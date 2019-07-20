@@ -22,22 +22,9 @@ using namespace CatchChallenger;
 #include <unistd.h>
 #endif
 
-//have query with reply
-bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
+bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    const bool &returnValue=parseQuery(packetCode,queryNumber,std::string(data,size));
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!returnValue)
-    {
-        errorParsingLayer("Api_protocol::parseQuery(): return false (abort), need be aborted before");
-        abort();
-    }
-    #endif
-    return returnValue;
-}
-
-bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data)
-{
+    int pos=0;
     if(!is_logged)
     {
         parseError("Procotol wrong or corrupted","is not logged with main ident: "+std::to_string(packetCode)+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -63,8 +50,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                uint8_t mapTempId;
-                in >> mapTempId;
+                uint8_t mapTempId=data[pos];
+                pos+=sizeof(uint8_t);
                 mapId=mapTempId;
             }
             else if(number_of_map<=65535)
@@ -74,8 +61,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                uint16_t mapTempId;
-                in >> mapTempId;
+                uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
                 mapId=mapTempId;
             }
             else
@@ -85,7 +72,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> mapId;
+                mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                pos+=sizeof(uint32_t);
             }
             uint8_t x,y;
             if((size-pos)<(int)sizeof(uint8_t)*2)
@@ -93,15 +81,18 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> x;
-            in >> y;
+            x=data[pos];
+            pos+=sizeof(uint8_t);
+            y=data[pos];
+            pos+=sizeof(uint8_t);
             uint8_t directionInt;
             if((size-pos)<(int)sizeof(uint8_t))
             {
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> directionInt;
+            directionInt=data[pos];
+            pos+=sizeof(uint8_t);
             if(directionInt<1 || directionInt>4)
             {
                 parseError("Procotol wrong or corrupted","direction have wrong value: "+std::to_string(directionInt)+
@@ -174,7 +165,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> skinInt;
+            skinInt=data[pos];
+            pos+=sizeof(uint8_t);
             tradeRequestId.push_back(queryNumber);
             tradeRequested(pseudo,skinInt);
         }
@@ -219,7 +211,8 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> skinInt;
+            skinInt=data[pos];
+            pos+=sizeof(uint8_t);
             battleRequestId.push_back(queryNumber);
             battleRequested(pseudo,skinInt);
         }

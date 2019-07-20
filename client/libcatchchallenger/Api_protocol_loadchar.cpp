@@ -13,18 +13,16 @@
 
 using namespace CatchChallenger;
 
-bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const std::string &data)
+bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size)
 {
-    QDataStream in(QByteArray(data.data(),data.size()));
-    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
+    int pos=0;
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-
-    uint16_t max_players;
-    in >> max_players;
+    uint16_t max_players=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    pos+=sizeof(uint16_t);
     max_players_real=max_players;
     if(max_players==65534)
     {
@@ -44,13 +42,15 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the city capture remainingTime, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> captureRemainingTime;
+    captureRemainingTime=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the city capture type, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> captureFrequencyType;
+    captureFrequencyType=data[pos];
+    pos+=sizeof(uint8_t);
     switch(captureFrequencyType)
     {
         case 0x01:
@@ -67,21 +67,23 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
+    CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick;
+    CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
     {
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t tempForceClientToSendAtBorder;
-        in >> tempForceClientToSendAtBorder;
+        uint8_t tempForceClientToSendAtBorder=data[pos];
+        pos+=sizeof(uint8_t);
         if(tempForceClientToSendAtBorder!=0 && tempForceClientToSendAtBorder!=1)
         {
             parseError("Procotol wrong or corrupted",std::string("forceClientToSendAtBorder have wrong value, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -94,19 +96,22 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.forcedSpeed;
+    CommonSettingsServer::commonSettingsServer.forcedSpeed=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the forcedSpeed, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.useSP;
+    CommonSettingsServer::commonSettingsServer.useSP=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the tcpCork, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.tcpCork;
+    CommonSettingsServer::commonSettingsServer.tcpCork=data[pos];
+    pos+=sizeof(uint8_t);
     {
         //socket->setTcpCork(CommonSettingsServer::commonSettingsServer.tcpCork);->ignored for now
     }
@@ -115,13 +120,15 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.autoLearn;
+    CommonSettingsServer::commonSettingsServer.autoLearn=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.dontSendPseudo;
+    CommonSettingsServer::commonSettingsServer.dontSendPseudo=data[pos];
+    pos+=sizeof(uint8_t);
 
 
     if((size-pos)<(int)sizeof(float))
@@ -154,31 +161,36 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_all, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.chat_allow_all;
+    CommonSettingsServer::commonSettingsServer.chat_allow_all=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_local, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.chat_allow_local;
+    CommonSettingsServer::commonSettingsServer.chat_allow_local=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_private, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.chat_allow_private;
+    CommonSettingsServer::commonSettingsServer.chat_allow_private=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.chat_allow_clan;
+    CommonSettingsServer::commonSettingsServer.chat_allow_clan=data[pos];
+    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the factoryPriceChange, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> CommonSettingsServer::commonSettingsServer.factoryPriceChange;
+    CommonSettingsServer::commonSettingsServer.factoryPriceChange=data[pos];
+    pos+=sizeof(uint8_t);
 
     {
         //Main type code
@@ -187,8 +199,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t textSize;
-        in >> textSize;
+        uint8_t textSize=data[pos];
+        pos+=sizeof(uint8_t);
         if(textSize>0)
         {
             if((size-pos)<(int)textSize)
@@ -229,8 +241,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t textSize;
-        in >> textSize;
+        uint8_t textSize=data[pos];
+        pos+=sizeof(uint8_t);
         if(textSize>0)
         {
             if((size-pos)<(int)textSize)
@@ -288,8 +300,8 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
             parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t mirrorSize;
-        in >> mirrorSize;
+        uint8_t mirrorSize=data[pos];
+        pos+=sizeof(uint8_t);
         if(mirrorSize>0)
         {
             if((size-pos)<(int)mirrorSize)
@@ -367,15 +379,9 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     return true;
 }
 
-bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const std::string &data)
+bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
-    QDataStream in(QByteArray(data.data(),data.size()));
-    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
-    if((size-pos)<(int)sizeof(uint16_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
+    int pos=0;
 
     //Events not with default value list size
     {
@@ -386,7 +392,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> tempListSize;
+        tempListSize=data[pos];
+        pos+=sizeof(uint8_t);
         uint8_t event,value;
         int index=0;
         while(index<tempListSize)
@@ -397,13 +404,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the event id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> event;
+            event=data[pos];
+            pos+=sizeof(uint8_t);
             if((size-pos)<(int)sizeof(uint8_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the event value, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> value;
+            value=data[pos];
+            pos+=sizeof(uint8_t);
             index++;
             events.push_back(std::pair<uint8_t,uint8_t>(event,value));
         }
@@ -417,8 +426,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t simplifiedId;
-        in >> simplifiedId;
+        uint8_t simplifiedId=data[pos];
+        pos+=sizeof(uint8_t);
         player_informations.public_informations.simplifiedId=simplifiedId;
     }
     else
@@ -428,7 +437,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> player_informations.public_informations.simplifiedId;
+        player_informations.public_informations.simplifiedId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
     }
     {
         //pseudo
@@ -437,8 +447,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t textSize;
-        in >> textSize;
+        uint8_t textSize=data[pos];
+        pos+=sizeof(uint8_t);
         if(textSize>0)
         {
             if((size-pos)<(int)textSize)
@@ -458,8 +468,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         newError("Procotol wrong or corrupted",std::string("wrong text with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint8_t tempAllowSize;
-    in >> tempAllowSize;
+    uint8_t tempAllowSize=data[pos];
+    pos+=sizeof(uint8_t);
     {
         int index=0;
         while(index<tempAllowSize)
@@ -469,8 +479,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 newError("Procotol wrong or corrupted",std::string("wrong id with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint8_t tempAllow;
-            in >> tempAllow;
+            uint8_t tempAllow=data[pos];
+            pos+=sizeof(uint8_t);
             player_informations.allow.insert(static_cast<ActionAllow>(tempAllow));
             index++;
         }
@@ -480,14 +490,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> player_informations.clan;
+    player_informations.clan=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan leader, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint8_t tempClanLeader;
-    in >> tempClanLeader;
+    uint8_t tempClanLeader=data[pos];
+    pos+=sizeof(uint8_t);
     if(tempClanLeader==0x01)
         player_informations.clan_leader=true;
     else
@@ -498,15 +509,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    quint64 cash;
-    in >> cash;
+    uint64_t cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+    pos+=sizeof(uint64_t);
     player_informations.cash=cash;
     if((size-pos)<(int)sizeof(uint64_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> cash;
+    cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+    pos+=sizeof(uint64_t);
     player_informations.warehouse_cash=cash;
 
     //monsters
@@ -515,14 +527,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint8_t monster_list_size;
-    in >> monster_list_size;
+    uint8_t monster_list_size=data[pos];
+    pos+=sizeof(uint8_t);
     uint32_t index=0;
     while(index<monster_list_size)
     {
         PlayerMonster monster;
-        if(!dataToPlayerMonster(in,monster))
+        const int returnVar=dataToPlayerMonster(data+pos,size-pos,monster);
+        if(returnVar<0)
             return false;
+        pos+=returnVar;
         player_informations.playerMonster.push_back(monster);
         index++;
     }
@@ -532,13 +546,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> monster_list_size;
+    monster_list_size=data[pos];
+    pos+=sizeof(uint8_t);
     index=0;
     while(index<monster_list_size)
     {
         PlayerMonster monster;
-        if(!dataToPlayerMonster(in,monster))
+        const int returnVar=dataToPlayerMonster(data+pos,size-pos,monster);
+        if(returnVar<0)
             return false;
+        pos+=returnVar;
         player_informations.warehouse_playerMonster.push_back(monster);
         index++;
     }
@@ -551,8 +568,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     PlayerReputation playerReputation;
     uint8_t type;
     index=0;
-    uint8_t sub_size8;
-    in >> sub_size8;
+    uint8_t sub_size8=data[pos];
+    pos+=sizeof(uint8_t);
     while(index<sub_size8)
     {
         if((size-pos)<(int)sizeof(int8_t))
@@ -560,19 +577,22 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted","wrong reputation code: "+std::to_string(packetCode)+", and queryNumber: "+std::to_string(queryNumber));
             return false;
         }
-        in >> type;
+        type=data[pos];
+        pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(int8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> playerReputation.level;
+        playerReputation.level=data[pos];
+        pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(int32_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> playerReputation.point;
+        playerReputation.point=data[pos];
+        pos+=sizeof(uint8_t);
         player_informations.reputation[type]=playerReputation;
         index++;
     }
@@ -582,8 +602,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint32_t sub_size32;
-    in >> sub_size32;
+    uint32_t sub_size32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
     if((size-pos)<sub_size32)
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -601,16 +621,6 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
         QDataStream in2(data2);
         in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
-        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
-        {
-            parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
-        }
-        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
-        {
-            parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
-        }
 
         //alloc
         if(player_informations.recipes!=NULL)
@@ -661,16 +671,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
         //recipes
         {
-            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            if((size2-pos2)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16;
-            in2 >> sub_size16;
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             if(sub_size16>0)
             {
-                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                if((size2-pos2)<sub_size16)
                 {
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -688,16 +698,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
         //encyclopedia_monster
         {
-            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            if((size2-pos2)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16;
-            in2 >> sub_size16;
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             if(sub_size16>0)
             {
-                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                if((size2-pos2)<sub_size16)
                 {
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -715,16 +725,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
         //encyclopedia_item
         {
-            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            if((size2-pos2)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16;
-            in2 >> sub_size16;
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             if(sub_size16>0)
             {
-                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                if((size2-pos2)<sub_size16)
                 {
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -740,7 +750,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
         }
 
-        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
+        if((size2-pos2)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
@@ -783,13 +793,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> playerQuest.step;
+        playerQuest.step=data[pos];
+        pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(int8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in >> playerQuest.finish_one_time;
+        playerQuest.finish_one_time=data[pos];
+        pos+=sizeof(uint8_t);
         if(playerQuest.step<=0 && !playerQuest.finish_one_time)
         {
             parseError("Procotol wrong or corrupted",std::string("can't be to step 0 if have never finish the quest, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -805,7 +817,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    in >> sub_size32;
+    sub_size32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+    pos+=sizeof(uint32_t);
     if((size-pos)<sub_size32)
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -823,16 +836,6 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         const QByteArray data2(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedSize);
         QDataStream in2(data2);
         in2.setVersion(QDataStream::Qt_4_4);in2.setByteOrder(QDataStream::LittleEndian);
-        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
-        {
-            parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
-        }
-        if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint8_t))
-        {
-            parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
-        }
 
         //alloc
         if(player_informations.bot_already_beaten!=NULL)
@@ -847,16 +850,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
         //bot
         {
-            if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<(int)sizeof(uint16_t))
+            if((size2-pos2)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16;
-            in2 >> sub_size16;
+            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             if(sub_size16>0)
             {
-                if(in2.device()->pos()<0 || !in2.device()->isOpen() || (in2.device()->size()-in2.device()->pos())<sub_size16)
+                if((size2-pos2)<sub_size16)
                 {
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
@@ -881,7 +884,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
     //item on map
     {
-        if((size-pos)<(int)sizeof(uint8_t))
+        if((size-pos)<(int)sizeof(uint16_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
@@ -891,7 +894,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         uint16_t index=0;
         while(index<itemOnMapSize)
         {
-            if((size-pos)<(int)sizeof(uint8_t))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
@@ -906,7 +909,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     //plant on map
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
     {
-        if((size-pos)<(int)sizeof(uint8_t))
+        if((size-pos)<(int)sizeof(uint16_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
@@ -919,7 +922,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             PlayerPlant playerPlant;
 
             //plant on map,x,y getted
-            if((size-pos)<(int)sizeof(uint8_t))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
@@ -933,7 +936,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            in >> playerPlant.plant;
+            playerPlant.plant=data[pos];
+            pos+=sizeof(uint8_t);
 
             //seconds to mature
             if((size-pos)<(int)sizeof(uint16_t))
@@ -941,8 +945,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t seconds_to_mature;
-            in >> seconds_to_mature;
+            uint16_t seconds_to_mature=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             playerPlant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
 
             player_informations.plantOnMap[plantOnMap]=playerPlant;

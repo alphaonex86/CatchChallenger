@@ -41,6 +41,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
 
 bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data)
 {
+    int pos=0;
     if(querySendTime.find(queryNumber)!=querySendTime.cend())
     {
         std::time_t result = std::time(nullptr);
@@ -206,19 +207,22 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError("Procotol wrong or corrupted","wrong size to get the max_pseudo_size, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.character_delete_time;
+                CommonSettingsCommon::commonSettingsCommon.character_delete_time=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                pos+=sizeof(uint32_t);
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the max_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.max_character;
+                CommonSettingsCommon::commonSettingsCommon.max_character=data[pos];
+                pos+=sizeof(uint8_t);
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the min_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.min_character;
+                CommonSettingsCommon::commonSettingsCommon.min_character=data[pos];
+                pos+=sizeof(uint8_t);
                 if(CommonSettingsCommon::commonSettingsCommon.max_character<CommonSettingsCommon::commonSettingsCommon.min_character)
                 {
                     parseError("Procotol wrong or corrupted","max_character<min_character, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -229,31 +233,36 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     parseError("Procotol wrong or corrupted","wrong size to get the max_pseudo_size, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.max_pseudo_size;
+                CommonSettingsCommon::commonSettingsCommon.max_pseudo_size=data[pos];
+                pos+=sizeof(uint8_t);
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxPlayerMonsters, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters;
+                CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters=data[pos];
+                pos+=sizeof(uint8_t);
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxWarehousePlayerMonsters, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters;
+                CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxPlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
+                CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=data[pos];
+                pos+=sizeof(uint8_t);
                 if((size-pos)<(int)sizeof(uint16_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the maxWarehousePlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                in >> CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems;
+                CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
                 if((size-pos)<28)
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the datapack checksum, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -272,8 +281,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                       );
                         return false;
                     }
-                    uint8_t mirrorSize;
-                    in >> mirrorSize;
+                    uint8_t mirrorSize=data[pos];
+                    pos+=sizeof(uint8_t);
                     if(mirrorSize>0)
                     {
                         if((size-pos)<(int)mirrorSize)
@@ -306,8 +315,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                       );
                         return false;
                     }
-                    uint8_t charatersGroupSize;
-                    in >> charatersGroupSize;
+                    uint8_t charatersGroupSize=data[pos];
+                    pos+=sizeof(uint8_t);
                     uint8_t charatersGroupIndex=0;
                     while(charatersGroupIndex<charatersGroupSize)
                     {
@@ -320,8 +329,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                             return false;
                         }
                         std::vector<CharacterEntry> characterEntryList;
-                        uint8_t characterListSize;
-                        in >> characterListSize;
+                        uint8_t characterListSize=data[pos];
+                        pos+=sizeof(uint8_t);
                         uint8_t characterListIndex=0;
                         /*if(characterListSize>0)
                             messageParsingLayer("For the character group "+std::to_string(charatersGroupIndex)+" you have "+std::to_string(characterListSize)+" character:");
@@ -339,7 +348,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                               );
                                 return false;
                             }
-                            in >> characterEntry.character_id;
+                            characterEntry.character_id=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                            pos+=sizeof(uint32_t);
                             {
                                 //pseudo
                                 if((size-pos)<(int)sizeof(uint8_t))
@@ -350,8 +360,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                                   );
                                     return false;
                                 }
-                                uint8_t pseudoSize;
-                                in >> pseudoSize;
+                                uint8_t pseudoSize=data[pos];
+                                pos+=sizeof(uint8_t);
                                 if(pseudoSize>0)
                                 {
                                     if((size-pos)<(int)pseudoSize)
@@ -376,7 +386,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                               );
                                 return false;
                             }
-                            in >> characterEntry.skinId;
+                            characterEntry.skinId=data[pos];
+                            pos+=sizeof(uint8_t);
                             //Time left before delete
                             if((size-pos)<(int)sizeof(uint32_t))
                             {
@@ -386,7 +397,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                               );
                                 return false;
                             }
-                            in >> characterEntry.delete_time_left;
+                            characterEntry.delete_time_left=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                            pos+=sizeof(uint32_t);
                             //Played time
                             if((size-pos)<(int)sizeof(uint32_t))
                             {
@@ -396,7 +408,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                               );
                                 return false;
                             }
-                            in >> characterEntry.played_time;
+                            characterEntry.played_time=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                            pos+=sizeof(uint32_t);
                             //Last connect
                             if((size-pos)<(int)sizeof(uint32_t))
                             {
@@ -406,8 +419,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                               );
                                 return false;
                             }
-                            uint32_t last_connect32;
-                            in >> last_connect32;
+                            uint32_t last_connect32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                            pos+=sizeof(uint32_t);
                             characterEntry.last_connect=last_connect32;
 
                             //important
@@ -433,8 +446,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                       );
                         return false;
                     }
-                    uint8_t serverListSize;
-                    in >> serverListSize;
+                    uint8_t serverListSize=data[pos];
+                    pos+=sizeof(uint8_t);
                     uint8_t serverListIndex=0;
                     while(serverListIndex<serverListSize)
                     {
@@ -447,8 +460,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                           );
                             return false;
                         }
-                        uint8_t serverIndex;
-                        in >> serverIndex;
+                        uint8_t serverIndex=data[pos];
+                        pos+=sizeof(uint8_t);
                         //Played time
                         if((size-pos)<(int)sizeof(uint32_t))
                         {
@@ -458,8 +471,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                           );
                             return false;
                         }
-                        uint32_t playedTime;
-                        in >> playedTime;
+                        uint32_t playedTime=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                        pos+=sizeof(uint32_t);
                         //Last connect
                         if((size-pos)<(int)sizeof(uint32_t))
                         {
@@ -469,8 +482,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                           );
                             return false;
                         }
-                        uint32_t lastConnect;
-                        in >> lastConnect;
+                        uint32_t lastConnect=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                        pos+=sizeof(uint32_t);
                         if(playedTime>0 && lastConnect==0)
                         {
                             parseError("Procotol wrong or corrupted","playedTime>0 && lastConnect==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -701,8 +714,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         clanActionSuccess(0);
                     else
                     {
-                        uint32_t clanId;
-                        in >> clanId;
+                        uint32_t clanId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                        pos+=sizeof(uint32_t);
                         clanActionSuccess(clanId);
                     }
                 break;
@@ -1142,8 +1155,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                               );
                 return false;
             }
-            quint64 cash;
-            in >> cash;
+            uint64_t cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+            pos+=sizeof(uint64_t);
             if((size-pos)<(int)(sizeof(uint32_t)))
             {
                 QByteArray tdata=QByteArray(data.data(),data.size()).mid(static_cast<int>(in.device()->pos()));
@@ -1192,8 +1205,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                   );
                     return false;
                 }
-                quint64 price;
-                in >> price;
+                uint64_t price=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
                 marketObject.price=price;
                 marketObjectList.push_back(marketObject);
                 index++;
@@ -1238,8 +1251,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                   );
                     return false;
                 }
-                quint64 price;
-                in >> price;
+                uint64_t price=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
                 marketMonster.price=price;
                 marketMonsterList.push_back(marketMonster);
                 index++;
@@ -1284,8 +1297,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                   );
                     return false;
                 }
-                quint64 price;
-                in >> price;
+                uint64_t price=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
                 marketObject.price=price;
                 marketOwnObjectList.push_back(marketObject);
                 index++;
@@ -1330,8 +1343,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                                   );
                     return false;
                 }
-                quint64 price;
-                in >> price;
+                uint64_t price=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
                 marketMonster.price=price;
                 marketOwnMonsterList.push_back(marketMonster);
                 index++;
@@ -1407,8 +1420,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                               );
                 return false;
             }
-            quint64 cash;
-            in >> cash;
+            uint64_t cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+            pos+=sizeof(uint64_t);
             marketGetCash(cash);
         break;
         case 0x91:
