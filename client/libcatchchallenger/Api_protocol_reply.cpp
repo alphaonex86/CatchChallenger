@@ -26,20 +26,7 @@ using namespace CatchChallenger;
 #endif
 
 //send reply
-bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
-{
-    const bool &returnValue=parseReplyData(packetCode,queryNumber,std::string(data,size));
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!returnValue)
-    {
-        errorParsingLayer("Api_protocol::parseReplyData(): return false (abort), need be aborted before");
-        abort();
-    }
-    #endif
-    return returnValue;
-}
-
-bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const std::string &data)
+bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
     int pos=0;
     if(querySendTime.find(queryNumber)!=querySendTime.cend())
@@ -56,8 +43,6 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
     }
     else
         lastQueryNumber.push_back(queryNumber);
-    QDataStream in(QByteArray(data.data(),data.size()));
-    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(packetCode)
     {
         case 0xA0:
@@ -497,7 +482,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                         }
                         else
                         {
-                            std::cerr << "dump data: " << binarytoHexa(data.data(),data.size()) << std::endl;
+                            std::cerr << "dump data: " << binarytoHexa(data,size) << std::endl;
                             parseError("Procotol wrong or corrupted",
                                        "out of range serverIndex("+
                                        std::to_string(serverIndex)+
@@ -645,7 +630,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode,const uint8_t &query
                     string=tr("Too recently disconnected").toStdString();
                 else
                     string=tr("Unknown error: %1").arg(returnCode).toStdString();
-                std::cerr << "Selected character not found, reason: " << string << ", data: " << binarytoHexa(data.data(),data.size()) << std::endl;
+                std::cerr << "Selected character not found, reason: " << string << ", data: " << binarytoHexa(data,size) << std::endl;
                 /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
                 abort();//to debug
                 #endif*/

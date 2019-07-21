@@ -1,4 +1,4 @@
-include(../lib/lib.pri)
+include(../libcatchchallenger/lib.pri)
 include(../qt/tiled/tiled.pri)
 
 QT       += gui network core widgets
