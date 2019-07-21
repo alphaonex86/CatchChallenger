@@ -31,12 +31,10 @@ public:
     void resetAll();
 
     //static items
-    struct ItemExtra
+    struct QtItemExtra
     {
         std::string imagePath;
         QPixmap image;
-        std::string name;
-        std::string description;
     };
     struct PlantExtra
     {

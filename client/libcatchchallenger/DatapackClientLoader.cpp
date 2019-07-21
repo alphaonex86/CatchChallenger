@@ -10,10 +10,24 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../../general/base/Map_loader.h"
+#include <sys/stat.h>
 #include <iostream>
 
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
+
+bool operator!=(const DatapackClientLoader::CCColor& a, const DatapackClientLoader::CCColor& b)
+{
+    if(a.a != b.a)
+        return true;
+    if(a.r != b.r)
+        return true;
+    if(a.g != b.g)
+        return true;
+    if(a.b != b.b)
+        return true;
+    return false;
+}
 
 DatapackClientLoader::DatapackClientLoader()
 {
@@ -149,7 +163,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     parseQuestsText();
     parseBotFightsExtra();
     parseZoneExtra();
-    parseTileset();
+    parseTopLib();
 
     inProgress=false;
 
@@ -374,7 +388,7 @@ void DatapackClientLoader::parseReputationExtra()
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"reputations")!=0)
     {
-        std::cerr << "Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        std::cerr << "\"reputations\" root balise not found for the xml file: " << file << std::endl;
         return;
     }
 
@@ -419,7 +433,7 @@ void DatapackClientLoader::parseReputationExtra()
                 }
                 if(!name_found)
                 {
-                    reputationExtra[item->Attribute("type")].name=tr("Unknown").toStdString();
+                    reputationExtra[item->Attribute("type")].name="Unknown";
                     std::cerr << "English name not found for the reputation with id: "
                               << item->Attribute("type") << std::endl;
                 }
@@ -472,7 +486,7 @@ void DatapackClientLoader::parseReputationExtra()
                             }
                             if(!name_found)
                             {
-                                text=tr("Unknown").toStdString();
+                                text="Unknown";
                                 std::cerr << "English name not found for the reputation with id: " << item->Attribute("type") << std::endl;
                             }
                         }
@@ -485,7 +499,8 @@ void DatapackClientLoader::parseReputationExtra()
                             {
                                 if(point_list_positive.at(index)==point)
                                 {
-                                    std::cerr << "Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                                    std::cerr << "reputation level with same number of point found!: child.Name(): " << file << " "
+                                              << item->Name() << std::endl;
                                     found=true;
                                     ok=false;
                                     break;
@@ -511,7 +526,7 @@ void DatapackClientLoader::parseReputationExtra()
                             {
                                 if(point_list_negative.at(index)==point)
                                 {
-                                    std::cerr << "Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                                    std::cerr << "reputation level with same number of point found!: child.Name(): " << file << " " << item->Name() << std::endl;
                                     found=true;
                                     ok=false;
                                     break;
@@ -533,7 +548,7 @@ void DatapackClientLoader::parseReputationExtra()
                         }
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, point is not number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                        std::cerr << "point is not number: child.Name(): " << file << " " << item->Name() << std::endl;
                 }
                 level = level->NextSiblingElement("level");
             }
@@ -542,19 +557,19 @@ void DatapackClientLoader::parseReputationExtra()
             if(ok)
                 if(point_list_positive.size()<2)
                 {
-                    std::cerr << "Unable to open the file: %1, reputation have to few level: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    std::cerr << "reputation have to few level: child.Name(): " << file << " " << item->Name() << std::endl;
                     ok=false;
                 }
             if(ok)
                 if(!vectorcontainsAtLeastOne(point_list_positive,0))
                 {
-                    std::cerr << "Unable to open the file: %1, no starting level for the positive: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    std::cerr << "no starting level for the positive: child.Name(): " << file << " " << item->Name() << std::endl;
                     ok=false;
                 }
             if(ok)
                 if(!point_list_negative.empty() && !vectorcontainsAtLeastOne(point_list_negative,-1))
                 {
-                    //std::cerr << "Unable to open the file: %1, no starting level for the negative client: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    //std::cerr << "Unable to open the file: %1, no starting level for the negative client: child.Name(): " << file << " " << item->Name() << std::endl;
                     std::vector<int32_t> point_list_negative_new;
                     int lastValue=-1;
                     unsigned int index=0;
@@ -569,9 +584,10 @@ void DatapackClientLoader::parseReputationExtra()
             if(ok)
                 if(!QString(item->Attribute("type")).contains(QRegExp("^[a-z]{1,32}$")))
                 {
-                    std::cerr << "Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.Name(): %2")
-                                 .arg(QString::fromStdString(file))
-                                 .arg(item->Name()).arg(item->Attribute("type")));
+                    std::cerr << "the type don't match wiuth the regex: ^[a-z]{1,32}$: "
+                              << file << " "
+                              << item->Name() << " "
+                              << item->Attribute("type") << std::endl;
                     ok=false;
                 }
             if(ok)
@@ -581,7 +597,7 @@ void DatapackClientLoader::parseReputationExtra()
             }
         }
         else
-            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): " << file << " " << item->Name() << std::endl;
         item = item->NextSiblingElement("reputation");
     }
     {
@@ -590,28 +606,26 @@ void DatapackClientLoader::parseReputationExtra()
         {
             const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index);
             if(reputationExtra.find(reputation.name)==reputationExtra.cend())
-                reputationExtra[reputation.name].name=tr("Unknown").toStdString();
+                reputationExtra[reputation.name].name="Unknown";
             while((uint32_t)reputationExtra[reputation.name].reputation_negative.size()<reputation.reputation_negative.size())
-                reputationExtra[reputation.name].reputation_negative.push_back(tr("Unknown").toStdString());
+                reputationExtra[reputation.name].reputation_negative.push_back("Unknown");
             while((uint32_t)reputationExtra[reputation.name].reputation_positive.size()<reputation.reputation_positive.size())
-                reputationExtra[reputation.name].reputation_positive.push_back(tr("Unknown").toStdString());
+                reputationExtra[reputation.name].reputation_positive.push_back("Unknown");
             index++;
         }
     }
 
-    std::cerr << "%1 reputation(s) extra loaded").arg(reputationExtra.size());
+    std::cout << std::to_string(reputationExtra.size()) << " reputation(s) extra loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseItemsExtra()
 {
-    QDir dir(QString::fromStdString(datapackPath)+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
-    const std::vector<std::string> &fileList=CatchChallenger::FacilityLibGeneral::listFolder(
-                (dir.absolutePath().toStdString()+DatapackClientLoader::text_slash));
+    const std::vector<std::string> &fileList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DATAPACK_BASE_PATH_ITEM+"/");
     unsigned int file_index=0;
     while(file_index<fileList.size())
     {
         const std::string &file=datapackPath+DATAPACK_BASE_PATH_ITEM+fileList.at(file_index);
-        if(!QFileInfo(QString::fromStdString(file)).isFile())
+        if(CatchChallenger::FacilityLibGeneral::isFile(file))
         {
             file_index++;
             continue;
@@ -638,8 +652,7 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
 
-        const std::string &folder=QFileInfo(QString::fromStdString(file)).absolutePath().toStdString()+
-                DatapackClientLoader::text_slash;
+        const std::string &folder=CatchChallenger::FacilityLibGeneral::getFolderFromFile(file);
         //load the content
         bool ok;
         const tinyxml2::XMLElement *item = root->FirstChildElement("item");
@@ -656,35 +669,14 @@ void DatapackClientLoader::parseItemsExtra()
                         ItemExtra itemExtra;
                         //load the image
                         if(item->Attribute("image")!=NULL)
-                        {
-                            const std::string &imagePath=folder+item->Attribute("image");
-                            QPixmap image(QString::fromStdString(imagePath));
-                            if(image.isNull())
-                            {
-                                std::cerr << "Unable to open the items image: %1: child.Name(): %2")
-                                            .arg(QString::fromStdString(datapackPath)+
-                                                 QStringLiteral(DATAPACK_BASE_PATH_ITEM)+
-                                                 item->Attribute("image")).arg(item->Name());
-                                itemExtra.image=*mDefaultInventoryImage;
-                                itemExtra.imagePath=":/images/inventory/unknown-object.png";
-                            }
-                            else
-                            {
-                                itemExtra.imagePath=QFileInfo(QString::fromStdString(imagePath))
-                                        .absoluteFilePath().toStdString();
-                                itemExtra.image=image;
-                            }
-                        }
+                            itemExtra.imagePath=folder+item->Attribute("image");
                         else
                         {
-                            std::cerr << "For parse item: Have not image attribute: child.Name(): %1 (%2)")
-                                        .arg(item->Name())
-                                        .arg(QString::fromStdString(file));
-                            itemExtra.image=*mDefaultInventoryImage;
+                            std::cerr << "For parse item: Have not image attribute: child.Name(): "
+                                        << item->Name() << " "
+                                        << file << std::endl;
                             itemExtra.imagePath=":/images/inventory/unknown-object.png";
                         }
-                        // base size: 24x24
-                        itemExtra.image=itemExtra.image.scaled(72,72);//then zoom: 3x
 
                         //load the name
                         {
@@ -718,8 +710,8 @@ void DatapackClientLoader::parseItemsExtra()
                             }
                             if(!name_found)
                             {
-                                itemExtra.name=tr("Unknown object").toStdString();
-                                std::cerr << "English name not found for the item with id: %1").arg(id);
+                                itemExtra.name="Unknown object";
+                                std::cerr << "English name not found for the item with id: " << std::to_string(id) << std::endl;
                             }
                         }
 
@@ -755,26 +747,26 @@ void DatapackClientLoader::parseItemsExtra()
                             }
                             if(!description_found)
                             {
-                                itemExtra.description=tr("This object is not listed as know object. The information can't be found.").toStdString();
+                                itemExtra.description="This object is not listed as know object. The information can't be found.";
                                 //std::cerr << "English description not found for the item with id: %1").arg(id);
                             }
                         }
                         DatapackClientLoader::itemsExtra[id]=itemExtra;
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                        std::cerr << "id number already set: child.Name(): " << file << " " << item->Name() << std::endl;
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                    std::cerr << "id is not a number: child.Name(): " << file << " " << item->Name() << std::endl;
             }
             else
-                std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                std::cerr << "have not the item id: child.Name(): " << file << " " << item->Name() << std::endl;
             item = item->NextSiblingElement("item");
         }
         file_index++;
     }
 
-    std::cerr << "%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
+    std::cout << std::to_string(DatapackClientLoader::itemsExtra.size()) << " item(s) extra loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseMaps()
@@ -809,12 +801,15 @@ void DatapackClientLoader::parseMaps()
     index=0;
     while(index<tempMapList.size())
     {
-        mapToId[sortToFull.at(tempMapList.at(index))]=index;
-        fullMapPathToId[QFileInfo(QString::fromStdString(basePath+sortToFull.at(tempMapList.at(index))))
-                .absoluteFilePath().toStdString()]=index;
-        maps.push_back(sortToFull.at(tempMapList.at(index)));
+        std::string entry=tempMapList.at(index);
+        mapToId[sortToFull.at(entry)]=index;
+        std::string temp=basePath+sortToFull.at(entry);
+        stringreplaceAll(temp,"\\\\","\\");
+        stringreplaceAll(temp,"//","/");
+        fullMapPathToId[temp]=index;
+        maps.push_back(sortToFull.at(entry));
 
-        const std::string &file=sortToFull.at(tempMapList.at(index));
+        const std::string &file=sortToFull.at(entry);
         {
             tinyxml2::XMLDocument domDocument;
             const auto loadOkay = domDocument.LoadFile((basePath+file).c_str());
@@ -828,7 +823,7 @@ void DatapackClientLoader::parseMaps()
             const tinyxml2::XMLElement *root = domDocument.RootElement();
             if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"map")!=0)
             {
-                std::cerr << "Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file));
+                std::cerr << "\"map\" root balise not found for the xml file" << file << std::endl;
                 index++;
                 continue;
             }
@@ -840,7 +835,7 @@ void DatapackClientLoader::parseMaps()
                 tilewidth=stringtouint8(root->Attribute("tilewidth"),&ok);
                 if(!ok)
                 {
-                    std::cerr << "Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
+                    std::cerr << "tilewidth is not a number" << file << std::endl;
                     tilewidth=16;
                 }
             }
@@ -849,7 +844,7 @@ void DatapackClientLoader::parseMaps()
                 tileheight=stringtouint8(root->Attribute("tileheight"),&ok);
                 if(!ok)
                 {
-                    std::cerr << "Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
+                    std::cerr << "tileheight is not a number" << file << std::endl;
                     tileheight=16;
                 }
             }
@@ -920,10 +915,10 @@ void DatapackClientLoader::parseMaps()
                                         pointOnMapIndexItem++;
                                     }
                                     else
-                                        std::cerr << "object_y too big or not number") << object->Attribute("y") << QString::fromStdString(file);
+                                        std::cerr << "object_y too big or not number" << object->Attribute("y") << " " << file << std::endl;
                                 }
                                 else
-                                    std::cerr << "object_x too big or not number") << object->Attribute("x") << QString::fromStdString(file);
+                                    std::cerr << "object_x too big or not number" << object->Attribute("x") << " " << file << std::endl;
                             }
                             object = object->NextSiblingElement("object");
                         }
@@ -935,14 +930,14 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
 
-    std::cerr << "%1 map(s) extra loaded").arg(maps.size());
+    std::cout << std::to_string(maps.size()) << " map(s) extra loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseSkins()
 {
     skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
-    std::cerr << "%1 skin(s) loaded").arg(skins.size());
+    std::cout << std::to_string(skins.size()) << " skin(s) loaded" << std::endl;
 }
 
 void DatapackClientLoader::resetAll()
@@ -952,25 +947,13 @@ void DatapackClientLoader::resetAll()
     mapToId.clear();
     fullMapPathToId.clear();
     visualCategories.clear();
-    if(mDefaultInventoryImage==NULL)
-    {
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
-        if(mDefaultInventoryImage->isNull())
-        {
-            qDebug() << "default internal image bug for item";
-            abort();
-        }
-    }
     datapackPath.clear();
     itemsExtra.clear();
     maps.clear();
     skins.clear();
 
-    for (const auto &n : plantExtra)
-        delete n.second.tileset;
     itemOnMap.clear();
     plantOnMap.clear();
-    plantExtra.clear();
     itemToPlants.clear();
     questsExtra.clear();
     botToQuestStart.clear();
@@ -981,52 +964,48 @@ void DatapackClientLoader::resetAll()
     audioAmbiance.clear();
     zonesExtra.clear();
     typeExtra.clear();
-    {
-         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
-         while (i.hasNext()) {
-             i.next();
-             delete i.value();
-         }
-         Tiled::Tileset::preloadedTileset.clear();
-    }
 }
 
 void DatapackClientLoader::parseQuestsExtra()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(
-                QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_QUESTS1+
-                QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-                DATAPACK_BASE_PATH_QUESTS2)
-            .entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
-    int index=0;
-    while(index<entryList.size())
+    std::string temp=datapackPath+DATAPACK_BASE_PATH_QUESTS1+
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2;
+    stringreplaceAll(temp,"\\\\","\\");
+    stringreplaceAll(temp,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    unsigned int index=0;
+    while(index<returnList.size())
     {
         bool showRewards=false;
         bool autostep=false;
-        if(!entryList.at(index).isDir())
+        if(!CatchChallenger::FacilityLibGeneral::isDir(returnList.at(index)))
         {
             index++;
             continue;
         }
         bool ok;
-        const uint32_t &tempid=entryList.at(index).fileName().toUInt(&ok);
+        std::string inode=returnList.at(index);
+        if(stringEndsWith(inode,"/") && stringEndsWith(inode,"\\"))
+            inode=inode.substr(0,inode.size()-1);
+        inode=inode.substr(temp.size());
+        const uint32_t &tempid=stringtouint32(inode,&ok);
         if(!ok)
         {
-            std::cerr << "Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
+            std::cerr << "because is folder name is not a number" << returnList.at(index) << std::endl;
             index++;
             continue;
         }
         if(tempid>=256)
         {
-            std::cerr << "parseQuestsExtra too big: %1").arg(entryList.at(index).fileName());
+            std::cerr << "parseQuestsExtra too big: " << returnList.at(index) << std::endl;
             index++;
             continue;
         }
         const uint16_t &id=static_cast<uint16_t>(tempid);
 
         tinyxml2::XMLDocument domDocument;
-        const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+DatapackClientLoader::text_slashdefinitiondotxml;
+        const std::string &file=returnList.at(index)+"/definition.xml";
         const auto loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -1037,7 +1016,7 @@ void DatapackClientLoader::parseQuestsExtra()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"quest")!=0)
         {
-            std::cerr << "Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "\"quest\" root balise not found for the xml file" << file << std::endl;
             index++;
             continue;
         }
@@ -1058,8 +1037,7 @@ void DatapackClientLoader::parseQuestsExtra()
                         break;
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2")
-                                    .arg(QString::fromStdString(file)).arg(name->Name());
+                        std::cerr << "is not an element: child.Name(): " << file << std::endl;
                     name = name->NextSiblingElement("name");
                 }
             if(!found)
@@ -1076,8 +1054,7 @@ void DatapackClientLoader::parseQuestsExtra()
                         }
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2")
-                                    .arg(QString::fromStdString(file)).arg(name->Name());
+                        std::cerr << "is not an element: child.Name(): " << file << std::endl;
                     name = name->NextSiblingElement("name");
                 }
             }
@@ -1112,7 +1089,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     tempid=stringtouint8(step->Attribute("id"),&ok);
                     if(!ok)
                     {
-                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(step->Name());
+                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): " << file << " " << step->Name() << std::endl;
                         tempid=-1;
                     }
                 }
@@ -1161,7 +1138,7 @@ void DatapackClientLoader::parseQuestsExtra()
                             stepItem = stepItem->NextSiblingElement("text");
                         }
                         if(text.empty())
-                            text=tr("No text").toStdString();
+                            text="No text";
                     }
                     steps[id]=text;
                 }
@@ -1185,30 +1162,32 @@ void DatapackClientLoader::parseQuestsExtra()
             questsExtra[id].showRewards=showRewards;
             questsExtra[id].autostep=autostep;
         }
-        questsPathToId[entryList.at(index).absoluteFilePath().toStdString()]=id;
+        questsPathToId[inode]=id;
 
         index++;
     }
 
-    std::cerr << "%1 quest(s) extra loaded").arg(questsExtra.size());
+    std::cout << std::to_string(questsExtra.size()) << " quest(s) extra loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
-    const QFileInfoList &entryList=QDir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_QUESTS1+
+    std::string temp=datapackPath+DATAPACK_BASE_PATH_QUESTS1+
             QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-            DATAPACK_BASE_PATH_QUESTS2)
-            .entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
+            DATAPACK_BASE_PATH_QUESTS2;
+    stringreplaceAll(temp,"\\\\","\\");
+    stringreplaceAll(temp,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
     unsigned int index=0;
-    while(index<(unsigned int)entryList.size())
+    while(index<(unsigned int)returnList.size())
     {
-        if(!entryList.at(index).isDir())
+        if(!CatchChallenger::FacilityLibGeneral::isDir(returnList.at(index)))
         {
             index++;
             continue;
         }
-        const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+"/text.xml";
+        const std::string &file=CatchChallenger::FacilityLibGeneral::getFolderFromFile(returnList.at(index))+"/text.xml";
 
         tinyxml2::XMLDocument domDocument;
         const auto loadOkay = domDocument.LoadFile(file.c_str());
@@ -1222,13 +1201,13 @@ void DatapackClientLoader::parseQuestsText()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"text")!=0)
         {
-            std::cerr << "Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "\"quest\" root balise not found for the xml file" << file << std::endl;
             index++;
             continue;
         }
 
         //load the content
-        const std::string &path=entryList.at(index).absoluteFilePath().toStdString();
+        const std::string &path=returnList.at(index);
         if(questsPathToId.find(path)!=questsPathToId.cend())
         {
             const uint16_t questId=questsPathToId.at(path);
@@ -1295,22 +1274,22 @@ void DatapackClientLoader::parseQuestsText()
                         questsExtra[questId].text[tempid].texts.push_back(questStepWithConditionExtra);
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): " << file << client_logic->Name());
                 }
                 else
-                    std::cerr << "Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                    std::cerr << "Has attribute: %1, have not id attribute: child.Name(): " << file << client_logic->Name());
                 client_logic = client_logic->NextSiblingElement("client_logic");
             }
         }
         else
-            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(QString::fromStdString(path));
+            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): " << file << QString::fromStdString(path));
         #ifdef DEBUG_CLIENT_QUEST
         std::cerr << "%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
         index++;
     }
 
-    std::cerr << "%1 quest(s) text loaded").arg(questsExtra.size());
+    std::cout << std::to_string(questsExtra.size()) << " quest(s) text loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseAudioAmbiance()
@@ -1350,7 +1329,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         item = item->NextSiblingElement("map");
     }
 
-    std::cerr << "%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
+    std::cout << std::to_string(audioAmbiance.size()) << " audio ambiance(s) link loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseQuestsLink()
@@ -1370,7 +1349,7 @@ void DatapackClientLoader::parseQuestsLink()
         }
         ++i;
     }
-    std::cerr << "%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
+    std::cout << std::to_string(botToQuestStart.size()) << " bot linked with quest(s) loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseZoneExtra()
@@ -1436,7 +1415,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name());
                 name = name->NextSiblingElement("name");
             }
         if(!found)
@@ -1454,7 +1433,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name());
                 name = name->NextSiblingElement("name");
             }
         }
@@ -1482,40 +1461,5 @@ void DatapackClientLoader::parseZoneExtra()
         index++;
     }
 
-    std::cerr << "%1 zone(s) extra loaded").arg(zonesExtra.size());
-}
-
-void DatapackClientLoader::parseTileset()
-{
-    const std::vector<std::string> &fileList=
-                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DATAPACK_BASE_PATH_MAPBASE);
-    unsigned int index=0;
-    while(index<fileList.size())
-    {
-        const std::string &filePath=fileList.at(index);
-        if(stringEndsWith(filePath,".tsx"))
-        {
-            const std::string &source=QFileInfo(QString::fromStdString(datapackPath+DATAPACK_BASE_PATH_MAPBASE+filePath))
-                    .absoluteFilePath().toStdString();
-            QFile file(QString::fromStdString(source));
-            if(file.open(QIODevice::ReadOnly))
-            {
-                Tiled::MapReader mapReader;
-                Tiled::Tileset *tileset = mapReader.readTileset(&file, QString::fromStdString(source));
-                if (tileset)
-                {
-                    tileset->setFileName(QString::fromStdString(source));
-                    Tiled::Tileset::preloadedTileset[QString::fromStdString(source)]=tileset;
-                }
-                file.close();
-            }
-            else
-                std::cerr << "Tileset: %1 can't be open: %2")
-                            .arg(QString::fromStdString(source))
-                            .arg(file.errorString());
-        }
-        index++;
-    }
-
-    std::cerr << "%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());
+    std::cout << std::to_string(zonesExtra.size()) << " zone(s) extra loaded" << std::endl;
 }
