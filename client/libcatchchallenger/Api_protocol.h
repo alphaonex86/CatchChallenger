@@ -135,8 +135,8 @@ protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
 
-    bool parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size);
-    bool parseCharacterBlockCharacter(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size);
+    bool parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size);
 
     /// \note This is note into server part to force to write manually the serial and improve the performance, this function is more easy but implies lot of memory copy via SIMD
     //send message without reply
@@ -149,11 +149,11 @@ protected:
     void send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
 protected:
     //have message without reply
-    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
+    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const int &size);
     //have query with reply
-    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
     //send reply
-    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
 
     //servers list
     LogicialGroup * addLogicalGroup(const std::string &path, const std::string &xml, const std::string &language);

@@ -22,7 +22,7 @@ using namespace CatchChallenger;
 #include <unistd.h>
 #endif
 
-bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
+bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
 {
     int pos=0;
     if(!is_logged)
@@ -30,8 +30,6 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumb
         parseError("Procotol wrong or corrupted","is not logged with main ident: "+std::to_string(packetCode)+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    QDataStream in(QByteArray(data.data(),data.size()));
-    in.setVersion(QDataStream::Qt_4_4);in.setByteOrder(QDataStream::LittleEndian);
     switch(packetCode)
     {
         //Teleport the player
