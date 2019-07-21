@@ -154,6 +154,7 @@ private:
     virtual void emitdatapackParsed() = 0;
     virtual void emitdatapackParsedMainSub() = 0;
     virtual void emitdatapackChecksumError() = 0;
+    virtual void parseTopLib() = 0;
 private:
     void parsePlantsExtra();
     void parseItemsExtra();
@@ -170,7 +171,6 @@ private:
     void parseBotFightsExtra();
     void parseAudioAmbiance();
     void parseZoneExtra();
-    void parseTileset();
     void parseReputationExtra();
     static std::string text_DATAPACK_BASE_PATH_MAPMAIN;
     static std::string text_DATAPACK_BASE_PATH_MAPSUB;
