@@ -13,7 +13,7 @@
 
 using namespace CatchChallenger;
 
-bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size)
+bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
     int pos=0;
     if((size-pos)<(int)sizeof(uint16_t))
@@ -368,7 +368,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     return true;
 }
 
-bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
+bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
     int pos=0;
 
@@ -592,7 +592,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
     uint32_t sub_size32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
-    if((size-pos)<sub_size32)
+    if((size-pos)<(int)sub_size32)
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
@@ -681,7 +681,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     else
                         memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(pos2+sub_size16);
+                pos2+=sub_size16;
             }
         }
 
@@ -708,7 +708,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     else
                         memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(pos2+sub_size16);
+                pos2+=sub_size16;
             }
         }
 
@@ -735,7 +735,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     else
                         memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
-                in2.device()->seek(pos2+sub_size16);
+                pos2+=sub_size16;
             }
         }
 
@@ -744,22 +744,22 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        in2.device()->seek(pos2+sizeof(uint8_t));
+        pos2+=sizeof(uint8_t);
 
-        if(in2.device()->size()!=pos2)
+        if(size2!=pos2)
         {
             parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                                                                 std::to_string(in2.device()->size())+" != pos2 "+
+                                                                 std::to_string(size2)+" != pos2 "+
                                                                  std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
     }
-    in.device()->seek(in.device()->pos()+sub_size32);
+    pos+=sub_size32;
 
     //------------------------------------------- End of common part, start of server specific part ----------------------------------
 
     //quest
-    if((size-pos)<(int)sizeof(uint8_t))
+    if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
@@ -768,7 +768,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     uint16_t playerQuestId;
     index=0;
     uint16_t sub_size16;
-    in >> sub_size16;
+    sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+    pos+=sizeof(uint16_t);
     while(index<sub_size16)
     {
         if((size-pos)<(int)sizeof(int16_t))
@@ -776,7 +777,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted","wrong text with main ident: "+std::to_string(packetCode)+", and queryNumber: "+std::to_string(queryNumber));
             return false;
         }
-        in >> playerQuestId;
+        playerQuestId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
         if((size-pos)<(int)sizeof(int8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -808,7 +810,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
     sub_size32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
-    if((size-pos)<sub_size32)
+    if((size-pos)<(int)sub_size32)
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
@@ -817,10 +819,11 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
     {
         decompressedSize=sub_size32;
-        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data.data()+in.device()->pos(),sub_size32);
+        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
     }
     else
-        decompressedSize=computeDecompression(data.data()+in.device()->pos(),ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+        decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,
+            sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
     {
         const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
         int pos2=0;
@@ -857,19 +860,19 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
                 else
                     memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
-                in2.device()->seek(pos2+sub_size16);
+                pos2+=sub_size16;
             }
         }
 
-        if(in2.device()->size()!=pos2)
+        if(size!=pos2)
         {
             parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                       std::to_string(in2.device()->size())+" != pos2 "+
+                       std::to_string(size)+" != pos2 "+
                        std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
     }
-    in.device()->seek(in.device()->pos()+sub_size32);
+    pos+=sub_size32;
 
     //item on map
     {
@@ -878,8 +881,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint16_t itemOnMapSize;
-        in >> itemOnMapSize;
+        uint16_t itemOnMapSize=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
         uint16_t index=0;
         while(index<itemOnMapSize)
         {
@@ -888,8 +891,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t itemOnMap;
-            in >> itemOnMap;
+            uint16_t itemOnMap=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
             player_informations.itemOnMap.insert(itemOnMap);
             index++;
         }
@@ -903,8 +906,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint16_t plantOnMapSize;
-        in >> plantOnMapSize;
+        uint16_t plantOnMapSize=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
         uint16_t index=0;
         while(index<plantOnMapSize)
         {
@@ -916,8 +919,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the player item on map, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t plantOnMap;
-            in >> plantOnMap;
+            uint16_t plantOnMap=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
 
             //plant
             if((size-pos)<(int)sizeof(uint8_t))
@@ -936,7 +939,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
             uint16_t seconds_to_mature=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
-            playerPlant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
+            playerPlant.mature_at=std::time(nullptr)/1000+seconds_to_mature;
 
             player_informations.plantOnMap[plantOnMap]=playerPlant;
             index++;
