@@ -28,6 +28,7 @@ public:
     virtual std::string socketDisconnectedForReconnect();
     const std::vector<ServerFromPoolForDisplay> &getServerOrdenedList();
     int dataToPlayerMonster(const char * const data, const unsigned int &size, PlayerMonster &monster);
+    virtual void disconnectFromHost();
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
@@ -216,7 +217,7 @@ public:
     //protocol/connection info
     virtual void disconnected(const std::string &reason) = 0;
     virtual void notLogged(const std::string &reason) = 0;
-    virtual void logged(const std::vector<ServerFromPoolForDisplay *> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList) = 0;
+    virtual void logged(const std::vector<ServerFromPoolForDisplay> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList) = 0;
     virtual void protocol_is_good() = 0;
     virtual void connectedOnLoginServer() = 0;
     virtual void connectingOnGameServer() = 0;

@@ -63,6 +63,12 @@ bool Api_protocol_Qt::disconnectClient()
     Api_protocol::disconnectClient();
 }
 
+void Api_protocol_Qt::disconnectFromHost()
+{
+    if(socket!=NULL)
+        socket->disconnectFromHost();
+}
+
 void Api_protocol_Qt::QtsocketDestroyed()
 {
     socketDestroyed();
