@@ -1,24 +1,46 @@
 #ifndef DATAPACKCLIENTLOADER_H
 #define DATAPACKCLIENTLOADER_H
 
+#ifndef NOTHREADS
+#include <QThread>
+#else
+#include <QObject>
+#endif
+#include <QPixmap>
+#include <QHash>
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <QIcon>
+#include <QColor>
 #include <utility>
 
 #include "../../general/base/GeneralStructures.h"
+#include "../tiled/tiled_tileset.h"
 
 class DatapackClientLoader
+        #ifndef NOTHREADS
+        : public QThread
+        #else
+        : public QObject
+        #endif
 {
+    Q_OBJECT
 public:
+    static DatapackClientLoader datapackLoader;
     void resetAll();
 
     //static items
     struct ItemExtra
     {
         std::string imagePath;
+        QPixmap image;
         std::string name;
         std::string description;
+    };
+    struct PlantExtra
+    {
+        Tiled::Tileset * tileset;
     };
     struct ReputationExtra
     {
@@ -70,10 +92,14 @@ public:
         std::string description;
         std::string kind;
         std::string habitat;
+        QPixmap front;
+        QPixmap back;
+        QPixmap thumb;
         struct Buff
         {
             std::string name;
             std::string description;
+            QIcon icon;
         };
         struct Skill
         {
@@ -87,25 +113,21 @@ public:
         std::string name;
         std::string description;
     };
-    struct CCColor
-    {
-        int r,g,b,a;
-    };
     struct VisualCategory
     {
-        CCColor defaultColor;
+        QColor defaultColor;
         struct VisualCategoryCondition
         {
             uint8_t event;
             uint8_t eventValue;
-            CCColor color;
+            QColor color;
         };
         std::vector<VisualCategoryCondition> conditions;
     };
     struct TypeExtra
     {
         std::string name;
-        CCColor color;
+        QColor color;
     };
     struct PlantIndexContent
     {
@@ -120,6 +142,7 @@ public:
     std::unordered_map<std::string,ReputationExtra> reputationExtra;
     std::unordered_map<std::string,uint8_t> reputationNameToId;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
     std::unordered_map<uint16_t,uint8_t> itemToPlants;
+    std::unordered_map<uint8_t,PlantExtra> plantExtra;
     std::unordered_map<uint16_t,QuestExtra> questsExtra;
     std::unordered_map<std::string,uint16_t> questsPathToId;
     std::unordered_map<uint16_t,std::vector<uint16_t> > botToQuestStart;
@@ -136,25 +159,30 @@ public:
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > itemOnMap;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > plantOnMap;
     std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
+    QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     std::string getDatapackPath();
     std::string getMainDatapackPath();
     std::string getSubDatapackPath();
-public:
+    QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
+protected:
+    void run();
+public slots:
     void parseDatapack(const std::string &datapackPath);
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
-    static CCColor namedColorToCCColor(const std::string &str,bool *ok);
+signals:
+    void datapackParsed();
+    void datapackParsedMainSub();
+    void datapackChecksumError();
 private:
     bool inProgress;
     std::string datapackPath;
     std::string mainDatapackCode;
     std::string subDatapackCode;
+    QPixmap *mDefaultInventoryImage;
     explicit DatapackClientLoader();
     ~DatapackClientLoader();
-    virtual void emitdatapackParsed() = 0;
-    virtual void emitdatapackParsedMainSub() = 0;
-    virtual void emitdatapackChecksumError() = 0;
-private:
+private slots:
     void parsePlantsExtra();
     void parseItemsExtra();
     void parseMaps();
@@ -172,6 +200,68 @@ private:
     void parseZoneExtra();
     void parseTileset();
     void parseReputationExtra();
+protected:
+    static const std::string text_list;
+    static const std::string text_reputation;
+    static const std::string text_type;
+    static const std::string text_name;
+    static const std::string text_en;
+    static const std::string text_lang;
+    static const std::string text_level;
+    static const std::string text_point;
+    static const std::string text_text;
+    static const std::string text_id;
+    static const std::string text_image;
+    static const std::string text_description;
+    static const std::string text_item;
+    static const std::string text_slashdefinitiondotxml;
+    static const std::string text_quest;
+    static const std::string text_rewards;
+    static const std::string text_show;
+    static const std::string text_autostep;
+    static const std::string text_yes;
+    static const std::string text_true;
+    static const std::string text_bot;
+    static const std::string text_dotcomma;
+    static const std::string text_client_logic;
+    static const std::string text_map;
+    static const std::string text_items;
+    static const std::string text_zone;
+    static const std::string text_music;
+    static const std::string text_backgroundsound;
+
+    static const std::string text_monster;
+    static const std::string text_monsters;
+    static const std::string text_kind;
+    static const std::string text_habitat;
+    static const std::string text_slash;
+    static const std::string text_types;
+    static const std::string text_buff;
+    static const std::string text_skill;
+    static const std::string text_buffs;
+    static const std::string text_skills;
+    static const std::string text_fight;
+    static const std::string text_fights;
+    static const std::string text_start;
+    static const std::string text_win;
+    static const std::string text_dotxml;
+    static const std::string text_dottsx;
+    static const std::string text_visual;
+    static const std::string text_category;
+    static const std::string text_alpha;
+    static const std::string text_color;
+    static const std::string text_event;
+    static const std::string text_value;
+    static const std::string text_tileheight;
+    static const std::string text_tilewidth;
+    static const std::string text_x;
+    static const std::string text_y;
+    static const std::string text_object;
+    static const std::string text_objectgroup;
+    static const std::string text_Object;
+    static const std::string text_layer;
+    static const std::string text_Dirt;
+    static const std::string text_DATAPACK_BASE_PATH_MAPBASE;
     static std::string text_DATAPACK_BASE_PATH_MAPMAIN;
     static std::string text_DATAPACK_BASE_PATH_MAPSUB;
 };
