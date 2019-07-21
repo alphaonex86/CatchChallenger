@@ -10,118 +10,18 @@
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/DatapackGeneralLoader.h"
 #include "../../general/base/Map_loader.h"
-#include "LanguagesSelect.h"
-#include "../tiled/tiled_tileset.h"
-#include "../tiled/tiled_mapreader.h"
-#include "FacilityLibClient.h"
-
-#include <QDebug>
-#include <QFile>
-#include <QByteArray>
-#include <QDir>
-#include <QFileInfoList>
-#include <QRegularExpression>
-#include <QCryptographicHash>
 #include <iostream>
 
-DatapackClientLoader DatapackClientLoader::datapackLoader;
-
-const std::string DatapackClientLoader::text_list="list";
-const std::string DatapackClientLoader::text_reputation="reputation";
-const std::string DatapackClientLoader::text_type="type";
-const std::string DatapackClientLoader::text_name="name";
-const std::string DatapackClientLoader::text_en="en";
-const std::string DatapackClientLoader::text_lang="lang";
-const std::string DatapackClientLoader::text_level="level";
-const std::string DatapackClientLoader::text_point="point";
-const std::string DatapackClientLoader::text_text="text";
-const std::string DatapackClientLoader::text_id="id";
-const std::string DatapackClientLoader::text_image="image";
-const std::string DatapackClientLoader::text_description="description";
-const std::string DatapackClientLoader::text_item="item";
-const std::string DatapackClientLoader::text_slashdefinitiondotxml="/definition.xml";
-const std::string DatapackClientLoader::text_quest="quest";
-const std::string DatapackClientLoader::text_rewards="rewards";
-const std::string DatapackClientLoader::text_show="show";
-const std::string DatapackClientLoader::text_autostep="autostep";
-const std::string DatapackClientLoader::text_yes="yes";
-const std::string DatapackClientLoader::text_true="true";
-const std::string DatapackClientLoader::text_bot="bot";
-const std::string DatapackClientLoader::text_dotcomma=";";
-const std::string DatapackClientLoader::text_client_logic="client_logic";
-const std::string DatapackClientLoader::text_map="map";
-const std::string DatapackClientLoader::text_items="items";
-const std::string DatapackClientLoader::text_zone="zone";
-const std::string DatapackClientLoader::text_music="music";
-const std::string DatapackClientLoader::text_backgroundsound="backgroundsound";
-
-const std::string DatapackClientLoader::text_monster="monster";
-const std::string DatapackClientLoader::text_monsters="monsters";
-const std::string DatapackClientLoader::text_kind="kind";
-const std::string DatapackClientLoader::text_habitat="habitat";
-const std::string DatapackClientLoader::text_slash="/";
-const std::string DatapackClientLoader::text_types="types";
-const std::string DatapackClientLoader::text_buff="buff";
-const std::string DatapackClientLoader::text_skill="skill";
-const std::string DatapackClientLoader::text_buffs="buffs";
-const std::string DatapackClientLoader::text_skills="skills";
-const std::string DatapackClientLoader::text_fight="fight";
-const std::string DatapackClientLoader::text_fights="fights";
-const std::string DatapackClientLoader::text_start="start";
-const std::string DatapackClientLoader::text_win="win";
-const std::string DatapackClientLoader::text_dotxml=".xml";
-const std::string DatapackClientLoader::text_dottsx=".tsx";
-const std::string DatapackClientLoader::text_visual="visual";
-const std::string DatapackClientLoader::text_category="category";
-const std::string DatapackClientLoader::text_alpha="alpha";
-const std::string DatapackClientLoader::text_color="color";
-const std::string DatapackClientLoader::text_event="event";
-const std::string DatapackClientLoader::text_value="value";
-
-const std::string DatapackClientLoader::text_tileheight="tileheight";
-const std::string DatapackClientLoader::text_tilewidth="tilewidth";
-const std::string DatapackClientLoader::text_x="x";
-const std::string DatapackClientLoader::text_y="y";
-const std::string DatapackClientLoader::text_object="object";
-const std::string DatapackClientLoader::text_objectgroup="objectgroup";
-const std::string DatapackClientLoader::text_Object="Object";
-const std::string DatapackClientLoader::text_layer="layer";
-const std::string DatapackClientLoader::text_Dirt="Dirt";
-const std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
 
 DatapackClientLoader::DatapackClientLoader()
 {
-    mDefaultInventoryImage=NULL;
     inProgress=false;
-    #ifndef NOTHREADS
-    start();
-    moveToThread(this);
-    #endif
-    setObjectName("DatapackClientLoader");
 }
 
 DatapackClientLoader::~DatapackClientLoader()
 {
-    if(mDefaultInventoryImage==NULL)
-        delete mDefaultInventoryImage;
-    #ifndef NOTHREADS
-    quit();
-    wait();
-    #endif
-}
-
-QPixmap DatapackClientLoader::defaultInventoryImage()
-{
-    return *mDefaultInventoryImage;
-}
-
-void DatapackClientLoader::run()
-{
-    #ifndef NOTHREADS
-    exec();
-    #endif
 }
 
 bool DatapackClientLoader::isParsingDatapack()
@@ -133,7 +33,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
     if(inProgress)
     {
-        qDebug() << QStringLiteral("already in progress");
+        std::cerr << "already in progress" << std::endl;
         return;
     }
     inProgress=true;
@@ -144,17 +44,17 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
         if(hash.empty())
         {
             std::cerr << "DatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
-            emit datapackChecksumError();
+            emitdatapackChecksumError();
             inProgress=false;
             return;
         }
 
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash)
         {
-            qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash.result(): %1!=%2")
-                        .arg(QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)))
-                        .arg(QString::fromStdString(binarytoHexa(hash)));
-            emit datapackChecksumError();
+            std::cerr << "DatapackClientLoader::parseDatapack() CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash.result(): "
+                      << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << "!="
+                      << binarytoHexa(hash) << std::endl;
+            emitdatapackChecksumError();
             inProgress=false;
             return;
         }
@@ -163,11 +63,9 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     this->datapackPath=datapackPath;
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
-    if(mDefaultInventoryImage==NULL)
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     #ifndef BOTTESTCONNECT
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
-    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    language="en";
     parseVisualCategory();
     parseTypesExtra();
     parseItemsExtra();
@@ -180,7 +78,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     parseReputationExtra();
     #endif
     inProgress=false;
-    emit datapackParsed();
+    emitdatapackParsed();
 }
 
 void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
@@ -190,7 +88,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
 
     if(inProgress)
     {
-        qDebug() << QStringLiteral("already in progress");
+        std::cerr << "already in progress" << std::endl;
         return;
     }
     inProgress=true;
@@ -204,17 +102,17 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
             if(hash.empty())
             {
                 std::cerr << "DatapackClientLoader::parseDatapackMainSub(): hash is empty" << std::endl;
-                emit datapackChecksumError();
+                emitdatapackChecksumError();
                 inProgress=false;
                 return;
             }
 
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash)
             {
-                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): %1!=%2")
-                            .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain)))
-                            .arg(QString::fromStdString(binarytoHexa(hash)));
-                emit datapackChecksumError();
+                 std::cerr << "DatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): "
+                           << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain) << "!="
+                           << binarytoHexa(hash) << std::endl;
+                emitdatapackChecksumError();
                 inProgress=false;
                 return;
             }
@@ -226,24 +124,22 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
             if(hash.empty())
             {
                 std::cerr << "DatapackClientLoader::parseDatapackSub(): hash is empty" << std::endl;
-                emit datapackChecksumError();
+                emitdatapackChecksumError();
                 inProgress=false;
                 return;
             }
 
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash)
             {
-                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): %1!=%2")
-                            .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)))
-                            .arg(QString::fromStdString(binarytoHexa(hash)));
-                emit datapackChecksumError();
+                std::cerr << "DatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): "
+                          << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub) << "!="
+                          << binarytoHexa(hash) << std::endl;
+                emitdatapackChecksumError();
                 inProgress=false;
                 return;
             }
         }
     }
-    if(mDefaultInventoryImage==NULL)
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(
                 datapackPath,mainDatapackCode,subDatapackCode);
 
@@ -257,7 +153,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
 
     inProgress=false;
 
-    emit datapackParsedMainSub();
+    emitdatapackParsedMainSub();
 }
 
 std::string DatapackClientLoader::getDatapackPath()
@@ -275,6 +171,47 @@ std::string DatapackClientLoader::getSubDatapackPath()
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }
 
+DatapackClientLoader::CCColor DatapackClientLoader::namedColorToCCColor(const std::string &str,bool *ok)
+{
+    CCColor color;
+    color.a=255;
+    color.r=0;
+    color.g=0;
+    color.b=0;
+
+    if(str.empty())
+    {
+        if(ok!=nullptr)
+            *ok=false;
+        return color;
+    }
+    std::string strclean=str;
+    if(str[0]=='#')
+        strclean=str.substr(1);
+    if(strclean.size()!=6)
+    {
+        if(ok!=nullptr)
+            *ok=false;
+        return color;
+    }
+
+    bool returnVar=false;
+    std::vector<char> data=hexatoBinary(strclean,&returnVar);
+    if(!returnVar)
+    {
+        if(ok!=nullptr)
+            *ok=false;
+        return color;
+    }
+
+    color.r=data.data()[0];
+    color.g=data.data()[1];
+    color.b=data.data()[2];
+    if(ok!=nullptr)
+        *ok=true;
+    return color;
+}
+
 void DatapackClientLoader::parseVisualCategory()
 {
     tinyxml2::XMLDocument domDocument;
@@ -289,7 +226,7 @@ void DatapackClientLoader::parseVisualCategory()
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"visual")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the file: %1, \"visual\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        std::cerr << "Unable to open the file, \"visual\" root balise not found for the xml file: " << file << std::endl;
         return;
     }
 
@@ -301,11 +238,16 @@ void DatapackClientLoader::parseVisualCategory()
         {
             if(strcmp(item->Attribute("id"),"")!=0)
             {
-                if(DatapackClientLoader::datapackLoader.visualCategories.find(item->Attribute("id"))==
-                        DatapackClientLoader::datapackLoader.visualCategories.cend())
+                if(visualCategories.find(item->Attribute("id"))==
+                        visualCategories.cend())
                 {
                     bool ok;
-                    DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=Qt::transparent;
+                    CCColor color;
+                    color.a=255;
+                    color.r=0;
+                    color.g=0;
+                    color.b=0;
+                    visualCategories[item->Attribute("id")].defaultColor=color;
                     int alpha=255;
                     if(item->Attribute("alpha")!=NULL)
                     {
@@ -313,26 +255,22 @@ void DatapackClientLoader::parseVisualCategory()
                         if(!ok || alpha>255)
                         {
                             alpha=255;
-                            qDebug() << (QStringLiteral("Unable to open the file: %1, alpha is not number or greater than 255: child.Name(): %2")
-                                         .arg(QString::fromStdString(file))
-                                         .arg(item->Name())
-                                         );
+                            std::cerr << "Unable to open the file: alpha is not number or greater than 255: child.Name()"
+                                      << file << std::endl;
                         }
                     }
                     if(item->Attribute("color")!=NULL)
                     {
-                        QColor color;
-                        color.setNamedColor(item->Attribute("color"));
-                        if(color.isValid())
+                        bool ok=false;
+                        CCColor color=namedColorToCCColor(item->Attribute("color"),&ok);
+                        if(ok)
                         {
-                            color.setAlpha(alpha);
-                            DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=color;
+                            color.a=alpha;
+                            visualCategories[item->Attribute("id")].defaultColor=color;
                         }
                         else
-                            qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.Name(): %2")
-                                         .arg(QString::fromStdString(file))
-                                         .arg(item->Name())
-                                         );
+                            std::cerr << "Unable to open the file, color is not valid: "
+                                      << file << std::endl;
                     }
                     const tinyxml2::XMLElement *event = item->FirstChildElement("event");
                     while(event!=NULL)
@@ -354,7 +292,7 @@ void DatapackClientLoader::parseVisualCategory()
                                             VisualCategory::VisualCategoryCondition visualCategoryCondition;
                                             visualCategoryCondition.event=static_cast<uint8_t>(index);
                                             visualCategoryCondition.eventValue=static_cast<uint8_t>(sub_index);
-                                            visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.at(
+                                            visualCategoryCondition.color=visualCategories.at(
                                                         item->Attribute("id")).defaultColor;
                                             int alpha=255;
                                             if(event->Attribute("alpha")!=NULL)
@@ -363,56 +301,55 @@ void DatapackClientLoader::parseVisualCategory()
                                                 if(!ok || alpha>255)
                                                 {
                                                     alpha=255;
-                                                    qDebug() << (QStringLiteral("Unable to open the file: %1, alpha is not number or greater than 255: child.Name(): %2")
-                                                                 .arg(QString::fromStdString(file)).arg(QString::fromStdString(event->Name())));
+                                                    std::cerr << "alpha is not number or greater than 255:" << file << std::endl;
                                                 }
                                             }
                                             if(event->Attribute("color")!=NULL)
                                             {
-                                                QColor color;
-                                                color.setNamedColor(event->Attribute("color"));
-                                                if(color.isValid())
-                                                    visualCategoryCondition.color=QColor(color.red(),color.green(),color.blue(),alpha);
+                                                bool ok=false;
+                                                CCColor color=namedColorToCCColor(item->Attribute("color"),&ok);
+                                                color.a=alpha;
+                                                if(ok)
+                                                    visualCategoryCondition.color=color;
                                                 else
-                                                    qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.Name(): %2")
-                                                                 .arg(QString::fromStdString(file)).arg(QString::fromStdString(event->Name())));
+                                                    std::cerr << "color is not valid: " << file << std::endl;
                                             }
-                                            if(visualCategoryCondition.color!=DatapackClientLoader::datapackLoader.visualCategories.at(
+                                            if(visualCategoryCondition.color!=visualCategories.at(
                                                         item->Attribute("id")).defaultColor)
-                                                DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")]
+                                                visualCategories[item->Attribute("id")]
                                                         .conditions.push_back(visualCategoryCondition);
                                             else
-                                                qDebug() << (QStringLiteral("Unable to open the file: %1, color same than the default color: child.Name(): %2").arg(QString::fromStdString(file)).arg(event->Name()));
+                                                std::cerr << "color same than the default color" << file << std::endl;
                                             break;
                                         }
                                         sub_index++;
                                     }
                                     if(sub_index==CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
-                                        qDebug() << (QStringLiteral("Unable to open the file: %1, event value not found: child.Name(): %2").arg(QString::fromStdString(file)).arg(event->Name()));
+                                        std::cerr << "event value not found: " << file << std::endl;
                                     break;
                                 }
                                 index++;
                             }
                             if(index==CatchChallenger::CommonDatapack::commonDatapack.events.size())
-                                qDebug() << (QStringLiteral("Unable to open the file: %1, event not found: child.Name(): %2").arg(QString::fromStdString(file)).arg(event->Name()));
+                                std::cerr << "event not found: " << file << std::endl;
                         }
                         else
-                            qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id is already found: child.Name(): %2").arg(QString::fromStdString(file)).arg(event->Name()));
+                            std::cerr << "attribute id is already found" << file << std::endl;
                         event = event->NextSiblingElement("event");
                     }
                 }
                 else
-                    qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id is already found: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    std::cerr << "attribute id is already found: " << file << std::endl;
             }
             else
-                qDebug() << (QStringLiteral("Unable to open the file: %1, attribute id can't be empty: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                std::cerr << "attribute id can't be empty: " << file << std::endl;
         }
         else
-            qDebug() << (QStringLiteral("Unable to open the file: %1, have not the attribute id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+            std::cerr << "have not the attribute id: " << file << std::endl;
         item = item->NextSiblingElement("category");
     }
 
-    qDebug() << QStringLiteral("%1 visual cat loaded").arg(DatapackClientLoader::datapackLoader.visualCategories.size());
+    std::cout << std::to_string(visualCategories.size()) << " visual cat loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseReputationExtra()
@@ -437,7 +374,7 @@ void DatapackClientLoader::parseReputationExtra()
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"reputations")!=0)
     {
-        qDebug() << (QStringLiteral("Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(QString::fromStdString(file)));
+        std::cerr << "Unable to open the file: %1, \"reputations\" root balise not found for the xml file").arg(QString::fromStdString(file)));
         return;
     }
 
@@ -483,8 +420,8 @@ void DatapackClientLoader::parseReputationExtra()
                 if(!name_found)
                 {
                     reputationExtra[item->Attribute("type")].name=tr("Unknown").toStdString();
-                    qDebug() << QStringLiteral("English name not found for the reputation with id: %1")
-                                .arg(item->Attribute("type"));
+                    std::cerr << "English name not found for the reputation with id: "
+                              << item->Attribute("type") << std::endl;
                 }
             }
 
@@ -536,7 +473,7 @@ void DatapackClientLoader::parseReputationExtra()
                             if(!name_found)
                             {
                                 text=tr("Unknown").toStdString();
-                                qDebug() << QStringLiteral("English name not found for the reputation with id: %1").arg(item->Attribute("type"));
+                                std::cerr << "English name not found for the reputation with id: " << item->Attribute("type") << std::endl;
                             }
                         }
 
@@ -548,7 +485,7 @@ void DatapackClientLoader::parseReputationExtra()
                             {
                                 if(point_list_positive.at(index)==point)
                                 {
-                                    qDebug() << (QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                                    std::cerr << "Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                                     found=true;
                                     ok=false;
                                     break;
@@ -574,7 +511,7 @@ void DatapackClientLoader::parseReputationExtra()
                             {
                                 if(point_list_negative.at(index)==point)
                                 {
-                                    qDebug() << (QStringLiteral("Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                                    std::cerr << "Unable to open the file: %1, reputation level with same number of point found!: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                                     found=true;
                                     ok=false;
                                     break;
@@ -596,7 +533,7 @@ void DatapackClientLoader::parseReputationExtra()
                         }
                     }
                     else
-                        qDebug() << (QStringLiteral("Unable to open the file: %1, point is not number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                        std::cerr << "Unable to open the file: %1, point is not number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                 }
                 level = level->NextSiblingElement("level");
             }
@@ -605,19 +542,19 @@ void DatapackClientLoader::parseReputationExtra()
             if(ok)
                 if(point_list_positive.size()<2)
                 {
-                    qDebug() << (QStringLiteral("Unable to open the file: %1, reputation have to few level: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    std::cerr << "Unable to open the file: %1, reputation have to few level: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                     ok=false;
                 }
             if(ok)
                 if(!vectorcontainsAtLeastOne(point_list_positive,0))
                 {
-                    qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the positive: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    std::cerr << "Unable to open the file: %1, no starting level for the positive: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                     ok=false;
                 }
             if(ok)
                 if(!point_list_negative.empty() && !vectorcontainsAtLeastOne(point_list_negative,-1))
                 {
-                    //qDebug() << (QStringLiteral("Unable to open the file: %1, no starting level for the negative client: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+                    //std::cerr << "Unable to open the file: %1, no starting level for the negative client: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
                     std::vector<int32_t> point_list_negative_new;
                     int lastValue=-1;
                     unsigned int index=0;
@@ -632,7 +569,7 @@ void DatapackClientLoader::parseReputationExtra()
             if(ok)
                 if(!QString(item->Attribute("type")).contains(QRegExp("^[a-z]{1,32}$")))
                 {
-                    qDebug() << (QStringLiteral("Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.Name(): %2")
+                    std::cerr << "Unable to open the file: %1, the type %4 don't match wiuth the regex: ^[a-z]{1,32}$: child.Name(): %2")
                                  .arg(QString::fromStdString(file))
                                  .arg(item->Name()).arg(item->Attribute("type")));
                     ok=false;
@@ -644,7 +581,7 @@ void DatapackClientLoader::parseReputationExtra()
             }
         }
         else
-            qDebug() << (QStringLiteral("Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
+            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name()));
         item = item->NextSiblingElement("reputation");
     }
     {
@@ -662,7 +599,7 @@ void DatapackClientLoader::parseReputationExtra()
         }
     }
 
-    qDebug() << QStringLiteral("%1 reputation(s) extra loaded").arg(reputationExtra.size());
+    std::cerr << "%1 reputation(s) extra loaded").arg(reputationExtra.size());
 }
 
 void DatapackClientLoader::parseItemsExtra()
@@ -696,7 +633,7 @@ void DatapackClientLoader::parseItemsExtra()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"items")!=0)
         {
-            //qDebug() << QStringLiteral("Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            //std::cerr << "Unable to open the file: %1, \"items\" root balise not found for the xml file").arg(QString::fromStdString(file));
             file_index++;
             continue;
         }
@@ -724,7 +661,7 @@ void DatapackClientLoader::parseItemsExtra()
                             QPixmap image(QString::fromStdString(imagePath));
                             if(image.isNull())
                             {
-                                qDebug() << QStringLiteral("Unable to open the items image: %1: child.Name(): %2")
+                                std::cerr << "Unable to open the items image: %1: child.Name(): %2")
                                             .arg(QString::fromStdString(datapackPath)+
                                                  QStringLiteral(DATAPACK_BASE_PATH_ITEM)+
                                                  item->Attribute("image")).arg(item->Name());
@@ -740,7 +677,7 @@ void DatapackClientLoader::parseItemsExtra()
                         }
                         else
                         {
-                            qDebug() << QStringLiteral("For parse item: Have not image attribute: child.Name(): %1 (%2)")
+                            std::cerr << "For parse item: Have not image attribute: child.Name(): %1 (%2)")
                                         .arg(item->Name())
                                         .arg(QString::fromStdString(file));
                             itemExtra.image=*mDefaultInventoryImage;
@@ -782,7 +719,7 @@ void DatapackClientLoader::parseItemsExtra()
                             if(!name_found)
                             {
                                 itemExtra.name=tr("Unknown object").toStdString();
-                                qDebug() << QStringLiteral("English name not found for the item with id: %1").arg(id);
+                                std::cerr << "English name not found for the item with id: %1").arg(id);
                             }
                         }
 
@@ -819,25 +756,25 @@ void DatapackClientLoader::parseItemsExtra()
                             if(!description_found)
                             {
                                 itemExtra.description=tr("This object is not listed as know object. The information can't be found.").toStdString();
-                                //qDebug() << QStringLiteral("English description not found for the item with id: %1").arg(id);
+                                //std::cerr << "English description not found for the item with id: %1").arg(id);
                             }
                         }
                         DatapackClientLoader::itemsExtra[id]=itemExtra;
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                        std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                    std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
             }
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
+                std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
             item = item->NextSiblingElement("item");
         }
         file_index++;
     }
 
-    qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
+    std::cerr << "%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
 }
 
 void DatapackClientLoader::parseMaps()
@@ -891,7 +828,7 @@ void DatapackClientLoader::parseMaps()
             const tinyxml2::XMLElement *root = domDocument.RootElement();
             if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"map")!=0)
             {
-                qDebug() << QStringLiteral("Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file));
+                std::cerr << "Unable to open the file: %1, \"map\" root balise not found for the xml file").arg(QString::fromStdString(file));
                 index++;
                 continue;
             }
@@ -903,7 +840,7 @@ void DatapackClientLoader::parseMaps()
                 tilewidth=stringtouint8(root->Attribute("tilewidth"),&ok);
                 if(!ok)
                 {
-                    qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
+                    std::cerr << "Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
                     tilewidth=16;
                 }
             }
@@ -912,7 +849,7 @@ void DatapackClientLoader::parseMaps()
                 tileheight=stringtouint8(root->Attribute("tileheight"),&ok);
                 if(!ok)
                 {
-                    qDebug() << QStringLiteral("Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
+                    std::cerr << "Unable to open the file: %1, tilewidth is not a number").arg(QString::fromStdString(file));
                     tileheight=16;
                 }
             }
@@ -983,10 +920,10 @@ void DatapackClientLoader::parseMaps()
                                         pointOnMapIndexItem++;
                                     }
                                     else
-                                        qDebug() << QStringLiteral("object_y too big or not number") << object->Attribute("y") << QString::fromStdString(file);
+                                        std::cerr << "object_y too big or not number") << object->Attribute("y") << QString::fromStdString(file);
                                 }
                                 else
-                                    qDebug() << QStringLiteral("object_x too big or not number") << object->Attribute("x") << QString::fromStdString(file);
+                                    std::cerr << "object_x too big or not number") << object->Attribute("x") << QString::fromStdString(file);
                             }
                             object = object->NextSiblingElement("object");
                         }
@@ -998,14 +935,14 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(DatapackClientLoader::datapackLoader.maps.size());
+    std::cerr << "%1 map(s) extra loaded").arg(maps.size());
 }
 
 void DatapackClientLoader::parseSkins()
 {
     skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
-    qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
+    std::cerr << "%1 skin(s) loaded").arg(skins.size());
 }
 
 void DatapackClientLoader::resetAll()
@@ -1076,13 +1013,13 @@ void DatapackClientLoader::parseQuestsExtra()
         const uint32_t &tempid=entryList.at(index).fileName().toUInt(&ok);
         if(!ok)
         {
-            qDebug() << QStringLiteral("Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
+            std::cerr << "Unable to open the folder: %1, because is folder name is not a number").arg(entryList.at(index).fileName());
             index++;
             continue;
         }
         if(tempid>=256)
         {
-            qDebug() << QStringLiteral("parseQuestsExtra too big: %1").arg(entryList.at(index).fileName());
+            std::cerr << "parseQuestsExtra too big: %1").arg(entryList.at(index).fileName());
             index++;
             continue;
         }
@@ -1100,7 +1037,7 @@ void DatapackClientLoader::parseQuestsExtra()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"quest")!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;
             continue;
         }
@@ -1121,7 +1058,7 @@ void DatapackClientLoader::parseQuestsExtra()
                         break;
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2")
+                        std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2")
                                     .arg(QString::fromStdString(file)).arg(name->Name());
                     name = name->NextSiblingElement("name");
                 }
@@ -1139,7 +1076,7 @@ void DatapackClientLoader::parseQuestsExtra()
                         }
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2")
+                        std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2")
                                     .arg(QString::fromStdString(file)).arg(name->Name());
                     name = name->NextSiblingElement("name");
                 }
@@ -1175,7 +1112,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     tempid=stringtouint8(step->Attribute("id"),&ok);
                     if(!ok)
                     {
-                        qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(step->Name());
+                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(step->Name());
                         tempid=-1;
                     }
                 }
@@ -1253,7 +1190,7 @@ void DatapackClientLoader::parseQuestsExtra()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 quest(s) extra loaded").arg(questsExtra.size());
+    std::cerr << "%1 quest(s) extra loaded").arg(questsExtra.size());
 }
 
 void DatapackClientLoader::parseQuestsText()
@@ -1285,7 +1222,7 @@ void DatapackClientLoader::parseQuestsText()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"text")!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "Unable to open the file: %1, \"quest\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;
             continue;
         }
@@ -1358,22 +1295,22 @@ void DatapackClientLoader::parseQuestsText()
                         questsExtra[questId].text[tempid].texts.push_back(questStepWithConditionExtra);
                     }
                     else
-                        qDebug() << QStringLiteral("Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
                 }
                 else
-                    qDebug() << QStringLiteral("Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
+                    std::cerr << "Has attribute: %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(client_logic->Name());
                 client_logic = client_logic->NextSiblingElement("client_logic");
             }
         }
         else
-            qDebug() << QStringLiteral("!questsPathToId find(): %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(QString::fromStdString(path));
+            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): %2").arg(QString::fromStdString(file)).arg(QString::fromStdString(path));
         #ifdef DEBUG_CLIENT_QUEST
-        qDebug() << QStringLiteral("%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
+        std::cerr << "%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 quest(s) text loaded").arg(questsExtra.size());
+    std::cerr << "%1 quest(s) text loaded").arg(questsExtra.size());
 }
 
 void DatapackClientLoader::parseAudioAmbiance()
@@ -1390,7 +1327,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"musics")!=0)
     {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(QString::fromStdString(file));
+        std::cerr << "Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(QString::fromStdString(file));
         return;
     }
 
@@ -1401,19 +1338,19 @@ void DatapackClientLoader::parseAudioAmbiance()
         if(item->Attribute("type")!=NULL)
         {
             const std::string &type=item->Attribute("type");
-            if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)==DatapackClientLoader::datapackLoader.audioAmbiance.cend() && item->GetText()!=NULL)
+            if(audioAmbiance.find(type)==audioAmbiance.cend() && item->GetText()!=NULL)
                 audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
             else
-                qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.Name(): %2")
+                std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2")
                             .arg(QString::fromStdString(file)).arg(item->Name());
         }
         else
-            qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child.Name(): %2")
+            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2")
                         .arg(QString::fromStdString(file)).arg(item->Name());
         item = item->NextSiblingElement("map");
     }
 
-    qDebug() << QStringLiteral("%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
+    std::cerr << "%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
 }
 
 void DatapackClientLoader::parseQuestsLink()
@@ -1433,7 +1370,7 @@ void DatapackClientLoader::parseQuestsLink()
         }
         ++i;
     }
-    qDebug() << QStringLiteral("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
+    std::cerr << "%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
 }
 
 void DatapackClientLoader::parseZoneExtra()
@@ -1453,7 +1390,7 @@ void DatapackClientLoader::parseZoneExtra()
         }
         if(!entryList.at(index).fileName().contains(xmlFilter))
         {
-            qDebug() << QStringLiteral("%1 the zone file name not match").arg(entryList.at(index).fileName());
+            std::cerr << "%1 the zone file name not match").arg(entryList.at(index).fileName());
             index++;
             continue;
         }
@@ -1474,7 +1411,7 @@ void DatapackClientLoader::parseZoneExtra()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"zone")!=0)
         {
-            qDebug() << QStringLiteral("Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file));
             index++;
             continue;
         }
@@ -1499,7 +1436,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
                 name = name->NextSiblingElement("name");
             }
         if(!found)
@@ -1517,7 +1454,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): %2").arg(QString::fromStdString(file)).arg(name->Name());
                 name = name->NextSiblingElement("name");
             }
         }
@@ -1536,7 +1473,7 @@ void DatapackClientLoader::parseZoneExtra()
                     zonesExtra[zoneCodeName].audioAmbiance[type]=backgroundsound;
                 }
                 else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, have not the music attribute: child.Name(): %2")
+                    std::cerr << "Unable to open the file: %1, have not the music attribute: child.Name(): %2")
                                 .arg(QString::fromStdString(file)).arg(item->Name());
                 item = item->NextSiblingElement("music");
             }
@@ -1545,7 +1482,7 @@ void DatapackClientLoader::parseZoneExtra()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 zone(s) extra loaded").arg(zonesExtra.size());
+    std::cerr << "%1 zone(s) extra loaded").arg(zonesExtra.size());
 }
 
 void DatapackClientLoader::parseTileset()
@@ -1573,12 +1510,12 @@ void DatapackClientLoader::parseTileset()
                 file.close();
             }
             else
-                qDebug() << QStringLiteral("Tileset: %1 can't be open: %2")
+                std::cerr << "Tileset: %1 can't be open: %2")
                             .arg(QString::fromStdString(source))
                             .arg(file.errorString());
         }
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());
+    std::cerr << "%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());
 }

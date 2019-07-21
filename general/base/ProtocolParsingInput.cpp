@@ -10,16 +10,16 @@
 
 using namespace CatchChallenger;
 
-ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
+/*ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 {
     #if defined (CATCHCHALLENGER_EXTRA_CHECK) && ! defined (EPOLLCATCHCHALLENGERSERVER)
     if(socket==NULL)
         return -1;
-    if(socket->openMode()|QIODevice::WriteOnly)
+    if(socket->openMode()|QIODevice::ReadOnly)
     {}
     else
     {
-        messageParsingLayer("Socket open in read only!");
+        messageParsingLayer("Socket open in write only!");
         disconnectClient();
         return false;
     }
@@ -110,13 +110,6 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
             }
             #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
         } while(cursor!=(uint32_t)size);
-        /*if(cursor!=(uint32_t)size)
-        {
-            // Muliple concatened packet
-            qDebug() << "Bug at data-sending cursor != size:" << cursor << "!=" << size;
-            qDebug() << "raw write control bug:" << std::string(std::vector<char>(data,size).toHex());
-            //abort();
-        }*/
     }
     #endif
 
@@ -131,14 +124,6 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     TXSize+=byteWriten;
     #endif
-    /*if(Q_UNLIKELY((ssize_t)size!=byteWriten))
-    {
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-        messageParsingLayer("All the bytes have not be written byteWriten: "+std::to_string(byteWriten)+", size: "+std::to_string(size));
-        #else
-        messageParsingLayer("All the bytes have not be written: "+socket->errorString().toStdString()+", byteWriten: "+std::to_string(byteWriten));
-        #endif
-    }*/
 
     return byteWriten;
 }
@@ -163,7 +148,79 @@ bool ProtocolParsingInputOutput::socketIsClosed()//for epoll delete
 {
     return !epollSocket.isValid();
 }
-#endif
+#endif*/
+
+ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
+{
+    (void)data;
+    (void)size;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    RXSize+=size;
+    return size;
+    #endif
+}
+
+ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
+{
+    (void)data;
+    (void)size;
+    //control the content BEFORE send
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        if(ProtocolParsingBase::packetFixedSize[0x02]!=2)
+        {
+            std::cerr << "parseIncommingDataRaw() You have never call: ProtocolParsing::initialiseTheVariable()" << std::endl;
+            abort();
+        }
+        uint32_t cursor=0;
+        #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+        uint32_t old_cursor=0;
+        #endif
+        do
+        {
+            protocolParsingCheck->flags|=0x08;
+            if(protocolParsingCheck->parseIncommingDataRaw(data,static_cast<uint32_t>(size),cursor)!=1)
+            {
+                if(cursor>0)
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data,cursor) << " " <<
+                                 binarytoHexa(data+cursor,static_cast<uint32_t>(size)-cursor) << ", cursor:" << cursor << std::endl;
+                else
+                    std::cerr << "Bug at data-sending: " << binarytoHexa(data+cursor,static_cast<uint32_t>(size)-cursor) << std::endl;
+                abort();
+            }
+            if(!protocolParsingCheck->valid)
+            {
+                std::cerr << "Bug at data-sending not tigger the function" << std::endl;
+                abort();
+            }
+            protocolParsingCheck->valid=false;
+            if((cursor-size)>0)
+            {
+                const uint8_t &mainCode=data[0];
+                if(mainCode!=0x01 && mainCode!=0x7F)
+                {
+                    if(ProtocolParsingBase::packetFixedSize[mainCode]==0xFF)
+                    {
+                        std::cerr << "unknow packet: " << mainCode << std::endl;
+                        abort();
+                    }
+                }
+            }
+            #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+            {
+                const uint32_t &splitedSize=(cursor-old_cursor);
+                std::cout << "Splited packet size: " << splitedSize << ": " << binarytoHexa(data+old_cursor,splitedSize) << std::endl;
+                old_cursor=cursor;
+            }
+            #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
+        } while(cursor!=(uint32_t)size);
+    }
+    #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    TXSize+=size;
+    #endif
+    return size;
+}
 
 void ProtocolParsingInputOutput::parseIncommingData()
 {
