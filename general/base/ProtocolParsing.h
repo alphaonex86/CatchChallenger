@@ -219,10 +219,10 @@ public:
     void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
 
-    void closeSocket();
+    virtual void closeSocket();
     #if defined(EPOLLCATCHCHALLENGERSERVER)
-    bool socketIsOpen();//for epoll delete
-    bool socketIsClosed();//for epoll delete
+    virtual bool socketIsOpen();//for epoll delete
+    virtual bool socketIsClosed();//for epoll delete
     #endif
     void resetForReconnect();
     #ifdef DYNAMICPACKETFIXEDSIZE
