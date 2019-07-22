@@ -552,8 +552,8 @@ void DatapackClientLoader::parseReputationExtra()
                 }
                 level = level->NextSiblingElement("level");
             }
-            qSort(point_list_positive);
-            qSort(point_list_negative.end(),point_list_negative.begin());
+            std::sort(point_list_positive.begin(),point_list_positive.end());
+            std::sort(point_list_negative.end(),point_list_negative.begin());
             if(ok)
                 if(point_list_positive.size()<2)
                 {
@@ -582,7 +582,11 @@ void DatapackClientLoader::parseReputationExtra()
                     point_list_negative=point_list_negative_new;
                 }
             if(ok)
-                if(!QString(item->Attribute("type")).contains(QRegExp("^[a-z]{1,32}$")))
+            {
+                std::regex regex("[a-z]{1,32}");
+                const std::string type(item->Attribute("type"));
+                std::smatch base_match;
+                if(!std::regex_match(type, base_match, regex))
                 {
                     std::cerr << "the type don't match wiuth the regex: ^[a-z]{1,32}$: "
                               << file << " "
@@ -590,6 +594,7 @@ void DatapackClientLoader::parseReputationExtra()
                               << item->Attribute("type") << std::endl;
                     ok=false;
                 }
+            }
             if(ok)
             {
                 reputationExtra[item->Attribute("type")].reputation_positive=text_positive;
@@ -796,7 +801,7 @@ void DatapackClientLoader::parseMaps()
         }
         index++;
     }
-    qSort(tempMapList);
+    std::sort(tempMapList.begin(),tempMapList.end());
     const std::string &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
     index=0;
     while(index<tempMapList.size())

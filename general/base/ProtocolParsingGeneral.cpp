@@ -6,10 +6,6 @@
 #include <cstring>
 //#include <openssl/sha.h>
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QMetaType>
-#endif
-
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include "zstd.h"
 

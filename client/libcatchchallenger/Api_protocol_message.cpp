@@ -2622,7 +2622,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             progression=data[pos];
             pos+=sizeof(uint8_t);
-            emit gatewayCacheUpdate(gateway,progression);
+            gatewayCacheUpdate(gateway,progression);
         }
         break;
 

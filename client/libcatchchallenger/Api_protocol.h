@@ -13,7 +13,6 @@ namespace CatchChallenger {
 class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
 {
 public:
-    static bool internalVersionDisplayed;
     explicit Api_protocol();
     ~Api_protocol();
     void unloadSelection();
