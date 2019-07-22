@@ -322,7 +322,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         else
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
-    emit haveDatapackMainSubCode();
+    haveDatapackMainSubCode();
 
     if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())//for bit array
     {
