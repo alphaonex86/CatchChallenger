@@ -28,8 +28,6 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 
 std::unordered_set<std::string> Api_protocol::extensionAllowed;
 
-bool Api_protocol::internalVersionDisplayed=false;
-
 /*std::string "<root>"="<root>";
 std::string "</root>"="</root>";
 std::string Api_protocol::text_name="name";
@@ -63,12 +61,6 @@ Api_protocol::Api_protocol() :
     player_informations.bot_already_beaten=NULL;
     stageConnexion=StageConnexion::Stage1;
     resetAll();
-
-    if(!Api_protocol::internalVersionDisplayed)
-    {
-        Api_protocol::internalVersionDisplayed=true;
-        std::cout << "Qt version: " << qVersion() << std::endl;
-    }
 
     {
         lastQueryNumber.reserve(16);
@@ -643,12 +635,12 @@ void Api_protocol::useSeed(const uint8_t &plant_id)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    QByteArray outputData;
+    char outputData[1];
     outputData[0]=plant_id;
     if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        packOutcommingQuery(0x83,queryNumber(),outputData.constData(),outputData.size());
+        packOutcommingQuery(0x83,queryNumber(),outputData,sizeof(outputData));
     else
-        packOutcommingData(0x19,outputData.constData(),outputData.size());
+        packOutcommingData(0x19,outputData,sizeof(outputData));
 }
 
 void Api_protocol::monsterMoveUp(const uint8_t &number)
@@ -2068,7 +2060,7 @@ void Api_protocol::connectTheExternalSocketInternal()
 
 bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const data,const int &size)
 {
-    const quint8 packetCode=inputQueryNumberToPacketCode[queryNumber];
+    const uint8_t packetCode=inputQueryNumberToPacketCode[queryNumber];
     removeFromQueryReceived(queryNumber);
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode+128];
     if(fixedSize!=0xFE)

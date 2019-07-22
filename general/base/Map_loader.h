@@ -8,10 +8,6 @@
 #include "GeneralStructuresXml.h"
 #include "CommonMap.h"
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QObject>
-#endif
-
 #ifdef CATCHCHALLENGER_CLASS_GATEWAY
 #error This kind don't need reply on that's
 #endif
@@ -24,13 +20,7 @@
 
 namespace CatchChallenger {
 class Map_loader
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        : public QObject
-        #endif
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
-Q_OBJECT
-#endif
 public:
     explicit Map_loader();
     ~Map_loader();

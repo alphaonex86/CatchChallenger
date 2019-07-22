@@ -10,18 +10,11 @@
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "tinyXML2/tinyxml2.h"
-#include <QObject>
 #endif
 
 namespace CatchChallenger {
 class CommonDatapack
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        : public QObject
-        #endif
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
-Q_OBJECT
-#endif
 public:
     explicit CommonDatapack();
     static CommonDatapack commonDatapack;
