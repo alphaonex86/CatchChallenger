@@ -1174,7 +1174,7 @@ void DatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
     std::string temp=datapackPath+DATAPACK_BASE_PATH_QUESTS1+
-            QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode+
             DATAPACK_BASE_PATH_QUESTS2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
@@ -1223,7 +1223,7 @@ void DatapackClientLoader::parseQuestsText()
                     {
                         //load the condition
                         QuestStepWithConditionExtra questStepWithConditionExtra;
-                        questStepWithConditionExtra.text=tr("No text").toStdString();
+                        questStepWithConditionExtra.text="No text";
                         const tinyxml2::XMLElement *condition = client_logic->FirstChildElement("contion");
                         while(condition!=NULL)
                         {
@@ -1274,15 +1274,15 @@ void DatapackClientLoader::parseQuestsText()
                         questsExtra[questId].text[tempid].texts.push_back(questStepWithConditionExtra);
                     }
                     else
-                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): " << file << client_logic->Name());
+                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): " << file << client_logic->Name() << std::endl;
                 }
                 else
-                    std::cerr << "Has attribute: %1, have not id attribute: child.Name(): " << file << client_logic->Name());
+                    std::cerr << "Has attribute: %1, have not id attribute: child.Name(): " << file << client_logic->Name() << std::endl;
                 client_logic = client_logic->NextSiblingElement("client_logic");
             }
         }
         else
-            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): " << file << QString::fromStdString(path));
+            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): " << file <<path << std::endl;
         #ifdef DEBUG_CLIENT_QUEST
         std::cerr << "%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
@@ -1306,7 +1306,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"musics")!=0)
     {
-        std::cerr << "Unable to open the file: %1, \"musics\" root balise not found for the xml file").arg(QString::fromStdString(file));
+        std::cerr << "Unable to open the file: %1, \"musics\" root balise not found for the xml file" << file << std::endl;
         return;
     }
 
@@ -1320,12 +1320,10 @@ void DatapackClientLoader::parseAudioAmbiance()
             if(audioAmbiance.find(type)==audioAmbiance.cend() && item->GetText()!=NULL)
                 audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
             else
-                std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2")
-                            .arg(QString::fromStdString(file)).arg(item->Name());
+                std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2" << file << " " << item->Name() << file << std::endl;
         }
         else
-            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2")
-                        .arg(QString::fromStdString(file)).arg(item->Name());
+            std::cerr << "Unable to open the file: %1, have not the item id: child.Name(): %2" << file << " " << item->Name() << file << std::endl;
         item = item->NextSiblingElement("map");
     }
 
@@ -1355,26 +1353,34 @@ void DatapackClientLoader::parseQuestsLink()
 void DatapackClientLoader::parseZoneExtra()
 {
     //open and quick check the file
-    QFileInfoList entryList=QDir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_ZONE1+
-                                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
-                                 DATAPACK_BASE_PATH_ZONE2).entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
-    int index=0;
-    QRegularExpression xmlFilter(QStringLiteral("^[a-zA-Z0-9\\- _]+\\.xml$"));
-    while(index<entryList.size())
+    std::string temp=datapackPath+DATAPACK_BASE_PATH_ZONE1+
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+            DATAPACK_BASE_PATH_ZONE2;
+    stringreplaceAll(temp,"\\\\","\\");
+    stringreplaceAll(temp,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    unsigned int index=0;
+    std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
+    while(index<returnList.size())
     {
-        if(!entryList.at(index).isFile())
+        const std::string &stringPath=returnList.at(index);
+        if(!CatchChallenger::FacilityLibGeneral::isFile(stringPath))
         {
             index++;
             continue;
         }
-        if(!entryList.at(index).fileName().contains(xmlFilter))
+        std::smatch m;
+        if(!std::regex_match(stringPath, m, xmlFilter))
         {
-            std::cerr << "%1 the zone file name not match").arg(entryList.at(index).fileName());
+            std::cerr << "%1 the zone file name not match" << stringPath << std::endl;
             index++;
             continue;
         }
-        std::string zoneCodeName=entryList.at(index).fileName().toStdString();
-        const std::string &file=entryList.at(index).absoluteFilePath().toStdString();
+        std::string zoneCodeName=stringPath;
+        const auto &pos=stringPath.find_last_of('/');
+        if(pos!=std::string::npos)
+            zoneCodeName=stringPath.substr(pos);
+        const std::string &file=stringPath;
         if(stringEndsWith(zoneCodeName,".xml"))
             zoneCodeName.resize(zoneCodeName.size()-4);
 
@@ -1390,7 +1396,7 @@ void DatapackClientLoader::parseZoneExtra()
         const tinyxml2::XMLElement *root = domDocument.RootElement();
         if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"zone")!=0)
         {
-            std::cerr << "Unable to open the file: %1, \"zone\" root balise not found for the xml file").arg(QString::fromStdString(file));
+            std::cerr << "Unable to open the file: %1, \"zone\" root balise not found for the xml file" << file << std::endl;
             index++;
             continue;
         }
@@ -1415,7 +1421,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name() << std::endl;
                 name = name->NextSiblingElement("name");
             }
         if(!found)
@@ -1433,7 +1439,7 @@ void DatapackClientLoader::parseZoneExtra()
                     }
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name());
+                    std::cerr << "Unable to open the file: %1, is not an element: child.Name(): " << file << name->Name() << std::endl;
                 name = name->NextSiblingElement("name");
             }
         }
@@ -1452,8 +1458,7 @@ void DatapackClientLoader::parseZoneExtra()
                     zonesExtra[zoneCodeName].audioAmbiance[type]=backgroundsound;
                 }
                 else
-                    std::cerr << "Unable to open the file: %1, have not the music attribute: child.Name(): %2")
-                                .arg(QString::fromStdString(file)).arg(item->Name());
+                    std::cerr << "Unable to open the file: %1, have not the music attribute: child.Name(): %2" << file << " " << item->Name() << std::endl;
                 item = item->NextSiblingElement("music");
             }
         }
