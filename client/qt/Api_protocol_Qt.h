@@ -4,8 +4,10 @@
 #include <QObject>
 #include "ClientStructures.h"
 #include "../../general/base/GeneralStructures.h"
+#include "../libcatchchallenger/Api_protocol.h"
+#include "ConnectedSocket.h"
 namespace CatchChallenger {
-class Api_protocol_Qt : public Api_protocol
+class Api_protocol_Qt : public QObject, public Api_protocol
 {
     Q_OBJECT
 public:
@@ -13,14 +15,22 @@ public:
     bool disconnectClient();
 
 public:
+    void send_player_direction(const CatchChallenger::Direction &the_direction);
     void newError(const std::string &error,const std::string &detailedError);
     void message(const std::string &message);
     void lastReplyTime(const uint32_t &time);
 
+    void useSeed(const uint8_t &plant_id);
+    void collectMaturePlant();
+    void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
+
     //protocol/connection info
+    virtual void hashSha224(const char * const data,const int size,char *buffer) override;
+    virtual void readForFirstHeader() override;
     void disconnected(const std::string &reason);
     void notLogged(const std::string &reason);
     void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    virtual void tryDisconnect() override;
     void protocol_is_good();
     void connectedOnLoginServer();
     void connectingOnGameServer();

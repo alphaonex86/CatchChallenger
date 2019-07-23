@@ -1,5 +1,5 @@
-#ifndef DATAPACKCLIENTLOADER_H
-#define DATAPACKCLIENTLOADER_H
+#ifndef QtDATAPACKCLIENTLOADER_H
+#define QtDATAPACKCLIENTLOADER_H
 
 #ifndef NOTHREADS
 #include <QThread>
@@ -16,26 +16,40 @@
 #include <utility>
 
 #include "../../general/base/GeneralStructures.h"
-#include "../tiled/tiled_tileset.h"
+#include "../libcatchchallenger/DatapackClientLoader.h"
+#include "tiled/tiled_tileset.h"
 
-class DatapackClientLoader
+class QtDatapackClientLoader
         #ifndef NOTHREADS
         : public QThread
         #else
         : public QObject
         #endif
+        , public DatapackClientLoader
 {
     Q_OBJECT
 public:
-    static DatapackClientLoader datapackLoader;
+    static QtDatapackClientLoader datapackLoader;
+    struct QtItemExtra
+    {
+        QPixmap image;
+    };
+    struct QtMonsterExtra
+    {
+        QPixmap front;
+        QPixmap back;
+        QPixmap thumb;
+        struct QtBuff
+        {
+            QIcon icon;
+        };
+    };
+
+    /*
     void resetAll();
 
     //static items
-    struct QtItemExtra
-    {
-        std::string imagePath;
-        QPixmap image;
-    };
+
     struct PlantExtra
     {
         Tiled::Tileset * tileset;
@@ -156,7 +170,10 @@ public:
     std::unordered_map<std::string,uint32_t> fullMapPathToId;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > itemOnMap;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > plantOnMap;
-    std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
+    std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;*/
+    std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
+    std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
+    std::unordered_map<uint8_t,QtMonsterExtra::QtBuff> QtmonsterBuffsExtra;
     QPixmap defaultInventoryImage();
     bool isParsingDatapack();
     std::string getDatapackPath();
@@ -165,6 +182,10 @@ public:
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
 protected:
     void run();
+    void emitdatapackParsed() override;
+    void emitdatapackParsedMainSub() override;
+    void emitdatapackChecksumError() override;
+    void parseTopLib() override;
 public slots:
     void parseDatapack(const std::string &datapackPath);
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
@@ -173,13 +194,9 @@ signals:
     void datapackParsedMainSub();
     void datapackChecksumError();
 private:
-    bool inProgress;
-    std::string datapackPath;
-    std::string mainDatapackCode;
-    std::string subDatapackCode;
     QPixmap *mDefaultInventoryImage;
-    explicit DatapackClientLoader();
-    ~DatapackClientLoader();
+    explicit QtDatapackClientLoader();
+    ~QtDatapackClientLoader();
 private slots:
     void parsePlantsExtra();
     void parseItemsExtra();
@@ -198,70 +215,6 @@ private slots:
     void parseZoneExtra();
     void parseTileset();
     void parseReputationExtra();
-protected:
-    static const std::string text_list;
-    static const std::string text_reputation;
-    static const std::string text_type;
-    static const std::string text_name;
-    static const std::string text_en;
-    static const std::string text_lang;
-    static const std::string text_level;
-    static const std::string text_point;
-    static const std::string text_text;
-    static const std::string text_id;
-    static const std::string text_image;
-    static const std::string text_description;
-    static const std::string text_item;
-    static const std::string text_slashdefinitiondotxml;
-    static const std::string text_quest;
-    static const std::string text_rewards;
-    static const std::string text_show;
-    static const std::string text_autostep;
-    static const std::string text_yes;
-    static const std::string text_true;
-    static const std::string text_bot;
-    static const std::string text_dotcomma;
-    static const std::string text_client_logic;
-    static const std::string text_map;
-    static const std::string text_items;
-    static const std::string text_zone;
-    static const std::string text_music;
-    static const std::string text_backgroundsound;
-
-    static const std::string text_monster;
-    static const std::string text_monsters;
-    static const std::string text_kind;
-    static const std::string text_habitat;
-    static const std::string text_slash;
-    static const std::string text_types;
-    static const std::string text_buff;
-    static const std::string text_skill;
-    static const std::string text_buffs;
-    static const std::string text_skills;
-    static const std::string text_fight;
-    static const std::string text_fights;
-    static const std::string text_start;
-    static const std::string text_win;
-    static const std::string text_dotxml;
-    static const std::string text_dottsx;
-    static const std::string text_visual;
-    static const std::string text_category;
-    static const std::string text_alpha;
-    static const std::string text_color;
-    static const std::string text_event;
-    static const std::string text_value;
-    static const std::string text_tileheight;
-    static const std::string text_tilewidth;
-    static const std::string text_x;
-    static const std::string text_y;
-    static const std::string text_object;
-    static const std::string text_objectgroup;
-    static const std::string text_Object;
-    static const std::string text_layer;
-    static const std::string text_Dirt;
-    static const std::string text_DATAPACK_BASE_PATH_MAPBASE;
-    static std::string text_DATAPACK_BASE_PATH_MAPMAIN;
-    static std::string text_DATAPACK_BASE_PATH_MAPSUB;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

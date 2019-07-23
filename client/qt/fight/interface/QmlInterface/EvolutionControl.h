@@ -2,8 +2,9 @@
 #define EvolutionControl_H
 
 #include <QObject>
-#include "../../../../general/base/CommonDatapack.h"
-#include "../../../base/DatapackClientLoader.h"
+#include <QString>
+#include "../../general/base/CommonDatapack.h"
+#include "../../../QtDatapackClientLoader.h"
 
 class EvolutionControl : public QObject
 {

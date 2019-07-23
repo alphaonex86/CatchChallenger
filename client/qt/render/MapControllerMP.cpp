@@ -1,5 +1,5 @@
 #include "MapController.h"
-#include "../DatapackClientLoader.h"
+#include "../QtDatapackClientLoader.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonDatapack.h"
 #include <iostream>
@@ -37,7 +37,7 @@ MapControllerMP::~MapControllerMP()
     pathFinding.cancel();
 }
 
-void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
+void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 {
     this->client=client;
     //connect the map controler
@@ -55,7 +55,7 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol *client)
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,               this,&MapControllerMP::dropAllPlayerOnTheMap,Qt::QueuedConnection))
         abort();
-    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_client_real::send_player_direction))
+    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_protocol_Qt::send_player_direction))
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection))
         abort();
@@ -539,7 +539,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Insert:
                 if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
-                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+DatapackClientLoader::datapackLoader.maps.at(
+                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader.maps.at(
                                                              delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();
                     if(all_map.find(mapPath)!=all_map.cend())
                     {

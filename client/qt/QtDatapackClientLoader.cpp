@@ -24,74 +24,74 @@
 #include <QCryptographicHash>
 #include <iostream>
 
-DatapackClientLoader DatapackClientLoader::datapackLoader;
+DatapackClientLoader QtDatapackClientLoader::datapackLoader;
 
-const std::string DatapackClientLoader::text_list="list";
-const std::string DatapackClientLoader::text_reputation="reputation";
-const std::string DatapackClientLoader::text_type="type";
-const std::string DatapackClientLoader::text_name="name";
-const std::string DatapackClientLoader::text_en="en";
-const std::string DatapackClientLoader::text_lang="lang";
-const std::string DatapackClientLoader::text_level="level";
-const std::string DatapackClientLoader::text_point="point";
-const std::string DatapackClientLoader::text_text="text";
-const std::string DatapackClientLoader::text_id="id";
-const std::string DatapackClientLoader::text_image="image";
-const std::string DatapackClientLoader::text_description="description";
-const std::string DatapackClientLoader::text_item="item";
-const std::string DatapackClientLoader::text_slashdefinitiondotxml="/definition.xml";
-const std::string DatapackClientLoader::text_quest="quest";
-const std::string DatapackClientLoader::text_rewards="rewards";
-const std::string DatapackClientLoader::text_show="show";
-const std::string DatapackClientLoader::text_autostep="autostep";
-const std::string DatapackClientLoader::text_yes="yes";
-const std::string DatapackClientLoader::text_true="true";
-const std::string DatapackClientLoader::text_bot="bot";
-const std::string DatapackClientLoader::text_dotcomma=";";
-const std::string DatapackClientLoader::text_client_logic="client_logic";
-const std::string DatapackClientLoader::text_map="map";
-const std::string DatapackClientLoader::text_items="items";
-const std::string DatapackClientLoader::text_zone="zone";
-const std::string DatapackClientLoader::text_music="music";
-const std::string DatapackClientLoader::text_backgroundsound="backgroundsound";
+const std::string QtDatapackClientLoader::text_list="list";
+const std::string QtDatapackClientLoader::text_reputation="reputation";
+const std::string QtDatapackClientLoader::text_type="type";
+const std::string QtDatapackClientLoader::text_name="name";
+const std::string QtDatapackClientLoader::text_en="en";
+const std::string QtDatapackClientLoader::text_lang="lang";
+const std::string QtDatapackClientLoader::text_level="level";
+const std::string QtDatapackClientLoader::text_point="point";
+const std::string QtDatapackClientLoader::text_text="text";
+const std::string QtDatapackClientLoader::text_id="id";
+const std::string QtDatapackClientLoader::text_image="image";
+const std::string QtDatapackClientLoader::text_description="description";
+const std::string QtDatapackClientLoader::text_item="item";
+const std::string QtDatapackClientLoader::text_slashdefinitiondotxml="/definition.xml";
+const std::string QtDatapackClientLoader::text_quest="quest";
+const std::string QtDatapackClientLoader::text_rewards="rewards";
+const std::string QtDatapackClientLoader::text_show="show";
+const std::string QtDatapackClientLoader::text_autostep="autostep";
+const std::string QtDatapackClientLoader::text_yes="yes";
+const std::string QtDatapackClientLoader::text_true="true";
+const std::string QtDatapackClientLoader::text_bot="bot";
+const std::string QtDatapackClientLoader::text_dotcomma=";";
+const std::string QtDatapackClientLoader::text_client_logic="client_logic";
+const std::string QtDatapackClientLoader::text_map="map";
+const std::string QtDatapackClientLoader::text_items="items";
+const std::string QtDatapackClientLoader::text_zone="zone";
+const std::string QtDatapackClientLoader::text_music="music";
+const std::string QtDatapackClientLoader::text_backgroundsound="backgroundsound";
 
-const std::string DatapackClientLoader::text_monster="monster";
-const std::string DatapackClientLoader::text_monsters="monsters";
-const std::string DatapackClientLoader::text_kind="kind";
-const std::string DatapackClientLoader::text_habitat="habitat";
-const std::string DatapackClientLoader::text_slash="/";
-const std::string DatapackClientLoader::text_types="types";
-const std::string DatapackClientLoader::text_buff="buff";
-const std::string DatapackClientLoader::text_skill="skill";
-const std::string DatapackClientLoader::text_buffs="buffs";
-const std::string DatapackClientLoader::text_skills="skills";
-const std::string DatapackClientLoader::text_fight="fight";
-const std::string DatapackClientLoader::text_fights="fights";
-const std::string DatapackClientLoader::text_start="start";
-const std::string DatapackClientLoader::text_win="win";
-const std::string DatapackClientLoader::text_dotxml=".xml";
-const std::string DatapackClientLoader::text_dottsx=".tsx";
-const std::string DatapackClientLoader::text_visual="visual";
-const std::string DatapackClientLoader::text_category="category";
-const std::string DatapackClientLoader::text_alpha="alpha";
-const std::string DatapackClientLoader::text_color="color";
-const std::string DatapackClientLoader::text_event="event";
-const std::string DatapackClientLoader::text_value="value";
+const std::string QtDatapackClientLoader::text_monster="monster";
+const std::string QtDatapackClientLoader::text_monsters="monsters";
+const std::string QtDatapackClientLoader::text_kind="kind";
+const std::string QtDatapackClientLoader::text_habitat="habitat";
+const std::string QtDatapackClientLoader::text_slash="/";
+const std::string QtDatapackClientLoader::text_types="types";
+const std::string QtDatapackClientLoader::text_buff="buff";
+const std::string QtDatapackClientLoader::text_skill="skill";
+const std::string QtDatapackClientLoader::text_buffs="buffs";
+const std::string QtDatapackClientLoader::text_skills="skills";
+const std::string QtDatapackClientLoader::text_fight="fight";
+const std::string QtDatapackClientLoader::text_fights="fights";
+const std::string QtDatapackClientLoader::text_start="start";
+const std::string QtDatapackClientLoader::text_win="win";
+const std::string QtDatapackClientLoader::text_dotxml=".xml";
+const std::string QtDatapackClientLoader::text_dottsx=".tsx";
+const std::string QtDatapackClientLoader::text_visual="visual";
+const std::string QtDatapackClientLoader::text_category="category";
+const std::string QtDatapackClientLoader::text_alpha="alpha";
+const std::string QtDatapackClientLoader::text_color="color";
+const std::string QtDatapackClientLoader::text_event="event";
+const std::string QtDatapackClientLoader::text_value="value";
 
-const std::string DatapackClientLoader::text_tileheight="tileheight";
-const std::string DatapackClientLoader::text_tilewidth="tilewidth";
-const std::string DatapackClientLoader::text_x="x";
-const std::string DatapackClientLoader::text_y="y";
-const std::string DatapackClientLoader::text_object="object";
-const std::string DatapackClientLoader::text_objectgroup="objectgroup";
-const std::string DatapackClientLoader::text_Object="Object";
-const std::string DatapackClientLoader::text_layer="layer";
-const std::string DatapackClientLoader::text_Dirt="Dirt";
-const std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
-std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
-std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
+const std::string QtDatapackClientLoader::text_tileheight="tileheight";
+const std::string QtDatapackClientLoader::text_tilewidth="tilewidth";
+const std::string QtDatapackClientLoader::text_x="x";
+const std::string QtDatapackClientLoader::text_y="y";
+const std::string QtDatapackClientLoader::text_object="object";
+const std::string QtDatapackClientLoader::text_objectgroup="objectgroup";
+const std::string QtDatapackClientLoader::text_Object="Object";
+const std::string QtDatapackClientLoader::text_layer="layer";
+const std::string QtDatapackClientLoader::text_Dirt="Dirt";
+const std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
+std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
+std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
 
-DatapackClientLoader::DatapackClientLoader()
+QtDatapackClientLoader::DatapackClientLoader()
 {
     mDefaultInventoryImage=NULL;
     inProgress=false;
@@ -102,7 +102,7 @@ DatapackClientLoader::DatapackClientLoader()
     setObjectName("DatapackClientLoader");
 }
 
-DatapackClientLoader::~DatapackClientLoader()
+QtDatapackClientLoader::~DatapackClientLoader()
 {
     if(mDefaultInventoryImage==NULL)
         delete mDefaultInventoryImage;
@@ -112,24 +112,24 @@ DatapackClientLoader::~DatapackClientLoader()
     #endif
 }
 
-QPixmap DatapackClientLoader::defaultInventoryImage()
+QPixmap QtDatapackClientLoader::defaultInventoryImage()
 {
     return *mDefaultInventoryImage;
 }
 
-void DatapackClientLoader::run()
+void QtDatapackClientLoader::run()
 {
     #ifndef NOTHREADS
     exec();
     #endif
 }
 
-bool DatapackClientLoader::isParsingDatapack()
+bool QtDatapackClientLoader::isParsingDatapack()
 {
     return inProgress;
 }
 
-void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
+void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
     if(inProgress)
     {
@@ -143,7 +143,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
         const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
         if(hash.empty())
         {
-            std::cerr << "DatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
+            std::cerr << "QtDatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
             emit datapackChecksumError();
             inProgress=false;
             return;
@@ -151,7 +151,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
 
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash)
         {
-            qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash.result(): %1!=%2")
+            qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack() CommonSettingsCommon::commonSettingsCommon.datapackHashBase!=hash.result(): %1!=%2")
                         .arg(QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)))
                         .arg(QString::fromStdString(binarytoHexa(hash)));
             emit datapackChecksumError();
@@ -161,8 +161,8 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     }
 
     this->datapackPath=datapackPath;
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
+    QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
+    QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     #ifndef BOTTESTCONNECT
@@ -183,10 +183,10 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     emit datapackParsed();
 }
 
-void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
+void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/";
-    DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1+mainDatapackCode+DATAPACK_BASE_PATH_MAPSUB2+subDatapackCode+"/";
+    QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/";
+    QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1+mainDatapackCode+DATAPACK_BASE_PATH_MAPSUB2+subDatapackCode+"/";
 
     if(inProgress)
     {
@@ -200,10 +200,10 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         {
-            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN));
+            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN));
             if(hash.empty())
             {
-                std::cerr << "DatapackClientLoader::parseDatapackMainSub(): hash is empty" << std::endl;
+                std::cerr << "QtDatapackClientLoader::parseDatapackMainSub(): hash is empty" << std::endl;
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
@@ -211,7 +211,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
 
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash)
             {
-                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): %1!=%2")
+                qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack() Main CommonSettingsServer::commonSettingsServer.datapackHashServerMain!=hash.result(): %1!=%2")
                             .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain)))
                             .arg(QString::fromStdString(binarytoHexa(hash)));
                 emit datapackChecksumError();
@@ -222,10 +222,10 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
         if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
         {
             const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumSub(
-                        (datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB));
+                        (datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB));
             if(hash.empty())
             {
-                std::cerr << "DatapackClientLoader::parseDatapackSub(): hash is empty" << std::endl;
+                std::cerr << "QtDatapackClientLoader::parseDatapackSub(): hash is empty" << std::endl;
                 emit datapackChecksumError();
                 inProgress=false;
                 return;
@@ -233,7 +233,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
 
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash)
             {
-                qDebug() << QStringLiteral("DatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): %1!=%2")
+                qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack() Sub CommonSettingsServer::commonSettingsServer.datapackHashServerSub!=hash.result(): %1!=%2")
                             .arg(QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)))
                             .arg(QString::fromStdString(binarytoHexa(hash)));
                 emit datapackChecksumError();
@@ -260,22 +260,42 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     emit datapackParsedMainSub();
 }
 
-std::string DatapackClientLoader::getDatapackPath()
+void QtDatapackClientLoader::emitdatapackParsed()
+{
+    emit datapackParsed();
+}
+
+void QtDatapackClientLoader::emitdatapackParsedMainSub()
+{
+    emit datapackParsedMainSub();
+}
+
+void QtDatapackClientLoader::emitdatapackChecksumError()
+{
+    emit datapackChecksumError();
+}
+
+void QtDatapackClientLoader::parseTopLib()
+{
+    parseTileset();
+}
+
+std::string QtDatapackClientLoader::getDatapackPath()
 {
     return datapackPath;
 }
 
-std::string DatapackClientLoader::getMainDatapackPath()
+std::string QtDatapackClientLoader::getMainDatapackPath()
 {
-    return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
+    return QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
 }
 
-std::string DatapackClientLoader::getSubDatapackPath()
+std::string QtDatapackClientLoader::getSubDatapackPath()
 {
-    return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
+    return QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }
 
-void DatapackClientLoader::parseVisualCategory()
+void QtDatapackClientLoader::parseVisualCategory()
 {
     tinyxml2::XMLDocument domDocument;
     //open and quick check the file
@@ -301,11 +321,11 @@ void DatapackClientLoader::parseVisualCategory()
         {
             if(strcmp(item->Attribute("id"),"")!=0)
             {
-                if(DatapackClientLoader::datapackLoader.visualCategories.find(item->Attribute("id"))==
-                        DatapackClientLoader::datapackLoader.visualCategories.cend())
+                if(QtDatapackClientLoader::datapackLoader.visualCategories.find(item->Attribute("id"))==
+                        QtDatapackClientLoader::datapackLoader.visualCategories.cend())
                 {
                     bool ok;
-                    DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=Qt::transparent;
+                    QtDatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=Qt::transparent;
                     int alpha=255;
                     if(item->Attribute("alpha")!=NULL)
                     {
@@ -326,7 +346,7 @@ void DatapackClientLoader::parseVisualCategory()
                         if(color.isValid())
                         {
                             color.setAlpha(alpha);
-                            DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=color;
+                            QtDatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")].defaultColor=color;
                         }
                         else
                             qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.Name(): %2")
@@ -354,7 +374,7 @@ void DatapackClientLoader::parseVisualCategory()
                                             VisualCategory::VisualCategoryCondition visualCategoryCondition;
                                             visualCategoryCondition.event=static_cast<uint8_t>(index);
                                             visualCategoryCondition.eventValue=static_cast<uint8_t>(sub_index);
-                                            visualCategoryCondition.color=DatapackClientLoader::datapackLoader.visualCategories.at(
+                                            visualCategoryCondition.color=QtDatapackClientLoader::datapackLoader.visualCategories.at(
                                                         item->Attribute("id")).defaultColor;
                                             int alpha=255;
                                             if(event->Attribute("alpha")!=NULL)
@@ -377,9 +397,9 @@ void DatapackClientLoader::parseVisualCategory()
                                                     qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child.Name(): %2")
                                                                  .arg(QString::fromStdString(file)).arg(QString::fromStdString(event->Name())));
                                             }
-                                            if(visualCategoryCondition.color!=DatapackClientLoader::datapackLoader.visualCategories.at(
+                                            if(visualCategoryCondition.color!=QtDatapackClientLoader::datapackLoader.visualCategories.at(
                                                         item->Attribute("id")).defaultColor)
-                                                DatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")]
+                                                QtDatapackClientLoader::datapackLoader.visualCategories[item->Attribute("id")]
                                                         .conditions.push_back(visualCategoryCondition);
                                             else
                                                 qDebug() << (QStringLiteral("Unable to open the file: %1, color same than the default color: child.Name(): %2").arg(QString::fromStdString(file)).arg(event->Name()));
@@ -412,10 +432,10 @@ void DatapackClientLoader::parseVisualCategory()
         item = item->NextSiblingElement("category");
     }
 
-    qDebug() << QStringLiteral("%1 visual cat loaded").arg(DatapackClientLoader::datapackLoader.visualCategories.size());
+    qDebug() << QStringLiteral("%1 visual cat loaded").arg(QtDatapackClientLoader::datapackLoader.visualCategories.size());
 }
 
-void DatapackClientLoader::parseReputationExtra()
+void QtDatapackClientLoader::parseReputationExtra()
 {
     {
         uint8_t index=0;
@@ -665,11 +685,11 @@ void DatapackClientLoader::parseReputationExtra()
     qDebug() << QStringLiteral("%1 reputation(s) extra loaded").arg(reputationExtra.size());
 }
 
-void DatapackClientLoader::parseItemsExtra()
+void QtDatapackClientLoader::parseItemsExtra()
 {
     QDir dir(QString::fromStdString(datapackPath)+QStringLiteral(DATAPACK_BASE_PATH_ITEM));
     const std::vector<std::string> &fileList=CatchChallenger::FacilityLibGeneral::listFolder(
-                (dir.absolutePath().toStdString()+DatapackClientLoader::text_slash));
+                (dir.absolutePath().toStdString()+QtDatapackClientLoader::text_slash));
     unsigned int file_index=0;
     while(file_index<fileList.size())
     {
@@ -702,7 +722,7 @@ void DatapackClientLoader::parseItemsExtra()
         }
 
         const std::string &folder=QFileInfo(QString::fromStdString(file)).absolutePath().toStdString()+
-                DatapackClientLoader::text_slash;
+                QtDatapackClientLoader::text_slash;
         //load the content
         bool ok;
         const tinyxml2::XMLElement *item = root->FirstChildElement("item");
@@ -714,7 +734,7 @@ void DatapackClientLoader::parseItemsExtra()
                 if(ok && tempid<65536)
                 {
                     const uint16_t &id=static_cast<uint16_t>(tempid);
-                    if(DatapackClientLoader::itemsExtra.find(id)==DatapackClientLoader::itemsExtra.cend())
+                    if(QtDatapackClientLoader::itemsExtra.find(id)==QtDatapackClientLoader::itemsExtra.cend())
                     {
                         ItemExtra itemExtra;
                         //load the image
@@ -822,7 +842,7 @@ void DatapackClientLoader::parseItemsExtra()
                                 //qDebug() << QStringLiteral("English description not found for the item with id: %1").arg(id);
                             }
                         }
-                        DatapackClientLoader::itemsExtra[id]=itemExtra;
+                        QtDatapackClientLoader::itemsExtra[id]=itemExtra;
                     }
                     else
                         qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.Name(): %2").arg(QString::fromStdString(file)).arg(item->Name());
@@ -837,14 +857,14 @@ void DatapackClientLoader::parseItemsExtra()
         file_index++;
     }
 
-    qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(DatapackClientLoader::itemsExtra.size());
+    qDebug() << QStringLiteral("%1 item(s) extra loaded").arg(QtDatapackClientLoader::itemsExtra.size());
 }
 
-void DatapackClientLoader::parseMaps()
+void QtDatapackClientLoader::parseMaps()
 {
     /// \todo do a sub overlay
     const std::vector<std::string> &returnList=
-                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
+                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
 
     //load the map
     uint16_t pointOnMapIndexItem=0;
@@ -868,7 +888,7 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
     qSort(tempMapList);
-    const std::string &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
+    const std::string &basePath=datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
     index=0;
     while(index<tempMapList.size())
     {
@@ -977,7 +997,7 @@ void DatapackClientLoader::parseMaps()
                                     const uint32_t &object_x=/*16Bits: /tileheight at final*/stringtouint32(object->Attribute("x"),&ok)/tilewidth;
                                     if(ok && object_x<256)
                                     {
-                                        itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+file]
+                                        itemOnMap[datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+file]
                                                 [std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(object_x),static_cast<uint8_t>(object_y))]=
                                                 pointOnMapIndexItem;
                                         pointOnMapIndexItem++;
@@ -998,17 +1018,17 @@ void DatapackClientLoader::parseMaps()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(DatapackClientLoader::datapackLoader.maps.size());
+    qDebug() << QStringLiteral("%1 map(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.maps.size());
 }
 
-void DatapackClientLoader::parseSkins()
+void QtDatapackClientLoader::parseSkins()
 {
     skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
 
     qDebug() << QStringLiteral("%1 skin(s) loaded").arg(skins.size());
 }
 
-void DatapackClientLoader::resetAll()
+void QtDatapackClientLoader::resetAll()
 {
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     language.clear();
@@ -1054,7 +1074,7 @@ void DatapackClientLoader::resetAll()
     }
 }
 
-void DatapackClientLoader::parseQuestsExtra()
+void QtDatapackClientLoader::parseQuestsExtra()
 {
     //open and quick check the file
     const QFileInfoList &entryList=QDir(
@@ -1089,7 +1109,7 @@ void DatapackClientLoader::parseQuestsExtra()
         const uint16_t &id=static_cast<uint16_t>(tempid);
 
         tinyxml2::XMLDocument domDocument;
-        const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+DatapackClientLoader::text_slashdefinitiondotxml;
+        const std::string &file=entryList.at(index).absoluteFilePath().toStdString()+QtDatapackClientLoader::text_slashdefinitiondotxml;
         const auto loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -1105,7 +1125,7 @@ void DatapackClientLoader::parseQuestsExtra()
             continue;
         }
 
-        DatapackClientLoader::QuestExtra quest;
+        QtDatapackClientLoader::QuestExtra quest;
 
         //load name
         {
@@ -1256,7 +1276,7 @@ void DatapackClientLoader::parseQuestsExtra()
     qDebug() << QStringLiteral("%1 quest(s) extra loaded").arg(questsExtra.size());
 }
 
-void DatapackClientLoader::parseQuestsText()
+void QtDatapackClientLoader::parseQuestsText()
 {
     //open and quick check the file
     const QFileInfoList &entryList=QDir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_QUESTS1+
@@ -1376,7 +1396,7 @@ void DatapackClientLoader::parseQuestsText()
     qDebug() << QStringLiteral("%1 quest(s) text loaded").arg(questsExtra.size());
 }
 
-void DatapackClientLoader::parseAudioAmbiance()
+void QtDatapackClientLoader::parseAudioAmbiance()
 {
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MAPBASE+"music.xml";
     tinyxml2::XMLDocument domDocument;
@@ -1401,8 +1421,8 @@ void DatapackClientLoader::parseAudioAmbiance()
         if(item->Attribute("type")!=NULL)
         {
             const std::string &type=item->Attribute("type");
-            if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)==DatapackClientLoader::datapackLoader.audioAmbiance.cend() && item->GetText()!=NULL)
-                audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
+            if(QtDatapackClientLoader::datapackLoader.audioAmbiance.find(type)==QtDatapackClientLoader::datapackLoader.audioAmbiance.cend() && item->GetText()!=NULL)
+                audioAmbiance[type]=datapackPath+QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
             else
                 qDebug() << QStringLiteral("Unable to open the file: %1, id number already set: child.Name(): %2")
                             .arg(QString::fromStdString(file)).arg(item->Name());
@@ -1416,7 +1436,7 @@ void DatapackClientLoader::parseAudioAmbiance()
     qDebug() << QStringLiteral("%1 audio ambiance(s) link loaded").arg(audioAmbiance.size());
 }
 
-void DatapackClientLoader::parseQuestsLink()
+void QtDatapackClientLoader::parseQuestsLink()
 {
     auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.begin();
     while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
@@ -1436,7 +1456,7 @@ void DatapackClientLoader::parseQuestsLink()
     qDebug() << QStringLiteral("%1 bot linked with quest(s) loaded").arg(botToQuestStart.size());
 }
 
-void DatapackClientLoader::parseZoneExtra()
+void QtDatapackClientLoader::parseZoneExtra()
 {
     //open and quick check the file
     QFileInfoList entryList=QDir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_ZONE1+
@@ -1481,7 +1501,7 @@ void DatapackClientLoader::parseZoneExtra()
 
         //load the content
         bool haveName=false;
-        DatapackClientLoader::ZoneExtra zone;
+        QtDatapackClientLoader::ZoneExtra zone;
 
         //load name
         const tinyxml2::XMLElement *name = root->FirstChildElement("name");
@@ -1548,7 +1568,7 @@ void DatapackClientLoader::parseZoneExtra()
     qDebug() << QStringLiteral("%1 zone(s) extra loaded").arg(zonesExtra.size());
 }
 
-void DatapackClientLoader::parseTileset()
+void QtDatapackClientLoader::parseTileset()
 {
     const std::vector<std::string> &fileList=
                 CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DATAPACK_BASE_PATH_MAPBASE);

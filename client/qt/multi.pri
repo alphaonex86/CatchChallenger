@@ -15,7 +15,7 @@ HEADERS  += $$PWD/FeedNews.h \
     $$PWD/BlacklistPassword.h \
     $$PWD/SslCert.h
 
-RESOURCES += $$PWD/resources/client-resources-multi.qrc
+RESOURCES += $$PWD/../resources/client-resources-multi.qrc
 
 DEFINES += CATCHCHALLENGER_MULTI
 DEFINES += CATCHCHALLENGER_CLASS_CLIENT

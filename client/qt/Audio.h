@@ -2,7 +2,7 @@
 #define Audio_H
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "opusfile/opusfile.h"
+#include "../opusfile/opusfile.h"
 
 #include <QString>
 #include <QAudioOutput>

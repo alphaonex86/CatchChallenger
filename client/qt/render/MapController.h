@@ -17,7 +17,7 @@ class MapController : public MapControllerMP
 public:
     explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
     ~MapController();
-    virtual void connectAllSignals(CatchChallenger::Api_protocol *client);
+    virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     virtual void resetAll();
     std::string mapIdToString(const uint32_t &mapId) const;
     void remove_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y);
