@@ -28,17 +28,17 @@
 #include <map>
 #include <QBuffer>
 
-#include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
+#include "../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../general/base/ChatParsing.h"
 #include "../../../general/base/GeneralStructures.h"
-#include "../../fight/interface/ClientFightEngine.h"
-#include "../Api_protocol.h"
+#include "../fight/interface/ClientFightEngine.h"
+#include "../Api_protocol_Qt.h"
 #include "../render/MapController.h"
 #include "Chat.h"
 #include "NewProfile.h"
 #include "../QmlInterface/AnimationControl.h"
-#include "../../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h"
-#include "../../fight/interface/QmlInterface/EvolutionControl.h"
+#include "../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h"
+#include "../fight/interface/QmlInterface/EvolutionControl.h"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
 #define CATCHCHALLENGER_BASEWINDOW_H
@@ -726,7 +726,7 @@ private:
     uint32_t worseQueryTime;
     bool multiplayer;
 
-    CatchChallenger::Api_protocol * client;
+    CatchChallenger::Api_protocol_Qt * client;
     ClientFightEngine fightEngine;
     Chat *chat;
 

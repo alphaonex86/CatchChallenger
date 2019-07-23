@@ -1,7 +1,7 @@
 #ifndef MAP_VISUALISER_PLAYER_WITH_FIGHT_H
 #define MAP_VISUALISER_PLAYER_WITH_FIGHT_H
 
-#include "../../base/render/MapVisualiserPlayer.h"
+#include "../../render/MapVisualiserPlayer.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
 #include <QObject>

@@ -1,7 +1,7 @@
 #include "BaseWindow.h"
 #include "GetPrice.h"
 #include "ui_BaseWindow.h"
-#include "../../fight/interface/ClientFightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 #include "../../../general/base/CommonSettingsServer.h"
 #include "../../../general/base/CommonSettingsCommon.h"
 
@@ -93,13 +93,13 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 break;
             }
             const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
-            const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=DatapackClientLoader::datapackLoader.monsterExtra.at(monster->monster);
+            const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader.monsterExtra.at(monster->monster);
             if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
             {
                 monsterEvolutionPostion=0;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster));
-                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
-                        DatapackClientLoader::datapackLoader.monsterExtra.at(
+                const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
+                        QtDatapackClientLoader::datapackLoader.monsterExtra.at(
                             CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster)
                             );
                 //create animation widget
@@ -130,7 +130,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(false));
                 animationWidget->rootContext()->setContextProperty("itemEvolution",
                                                                    QUrl::fromLocalFile(
-                                                                       QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra
+                                                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra
                                                                                               .at(item).imagePath)));
                 animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
                 animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
@@ -157,7 +157,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 if(fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
                 {
                     showTip(tr("Using <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(item).name))
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
                     client->useObjectOnMonsterByPosition(item,monsterPosition);
@@ -167,7 +167,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 else
                 {
                     showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
-                            .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(item).name))
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(item).name))
                             .arg(QString::fromStdString(monsterInformationsExtra.name))
                             .toStdString());
                     if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=
@@ -306,12 +306,12 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             PlayerMonster * playerMonster=fightEngine.getCurrentMonster();
             init_current_monster_display(&copiedMonster);
             ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-            if(DatapackClientLoader::datapackLoader.monsterExtra.find(playerMonster->monster)!=
-                    DatapackClientLoader::datapackLoader.monsterExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader.monsterExtra.find(playerMonster->monster)!=
+                    QtDatapackClientLoader::datapackLoader.monsterExtra.cend())
             {
                 ui->labelFightEnter->setText(tr("Go %1")
-                                             .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(playerMonster->monster).name)));
-                ui->labelFightMonsterBottom->setPixmap(DatapackClientLoader::datapackLoader.monsterExtra.at(playerMonster->monster).back.scaled(160,160));
+                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.monsterExtra.at(playerMonster->monster).name)));
+                ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader.QtmonsterExtra.at(playerMonster->monster).back.scaled(160,160));
             }
             else
             {
@@ -387,9 +387,9 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             fightEngine.removeMonsterByPosition(monsterPosition);
             client->addMonsterByPosition(monsterPosition);
             QListWidgetItem *item=new QListWidgetItem();
-            item->setText(QString::fromStdString(DatapackClientLoader::datapackLoader.monsterExtra.at(tradeCurrentMonsters.back().monster).name));
+            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader.monsterExtra.at(tradeCurrentMonsters.back().monster).name));
             item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));
-            item->setIcon(DatapackClientLoader::datapackLoader.monsterExtra.at(tradeCurrentMonsters.back().monster).front);
+            item->setIcon(QtDatapackClientLoader::datapackLoader.QtmonsterExtra.at(tradeCurrentMonsters.back().monster).front);
             ui->tradePlayerMonsters->addItem(item);
         }
         break;
@@ -403,15 +403,15 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                 seed_in_waiting.pop_back();
                 break;
             }
-            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==
-                    DatapackClientLoader::datapackLoader.itemToPlants.cend())
+            if(QtDatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==
+                    QtDatapackClientLoader::datapackLoader.itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 seed_in_waiting.pop_back();
                 return;
             }
-            const uint8_t &plantId=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
+            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
             if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
             {
                 qDebug() << "You don't have the requirements to plant the seed";

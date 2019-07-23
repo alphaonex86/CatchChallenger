@@ -16,20 +16,20 @@ macx:LIBS += -lopus
 win32:LIBS += -lopus
 wasm:LIBS += -Lopus
 SOURCES += \
-    $$PWD/libogg/bitwise.c \
-    $$PWD/libogg/framing.c \
-    $$PWD/opusfile/info.c \
-    $$PWD/opusfile/internal.c \
-    $$PWD/opusfile/opusfile.c \
-    $$PWD/opusfile/stream.c \
+    $$PWD/../libogg/bitwise.c \
+    $$PWD/../libogg/framing.c \
+    $$PWD/../opusfile/info.c \
+    $$PWD/../opusfile/internal.c \
+    $$PWD/../opusfile/opusfile.c \
+    $$PWD/../opusfile/stream.c \
     $$PWD/Audio.cpp \
     $$PWD/QInfiniteBuffer.cpp
 
 HEADERS  += \
-    $$PWD/libogg/ogg.h \
-    $$PWD/libogg/os_types.h \
-    $$PWD/opusfile/internal.h \
-    $$PWD/opusfile/opusfile.h \
+    $$PWD/../libogg/ogg.h \
+    $$PWD/../libogg/os_types.h \
+    $$PWD/../opusfile/internal.h \
+    $$PWD/../opusfile/opusfile.h \
     $$PWD/Audio.h \
     $$PWD/QInfiniteBuffer.h
 }
@@ -83,20 +83,20 @@ SOURCES += \
     $$PWD/interface/GetPrice.cpp \
     $$PWD/interface/NewProfile.cpp \
     $$PWD/interface/NewGame.cpp \
-    $$PWD/../crafting/interface/MapControllerCrafting.cpp \
-    $$PWD/../crafting/interface/QmlInterface/CraftingAnimation.cpp \
-    $$PWD/../crafting/interface/DatapackClientLoaderCrafting.cpp \
-    $$PWD/../crafting/interface/BaseWindowCrafting.cpp \
-    $$PWD/../fight/interface/QmlInterface/QmlMonsterGeneralInformations.cpp \
-    $$PWD/../fight/interface/QmlInterface/EvolutionControl.cpp \
-    $$PWD/../fight/interface/DatapackClientLoaderFight.cpp \
-    $$PWD/../fight/interface/BaseWindowFight.cpp \
-    $$PWD/../fight/interface/BaseWindowFightNextAction.cpp \
-    $$PWD/../fight/interface/ClientFightEngine.cpp \
-    $$PWD/../fight/interface/MapVisualiserPlayerWithFight.cpp \
+    $$PWD/crafting/interface/MapControllerCrafting.cpp \
+    $$PWD/crafting/interface/QmlInterface/CraftingAnimation.cpp \
+    $$PWD/crafting/interface/DatapackClientLoaderCrafting.cpp \
+    $$PWD/crafting/interface/BaseWindowCrafting.cpp \
+    $$PWD/fight/interface/QmlInterface/QmlMonsterGeneralInformations.cpp \
+    $$PWD/fight/interface/QmlInterface/EvolutionControl.cpp \
+    $$PWD/fight/interface/DatapackClientLoaderFight.cpp \
+    $$PWD/fight/interface/BaseWindowFight.cpp \
+    $$PWD/fight/interface/BaseWindowFightNextAction.cpp \
+    $$PWD/fight/interface/ClientFightEngine.cpp \
+    $$PWD/fight/interface/MapVisualiserPlayerWithFight.cpp \
     $$PWD/QmlInterface/AnimationControl.cpp \
-    $$PWD/DatapackClientLoader.cpp \
-    $$PWD/DatapackChecksum.cpp \
+    $$PWD/QtDatapackClientLoader.cpp \
+    $$PWD/QtDatapackChecksum.cpp \
     $$PWD/Api_client_virtual.cpp \
     $$PWD/Options.cpp \
     $$PWD/LanguagesSelect.cpp \
@@ -113,7 +113,7 @@ SOURCES += \
     $$PWD/CustomButton.cpp \
     $$PWD/ConnectedSocket.cpp \
     $$PWD/QFakeSocket.cpp \
-    $$PWD/QFakeServer.cpp \
+    $$PWD/QFakeServer.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -139,21 +139,20 @@ HEADERS  += \
     $$PWD/interface/GetPrice.h \
     $$PWD/interface/NewProfile.h \
     $$PWD/interface/NewGame.h \
-    $$PWD/../crafting/interface/QmlInterface/CraftingAnimation.h \
-    $$PWD/../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h \
-    $$PWD/../fight/interface/QmlInterface/EvolutionControl.h \
-    $$PWD/../fight/interface/ClientFightEngine.h \
-    $$PWD/../fight/interface/MapVisualiserPlayerWithFight.h \
+    $$PWD/crafting/interface/QmlInterface/CraftingAnimation.h \
+    $$PWD/fight/interface/QmlInterface/QmlMonsterGeneralInformations.h \
+    $$PWD/fight/interface/QmlInterface/EvolutionControl.h \
+    $$PWD/fight/interface/ClientFightEngine.h \
+    $$PWD/fight/interface/MapVisualiserPlayerWithFight.h \
     $$PWD/QmlInterface/AnimationControl.h \
-    $$PWD/DatapackClientLoader.h \
-    $$PWD/DatapackChecksum.h \
+    $$PWD/QtDatapackClientLoader.h \
+    $$PWD/QtDatapackChecksum.h \
     $$PWD/Api_protocol_Qt.h \
     $$PWD/LanguagesSelect.h \
     $$PWD/CachedString.h \
     $$PWD/InternetUpdater.h \
     $$PWD/ExtraSocket.h \
     $$PWD/LocalListener.h \
-    $$PWD/DisplayStructures.h \
     $$PWD/Map_client.h \
     $$PWD/ClientVariable.h \
     $$PWD/Options.h \
@@ -165,8 +164,9 @@ HEADERS  += \
     $$PWD/CCBackground.h \
     $$PWD/CustomButton.h \
     $$PWD/ConnectedSocket.h \
-    $$PWD/base/QFakeServer.h \
-    $$PWD/base/QFakeSocket.h
+    $$PWD/QFakeServer.h \
+    $$PWD/QFakeSocket.h \
+    $$PWD/DisplayStructures.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -178,14 +178,14 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/LoadingScreen.ui
 
 #commented to workaround to compil under wine
-win32:RC_FILE += $$PWD/resources/resources-windows.rc
-ICON = $$PWD/resources/client.icns
+win32:RC_FILE += $$PWD/../resources/resources-windows.rc
+ICON = $$PWD/../resources/client.icns
 macx:INCLUDEPATH += /Users/user/Desktop/VLC.app/Contents/MacOS/include/
 macx:LIBS += -L/Users/user/Desktop/VLC.app/Contents/MacOS/lib/
 
-RESOURCES += $$PWD/resources/client-resources.qrc \
-    $$PWD/../crafting/resources/client-resources-plant.qrc \
-    $$PWD/../fight/resources/client-resources-fight.qrc
+RESOURCES += $$PWD/../resources/client-resources.qrc \
+    $$PWD/crafting/resources/client-resources-plant.qrc \
+    $$PWD/fight/resources/client-resources-fight.qrc
 
 TRANSLATIONS    = $$PWD/resources/languages/en/translation.ts \
     $$PWD/languages/fr/translation.ts
