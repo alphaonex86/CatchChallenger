@@ -5,11 +5,11 @@
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/tinyXML2/tinyxml2.h"
 #include "../../../general/base/tinyXML2/customtinyxml2.h"
-#include "../../tiled/tiled_mapobject.h"
+#include "../tiled/tiled_mapobject.h"
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../ClientVariable.h"
-#include "../DatapackClientLoader.h"
+#include "../QtDatapackClientLoader.h"
 #include "../LanguagesSelect.h"
 #include "../FacilityLibClient.h"
 #include <QDebug>
@@ -143,12 +143,12 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
-            if(DatapackClientLoader::datapackLoader.itemOnMap.find(resolvedFileName)!=
-                    DatapackClientLoader::datapackLoader.itemOnMap.cend())
+            if(QtDatapackClientLoader::datapackLoader.itemOnMap.find(resolvedFileName)!=
+                    QtDatapackClientLoader::datapackLoader.itemOnMap.cend())
             {
-                if(DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
-                        DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).cend())
-                    newItem.indexOfItemOnMap=DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName)
+                if(QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
+                        QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).cend())
+                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName)
                             .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
@@ -156,7 +156,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             else
             {
                 QStringList keys;
-                for(auto kv : DatapackClientLoader::datapackLoader.itemOnMap)
+                for(auto kv : QtDatapackClientLoader::datapackLoader.itemOnMap)
                     keys.push_back(QString::fromStdString(kv.first));
                 qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                             .arg(QString::fromStdString(resolvedFileName))
@@ -167,12 +167,12 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         }
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(DatapackClientLoader::datapackLoader.fullMapPathToId.find(resolvedFileName)==
-            DatapackClientLoader::datapackLoader.fullMapPathToId.cend())
+    if(QtDatapackClientLoader::datapackLoader.fullMapPathToId.find(resolvedFileName)==
+            QtDatapackClientLoader::datapackLoader.fullMapPathToId.cend())
     {
         mLastError="Map id unresolved "+resolvedFileName;
         QStringList keys;
-        for(auto kv : DatapackClientLoader::datapackLoader.fullMapPathToId)
+        for(auto kv : QtDatapackClientLoader::datapackLoader.fullMapPathToId)
             keys.push_back(QString::fromStdString(kv.first));
         qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
         delete tempMapObject->tiledMap;
@@ -180,7 +180,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         return NULL;
     }
     #endif
-    tempMapObject->logicalMap.id                                    = DatapackClientLoader::datapackLoader.fullMapPathToId.at(resolvedFileName);
+    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader.fullMapPathToId.at(resolvedFileName);
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {

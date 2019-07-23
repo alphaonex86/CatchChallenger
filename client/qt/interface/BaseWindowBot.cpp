@@ -2,7 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../LanguagesSelect.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../fight/interface/ClientFightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 
 #include <QDesktopServices>
 #include <QInputDialog>
@@ -18,13 +18,13 @@ bool BaseWindow::botHaveQuest(const uint16_t &botId) const
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    if(DatapackClientLoader::datapackLoader.botToQuestStart.find(botId)==
-            DatapackClientLoader::datapackLoader.botToQuestStart.cend())
+    if(QtDatapackClientLoader::datapackLoader.botToQuestStart.find(botId)==
+            QtDatapackClientLoader::datapackLoader.botToQuestStart.cend())
     {
         std::cerr << "BaseWindow::botHaveQuest(), botId not found: " << std::to_string(botId) << std::endl;
         return false;
     }
-    const std::vector<uint16_t> &botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
+    const std::vector<uint16_t> &botQuests=QtDatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -259,7 +259,7 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             if(quests.size()==1)
             {
                 const std::pair<uint16_t,std::string> &quest=quests.at(0);
-                if(DatapackClientLoader::datapackLoader.questsExtra.at(quest.first).autostep)
+                if(QtDatapackClientLoader::datapackLoader.questsExtra.at(quest.first).autostep)
                 {
                     IG_dialog_text_linkActivated("quest_"+std::to_string(quest.first));
                     return;
@@ -418,9 +418,9 @@ void BaseWindow::goToBotStep(const uint8_t &step)
             return;
         }
         const std::string zone=stepXml->Attribute("zone");
-        if(DatapackClientLoader::datapackLoader.zonesExtra.find(zone)!=DatapackClientLoader::datapackLoader.zonesExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader.zonesExtra.find(zone)!=QtDatapackClientLoader::datapackLoader.zonesExtra.cend())
         {
-            zonecatchName=DatapackClientLoader::datapackLoader.zonesExtra.at(zone).name;
+            zonecatchName=QtDatapackClientLoader::datapackLoader.zonesExtra.at(zone).name;
             ui->zonecaptureWaitText->setText(tr("You are waiting to capture %1").arg(QString("<b>%1</b>").arg(QString::fromStdString(zonecatchName))));
         }
         else
@@ -533,7 +533,7 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
     {
         if(!silent)
             showTip(tr("You have finish the quest <b>%1</b>")
-                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(questId).name))
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.questsExtra.at(questId).name))
                     .toStdString()
                     );
         client->finishQuest(questId);
@@ -555,14 +555,14 @@ bool BaseWindow::tryValidateQuestStep(const uint16_t &questId, const uint16_t &b
 
 void BaseWindow::showQuestText(const uint32_t &textId)
 {
-    if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)==
-            DatapackClientLoader::datapackLoader.questsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader.questsExtra.find(questId)==
+            QtDatapackClientLoader::datapackLoader.questsExtra.cend())
     {
         qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
         showTip(tr("No quest text for this quest").toStdString());
         return;
     }
-    const DatapackClientLoader::QuestExtra &questExtra=DatapackClientLoader::datapackLoader.questsExtra.at(questId);
+    const QtDatapackClientLoader::QuestExtra &questExtra=QtDatapackClientLoader::datapackLoader.questsExtra.at(questId);
     if(questExtra.text.find(textId)==questExtra.text.cend())
     {
         qDebug() << "No quest text entry point";
@@ -575,22 +575,22 @@ void BaseWindow::showQuestText(const uint32_t &textId)
     if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
         stepQuest=playerInformations.quests.at(questId).step-1;
     std::string text=tr("No text found").toStdString();
-    const DatapackClientLoader::QuestTextExtra &questTextExtra=questExtra.text.at(textId);
+    const QtDatapackClientLoader::QuestTextExtra &questTextExtra=questExtra.text.at(textId);
     unsigned int index=0;
     while(index<questTextExtra.texts.size())
     {
-        const DatapackClientLoader::QuestStepWithConditionExtra &e=questTextExtra.texts.at(index);
+        const QtDatapackClientLoader::QuestStepWithConditionExtra &e=questTextExtra.texts.at(index);
         unsigned int indexCond=0;
         while(indexCond<e.conditions.size())
         {
-            const DatapackClientLoader::QuestConditionExtra &condition=e.conditions.at(indexCond);
+            const QtDatapackClientLoader::QuestConditionExtra &condition=e.conditions.at(indexCond);
             switch(condition.type)
             {
-            case DatapackClientLoader::QuestCondition_queststep:
+            case QtDatapackClientLoader::QuestCondition_queststep:
                 if((stepQuest+1)!=condition.value)
                     indexCond=e.conditions.size()+999;//not validated condition
             break;
-            case DatapackClientLoader::QuestCondition_haverequirements:
+            case QtDatapackClientLoader::QuestCondition_haverequirements:
             {
                 const Quest &quest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
                 if(!haveNextStepQuestRequirements(quest))
@@ -766,10 +766,10 @@ void BaseWindow::IG_dialog_text_linkActivated(const std::string &rawlink)
             }
             isInQuest=true;
             this->questId=questId;
-            if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
-                    DatapackClientLoader::datapackLoader.questsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                    QtDatapackClientLoader::datapackLoader.questsExtra.cend())
             {
-                if(DatapackClientLoader::datapackLoader.questsExtra.at(questId).autostep)
+                if(QtDatapackClientLoader::datapackLoader.questsExtra.at(questId).autostep)
                 {
                     int index=0;
                     bool ok;
@@ -858,7 +858,7 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
     std::vector<std::pair<uint16_t,std::string> > entryList;
     std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    std::vector<uint16_t> botQuests=DatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
+    std::vector<uint16_t> botQuests=QtDatapackClientLoader::datapackLoader.botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -874,9 +874,9 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
             if(haveStartQuestRequirement(currentQuest))
             {
                 oneEntry.first=questId;
-                if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
-                        DatapackClientLoader::datapackLoader.questsExtra.cend())
-                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
+                if(QtDatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                        QtDatapackClientLoader::datapackLoader.questsExtra.cend())
+                    oneEntry.second=QtDatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
                 else
                 {
                     qDebug() << "internal bug: quest extra not found";
@@ -903,9 +903,9 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
                             if(haveStartQuestRequirement(currentQuest))
                             {
                                 oneEntry.first=questId;
-                                if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
-                                        DatapackClientLoader::datapackLoader.questsExtra.cend())
-                                    oneEntry.second=DatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
+                                if(QtDatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                                        QtDatapackClientLoader::datapackLoader.questsExtra.cend())
+                                    oneEntry.second=QtDatapackClientLoader::datapackLoader.questsExtra.at(questId).name;
                                 else
                                 {
                                     qDebug() << "internal bug: quest extra not found";
@@ -928,10 +928,10 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
                     if(vectorcontainsAtLeastOne(bots,botId))
                     {
                         oneEntry.first=questId;
-                        if(DatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
-                                DatapackClientLoader::datapackLoader.questsExtra.cend())
+                        if(QtDatapackClientLoader::datapackLoader.questsExtra.find(questId)!=
+                                QtDatapackClientLoader::datapackLoader.questsExtra.cend())
                             oneEntry.second=tr("%1 (in progress)")
-                                    .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(questId).name)).toStdString();
+                                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.questsExtra.at(questId).name)).toStdString();
                         else
                         {
                             qDebug() << "internal bug: quest extra not found";
@@ -960,7 +960,7 @@ std::vector<std::pair<uint16_t,std::string> > BaseWindow::getQuestList(const uin
                 //in progress, but not the starting bot
                 oneEntry.first=i->first;
                 oneEntry.second=tr("%1 (in progress)")
-                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.questsExtra.at(i->first).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.questsExtra.at(i->first).name))
                         .toStdString();
                 entryList.push_back(oneEntry);
             }

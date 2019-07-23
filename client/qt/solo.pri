@@ -10,7 +10,7 @@ FORMS    += $$PWD/solo/solowindow.ui
 
 # done into all qt server: RESOURCES += $$PWD/../../server/databases/resources-db-sqlite.qrc
 
-#RESOURCES += $$PWD/resources/resources-single-player.qrc
+#RESOURCES += $$PWD/../resources/resources-single-player.qrc
 
 TRANSLATIONS    = $$PWD/resources/languages/en/solo.ts \
     $$PWD/languages/fr/solo.ts

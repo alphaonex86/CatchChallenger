@@ -77,7 +77,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.character_id=0;
     characterEntry.delete_time_left=0;
     characterEntry.last_connect=QDateTime::currentMSecsSinceEpoch()/1000;
-    //characterEntry.mapId=DatapackClientLoader::datapackLoader.mapToId.value(profile.map);
+    //characterEntry.mapId=QtDatapackClientLoader::datapackLoader.mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo();
     if(characterEntry.pseudo.find(" ")!=std::string::npos)
@@ -153,11 +153,11 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(QString::fromStdString(text));
-        if(characterEntry.skinId<DatapackClientLoader::datapackLoader.skins.size())
+        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader.skins.size())
             item->setIcon(QIcon(
                               QString::fromStdString(client->datapackPathBase())+
                               DATAPACK_BASE_PATH_SKIN+
-                              QString::fromStdString(DatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId))+
+                              QString::fromStdString(QtDatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId))+
                               "/front.png"
                               ));
         else

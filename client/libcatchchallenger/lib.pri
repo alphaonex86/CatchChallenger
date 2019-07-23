@@ -11,7 +11,5 @@ SOURCES += \
 HEADERS  += \
     $$PWD/Api_protocol.h \
     $$PWD/ClientStructures.h \
-    $$PWD/DatapackChecksum.h \
     $$PWD/DatapackClientLoader.h \
-    $$PWD/DisplayStructures.h \
     $$PWD/ClientVariableAudio.h

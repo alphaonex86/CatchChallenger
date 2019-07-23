@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAPCONTROLLERMP_H
 #define CATCHCHALLENGER_MAPCONTROLLERMP_H
 
-#include "../../fight/interface/MapVisualiserPlayerWithFight.h"
+#include "../fight/interface/MapVisualiserPlayerWithFight.h"
 #include "../Api_client_real.h"
 #include "PathFinding.h"
 
@@ -17,7 +17,7 @@ public:
     ~MapControllerMP();
 
     virtual void resetAll();
-    virtual void connectAllSignals(CatchChallenger::Api_protocol *client);
+    virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     void setScale(const float &scaleSize);
 
     //the other player
@@ -158,7 +158,7 @@ private:
     static QPixmap *imgForPseudoPremium;
     std::vector<PathResolved> pathList;
 
-    CatchChallenger::Api_protocol * client;
+    CatchChallenger::Api_protocol_Qt * client;
 private slots:
     bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();

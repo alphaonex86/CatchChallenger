@@ -8,8 +8,8 @@
 
 #include "../../../general/base/GeneralStructures.h"
 #include "../../../general/base/CommonMap.h"
-#include "../../../client/base/Map_client.h"
-#include "../../../client/base/DisplayStructures.h"
+#include "../Map_client.h"
+#include "../DisplayStructures.h"
 #include "../../../general/base/Map_loader.h"
 
 #include <QGraphicsView>
