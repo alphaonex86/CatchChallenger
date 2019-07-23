@@ -339,7 +339,7 @@ public:
 public:
     virtual std::string getLanguage() const = 0;
 public:
-    void send_player_direction(const CatchChallenger::Direction &the_direction);
+    virtual void send_player_direction(const CatchChallenger::Direction &the_direction);
     void send_player_move(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
     //void send_move_unit(const CatchChallenger::Direction &direction);->do by MoveOnTheMap::newDirection()
     void sendChatText(const CatchChallenger::Chat_type &chatType,const std::string &text);

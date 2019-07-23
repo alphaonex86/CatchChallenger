@@ -89,10 +89,10 @@ int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8
     }
     else
     {
-        if(DatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
-                DatapackClientLoader::datapackLoader.plantOnMap.cend())
+        if(QtDatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
+                QtDatapackClientLoader::datapackLoader.plantOnMap.cend())
             return -1;
-        const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=DatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
+        const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
         if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
             return -1;
         unsigned int index=0;
@@ -140,10 +140,10 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
                 }
                 else
                 {
-                    if(DatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
-                            DatapackClientLoader::datapackLoader.plantOnMap.cend())
+                    if(QtDatapackClientLoader::datapackLoader.plantOnMap.find(map->map_file)==
+                            QtDatapackClientLoader::datapackLoader.plantOnMap.cend())
                         return;
-                    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=DatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
+                    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader.plantOnMap.at(map->map_file);
                     if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
                         return;
                     emit collectMaturePlant();
@@ -302,10 +302,10 @@ void BaseWindow::currentMapLoaded()
         Map_full *mapFull=mapController->currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
-            if(DatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=
-                    DatapackClientLoader::datapackLoader.zonesExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=
+                    QtDatapackClientLoader::datapackLoader.zonesExtra.cend())
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
+                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
                 visualName=zoneExtra.name;
             }
         if(visualName.empty())
@@ -330,9 +330,9 @@ void BaseWindow::currentMapLoaded()
         //zone sound
         Map_full *mapFull=mapController->currentMapFull();
         if(!mapFull->zone.empty())
-            if(DatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=DatapackClientLoader::datapackLoader.zonesExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader.zonesExtra.find(mapFull->zone)!=QtDatapackClientLoader::datapackLoader.zonesExtra.cend())
             {
-                const DatapackClientLoader::ZoneExtra &zoneExtra=DatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
+                const QtDatapackClientLoader::ZoneExtra &zoneExtra=QtDatapackClientLoader::datapackLoader.zonesExtra.at(mapFull->zone);
                 if(zoneExtra.audioAmbiance.find(type)!=zoneExtra.audioAmbiance.cend())
                 {
                     const std::string &backgroundsound=zoneExtra.audioAmbiance.at(type);
@@ -341,9 +341,9 @@ void BaseWindow::currentMapLoaded()
                 }
             }
         //general sound
-        if(DatapackClientLoader::datapackLoader.audioAmbiance.find(type)!=DatapackClientLoader::datapackLoader.audioAmbiance.cend())
+        if(QtDatapackClientLoader::datapackLoader.audioAmbiance.find(type)!=QtDatapackClientLoader::datapackLoader.audioAmbiance.cend())
         {
-            const std::string &backgroundsound=DatapackClientLoader::datapackLoader.audioAmbiance.at(type);
+            const std::string &backgroundsound=QtDatapackClientLoader::datapackLoader.audioAmbiance.at(type);
             if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
                 soundList.push_back(backgroundsound);
         }
@@ -420,20 +420,20 @@ void BaseWindow::currentMapLoaded()
         if(visualCategory!=type)
         {
             visualCategory=type;
-            if(DatapackClientLoader::datapackLoader.visualCategories.find(type)!=
-                    DatapackClientLoader::datapackLoader.visualCategories.cend())
+            if(QtDatapackClientLoader::datapackLoader.visualCategories.find(type)!=
+                    QtDatapackClientLoader::datapackLoader.visualCategories.cend())
             {
-                const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
-                        DatapackClientLoader::datapackLoader.visualCategories.at(type).conditions;
+                const std::vector<QtDatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
+                        QtDatapackClientLoader::datapackLoader.visualCategories.at(type).conditions;
                 unsigned int index=0;
                 while(index<conditions.size())
                 {
-                    const DatapackClientLoader::VisualCategory::VisualCategoryCondition &condition=conditions.at(index);
+                    const QtDatapackClientLoader::VisualCategory::VisualCategoryCondition &condition=conditions.at(index);
                     if(condition.event<events.size())
                     {
                         if(events.at(condition.event)==condition.eventValue)
                         {
-                            mapController->setColor(condition.color);
+                            mapController->setColor(QColor(condition.color.r,condition.color.g,condition.color.b,condition.color.a));
                             break;
                         }
                     }
@@ -442,7 +442,10 @@ void BaseWindow::currentMapLoaded()
                     index++;
                 }
                 if(index==conditions.size())
-                    mapController->setColor(DatapackClientLoader::datapackLoader.visualCategories.at(type).defaultColor);
+                {
+                    QtDatapackClientLoader::CCColor defaultColor=QtDatapackClientLoader::datapackLoader.visualCategories.at(type).defaultColor;
+                    mapController->setColor(QColor(defaultColor.r,defaultColor.g,defaultColor.b,defaultColor.a),15000);
+                }
             }
             else
                 mapController->setColor(Qt::transparent);

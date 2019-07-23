@@ -3,10 +3,10 @@
 
 #include <QObject>
 #include <QTimer>
-#include "../../tiled/tiled_mapobject.h"
-#include "../../tiled/tiled_tile.h"
-#include "../../tiled/tiled_tileset.h"
-#include "../../tiled/tiled_objectgroup.h"
+#include "../tiled/tiled_mapobject.h"
+#include "../tiled/tiled_tile.h"
+#include "../tiled/tiled_tileset.h"
+#include "../tiled/tiled_objectgroup.h"
 
 class MapMark : public QObject
 {
