@@ -1,4 +1,5 @@
 #include "Api_client_virtual.h"
+#include <QCoreApplication>
 
 using namespace CatchChallenger;
 
@@ -12,7 +13,7 @@ using namespace CatchChallenger;
 //need host + port here to have datapack base
 
 Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
-    Api_protocol(socket)
+    Api_protocol_Qt(socket)
 {
     mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath()).toStdString();
 }
@@ -32,12 +33,6 @@ void Api_client_virtual::sendDatapackContentMainSub(const std::string &hashMain,
     Q_UNUSED(hashMain);
     Q_UNUSED(hashSub);
     /*emit */haveTheDatapackMainSub();
-}
-
-void Api_client_virtual::tryDisconnect()
-{
-    if(socket!=NULL)
-        socket->disconnectFromHost();
 }
 
 //general data

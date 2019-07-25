@@ -1,18 +1,20 @@
-#include "../../base/DatapackClientLoader.h"
-#include "../../base/LanguagesSelect.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../../../general/fight/FightLoader.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../QtDatapackClientLoader.h"
+#include "../../LanguagesSelect.h"
+#include "../../general/base/GeneralVariable.h"
+#include "../../general/base/FacilityLib.h"
+#include "../../general/fight/FightLoader.h"
+#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../fight/interface/ClientFightEngine.h"
 
 #include <QFile>
 #include <QByteArray>
 #include <QDebug>
+#include <QDir>
+#include <QFileInfoList>
 #include <iostream>
 
-void DatapackClientLoader::parseMonstersExtra()
+void QtDatapackClientLoader::parseMonstersExtra()
 {
     QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
@@ -75,7 +77,8 @@ void DatapackClientLoader::parseMonstersExtra()
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
                     {
-                        DatapackClientLoader::MonsterExtra monsterExtraEntry;
+                        QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
+                        QtDatapackClientLoader::QtMonsterExtra QtmonsterExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
@@ -206,38 +209,39 @@ void DatapackClientLoader::parseMonstersExtra()
                         if(monsterExtraEntry.description.empty())
                             monsterExtraEntry.description=tr("Unknown").toStdString();
                         monsterExtraEntry.frontPath=basepath+"/front.png";
-                        monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
-                        if(monsterExtraEntry.front.isNull())
+                        QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
+                        if(QtmonsterExtraEntry.front.isNull())
                         {
                             monsterExtraEntry.frontPath=basepath+"/front.gif";
-                            monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
-                            if(monsterExtraEntry.front.isNull())
+                            QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
+                            if(QtmonsterExtraEntry.front.isNull())
                             {
                                 monsterExtraEntry.frontPath=":/images/monsters/default/front.png";
-                                monsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
+                                QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             }
                         }
                         monsterExtraEntry.backPath=basepath+"/back.png";
-                        monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
-                        if(monsterExtraEntry.back.isNull())
+                        QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
+                        if(QtmonsterExtraEntry.back.isNull())
                         {
                             monsterExtraEntry.backPath=basepath+"/back.gif";
-                            monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
-                            if(monsterExtraEntry.back.isNull())
+                            QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
+                            if(QtmonsterExtraEntry.back.isNull())
                             {
                                 monsterExtraEntry.backPath=":/images/monsters/default/back.png";
-                                monsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
+                                QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             }
                         }
-                        monsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.png");
-                        if(monsterExtraEntry.thumb.isNull())
+                        QtmonsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.png");
+                        if(QtmonsterExtraEntry.thumb.isNull())
                         {
-                            monsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.gif");
-                            if(monsterExtraEntry.thumb.isNull())
-                                monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+                            QtmonsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.gif");
+                            if(QtmonsterExtraEntry.thumb.isNull())
+                                QtmonsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
                         }
-                        monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
-                        DatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
+                        QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
+                        QtDatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
+                        QtDatapackClientLoader::datapackLoader.QtmonsterExtra[id]=QtmonsterExtraEntry;
                     }
                 }
             }
@@ -253,128 +257,29 @@ void DatapackClientLoader::parseMonstersExtra()
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
     {
-        if(DatapackClientLoader::datapackLoader.monsterExtra.find(i->first)==
-                DatapackClientLoader::datapackLoader.monsterExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader.monsterExtra.find(i->first)==
+                QtDatapackClientLoader::datapackLoader.monsterExtra.cend())
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
-            DatapackClientLoader::MonsterExtra monsterExtraEntry;
+            QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
+            QtDatapackClientLoader::QtMonsterExtra QtmonsterExtraEntry;
             monsterExtraEntry.name=tr("Unknown").toStdString();
             monsterExtraEntry.description=tr("Unknown").toStdString();
-            monsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
-            monsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
-            monsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
-            monsterExtraEntry.thumb=monsterExtraEntry.thumb.scaled(64,64);
-            DatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
+            QtmonsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
+            QtmonsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
+            QtmonsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+            QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
+            QtDatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
+            QtDatapackClientLoader::datapackLoader.QtmonsterExtra[i->first]=QtmonsterExtraEntry;
         }
         ++i;
     }
 
-    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(DatapackClientLoader::datapackLoader.monsterExtra.size());
+    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.monsterExtra.size());
 }
 
-void DatapackClientLoader::parseTypesExtra()
-{
-    const std::string &file=datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml";
-    tinyxml2::XMLDocument *domDocument;
-    //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
-    else
-    {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        const auto loadOkay = domDocument->LoadFile(file.c_str());
-        if(loadOkay!=0)
-        {
-            std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
-            return;
-        }
-    }
-    const tinyxml2::XMLElement *root = domDocument->RootElement();
-    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"types")!=0)
-    {
-        qDebug() << QStringLiteral("Unable to open the file: %1, \"types\" root balise not found for the xml file").arg(QString::fromStdString(file));
-        return;
-    }
 
-    //load the content
-    {
-        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        std::unordered_set<std::string> duplicate;
-        const tinyxml2::XMLElement *typeItem = root->FirstChildElement("type");
-        while(typeItem!=NULL)
-        {
-            if(typeItem->Attribute("name")!=NULL)
-            {
-                std::string name=typeItem->Attribute("name");
-                if(duplicate.find(name)==duplicate.cend())
-                {
-                    TypeExtra type;
-
-                    duplicate.insert(name);
-                    if(typeItem->Attribute("color")!=NULL)
-                    {
-                        QColor color;
-                        color.setNamedColor(QString(typeItem->Attribute("color")));
-                        if(color.isValid())
-                            type.color=color;
-                        else
-                            qDebug() << (QStringLiteral("Unable to open the file: %1, color is not valid: child->Name(): %2")
-                                         .arg(QString::fromStdString(file)).arg(typeItem->Name()));
-                    }
-
-                    bool found=false;
-                    const tinyxml2::XMLElement *nameItem = typeItem->FirstChildElement("name");
-                    if(!language.empty() && language!="en")
-                        while(nameItem!=NULL)
-                        {
-                            if(nameItem->Attribute("lang")!=NULL && nameItem->Attribute("lang")==language && nameItem->GetText()!=NULL)
-                            {
-                                type.name=nameItem->GetText();
-                                found=true;
-                                break;
-                            }
-                            nameItem = nameItem->NextSiblingElement("name");
-                        }
-                    if(!found)
-                    {
-                        nameItem = typeItem->FirstChildElement("name");
-                        while(nameItem!=NULL)
-                        {
-                            if(nameItem->Attribute("lang")==NULL || strcmp(nameItem->Attribute("lang"),"en")==0)
-                                if(nameItem->GetText()!=NULL)
-                                {
-                                    type.name=nameItem->GetText();
-                                    break;
-                                }
-                            nameItem = nameItem->NextSiblingElement("name");
-                        }
-                    }
-                    if(DatapackClientLoader::datapackLoader.typeExtra.size()>255)
-                    {
-                        qDebug() << QStringLiteral("Unable to open the file: %1, DatapackClientLoader::datapackLoader.typeExtra.size()>255: child->Name(): %2")
-                                    .arg(QString::fromStdString(file)).arg(typeItem->Name());
-                        abort();
-                    }
-                    DatapackClientLoader::datapackLoader.typeExtra[
-                            static_cast<uint8_t>(DatapackClientLoader::datapackLoader.typeExtra.size())
-                            ]=type;
-                }
-                else
-                    qDebug() << QStringLiteral("Unable to open the file: %1, name is already set for type: child->Name(): %2")
-                                .arg(QString::fromStdString(file)).arg(typeItem->Name());
-            }
-            else
-                qDebug() << QStringLiteral("Unable to open the file: %1, have not the item id: child->Name(): %2")
-                            .arg(QString::fromStdString(file)).arg(typeItem->Name());
-            typeItem = typeItem->NextSiblingElement("type");
-        }
-    }
-
-    qDebug() << QStringLiteral("%1 type(s) extra loaded").arg(DatapackClientLoader::datapackLoader.typeExtra.size());
-}
-
-void DatapackClientLoader::parseBuffExtra()
+void QtDatapackClientLoader::parseBuffExtra()
 {
     QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_BUFF);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
@@ -440,7 +345,8 @@ void DatapackClientLoader::parseBuffExtra()
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
                     {
-                        DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+                        QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+                        QtDatapackClientLoader::QtMonsterExtra::QtBuff QtmonsterBuffExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
@@ -506,13 +412,14 @@ void DatapackClientLoader::parseBuffExtra()
                         const std::string pngFile=basePath+dotpng;
                         const std::string gifFile=basePath+dotgif;
                         if(QFile(QString::fromStdString(pngFile)).exists())
-                            monsterBuffExtraEntry.icon=QIcon(QString::fromStdString(pngFile));
+                            QtmonsterBuffExtraEntry.icon=QIcon(QString::fromStdString(pngFile));
                         else if(QFile(QString::fromStdString(gifFile)).exists())
-                            monsterBuffExtraEntry.icon=QIcon(QString::fromStdString(gifFile));
-                        const QList<QSize> &availableSizes=monsterBuffExtraEntry.icon.availableSizes();
-                        if(monsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
-                            monsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
-                        DatapackClientLoader::datapackLoader.monsterBuffsExtra[id]=monsterBuffExtraEntry;
+                            QtmonsterBuffExtraEntry.icon=QIcon(QString::fromStdString(gifFile));
+                        const QList<QSize> &availableSizes=QtmonsterBuffExtraEntry.icon.availableSizes();
+                        if(QtmonsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
+                            QtmonsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
+                        QtDatapackClientLoader::datapackLoader.monsterBuffsExtra[id]=monsterBuffExtraEntry;
+                        QtDatapackClientLoader::datapackLoader.QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
                     }
                 }
             }
@@ -528,334 +435,20 @@ void DatapackClientLoader::parseBuffExtra()
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
     {
-        if(DatapackClientLoader::datapackLoader.monsterBuffsExtra.find(i->first)==
-                DatapackClientLoader::datapackLoader.monsterBuffsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.find(i->first)==
+                QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.cend())
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
-            DatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+            QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
+            QtDatapackClientLoader::QtMonsterExtra::QtBuff QtmonsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
-            monsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
-            DatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
+            QtmonsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
+            QtDatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
+            QtDatapackClientLoader::datapackLoader.QtmonsterBuffsExtra[i->first]=QtmonsterBuffExtraEntry;
         }
         ++i;
     }
 
-    qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(DatapackClientLoader::datapackLoader.monsterBuffsExtra.size());
-}
-
-void DatapackClientLoader::parseSkillsExtra()
-{
-    QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_SKILL);
-    QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    int file_index=0;
-    while(file_index<fileList.size())
-    {
-        if(!fileList.at(file_index).isFile())
-        {
-            file_index++;
-            continue;
-        }
-        const std::string &file=fileList.at(file_index).absoluteFilePath().toStdString();
-        if(!stringEndsWith(file,".xml"))
-        {
-            file_index++;
-            continue;
-        }
-        //open and quick check the file
-        tinyxml2::XMLDocument *domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
-        else
-        {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
-            if(loadOkay!=0)
-            {
-                std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
-                file_index++;
-                continue;
-            }
-        }
-        const tinyxml2::XMLElement *root = domDocument->RootElement();
-        if(root==NULL)
-        {
-            qDebug() << (QStringLiteral("Unable to open the xml root: %1, \"skills\" root balise not found for the xml file")
-                         .arg(QString::fromStdString(file)));
-            file_index++;
-            continue;
-        }
-        if(root->Name()!=DatapackClientLoader::text_skills)
-        {
-            qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"skills\" root balise not found for the xml file")
-                         .arg(QString::fromStdString(file)));
-            file_index++;
-            continue;
-        }
-
-        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-        bool found;
-        //load the content
-        bool ok;
-        const tinyxml2::XMLElement *item = root->FirstChildElement("skill");
-        while(item!=NULL)
-        {
-            if(item->Attribute("id"))
-            {
-                const uint32_t tempid=stringtouint16(item->Attribute("id"),&ok);
-                if(!ok || tempid>65535)
-                    qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not a number: child->Name(): %2")
-                                 .arg(QString::fromStdString(file)).arg(item->Name()));
-                else
-                {
-                    const uint16_t &id=static_cast<uint16_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-                    {}
-                    else
-                    {
-                        DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
-                        #ifdef DEBUG_MESSAGE_MONSTER_LOAD
-                        qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
-                        #endif
-                        found=false;
-                        const tinyxml2::XMLElement *name = item->FirstChildElement("name");
-                        if(!language.empty() && language!="en")
-                            while(name!=NULL)
-                            {
-                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
-                                {
-                                    monsterSkillExtraEntry.name=name->GetText();
-                                    found=true;
-                                    break;
-                                }
-                                name = name->NextSiblingElement("name");
-                            }
-                        if(!found)
-                        {
-                            name = item->FirstChildElement("name");
-                            while(name!=NULL)
-                            {
-                                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
-                                    if(name->GetText()!=NULL)
-                                    {
-                                        monsterSkillExtraEntry.name=name->GetText();
-                                        break;
-                                    }
-                                name = name->NextSiblingElement("name");
-                            }
-                        }
-                        found=false;
-                        const tinyxml2::XMLElement *description = item->FirstChildElement("description");
-                        if(!language.empty() && language!="en")
-                            while(description!=NULL)
-                            {
-                                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
-                                {
-                                    monsterSkillExtraEntry.description=description->GetText();
-                                    found=true;
-                                    break;
-                                }
-                                description = description->NextSiblingElement("description");
-                            }
-                        if(!found)
-                        {
-                            description = item->FirstChildElement("description");
-                            while(description!=NULL)
-                            {
-                                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
-                                    if(description->GetText()!=NULL)
-                                    {
-                                        monsterSkillExtraEntry.description=description->GetText();
-                                        break;
-                                    }
-                                description = description->NextSiblingElement("description");
-                            }
-                        }
-                        if(monsterSkillExtraEntry.name.empty())
-                            monsterSkillExtraEntry.name=tr("Unknown").toStdString();
-                        if(monsterSkillExtraEntry.description.empty())
-                            monsterSkillExtraEntry.description=tr("Unknown").toStdString();
-                        monsterSkillsExtra[id]=monsterSkillExtraEntry;
-                    }
-                }
-            }
-            else
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, have not the skill id: child->Name(): %2")
-                             .arg(QString::fromStdString(file)).arg(item->Name()));
-            item = item->NextSiblingElement("skill");
-        }
-
-        file_index++;
-    }
-
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-    {
-        if(monsterSkillsExtra.find(i->first)==monsterSkillsExtra.cend())
-        {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster skill extra for id: %1").arg(i->first));
-            DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
-            monsterSkillExtraEntry.name=tr("Unknown").toStdString();
-            monsterSkillExtraEntry.description=tr("Unknown").toStdString();
-            monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
-        }
-        ++i;
-    }
-
-    qDebug() << QStringLiteral("%1 skill(s) extra loaded").arg(monsterSkillsExtra.size());
-}
-
-void DatapackClientLoader::parseBotFightsExtra()
-{
-    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-    bool found;
-    QDir dir(QString::fromStdString(datapackPath)+
-             DATAPACK_BASE_PATH_FIGHT1+
-             QString::fromStdString(mainDatapackCode)+
-             DATAPACK_BASE_PATH_FIGHT2);
-    QFileInfoList list=dir.entryInfoList(QStringList(),QDir::NoDotAndDotDot|QDir::Files);
-    int file_index=0;
-    while(file_index<list.size())
-    {
-        if(list.at(file_index).isFile())
-        {
-            const std::string &file=list.at(file_index).absoluteFilePath().toStdString();
-            tinyxml2::XMLDocument *domDocument;
-            //open and quick check the file
-            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
-            else
-            {
-                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
-                const auto loadOkay = domDocument->LoadFile(file.c_str());
-                if(loadOkay!=0)
-                {
-                    std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
-                    file_index++;
-                    continue;
-                }
-            }
-            const tinyxml2::XMLElement *root = domDocument->RootElement();
-            if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"fights")!=0)
-            {
-                qDebug() << (QStringLiteral("Unable to open the xml file: %1, \"fights\" root balise not found for the xml file: %2!=%3")
-                             .arg(QString::fromStdString(file))
-                             .arg(root->Name())
-                             .arg("fights"));
-                file_index++;
-                continue;
-            }
-
-            //load the content
-            bool ok;
-            const tinyxml2::XMLElement *item = root->FirstChildElement("fight");
-            while(item!=NULL)
-            {
-                if(item->Attribute("id"))
-                {
-                    const uint32_t tempid=stringtouint16(item->Attribute("id"),&ok);
-                    if(ok && tempid<65535)
-                    {
-                        const uint16_t id=static_cast<uint16_t>(tempid);
-                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=
-                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
-                        {
-                            if(botFightsExtra.find(id)==botFightsExtra.cend())
-                            {
-                                BotFightExtra botFightExtra;
-                                botFightExtra.start=tr("Ready for the fight?").toStdString();
-                                botFightExtra.win=tr("You are so strong for me!").toStdString();
-                                {
-                                    found=false;
-                                    const tinyxml2::XMLElement *start = item->FirstChildElement("start");
-                                    if(!language.empty() && language!="en")
-                                        while(start!=NULL)
-                                        {
-                                            if(start->Attribute("lang")!=NULL && start->Attribute("lang")==language && start->GetText()!=NULL)
-                                            {
-                                                botFightExtra.start=start->GetText();
-                                                found=true;
-                                                break;
-                                            }
-                                            start = start->NextSiblingElement("start");
-                                        }
-                                    if(!found)
-                                    {
-                                        start = item->FirstChildElement("start");
-                                        while(start!=NULL)
-                                        {
-                                            if(start->Attribute("lang")==NULL || strcmp(start->Attribute("lang"),"en")==0)
-                                                if(start->GetText()!=NULL)
-                                                {
-                                                    botFightExtra.start=start->GetText();
-                                                    break;
-                                                }
-                                            start = start->NextSiblingElement("start");
-                                        }
-                                    }
-                                    found=false;
-                                    const tinyxml2::XMLElement *win = item->FirstChildElement("win");
-                                    if(!language.empty() && language!="en")
-                                        while(win!=NULL)
-                                        {
-                                            if(win->Attribute("lang") && win->Attribute("lang")==language && win->GetText()!=NULL)
-                                            {
-                                                botFightExtra.win=win->GetText();
-                                                found=true;
-                                                break;
-                                            }
-                                            win = win->NextSiblingElement("win");
-                                        }
-                                    if(!found)
-                                    {
-                                        win = item->FirstChildElement("win");
-                                        while(win!=NULL)
-                                        {
-                                            if(win->Attribute("lang")==NULL || strcmp(win->Attribute("lang"),"en")==0)
-                                                if(win->GetText()!=NULL)
-                                                {
-                                                    botFightExtra.win=win->GetText();
-                                                    break;
-                                                }
-                                            win = win->NextSiblingElement("win");
-                                        }
-                                    }
-                                }
-                                botFightsExtra[id]=botFightExtra;
-                            }
-                            else
-                                qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is already into the botFight extra, child->Name(): %2")
-                                             .arg(QString::fromStdString(file)).arg(item->Name()));
-                        }
-                        else
-                            qDebug() << (QStringLiteral("Unable to open the xml file: %1, bot fights have not the id %3, child->Name(): %2")
-                                         .arg(QString::fromStdString(file)).arg(item->Name()).arg(id));
-                    }
-                    else
-                        qDebug() << (QStringLiteral("Unable to open the xml file: %1, id is not a number to parse bot fight extra, child->Name(): %2")
-                                     .arg(QString::fromStdString(file)).arg(item->Name()));
-                }
-                item = item->NextSiblingElement("fight");
-            }
-            file_index++;
-        }
-    }
-
-    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.begin();
-    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
-    {
-        if(botFightsExtra.find(i->first)==botFightsExtra.cend())
-        {
-            qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into bot fight extra for id: %1").arg(i->first));
-            BotFightExtra botFightExtra;
-            botFightExtra.start=tr("Ready for the fight?").toStdString();
-            botFightExtra.win=tr("You are so strong for me!").toStdString();
-            botFightsExtra[i->first]=botFightExtra;
-        }
-        ++i;
-    }
-
-    qDebug() << QStringLiteral("%1 fight extra(s) loaded").arg(botFightsExtra.size());
+    qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.size());
 }

@@ -54,6 +54,21 @@ void EpollClient::close()
     }
 }
 
+void EpollClient::closeSocket()
+{
+    close();
+}
+
+bool EpollClient::socketIsOpen()
+{
+    return infd!=-1;
+}
+
+bool EpollClient::socketIsClosed()
+{
+    return !socketIsOpen();
+}
+
 ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
 {
     //std::cerr << "EpollClient::read infd: " << infd << std::endl;

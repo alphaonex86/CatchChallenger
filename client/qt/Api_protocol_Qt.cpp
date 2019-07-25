@@ -1,13 +1,22 @@
 #include "Api_protocol_Qt.h"
+#include "LanguagesSelect.h"
+#ifndef NOTCPSOCKET
+#include "SslCert.h"
+#include <QSslKey>
+#endif
 #include <iostream>
+#include <cstring>
+#include <QCoreApplication>
+#include <QDir>
+#include <QStandardPaths>
 
 using namespace CatchChallenger;
 
-Api_protocol_Qt::Api_protocol_Qt()
+Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
 {
     //register meta type
     #ifndef EPOLLCATCHCHALLENGERSERVER
-        qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol::tradeAddTradeMonster()
+        qRegisterMetaType<CatchChallenger::PlayerMonster >("CatchChallenger::PlayerMonster");//for Api_protocol_Qt::tradeAddTradeMonster()
         qRegisterMetaType<PublicPlayerMonster >("PublicPlayerMonster");//for battleAcceptedByOther(stat,publicPlayerMonster);
         qRegisterMetaType<std::vector<uint8_t> >("std::vector<uint8_t>");//for battleAcceptedByOther(stat,publicPlayerMonster);
         qRegisterMetaType<std::vector<Skill::AttackReturn> >("std::vector<Skill::AttackReturn>");//for battleAcceptedByOther(stat,publicPlayerMonster);
@@ -22,12 +31,13 @@ Api_protocol_Qt::Api_protocol_Qt()
         #endif
     #endif
 
-    if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol::QtsocketDestroyed))
+    this->socket=socket;
+    if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol_Qt::QtsocketDestroyed))
         abort();
     #ifndef NOTCPSOCKET
     if(socket->sslSocket!=NULL)
     {
-        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
             abort();
         if(socket->bytesAvailable())
             readForFirstHeader();
@@ -37,7 +47,7 @@ Api_protocol_Qt::Api_protocol_Qt()
     #ifndef NOWEBSOCKET
     if(socket->webSocket!=NULL)
     {
-        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::readForFirstHeader))
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
             abort();
         if(socket->bytesAvailable())
             readForFirstHeader();
@@ -49,18 +59,29 @@ Api_protocol_Qt::Api_protocol_Qt()
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
         #endif
-        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
             abort();
         if(socket->bytesAvailable())
             parseIncommingData();
     }
 }
 
+void Api_protocol_Qt::parseIncommingData()
+{
+    Api_protocol::parseIncommingData();
+}
+
 bool Api_protocol_Qt::disconnectClient()
 {
     if(socket!=NULL)
         socket->disconnect();
-    Api_protocol::disconnectClient();
+    return Api_protocol::disconnectClient();
+}
+
+void Api_protocol_Qt::tryDisconnect()
+{
+    if(socket!=NULL)
+        socket->disconnectFromHost();
 }
 
 void Api_protocol_Qt::disconnectFromHost()
@@ -80,22 +101,11 @@ void Api_protocol_Qt::socketDestroyed()
     Api_protocol::socketDestroyed();
 }
 
-void Api_protocol_Qt::resetAll()
-{
-    Api_protocol::resetAll();
-    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
-    #ifdef Q_OS_ANDROID
-    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/datapack/";
-    #endif
-    mDatapackMain=mDatapackBase+"map/main/[main]/";
-    mDatapackSub=mDatapackMain+"sub/[sub]/";
-}
-
 void Api_protocol_Qt::hashSha224(const char * const data,const int size,char *buffer)
 {
-    QCryptographicHash hashLogin(QCryptographicHash::Sha224);
-    hashLogin.addData(data,size);
-    mempcy(buffer,hashAndToken.result(),CATCHCHALLENGER_SHA224HASH_SIZE);
+    QCryptographicHash hash(QCryptographicHash::Sha224);
+    hash.addData(data,size);
+    memcpy(buffer,hash.result(),CATCHCHALLENGER_SHA224HASH_SIZE);
 }
 
 void Api_protocol_Qt::connectTheExternalSocketInternal()
@@ -105,7 +115,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
     {
         if(socket->peerName().isEmpty() || socket->sslSocket->state()!=QSslSocket::SocketState::ConnectedState)
         {
-            newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+
+            newError(std::string("Internal problem"),std::string("Api_protocol_Qt::connectTheExternalSocket() socket->sslSocket->peerAddress()==QHostAddress::Null: ")+
                      socket->peerName().toStdString()+"-"+std::to_string(socket->peerPort())+
                      ", state: "+std::to_string(socket->sslSocket->state())
                      );
@@ -122,7 +132,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
             {
                 if(selectedServerIndex==-1)
                 {
-                    parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() selectedServerIndex==-1"));
+                    parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol_Qt::connectTheExternalSocket() selectedServerIndex==-1"));
                     return;
                 }
                 const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
@@ -134,7 +144,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
             }
             else
             {
-                parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
+                parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("Api_protocol_Qt::connectTheExternalSocket() stageConnexion!=StageConnexion::Stage1/3"));
                 return;
             }
             if(certFile.exists())
@@ -182,15 +192,15 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
     }
     /*else
     {
-        newError(std::string("Internal problem"),std::string("Api_protocol::connectTheExternalSocket() socket->sslSocket==NULL"));
+        newError(std::string("Internal problem"),std::string("Api_protocol_Qt::connectTheExternalSocket() socket->sslSocket==NULL"));
         return;
     }*/
     #endif
     //continue the normal procedure
-    void Api_protocol::connectTheExternalSocketInternal();
+    Api_protocol::connectTheExternalSocketInternal();
 
     if(stageConnexion==StageConnexion::Stage1)
-        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
+        if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
             abort();
     if(socket->bytesAvailable())
         parseIncommingData();
@@ -225,17 +235,17 @@ void Api_protocol_Qt::saveCert(const std::string &file)
 
 void Api_protocol_Qt::useSeed(const uint8_t &plant_id)
 {
-    Api_protocol::useSeed(plant_id);
+    Api_protocol_Qt::useSeed(plant_id);
 }
 
 void Api_protocol_Qt::collectMaturePlant()
 {
-    Api_protocol::collectMaturePlant();
+    Api_protocol_Qt::collectMaturePlant();
 }
 
 void Api_protocol_Qt::destroyObject(const uint16_t &object,const uint32_t &quantity)
 {
-    Api_protocol::destroyObject(object,quantity);
+    Api_protocol_Qt::destroyObject(object,quantity);
 }
 
 void Api_protocol_Qt::readForFirstHeader()
@@ -245,40 +255,40 @@ void Api_protocol_Qt::readForFirstHeader()
     #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
     if(socket->sslSocket==NULL && socket->webSocket==NULL)
     {
-        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+        newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
     #else
         #ifndef NOTCPSOCKET
         if(socket->sslSocket==NULL)
         {
-            newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+            newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
             return;
         }
         #endif
         #ifndef NOWEBSOCKET
         if(socket->webSocket==NULL)
         {
-            newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() socket->sslSocket==NULL"));
+            newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
             return;
         }
         #endif
     #endif
     if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
-        newError(std::string("Internal problem"),std::string("Api_protocol::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
+        newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));
         return;
     }
     if(stageConnexion==StageConnexion::Stage2)
     {
-        message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        message("stageConnexion=CatchChallenger::Api_protocol_Qt::StageConnexion::Stage3 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         stageConnexion=StageConnexion::Stage3;
     }
     {
         #ifndef NOTCPSOCKET
         if(socket->sslSocket!=NULL && socket->sslSocket->mode()!=QSslSocket::UnencryptedMode)
         {
-            newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+            newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
             return;
         }
         #endif
@@ -294,19 +304,24 @@ void Api_protocol_Qt::readForFirstHeader()
                     socket->sslSocket->setPeerVerifyMode(QSslSocket::VerifyNone);
                     socket->sslSocket->ignoreSslErrors();
                     socket->sslSocket->startClientEncryption();
-                    if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol::sslHandcheckIsFinished))
+                    if(!QObject::connect(socket->sslSocket,&QSslSocket::encrypted,this,&Api_protocol_Qt::sslHandcheckIsFinished))
                         abort();
                 }
                 else
-                    newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+                    newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
                 #else
-                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol::readForFirstHeader()"));
+                newError(std::string("Internal problem"),std::string("socket->sslSocket->mode()!=QSslSocket::UnencryptedMode into Api_protocol_Qt::readForFirstHeader()"));
                 #endif
             }
             else
                 connectTheExternalSocketInternal();
         }
     }
+}
+
+void Api_protocol_Qt::sslHandcheckIsFinished()
+{
+     Api_protocol::sslHandcheckIsFinished();
 }
 
 void Api_protocol_Qt::resetAll()
@@ -320,6 +335,12 @@ void Api_protocol_Qt::resetAll()
         haveFirstHeader=true;
     else
     #endif
+    mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+    #ifdef Q_OS_ANDROID
+    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/datapack/";
+    #endif
+    mDatapackMain=mDatapackBase+"map/main/[main]/";
+    mDatapackSub=mDatapackMain+"sub/[sub]/";
     Api_protocol::resetAll();
 }
 
@@ -331,15 +352,16 @@ bool Api_protocol_Qt::tryLogin(const std::string &login, const std::string &pass
         newError(QObject::tr("Hostname too big").toStdString(),std::string("Hostname too big"));
         return false;
     }
-    return Api_protocol::tryLogin(login,pass);
+    return Api_protocol_Qt::tryLogin(login,pass);
 }
 
 std::string Api_protocol_Qt::socketDisconnectedForReconnect()
 {
-    std::string returnVar=Api_protocol::socketDisconnectedForReconnect();
+    std::string returnVar=Api_protocol_Qt::socketDisconnectedForReconnect();
+    const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
     if(socket==NULL)
     {
-        parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("socket==NULL with Api_protocol::socketDisconnectedForReconnect()"));
+        parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("socket==NULL with Api_protocol_Qt::socketDisconnectedForReconnect()"));
         return serverFromPoolForDisplay.host+":"+std::to_string(serverFromPoolForDisplay.port);
     }
     socket->connectToHost(QString::fromStdString(serverFromPoolForDisplay.host),serverFromPoolForDisplay.port);
@@ -348,7 +370,7 @@ std::string Api_protocol_Qt::socketDisconnectedForReconnect()
 
 void Api_protocol_Qt::send_player_direction(const CatchChallenger::Direction &the_direction)
 {
-    Api_protocol::send_player_direction(the_direction);
+    Api_protocol_Qt::send_player_direction(the_direction);
 }
 
 void Api_protocol_Qt::newError(const std::string &error,const std::string &detailedError)
@@ -755,12 +777,12 @@ void Api_protocol_Qt::marketWithdrawMonster(const PlayerMonster &playerMonster)
 
 std::string Api_protocol_Qt::getLanguage() const
 {
-                #ifndef BOTTESTCONNECT
-            if(LanguagesSelect::languagesSelect==NULL)
-                language="en";
-            else
-                language=LanguagesSelect::languagesSelect->getCurrentLanguages();
-            #else
-            language="en";
-            #endif
+    #ifndef BOTTESTCONNECT
+    if(LanguagesSelect::languagesSelect==NULL)
+        return "en";
+    else
+        return LanguagesSelect::languagesSelect->getCurrentLanguages();
+    #else
+    return "en";
+    #endif
 }

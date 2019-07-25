@@ -14,6 +14,19 @@ public:
     explicit Api_protocol_Qt(ConnectedSocket *socket);
     bool disconnectClient();
 
+    void QtsocketDestroyed();
+    void socketDestroyed();
+    void resetAll();
+    void disconnectFromHost();
+    void connectTheExternalSocketInternal();
+    bool tryLogin(const std::string &login, const std::string &pass);
+    std::string socketDisconnectedForReconnect();
+    void parseIncommingData();
+    void sslHandcheckIsFinished();
+#ifndef NOTCPSOCKET
+protected:
+    void saveCert(const std::string &file);
+#endif
 public:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void newError(const std::string &error,const std::string &detailedError);
@@ -282,6 +295,8 @@ signals:
 
 public:
     std::string getLanguage() const;
+protected:
+    ConnectedSocket *socket;
 };
 }
 

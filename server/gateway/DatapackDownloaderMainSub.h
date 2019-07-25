@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_DatapackDownloaderMainSub_H
 
 #include "../../general/base/GeneralVariable.h"
-#include "../../client/base/DatapackChecksum.h"
+#include "../../client/libcatchchallenger/DatapackChecksum.h"
 
 #include <string>
 #include <string>

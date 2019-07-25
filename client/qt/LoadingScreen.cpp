@@ -13,7 +13,7 @@ LoadingScreen::~LoadingScreen()
     delete ui;
 }
 
-void LoadingScreen::resizeEvent(QResizeEvent *event)
+void LoadingScreen::resizeEvent(QResizeEvent *)
 {
     if(width()<600)
         ui->teacher->setVisible(false);

@@ -1,11 +1,11 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
-#include "../base/InternetUpdater.h"
-#include "../base/BlacklistPassword.h"
+#include "../qt/InternetUpdater.h"
+#include "../qt/BlacklistPassword.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "../base/Ultimate.h"
+#include "../qt/Ultimate.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
 #include <QCoreApplication>
@@ -19,8 +19,8 @@
 
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/Version.h"
-#include "../base/PlatformMacro.h"
-#include "../base/ClientVariable.h"
+#include "../qt/PlatformMacro.h"
+#include "../qt/ClientVariable.h"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -36,14 +36,14 @@
 #include <netinet/tcp.h>
 #endif
 
-#include "../base/render/MapVisualiserPlayer.h"
+#include "../qt/render/MapVisualiserPlayer.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/CommonSettingsCommon.h"
-#include "../base/LanguagesSelect.h"
-#include "../base/Api_client_real.h"
-#include "../base/Api_client_virtual.h"
-#include "../base/SslCert.h"
+#include "../qt/LanguagesSelect.h"
+#include "../qt/Api_client_real.h"
+#include "../qt/Api_client_virtual.h"
+#include "../qt/SslCert.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1087,7 +1087,7 @@ void MainWindow::resetAll()
     if(client!=NULL)
     {
         client->resetAll();
-        client->deleteLater();
+        //client->deleteLater();
         client=NULL;
     }
     if(completer!=NULL)

@@ -412,7 +412,7 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
     if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        item->setIcon(QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId).image);
+        item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(itemId).image);
         if(item->data(97).toUInt()==0)
             item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
                 QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()));

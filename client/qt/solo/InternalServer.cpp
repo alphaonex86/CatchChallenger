@@ -7,6 +7,7 @@
 #include <QSqlError>
 #include <QDir>
 #include <QString>
+#include <QDateTime>
 
 #include "InternalServer.h"
 #include "../../../server/base/GlobalServerData.h"

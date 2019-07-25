@@ -10,11 +10,11 @@ bool Client::sendRawBlock(const char * const data,const unsigned int &size)
     if(!ProtocolParsingBase::internalSendRawSmallPacket(data,size))
         return false;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(!socket->isValid())
+    /*if(!socket->isValid())
     {
         errorOutput("device is not valid at sendPacket(mainCodeType)");
         return false;
-    }
+    }*/
     #endif
     return true;
 }

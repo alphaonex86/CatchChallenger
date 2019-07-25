@@ -6,8 +6,8 @@
 #include "../../../server/base/Client.h"
 #include "../../../general/base/Map_loader.h"
 #include "../../../general/base/ProtocolParsing.h"
-#include "../../../general/base/QFakeServer.h"
-#include "../../../general/base/QFakeSocket.h"
+#include "../QFakeServer.h"
+#include "../QFakeSocket.h"
 #include "../../../server/base/MapServer.h"
 #include "../../../server/base/QtServer.h"
 

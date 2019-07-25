@@ -91,8 +91,9 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     parseAudioAmbiance();
     parseReputationExtra();
     #endif
-    inProgress=false;
-    emitdatapackParsed();
+    /*do into child class
+     * inProgress=false;
+    emitdatapackParsed();*/
 }
 
 void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
@@ -1472,4 +1473,413 @@ void DatapackClientLoader::parseZoneExtra()
     }
 
     std::cout << std::to_string(zonesExtra.size()) << " zone(s) extra loaded" << std::endl;
+}
+
+void DatapackClientLoader::parseSkillsExtra()
+{
+    //open and quick check the file
+    std::string temp=datapackPath+DATAPACK_BASE_PATH_SKILL;
+    stringreplaceAll(temp,"\\\\","\\");
+    stringreplaceAll(temp,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    unsigned int file_index=0;
+    while(file_index<returnList.size())
+    {
+        const std::string &file=returnList.at(file_index);
+        if(!CatchChallenger::FacilityLibGeneral::isFile(file))
+        {
+            file_index++;
+            continue;
+        }
+        if(!stringEndsWith(file,".xml"))
+        {
+            file_index++;
+            continue;
+        }
+        //open and quick check the file
+        tinyxml2::XMLDocument *domDocument;
+        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        else
+        {
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            const auto loadOkay = domDocument->LoadFile(file.c_str());
+            if(loadOkay!=0)
+            {
+                std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
+                file_index++;
+                continue;
+            }
+        }
+        const tinyxml2::XMLElement *root = domDocument->RootElement();
+        if(root==NULL)
+        {
+            std::cerr << "\"skills\" root balise not found for the xml file: " << file << std::endl;
+            file_index++;
+            continue;
+        }
+        if(strcmp(root->Name(),"skills")!=0)
+        {
+            std::cerr << "Unable to open the xml file: %1, \"skills\" root balise not found for the xml file" << file << std::endl;
+            file_index++;
+            continue;
+        }
+
+        const std::string &language=getLanguage();
+        bool found;
+        //load the content
+        bool ok;
+        const tinyxml2::XMLElement *item = root->FirstChildElement("skill");
+        while(item!=NULL)
+        {
+            if(item->Attribute("id"))
+            {
+                const uint32_t tempid=stringtouint16(item->Attribute("id"),&ok);
+                if(!ok || tempid>65535)
+                    std::cerr << "id not a number: child->Name(): " << file << std::endl;
+                else
+                {
+                    const uint16_t &id=static_cast<uint16_t>(tempid);
+                    if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                    {}
+                    else
+                    {
+                        DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
+                        #ifdef DEBUG_MESSAGE_MONSTER_LOAD
+                        std::cerr << (QStringLiteral("monster extra loading: %1").arg(id)) << std::endl;
+                        #endif
+                        found=false;
+                        const tinyxml2::XMLElement *name = item->FirstChildElement("name");
+                        if(!language.empty() && language!="en")
+                            while(name!=NULL)
+                            {
+                                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
+                                {
+                                    monsterSkillExtraEntry.name=name->GetText();
+                                    found=true;
+                                    break;
+                                }
+                                name = name->NextSiblingElement("name");
+                            }
+                        if(!found)
+                        {
+                            name = item->FirstChildElement("name");
+                            while(name!=NULL)
+                            {
+                                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                                    if(name->GetText()!=NULL)
+                                    {
+                                        monsterSkillExtraEntry.name=name->GetText();
+                                        break;
+                                    }
+                                name = name->NextSiblingElement("name");
+                            }
+                        }
+                        found=false;
+                        const tinyxml2::XMLElement *description = item->FirstChildElement("description");
+                        if(!language.empty() && language!="en")
+                            while(description!=NULL)
+                            {
+                                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
+                                {
+                                    monsterSkillExtraEntry.description=description->GetText();
+                                    found=true;
+                                    break;
+                                }
+                                description = description->NextSiblingElement("description");
+                            }
+                        if(!found)
+                        {
+                            description = item->FirstChildElement("description");
+                            while(description!=NULL)
+                            {
+                                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
+                                    if(description->GetText()!=NULL)
+                                    {
+                                        monsterSkillExtraEntry.description=description->GetText();
+                                        break;
+                                    }
+                                description = description->NextSiblingElement("description");
+                            }
+                        }
+                        if(monsterSkillExtraEntry.name.empty())
+                            monsterSkillExtraEntry.name="Unknown";
+                        if(monsterSkillExtraEntry.description.empty())
+                            monsterSkillExtraEntry.description="Unknown";
+                        monsterSkillsExtra[id]=monsterSkillExtraEntry;
+                    }
+                }
+            }
+            else
+                std::cerr << "have not the skill id: child->Name(): " << file << std::endl;
+            item = item->NextSiblingElement("skill");
+        }
+
+        file_index++;
+    }
+
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+    {
+        if(monsterSkillsExtra.find(i->first)==monsterSkillsExtra.cend())
+        {
+            std::cerr << "Strange, have entry into monster list, but not into monster skill extra for id: " << i->first << std::endl;
+            DatapackClientLoader::MonsterExtra::Skill monsterSkillExtraEntry;
+            monsterSkillExtraEntry.name="Unknown";
+            monsterSkillExtraEntry.description="Unknown";
+            monsterSkillsExtra[i->first]=monsterSkillExtraEntry;
+        }
+        ++i;
+    }
+
+    std::cerr << std::to_string(monsterSkillsExtra.size()) << " skill(s) extra loaded" << std::endl;
+}
+
+void DatapackClientLoader::parseTypesExtra()
+{
+    const std::string &file=datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml";
+    tinyxml2::XMLDocument *domDocument;
+    //open and quick check the file
+    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+    else
+    {
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
+        {
+            std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
+            return;
+        }
+    }
+    const tinyxml2::XMLElement *root = domDocument->RootElement();
+    if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"types")!=0)
+    {
+        std::cerr << "\"types\" root balise not found for the xml file" << file << std::endl;
+        return;
+    }
+
+    //load the content
+    {
+        const std::string &language=getLanguage();
+        std::unordered_set<std::string> duplicate;
+        const tinyxml2::XMLElement *typeItem = root->FirstChildElement("type");
+        while(typeItem!=NULL)
+        {
+            if(typeItem->Attribute("name")!=NULL)
+            {
+                std::string name=typeItem->Attribute("name");
+                if(duplicate.find(name)==duplicate.cend())
+                {
+                    TypeExtra type;
+
+                    duplicate.insert(name);
+                    if(typeItem->Attribute("color")!=NULL)
+                    {
+                        bool ok=false;
+                        CCColor c=namedColorToCCColor(typeItem->Attribute("color"),&ok);
+                        if(ok)
+                            type.color=c;
+                        else
+                            std::cerr << "color is not valid: " << file << std::endl;
+                    }
+
+                    bool found=false;
+                    const tinyxml2::XMLElement *nameItem = typeItem->FirstChildElement("name");
+                    if(!language.empty() && language!="en")
+                        while(nameItem!=NULL)
+                        {
+                            if(nameItem->Attribute("lang")!=NULL && nameItem->Attribute("lang")==language && nameItem->GetText()!=NULL)
+                            {
+                                type.name=nameItem->GetText();
+                                found=true;
+                                break;
+                            }
+                            nameItem = nameItem->NextSiblingElement("name");
+                        }
+                    if(!found)
+                    {
+                        nameItem = typeItem->FirstChildElement("name");
+                        while(nameItem!=NULL)
+                        {
+                            if(nameItem->Attribute("lang")==NULL || strcmp(nameItem->Attribute("lang"),"en")==0)
+                                if(nameItem->GetText()!=NULL)
+                                {
+                                    type.name=nameItem->GetText();
+                                    break;
+                                }
+                            nameItem = nameItem->NextSiblingElement("name");
+                        }
+                    }
+                    if(typeExtra.size()>255)
+                    {
+                        std::cerr << "QtDatapackClientLoader::datapackLoader.typeExtra.size()>255" << std::endl;
+                        abort();
+                    }
+                    typeExtra[static_cast<uint8_t>(typeExtra.size())]=type;
+                }
+                else
+                    std::cerr << "name is already set for type: " << file << std::endl;
+            }
+            else
+                std::cerr << "have not the item id: " << file << std::endl;
+            typeItem = typeItem->NextSiblingElement("type");
+        }
+    }
+
+    std::cerr << std::to_string(typeExtra.size()) << " type(s) extra loaded" << std::endl;
+}
+void DatapackClientLoader::parseBotFightsExtra()
+{
+    const std::string &language=getLanguage();
+    bool found;
+
+    std::string temp=datapackPath+
+            DATAPACK_BASE_PATH_FIGHT1+
+            mainDatapackCode+
+            DATAPACK_BASE_PATH_FIGHT2;
+    stringreplaceAll(temp,"\\\\","\\");
+    stringreplaceAll(temp,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    unsigned int file_index=0;
+    while(file_index<returnList.size())
+    {
+        const std::string &file=returnList.at(file_index);
+        if(CatchChallenger::FacilityLibGeneral::isFile(file))
+        {
+            const std::string &file=returnList.at(file_index);
+            tinyxml2::XMLDocument *domDocument;
+            //open and quick check the file
+            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            else
+            {
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+                const auto loadOkay = domDocument->LoadFile(file.c_str());
+                if(loadOkay!=0)
+                {
+                    std::cerr << file << ", " << tinyxml2errordoc(domDocument) << std::endl;
+                    file_index++;
+                    continue;
+                }
+            }
+            const tinyxml2::XMLElement *root = domDocument->RootElement();
+            if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"fights")!=0)
+            {
+                std::cerr << "\"fights\" root balise not found for the xml file: "
+                          << file << ", " << root->Name() << "!=" << "fights" << std::endl;
+                file_index++;
+                continue;
+            }
+
+            //load the content
+            bool ok;
+            const tinyxml2::XMLElement *item = root->FirstChildElement("fight");
+            while(item!=NULL)
+            {
+                if(item->Attribute("id"))
+                {
+                    const uint32_t tempid=stringtouint16(item->Attribute("id"),&ok);
+                    if(ok && tempid<65535)
+                    {
+                        const uint16_t id=static_cast<uint16_t>(tempid);
+                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=
+                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                        {
+                            if(botFightsExtra.find(id)==botFightsExtra.cend())
+                            {
+                                BotFightExtra botFightExtra;
+                                botFightExtra.start="Ready for the fight?";
+                                botFightExtra.win="You are so strong for me!";
+                                {
+                                    found=false;
+                                    const tinyxml2::XMLElement *start = item->FirstChildElement("start");
+                                    if(!language.empty() && language!="en")
+                                        while(start!=NULL)
+                                        {
+                                            if(start->Attribute("lang")!=NULL && start->Attribute("lang")==language && start->GetText()!=NULL)
+                                            {
+                                                botFightExtra.start=start->GetText();
+                                                found=true;
+                                                break;
+                                            }
+                                            start = start->NextSiblingElement("start");
+                                        }
+                                    if(!found)
+                                    {
+                                        start = item->FirstChildElement("start");
+                                        while(start!=NULL)
+                                        {
+                                            if(start->Attribute("lang")==NULL || strcmp(start->Attribute("lang"),"en")==0)
+                                                if(start->GetText()!=NULL)
+                                                {
+                                                    botFightExtra.start=start->GetText();
+                                                    break;
+                                                }
+                                            start = start->NextSiblingElement("start");
+                                        }
+                                    }
+                                    found=false;
+                                    const tinyxml2::XMLElement *win = item->FirstChildElement("win");
+                                    if(!language.empty() && language!="en")
+                                        while(win!=NULL)
+                                        {
+                                            if(win->Attribute("lang") && win->Attribute("lang")==language && win->GetText()!=NULL)
+                                            {
+                                                botFightExtra.win=win->GetText();
+                                                found=true;
+                                                break;
+                                            }
+                                            win = win->NextSiblingElement("win");
+                                        }
+                                    if(!found)
+                                    {
+                                        win = item->FirstChildElement("win");
+                                        while(win!=NULL)
+                                        {
+                                            if(win->Attribute("lang")==NULL || strcmp(win->Attribute("lang"),"en")==0)
+                                                if(win->GetText()!=NULL)
+                                                {
+                                                    botFightExtra.win=win->GetText();
+                                                    break;
+                                                }
+                                            win = win->NextSiblingElement("win");
+                                        }
+                                    }
+                                }
+                                botFightsExtra[id]=botFightExtra;
+                            }
+                            else
+                                std::cerr << "id is already into the botFight extra: " << file << std::endl;
+                        }
+                        else
+                            std::cerr << "bot fights have not the id " << std::to_string(id) << ", " << file << std::endl;
+                    }
+                    else
+                        std::cerr << "id is not a number to parse bot fight extra: " << file << std::endl;
+                }
+                item = item->NextSiblingElement("fight");
+            }
+            file_index++;
+        }
+    }
+
+    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.begin();
+    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+    {
+        if(botFightsExtra.find(i->first)==botFightsExtra.cend())
+        {
+            std::cerr << "Strange, have entry into monster list, but not into bot fight extra for id: " << std::to_string(i->first) << std::endl;
+            BotFightExtra botFightExtra;
+            botFightExtra.start="Ready for the fight?";
+            botFightExtra.win="You are so strong for me!";
+            botFightsExtra[i->first]=botFightExtra;
+        }
+        ++i;
+    }
+
+    std::cerr << std::to_string(botFightsExtra.size()) << " fight extra(s) loaded" << std::endl;
 }

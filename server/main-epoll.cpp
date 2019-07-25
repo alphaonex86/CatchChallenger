@@ -13,6 +13,7 @@
 #include "../general/base/CommonSettingsCommon.h"
 #include "epoll/EpollServer.h"
 #include "epoll/Epoll.h"
+#include "epoll/EpollMapManagement.h"
 #include "NormalServerGlobal.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.h"
@@ -620,26 +621,26 @@ int main(int argc, char *argv[])
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:
-                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender(infd
+                                    client=new EpollMapVisibilityAlgorithm_Simple_StoreOnSender(infd
                                                        #ifdef SERVERSSL
                                                        ,server->getCtx()
                                                        #endif
-                                                                                           );
+                                                       );
                                 break;
                                 case MapVisibilityAlgorithmSelection_WithBorder:
-                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(infd
+                                    client=new EpollMapVisibilityAlgorithm_WithBorder_StoreOnSender(infd
                                                            #ifdef SERVERSSL
                                                            ,server->getCtx()
                                                            #endif
-                                                                                               );
+                                                           );
                                 break;
                                 default:
                                 case MapVisibilityAlgorithmSelection_None:
-                                    client=new MapVisibilityAlgorithm_None(infd
+                                    client=new EpollMapVisibilityAlgorithm_None(infd
                                        #ifdef SERVERSSL
                                        ,server->getCtx()
                                        #endif
-                                                                           );
+                                       );
                                 break;
                             }
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
