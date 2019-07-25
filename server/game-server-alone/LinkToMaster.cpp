@@ -37,15 +37,11 @@ LinkToMaster::LinkToMaster(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Client
+            PacketModeTransmission_Client
             #endif
             ),
+        EpollClient(infd),
         stat(Stat::Unconnected),
         tryInterval(5),
         considerDownAfterNumberOfTry(3),
@@ -209,7 +205,7 @@ void LinkToMaster::connectInternal()
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
     }
-    epollSocket.reopen(LinkToMaster::linkToMasterSocketFd);
+    EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
     int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
     if(connStatusType<0)
@@ -269,7 +265,6 @@ void LinkToMaster::readTheFirstSslHeader()
 
 bool LinkToMaster::disconnectClient()
 {
-    epollSocket.close();
     messageParsingLayer("Disconnected master link... try connect in loop");
     return true;
 }
@@ -675,4 +670,22 @@ void LinkToMaster::sendProtocolHeader()
 
 void LinkToMaster::moveClientFastPath(const uint8_t &,const uint8_t &)
 {
+}
+
+ssize_t LinkToMaster::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t LinkToMaster::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void LinkToMaster::closeSocket()
+{
+    disconnectClient();
 }

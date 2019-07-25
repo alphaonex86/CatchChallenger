@@ -52,8 +52,8 @@ SOURCES += \
     ../epoll/EpollClientToServer.cpp \
     ../epoll/EpollSslClientToServer.cpp \
     ../epoll/EpollTimer.cpp \
-    ../../client/base/DatapackChecksum.cpp \
-    ../../client/base/qt-tar-compressed/QTarDecode.cpp \
+    ../../client/libcatchchallenger/DatapackChecksum.cpp \
+    ../../client/tarcompressed/TarDecode.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
@@ -91,8 +91,8 @@ HEADERS += \
     ../../general/base/ProtocolParsing.h \
     ../../general/base/ProtocolParsingCheck.h \
     ../../general/base/GeneralVariable.h \
-    ../../client/base/DatapackChecksum.h \
-    ../../client/base/qt-tar-compressed/QTarDecode.h \
+    ../../client/libcatchchallenger/DatapackChecksum.h \
+    ../../client/tarcompressed/TarDecode.h \
     ../base/TinyXMLSettings.h \
     ../VariableServer.h
 

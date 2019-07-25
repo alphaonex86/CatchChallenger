@@ -220,10 +220,6 @@ public:
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
 
     virtual void closeSocket() = 0;
-    #if defined(EPOLLCATCHCHALLENGERSERVER)
-    virtual bool socketIsOpen() = 0;//for epoll delete
-    virtual bool socketIsClosed() = 0;//for epoll delete
-    #endif
     void resetForReconnect();
     #ifdef DYNAMICPACKETFIXEDSIZE
     void setMaxPlayers(const uint16_t &maxPlayers) override;

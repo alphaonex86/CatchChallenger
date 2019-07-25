@@ -3,6 +3,7 @@
 
 #include "../../general/base/ProtocolParsing.h"
 #include "../../server/base/TinyXMLSettings.h"
+#include "../../server/epoll/EpollClient.h"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
@@ -12,7 +13,7 @@
 #include <vector>
 
 namespace CatchChallenger {
-class LinkToLogin : public BaseClassSwitch, public ProtocolParsingInputOutput
+class LinkToLogin : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToLogin(
@@ -105,6 +106,10 @@ public:
     #endif
     static void displayErrorAndQuit(const char * errorString);
     const std::string &getJsonFileContent() const;
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
 protected:
     bool disconnectClient();
     void errorParsingLayer(const std::string &error);

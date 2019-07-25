@@ -6,15 +6,16 @@
 #else
 #include <QObject>
 #endif
-#include "../../tarcompressed/ZstdDecode.h"
+#include "../tarcompressed/ZstdDecode.h"
 
 /// \brief to decode the xz via a thread
-class QZstdDecodeThread : public ZstdDecode
+class QZstdDecodeThread :
         #ifndef NOTHREADS
-        : public QThread
+        public QThread
         #else
-        : public QObject
+        public QObject
         #endif
+        , public ZstdDecode
 {
         Q_OBJECT
         public:

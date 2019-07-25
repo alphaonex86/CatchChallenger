@@ -58,7 +58,7 @@ QStringList SimpleBotInterface::variablesList()
     return QStringList() << QString("move") << QString("randomText") << QString("bugInDirection") << QString("globalChatRandomReply");
 }
 
-void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
     Player newPlayer;
     newPlayer.player=player;
@@ -69,7 +69,7 @@ void SimpleBotInterface::insert_player(CatchChallenger::Api_protocol *api,const 
     clientList[api]=newPlayer;
 }
 
-void SimpleBotInterface::removeClient(CatchChallenger::Api_protocol *api)
+void SimpleBotInterface::removeClient(CatchChallenger::Api_protocol_Qt *api)
 {
     clientList.remove(api);
 }

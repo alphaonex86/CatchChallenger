@@ -7,7 +7,7 @@
 #define ACTIONS_BOT_INTERFACE_H
 
 #include "../BotInterface.h"
-#include "../../../client/fight/interface/ClientFightEngine.h"
+#include "../../../client/qt/fight/interface/ClientFightEngine.h"
 #include "MapServerMini.h"
 #include <unordered_map>
 #include <QRegularExpression>

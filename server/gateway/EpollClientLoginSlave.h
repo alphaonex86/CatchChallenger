@@ -49,7 +49,7 @@ struct FileToSend
 };
 bool operator<(const FileToSend &fileToSend1,const FileToSend &fileToSend2);
 
-class EpollClientLoginSlave : public BaseClassSwitch, public ProtocolParsingInputOutput
+class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     EpollClientLoginSlave(
@@ -88,6 +88,10 @@ public:
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     bool sendDatapackProgression(const uint8_t progression);
     void allowDynamicSize();
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
 
     bool fastForward;
     LinkToGameServer *linkToGameServer;
