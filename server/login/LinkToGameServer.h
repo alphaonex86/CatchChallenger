@@ -2,6 +2,7 @@
 #define LOGINLINKTOGameServer_H
 
 #include "../../general/base/ProtocolParsing.h"
+#include "../epoll/EpollClient.h"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -9,7 +10,7 @@
 
 namespace CatchChallenger {
 class EpollClientLoginSlave;
-class LinkToGameServer : public BaseClassSwitch, public ProtocolParsingInputOutput
+class LinkToGameServer : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToGameServer(
@@ -47,6 +48,9 @@ public:
     bool sendRawBlock(const char * const data,const unsigned int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     bool disconnectClient();
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
 protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;

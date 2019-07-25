@@ -89,7 +89,8 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFightDatabase.cpp \
     $$PWD/fight/LocalClientHandlerFightBattle.cpp \
     $$PWD/fight/BaseServerFight.cpp \
-    $$PWD/fight/ClientHeavyLoadFight.cpp
+    $$PWD/fight/ClientHeavyLoadFight.cpp \
+    $$PWD/base/ClientWithSocket.cpp
 
 HEADERS += \
     $$PWD/VariableServer.h \
@@ -126,4 +127,5 @@ HEADERS += \
     $$PWD/base/GameServerVariables.h \
     $$PWD/base/PreparedStatementUnit.h \
     $$PWD/base/TimeRangeEventScan.h \
-    $$PWD/crafting/MapServerCrafting.h
+    $$PWD/crafting/MapServerCrafting.h \
+    $$PWD/base/ClientWithSocket.h

@@ -26,23 +26,23 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../client/tiled/tiled_mapobject.h"
-#include "../../client/tiled/tiled_objectgroup.h"
-#include "../../client/base/render/MapVisualiserThread.h"
+#include "../../client/qt/tiled/tiled_mapobject.h"
+#include "../../client/qt/tiled/tiled_objectgroup.h"
+#include "../../client/qt/render/MapVisualiserThread.h"
 
 #include "../../general/base/GeneralStructures.h"
 #include "../../general/base/CommonMap.h"
-#include "../../client/base/Map_client.h"
+#include "../../client/qt/Map_client.h"
 #include "../../general/base/Map_loader.h"
 
-#include "../../client/tiled/tiled_isometricrenderer.h"
-#include "../../client/tiled/tiled_map.h"
-#include "../../client/tiled/tiled_mapobject.h"
-#include "../../client/tiled/tiled_mapreader.h"
-#include "../../client/tiled/tiled_objectgroup.h"
-#include "../../client/tiled/tiled_orthogonalrenderer.h"
-#include "../../client/tiled/tiled_tilelayer.h"
-#include "../../client/tiled/tiled_tileset.h"
+#include "../../client/qt/tiled/tiled_isometricrenderer.h"
+#include "../../client/qt/tiled/tiled_map.h"
+#include "../../client/qt/tiled/tiled_mapobject.h"
+#include "../../client/qt/tiled/tiled_mapreader.h"
+#include "../../client/qt/tiled/tiled_objectgroup.h"
+#include "../../client/qt/tiled/tiled_orthogonalrenderer.h"
+#include "../../client/qt/tiled/tiled_tilelayer.h"
+#include "../../client/qt/tiled/tiled_tileset.h"
 
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H

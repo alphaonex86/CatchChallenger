@@ -18,6 +18,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             PacketModeTransmission_Server
             #endif
             ),
+        EpollClient(infd),
         stat(EpollClientLoginStat::None),
         datapackStatus(DatapackStatus::Base),
         fastForward(false),
@@ -57,7 +58,7 @@ bool EpollClientLoginSlave::disconnectClient()
         linkToGameServer->client=NULL;
         linkToGameServer=NULL;
     }
-    epollSocket.close();
+    EpollClient::close();
     vectorremoveOne(client_list,this);
     /*SIGILLif(stat!=EpollClientLoginStat::None)
         messageParsingLayer("Disconnected client");*/
@@ -146,3 +147,20 @@ void EpollClientLoginSlave::breakNeedMoreData()
     #endif
 }
 
+ssize_t EpollClientLoginSlave::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t EpollClientLoginSlave::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void EpollClientLoginSlave::closeSocket()
+{
+    disconnectClient();
+}

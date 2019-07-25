@@ -1,11 +1,11 @@
-/** \file QTarDecode.cpp
+/** \file TarDecode.cpp
 \brief To read a tar data block
 \author alpha_one_x86
 \version 0.3
 \date 2010
 \licence GPL3, see the file COPYING */
 
-#include "QTarDecode.h"
+#include "TarDecode.h"
 
 #include <inttypes.h>
 #include <regex>
@@ -16,12 +16,12 @@ static const std::regex isaunsignednumber("^[0-9]+$",std::regex::optimize);
 static const std::regex isaunoctalnumber("^[0-7]+$",std::regex::optimize);
 //static const char* const lut = "0123456789ABCDEF";
 
-QTarDecode::QTarDecode()
+TarDecode::TarDecode()
 {
     error="Unknown error";
 }
 
-uint64_t QTarDecode::octaltouint64(const std::string &string,bool *ok)
+uint64_t TarDecode::octaltouint64(const std::string &string,bool *ok)
 {
     if(std::regex_match(string,isaunsignednumber))
     {
@@ -37,7 +37,7 @@ uint64_t QTarDecode::octaltouint64(const std::string &string,bool *ok)
     }
 }
 
-uint64_t QTarDecode::stringtouint64(const std::string &string,bool *ok)
+uint64_t TarDecode::stringtouint64(const std::string &string,bool *ok)
 {
     if(std::regex_match(string,isaunsignednumber))
     {
@@ -53,19 +53,19 @@ uint64_t QTarDecode::stringtouint64(const std::string &string,bool *ok)
     }
 }
 
-std::string QTarDecode::errorString()
+std::string TarDecode::errorString()
 {
     return error;
 }
 
-void QTarDecode::setErrorString(const std::string &error)
+void TarDecode::setErrorString(const std::string &error)
 {
     this->error=error;
     fileList.clear();
     dataList.clear();
 }
 
-bool QTarDecode::stringStartWith(std::string const &fullString, std::string const &starting)
+bool TarDecode::stringStartWith(std::string const &fullString, std::string const &starting)
 {
     if (fullString.length() >= starting.length()) {
         return (fullString.substr(0,starting.length())==starting);
@@ -74,7 +74,7 @@ bool QTarDecode::stringStartWith(std::string const &fullString, std::string cons
     }
 }
 
-bool QTarDecode::decodeData(const std::vector<char> &data)
+bool TarDecode::decodeData(const std::vector<char> &data)
 {
     setErrorString("Unknown error");
     if(data.size()<1024)
@@ -163,12 +163,12 @@ bool QTarDecode::decodeData(const std::vector<char> &data)
     return true;
 }
 
-std::vector<std::string> QTarDecode::getFileList()
+std::vector<std::string> TarDecode::getFileList()
 {
     return fileList;
 }
 
-std::vector<std::vector<char> > QTarDecode::getDataList()
+std::vector<std::vector<char> > TarDecode::getDataList()
 {
     return dataList;
 }

@@ -4,6 +4,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "CharactersGroup.h"
 #include "../VariableServer.h"
+#include "../epoll/EpollClient.h"
 
 #include <random>
 #include <string>
@@ -12,7 +13,7 @@
 #define BASE_PROTOCOL_MAGIC_SIZE 9
 
 namespace CatchChallenger {
-class EpollClientLoginMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
+class EpollClientLoginMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     EpollClientLoginMaster(
@@ -26,6 +27,11 @@ public:
     bool disconnectClient();
     void parseIncommingData();
     void breakNeedMoreData();
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
+
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);
     bool trySelectCharacterGameServer(EpollClientLoginMaster * const loginServer,const uint8_t &client_query_id,const uint32_t &serverUniqueKey,const uint8_t &charactersGroupIndex,const uint32_t &characterId, const uint32_t &accountId);
     void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);

@@ -21,6 +21,7 @@ EpollClientLoginMaster::EpollClientLoginMaster(
             PacketModeTransmission_Server
             #endif
             ),
+        EpollClient(infd),
         stat(None),
         uniqueKey(0),
         charactersGroupForGameServer(NULL),
@@ -152,7 +153,7 @@ bool EpollClientLoginMaster::disconnectClient()
 {
     resetToDisconnect();
     updateConsoleCountServer();
-    epollSocket.close();
+    EpollClient::close();
     //messageParsingLayer("Disconnected client");
     return true;
 }
@@ -840,4 +841,23 @@ void EpollClientLoginMaster::breakNeedMoreData()
     //std::cerr << "Break due to need more in parse data" << std::endl;
     #endif
 }
+
+ssize_t EpollClientLoginMaster::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t EpollClientLoginMaster::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void EpollClientLoginMaster::closeSocket()
+{
+    disconnectClient();
+}
+
 

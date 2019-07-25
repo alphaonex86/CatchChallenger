@@ -9,7 +9,7 @@ using namespace CatchChallenger;
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
 MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender() :
-    Client(),
+    ClientWithSocket(),
     to_send_insert(false),
     haveNewMove(false)
 {

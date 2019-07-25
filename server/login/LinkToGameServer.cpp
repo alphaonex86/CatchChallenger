@@ -23,15 +23,11 @@ LinkToGameServer::LinkToGameServer(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Client
+            PacketModeTransmission_Client
             #endif
             ),
+        EpollClient(infd),
         stat(Stat::Connected),
         client(NULL),
         haveTheFirstSslHeader(false),
@@ -207,7 +203,7 @@ bool LinkToGameServer::disconnectClient()
         client->linkToGameServer=NULL;
         client=NULL;
     }
-    epollSocket.close();
+    EpollClient::close();
     messageParsingLayer("Disconnected client");
     return true;
 }
@@ -263,4 +259,22 @@ bool LinkToGameServer::sendRawBlock(const char * const data,const unsigned int &
 bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
+}
+
+ssize_t LinkToGameServer::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t LinkToGameServer::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void LinkToGameServer::closeSocket()
+{
+    EpollClient::closeSocket();
 }

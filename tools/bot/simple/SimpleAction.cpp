@@ -16,7 +16,7 @@ SimpleAction::~SimpleAction()
 {
 }
 
-void SimpleAction::insert_player(CatchChallenger::Api_protocol *api, const CatchChallenger::Player_public_informations &player, const uint32_t &mapId, const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction)
+void SimpleAction::insert_player(CatchChallenger::Api_protocol_Qt *api, const CatchChallenger::Player_public_informations &player, const uint32_t &mapId, const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);
@@ -25,7 +25,7 @@ void SimpleAction::insert_player(CatchChallenger::Api_protocol *api, const Catch
     Q_UNUSED(direction);
 
     SimpleBotInterface::insert_player(api,player,mapId,x,y,direction);
-    if(!connect(api,&CatchChallenger::Api_protocol::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
+    if(!connect(api,&CatchChallenger::Api_protocol_Qt::new_chat_text,this,&SimpleAction::new_chat_text,Qt::QueuedConnection))
         abort();
 }
 
@@ -45,10 +45,10 @@ void SimpleAction::doMove()
         return;
 
     purgeCpuCache();
-    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
+    QHashIterator<CatchChallenger::Api_protocol_Qt *,Player> i(clientList);
     while (i.hasNext()) {
         i.next();
-        CatchChallenger::Api_protocol *api=i.key();
+        CatchChallenger::Api_protocol_Qt *api=i.key();
         Player &player=clientList[i.key()];
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
         if(api->getCaracterSelected())
@@ -95,13 +95,13 @@ void SimpleAction::doText()
         return;
 
     purgeCpuCache();
-    QList<CatchChallenger::Api_protocol *> clientListApi;
-    QHashIterator<CatchChallenger::Api_protocol *,Player> i(clientList);
+    QList<CatchChallenger::Api_protocol_Qt *> clientListApi;
+    QHashIterator<CatchChallenger::Api_protocol_Qt *,Player> i(clientList);
     while (i.hasNext()) {
         i.next();
         clientListApi << i.key();
     }
-    CatchChallenger::Api_protocol *api=clientListApi.at(rand()%clientListApi.size());
+    CatchChallenger::Api_protocol_Qt *api=clientListApi.at(rand()%clientListApi.size());
     //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
     if(api->getCaracterSelected())
     {
@@ -154,7 +154,7 @@ void SimpleAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,con
     Q_UNUSED(text);
     Q_UNUSED(pseudo);
     Q_UNUSED(type);
-    CatchChallenger::Api_protocol *api = static_cast<CatchChallenger::Api_protocol *>(sender());
+    CatchChallenger::Api_protocol_Qt *api = static_cast<CatchChallenger::Api_protocol_Qt *>(sender());
     if(api==NULL)
         return;
 

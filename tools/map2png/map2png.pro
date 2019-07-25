@@ -1,4 +1,4 @@
-include(../../client/tiled/tiled.pri)
+include(../../client/qt/tiled/tiled.pri)
 
 TEMPLATE = app
 TARGET = map2png
@@ -19,15 +19,15 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 
 SOURCES += main.cpp \
          map2png.cpp \
-    ../../client/base/Map_client.cpp \
-    ../../client/base/render/MapVisualiserOrder.cpp \
-    ../../client/base/render/MapDoor.cpp
+    ../../client/qt/Map_client.cpp \
+    ../../client/qt/render/MapVisualiserOrder.cpp \
+    ../../client/qt/render/MapDoor.cpp
 
 HEADERS += map2png.h \
-    ../../client/base/ClientStructures.h \
-    ../../client/base/Map_client.h \
-    ../../client/base/render/MapVisualiserOrder.h \
-    ../../client/base/render/MapDoor.h
+    ../../client/qt/ClientStructures.h \
+    ../../client/qt/Map_client.h \
+    ../../client/qt/render/MapVisualiserOrder.h \
+    ../../client/qt/render/MapDoor.h
 
 RESOURCES += \
     resources.qrc

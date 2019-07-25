@@ -584,7 +584,7 @@ void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawDat
     else
     {
         const std::vector<char> &decodedData=mDataToDecode;
-        QTarDecode tarDecode;
+        TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             const std::vector<std::string> &fileList=tarDecode.getFileList();

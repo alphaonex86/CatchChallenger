@@ -13,7 +13,6 @@
 #include "../general/base/CommonSettingsCommon.h"
 #include "epoll/EpollServer.h"
 #include "epoll/Epoll.h"
-#include "epoll/EpollMapManagement.h"
 #include "NormalServerGlobal.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.h"
@@ -617,30 +616,22 @@ int main(int argc, char *argv[])
                                     std::cerr << "Unable to apply tcp no delay" << std::endl;
                             }
 
-                            Client *client;
+                            ClientWithSocket *client;
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:
-                                    client=new EpollMapVisibilityAlgorithm_Simple_StoreOnSender(infd
-                                                       #ifdef SERVERSSL
-                                                       ,server->getCtx()
-                                                       #endif
-                                                       );
+                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender();
+                                    client->reopen(infd);
+
                                 break;
                                 case MapVisibilityAlgorithmSelection_WithBorder:
-                                    client=new EpollMapVisibilityAlgorithm_WithBorder_StoreOnSender(infd
-                                                           #ifdef SERVERSSL
-                                                           ,server->getCtx()
-                                                           #endif
-                                                           );
+                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+                                    client->reopen(infd);
                                 break;
                                 default:
                                 case MapVisibilityAlgorithmSelection_None:
-                                    client=new EpollMapVisibilityAlgorithm_None(infd
-                                       #ifdef SERVERSSL
-                                       ,server->getCtx()
-                                       #endif
-                                       );
+                                    client=new MapVisibilityAlgorithm_None();
+                                    client->reopen(infd);
                                 break;
                             }
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -694,7 +685,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    Client * const client=static_cast<Client *>(events[i].data.ptr);
+                    ClientWithSocket * const client=static_cast<ClientWithSocket *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -712,7 +703,7 @@ int main(int argc, char *argv[])
                     //ready to read
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
                     {
                         // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
                         numberOfConnectedClient--;

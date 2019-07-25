@@ -33,6 +33,7 @@ LinkToGameServer::LinkToGameServer(
             PacketModeTransmission_Client
             #endif
             ),
+        EpollClient(infd),
         stat(Stat::Connected),
         gameServerMode(GameServerMode::None),
         client(NULL),
@@ -270,7 +271,7 @@ bool LinkToGameServer::disconnectClient()
         delete replySelectCharInWait;
         replySelectCharInWait=NULL;
     }
-    epollSocket.close();
+    EpollClient::close();
     messageParsingLayer("Disconnected login/game server: "+std::to_string(stat));
     return true;
 }
@@ -411,4 +412,22 @@ bool LinkToGameServer::sendRawSmallPacket(const char * const data,const int &siz
 bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
 {
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
+}
+
+ssize_t LinkToGameServer::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t LinkToGameServer::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void LinkToGameServer::closeSocket()
+{
+    EpollClient::closeSocket();
 }

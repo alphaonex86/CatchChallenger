@@ -25,7 +25,7 @@ public:
     void closeSocket();
     bool socketIsOpen();
     bool socketIsClosed();
-private:
+protected:
     int infd;
 };
 }

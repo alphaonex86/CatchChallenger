@@ -23,7 +23,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "ClientStructures.h"
 #include "Api_protocol_Qt.h"
-#include "qt-tar-compressed/QZstdDecodeThread.h"
+#include "QZstdDecodeThread.h"
 
 namespace CatchChallenger {
 class Api_client_real : public Api_protocol_Qt

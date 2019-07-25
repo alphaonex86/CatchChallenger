@@ -1,12 +1,12 @@
 #ifndef MULTIPLEBOTCONNECTION_H
 #define MULTIPLEBOTCONNECTION_H
 
-#include "../../general/base/QFakeSocket.h"
-#include "../../general/base/ConnectedSocket.h"
+#include "../../client/qt/QFakeSocket.h"
+#include "../../client/qt/ConnectedSocket.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../client/base/Api_client_real.h"
-#include "../../client/base/ClientStructures.h"
+#include "../../client/qt/Api_client_real.h"
+#include "../../client/qt/ClientStructures.h"
 #include "BotInterface.h"
 
 #include <QTimer>

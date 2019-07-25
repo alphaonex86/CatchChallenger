@@ -31,15 +31,11 @@ LinkToMaster::LinkToMaster(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Client
+            PacketModeTransmission_Client
             #endif
             ),
+        EpollClient(infd),
         stat(Stat::Connected)
 {
     flags|=0x08;
@@ -189,7 +185,7 @@ void LinkToMaster::connectInternal()
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
     }
-    epollSocket.reopen(LinkToMaster::linkToMasterSocketFd);
+    EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
     struct hostent *server=gethostbyname(host);
     if(server==NULL)
@@ -259,7 +255,7 @@ void LinkToMaster::readTheFirstSslHeader()
 
 bool LinkToMaster::disconnectClient()
 {
-    epollSocket.close();
+    EpollClient::close();
     messageParsingLayer("LinkToMaster::disconnectClient()");
     return true;
 }
@@ -429,4 +425,22 @@ std::string LinkToMaster::listTheRunningQuery() const
     else
         returnVar="no running query";
     return returnVar;
+}
+
+ssize_t LinkToMaster::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t LinkToMaster::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void LinkToMaster::closeSocket()
+{
+    disconnectClient();
 }
