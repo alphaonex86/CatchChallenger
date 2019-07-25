@@ -26,11 +26,13 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
-    if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
+    #ifdef CATCHCHALLENGER_SOLO
+    /*if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
-    }
+    }*/
+    #endif
     if(!connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -170,7 +172,7 @@ void QtServer::removeOneClient()
 #ifndef EPOLLCATCHCHALLENGERSERVER
 void QtServer::newConnection()
 {
-    while(QFakeServer::server.hasPendingConnections())
+/*    while(QFakeServer::server.hasPendingConnections())
     {
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
@@ -192,7 +194,7 @@ void QtServer::newConnection()
         }
         else
             qDebug() << ("NULL client at BaseServer::newConnection()");
-    }
+    }*/
 }
 #endif
 
@@ -300,8 +302,10 @@ void QtServer::stop_internal_server()
         ++i;
     }
     client_list.clear();
-    QFakeServer::server.disconnectedSocket();
-    QFakeServer::server.close();
+    #ifdef CATCHCHALLENGER_SOLO
+    /*QFakeServer::server.disconnectedSocket();
+    QFakeServer::server.close();*/
+    #endif
 
     check_if_now_stopped();
 }

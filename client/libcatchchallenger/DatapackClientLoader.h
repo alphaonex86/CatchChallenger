@@ -11,6 +11,8 @@
 class DatapackClientLoader
 {
 public:
+    explicit DatapackClientLoader();
+    ~DatapackClientLoader();
     void resetAll();
 
     //static items
@@ -144,25 +146,26 @@ public:
     void parseDatapack(const std::string &datapackPath);
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
-private:
+protected:
     bool inProgress;
     std::string datapackPath;
     std::string mainDatapackCode;
     std::string subDatapackCode;
-    explicit DatapackClientLoader();
-    ~DatapackClientLoader();
+
+    virtual void parsePlantsExtra();
+    virtual void parseItemsExtra();
+    virtual void parseMonstersExtra();
+    virtual void parseBuffExtra();
+private:
     virtual void emitdatapackParsed() = 0;
     virtual void emitdatapackParsedMainSub() = 0;
     virtual void emitdatapackChecksumError() = 0;
     virtual void parseTopLib() = 0;
+    virtual std::string getLanguage() = 0;
 private:
-    void parsePlantsExtra();
-    void parseItemsExtra();
     void parseMaps();
     void parseVisualCategory();
     void parseTypesExtra();
-    void parseMonstersExtra();
-    void parseBuffExtra();
     void parseSkillsExtra();
     void parseQuestsExtra();
     void parseQuestsText();

@@ -345,7 +345,8 @@ void BaseServer::preload_finish()
 bool BaseServer::load_next_city_capture()
 {
     GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch()/1000;
+    std::time_t result = std::time(nullptr);
+    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-result;
     GlobalServerData::serverPrivateVariables.timer_city_capture->start(static_cast<int>(time));
     return true;
 }

@@ -29,13 +29,8 @@ LinkToGameServer::LinkToGameServer(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
-           #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Client
+            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
+            PacketModeTransmission_Client
             #endif
             ),
         stat(Stat::Connected),
