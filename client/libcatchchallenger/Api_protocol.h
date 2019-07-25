@@ -84,7 +84,7 @@ public:
 
     bool setMapNumber(const unsigned int number_of_map);
     virtual bool disconnectClient();
-private:
+protected:
     //status for the query
     bool haveFirstHeader;
     bool is_logged;

@@ -13,28 +13,8 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::mapHaveChanged;
 //temp variable to move on the map
 map_management_movement MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient_tempMov;
 
-MapVisibilityAlgorithm_WithBorder_StoreOnSender::MapVisibilityAlgorithm_WithBorder_StoreOnSender(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
-        ) :
-    Client(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
-        #else
-        socket
-        #endif
-        ),
+MapVisibilityAlgorithm_WithBorder_StoreOnSender::MapVisibilityAlgorithm_WithBorder_StoreOnSender() :
+    Client(),
     haveBufferToPurge(false)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE

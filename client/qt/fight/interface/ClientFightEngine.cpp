@@ -1,10 +1,10 @@
 #include "ClientFightEngine.h"
-#include "../../../general/base/MoveOnTheMap.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../base/Api_client_real.h"
-#include "../../base/FacilityLibClient.h"
-#include "../../../general/base/FacilityLib.h"
+#include "../../general/base/MoveOnTheMap.h"
+#include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonDatapack.h"
+#include "../../Api_client_real.h"
+#include "../../FacilityLibClient.h"
+#include "../../general/base/FacilityLib.h"
 
 #include <QDebug>
 #include <iostream>
@@ -738,7 +738,7 @@ void ClientFightEngine::newRandomNumber(const std::string &data)
     randomSeeds.append(data);
 }
 
-void ClientFightEngine::setClient(Api_protocol * client)
+void ClientFightEngine::setClient(Api_protocol_Qt * client)
 {
     this->client=client;
 }

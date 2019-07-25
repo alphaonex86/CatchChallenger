@@ -1,7 +1,6 @@
 #include "Client.h"
 #include "GlobalServerData.h"
 #include "../base/PreparedDBQuery.h"
-#include "../../general/base/QFakeSocket.h"
 #include "../../general/base/GeneralType.h"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.h"
@@ -19,29 +18,10 @@ using namespace CatchChallenger;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
-        ) :
+Client::Client() :
     ProtocolParsingInputOutput(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
-        #else
-        socket
-        #endif
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-        ,PacketModeTransmission_Server
+        PacketModeTransmission_Server
         #endif
         ),
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -130,7 +110,7 @@ Client::~Client()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
+    /*#ifndef EPOLLCATCHCHALLENGERSERVER
     if(socket!=NULL)
     {
         delete socket;
@@ -139,7 +119,7 @@ Client::~Client()
     #else
     if(socketString!=NULL)
         delete socketString;
-    #endif
+    #endif*/
     //SQL
     {
         while(!callbackRegistred.empty())
@@ -164,7 +144,7 @@ BaseClassSwitch::EpollObjectType Client::getType() const
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 /// \brief new error at connexion
-void Client::connectionError(QAbstractSocket::SocketError error)
+/*void Client::connectionError(QAbstractSocket::SocketError error)
 {
     isConnected=false;
     if(error!=QAbstractSocket::RemoteHostClosedError)
@@ -172,7 +152,7 @@ void Client::connectionError(QAbstractSocket::SocketError error)
         normalOutput("error detected for the client: "+std::to_string(error));
         socket->disconnectFromHost();
     }
-}
+}*/
 #endif
 
 /// \warning called in one other thread!!!
@@ -197,14 +177,11 @@ bool Client::disconnectClient()
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected=false;
-    if(socket!=NULL)
+    /*if(socket!=NULL)
     {
         socket->disconnectFromHost();
-        //commented because if in closing state, block in waitForDisconnected
-        /*if(socket->state()!=QAbstractSocket::UnconnectedState)
-            socket->waitForDisconnected();*/
         socket=NULL;
-    }
+    }*/
     #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
@@ -401,7 +378,7 @@ std::string Client::headerOutput() const
     else
     {
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        std::string ip;
+        /*std::string ip;
         if(socket==NULL)
             ip="unknown";
         else
@@ -414,22 +391,16 @@ std::string Client::headerOutput() const
             else
                 ip=hostAddress.toString().toStdString()+":"+std::to_string(socket->peerPort());
         }
+        return ip+": ";*/
+        return "";
         #else
         std::string ip;
         if(socketString==NULL)
             ip="[IP]:[PORT]";
         else
             ip=socketString;
+        return ip+": ";
         #endif
-        /// \todo fast hide the ip
-        /*if(GlobalServerData::serverSettings.anonymous)
-        {
-            QCryptographicHash hash(QCryptographicHash::Sha224);
-            hash.addData(ip.data(),ip.size());
-            return std::string(hash.result().toHex())+": ";
-        }
-        else*/
-            return ip+": ";
     }
 }
 

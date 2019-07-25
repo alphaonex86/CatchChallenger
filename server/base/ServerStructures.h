@@ -1,10 +1,6 @@
 #ifndef CATCHCHALLENGER_SERVER_STRUCTURES_H
 #define CATCHCHALLENGER_SERVER_STRUCTURES_H
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
-#endif
-
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -12,7 +8,6 @@
 #include <regex>
 
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/ConnectedSocket.h"
 #include "PlayerUpdater.h"
 #include "TimeRangeEventScan.h"
 #include "StringWithReplacement.h"
@@ -38,12 +33,15 @@
     #else
     #error Unknow database type
     #endif
-#else
-#include "QtTimerEvents.h"
-#include "QtDatabase.h"
 #endif
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include <atomic>
+#endif
+
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QTimer>
+#include "QtTimerEvents.h"
+#include "QtDatabase.h"
 #endif
 
 namespace CatchChallenger {

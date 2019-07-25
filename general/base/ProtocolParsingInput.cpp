@@ -158,6 +158,7 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
     RXSize+=size;
     return size;
     #endif
+    return -1;
 }
 
 ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
@@ -340,12 +341,12 @@ std::string(" parseIncommingData(): size returned is 0!"));*/
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     parseIncommingDataCount--;
     #if defined(EPOLLCATCHCHALLENGERSERVER)
-    if(epollSocket.bytesAvailable()>0)
+    /*if(epollSocket.bytesAvailable()>0)
         messageParsingLayer(
                     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                     std::to_string(flags & 0x10)+
                     #endif
-        std::string(" parseIncommingData(): remain byte to purge!"));
+        std::string(" parseIncommingData(): remain byte to purge!"));*/
     #endif
     #endif
 }

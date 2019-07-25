@@ -12,8 +12,6 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QSemaphore>
-#include "../../general/base/QFakeServer.h"
-#include "../../general/base/QFakeSocket.h"
 #endif
 
 #include "../../general/base/Map_loader.h"

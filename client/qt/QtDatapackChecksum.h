@@ -3,10 +3,18 @@
 
 #include <vector>
 #include <string>
+#include <QThread>
+#include "../libcatchchallenger/DatapackChecksum.h"
 
 namespace CatchChallenger {
-class QtDatapackChecksum
+class QtDatapackChecksum : public DatapackChecksum
+        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+        , public QThread
+        #else
+        , public QObject
+        #endif
 {
+    Q_OBJECT
 public:
     explicit QtDatapackChecksum();
     ~QtDatapackChecksum();

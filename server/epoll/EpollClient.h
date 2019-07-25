@@ -21,6 +21,10 @@ public:
     EpollObjectType getType() const;
     bool isValid() const;
     long int bytesAvailable() const;
+
+    void closeSocket();
+    bool socketIsOpen();
+    bool socketIsClosed();
 private:
     int infd;
 };

@@ -8,28 +8,8 @@ using namespace CatchChallenger;
 //temp variable for purge buffer
 bool MapVisibilityAlgorithm_Simple_StoreOnSender::mapHaveChanged;
 
-MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
-        ) :
-    Client(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
-        #else
-        socket
-        #endif
-        ),
+MapVisibilityAlgorithm_Simple_StoreOnSender::MapVisibilityAlgorithm_Simple_StoreOnSender() :
+    Client(),
     to_send_insert(false),
     haveNewMove(false)
 {

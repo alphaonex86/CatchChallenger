@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
 
 #include "../../general/base/GeneralVariable.h"
-#include "../libcatchchallenger/DatapackChecksum.h"
+#include "QtDatapackChecksum.h"
 
 #include <QObject>
 #include <string>
@@ -30,7 +30,7 @@ class Api_client_real : public Api_protocol_Qt
 {
     Q_OBJECT
 public:
-    explicit Api_client_real(ConnectedSocket *socket,bool tolerantMode=false);
+    explicit Api_client_real(ConnectedSocket *socket);
     ~Api_client_real();
     void resetAll();
     void closeDownload();
@@ -83,7 +83,7 @@ private:
     bool datapackTarBase;
     bool datapackTarMain;
     bool datapackTarSub;
-    CatchChallenger::DatapackChecksum datapackChecksum;
+    CatchChallenger::QtDatapackChecksum datapackChecksum;
     std::string host;
     uint16_t port;
     uint64_t RXSize,TXSize;

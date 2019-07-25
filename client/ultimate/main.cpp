@@ -1,8 +1,8 @@
 #include <QApplication>
-#include "../base/CCBackground.h"
-#include "../base/LoadingScreen.h"
-#include "../base/LanguagesSelect.h"
-#include "../base/LocalListener.h"
+#include "../qt/CCBackground.h"
+#include "../qt/LoadingScreen.h"
+#include "../qt/LanguagesSelect.h"
+#include "../qt/LocalListener.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include <iostream>
 #include <QFontDatabase>
