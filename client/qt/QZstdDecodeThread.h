@@ -1,0 +1,33 @@
+#ifndef QZstdDecodeThread_h
+#define QZstdDecodeThread_h
+
+#ifndef NOTHREADS
+#include <QThread>
+#else
+#include <QObject>
+#endif
+#include "../../tarcompressed/ZstdDecode.h"
+
+/// \brief to decode the xz via a thread
+class QZstdDecodeThread : public ZstdDecode
+        #ifndef NOTHREADS
+        : public QThread
+        #else
+        : public QObject
+        #endif
+{
+        Q_OBJECT
+        public:
+                QZstdDecodeThread();
+                ~QZstdDecodeThread();
+        #ifndef NOTHREADS
+        protected:
+        #else
+        public:
+        #endif
+                void run();
+        signals:
+                void decodedIsFinish();
+};
+
+#endif // QZstdDecodeThread_h

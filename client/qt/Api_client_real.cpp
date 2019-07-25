@@ -29,8 +29,8 @@ QRegularExpression Api_client_real::regex_DATAPACK_FILE_REGEX=QRegularExpression
 std::regex Api_client_real::excludePathBase("^map[/\\\\]main[/\\\\]");
 std::regex Api_client_real::excludePathMain("^sub[/\\\\]");
 
-Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
-    Api_protocol(socket,tolerantMode),
+Api_client_real::Api_client_real(ConnectedSocket *socket) :
+    Api_protocol_Qt(socket),
     qnamQueueCount(0),
     qnamQueueCount2(0),
     qnamQueueCount3(0),
@@ -58,17 +58,17 @@ Api_client_real::Api_client_real(ConnectedSocket *socket,bool tolerantMode) :
         abort();
     if(!connect(this,   &Api_client_real::QtnewHttpFileSub,  this,&Api_client_real::getHttpFileSub))
         abort();
-    if(!connect(this,   &Api_client_real::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumBase))
+    if(!connect(this,   &Api_client_real::doDifferedChecksumBase,&datapackChecksum,&CatchChallenger::QtDatapackChecksum::doDifferedChecksumBase))
         abort();
-    if(!connect(this,   &Api_client_real::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumMain))
+    if(!connect(this,   &Api_client_real::doDifferedChecksumMain,&datapackChecksum,&CatchChallenger::QtDatapackChecksum::doDifferedChecksumMain))
         abort();
-    if(!connect(this,   &Api_client_real::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::DatapackChecksum::doDifferedChecksumSub))
+    if(!connect(this,   &Api_client_real::doDifferedChecksumSub,&datapackChecksum,&CatchChallenger::QtDatapackChecksum::doDifferedChecksumSub))
         abort();
-    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase))
+    if(!connect(&datapackChecksum,&CatchChallenger::QtDatapackChecksum::datapackChecksumDoneBase,this,&Api_client_real::datapackChecksumDoneBase))
         abort();
-    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain))
+    if(!connect(&datapackChecksum,&CatchChallenger::QtDatapackChecksum::datapackChecksumDoneMain,this,&Api_client_real::datapackChecksumDoneMain))
         abort();
-    if(!connect(&datapackChecksum,&CatchChallenger::DatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub))
+    if(!connect(&datapackChecksum,&CatchChallenger::QtDatapackChecksum::datapackChecksumDoneSub,this,&Api_client_real::datapackChecksumDoneSub))
         abort();
     if(!connect(&zstdDecodeThreadBase,&QZstdDecodeThread::decodedIsFinish,this,&Api_client_real::decodedIsFinishBase))
         abort();
@@ -310,7 +310,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
         }
         return true;
         default:
-            return Api_protocol::parseReplyData(mainCodeType,queryNumber,data);
+            return Api_protocol::parseReplyData(mainCodeType,queryNumber,data.data(),data.size());
         break;
     }
     if((in.device()->size()-in.device()->pos())!=0)

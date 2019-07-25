@@ -178,7 +178,8 @@ void BaseServer::preload_other()
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
         else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
         {
-            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-QDateTime::currentMSecsSinceEpoch();
+            std::time_t result = std::time(nullptr);
+            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-result*1000;
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
         }
         else

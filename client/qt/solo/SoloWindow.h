@@ -9,7 +9,7 @@
 #include <QDateTime>
 #include <QSpacerItem>
 
-#include "../../general/base/QFakeSocket.h"
+#include "../QFakeSocket.h"
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"

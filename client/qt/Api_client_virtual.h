@@ -3,11 +3,11 @@
 
 #include <string>
 
-#include "../../general/base/ConnectedSocket.h"
-#include "Api_protocol.h"
+#include "ConnectedSocket.h"
+#include "Api_protocol_Qt.h"
 
 namespace CatchChallenger {
-class Api_client_virtual : public Api_protocol
+class Api_client_virtual : public Api_protocol_Qt
 {
 public:
     explicit Api_client_virtual(ConnectedSocket *socket);

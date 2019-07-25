@@ -16,26 +16,26 @@
 #include <QDateTime>
 #include <QSet>
 #include <QCompleter>
-#include "../base/ClientVariableAudio.h"
+#include "../qt/ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../base/QInfiniteBuffer.h"
+#include "../qt/QInfiniteBuffer.h"
 #endif
 
 #include "../../general/base/ChatParsing.h"
 #include "../../general/base/GeneralStructures.h"
-#include "../../general/base/ConnectedSocket.h"
-#include "../base/FeedNews.h"
+#include "../qt/ConnectedSocket.h"
+#include "../qt/FeedNews.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../base/Audio.h"
+#include "../qt/Audio.h"
 #endif
-#include "../base/Api_client_real.h"
-#include "../base/render/MapController.h"
-#include "../base/interface/BaseWindow.h"
-#include "../base/interface/ListEntryEnvolued.h"
+#include "../qt/Api_client_real.h"
+#include "../qt/render/MapController.h"
+#include "../qt/interface/BaseWindow.h"
+#include "../qt/interface/ListEntryEnvolued.h"
 #ifndef NOSINGLEPLAYER
-#include "../base/solo/SoloWindow.h"
+#include "../qt/solo/SoloWindow.h"
 #endif
-#include "../base/LanguagesSelect.h"
+#include "../qt/LanguagesSelect.h"
 
 namespace Ui {
     class MainWindow;

@@ -16,13 +16,8 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Server
+            PacketModeTransmission_Server
             #endif
             ),
         stat(EpollClientLoginStat::None),

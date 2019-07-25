@@ -4,6 +4,7 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QObject>
 #include <QTimer>
+#include <QAbstractSocket>
 #endif
 #include <vector>
 
@@ -66,17 +67,7 @@ class Client :
 #endif
 public:
     friend class BaseServer;
-    explicit Client(
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-            #ifdef SERVERSSL
-                const int &infd, SSL_CTX *ctx
-            #else
-                const int &infd
-            #endif
-        #else
-        ConnectedSocket *socket
-        #endif
-        );
+    explicit Client();
     virtual ~Client();
     #ifdef EPOLLCATCHCHALLENGERSERVER
     BaseClassSwitch::EpollObjectType getType() const;
@@ -312,7 +303,7 @@ private:
 
     //socket related
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    void connectionError(QAbstractSocket::SocketError);
+    //void connectionError(QAbstractSocket::SocketError);
     #endif
 
     #ifndef EPOLLCATCHCHALLENGERSERVER

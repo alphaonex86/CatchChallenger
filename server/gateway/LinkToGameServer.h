@@ -2,6 +2,7 @@
 #define LOGINLINKTOGameServer_H
 
 #include "../../general/base/ProtocolParsing.h"
+#include "../epoll/BaseClassSwitch.h"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>

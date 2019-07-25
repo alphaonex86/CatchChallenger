@@ -1,6 +1,6 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../DatapackClientLoader.h"
+#include "../QtDatapackClientLoader.h"
 #include "../../../general/base/CommonDatapack.h"
 
 #include <QInputDialog>
@@ -76,17 +76,18 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
     }
     ui->shopBuy->setVisible(true);
     QListWidgetItem *item=items.first();
-    if(DatapackClientLoader::datapackLoader.itemsExtra.find(shop_items_graphical.at(item))==
-            DatapackClientLoader::datapackLoader.itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(shop_items_graphical.at(item))==
+            QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
     {
-        ui->shopImage->setPixmap(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->shopImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->shopName->setText(tr("Unknown name"));
         ui->shopDescription->setText(tr("Unknown description"));
         return;
     }
-    const DatapackClientLoader::ItemExtra &content=DatapackClientLoader::datapackLoader.itemsExtra.at(shop_items_graphical.at(item));
+    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader.itemsExtra.at(shop_items_graphical.at(item));
+    const QtDatapackClientLoader::QtItemExtra &Qtcontent=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(shop_items_graphical.at(item));
 
-    ui->shopImage->setPixmap(content.image);
+    ui->shopImage->setPixmap(Qtcontent.image);
     ui->shopName->setText(QString::fromStdString(content.name));
     ui->shopDescription->setText(QString::fromStdString(content.description));
 }
@@ -121,22 +122,22 @@ void BaseWindow::haveShopList(const std::vector<ItemToSellOrBuy> &items)
         QListWidgetItem *item=new QListWidgetItem();
         shop_items_to_graphical[items.at(index).object]=item;
         shop_items_graphical[item]=items.at(index).object;
-        if(DatapackClientLoader::datapackLoader.itemsExtra.find(items.at(index).object)!=
-                DatapackClientLoader::datapackLoader.itemsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(items.at(index).object)!=
+                QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(items.at(index).object).image);
+            item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(items.at(index).object).image);
             if(items.at(index).quantity==0)
                 item->setText(tr("%1\nPrice: %2$")
-                              .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(items.at(index).object).name))
+                              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(items.at(index).object).name))
                               .arg(items.at(index).price));
             else
                 item->setText(tr("%1 at %2$\nQuantity: %3")
-                              .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(items.at(index).object).name))
+                              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(items.at(index).object).name))
                               .arg(items.at(index).price).arg(items.at(index).quantity));
         }
         else
         {
-            item->setIcon(DatapackClientLoader::datapackLoader.defaultInventoryImage());
+            item->setIcon(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
             if(items.at(index).quantity==0)
                 item->setText(tr("Item %1\nPrice: %2$").arg(items.at(index).object).arg(items.at(index).price));
             else
@@ -167,23 +168,23 @@ void BaseWindow::displaySellList()
     auto i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
-        if(DatapackClientLoader::datapackLoader.itemsExtra.find(i->first)!=
-                DatapackClientLoader::datapackLoader.itemsExtra.cend() &&
+        if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(i->first)!=
+                QtDatapackClientLoader::datapackLoader.itemsExtra.cend() &&
                 CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i->first).price>0)
         {
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i->first]=item;
             shop_items_graphical[item]=i->first;
-            item->setIcon(DatapackClientLoader::datapackLoader.itemsExtra.at(i->first).image);
+            item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(i->first).image);
             if(i->second>1)
                 item->setText(tr("%1\nPrice: %2$, quantity: %3")
-                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(i->first).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(i->first).name))
                         .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i->first).price/2)
                         .arg(i->second)
                         );
             else
                 item->setText(tr("%1\nPrice: %2$")
-                        .arg(QString::fromStdString(DatapackClientLoader::datapackLoader.itemsExtra.at(i->first).name))
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(i->first).name))
                         .arg(CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i->first).price/2)
                         );
             ui->shopItemList->addItem(item);

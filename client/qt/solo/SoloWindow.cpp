@@ -8,9 +8,9 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/SavegameVersion.h"
-#include "../DatapackClientLoader.h"
+#include "../QtDatapackClientLoader.h"
 #include "../LanguagesSelect.h"
-#include "../../fight/interface/ClientFightEngine.h"
+#include "../fight/interface/ClientFightEngine.h"
 #include "../../general/base/Version.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../InternetUpdater.h"
@@ -500,8 +500,8 @@ std::string SoloWindow::getMapZone(const std::string &file)
 std::string SoloWindow::getZoneName(const std::string &zone)
 {
     //open and quick check the file
-    std::string file(DatapackClientLoader::datapackLoader.getDatapackPath()+
-                     DatapackClientLoader::datapackLoader.getMainDatapackPath()+
+    std::string file(QtDatapackClientLoader::datapackLoader.getDatapackPath()+
+                     QtDatapackClientLoader::datapackLoader.getMainDatapackPath()+
                      DATAPACK_BASE_PATH_ZONE2+zone+".xml");
     //open and quick check the file
     tinyxml2::XMLDocument domDocument;
