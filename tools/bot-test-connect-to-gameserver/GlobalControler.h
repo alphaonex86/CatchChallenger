@@ -13,7 +13,7 @@
 #include <time.h>
 
 #include "../bot/MultipleBotConnectionImplForGui.h"
-#include "../../client/base/ClientStructures.h"
+#include "../../client/qt/ClientStructures.h"
 
 class GlobalControler : public QObject
 {

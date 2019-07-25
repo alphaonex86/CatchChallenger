@@ -34,15 +34,11 @@ LinkToLogin::LinkToLogin(
         #endif
         ) :
         ProtocolParsingInputOutput(
-            #ifdef SERVERSSL
-                infd,ctx
-            #else
-                infd
-            #endif
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ,PacketModeTransmission_Client
+            PacketModeTransmission_Client
             #endif
             ),
+        EpollClient(infd),
         stat(Stat::Unconnected),
         tryInterval(5),
         considerDownAfterNumberOfTry(3)
@@ -204,7 +200,7 @@ void LinkToLogin::connectInternal()
         std::cerr << "ERROR opening socket to login server (abort)" << std::endl;
         abort();
     }
-    epollSocket.reopen(LinkToLogin::linkToLoginSocketFd);
+    EpollClient::reopen(LinkToLogin::linkToLoginSocketFd);
 
     struct hostent *server;
     server=gethostbyname(LinkToLogin::host);
@@ -275,7 +271,7 @@ void LinkToLogin::readTheFirstSslHeader()
 
 bool LinkToLogin::disconnectClient()
 {
-    epollSocket.close();
+    EpollClient::close();
     messageParsingLayer("Disconnected login link... try connect in loop");
     return true;
 }
@@ -597,3 +593,22 @@ void LinkToLogin::writeData(const std::string &str)
     writeData(str.c_str());
 }
 #endif
+
+ssize_t LinkToLogin::read(char * data, const size_t &size)
+{
+    return EpollClient::read(data,size);
+}
+
+ssize_t LinkToLogin::write(const char * const data, const size_t &size)
+{
+    //do some basic check on low level protocol (message split, ...)
+    if(ProtocolParsingInputOutput::write(data,size)<0)
+        return -1;
+    return EpollClient::write(data,size);
+}
+
+void LinkToLogin::closeSocket()
+{
+    disconnectClient();
+}
+

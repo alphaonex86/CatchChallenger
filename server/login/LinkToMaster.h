@@ -2,14 +2,14 @@
 #define LOGINLINKTOMASTER_H
 
 #include "../../general/base/ProtocolParsing.h"
-#include "../epoll/BaseClassSwitch.h"
+#include "../epoll/EpollClient.h"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netdb.h>
 
 namespace CatchChallenger {
-class LinkToMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
+class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
@@ -62,6 +62,10 @@ public:
     void readTheFirstSslHeader();
     bool sendRawBlock(const char * const data,const unsigned int &size);
     std::string listTheRunningQuery() const;
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
 protected:
     bool disconnectClient();
     void errorParsingLayer(const std::string &error);

@@ -18,7 +18,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "qt-tar-compressed/QTarDecode.h"
+#include "../tarcompressed/TarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 //need host + port here to have datapack base

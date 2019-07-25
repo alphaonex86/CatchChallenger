@@ -1,4 +1,4 @@
-/** \file QTarDecode.h
+/** \file TarDecode.h
 \brief To read a tar data block
 \author alpha_one_x86
 \licence GPL3, see the file COPYING */
@@ -10,10 +10,10 @@
 #include <string>
 
 /// \brief read the raw tar data, and organize it into data structure
-class QTarDecode
+class TarDecode
 {
     public:
-        QTarDecode();
+        TarDecode();
         /// \brief to get the file list
         std::vector<std::string> getFileList();
         /// \brief to get the data of the file
@@ -32,4 +32,4 @@ class QTarDecode
         bool stringStartWith(std::string const &fullString, std::string const &starting);
 };
 
-#endif // QTARDECODE_H
+#endif // TarDecode_H

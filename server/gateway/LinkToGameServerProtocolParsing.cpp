@@ -787,7 +787,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             const int &socketFd=LinkToGameServer::tryConnect(selectedServer.host.c_str(),selectedServer.port,5,1);
             if(Q_LIKELY(socketFd>=0))
             {
-                epollSocket.reopen(socketFd);
+                EpollClient::reopen(socketFd);
                 this->socketFd=socketFd;
 
                 epoll_event event;

@@ -17,19 +17,20 @@ SOURCES += main.cpp\
     ../bot/MultipleBotConnection.cpp \
     ../bot/MultipleBotConnectionImplForGui.cpp \
     GlobalControler.cpp \
-    ../../client/base/Api_client_real_base.cpp \
-    ../../client/base/Api_client_real_main.cpp \
-    ../../client/base/Api_client_real_sub.cpp \
-    ../../client/base/Api_client_real.cpp \
-    ../../client/base/Api_client_virtual.cpp \
-    ../../client/base/Api_protocol_loadchar.cpp \
-    ../../client/base/Api_protocol_message.cpp \
-    ../../client/base/Api_protocol_query.cpp \
-    ../../client/base/Api_protocol_reply.cpp \
-    ../../client/base/Api_protocol.cpp \
-    ../../client/base/qt-tar-compressed/QTarDecode.cpp \
-    ../../client/base/qt-tar-compressed/QZstdDecodeThread.cpp \
-    ../../client/base/DatapackChecksum.cpp \
+    ../../client/qt/Api_client_real_base.cpp \
+    ../../client/qt/Api_client_real_main.cpp \
+    ../../client/qt/Api_client_real_sub.cpp \
+    ../../client/qt/Api_client_real.cpp \
+    ../../client/qt/Api_client_virtual.cpp \
+    ../../client/libcatchchallenger/Api_protocol_loadchar.cpp \
+    ../../client/libcatchchallenger/Api_protocol_message.cpp \
+    ../../client/libcatchchallenger/Api_protocol_query.cpp \
+    ../../client/libcatchchallenger/Api_protocol_reply.cpp \
+    ../../client/libcatchchallenger/Api_protocol.cpp \
+    ../../client/qt/QZstdDecodeThread.cpp \
+    ../../client/tarcompressed/TarDecode.cpp \
+    ../../client/tarcompressed/ZstdDecode.cpp \
+    ../../client/qt/QtDatapackChecksum.cpp \
     ../bot/BotInterface.cpp \
     ../../client/base/FacilityLibClient.cpp \
     ../../client/base/Api_protocol_Qt.cpp
@@ -38,16 +39,17 @@ HEADERS  += \
     ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h \
     GlobalControler.h \
-    ../../client/base/Api_client_real.h \
-    ../../client/base/Api_client_virtual.h \
-    ../../client/base/Api_protocol.h \
-    ../../client/base/ClientVariable.h \
-    ../../client/base/ClientStructures.h \
-    ../../client/base/qt-tar-compressed/QTarDecode.h \
-    ../../client/base/qt-tar-compressed/QZstdDecodeThread.h \
-    ../../client/base/DatapackChecksum.h \
-    ../../client/base/FacilityLibClient.h \
-    ../../client/base/Api_protocol_Qt.h
+    ../../client/qt/Api_client_real.h \
+    ../../client/qt/Api_client_virtual.h \
+    ../../client/libcatchchallenger/Api_protocol.h \
+    ../../client/qt/ClientVariable.h \
+    ../../client/qt/ClientStructures.h \
+    ../../client/qt/QZstdDecodeThread.h \
+    ../../client/tarcompressed/TarDecode.h \
+    ../../client/tarcompressed/ZstdDecode.h \
+    ../../client/qt/QtDatapackChecksum.h \
+    ../../client/qt/FacilityLibClient.h \
+    ../../client/qt/Api_protocol_Qt.h
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

@@ -14,7 +14,7 @@ using namespace CatchChallenger;
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/cpp11addition.h"
-#include "../../client/base/qt-tar-compressed/QTarDecode.h"
+#include "../../client/tarcompressed/TarDecode.h"
 #include "LinkToGameServer.h"
 #include "EpollServerLoginSlave.h"
 #include "FacilityLibGateway.h"
@@ -432,7 +432,7 @@ void DatapackDownloaderMainSub::decodedIsFinishMain(const std::vector<char> &raw
     else
     {
         const std::vector<char> &decodedData=mDataToDecode;
-        QTarDecode tarDecode;
+        TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             const std::vector<std::string> &fileList=tarDecode.getFileList();

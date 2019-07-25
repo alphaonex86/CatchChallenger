@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
                     //ready to read
                     if(events[i].events & EPOLLIN)
                         client->parseIncommingData();
-                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
                     {
                         numberOfConnectedClient--;
                         //disconnected, remove the object

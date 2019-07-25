@@ -42,7 +42,7 @@
 #define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 45
 
 namespace CatchChallenger {
-class EpollClientLoginSlave : public BaseClassSwitch, public ProtocolParsingInputOutput
+class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     EpollClientLoginSlave(
@@ -225,6 +225,10 @@ public:
     void server_list_return(const uint8_t &serverCount,char * const tempRawData,const int &tempRawDataSize);
 
     bool sendRawBlock(const char * const data, const unsigned int &size);
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
+    void closeSocket();
 private:
     void deleteCharacterNow(const uint32_t &characterId);
     void addCharacter(const uint8_t &query_id, const uint8_t &characterGroupIndex, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId);

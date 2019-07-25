@@ -1,11 +1,6 @@
 #ifndef CATCHCHALLENGER_CLIENT_H
 #define CATCHCHALLENGER_CLIENT_H
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QObject>
-#include <QTimer>
-#include <QAbstractSocket>
-#endif
 #include <vector>
 
 #include "ServerStructures.h"
@@ -18,11 +13,6 @@
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "DdosBuffer.h"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../epoll/BaseClassSwitch.h"
-#else
-#include <QObject>
-#endif
 #include <unordered_map>
 #include <vector>
 #include <queue>
@@ -54,17 +44,8 @@ namespace CatchChallenger {
 void recordDisconnectByServer(void * client);
 #endif
 
-class Client :
-        #ifdef EPOLLCATCHCHALLENGERSERVER
-        public BaseClassSwitch,
-        #else
-        public QObject,
-        #endif
-        public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
+class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
 {
-#ifndef EPOLLCATCHCHALLENGERSERVER
-    Q_OBJECT
-#endif
 public:
     friend class BaseServer;
     explicit Client();
