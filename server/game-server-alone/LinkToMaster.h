@@ -4,6 +4,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "TimerReconnectOnTheMaster.h"
 #include "../base/TinyXMLSettings.h"
+#include "../epoll/EpollClient.h"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
@@ -11,7 +12,7 @@
 #include <netdb.h>
 
 namespace CatchChallenger {
-class LinkToMaster : public BaseClassSwitch, public ProtocolParsingInputOutput
+class LinkToMaster : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
     explicit LinkToMaster(
@@ -75,8 +76,12 @@ public:
     void tryReconnect();
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
-protected:
+
+    ssize_t read(char * data, const size_t &size);
+    ssize_t write(const char * const data, const size_t &size);
     bool disconnectClient();
+    void closeSocket();
+protected:
     void errorParsingLayer(const std::string &error);
     void messageParsingLayer(const std::string &message) const;
     void errorParsingLayer(const char * const error);

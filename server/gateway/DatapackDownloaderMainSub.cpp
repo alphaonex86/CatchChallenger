@@ -8,7 +8,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "../../client/base/qt-tar-compressed/QTarDecode.h"
+#include "../../client/tarcompressed/TarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 #include "LinkToGameServer.h"
 #include "EpollClientLoginSlave.h"

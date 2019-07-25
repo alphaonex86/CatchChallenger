@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 
-#include "../Client.h"
+#include "../ClientWithSocket.h"
 #include "Map_server_MapVisibility_WithBorder_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client
+class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public ClientWithSocket
 {
 public:
     explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender();

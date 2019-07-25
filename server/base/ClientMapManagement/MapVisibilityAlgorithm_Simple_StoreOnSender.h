@@ -1,14 +1,14 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_SIMPLE_STOREONSENDER_H
 
-#include "../Client.h"
+#include "../ClientWithSocket.h"
 #include "Map_server_MapVisibility_Simple_StoreOnSender.h"
 #include "../../../general/base/CommonMap.h"
 
 namespace CatchChallenger {
 class Map_server_MapVisibility_Simple_StoreOnSender;
 
-class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
+class MapVisibilityAlgorithm_Simple_StoreOnSender : public ClientWithSocket
 {
 public:
     explicit MapVisibilityAlgorithm_Simple_StoreOnSender();

@@ -1,12 +1,15 @@
 #ifndef ZstdDecodeThread_h
 #define ZstdDecodeThread_h
 
+#include <vector>
+#include <string>
+
 /// \brief to decode the xz via a thread
-class ZstdDecodeThread
+class ZstdDecode
 {
         public:
-                QZstdDecodeThread();
-                ~QZstdDecodeThread();
+                ZstdDecode();
+                ~ZstdDecode();
                 /// \brief to return if the error have been found
                 bool errorFound();
                 /// \brief to return the error string
