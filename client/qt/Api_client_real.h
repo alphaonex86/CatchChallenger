@@ -34,6 +34,7 @@ public:
     ~Api_client_real();
     void resetAll();
     void closeDownload();
+    void closeSocket();
 
     //connection related
     void tryConnect(std::string host,uint16_t port);

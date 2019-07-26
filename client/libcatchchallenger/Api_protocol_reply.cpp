@@ -26,7 +26,7 @@ using namespace CatchChallenger;
 #endif
 
 //send reply
-bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
+bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     int pos=0;
     if(querySendTime.find(queryNumber)!=querySendTime.cend())
@@ -479,7 +479,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
 
                 is_logged=true;
                 logicialGroupIndexList.clear();
-                logged(serverOrdenedList,characterListForSelection);
+                logged(/*serverOrdenedList,*/characterListForSelection);
             }
         }
         break;
@@ -633,7 +633,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                         have_send_protocol=false;
                         message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage2 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         stageConnexion=StageConnexion::Stage2;
-                        disconnectFromHost();
+                        closeSocket();
                         connectingOnGameServer();
                         return true;
                     }

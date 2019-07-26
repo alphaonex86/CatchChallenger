@@ -340,7 +340,7 @@ void Api_client_real::decodedIsFinishBase()
     else
     {
         const std::vector<char> &decodedData=zstdDecodeThreadBase.decodedData();
-        QTarDecode tarDecode;
+        TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();

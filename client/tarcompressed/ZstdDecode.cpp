@@ -47,7 +47,7 @@ void ZstdDecode::run()
     size_t const dSize = ZSTD_decompress(dataToDecoded.data(), rSize, mDataToDecode.data(), mDataToDecode.size());
 
     if (dSize != rSize) {
-        mErrorString=QString("error decoding: ")+ZSTD_getErrorName(dSize);
+        mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
         return;
     }
     dataToDecoded.resize(dSize);
