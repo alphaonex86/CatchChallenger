@@ -166,7 +166,8 @@ HEADERS  += \
     $$PWD/ConnectedSocket.h \
     $$PWD/QFakeServer.h \
     $$PWD/QFakeSocket.h \
-    $$PWD/DisplayStructures.h
+    $$PWD/DisplayStructures.h \
+    $$PWD/ClientVariableAudio.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

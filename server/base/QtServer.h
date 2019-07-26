@@ -14,7 +14,7 @@ public:
     void preload_the_city_capture();
     void removeOneClient();
     void newConnection();
-    void connect_the_last_client(Client * client, QIODevice *socket);
+    void connect_the_last_client(ClientWithSocket * client, QIODevice *socket);
     void load_next_city_capture();
     void send_insert_move_remove();
     void positionSync();
@@ -37,7 +37,7 @@ signals:
 
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
-    std::unordered_set<Client *> client_list;
+    std::unordered_set<ClientWithSocket *> client_list;
 };
 }
 

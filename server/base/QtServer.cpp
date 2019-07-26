@@ -71,7 +71,7 @@ QtServer::~QtServer()
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
-        Client *client=(*i);
+        ClientWithSocket *client=(*i);
         client->disconnectClient();
         delete client;
         ++i;
@@ -157,14 +157,21 @@ void QtServer::ddosTimer()
 
 void QtServer::removeOneClient()
 {
-    Client *client=qobject_cast<Client *>(QObject::sender());
-    if(client==NULL)
+    QIODevice *socket=qobject_cast<QIODevice *>(QObject::sender());
+    if(socket==NULL)
     {
-        qDebug() << ("removeOneClient(): NULL client at disconnection");
+        qDebug() << ("removeOneClient(): NULL ClientWithSocket at disconnection");
         return;
     }
-    client_list.erase(client);
-    delete client;
+    for(ClientWithSocket * const client : client_list)
+    {
+        if(client->qtSocket==socket)
+        {
+            delete client;
+            client_list.erase(client);
+            break;
+        }
+    }
 }
 
 /////////////////////////////////////// player related //////////////////////////////////////
@@ -177,7 +184,7 @@ void QtServer::newConnection()
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
-            qDebug() << ("newConnection(): new client connected by fake socket");
+            qDebug() << ("newConnection(): new ClientWithSocket connected by fake socket");
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 default:
@@ -193,15 +200,16 @@ void QtServer::newConnection()
             }
         }
         else
-            qDebug() << ("NULL client at BaseServer::newConnection()");
+            qDebug() << ("NULL ClientWithSocket at BaseServer::newConnection()");
     }*/
 }
 #endif
 
-void QtServer::connect_the_last_client(Client * client,QIODevice *socket)
+void QtServer::connect_the_last_client(ClientWithSocket * client,QIODevice *socket)
 {
-    connect(socket,&QIODevice::readyRead,client,&Client::parseIncommingData,Qt::QueuedConnection);
-    connect(client,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection);
+    connect(socket,&QIODevice::readyRead,client,&ClientWithSocket::parseIncommingData,Qt::QueuedConnection);
+    connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection);
+    client->qtSocket=socket;
     client_list.insert(client);
 }
 
@@ -296,7 +304,7 @@ void QtServer::stop_internal_server()
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
-        Client * client=*i;
+        ClientWithSocket * client=*i;
         client->disconnectClient();
         delete client;
         ++i;
