@@ -4,6 +4,7 @@
 #include "../qt/LanguagesSelect.h"
 #include "../qt/LocalListener.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "mainwindow.h"
 #include <iostream>
 #include <QFontDatabase>
 #include <QHBoxLayout>
@@ -44,16 +45,17 @@ int main(int argc, char *argv[])
     //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
-    /*MainWindow w;
+    MainWindow w;
     if(w.toQuit)
         return 523;
-    w.show();*/
-    CCBackground background;
+    w.show();
+
+/*    CCBackground background;
     background.setWindowTitle(QObject::tr("CatchChallenger loading..."));
     QHBoxLayout layout(&background);
     LoadingScreen l;
     layout.addWidget(&l);
-    background.show();
+    background.show();*/
     /*LoadingScreen l;
     l.show();*/
     const auto returnCode=a.exec();

@@ -3,6 +3,10 @@
 
 #include <QMessageBox>
 
+#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+#error no web and tcp socket selected
+#endif
+
 AddOrEditServer::AddOrEditServer(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::AddServer)
@@ -25,7 +29,7 @@ AddOrEditServer::~AddOrEditServer()
 
 int AddOrEditServer::type() const
 {
-#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
 return ui->type->currentIndex();
 #else
     #if defined(NOTCPSOCKET)
@@ -42,7 +46,7 @@ return ui->type->currentIndex();
 
 void AddOrEditServer::setType(const int &type)
 {
-#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
 ui->type->setCurrentIndex(type);
 #else
     #if defined(NOTCPSOCKET)
