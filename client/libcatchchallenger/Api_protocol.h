@@ -27,7 +27,7 @@ public:
     virtual std::string socketDisconnectedForReconnect();
     const std::vector<ServerFromPoolForDisplay> &getServerOrdenedList();
     int dataToPlayerMonster(const char * const data, const unsigned int &size, PlayerMonster &monster);
-    virtual void disconnectFromHost();
+    //virtual void disconnectFromHost();
 
     //get the stored data
     Player_private_and_public_informations &get_player_informations();
@@ -140,20 +140,20 @@ protected:
 
     /// \note This is note into server part to force to write manually the serial and improve the performance, this function is more easy but implies lot of memory copy via SIMD
     //send message without reply
-    bool packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size);
+    bool packOutcommingData(const uint8_t &packetCode,const char * const data,const unsigned int &size);
     //send query with reply
-    bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
+    bool packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
     //the internal serialiser
     void send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
 protected:
     //have message without reply
-    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const int &size);
+    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
     //have query with reply
-    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     //send reply
-    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
 
     //servers list
     LogicialGroup * addLogicalGroup(const std::string &path, const std::string &xml, const std::string &language);
@@ -216,7 +216,7 @@ public:
     //protocol/connection info
     virtual void disconnected(const std::string &reason) = 0;
     virtual void notLogged(const std::string &reason) = 0;
-    virtual void logged(const std::vector<ServerFromPoolForDisplay> &serverOrdenedList,const std::vector<std::vector<CharacterEntry> > &characterEntryList) = 0;
+    virtual void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList) = 0;//const std::vector<ServerFromPoolForDisplay> &serverOrdenedList,
     virtual void protocol_is_good() = 0;
     virtual void connectedOnLoginServer() = 0;
     virtual void connectingOnGameServer() = 0;
@@ -307,7 +307,7 @@ public:
     //battle
     virtual void battleRequested(const std::string &pseudo,const uint8_t &skinInt) = 0;
     virtual void battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) = 0;
-    virtual void battleCanceledByOther();
+    virtual void battleCanceledByOther() = 0;
     virtual void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn) = 0;
 
     //clan

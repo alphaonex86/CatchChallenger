@@ -1,6 +1,8 @@
 #ifndef LANGUAGESSELECT_H
 #define LANGUAGESSELECT_H
 
+#ifndef CATCHCHALLENGER_BOT
+
 #include <QDialog>
 #include <QHash>
 #include <QString>
@@ -42,5 +44,7 @@ private:
     std::vector<QTranslator *> installedTranslator;
     std::string currentLanguage;
 };
+
+#endif
 
 #endif // LANGUAGESSELECT_H

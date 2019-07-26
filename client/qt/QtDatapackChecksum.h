@@ -7,12 +7,13 @@
 #include "../libcatchchallenger/DatapackChecksum.h"
 
 namespace CatchChallenger {
-class QtDatapackChecksum : public DatapackChecksum
+class QtDatapackChecksum :
         #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
-        , public QThread
+        public QThread
         #else
-        , public QObject
+        public QObject
         #endif
+        , public DatapackChecksum
 {
     Q_OBJECT
 public:
