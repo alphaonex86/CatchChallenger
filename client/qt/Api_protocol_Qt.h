@@ -23,6 +23,7 @@ public:
     std::string socketDisconnectedForReconnect();
     void parseIncommingData();
     void sslHandcheckIsFinished();
+    void closeSocket() override;
 #ifndef NOTCPSOCKET
 protected:
     void saveCert(const std::string &file);

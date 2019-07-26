@@ -446,9 +446,3 @@ void Api_client_real::setProxy(const QNetworkProxy &proxy)
         qnam4.setProxy(QNetworkProxy::applicationProxy());
     }
 }
-
-void Api_client_real::closeSocket()
-{
-    if(socket!=nullptr)
-        socket->close();
-}

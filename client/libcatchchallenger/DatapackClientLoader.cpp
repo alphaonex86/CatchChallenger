@@ -84,10 +84,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     parseTypesExtra();
     parseItemsExtra();
     parseSkins();
-    parseMonstersExtra();
-    parseBuffExtra();
     parseSkillsExtra();
-    parsePlantsExtra();
     parseAudioAmbiance();
     parseReputationExtra();
     #endif
