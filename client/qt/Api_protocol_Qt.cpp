@@ -786,3 +786,9 @@ std::string Api_protocol_Qt::getLanguage() const
     return "en";
     #endif
 }
+
+void Api_protocol_Qt::closeSocket()
+{
+    if(socket!=nullptr)
+        socket->close();
+}

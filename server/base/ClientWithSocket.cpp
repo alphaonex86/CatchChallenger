@@ -3,7 +3,11 @@
 using namespace CatchChallenger;
 
 ClientWithSocket::ClientWithSocket() :
+    #ifdef EPOLLCATCHCHALLENGERSERVER
     EpollClient(-1)
+    #else
+    qtSocket(nullptr)
+    #endif
 {
 }
 
@@ -12,7 +16,9 @@ ssize_t ClientWithSocket::read(char * data, const size_t &size)
     #ifdef EPOLLCATCHCHALLENGERSERVER
     return EpollClient::read(data,size);
     #else
-    ProtocolParsingInputOutput::read(data,size);//count RXSize
+    if(qtSocket==nullptr)
+        abort();
+    return qtSocket->read(data,size);//count RXSize
     #endif
 }
 
@@ -24,6 +30,9 @@ ssize_t ClientWithSocket::write(const char * const data, const size_t &size)
     #ifdef EPOLLCATCHCHALLENGERSERVER
     return EpollClient::write(data,size);
     #else
+    if(qtSocket==nullptr)
+        abort();
+    return qtSocket->write(data,size);
     #endif
 }
 
@@ -33,13 +42,21 @@ bool ClientWithSocket::disconnectClient()
     EpollClient::close();
     return true;
     #else
+    if(qtSocket==nullptr)
+        abort();
+    qtSocket->close();
+    return true;
     #endif
 }
 
+#ifndef EPOLLCATCHCHALLENGERSERVER
+void ClientWithSocket::parseIncommingData()
+{
+    Client::parseIncommingData();
+}
+#endif
+
 void ClientWithSocket::closeSocket()
 {
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    return EpollClient::closeSocket();
-    #else
-    #endif
+    disconnectClient();
 }

@@ -131,6 +131,9 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         return;
     }
     DatapackClientLoader::parseDatapack(datapackPath);
+    parseMonstersExtra();
+    parseBuffExtra();
+    parsePlantsExtra();
     inProgress=false;
     emit datapackParsed();
 }
