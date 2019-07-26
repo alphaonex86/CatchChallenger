@@ -12,16 +12,16 @@ class Api_protocol_Qt : public QObject, public Api_protocol
     Q_OBJECT
 public:
     explicit Api_protocol_Qt(ConnectedSocket *socket);
-    bool disconnectClient();
+    bool disconnectClient() override;
 
     void QtsocketDestroyed();
-    void socketDestroyed();
+    void socketDestroyed() override;
     void resetAll();
     void disconnectFromHost();
     void connectTheExternalSocketInternal();
     bool tryLogin(const std::string &login, const std::string &pass);
-    std::string socketDisconnectedForReconnect();
-    void parseIncommingData();
+    std::string socketDisconnectedForReconnect() override;
+    void parseIncommingData() override;
     void sslHandcheckIsFinished();
     void closeSocket() override;
 #ifndef NOTCPSOCKET
@@ -29,10 +29,10 @@ protected:
     void saveCert(const std::string &file);
 #endif
 public:
-    void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void newError(const std::string &error,const std::string &detailedError);
-    void message(const std::string &message);
-    void lastReplyTime(const uint32_t &time);
+    void send_player_direction(const CatchChallenger::Direction &the_direction) override;
+    void newError(const std::string &error,const std::string &detailedError) override;
+    void message(const std::string &message) override;
+    void lastReplyTime(const uint32_t &time) override;
 
     void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();
@@ -41,129 +41,136 @@ public:
     //protocol/connection info
     virtual void hashSha224(const char * const data,const int size,char *buffer) override;
     virtual void readForFirstHeader() override;
-    void disconnected(const std::string &reason);
-    void notLogged(const std::string &reason);
-    void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    void disconnected(const std::string &reason) override;
+    void notLogged(const std::string &reason) override;
+    void logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList) override;
     virtual void tryDisconnect() override;
-    void protocol_is_good();
-    void connectedOnLoginServer();
-    void connectingOnGameServer();
-    void connectedOnGameServer();
-    void haveDatapackMainSubCode();
-    void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
+    void protocol_is_good() override;
+    void connectedOnLoginServer() override;
+    void connectingOnGameServer() override;
+    void connectedOnGameServer() override;
+    void haveDatapackMainSubCode() override;
+    void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression) override;
 
     //general info
-    void number_of_player(const uint16_t &number,const uint16_t &max_players);
-    void random_seeds(const std::string &data);
+    void number_of_player(const uint16_t &number,const uint16_t &max_players) override;
+    void random_seeds(const std::string &data) override;
 
     //character
-    void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId);
-    void haveCharacter();
+    void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) override;
+    void haveCharacter() override;
     //events
-    void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events);
-    void newEvent(const uint8_t &event,const uint8_t &event_value);
+    void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events) override;
+    void newEvent(const uint8_t &event,const uint8_t &event_value) override;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
-    void remove_player(const uint16_t &id);
-    void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction);
-    void dropAllPlayerOnTheMap();
-    void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,
+                       const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
+    void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) override;
+    void remove_player(const uint16_t &id) override;
+    void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
+    void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,
+                              const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) override;
+    void dropAllPlayerOnTheMap() override;
+    void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
 
     //plant
-    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y);
-    void seed_planted(const bool &ok);
-    void plant_collected(const CatchChallenger::Plant_collect &stat);
+    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) override;
+    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) override;
+    void seed_planted(const bool &ok) override;
+    void plant_collected(const CatchChallenger::Plant_collect &stat) override;
     //crafting
-    void recipeUsed(const RecipeUsage &recipeUsage);
+    void recipeUsed(const RecipeUsage &recipeUsage) override;
     //inventory
-    void objectUsed(const ObjectUsage &objectUsage);
-    void monsterCatch(const bool &success);
+    void objectUsed(const ObjectUsage &objectUsage) override;
+    void monsterCatch(const bool &success) override;
 
     //chat
-    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,const std::string &pseudo,const CatchChallenger::Player_type &player_type);
-    void new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text);
+    void new_chat_text(const CatchChallenger::Chat_type &chat_type,const std::string &text,
+                       const std::string &pseudo,const CatchChallenger::Player_type &player_type) override;
+    void new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text) override;
 
     //player info
-    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items);
-    void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
-    void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
+    void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) override;
+    void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) override;
+    void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) override;
+    void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) override;
 
     //datapack
-    void haveTheDatapack();
-    void haveTheDatapackMainSub();
+    void haveTheDatapack() override;
+    void haveTheDatapackMainSub() override;
     //base
-    void newFileBase(const std::string &fileName,const std::string &data);
-    void newHttpFileBase(const std::string &url,const std::string &fileName);
-    void removeFileBase(const std::string &fileName);
-    void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
+    void newFileBase(const std::string &fileName,const std::string &data) override;
+    void newHttpFileBase(const std::string &url,const std::string &fileName) override;
+    void removeFileBase(const std::string &fileName) override;
+    void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
     //main
-    void newFileMain(const std::string &fileName,const std::string &data);
-    void newHttpFileMain(const std::string &url,const std::string &fileName);
-    void removeFileMain(const std::string &fileName);
-    void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
+    void newFileMain(const std::string &fileName,const std::string &data) override;
+    void newHttpFileMain(const std::string &url,const std::string &fileName) override;
+    void removeFileMain(const std::string &fileName) override;
+    void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
     //sub
-    void newFileSub(const std::string &fileName,const std::string &data);
-    void newHttpFileSub(const std::string &url,const std::string &fileName);
-    void removeFileSub(const std::string &fileName);
-    void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
+    void newFileSub(const std::string &fileName,const std::string &data) override;
+    void newHttpFileSub(const std::string &url,const std::string &fileName) override;
+    void removeFileSub(const std::string &fileName) override;
+    void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
 
     //shop
-    void haveShopList(const std::vector<ItemToSellOrBuy> &items);
-    void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice);
-    void haveSellObject(const SoldStat &stat,const uint32_t &newPrice);
+    void haveShopList(const std::vector<ItemToSellOrBuy> &items) override;
+    void haveBuyObject(const BuyStat &stat,const uint32_t &newPrice) override;
+    void haveSellObject(const SoldStat &stat,const uint32_t &newPrice) override;
 
     //factory
-    void haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products);
-    void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice);
-    void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice);
+    void haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,
+                         const std::vector<ItemToSellOrBuy> &products) override;
+    void haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice) override;
+    void haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice) override;
 
     //trade
-    void tradeRequested(const std::string &pseudo,const uint8_t &skinInt);
-    void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
-    void tradeCanceledByOther();
-    void tradeFinishedByOther();
-    void tradeValidatedByTheServer();
-    void tradeAddTradeCash(const uint64_t &cash);
-    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity);
-    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
+    void tradeRequested(const std::string &pseudo,const uint8_t &skinInt) override;
+    void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt) override;
+    void tradeCanceledByOther() override;
+    void tradeFinishedByOther() override;
+    void tradeValidatedByTheServer() override;
+    void tradeAddTradeCash(const uint64_t &cash) override;
+    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) override;
+    void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) override;
 
     //battle
-    void battleRequested(const std::string &pseudo,const uint8_t &skinInt);
-    void battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
-    void battleCanceledByOther();
-    void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn);
+    void battleRequested(const std::string &pseudo,const uint8_t &skinInt) override;
+    void battleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,
+                               const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster) override;
+    void battleCanceledByOther() override;
+    void sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn) override;
 
     //clan
-    void clanActionSuccess(const uint32_t &clanId);
-    void clanActionFailed();
-    void clanDissolved();
-    void clanInformations(const std::string &name);
-    void clanInvite(const uint32_t &clanId,const std::string &name);
-    void cityCapture(const uint32_t &remainingTime,const uint8_t &type);
+    void clanActionSuccess(const uint32_t &clanId) override;
+    void clanActionFailed() override;
+    void clanDissolved() override;
+    void clanInformations(const std::string &name) override;
+    void clanInvite(const uint32_t &clanId,const std::string &name) override;
+    void cityCapture(const uint32_t &remainingTime,const uint8_t &type) override;
 
     //city
-    void captureCityYourAreNotLeader();
-    void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone);
-    void captureCityPreviousNotFinished();
-    void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
-    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
-    void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
-    void captureCityWin();
+    void captureCityYourAreNotLeader() override;
+    void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone) override;
+    void captureCityPreviousNotFinished() override;
+    void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count) override;
+    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId) override;
+    void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count) override;
+    void captureCityWin() override;
 
     //market
-    void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList);
-    void marketBuy(const bool &success);
-    void marketBuyMonster(const PlayerMonster &playerMonster);
-    void marketPut(const bool &success);
-    void marketGetCash(const uint64_t &cash);
-    void marketWithdrawCanceled();
-    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
-    void marketWithdrawMonster(const PlayerMonster &playerMonster);
+    void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,
+                    const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,
+                    const std::vector<MarketMonster> &marketOwnMonsterList) override;
+    void marketBuy(const bool &success) override;
+    void marketBuyMonster(const PlayerMonster &playerMonster) override;
+    void marketPut(const bool &success) override;
+    void marketGetCash(const uint64_t &cash) override;
+    void marketWithdrawCanceled() override;
+    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) override;
+    void marketWithdrawMonster(const PlayerMonster &playerMonster) override;
 
 signals:
     void QtnewError(const std::string &error,const std::string &detailedError);

@@ -868,13 +868,17 @@ void MainWindow::server_add_finished()
             return;
         }
     }
-    else
+    else if(addServer->type()==1)
     {
         if(!addServer->server().startsWith("ws://") && !addServer->server().startsWith("wss://"))
         {
             QMessageBox::warning(this,tr("Error"),tr("The web socket url seam wrong, not start with ws:// or wss://"));
             return;
         }
+    }
+    else {
+        QMessageBox::warning(this,tr("Error"),tr("No TCP and websocket supported"));
+        return;
     }
     if(customServerName.contains(addServer->name()))
     {
