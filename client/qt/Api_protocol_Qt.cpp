@@ -326,6 +326,7 @@ void Api_protocol_Qt::sslHandcheckIsFinished()
 
 void Api_protocol_Qt::resetAll()
 {
+    messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     #ifndef NOTCPSOCKET
     if(socket!=NULL && socket->fakeSocket!=NULL)
         haveFirstHeader=true;
@@ -791,4 +792,20 @@ void Api_protocol_Qt::closeSocket()
 {
     if(socket!=nullptr)
         socket->close();
+}
+
+ssize_t Api_protocol_Qt::read(char * data, const size_t &size)
+{
+    if(socket!=nullptr)
+        return socket->read(data,size);
+    abort();
+    return -1;
+}
+
+ssize_t Api_protocol_Qt::write(const char * const data, const size_t &size)
+{
+    if(socket!=nullptr)
+        return socket->write(data,size);
+    abort();
+    return -1;
 }
