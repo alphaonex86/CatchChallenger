@@ -18,7 +18,7 @@
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "ServerStructures.h"
-#include "Client.h"
+#include "ClientWithSocket.h"
 #include "MapServer.h"
 #include "BaseServerMasterLoadDictionary.h"
 #include "BaseServerMasterSendDatapack.h"
