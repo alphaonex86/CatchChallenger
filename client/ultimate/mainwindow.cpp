@@ -1293,19 +1293,44 @@ void MainWindow::on_pushButtonTryLogin_clicked()
         realWebSocket=nullptr;
         #endif
     }
-    #ifndef NOTCPSOCKET
+    #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
     if(!selectedServerConnexion->host.isEmpty())
     {
         realSslSocket=new QSslSocket();
         socket=new CatchChallenger::ConnectedSocket(realSslSocket);
     }
-    #endif
-    #ifndef NOWEBSOCKET
     else if(!selectedServerConnexion->ws.isEmpty())
     {
         realWebSocket=new QWebSocket();
         socket=new CatchChallenger::ConnectedSocket(realWebSocket);
     }
+    else {
+        std::cerr << "host and ws is empty" << std::endl;
+        abort();
+    }
+    #else
+        #ifndef NOTCPSOCKET
+        if(!selectedServerConnexion->host.isEmpty())
+        {
+            realSslSocket=new QSslSocket();
+            socket=new CatchChallenger::ConnectedSocket(realSslSocket);
+        }
+        else {
+            std::cerr << "host is empty" << std::endl;
+            abort();
+        }
+        #endif
+        #ifndef NOWEBSOCKET
+        if(!selectedServerConnexion->ws.isEmpty())
+        {
+            realWebSocket=new QWebSocket();
+            socket=new CatchChallenger::ConnectedSocket(realWebSocket);
+        }
+        else {
+            std::cerr << "ws is empty" << std::endl;
+            abort();
+        }
+        #endif
     #endif
     CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
     this->client=client;
@@ -1447,18 +1472,18 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
         if(realSslSocket==NULL && realWebSocket==NULL)
             client->sendProtocol();
-        else
-            qDebug() << "Tcp/Web socket found, skip sendProtocol()";
+        /*else
+            qDebug() << "Tcp/Web socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
         #elif !defined(NOTCPSOCKET)
         if(realSslSocket==NULL)
             client->sendProtocol();
-        else
-            qDebug() << "Tcp socket found, skip sendProtocol()";
+        /*else
+            qDebug() << "Tcp socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
         #elif !defined(NOWEBSOCKET)
         if(realWebSocket==NULL)
             client->sendProtocol();
-        else
-            qDebug() << "Web socket found, skip sendProtocol()";
+        /*else
+            qDebug() << "Web socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
         #endif
     }
     if(socketState==QAbstractSocket::UnconnectedState)

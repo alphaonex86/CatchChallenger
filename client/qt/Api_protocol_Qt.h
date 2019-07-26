@@ -24,6 +24,9 @@ public:
     void parseIncommingData() override;
     void sslHandcheckIsFinished();
     void closeSocket() override;
+
+    ssize_t read(char * data, const size_t &size) override;
+    ssize_t write(const char * const data, const size_t &size) override;
 #ifndef NOTCPSOCKET
 protected:
     void saveCert(const std::string &file);

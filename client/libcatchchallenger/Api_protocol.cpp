@@ -1702,7 +1702,6 @@ void Api_protocol::resetAll()
         std::cerr << "Api_protocol::resetAll() Suspect internal bug" << std::endl;
     //status for the query
     token.clear();
-    message("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     stageConnexion=StageConnexion::Stage1;
 
     haveFirstHeader=false;
