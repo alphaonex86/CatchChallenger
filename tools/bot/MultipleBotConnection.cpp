@@ -588,7 +588,7 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     client->sslSocket=sslSocket;
     sslSocketToCatchChallengerClient[client->sslSocket]=client;
     client->socket=new CatchChallenger::ConnectedSocket(client->sslSocket);
-    client->api=new CatchChallenger::Api_client_real(client->socket,false);
+    client->api=new CatchChallenger::Api_client_real(client->socket);
     client->preferences.plant=100;
     client->preferences.item=100;
     client->preferences.fight=100;

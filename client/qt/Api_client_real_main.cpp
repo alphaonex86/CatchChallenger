@@ -18,7 +18,7 @@ using namespace CatchChallenger;
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "qt-tar-compressed/QTarDecode.h"
+#include "../tarcompressed/TarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 void Api_client_real::writeNewFileMain(const std::string &fileName,const std::string &data)
@@ -363,7 +363,7 @@ void Api_client_real::decodedIsFinishMain()
     else
     {
         const std::vector<char> &decodedData=zstdDecodeThreadMain.decodedData();
-        QTarDecode tarDecode;
+        TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
             QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();

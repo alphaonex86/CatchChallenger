@@ -18,7 +18,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "qt-tar-compressed/QTarDecode.h"
+#include "../tarcompressed/TarDecode.h"
 #include "../../general/base/GeneralVariable.h"
 
 //need host + port here to have datapack base
@@ -445,4 +445,10 @@ void Api_client_real::setProxy(const QNetworkProxy &proxy)
         qnam3.setProxy(QNetworkProxy::applicationProxy());
         qnam4.setProxy(QNetworkProxy::applicationProxy());
     }
+}
+
+void Api_client_real::closeSocket()
+{
+    if(socket!=nullptr)
+        socket->close();
 }

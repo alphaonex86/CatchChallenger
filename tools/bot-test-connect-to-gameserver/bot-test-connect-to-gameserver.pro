@@ -32,8 +32,13 @@ SOURCES += main.cpp\
     ../../client/tarcompressed/ZstdDecode.cpp \
     ../../client/qt/QtDatapackChecksum.cpp \
     ../bot/BotInterface.cpp \
-    ../../client/base/FacilityLibClient.cpp \
-    ../../client/base/Api_protocol_Qt.cpp
+    ../../client/qt/FacilityLibClient.cpp \
+    ../../client/qt/Api_protocol_Qt.cpp \
+    ../../client/qt/ConnectedSocket.cpp \
+    ../../client/libcatchchallenger/DatapackChecksum.cpp \
+    ../../client/libcatchchallenger/DatapackClientLoader.cpp \
+    ../../client/qt/QFakeServer.cpp \
+    ../../client/qt/QFakeSocket.cpp
 HEADERS  += \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
@@ -43,13 +48,19 @@ HEADERS  += \
     ../../client/qt/Api_client_virtual.h \
     ../../client/libcatchchallenger/Api_protocol.h \
     ../../client/qt/ClientVariable.h \
-    ../../client/qt/ClientStructures.h \
     ../../client/qt/QZstdDecodeThread.h \
     ../../client/tarcompressed/TarDecode.h \
     ../../client/tarcompressed/ZstdDecode.h \
     ../../client/qt/QtDatapackChecksum.h \
     ../../client/qt/FacilityLibClient.h \
-    ../../client/qt/Api_protocol_Qt.h
+    ../../client/qt/Api_protocol_Qt.h \
+    ../../client/qt/ConnectedSocket.h \
+    ../../client/libcatchchallenger/DatapackChecksum.h \
+    ../../client/libcatchchallenger/DatapackClientLoader.h \
+    ../../client/qt/ClientVariableAudio.h \
+    ../../client/libcatchchallenger/ClientStructures.h \
+    ../../client/qt/QFakeServer.h \
+    ../../client/qt/QFakeSocket.h
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 

@@ -2105,7 +2105,7 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
     }
 }
 
-bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * const data,const int &size)
+bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * const data,const unsigned int &size)
 {
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
@@ -2147,7 +2147,7 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
 }
 
 
-bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
+bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     registerOutputQuery(queryNumber,packetCode);
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];

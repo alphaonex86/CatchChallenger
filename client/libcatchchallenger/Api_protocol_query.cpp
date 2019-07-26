@@ -22,7 +22,7 @@ using namespace CatchChallenger;
 #include <unistd.h>
 #endif
 
-bool Api_protocol::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const int &size)
+bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     int pos=0;
     if(!is_logged)

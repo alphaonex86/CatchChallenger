@@ -25,7 +25,7 @@ using namespace CatchChallenger;
 #endif
 
 //have message without reply
-bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const data,const int &size)
+bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const data, const unsigned int &size)
 {
     int pos=0;
     if(!is_logged)

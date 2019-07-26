@@ -39,3 +39,8 @@ void Api_client_virtual::sendDatapackContentMainSub(const std::string &hashMain,
 void Api_client_virtual::defineMaxPlayers(const uint16_t &)
 {
 }
+
+void Api_client_virtual::tryDisconnect()
+{
+    socket->disconnectFromHost();
+}
