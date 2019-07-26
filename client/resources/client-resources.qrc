@@ -69,5 +69,10 @@
         <file>images/animatedbackground/treefront.png</file>
         <file>images/interface/teacher.png</file>
         <file>images/interface/message.png</file>
+        <file>music/click.opus</file>
+        <file>music/crafting.opus</file>
+        <file>music/loading.opus</file>
+        <file>music/shop.opus</file>
+        <file>music/text.opus</file>
     </qresource>
 </RCC>
