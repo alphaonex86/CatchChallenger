@@ -152,10 +152,10 @@ protected:
     std::string mainDatapackCode;
     std::string subDatapackCode;
 
-    virtual void parsePlantsExtra();
+    //virtual void parsePlantsExtra();
     virtual void parseItemsExtra();
-    virtual void parseMonstersExtra();
-    virtual void parseBuffExtra();
+    //virtual void parseMonstersExtra();
+    //virtual void parseBuffExtra();
 private:
     virtual void emitdatapackParsed() = 0;
     virtual void emitdatapackParsedMainSub() = 0;
