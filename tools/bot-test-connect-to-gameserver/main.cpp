@@ -24,6 +24,11 @@ const char* __asan_default_options() { return "alloc_dealloc_mismatch=0:detect_c
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
+    if(QCoreApplication::applicationDirPath().isEmpty())
+    {
+        std::cerr << "QCoreApplication::applicationDirPath() is empty, abort" << std::endl;
+        abort();
+    }
     std::string config=QCoreApplication::applicationDirPath().toStdString();
     if(!QCoreApplication::applicationDirPath().endsWith("/"))
         config+="/";
