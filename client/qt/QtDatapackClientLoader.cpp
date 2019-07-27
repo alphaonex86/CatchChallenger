@@ -140,7 +140,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 
 void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
-    parseDatapackMainSub(mainDatapackCode,subDatapackCode);
+    DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode);
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(

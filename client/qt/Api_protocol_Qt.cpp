@@ -358,7 +358,7 @@ bool Api_protocol_Qt::tryLogin(const std::string &login, const std::string &pass
 
 std::string Api_protocol_Qt::socketDisconnectedForReconnect()
 {
-    std::string returnVar=Api_protocol_Qt::socketDisconnectedForReconnect();
+    std::string returnVar=Api_protocol::socketDisconnectedForReconnect();
     const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
     if(socket==NULL)
     {

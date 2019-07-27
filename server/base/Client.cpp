@@ -158,7 +158,7 @@ BaseClassSwitch::EpollObjectType Client::getType() const
 /// \warning called in one other thread!!!
 bool Client::disconnectClient()
 {
-    closeSocket();
+    //closeSocket();-> done into above layer
     if(stat==ClientStat::None)
         return false;
     if(account_id==0)

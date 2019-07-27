@@ -319,7 +319,7 @@ void DatapackClientLoader::parseVisualCategory()
                                             if(event->Attribute("color")!=NULL)
                                             {
                                                 bool ok=false;
-                                                CCColor color=namedColorToCCColor(item->Attribute("color"),&ok);
+                                                CCColor color=namedColorToCCColor(event->Attribute("color"),&ok);
                                                 color.a=alpha;
                                                 if(ok)
                                                     visualCategoryCondition.color=color;
@@ -1860,8 +1860,8 @@ void DatapackClientLoader::parseBotFightsExtra()
                 }
                 item = item->NextSiblingElement("fight");
             }
-            file_index++;
         }
+        file_index++;
     }
 
     auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.begin();

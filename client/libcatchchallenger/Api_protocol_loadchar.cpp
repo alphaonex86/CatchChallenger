@@ -370,6 +370,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
 
 bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
+    std::cout << binarytoHexa(data,size) << std::endl;
     int pos=0;
 
     //Events not with default value list size
@@ -497,17 +498,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint64_t cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+    player_informations.cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
     pos+=sizeof(uint64_t);
-    player_informations.cash=cash;
     if((size-pos)<(int)sizeof(uint64_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+    player_informations.warehouse_cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
     pos+=sizeof(uint64_t);
-    player_informations.warehouse_cash=cash;
 
     //monsters
     if((size-pos)<(int)sizeof(uint8_t))
