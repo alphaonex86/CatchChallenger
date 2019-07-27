@@ -353,7 +353,7 @@ bool Api_protocol_Qt::tryLogin(const std::string &login, const std::string &pass
         newError(QObject::tr("Hostname too big").toStdString(),std::string("Hostname too big"));
         return false;
     }
-    return Api_protocol_Qt::tryLogin(login,pass);
+    return Api_protocol::tryLogin(login,pass);
 }
 
 std::string Api_protocol_Qt::socketDisconnectedForReconnect()

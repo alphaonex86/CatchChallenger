@@ -355,7 +355,8 @@ void GlobalControler::on_connect_clicked()
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
-            std::cerr << "Unable to create the datapack folder: " << datapack.absolutePath().toStdString() << std::endl;
+            std::cerr << "Unable to create the datapack folder: " << datapack.absolutePath().toStdString()
+                      << ", QCoreApplication::applicationDirPath(): " << QCoreApplication::applicationDirPath().toStdString() << std::endl;
             abort();
         }
 

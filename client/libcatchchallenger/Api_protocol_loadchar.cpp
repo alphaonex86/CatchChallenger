@@ -370,7 +370,6 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
 
 bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
-    std::cout << binarytoHexa(data,size) << std::endl;
     int pos=0;
 
     //Events not with default value list size
