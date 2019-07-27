@@ -578,8 +578,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        playerReputation.point=data[pos];
-        pos+=sizeof(uint8_t);
+        playerReputation.point=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+        pos+=sizeof(uint32_t);
         player_informations.reputation[type]=playerReputation;
         index++;
     }
@@ -863,10 +863,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
         }
 
-        if(size!=pos2)
+        if(size2!=pos2)
         {
             parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                       std::to_string(size)+" != pos2 "+
+                       std::to_string(size2)+" != pos2 "+
                        std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
