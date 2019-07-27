@@ -47,7 +47,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -286,7 +286,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -424,7 +424,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -496,7 +496,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -550,7 +550,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -648,7 +648,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -908,7 +908,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -1005,7 +1005,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
-                delayedMessageTemp.data=data;
+                delayedMessageTemp.data=std::string(data,size);
                 delayedMessageTemp.packetCode=packetCode;
                 delayedMessages.push_back(delayedMessageTemp);
                 return true;
@@ -1615,7 +1615,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 DelayedMessage delayedMessage;
                 delayedMessage.packetCode=packetCode;
-                delayedMessage.data=data;
+                delayedMessage.data=std::string(data,size);
                 delayedMessages.push_back(delayedMessage);
                 return true;
             }
