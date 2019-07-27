@@ -1159,16 +1159,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                uint32_t size=le32toh(*reinterpret_cast<const uint32_t *>(data2+pos2));
+                uint32_t filesize=le32toh(*reinterpret_cast<const uint32_t *>(data2+pos2));
                 pos2+=sizeof(uint32_t);
-                if((size2-pos2)<(int)size)
+                if((size2-pos2)<(int)filesize)
                 {
                     parseError("Procotol wrong or corrupted","wrong file data size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::string dataFile;
-                dataFile=std::string(data2+pos2,size);
-                pos2+=size2;
+                dataFile=std::string(data2+pos2,filesize);
+                pos2+=filesize;
                 if(packetCode==0x76)
                     std::cout << "Raw file to create: " << std::endl;
                 else
