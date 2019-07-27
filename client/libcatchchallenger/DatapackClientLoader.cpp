@@ -255,7 +255,7 @@ void DatapackClientLoader::parseVisualCategory()
                 {
                     bool ok;
                     CCColor color;
-                    color.a=255;
+                    color.a=0;
                     color.r=0;
                     color.g=0;
                     color.b=0;

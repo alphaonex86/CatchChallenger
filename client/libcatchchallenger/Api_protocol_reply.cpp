@@ -626,7 +626,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 }
                 else
                 {
-                    tokenForGameServer=data;
+                    tokenForGameServer=std::string(data,size);
                     std::cout << "new token to go on game server: " << binarytoHexa(tokenForGameServer.data(),tokenForGameServer.size()) << std::endl;
                     if(tokenForGameServer.size()==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)
                     {
