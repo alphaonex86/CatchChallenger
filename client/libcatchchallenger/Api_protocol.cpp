@@ -2240,49 +2240,49 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.monster=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
     pos+=sizeof(uint16_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.level=*(data+pos);
     pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster remaining_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.remaining_xp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster hp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster sp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.sp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.catched_with=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
     pos+=sizeof(uint16_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     uint8_t gender=*(data+pos);
     pos+=sizeof(uint8_t);
@@ -2295,20 +2295,20 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         break;
         default:
             parseError("Procotol wrong or corrupted",std::string("gender code wrong: ")+std::to_string(gender)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         break;
     }
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster egg_step, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     monster.egg_step=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster character_origin, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     {
         uint8_t character_origin=*(data+pos);
@@ -2319,7 +2319,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the buff monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     uint8_t sub_size8=*(data+pos);
     pos+=sizeof(uint8_t);
@@ -2329,21 +2329,21 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         buff.buff=*(data+pos);
         pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         buff.level=*(data+pos);
         pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster buff level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         buff.remainingNumberOfTurn=*(data+pos);
         pos+=sizeof(uint8_t);
@@ -2354,7 +2354,7 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster size of list of the skill monsters, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
+        return -1;
     }
     uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
     pos+=sizeof(uint16_t);
@@ -2364,28 +2364,28 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
         if((size-pos)<(int)sizeof(uint16_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         skill.skill=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
         pos+=sizeof(uint16_t);
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         skill.level=*(data+pos);
         pos+=sizeof(uint8_t);
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster skill level, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            return -1;
         }
         skill.endurance=*(data+pos);
         pos+=sizeof(uint8_t);
         monster.skills.push_back(skill);
         sub_index++;
     }
-    return true;
+    return pos;
 }
 
 bool Api_protocol::setMapNumber(const unsigned int number_of_map)

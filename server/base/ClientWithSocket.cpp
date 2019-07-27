@@ -40,13 +40,14 @@ bool ClientWithSocket::disconnectClient()
 {
     #ifdef EPOLLCATCHCHALLENGERSERVER
     EpollClient::close();
-    return true;
     #else
     if(qtSocket==nullptr)
         abort();
     qtSocket->close();
-    return true;
     #endif
+    Client::disconnectClient();
+    return true;
+
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
