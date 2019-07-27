@@ -1137,11 +1137,17 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 std::string ext;
                 std::string::size_type n=fileName.rfind(".");
                 if(n != std::string::npos)
-                    ext=fileName.substr(n);
+                    ext=fileName.substr(n+1);
+                else
+                    std::cerr << "fileName.rfind(\".\")==std::string::npos" << std::endl;
                 if(extensionAllowed.find(ext)==extensionAllowed.cend())
                 {
-                    parseError("Procotol wrong or corrupted","extension not allowed: "+fileName+
-                               " with main ident: "+std::to_string(packetCode)+", line: "+
+                    if(extensionAllowed.empty())
+                        std::cerr << "extensionAllowed is empty" << std::endl;
+                    else
+                        std::cerr << "extensionAllowed: \"" << stringimplode(std::vector<std::string>(extensionAllowed.cbegin(),extensionAllowed.cend()),";") << "\"" << std::endl;
+                    parseError("Procotol wrong or corrupted","extension not allowed: \""+fileName+
+                               "\", ext: \""+ext+"\" with main ident: "+std::to_string(packetCode)+", line: "+
                                std::string(__FILE__)+":"+std::to_string(__LINE__)+
                                ", data: "+binarytoHexa(data,size2)
                                );
