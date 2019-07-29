@@ -13,7 +13,6 @@ public:
     #endif
     bool plantOnlyVisibleByPlayer;
     uint8_t forcedSpeed;
-    bool tcpCork;
     bool useSP;
     bool autoLearn;
     bool dontSendPseudo;

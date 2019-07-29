@@ -119,7 +119,6 @@ private slots:
     void on_datapack_cache_toggled(bool checked);
     void on_datapack_cache_timeout_checkbox_toggled(bool checked);
     void on_datapack_cache_timeout_editingFinished();
-    void on_linux_socket_cork_toggled(bool checked);
     void datapack_cache_save();
     void on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked);
     void on_useSsl_toggled(bool checked);

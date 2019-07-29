@@ -467,12 +467,6 @@ void MainWindow::load_settings()
         CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value("httpDatapackMirror");
         CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
         formatedServerSettings.datapackCache				= stringtoint32(settings->value("datapackCache"));
-        #ifdef __linux__
-        settings->beginGroup("Linux");
-        CommonSettingsServer::commonSettingsServer.tcpCork	= stringtobool(settings->value("tcpCork"));
-        formatedServerNormalSettings.tcpNodelay= stringtobool(settings->value("tcpNodelay"));
-        settings->endGroup();
-        #endif
 
         //fight
         //CommonSettingsCommon::commonSettingsCommon.pvp			= stringtobool(settings->value("pvp"));
@@ -883,15 +877,6 @@ void MainWindow::load_settings()
     }
     if(ui->programmedEventType->count()>0)
         on_programmedEventType_currentIndexChanged(0);
-    {
-        #ifdef __linux__
-        ui->linux_socket_cork->setChecked(CommonSettingsServer::commonSettingsServer.tcpCork);
-        ui->tcpNodelay->setChecked(formatedServerNormalSettings.tcpNodelay);
-        #else
-        ui->linux_socket_cork->setEnabled(false);
-        ui->tcpNodelay->setEnabled(false);
-        #endif
-    }
     if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
     {
         ui->forceSpeed->setChecked(true);
@@ -1071,10 +1056,6 @@ void MainWindow::send_settings()
         formatedServerSettings.datapackCache			= 0;
     else
         formatedServerSettings.datapackCache			= ui->datapack_cache_timeout->value();
-    #ifdef __linux__
-    CommonSettingsServer::commonSettingsServer.tcpCork  = ui->linux_socket_cork->isChecked();
-    formatedServerNormalSettings.tcpNodelay  = ui->tcpNodelay->isChecked();
-    #endif
 
     //ddos
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=ui->DDOSwaitBeforeConnectAfterKick->value();
@@ -1835,15 +1816,6 @@ void MainWindow::datapack_cache_save()
         settings->setValue("datapackCache",0);
     else
         settings->setValue("datapackCache",ui->datapack_cache_timeout->value());
-}
-
-void MainWindow::on_linux_socket_cork_toggled(bool checked)
-{
-    #ifdef __linux__
-    settings->beginGroup("Linux");
-    settings->setValue("tcpCork",checked);
-    settings->endGroup();
-    #endif
 }
 
 void CatchChallenger::MainWindow::on_MapVisibilityAlgorithmSimpleReemit_toggled(bool checked)

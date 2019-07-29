@@ -33,11 +33,6 @@ NormalServer::NormalServer() :
     normalServerSettings.server_ip      = std::string();
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
-    #ifdef __linux__
-    CommonSettingsServer::commonSettingsServer.tcpCork  = false;
-    normalServerSettings.tcpNodelay         = false;
-    #endif
-
 
     //botThread = new EventThreader();
     //crash if this, due to different socket and thread
@@ -242,6 +237,7 @@ void NormalServer::start_internal_server()
         error("Unable to listen: "+listenAddressAndPort+", errror: "+sslServer->errorString().toStdString());
         return;
     }
+    #ifdef CATCHCHALLENGER_SOLO
     if(!QFakeServer::server.listen())
     {
         std::cerr << "Unable to listen the internal server" << std::endl;
@@ -249,31 +245,6 @@ void NormalServer::start_internal_server()
         is_started(false);
         error("Unable to listen the internal server");
         return;
-    }
-    #ifdef __linux__
-    if(CommonSettingsServer::commonSettingsServer.tcpCork)
-    {
-        qintptr socketDescriptor=sslServer->socketDescriptor();
-        if(socketDescriptor!=-1)
-        {
-            int state = 1;
-            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
-        }
-        else
-            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
-    }
-    else if(normalServerSettings.tcpNodelay)
-    {
-        qintptr socketDescriptor=sslServer->socketDescriptor();
-        if(socketDescriptor!=-1)
-        {
-            int state = 1;
-            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
-        }
-        else
-            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
     }
     #endif
 
@@ -375,6 +346,7 @@ std::string NormalServer::listenIpAndPort(std::string server_ip,uint16_t server_
 
 void NormalServer::newConnection()
 {
+    #ifdef CATCHCHALLENGER_SOLO
     while(QFakeServer::server.hasPendingConnections())
     {
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
@@ -398,6 +370,7 @@ void NormalServer::newConnection()
         else
             std::cout << "NULL client with fake socket" << std::endl;
     }
+    #endif
     if(sslServer!=NULL)
         while(sslServer->hasPendingConnections())
         {
@@ -415,45 +388,22 @@ void NormalServer::newConnection()
                 connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
-                    #ifdef __linux__
-                    if(CommonSettingsServer::commonSettingsServer.tcpCork)
-                    {
-                        qintptr socketDescriptor=socket->socketDescriptor();
-                        if(socketDescriptor!=-1)
-                        {
-                            int state = 1;
-                            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
-                        }
-                        else
-                            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
-                    }
-                    else if(normalServerSettings.tcpNodelay)
-                    {
-                        qintptr socketDescriptor=socket->socketDescriptor();
-                        if(socketDescriptor!=-1)
-                        {
-                            int state = 1;
-                            if(setsockopt(socketDescriptor, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                                std::cerr << "Unable to apply tcp cork under linux" << std::endl;
-                        }
-                        else
-                            std::cerr << "Unable to get socket descriptor to apply tcp cork under linux" << std::endl;
-                    }
-                    #endif
                     //DebugClass::debugConsole(std::stringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
-                    Client *client;
+                    ClientWithSocket *client=nullptr;
                     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                     {
                         case MapVisibilityAlgorithmSelection_Simple:
-                            client=new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket));
+                            client=new MapVisibilityAlgorithm_Simple_StoreOnSender();
+                            client->qtSocket=new ConnectedSocket(socket);
                         break;
                         case MapVisibilityAlgorithmSelection_WithBorder:
-                            client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket));
+                            client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+                            client->qtSocket=new ConnectedSocket(socket);
                         break;
                         default:
                         case MapVisibilityAlgorithmSelection_None:
-                            client=new MapVisibilityAlgorithm_None(new ConnectedSocket(socket));
+                            client=new MapVisibilityAlgorithm_None();
+                            client->qtSocket=new ConnectedSocket(socket);
                         break;
                     }
                     connect_the_last_client(client,socket);

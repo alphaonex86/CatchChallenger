@@ -16,9 +16,6 @@ EpollServer::EpollServer()
     //normalServerSettings.server_ip
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
-    #ifdef __linux__
-    CommonSettingsServer::commonSettingsServer.tcpCork                      = false;
-    #endif
     GlobalServerData::serverPrivateVariables.db_server=NULL;
     GlobalServerData::serverPrivateVariables.db_common=NULL;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

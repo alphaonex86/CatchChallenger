@@ -1,6 +1,7 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 #ifndef CATCHCHALLENGER_QFAKESERVER_H
 #define CATCHCHALLENGER_QFAKESERVER_H
+#ifdef CATCHCHALLENGER_SOLO
 
 #include <QObject>
 #include <QPair>
@@ -41,5 +42,6 @@ public slots:
 };
 }
 
+#endif
 #endif // QFAKESERVER_H
 #endif
