@@ -1,4 +1,4 @@
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
 #include "QFakeSocket.h"
 #include "QFakeServer.h"
 #include "ClientVariable.h"

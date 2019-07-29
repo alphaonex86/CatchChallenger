@@ -6,7 +6,6 @@ CommonSettingsServer::CommonSettingsServer()
 {
     plantOnlyVisibleByPlayer=false;
     forcedSpeed=0;
-    tcpCork=false;
     useSP=false;
     autoLearn=false;
     dontSendPseudo=false;

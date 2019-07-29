@@ -110,7 +110,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the tcpCork, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.tcpCork=data[pos];
+    //CommonSettingsServer::commonSettingsServer.tcpCork=data[pos];
     pos+=sizeof(uint8_t);
     {
         //socket->setTcpCork(CommonSettingsServer::commonSettingsServer.tcpCork);->ignored for now

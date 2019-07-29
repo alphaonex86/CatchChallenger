@@ -23,7 +23,9 @@ class ConnectedSocket : public QIODevice
     Q_OBJECT
 public:
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     explicit ConnectedSocket(QFakeSocket *socket);
+    #endif
     explicit ConnectedSocket(QSslSocket *socket);
     explicit ConnectedSocket(QTcpSocket *socket);
     #endif
@@ -38,7 +40,6 @@ public:
     QAbstractSocket::SocketError error() const;
     bool	flush();
     bool	isValid() const;
-    void    setTcpCork(const bool &cork);
     QHostAddress localAddress() const;
     quint16	localPort() const;
     QHostAddress peerAddress() const;
@@ -54,7 +55,9 @@ public:
     qint64	writeData(const char * data, qint64 maxSize);
     void	close();
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     QFakeSocket *fakeSocket;
+    #endif
     QSslSocket *sslSocket;
     QTcpSocket *tcpSocket;
     #endif

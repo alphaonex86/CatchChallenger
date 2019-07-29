@@ -188,15 +188,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     settings->endGroup();
     #endif
 
-    #ifdef __linux__
-    settings->beginGroup("Linux");
-    if(!settings->contains("tcpCork"))
-        settings->setValue("tcpCork",false);
-    if(!settings->contains("tcpNodelay"))
-        settings->setValue("tcpNodelay",false);
-    settings->endGroup();
-    #endif
-
     settings->beginGroup("MapVisibilityAlgorithm");
     if(!settings->contains("MapVisibilityAlgorithm"))
         settings->setValue("MapVisibilityAlgorithm",0);
