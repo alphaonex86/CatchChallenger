@@ -203,7 +203,7 @@ void BaseServer::preload_other()
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.useSP;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.tcpCork;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.autoLearn;
         posOutput+=1;

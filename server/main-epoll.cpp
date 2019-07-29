@@ -177,12 +177,9 @@ int main(int argc, char *argv[])
     }
     #endif
 
-    bool tcpCork,tcpNodelay;
     {
         const GameServerSettings &formatedServerSettings=server->getSettings();
         const NormalServerSettings &formatedServerNormalSettings=server->getNormalSettings();
-        tcpCork=CommonSettingsServer::commonSettingsServer.tcpCork;
-        tcpNodelay=formatedServerNormalSettings.tcpNodelay;
 
         if(!formatedServerNormalSettings.proxy.empty())
         {
@@ -601,21 +598,6 @@ int main(int argc, char *argv[])
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else
                         {
-                            if(tcpCork)
-                            {
-                                //set cork for CatchChallener because don't have real time part
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                            }
-                            else if(tcpNodelay)
-                            {
-                                //set no delay to don't try group the packet and improve the performance
-                                int state = 1;
-                                if(setsockopt(infd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                            }
-
                             ClientWithSocket *client;
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {

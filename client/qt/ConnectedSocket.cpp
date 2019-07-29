@@ -10,6 +10,7 @@
 
 using namespace CatchChallenger;
 #ifndef NOTCPSOCKET
+#ifdef CATCHCHALLENGER_SOLO
 ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     fakeSocket(socket),
     sslSocket(NULL),
@@ -32,9 +33,12 @@ ConnectedSocket::ConnectedSocket(QFakeSocket *socket) :
     webSocket=nullptr;
     #endif
 }
+#endif
 
 ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
+    #ifdef CATCHCHALLENGER_SOLO
     fakeSocket(NULL),
+    #endif
     sslSocket(socket),
     tcpSocket(NULL)
 {
@@ -63,7 +67,9 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
 }
 
 ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
+    #ifdef CATCHCHALLENGER_SOLO
     fakeSocket(NULL),
+    #endif
     sslSocket(NULL),
     tcpSocket(socket)
 {
@@ -106,7 +112,9 @@ ConnectedSocket::ConnectedSocket(QWebSocket *socket) :
         abort();*/
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     fakeSocket=nullptr;
+    #endif
     sslSocket=nullptr;
     tcpSocket=nullptr;
     #endif
@@ -126,11 +134,13 @@ ConnectedSocket::~ConnectedSocket()
         tcpSocket->deleteLater();
         tcpSocket=nullptr;
     }
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
     {
         fakeSocket->deleteLater();
         fakeSocket=nullptr;
     }
+    #endif
     #endif
     #ifndef NOWEBSOCKET
     /*generate crash because delete in internal by Qt:
@@ -201,7 +211,9 @@ void ConnectedSocket::destroyedSocket()
     #ifndef NOTCPSOCKET
     sslSocket=nullptr;
     tcpSocket=nullptr;
+    #ifdef CATCHCHALLENGER_SOLO
     fakeSocket=nullptr;
+    #endif
     #endif
     hostName.clear();
     port=0;
@@ -213,8 +225,10 @@ void ConnectedSocket::abort()
     port=0;
 
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         fakeSocket->abort();
+    #endif
     if(sslSocket!=nullptr)
         sslSocket->abort();
     if(tcpSocket!=nullptr)
@@ -231,9 +245,11 @@ void ConnectedSocket::connectToHost(const QString & hostName, quint16 port)
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         fakeSocket->connectToHost();
     else
+    #endif
     {
         //workaround because QSslSocket don't return correct value for i2p via proxy
         this->hostName=hostName;
@@ -271,12 +287,15 @@ void ConnectedSocket::connectToHost(const QHostAddress & address, quint16 port)
     if(state()!=QAbstractSocket::UnconnectedState)
         return;
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
     {
         fakeSocket->connectToHost();
         return;
     }
-    else if(sslSocket!=nullptr)
+    else
+    #endif
+    if(sslSocket!=nullptr)
     {
         sslSocket->connectToHost(address.toString(),port);
         return;
@@ -303,8 +322,10 @@ void ConnectedSocket::disconnectFromHost()
     hostName.clear();
     port=0;
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         fakeSocket->disconnectFromHost();
+    #endif
     if(sslSocket!=nullptr)
         sslSocket->disconnectFromHost();
     if(tcpSocket!=nullptr)
@@ -319,8 +340,10 @@ void ConnectedSocket::disconnectFromHost()
 QAbstractSocket::SocketError ConnectedSocket::error() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->error();
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->error();
     if(tcpSocket!=nullptr)
@@ -336,8 +359,10 @@ QAbstractSocket::SocketError ConnectedSocket::error() const
 bool ConnectedSocket::flush()
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return true;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->flush();
     if(tcpSocket!=nullptr)
@@ -353,9 +378,12 @@ bool ConnectedSocket::flush()
 bool ConnectedSocket::isValid() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->isValid();
-    else if(sslSocket!=nullptr)
+    else
+    #endif
+    if(sslSocket!=nullptr)
         return sslSocket->isValid();
     else if(tcpSocket!=nullptr)
         return tcpSocket->isValid();
@@ -367,55 +395,16 @@ bool ConnectedSocket::isValid() const
     return false;
 }
 
-void ConnectedSocket::setTcpCork(const bool &cork)
-{
-    #if ! defined(__EMSCRIPTEN__) && ! defined(ANDROID_NDK) && ! defined(__ANDROID_API__)
-    #ifdef __linux__
-    #ifndef NOTCPSOCKET
-    if(sslSocket!=nullptr)
-    {
-        #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
-        const qintptr &infd=
-        #else
-        const int32_t &infd=
-        #endif
-                sslSocket->socketDescriptor();
-        if(infd!=-1)
-        {
-            int state = cork;
-            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork" << std::endl;
-        }
-    }
-    if(tcpSocket!=nullptr)
-    {
-        #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
-        const qintptr &infd=
-        #else
-        const int32_t &infd=
-        #endif
-                tcpSocket->socketDescriptor();
-        if(infd!=-1)
-        {
-            int state = cork;
-            if(setsockopt(static_cast<int>(infd), IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                std::cerr << "Unable to apply tcp cork" << std::endl;
-        }
-    }
-    #endif
-    #endif
-    #endif
-    Q_UNUSED(cork);
-}
-
 QHostAddress ConnectedSocket::localAddress() const
 {
     //deprecated form incorrect value for i2p
     std::cerr << "ConnectedSocket::localAddress(): deprecated form incorrect value for i2p" << std::endl;
 
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->localAddress();
     if(tcpSocket!=nullptr)
@@ -427,8 +416,10 @@ QHostAddress ConnectedSocket::localAddress() const
 quint16	ConnectedSocket::localPort() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return 9999;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->localPort();
     if(tcpSocket!=nullptr)
@@ -443,8 +434,10 @@ QHostAddress	ConnectedSocket::peerAddress() const
     std::cerr << "ConnectedSocket::peerAddress(): deprecated form incorrect value for i2p" << std::endl;
 
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return QHostAddress::LocalHost;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->peerAddress();
     if(tcpSocket!=nullptr)
@@ -458,8 +451,10 @@ QString ConnectedSocket::peerName() const
     #ifndef NOTCPSOCKET
     /// \warning via direct value for i2p. Never pass by peerAddress()
     QString pearName;
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return QString();
+    #endif
     if(sslSocket!=nullptr)
         pearName=sslSocket->peerName();
     if(tcpSocket!=nullptr)
@@ -477,8 +472,10 @@ QString ConnectedSocket::peerName() const
 quint16	ConnectedSocket::peerPort() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return 15000;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->peerPort();
     if(tcpSocket!=nullptr)
@@ -490,8 +487,10 @@ quint16	ConnectedSocket::peerPort() const
 QAbstractSocket::SocketState ConnectedSocket::state() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->state();
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->state();
     if(tcpSocket!=nullptr)
@@ -507,8 +506,10 @@ QAbstractSocket::SocketState ConnectedSocket::state() const
 bool ConnectedSocket::waitForConnected(int msecs)
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return true;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->waitForConnected(msecs);
     if(tcpSocket!=nullptr)
@@ -521,8 +522,10 @@ bool ConnectedSocket::waitForConnected(int msecs)
 bool ConnectedSocket::waitForDisconnected(int msecs)
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return true;
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->waitForDisconnected(msecs);
     if(tcpSocket!=nullptr)
@@ -535,8 +538,10 @@ bool ConnectedSocket::waitForDisconnected(int msecs)
 qint64 ConnectedSocket::bytesAvailable() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->bytesAvailable();
+    #endif
     if(tcpSocket!=nullptr)
         return tcpSocket->bytesAvailable();
     if(sslSocket!=nullptr)
@@ -553,8 +558,10 @@ qint64 ConnectedSocket::bytesAvailable() const
 QIODevice::OpenMode ConnectedSocket::openMode() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->openMode();
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->openMode();
     if(tcpSocket!=nullptr)
@@ -566,8 +573,10 @@ QIODevice::OpenMode ConnectedSocket::openMode() const
 QString ConnectedSocket::errorString() const
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->errorString();
+    #endif
     if(sslSocket!=nullptr)
         return sslSocket->errorString();
     if(tcpSocket!=nullptr)
@@ -588,8 +597,10 @@ void ConnectedSocket::close()
 qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->read(data,maxSize);
+    #endif
     if(tcpSocket!=nullptr)
         return tcpSocket->read(data,maxSize);
     if(sslSocket!=nullptr)
@@ -610,8 +621,10 @@ qint64 ConnectedSocket::readData(char * data, qint64 maxSize)
 qint64 ConnectedSocket::writeData(const char * data, qint64 maxSize)
 {
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
         return fakeSocket->write(data,maxSize);
+    #endif
     if(tcpSocket!=nullptr)
         return tcpSocket->write(data,maxSize);
     if(sslSocket!=nullptr)
