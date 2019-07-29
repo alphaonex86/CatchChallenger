@@ -6,12 +6,12 @@ SOURCES += $$PWD/NormalServer.cpp \
     NormalServerGlobal.cpp
 
 HEADERS += $$PWD/NormalServer.h \
-    $$PWD/../client/base/ClientStructures.h \
+    $$PWD/../client/qt/ClientStructures.h \
     QSslServer.h \
     NormalServerGlobal.h
 
 #choose one of:
-DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2 NOWEBSOCKET
 
 HEADERS += $$PWD/../general/base/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../general/base/tinyXML2/tinyxml2.cpp \

@@ -2,6 +2,7 @@
 #ifndef CATCHCHALLENGER_QFAKESOCKET_H
 #define CATCHCHALLENGER_QFAKESOCKET_H
 
+#ifdef CATCHCHALLENGER_SOLO
 #include <QAbstractSocket>
 #include <QMutex>
 #include <QByteArray>
@@ -49,6 +50,7 @@ private:
     qint64	bytesAvailableWithMutex();
 };
 }
+#endif
 
 #endif // QFAKESOCKET_H
 #endif

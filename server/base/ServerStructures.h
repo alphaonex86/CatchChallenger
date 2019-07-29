@@ -98,9 +98,6 @@ struct NormalServerSettings
     std::string proxy;
     uint16_t proxy_port;
     bool useSsl;
-    #ifdef __linux__
-    bool tcpNodelay;
-    #endif
 };
 
 struct LoginServerSettings

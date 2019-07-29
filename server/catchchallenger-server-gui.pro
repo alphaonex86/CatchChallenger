@@ -1,7 +1,7 @@
 include(catchchallenger-server-normal.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-QT       += gui
+QT       += gui network
 
 TARGET = catchchallenger-server-gui
 
@@ -14,4 +14,4 @@ HEADERS  += MainWindow.h
 FORMS    += MainWindow.ui
 
 RESOURCES += \
-    ../client/base/resources/client-resources-multi.qrc
+    ../client/resources/client-resources-multi.qrc

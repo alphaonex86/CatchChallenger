@@ -110,10 +110,7 @@ SOURCES += \
     $$PWD/Ultimate.cpp \
     $$PWD/LoadingScreen.cpp \
     $$PWD/CCBackground.cpp \
-    $$PWD/CustomButton.cpp \
-    $$PWD/ConnectedSocket.cpp \
-    $$PWD/QFakeSocket.cpp \
-    $$PWD/QFakeServer.cpp
+    $$PWD/CustomButton.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -163,9 +160,6 @@ HEADERS  += \
     $$PWD/LoadingScreen.h \
     $$PWD/CCBackground.h \
     $$PWD/CustomButton.h \
-    $$PWD/ConnectedSocket.h \
-    $$PWD/QFakeServer.h \
-    $$PWD/QFakeSocket.h \
     $$PWD/DisplayStructures.h \
     $$PWD/ClientVariableAudio.h
 

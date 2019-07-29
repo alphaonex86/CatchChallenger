@@ -161,12 +161,6 @@ void send_settings(
     CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase	= settings->value("httpDatapackMirror");
     CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer=CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase;
     formatedServerSettings.datapackCache				= stringtoint32(settings->value("datapackCache"));
-    #ifdef __linux__
-    settings->beginGroup("Linux");
-    CommonSettingsServer::commonSettingsServer.tcpCork	= stringtobool(settings->value("tcpCork"));
-    formatedServerNormalSettings.tcpNodelay= stringtobool(settings->value("tcpNodelay"));
-    settings->endGroup();
-    #endif
 
     //fight
     //CommonSettingsCommon::commonSettingsCommon.pvp			= stringtobool(settings->value("pvp"));

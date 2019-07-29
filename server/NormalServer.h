@@ -17,8 +17,6 @@
 #include "base/Client.h"
 #include "../general/base/Map_loader.h"
 #include "../general/base/ProtocolParsing.h"
-#include "../general/base/QFakeServer.h"
-#include "../general/base/QFakeSocket.h"
 #include "base/MapServer.h"
 #include "base/QtServer.h"
 #include "QSslServer.h"
