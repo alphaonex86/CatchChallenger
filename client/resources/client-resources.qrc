@@ -74,5 +74,7 @@
         <file>music/loading.opus</file>
         <file>music/shop.opus</file>
         <file>music/text.opus</file>
+        <file>images/interface/Pbarbackground.png</file>
+        <file>images/interface/Pbarforeground.png</file>
     </qresource>
 </RCC>

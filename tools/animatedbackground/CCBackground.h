@@ -10,6 +10,8 @@ class CCBackground : public QWidget
 public:
     CCBackground(QWidget *parent = nullptr);
     void paintEvent(QPaintEvent *) override;
+    void startAnimation();
+    void stopAnimation();
 private:
     QPixmap cloud,grass,sun,treeback,treefront;
     void scalePix(QPixmap &pix,unsigned int zoom);

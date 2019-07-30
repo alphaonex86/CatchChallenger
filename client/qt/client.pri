@@ -110,7 +110,9 @@ SOURCES += \
     $$PWD/Ultimate.cpp \
     $$PWD/LoadingScreen.cpp \
     $$PWD/CCBackground.cpp \
-    $$PWD/CustomButton.cpp
+    $$PWD/CustomButton.cpp \
+    $$PWD/CCWidget.cpp \
+    $$PWD/CCprogressbar.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -161,7 +163,9 @@ HEADERS  += \
     $$PWD/CCBackground.h \
     $$PWD/CustomButton.h \
     $$PWD/DisplayStructures.h \
-    $$PWD/ClientVariableAudio.h
+    $$PWD/ClientVariableAudio.h \
+    $$PWD/CCWidget.h \
+    $$PWD/CCprogressbar.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

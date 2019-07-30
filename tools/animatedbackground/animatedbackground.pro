@@ -28,12 +28,16 @@ SOURCES += \
         main.cpp \
         MainWindow.cpp \
     CCBackground.cpp \
-    CustomButton.cpp
+    CustomButton.cpp \
+    CCprogressbar.cpp \
+    CCWidget.cpp
 
 HEADERS += \
         MainWindow.h \
     CCBackground.h \
-    CustomButton.h
+    CustomButton.h \
+    CCprogressbar.h \
+    CCWidget.h
 
 FORMS += \
         MainWindow.ui

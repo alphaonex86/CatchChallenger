@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     QFont font("Comic Sans MS");
     font.setStyleHint(QFont::Monospace);
-    font.setBold(true);
+    //font.setBold(true);
     QApplication::setFont(font);
 
     LocalListener localListener;
@@ -50,12 +50,16 @@ int main(int argc, char *argv[])
         return 523;
     w.show();
 
-/*    CCBackground background;
+    CCBackground background;
     background.setWindowTitle(QObject::tr("CatchChallenger loading..."));
+    background.setMinimumSize(QSize(320,240));
+    QIcon icon;
+    icon.addFile(":/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
+    background.setWindowIcon(icon);
     QHBoxLayout layout(&background);
     LoadingScreen l;
     layout.addWidget(&l);
-    background.show();*/
+    background.show();
     /*LoadingScreen l;
     l.show();*/
     const auto returnCode=a.exec();
