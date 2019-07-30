@@ -12,6 +12,7 @@ CCprogressbar::CCprogressbar(QWidget *parent) :
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
+    setMaximumHeight(82);
 }
 
 CCprogressbar::~CCprogressbar()
