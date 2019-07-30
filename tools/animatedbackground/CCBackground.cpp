@@ -16,12 +16,23 @@ CCBackground::CCBackground(QWidget *parent) :
     connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
     connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
     connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
-    //*
+}
+
+void CCBackground::startAnimation()
+{
     unsigned int baseTime=20;
     grassTimer.start(baseTime);
     treefrontTimer.start(baseTime*3);
     treebackTimer.start(baseTime*9);
-    updateTimer.start(40);//*/
+    updateTimer.start(40);
+}
+
+void CCBackground::stopAnimation()
+{
+    grassTimer.stop();
+    treefrontTimer.stop();
+    treebackTimer.stop();
+    updateTimer.stop();
 }
 
 void CCBackground::scalePix(QPixmap &pix,unsigned int zoom)

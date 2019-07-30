@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 #include "CustomButton.h"
+#include "CCprogressbar.h"
+#include "CCWidget.h"
 
 #include <QPushButton>
 
@@ -19,9 +21,18 @@ MainWindow::MainWindow(QWidget *parent) :
     p->setText(tr("Normal"));
     if(!connect(p,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
-    p->setMinimumWidth(223);
-    p->setMinimumHeight(93);
+    ui->verticalLayout->addWidget(p);
     setStyleSheet("");
+
+    CCprogressbar *progressbar=new CCprogressbar();
+    progressbar->setValue(25);
+    ui->verticalLayout->addWidget(progressbar);
+    progressbar->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::MinimumExpanding);
+    progressbar->setTextVisible(true);
+
+    CCWidget *widget=new CCWidget();
+    ui->verticalLayout->addWidget(widget);
+    widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::MinimumExpanding);
 
     //showFullScreen();
 }
@@ -49,11 +60,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
         text="фхцчшщ";
         break;
     }
-    const int w=rand()%173+50;
+    /*const int w=rand()%173+50;
     const int h=rand()%73+20;
     p->setMinimumWidth(w);
     p->setMinimumHeight(h);
     p->setMaximumWidth(w);
-    p->setMaximumHeight(h);
+    p->setMaximumHeight(h);*/
     p->setText(text);
 }

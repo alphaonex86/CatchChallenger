@@ -2,6 +2,10 @@
 #define LOADINGSCREEN_H
 
 #include <QWidget>
+#include <QHBoxLayout>
+#include <QLabel>
+#include "CCWidget.h"
+#include "CCprogressbar.h"
 
 namespace Ui {
 class LoadingScreen;
@@ -18,6 +22,11 @@ protected:
     void resizeEvent(QResizeEvent *event) override;
 private:
     Ui::LoadingScreen *ui;
+    CCWidget *widget;
+    QHBoxLayout *horizontalLayout;
+    QLabel *teacher;
+    QLabel *info;
+    CCprogressbar *progressbar;
 };
 
 #endif // LOADINGSCREEN_H

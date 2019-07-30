@@ -37,63 +37,13 @@
        <property name="sizeType">
         <enum>QSizePolicy::Minimum</enum>
        </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
       </spacer>
-     </item>
-     <item>
-      <widget class="QWidget" name="widget" native="true">
-       <property name="minimumSize">
-        <size>
-         <width>120</width>
-         <height>120</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>600</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">#widget {border-image: url(:/images/interface/message.png);border-width:46px;}</string>
-       </property>
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <property name="spacing">
-         <number>20</number>
-        </property>
-        <property name="leftMargin">
-         <number>24</number>
-        </property>
-        <property name="topMargin">
-         <number>24</number>
-        </property>
-        <property name="rightMargin">
-         <number>24</number>
-        </property>
-        <property name="bottomMargin">
-         <number>24</number>
-        </property>
-        <item>
-         <widget class="QLabel" name="teacher">
-          <property name="maximumSize">
-           <size>
-            <width>189</width>
-            <height>206</height>
-           </size>
-          </property>
-          <property name="pixmap">
-           <pixmap resource="resources/client-resources.qrc">:/images/interface/teacher.png</pixmap>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="info">
-          <property name="text">
-           <string>TextLabel</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </widget>
      </item>
      <item>
       <spacer name="horizontalSpacer_2">
@@ -102,6 +52,12 @@
        </property>
        <property name="sizeType">
         <enum>QSizePolicy::Minimum</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
        </property>
       </spacer>
      </item>
@@ -122,8 +78,6 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resources/client-resources.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
