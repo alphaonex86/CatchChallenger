@@ -15,6 +15,7 @@ CustomButton::CustomButton(QString pix,QWidget *parent) :
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
+    setMaximumSize(QSize(223,92));
 
     pressed=false;
     over=false;
@@ -117,4 +118,14 @@ void CustomButton::mouseReleaseEvent(QMouseEvent *e)
 {
     pressed=false;
     QPushButton::mouseReleaseEvent(e);
+}
+
+bool CustomButton::hasHeightForWidth() const
+{
+    return true;
+}
+
+int CustomButton::heightForWidth(int w) const
+{
+    return w*92/223;
 }
