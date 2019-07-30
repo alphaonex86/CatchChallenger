@@ -14,8 +14,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_CCBackground=new CCBackground(ui->centralWidget);
     m_CCBackground->move(0,0);
-    setMinimumHeight(120);
-    setMinimumWidth(120);
+    setMinimumHeight(60);
+    setMinimumWidth(60);
 
     p=new CustomButton(":/quit.png",m_CCBackground);
     p->setText(tr("Normal"));
