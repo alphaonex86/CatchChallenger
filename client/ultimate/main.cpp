@@ -3,6 +3,7 @@
 #include "../qt/LoadingScreen.h"
 #include "../qt/LanguagesSelect.h"
 #include "../qt/LocalListener.h"
+#include "../qt/ScreenTransition.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "mainwindow.h"
 #include <iostream>
@@ -50,16 +51,19 @@ int main(int argc, char *argv[])
         return 523;
     w.show();
 
-    CCBackground background;
-    background.setWindowTitle(QObject::tr("CatchChallenger loading..."));
-    background.setMinimumSize(QSize(320,240));
+    ScreenTransition s;
+    s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
+    s.setMinimumSize(QSize(320,240));
     QIcon icon;
     icon.addFile(":/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
-    background.setWindowIcon(icon);
-    QHBoxLayout layout(&background);
+    s.setWindowIcon(icon);
+
+    CCBackground b;
+    s.setBackground(&b);
     LoadingScreen l;
-    layout.addWidget(&l);
-    background.show();
+    s.setForeground(&l);
+
+    s.show();
     /*LoadingScreen l;
     l.show();*/
     const auto returnCode=a.exec();

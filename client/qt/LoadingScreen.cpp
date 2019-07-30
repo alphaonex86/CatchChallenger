@@ -8,11 +8,10 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     ui->setupUi(this);
 
     widget = new CCWidget(this);
-    widget->setSizePolicy(QSizePolicy::Preferred,QSizePolicy::MinimumExpanding);
-    widget->setMinimumSize(QSize(120, 120));
-    widget->setMaximumWidth(600);
+    widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
+    widget->setMinimumSize(QSize(180,100));
+    widget->setMaximumSize(QSize(800,300));
     horizontalLayout = new QHBoxLayout(widget);
-    horizontalLayout->setSpacing(20);
     horizontalLayout->setContentsMargins(24, 24, 24, 24);
     teacher = new QLabel(widget);
     teacher->setMaximumSize(QSize(189, 206));
@@ -23,8 +22,9 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     horizontalLayout->addWidget(info);
     info->setText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
     info->setStyleSheet("color:#401c02;");
+    info->setWordWrap(true);
 
-    ui->horizontalLayout_2->addWidget(widget);
+    ui->horizontalLayout_2->insertWidget(1,widget);
     progressbar=new CCprogressbar(this);
     progressbar->setMaximum(100);
     progressbar->setMinimum(0);
@@ -39,27 +39,25 @@ LoadingScreen::~LoadingScreen()
 
 void LoadingScreen::resizeEvent(QResizeEvent *)
 {
-    if(width()<600 || height()<600)
+    widget->updateGeometry();
+    if(width()<400 || height()<320)
     {
+        horizontalLayout->setContentsMargins(8, 8, 8, 8);
         teacher->setVisible(false);
-        widget->setMinimumHeight(120);
+        widget->setMinimumHeight(100);
     }
     else
     {
+        horizontalLayout->setContentsMargins(24, 24, 24, 24);
         teacher->setVisible(true);
-        widget->setMinimumHeight(206+24*2);
+        widget->setMinimumHeight(260);
     }
 
+
     if(height()<500)
-    {
         progressbar->setMinimumHeight(0);
-    }
     else if(height()<800)
-    {
         progressbar->setMinimumHeight(45);
-    }
     else
-    {
         progressbar->setMinimumHeight(55);
-    }
 }

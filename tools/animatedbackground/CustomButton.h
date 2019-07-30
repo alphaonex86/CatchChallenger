@@ -16,6 +16,8 @@ protected:
     void leaveEvent(QEvent *e) override;
     void mousePressEvent(QMouseEvent *e) override;
     void mouseReleaseEvent(QMouseEvent *e) override;
+    bool hasHeightForWidth() const override;
+    int heightForWidth(int w) const override;
 private:
     QPixmap scaledBackground,scaledBackgroundPressed,scaledBackgroundOver;
     QString background;
