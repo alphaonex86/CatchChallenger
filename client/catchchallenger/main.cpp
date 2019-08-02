@@ -1,9 +1,7 @@
 #include <QApplication>
-#include "../qt/CCBackground.h"
-#include "../qt/LoadingScreen.h"
 #include "../qt/LanguagesSelect.h"
-#include "../qt/LocalListener.h"
 #include "../qt/ScreenTransition.h"
+#include "../qt/LocalListener.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "mainwindow.h"
 #include <iostream>
@@ -57,12 +55,6 @@ int main(int argc, char *argv[])
     QIcon icon;
     icon.addFile(":/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
-
-    CCBackground b;
-    s.setBackground(&b);
-    LoadingScreen l;
-    s.setForeground(&l);
-
     s.show();
     /*LoadingScreen l;
     l.show();*/

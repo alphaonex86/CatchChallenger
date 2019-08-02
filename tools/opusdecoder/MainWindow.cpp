@@ -3,9 +3,12 @@
 #include <QAudioOutput>
 #include <QBuffer>
 #include <QSound>
+#include <QFile>
 #include <iostream>
 
 #include "opusfile/opusfile.h"
+
+#define MAX_SAMPLE_LENGTH 16*1024*1024
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -40,8 +43,18 @@ void MainWindow::on_convert_clicked()
     audio = new QAudioOutput(format, this);
     buffer.open(QBuffer::ReadWrite);
 
+
+
+
+
+    QFile f("file.opus");
+    if(!f.open(QFile::ReadOnly))
+        abort();
+    const QByteArray data=f.readAll();
+    f.close();
+
     int           ret;
-    OggOpusFile  *of=op_open_file("file.opus",&ret);
+    OggOpusFile  *of=op_open_memory(reinterpret_cast<const unsigned char *>(data.constData()),data.size(),&ret);
     if(of==NULL) {
         fprintf(stderr,"Failed to open file '%s': %i\n","file.opus",ret);
         return;
@@ -83,6 +96,83 @@ void MainWindow::on_convert_clicked()
     if(ret==EXIT_SUCCESS)
         fprintf(stderr,"\nDone: played ");
     op_free(of);
+
+
+
+
+
+    /*QFile f("file.opus");
+    if(!f.open(QFile::ReadOnly))
+        abort();
+    const QByteArray data=f.readAll();
+    f.close();
+
+    OggOpusFile *of = op_open_memory(reinterpret_cast<const unsigned char *>(data.constData()),data.size(),NULL);
+    if(!of)
+        abort();
+
+    int rate = 48000;
+    int channels = op_channel_count(of, -1);
+    if(rate <= 0 || channels <= 0)
+    {
+        op_free(of);
+        of = NULL;
+        return;
+    }
+    if(channels > 2 || op_link_count(of) != 1)
+    {
+        // We downmix multichannel to stereo as recommended by Opus specification in
+        // case we are not able to handle > 2 channels.
+        // We also decode chained files as stereo even if they start with a mono
+        // stream, which simplifies handling of link boundaries for us.
+        channels = 2;
+    }
+
+    std::vector<int16_t> decodeBuf(120 * 48000 / 1000); // 120ms (max Opus packet), 48kHz
+    bool eof = false;
+    while(!eof)
+    {
+        int framesRead = 0;
+        if(channels == 2)
+        {
+            framesRead = op_read_stereo(of, &(decodeBuf[0]), static_cast<int>(decodeBuf.size()));
+        } else if(channels == 1)
+        {
+            framesRead = op_read(of, &(decodeBuf[0]), static_cast<int>(decodeBuf.size()), NULL);
+        }
+        if(framesRead > 0)
+        {
+            buffer.write(reinterpret_cast<const char *>(decodeBuf.data()),framesRead * channels);
+        } else if(framesRead == 0)
+        {
+            eof = true;
+        } else if(framesRead == OP_HOLE)
+        {
+            // continue
+        } else
+        {
+            // other errors are fatal, stop decoding
+            eof = true;
+        }
+        if((buffer.size() / channels) > MAX_SAMPLE_LENGTH)
+        {
+            break;
+        }
+    }
+
+    op_free(of);
+    of = NULL;
+
+    if(buffer.data().isEmpty())
+    {
+        return;
+    }*/
+
+
+
+
+
+
 
     buffer.seek(0);
     audio->start(&buffer);
