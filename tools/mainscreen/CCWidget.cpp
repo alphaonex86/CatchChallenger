@@ -2,7 +2,7 @@
 #include <QPainter>
 
 CCWidget::CCWidget(QWidget *parent) :
-    QProgressBar(parent)
+    QWidget(parent)
 {
     oldratio=0;
 }
@@ -41,7 +41,7 @@ void CCWidget::paintEvent(QPaintEvent *)
 
     if(tl.isNull() || min!=tl.height())
     {
-        QPixmap background(":/images/interface/message.png");
+        QPixmap background(":/CC/images/interface/message.png");
         if(background.isNull())
             abort();
         tl=background.copy(0,0,46,46);

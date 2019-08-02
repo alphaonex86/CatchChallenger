@@ -1,9 +1,9 @@
 #ifndef CCWidget_H
 #define CCWidget_H
 
-#include <QProgressBar>
+#include <QWidget>
 
-class CCWidget : public QProgressBar
+class CCWidget : public QWidget
 {
 public:
     CCWidget(QWidget *parent = nullptr);

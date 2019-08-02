@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/CC">
         <file>images/catchchallenger.png</file>
         <file>images/background-dialog.png</file>
         <file>images/empty.png</file>
@@ -17,7 +17,6 @@
         <file>images/interface/option-player.png</file>
         <file>images/interface/option-options.png</file>
         <file>images/interface/player.png</file>
-        <file>images/interface/pokemonbar.png</file>
         <file>images/interface/player/point.png</file>
         <file>images/interface/player/player_background.png</file>
         <file>images/interface/player/bande.png</file>
@@ -76,5 +75,10 @@
         <file>music/text.opus</file>
         <file>images/interface/Pbarbackground.png</file>
         <file>images/interface/Pbarforeground.png</file>
+        <file>images/interface/button.png</file>
+        <file>images/interface/greenbutton.png</file>
+        <file>images/interface/options.png</file>
+        <file>images/interface/bluetoolbox.png</file>
+        <file>images/interface/updatewidget.png</file>
     </qresource>
 </RCC>

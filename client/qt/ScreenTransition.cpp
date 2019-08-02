@@ -1,10 +1,13 @@
 #include "ScreenTransition.h"
+#include "GameLoader.h"
 
 ScreenTransition::ScreenTransition() :
     QWidget()
 {
     m_background=nullptr;
     m_foreground=nullptr;
+    setBackground(&b);
+    setForeground(&l);
 }
 
 ScreenTransition::~ScreenTransition()

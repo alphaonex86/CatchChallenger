@@ -113,7 +113,10 @@ SOURCES += \
     $$PWD/CustomButton.cpp \
     $$PWD/CCWidget.cpp \
     $$PWD/CCprogressbar.cpp \
-    $$PWD/ScreenTransition.cpp
+    $$PWD/ScreenTransition.cpp \
+    $$PWD/GameLoader.cpp \
+    $$PWD/GameLoaderThread.cpp \
+    $$PWD/MainScreen.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -167,7 +170,10 @@ HEADERS  += \
     $$PWD/ClientVariableAudio.h \
     $$PWD/CCWidget.h \
     $$PWD/CCprogressbar.h \
-    $$PWD/ScreenTransition.h
+    $$PWD/ScreenTransition.h \
+    $$PWD/GameLoader.h \
+    $$PWD/GameLoaderThread.h \
+    $$PWD/MainScreen.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -176,7 +182,8 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewProfile.ui \
     $$PWD/interface/NewGame.ui \
     $$PWD/LanguagesSelect.ui \
-    $$PWD/LoadingScreen.ui
+    $$PWD/LoadingScreen.ui \
+    $$PWD/MainScreen.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/../resources/resources-windows.rc
