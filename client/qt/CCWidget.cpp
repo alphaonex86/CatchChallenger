@@ -7,7 +7,7 @@ CCWidget::CCWidget(QWidget *parent) :
     oldratio=0;
 }
 
-void CCWidget::paintEvent(QPaintEvent *)
+unsigned int CCWidget::imageBorderSize() const
 {
     const int w=width();
     int tw=46;
@@ -31,6 +31,13 @@ void CCWidget::paintEvent(QPaintEvent *)
     int min=tw;
     if(min>th)
         min=th;
+
+    return min;
+}
+
+void CCWidget::paintEvent(QPaintEvent *)
+{
+    const int min=imageBorderSize();
 
     if(tl.isNull() || min!=tl.height())
     {
@@ -73,4 +80,9 @@ void CCWidget::paintEvent(QPaintEvent *)
     paint.drawPixmap(0,             height()-min,min,           min,bl);
     paint.drawPixmap(min,           height()-min,width()-min*2, min,bm);
     paint.drawPixmap(width()-min,   height()-min,min,           min,br);
+}
+
+unsigned int CCWidget::currentBorderSize() const
+{
+    return imageBorderSize()/2;
 }

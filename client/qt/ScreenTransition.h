@@ -2,6 +2,8 @@
 #define SCREENTRANSITION_H
 
 #include <QWidget>
+#include "../qt/CCBackground.h"
+#include "../qt/LoadingScreen.h"
 
 class ScreenTransition : public QWidget
 {
@@ -17,6 +19,8 @@ protected:
 private:
     QWidget *m_background;
     QWidget *m_foreground;
+    CCBackground b;
+    LoadingScreen l;
 };
 
 #endif // SCREENTRANSITION_H

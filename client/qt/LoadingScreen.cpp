@@ -1,5 +1,6 @@
 #include "LoadingScreen.h"
 #include "ui_LoadingScreen.h"
+#include "../../general/base/Version.h"
 
 LoadingScreen::LoadingScreen(QWidget *parent) :
     QWidget(parent),
@@ -23,6 +24,13 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     info->setText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
     info->setStyleSheet("color:#401c02;");
     info->setWordWrap(true);
+    version = new QLabel(widget);
+    version->setText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(CATCHCHALLENGER_VERSION));
+    version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    QFont font = version->font();
+    font.setPointSize(7);
+    version->setFont(font);
+    ui->verticalLayout->insertWidget(0,version);
 
     ui->horizontalLayout_2->insertWidget(1,widget);
     progressbar=new CCprogressbar(this);
@@ -30,6 +38,16 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     progressbar->setMinimum(0);
     progressbar->setValue(0);
     ui->verticalLayout->insertWidget(ui->verticalLayout->count(),progressbar);
+
+    if(GameLoader::gameLoader==nullptr)
+        GameLoader::gameLoader=new GameLoader();
+    connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression);
+    connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed);
+
+    timer.setSingleShot(true);
+    connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged);
+    timer.start(1000);
+    doTheNext=false;
 }
 
 LoadingScreen::~LoadingScreen()
@@ -42,22 +60,61 @@ void LoadingScreen::resizeEvent(QResizeEvent *)
     widget->updateGeometry();
     if(width()<400 || height()<320)
     {
-        horizontalLayout->setContentsMargins(8, 8, 8, 8);
         teacher->setVisible(false);
         widget->setMinimumHeight(100);
     }
     else
     {
-        horizontalLayout->setContentsMargins(24, 24, 24, 24);
         teacher->setVisible(true);
         widget->setMinimumHeight(260);
     }
+    horizontalLayout->setContentsMargins(
+                widget->currentBorderSize(),widget->currentBorderSize(),
+                widget->currentBorderSize(),widget->currentBorderSize()
+                );
 
-
+    QFont font = version->font();
     if(height()<500)
+    {
         progressbar->setMinimumHeight(0);
+        font.setPointSize(9);
+    }
     else if(height()<800)
+    {
         progressbar->setMinimumHeight(45);
+        font.setPointSize(11);
+    }
     else
+    {
         progressbar->setMinimumHeight(55);
+        font.setPointSize(14);
+    }
+    version->setFont(font);
+}
+
+void LoadingScreen::canBeChanged()
+{
+    if(doTheNext)
+        emit finished();
+    else
+        doTheNext=true;
+}
+
+void LoadingScreen::dataIsParsed()
+{
+    if(doTheNext)
+        emit finished();
+    else
+    {
+        doTheNext=true;
+        info->setText(tr("%1 is loaded").arg("<b>CatchChallenger</b>"));
+    }
+}
+
+void LoadingScreen::progression(uint32_t size,uint32_t total)
+{
+    if(size<=total)
+        progressbar->setValue(size*100/total);
+    else
+        abort();
 }
