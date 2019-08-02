@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/CC/images/interface">
+        <file>greenbutton.png</file>
+        <file>bluetoolbox.png</file>
+        <file>button.png</file>
+        <file>star.png</file>
+        <file>updatewidget.png</file>
+        <file>message.png</file>
+        <file>options.png</file>
+    </qresource>
+    <qresource prefix="/"/>
+</RCC>

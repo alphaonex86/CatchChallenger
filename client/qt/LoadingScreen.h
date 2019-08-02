@@ -4,8 +4,10 @@
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QTimer>
 #include "CCWidget.h"
 #include "CCprogressbar.h"
+#include "GameLoader.h"
 
 namespace Ui {
 class LoadingScreen;
@@ -20,6 +22,9 @@ public:
     ~LoadingScreen();
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void progression(uint32_t size, uint32_t total);
+    void canBeChanged();
+    void dataIsParsed();
 private:
     Ui::LoadingScreen *ui;
     CCWidget *widget;
@@ -27,6 +32,11 @@ private:
     QLabel *teacher;
     QLabel *info;
     CCprogressbar *progressbar;
+    QLabel *version;
+    QTimer timer;
+    bool doTheNext;
+signals:
+    void finished();
 };
 
 #endif // LOADINGSCREEN_H
