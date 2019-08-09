@@ -4,8 +4,7 @@
 #include <QMainWindow>
 #include <QWidget>
 #include <QLabel>
-#include "CustomButton.h"
-#include "CCWidget.h"
+#include <QPushButton>
 
 namespace Ui {
 class MainScreen;
@@ -25,13 +24,13 @@ private:
     QLabel *update;
     QLabel *updateStar;
     QLabel *updateText;
-    CustomButton *updateButton;
-    CustomButton *solo;
-    CustomButton *multi;
-    CustomButton *options;
-    CustomButton *facebook;
-    CustomButton *website;
-    CCWidget *news;
+
+    QPushButton *updateButton;
+    QPushButton *solo;
+    QPushButton *multi;
+    QPushButton *options;
+    QPushButton *facebook;
+    QPushButton *website;
 protected:
     void resizeEvent(QResizeEvent *) override;
 };
