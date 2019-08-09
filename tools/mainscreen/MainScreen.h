@@ -25,13 +25,21 @@ private:
     QLabel *update;
     QLabel *updateStar;
     QLabel *updateText;
-    CustomButton *updateButton;
+
+    /*CustomButton *updateButton;
     CustomButton *solo;
     CustomButton *multi;
     CustomButton *options;
     CustomButton *facebook;
-    CustomButton *website;
+    CustomButton *website;*/
     CCWidget *news;
+
+    QPushButton *updateButton;
+    QPushButton *solo;
+    QPushButton *multi;
+    QPushButton *options;
+    QPushButton *facebook;
+    QPushButton *website;
 protected:
     void resizeEvent(QResizeEvent *) override;
 };
