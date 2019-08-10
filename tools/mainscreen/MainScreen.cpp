@@ -3,20 +3,22 @@
 #include <iostream>
 
 MainScreen::MainScreen(QWidget *parent) :
-    QMainWindow(parent),
+    QWidget(parent),
     ui(new Ui::MainScreen)
 {
     ui->setupUi(this);
     setMinimumSize(QSize(320,240));
 
-    /*update=new QLabel(this);
-    update->setObjectName("update");
-    update->setStyleSheet("#update{border-image: url(:/CC/images/interface/updatewidget.png) 0 0 0 0 stretch stretch;}");
-    updateStar=new QLabel(update);
-    updateText=new QLabel(update);
-    updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",update);
-    update->setMinimumSize(QSize(493,156));
-    update->setMaximumSize(QSize(493,156));*/
+    updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",ui->widgetUpdate);
+    updateButton->setMaximumSize(QSize(136,57));
+    updateButton->setMinimumSize(QSize(136,57));
+    updateButton->setText(tr("Update!"));
+    updateButton->setOutlineColor(QColor(44,117,0));
+    updateButton->setPointSize(20);
+    ui->horizontalLayoutUpdateFull->addWidget(updateButton);
+    title=new CCTitle(ui->widgetUpdate);
+    title->setText("Update!");
+    ui->verticalLayoutUpdateTitle->insertWidget(0,title);
 
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     solo->setText("Solo");
@@ -33,7 +35,6 @@ MainScreen::MainScreen(QWidget *parent) :
     website->setPointSize(28);
     website->updateTextPercent(75);
     news=new CCWidget(this);
-    news->setVisible(false);
 
     ui->horizontalLayoutBottom->insertWidget(1,news);
     ui->verticalLayoutMiddle->insertWidget(0,solo);
@@ -41,6 +42,21 @@ MainScreen::MainScreen(QWidget *parent) :
     ui->horizontalLayoutMiddle->insertWidget(0,options);
     ui->horizontalLayoutMiddle->insertWidget(1,facebook);
     ui->horizontalLayoutMiddle->insertWidget(2,website);
+
+    verticalLayoutNews = new QHBoxLayout(news);
+    verticalLayoutNews->setSpacing(6);
+    newsText=new QLabel(news);
+    newsText->setText("News");
+    newsWait=new QLabel(news);
+    newsWait->setPixmap(QPixmap(":/CC/images/multi/busy.png"));
+    newsWait->setMinimumWidth(64);
+    newsWait->setMaximumWidth(64);
+    newsUpdate=new CustomButton(":/CC/images/interface/greenbutton.png",news);
+    newsUpdate->setText(tr("Update!"));
+    newsUpdate->setOutlineColor(QColor(44,117,0));
+    verticalLayoutNews->addWidget(newsText);
+    verticalLayoutNews->addWidget(newsWait);
+    verticalLayoutNews->addWidget(newsUpdate);
 }
 
 MainScreen::~MainScreen()
@@ -48,7 +64,7 @@ MainScreen::~MainScreen()
     delete ui;
 }
 
-void MainScreen::resizeEvent(QResizeEvent *)
+void MainScreen::resizeEvent(QResizeEvent * e)
 {
     if(width()<600 || height()<600)
     {
@@ -67,10 +83,6 @@ void MainScreen::resizeEvent(QResizeEvent *)
         website->setMaximumSize(QSize(41,46));
         website->setMinimumSize(QSize(41,46));
         website->setPointSize(18);
-        news->setMaximumSize(QSize(width(),height()*15/100));
-        news->setMinimumSize(QSize(width(),height()*15/100));
-        if(news->maximumWidth()>600)
-            news->setMaximumWidth(600);
     }
     else {
         solo->setMaximumSize(QSize(223,92));
@@ -88,17 +100,61 @@ void MainScreen::resizeEvent(QResizeEvent *)
         website->setMaximumSize(QSize(62,70));
         website->setMinimumSize(QSize(62,70));
         website->setPointSize(28);
-        news->setMaximumSize(QSize(600,120));
-        news->setMinimumSize(QSize(600,120));
+    }
+    if(width()<600)
+    {
+        news->setMaximumSize(QSize(width()-9*2,height()*15/100));
+        news->setMinimumSize(QSize(width()-9*2,height()*15/100));
+        verticalLayoutNews->setContentsMargins(news->currentBorderSize(), news->currentBorderSize(),
+                                               news->currentBorderSize(), news->currentBorderSize());
+
+        newsWait->setVisible(width()>450);
+    }
+    else {
+        news->setMaximumSize(QSize(600-9*2,120));
+        news->setMinimumSize(QSize(600-9*2,120));
+        verticalLayoutNews->setContentsMargins(12, 9, 12, 9);
+
+        newsWait->setVisible(true);
+    }
+    if(news->width()<450 || news->height()<80)
+    {
+        newsUpdate->setMaximumSize(QSize(90,38));
+        newsUpdate->setMinimumSize(QSize(90,38));
+        newsUpdate->setPointSize(12);
+        newsUpdate->setVisible(news->height()>50);
+    }
+    else
+    {
+        newsUpdate->setMaximumSize(QSize(136,57));
+        newsUpdate->setMinimumSize(QSize(136,57));
+        newsUpdate->setPointSize(20);
     }
 
-    /*unsigned int centerWidget=solo->height()+ui->horizontalLayoutMiddle->spacing()+
-            multi->height()+ui->horizontalLayoutMiddle->spacing()+options->height();*/
 
-    ui->widget->adjustSize();
-    //ui->widget->setMinimumSize(solo->width(),centerWidget);
-    /*if((height()-centerWidget-options->height())<(unsigned int)news->minimumHeight())
+    unsigned int centerWidget=solo->height()+ui->horizontalLayoutMiddle->spacing()+
+            multi->height()+ui->horizontalLayoutMiddle->spacing()+options->height();
+
+    ui->widget->setMinimumSize(9+solo->width()+9,9+centerWidget+9);
+    //ui->widget->adjustSize();
+    if((height()-(9+6+6+ui->widget->height()+6+6+9))<(unsigned int)news->minimumHeight())
         news->setVisible(false);
     else
-        news->setVisible(true);*/
+        news->setVisible(true);
+    if(news->isVisible())
+    {
+        if(height()>600 && width()>510)
+        {
+            news->setVisible(false);
+            ui->widgetUpdate->setVisible(true);
+        }
+        else
+        {
+            ui->widgetUpdate->setVisible(false);
+            news->setVisible(true);
+        }
+    }
+    else
+        ui->widgetUpdate->setVisible(false);
+    QWidget::resizeEvent(e);
 }
