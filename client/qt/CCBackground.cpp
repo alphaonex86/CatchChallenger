@@ -101,19 +101,19 @@ void CCBackground::paintEvent(QPaintEvent *)
     if(zoom!=targetZoom)
     {
         //std::cout << "new zoom: " << targetZoom << " with " << width() << "*" << height() << std::endl;
-        cloud=QPixmap(":/images/animatedbackground/cloud.png");
+        cloud=QPixmap(":/CC/images/animatedbackground/cloud.png");
         if(cloud.isNull())
             abort();
-        grass=QPixmap(":/images/animatedbackground/grass.png");
+        grass=QPixmap(":/CC/images/animatedbackground/grass.png");
         if(grass.isNull())
             abort();
-        sun=QPixmap(":/images/animatedbackground/sun.png");
+        sun=QPixmap(":/CC/images/animatedbackground/sun.png");
         if(sun.isNull())
             abort();
-        treeback=QPixmap(":/images/animatedbackground/treeback.png");
+        treeback=QPixmap(":/CC/images/animatedbackground/treeback.png");
         if(treeback.isNull())
             abort();
-        treefront=QPixmap(":/images/animatedbackground/treefront.png");
+        treefront=QPixmap(":/CC/images/animatedbackground/treefront.png");
         if(treefront.isNull())
             abort();
         if(targetZoom>1)

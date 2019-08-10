@@ -17,7 +17,7 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     teacher = new QLabel(widget);
     teacher->setMaximumSize(QSize(189, 206));
     teacher->setMinimumSize(QSize(189, 206));
-    teacher->setPixmap(QPixmap(":/images/interface/teacher.png"));
+    teacher->setPixmap(QPixmap(":/CC/images/interface/teacher.png"));
     horizontalLayout->addWidget(teacher);
     info = new QLabel(widget);
     horizontalLayout->addWidget(info);

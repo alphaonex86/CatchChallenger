@@ -20,6 +20,7 @@ CustomButton::CustomButton(QString pix,QWidget *parent) :
     background=pix;
     outlineColor=QColor(217,145,0);
     percent=85;
+    cache=nullptr;
 }
 
 CustomButton::~CustomButton()
@@ -34,42 +35,61 @@ CustomButton::~CustomButton()
         delete font;
         font=nullptr;
     }
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
 }
 
 void CustomButton::paintEvent(QPaintEvent *)
 {
-    QPainter paint;
-    paint.begin(this);
-    if(pressed) {
-        if(scaledBackgroundPressed.width()!=width() || scaledBackgroundPressed.height()!=height())
-        {
-            QPixmap temp(background);
-            if(temp.isNull())
-                abort();
-            scaledBackgroundPressed=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
-            scaledBackgroundPressed=scaledBackgroundPressed.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        }
-        paint.drawPixmap(0,0,width(),height(),scaledBackgroundPressed);
-        updateTextPath();
-    } else {
-        if(scaledBackground.width()!=width() || scaledBackground.height()!=height())
-        {
-            QPixmap temp(background);
-            if(temp.isNull())
-                abort();
-            scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
-            scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        }
-        paint.drawPixmap(0,0,width(),height(),scaledBackground);
-        updateTextPath();
+    if(cache!=nullptr && !cache->isNull() && cache->width()==width() && cache->height()==height())
+    {
+        QPainter paint;
+        paint.begin(this);
+        paint.drawPixmap(0,0,width(),height(),*cache);
+        return;
     }
+    if(cache!=nullptr)
+        delete cache;
+    cache=new QPixmap();
+    QImage image(width(),height(),QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter paint;
+    paint.begin(&image);
+    QPixmap scaledBackground;
+    QPixmap temp(background);
+    if(temp.isNull())
+        abort();
+    if(pressed)
+        scaledBackground=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
+    else
+        scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
+    scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    paint.drawPixmap(0,0,width(),height(),scaledBackground);
+    updateTextPath();
 
     if(textPath!=nullptr)
     {
         paint.setRenderHint(QPainter::Antialiasing);
-        paint.setPen(QPen(outlineColor/*penColor*/, 2/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        qreal penWidth=2.0;
+        if(font->pointSize()<=12)
+            penWidth=0.7;
+        else if(font->pointSize()<=18)
+            penWidth=1;
+        else if(font->pointSize()<=24)
+            penWidth=1.5;
+        paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint.setBrush(Qt::white);
         paint.drawPath(*textPath);
+    }
+    *cache=QPixmap::fromImage(image);
+
+    {
+        QPainter paint;
+        paint.begin(this);
+        paint.drawPixmap(0,0,width(),height(),*cache);
     }
 }
 
@@ -133,13 +153,21 @@ void CustomButton::setOutlineColor(const QColor &color)
 void CustomButton::mousePressEvent(QMouseEvent *e)
 {
     pressed=true;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     QPushButton::mousePressEvent(e);
-    updateTextPath();
 }
 
 void CustomButton::mouseReleaseEvent(QMouseEvent *e)
 {
     pressed=false;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     QPushButton::mouseReleaseEvent(e);
-    updateTextPath();
 }

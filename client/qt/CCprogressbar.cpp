@@ -33,10 +33,10 @@ void CCprogressbar::paintEvent(QPaintEvent *)
 {
     if(backgroundLeft.isNull() || backgroundLeft.height()!=height())
     {
-        QPixmap background(":/images/interface/Pbarbackground.png");
+        QPixmap background(":/CC/images/interface/Pbarbackground.png");
         if(background.isNull())
             abort();
-        QPixmap bar(":/images/interface/Pbarforeground.png");
+        QPixmap bar(":/CC/images/interface/Pbarforeground.png");
         if(bar.isNull())
             abort();
         if(height()==background.height())
