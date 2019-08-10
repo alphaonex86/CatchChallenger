@@ -178,7 +178,7 @@ void QtDatapackClientLoader::resetAll()
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     if(mDefaultInventoryImage==NULL)
     {
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
+        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/CC/images/inventory/unknown-object.png"));
         if(mDefaultInventoryImage->isNull())
         {
             qDebug() << "default internal image bug for item";

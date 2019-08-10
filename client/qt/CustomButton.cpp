@@ -17,8 +17,10 @@ CustomButton::CustomButton(QString pix,QWidget *parent) :
     font->setStyleStrategy(QFont::ForceOutline);
 
     pressed=false;
-    over=false;
     background=pix;
+    outlineColor=QColor(217,145,0);
+    percent=85;
+    cache=nullptr;
 }
 
 CustomButton::~CustomButton()
@@ -33,49 +35,79 @@ CustomButton::~CustomButton()
         delete font;
         font=nullptr;
     }
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
 }
 
 void CustomButton::paintEvent(QPaintEvent *)
 {
-    QPainter paint;
-    paint.begin(this);
-    if(pressed) {
-            if(scaledBackgroundPressed.width()!=width() || scaledBackgroundPressed.height()!=height())
-            {
-                QPixmap temp(background);
-                scaledBackgroundPressed=temp.copy(0,temp.height()/3,temp.width(),temp.height()/3);
-                scaledBackgroundPressed=scaledBackgroundPressed.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-            }
-            paint.drawPixmap(0,0,width(),height(),scaledBackgroundPressed);
-    } else if(over) {
-        if(scaledBackgroundOver.width()!=width() || scaledBackgroundOver.height()!=height())
-        {
-            QPixmap temp(background);
-            scaledBackgroundOver=temp.copy(0,temp.height()/3*2,temp.width(),temp.height()/3);
-            scaledBackgroundOver=scaledBackgroundOver.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        }
-        paint.drawPixmap(0,0,width(),height(),scaledBackgroundOver);
-    } else {
-        if(scaledBackground.width()!=width() || scaledBackground.height()!=height())
-        {
-            QPixmap temp(background);
-            scaledBackground=temp.copy(0,0,temp.width(),temp.height()/3);
-            scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        }
-        paint.drawPixmap(0,0,width(),height(),scaledBackground);
+    if(cache!=nullptr && !cache->isNull() && cache->width()==width() && cache->height()==height())
+    {
+        QPainter paint;
+        paint.begin(this);
+        paint.drawPixmap(0,0,width(),height(),*cache);
+        return;
     }
+    if(cache!=nullptr)
+        delete cache;
+    cache=new QPixmap();
+    QImage image(width(),height(),QImage::Format_ARGB32);
+    image.fill(Qt::transparent);
+    QPainter paint;
+    paint.begin(&image);
+    QPixmap scaledBackground;
+    QPixmap temp(background);
+    if(temp.isNull())
+        abort();
+    if(pressed)
+        scaledBackground=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
+    else
+        scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
+    scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    paint.drawPixmap(0,0,width(),height(),scaledBackground);
+    updateTextPath();
 
     if(textPath!=nullptr)
     {
         paint.setRenderHint(QPainter::Antialiasing);
-        paint.setPen(QPen(QColor(217,145,0)/*penColor*/, 2/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        qreal penWidth=2.0;
+        if(font->pointSize()<=12)
+            penWidth=0.7;
+        else if(font->pointSize()<=18)
+            penWidth=1;
+        else if(font->pointSize()<=24)
+            penWidth=1.5;
+        paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint.setBrush(Qt::white);
         paint.drawPath(*textPath);
+    }
+    *cache=QPixmap::fromImage(image);
+
+    {
+        QPainter paint;
+        paint.begin(this);
+        paint.drawPixmap(0,0,width(),height(),*cache);
     }
 }
 
 void CustomButton::setText(const QString &text)
 {
+    QPushButton::setText(text);
+    updateTextPath();
+}
+
+bool CustomButton::setPointSize(uint8_t size)
+{
+    font->setPointSize(size);
+    return true;
+}
+
+void CustomButton::updateTextPath()
+{
+    const QString &text=QPushButton::text();
     if(textPath!=nullptr)
         delete textPath;
     QPainterPath tempPath;
@@ -83,11 +115,24 @@ void CustomButton::setText(const QString &text)
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
     const int h=height();
-    const int newHeight=(h*80/100);
+    int newHeight=0;
+    if(pressed)
+        newHeight=(h*(percent+20)/100);
+    else
+        newHeight=(h*percent/100);
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
     textPath->addText(width()/2-rect.width()/2, tempHeight, *font, text);
-    QPushButton::setText(text);
+}
+
+bool CustomButton::updateTextPercent(uint8_t percent)
+{
+    if(percent>100)
+        return false;
+    this->percent=percent;
+    updateTextPath();
+    update();
+    return true;
 }
 
 void CustomButton::setFont(const QFont &font)
@@ -95,26 +140,34 @@ void CustomButton::setFont(const QFont &font)
     *this->font=font;
 }
 
-void CustomButton::enterEvent(QEvent *e)
+QFont CustomButton::getFont() const
 {
-    over=true;
-    QPushButton::enterEvent(e);
+    return *font;
 }
-void CustomButton::leaveEvent(QEvent *e)
+
+void CustomButton::setOutlineColor(const QColor &color)
 {
-    over=false;
-    pressed=false;
-    QPushButton::leaveEvent(e);
+    this->outlineColor=color;
 }
 
 void CustomButton::mousePressEvent(QMouseEvent *e)
 {
     pressed=true;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     QPushButton::mousePressEvent(e);
 }
 
 void CustomButton::mouseReleaseEvent(QMouseEvent *e)
 {
     pressed=false;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     QPushButton::mouseReleaseEvent(e);
 }
