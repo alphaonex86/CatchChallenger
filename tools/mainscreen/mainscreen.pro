@@ -28,12 +28,14 @@ SOURCES += \
         main.cpp \
         MainScreen.cpp \
     CCWidget.cpp \
-    CustomButton.cpp
+    CustomButton.cpp \
+    CCTitle.cpp
 
 HEADERS += \
         MainScreen.h \
     CCWidget.h \
-    CustomButton.h
+    CustomButton.h \
+    CCTitle.h
 
 FORMS += \
         MainScreen.ui

@@ -20,7 +20,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *e) override;
     void updateTextPath();
 private:
-    QPixmap scaledBackground,scaledBackgroundPressed,scaledBackgroundOver;
+    QPixmap *cache;
     QString background;
     bool pressed;
     QPainterPath *textPath;

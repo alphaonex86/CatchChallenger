@@ -1,29 +1,28 @@
-#include "CustomButton.h"
+#include "CCTitle.h"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>
 #include <iostream>
 
-CustomButton::CustomButton(QString pix,QWidget *parent) :
-    QPushButton(parent)
+CCTitle::CCTitle(QWidget *parent) :
+    QLabel(parent)
 {
     textPath=nullptr;
 
     font=new QFont();
     font->setFamily("Comic Sans MS");
-    font->setPointSize(35);
+    font->setPointSize(25);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
 
-    pressed=false;
-    background=pix;
-    outlineColor=QColor(217,145,0);
-    percent=85;
+    outlineColor=QColor(77,64,44);
+    lastwidth=0;
+    lastheight=0;
     cache=nullptr;
 }
 
-CustomButton::~CustomButton()
+CCTitle::~CCTitle()
 {
     if(textPath!=nullptr)
     {
@@ -42,7 +41,7 @@ CustomButton::~CustomButton()
     }
 }
 
-void CustomButton::paintEvent(QPaintEvent *)
+void CCTitle::paintEvent(QPaintEvent *)
 {
     if(cache!=nullptr && !cache->isNull() && cache->width()==width() && cache->height()==height())
     {
@@ -54,21 +53,17 @@ void CustomButton::paintEvent(QPaintEvent *)
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
+
     QImage image(width(),height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
     paint.begin(&image);
-    QPixmap scaledBackground;
-    QPixmap temp(background);
-    if(temp.isNull())
-        abort();
-    if(pressed)
-        scaledBackground=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
-    else
-        scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
-    scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    paint.drawPixmap(0,0,width(),height(),scaledBackground);
-    updateTextPath();
+    if(lastwidth!=width() || lastheight!=height())
+    {
+        updateTextPath();
+        lastwidth=width();
+        lastheight=height();
+    }
 
     if(textPath!=nullptr)
     {
@@ -84,6 +79,7 @@ void CustomButton::paintEvent(QPaintEvent *)
         paint.setBrush(Qt::white);
         paint.drawPath(*textPath);
     }
+
     *cache=QPixmap::fromImage(image);
 
     {
@@ -93,81 +89,50 @@ void CustomButton::paintEvent(QPaintEvent *)
     }
 }
 
-void CustomButton::setText(const QString &text)
+void CCTitle::setText(const QString &text)
 {
-    QPushButton::setText(text);
+    QLabel::setText(text);
     updateTextPath();
 }
 
-bool CustomButton::setPointSize(uint8_t size)
+bool CCTitle::setPointSize(uint8_t size)
 {
     font->setPointSize(size);
     return true;
 }
 
-void CustomButton::updateTextPath()
+void CCTitle::updateTextPath()
 {
-    const QString &text=QPushButton::text();
+    const QString &text=QLabel::text();
     if(textPath!=nullptr)
         delete textPath;
     QPainterPath tempPath;
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
-    const int h=height();
-    int newHeight=0;
-    if(pressed)
-        newHeight=(h*(percent+20)/100);
-    else
-        newHeight=(h*percent/100);
+    int newHeight=height();
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
-    textPath->addText(width()/2-rect.width()/2, tempHeight, *font, text);
+    const Qt::Alignment a=alignment();
+    if(a.testFlag(Qt::AlignLeft))
+        textPath->addText(0, tempHeight-1, *font, text);
+    else if(a.testFlag(Qt::AlignRight))
+        textPath->addText(width()-rect.width(), tempHeight-1, *font, text);
+    else
+        textPath->addText(width()/2-rect.width()/2, tempHeight-1, *font, text);
 }
 
-bool CustomButton::updateTextPercent(uint8_t percent)
-{
-    if(percent>100)
-        return false;
-    this->percent=percent;
-    updateTextPath();
-    update();
-    return true;
-}
-
-void CustomButton::setFont(const QFont &font)
+void CCTitle::setFont(const QFont &font)
 {
     *this->font=font;
 }
 
-QFont CustomButton::getFont() const
+QFont CCTitle::getFont() const
 {
     return *font;
 }
 
-void CustomButton::setOutlineColor(const QColor &color)
+void CCTitle::setOutlineColor(const QColor &color)
 {
     this->outlineColor=color;
-}
-
-void CustomButton::mousePressEvent(QMouseEvent *e)
-{
-    pressed=true;
-    if(cache!=nullptr)
-    {
-        delete cache;
-        cache=nullptr;
-    }
-    QPushButton::mousePressEvent(e);
-}
-
-void CustomButton::mouseReleaseEvent(QMouseEvent *e)
-{
-    pressed=false;
-    if(cache!=nullptr)
-    {
-        delete cache;
-        cache=nullptr;
-    }
-    QPushButton::mouseReleaseEvent(e);
 }

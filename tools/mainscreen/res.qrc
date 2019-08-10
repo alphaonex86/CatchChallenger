@@ -8,5 +8,7 @@
         <file>message.png</file>
         <file>options.png</file>
     </qresource>
-    <qresource prefix="/"/>
+    <qresource prefix="/CC/images/multi">
+        <file>busy.png</file>
+    </qresource>
 </RCC>
