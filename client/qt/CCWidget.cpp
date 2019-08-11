@@ -2,7 +2,7 @@
 #include <QPainter>
 
 CCWidget::CCWidget(QWidget *parent) :
-    QProgressBar(parent)
+    QWidget(parent)
 {
     oldratio=0;
 }

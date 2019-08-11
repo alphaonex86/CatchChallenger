@@ -116,7 +116,8 @@ SOURCES += \
     $$PWD/ScreenTransition.cpp \
     $$PWD/GameLoader.cpp \
     $$PWD/GameLoaderThread.cpp \
-    $$PWD/MainScreen.cpp
+    $$PWD/MainScreen.cpp \
+    $$PWD/CCTitle.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -173,7 +174,8 @@ HEADERS  += \
     $$PWD/ScreenTransition.h \
     $$PWD/GameLoader.h \
     $$PWD/GameLoaderThread.h \
-    $$PWD/MainScreen.h
+    $$PWD/MainScreen.h \
+    $$PWD/CCTitle.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
