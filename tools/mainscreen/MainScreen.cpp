@@ -66,6 +66,11 @@ MainScreen::~MainScreen()
 
 void MainScreen::resizeEvent(QResizeEvent * e)
 {
+    QWidget::resizeEvent(e);
+}
+
+void MainScreen::paintEvent(QPaintEvent * e)
+{
     if(width()<600 || height()<600)
     {
         solo->setMaximumSize(QSize(148,61));
@@ -145,16 +150,18 @@ void MainScreen::resizeEvent(QResizeEvent * e)
     {
         if(height()>600 && width()>510)
         {
-            news->setVisible(false);
+            //news->setVisible(false);
             ui->widgetUpdate->setVisible(true);
+            newsUpdate->setVisible(false);
         }
         else
         {
             ui->widgetUpdate->setVisible(false);
-            news->setVisible(true);
+            newsUpdate->setVisible(true);
+            //news->setVisible(true);
         }
     }
     else
         ui->widgetUpdate->setVisible(false);
-    QWidget::resizeEvent(e);
+    QWidget::paintEvent(e);
 }

@@ -16,6 +16,7 @@ public:
 protected:
     void paintEvent(QPaintEvent *) override;
     void resizeEvent(QResizeEvent *) override;
+    void toMainScreen();
 private:
     QWidget *m_background;
     QWidget *m_foreground;
