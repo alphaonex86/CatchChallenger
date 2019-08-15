@@ -6,8 +6,8 @@
 ScreenTransition::ScreenTransition() :
     QWidget()
 {
-    m_background=nullptr;
-    m_foreground=nullptr;
+    m_backgroundStack=new QStackedWidget(this);
+    m_foregroundStack=new QStackedWidget(this);
     setBackground(&b);
     setForeground(&l);
     connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen);
@@ -23,43 +23,33 @@ void ScreenTransition::paintEvent(QPaintEvent *)
 
 void ScreenTransition::resizeEvent(QResizeEvent *)
 {
-    if(m_background!=nullptr)
+    if(m_backgroundStack!=nullptr)
     {
-        m_background->setMinimumSize(size());
-        m_background->setMaximumSize(size());
+        m_backgroundStack->setMinimumSize(size());
+        m_backgroundStack->setMaximumSize(size());
     }
-    if(m_foreground!=nullptr)
+    if(m_foregroundStack!=nullptr)
     {
-        m_foreground->setMinimumSize(size());
-        m_foreground->setMaximumSize(size());
+        m_foregroundStack->setMinimumSize(size());
+        m_foregroundStack->setMaximumSize(size());
     }
 }
 
 void ScreenTransition::setBackground(QWidget *widget)
 {
-    m_background=widget;
     if(widget!=nullptr)
     {
-        widget->setMinimumSize(size());
-        widget->setMaximumSize(size());
-        widget->setParent(this);
+        m_backgroundStack->addWidget(widget);
+        m_backgroundStack->setCurrentWidget(widget);
     }
 }
 
 void ScreenTransition::setForeground(QWidget *widget)
 {
-    if(m_foreground!=nullptr)
-    {
-        m_foreground->setVisible(false);
-        m_foreground->setParent(nullptr);
-    }
-    m_foreground=widget;
     if(widget!=nullptr)
     {
-        widget->move(0,0);
-        widget->setMinimumSize(size());
-        widget->setMaximumSize(size());
-        widget->setParent(this);
+        m_foregroundStack->addWidget(widget);
+        m_foregroundStack->setCurrentWidget(widget);
     }
 }
 
