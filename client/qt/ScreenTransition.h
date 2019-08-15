@@ -2,6 +2,7 @@
 #define SCREENTRANSITION_H
 
 #include <QWidget>
+#include <QStackedWidget>
 #include "../qt/CCBackground.h"
 #include "../qt/LoadingScreen.h"
 
@@ -18,10 +19,10 @@ protected:
     void resizeEvent(QResizeEvent *) override;
     void toMainScreen();
 private:
-    QWidget *m_background;
-    QWidget *m_foreground;
     CCBackground b;
     LoadingScreen l;
+    QStackedWidget *m_backgroundStack;
+    QStackedWidget *m_foregroundStack;
 };
 
 #endif // SCREENTRANSITION_H
