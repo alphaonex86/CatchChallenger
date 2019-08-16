@@ -56,8 +56,10 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     #endif
     {
         #ifndef NOTCPSOCKET
+        #ifdef CATCHCHALLENGER_SOLO
         if(socket->fakeSocket!=NULL)
             haveFirstHeader=true;
+        #endif
         #endif
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
             abort();
@@ -328,9 +330,11 @@ void Api_protocol_Qt::resetAll()
 {
     messageParsingLayer("Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
     #ifndef NOTCPSOCKET
+    #ifdef CATCHCHALLENGER_SOLO
     if(socket!=NULL && socket->fakeSocket!=NULL)
         haveFirstHeader=true;
     else
+    #endif
     #else
     if(socket==NULL)
         haveFirstHeader=true;
