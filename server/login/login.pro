@@ -79,7 +79,8 @@ SOURCES += \
     ../base/DictionaryLogin.cpp \
     ../base/TinyXMLSettings.cpp \
     ../base/DatabaseFunction.cpp \
-    ../base/StringWithReplacement.cpp
+    ../base/StringWithReplacement.cpp \
+    TimerDetectTimeout.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \
@@ -116,7 +117,8 @@ HEADERS += \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
     ../base/StringWithReplacement.h \
-    ../VariableServer.h
+    ../VariableServer.h \
+    TimerDetectTimeout.h
 
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 

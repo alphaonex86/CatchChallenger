@@ -16,6 +16,7 @@
 #include "EpollServerLoginSlave.h"
 #include "EpollClientLoginSlave.h"
 #include "TimerDdos.h"
+#include "TimerDetectTimeout.h"
 
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16
@@ -69,6 +70,14 @@ int main(int argc, char *argv[])
         if(!timerDdos.start(CATCHCHALLENGER_DDOS_COMPUTERINTERVAL*1000))
         {
             std::cerr << "timerDdos fail to set" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    TimerDetectTimeout timerDetectTimeout;
+    {
+        if(!timerDetectTimeout.start(60*1000))
+        {
+            std::cerr << "timerDetectTimeout fail to set" << std::endl;
             return EXIT_FAILURE;
         }
     }

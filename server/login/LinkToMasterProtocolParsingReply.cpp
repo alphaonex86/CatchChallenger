@@ -228,6 +228,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
         //Select character on master
         case 0xBE:
         {
+            messageParsingLayer("selected (0xBE: 190)");
             if(selectCharacterClients.find(queryNumber)!=selectCharacterClients.cend())
             {
                 const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.at(queryNumber);
