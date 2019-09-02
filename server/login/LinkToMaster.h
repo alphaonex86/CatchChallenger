@@ -32,10 +32,11 @@ public:
     Stat stat;
     struct DataForSelectedCharacterReturn
     {
-        void * client;
+        void * client;//EpollClientLoginSlave *
         uint8_t client_query_id;
         uint32_t serverUniqueKey;
         uint8_t charactersGroupIndex;
+        uint64_t start;
     };
 
     std::string httpDatapackMirror;
@@ -66,6 +67,7 @@ public:
     ssize_t read(char * data, const size_t &size);
     ssize_t write(const char * const data, const size_t &size);
     void closeSocket();
+    void detectTimeout();
 protected:
     bool disconnectClient();
     void errorParsingLayer(const std::string &error);
