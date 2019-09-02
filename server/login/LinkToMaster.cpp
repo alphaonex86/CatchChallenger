@@ -256,7 +256,37 @@ void LinkToMaster::readTheFirstSslHeader()
 bool LinkToMaster::disconnectClient()
 {
     EpollClient::close();
+    reset();
+    resetForReconnect();
     messageParsingLayer("LinkToMaster::disconnectClient()");
+
+    queryNumberList.clear();
+    queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+    unsigned int index=0;
+    while(index<queryNumberList.size())
+    {
+        queryNumberList[index]=index;
+        index++;
+    }
+    for( const auto& n : selectCharacterClients ) {
+        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
+        EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
+        if(dataForSelectedCharacterReturn.client!=NULL)
+        {
+            messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
+            if(client->stat!=EpollClientLoginSlave::GameServerConnected)
+            {
+                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
+                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                ->closeSocket();
+            }
+        }
+        else
+            messageParsingLayer("connected player NULL");
+    }
+    selectCharacterClients.clear();
+
     return true;
 }
 
@@ -365,11 +395,13 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
         std::cerr << listTheRunningQuery() << std::endl;
         return false;
     }
+    messageParsingLayer("try select (0xBE: 190)");
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
-    dataForSelectedCharacterReturn.client=client;
+    dataForSelectedCharacterReturn.client=client;// EpollClientLoginSlave *
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
     dataForSelectedCharacterReturn.serverUniqueKey=serverUniqueKey;
     dataForSelectedCharacterReturn.charactersGroupIndex=charactersGroupIndex;
+    dataForSelectedCharacterReturn.start=time(NULL);
     selectCharacterClients[queryNumberList.back()]=dataForSelectedCharacterReturn;
     //register it
     registerOutputQuery(queryNumberList.back(),0xBE);
@@ -443,4 +475,39 @@ ssize_t LinkToMaster::write(const char * const data, const size_t &size)
 void LinkToMaster::closeSocket()
 {
     disconnectClient();
+}
+
+void LinkToMaster::detectTimeout()
+{
+    uint64_t timetemp=time(NULL);
+    for( const auto& n : selectCharacterClients ) {
+        const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
+        if(dataForSelectedCharacterReturn.client==nullptr)
+        {
+            messageParsingLayer("LinkToMaster::detectTimeout(): connected player NULL");
+            const uint8_t queryNumber=n.first;
+            queryNumberList.push_back(queryNumber);
+            selectCharacterClients.erase(queryNumber);
+        }
+        else
+        {
+            EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
+            if(dataForSelectedCharacterReturn.start<(timetemp-60))//if started than more 60s
+            {
+                if(client->stat!=EpollClientLoginSlave::GameServerConnected)
+                {
+                    messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
+                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
+                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                    ->closeSocket();
+                }
+                else
+                    messageParsingLayer("connected player: "+std::to_string(client->account_id)+", should be removed from this list");
+                const uint8_t queryNumber=n.first;
+                queryNumberList.push_back(queryNumber);
+                selectCharacterClients.erase(queryNumber);
+            }
+        }
+    }
 }
