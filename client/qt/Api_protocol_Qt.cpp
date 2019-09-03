@@ -237,17 +237,17 @@ void Api_protocol_Qt::saveCert(const std::string &file)
 
 void Api_protocol_Qt::useSeed(const uint8_t &plant_id)
 {
-    Api_protocol_Qt::useSeed(plant_id);
+    Api_protocol::useSeed(plant_id);
 }
 
 void Api_protocol_Qt::collectMaturePlant()
 {
-    Api_protocol_Qt::collectMaturePlant();
+    Api_protocol::collectMaturePlant();
 }
 
 void Api_protocol_Qt::destroyObject(const uint16_t &object,const uint32_t &quantity)
 {
-    Api_protocol_Qt::destroyObject(object,quantity);
+    Api_protocol::destroyObject(object,quantity);
 }
 
 void Api_protocol_Qt::readForFirstHeader()
@@ -375,7 +375,7 @@ std::string Api_protocol_Qt::socketDisconnectedForReconnect()
 
 void Api_protocol_Qt::send_player_direction(const CatchChallenger::Direction &the_direction)
 {
-    Api_protocol_Qt::send_player_direction(the_direction);
+    Api_protocol::send_player_direction(the_direction);
 }
 
 void Api_protocol_Qt::newError(const std::string &error,const std::string &detailedError)
