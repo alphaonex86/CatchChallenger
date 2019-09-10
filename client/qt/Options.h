@@ -38,7 +38,6 @@ public slots:
 
     void setAudioDeviceList(const QStringList &devices);
 private:
-    QSettings *settings;
     uint16_t fps;
     bool limitedFPS;
     uint8_t zoom;//0 is no forced
@@ -46,6 +45,7 @@ private:
     std::string language;
     int indexDevice;
     QStringList devices;
+    QSettings settings;
 };
 
 #endif // OPTIONS_H

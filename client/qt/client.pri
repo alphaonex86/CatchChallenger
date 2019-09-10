@@ -117,7 +117,9 @@ SOURCES += \
     $$PWD/GameLoader.cpp \
     $$PWD/GameLoaderThread.cpp \
     $$PWD/MainScreen.cpp \
-    $$PWD/CCTitle.cpp
+    $$PWD/CCTitle.cpp \
+    $$PWD/Settings.cpp \
+    $$PWD/OptionsDialog.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -175,7 +177,9 @@ HEADERS  += \
     $$PWD/GameLoader.h \
     $$PWD/GameLoaderThread.h \
     $$PWD/MainScreen.h \
-    $$PWD/CCTitle.h
+    $$PWD/CCTitle.h \
+    $$PWD/Settings.h \
+    $$PWD/OptionsDialog.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -185,7 +189,8 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/NewGame.ui \
     $$PWD/LanguagesSelect.ui \
     $$PWD/LoadingScreen.ui \
-    $$PWD/MainScreen.ui
+    $$PWD/MainScreen.ui \
+    $$PWD/OptionsDialog.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/../resources/resources-windows.rc

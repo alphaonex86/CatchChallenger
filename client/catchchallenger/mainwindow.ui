@@ -26,7 +26,7 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../base/resources/client-resources.qrc">
+   <iconset resource="../../server/all-server-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -185,7 +185,7 @@ color: rgb(0, 0, 0);</string>
           <item>
            <widget class="QToolButton" name="languages">
             <property name="icon">
-             <iconset resource="../base/resources/client-resources.qrc">
+             <iconset>
               <normaloff>:/images/interface/languages.png</normaloff>:/images/interface/languages.png</iconset>
             </property>
             <property name="iconSize">
@@ -323,8 +323,8 @@ QLabel { padding:2px; }</string>
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>746</width>
-                     <height>245</height>
+                     <width>740</width>
+                     <height>255</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -626,8 +626,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>746</width>
-                   <height>268</height>
+                   <width>740</width>
+                   <height>278</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -942,7 +942,7 @@ color: rgb(0, 0, 0);</string>
                      <string>Show the password</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="../base/resources/client-resources-multi.qrc">
+                     <iconset resource="../resources/client-resources-multi.qrc">
                       <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
                     </property>
                     <property name="iconSize">
@@ -1149,8 +1149,8 @@ padding: 0 5px;</string>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../base/resources/client-resources.qrc"/>
-  <include location="../base/resources/client-resources-multi.qrc"/>
+  <include location="../resources/client-resources-multi.qrc"/>
+  <include location="../../server/all-server-resources.qrc"/>
  </resources>
  <connections/>
 </ui>
