@@ -1,6 +1,10 @@
 #include "MainScreen.h"
 #include "ui_MainScreen.h"
+#include "InternetUpdater.h"
+#include "FeedNews.h"
 #include <iostream>
+#include <QDesktopServices>
+#include "Settings.h"
 
 MainScreen::MainScreen(QWidget *parent) :
     QWidget(parent),
@@ -46,7 +50,8 @@ MainScreen::MainScreen(QWidget *parent) :
     verticalLayoutNews = new QHBoxLayout(news);
     verticalLayoutNews->setSpacing(6);
     newsText=new QLabel(news);
-    newsText->setText("News");
+    newsText->setText(Settings::settings.value("news").toString());
+    newsText->setOpenExternalLinks(true);
     newsWait=new QLabel(news);
     newsWait->setPixmap(QPixmap(":/CC/images/multi/busy.png"));
     newsWait->setMinimumWidth(64);
@@ -57,6 +62,48 @@ MainScreen::MainScreen(QWidget *parent) :
     verticalLayoutNews->addWidget(newsText);
     verticalLayoutNews->addWidget(newsWait);
     verticalLayoutNews->addWidget(newsUpdate);
+
+    #ifndef __EMSCRIPTEN__
+    InternetUpdater::internetUpdater=new InternetUpdater();
+    if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainScreen::newUpdate))
+        abort();
+    #endif
+    FeedNews::feedNews=new FeedNews();
+    if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainScreen::feedEntryList))
+        qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
+    #ifndef NOSINGLEPLAYER
+    /*solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
+                              "/datapack/internal/",
+                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
+                              "/savegames/",false);
+    if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
+        abort();
+    if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
+        abort();
+    ui->stackedWidget->addWidget(solowindow);
+    if(ui->stackedWidget->indexOf(solowindow)<0)
+        solo->hide();*/
+    #endif
+    #ifdef NOSINGLEPLAYER
+    solo->hide();
+    #endif
+    if(!connect(facebook,&QPushButton::clicked,this,&MainScreen::openFacebook))
+        abort();
+    if(!connect(website,&QPushButton::clicked,this,&MainScreen::openWebsite))
+        abort();
+    if(!connect(updateButton,&QPushButton::clicked,this,&MainScreen::openUpdate))
+        abort();
+    if(!connect(newsUpdate,&QPushButton::clicked,this,&MainScreen::openUpdate))
+        abort();
+
+    if(!connect(solo,&QPushButton::clicked,this,&MainScreen::goToSolo))
+        abort();
+    if(!connect(multi,&QPushButton::clicked,this,&MainScreen::goToMulti))
+        abort();
+    if(!connect(options,&QPushButton::clicked,this,&MainScreen::goToOptions))
+        abort();
+
+    haveUpdate=false;
 }
 
 MainScreen::~MainScreen()
@@ -151,17 +198,81 @@ void MainScreen::paintEvent(QPaintEvent * e)
         if(height()>600 && width()>510)
         {
             //news->setVisible(false);
-            ui->widgetUpdate->setVisible(true);
+            ui->widgetUpdate->setVisible(haveUpdate);
             newsUpdate->setVisible(false);
         }
         else
         {
             ui->widgetUpdate->setVisible(false);
-            newsUpdate->setVisible(true);
+            newsUpdate->setVisible(haveUpdate);
             //news->setVisible(true);
         }
     }
     else
         ui->widgetUpdate->setVisible(false);
     QWidget::paintEvent(e);
+}
+
+#ifndef __EMSCRIPTEN__
+void MainScreen::newUpdate(const std::string &version)
+{
+    haveUpdate=true;
+    QWidget::update();
+    /*
+    ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
+    ui->update->setVisible(true);*/
+}
+#endif
+
+void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error)
+{
+    if(entryList.empty())
+    {
+        if(error.empty())
+            newsWait->setVisible(false);
+        else
+        {
+            newsText->setToolTip(QString::fromStdString(error));
+            newsText->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
+        }
+        return;
+    }
+    if(entryList.size()==1)
+        newsText->setText(tr("Latest news:")+" "+QStringLiteral("<a href=\"%1\">%2</a>")
+                          .arg(QString::fromStdString(entryList.at(0).link))
+                          .arg(QString::fromStdString(entryList.at(0).title)));
+    else
+    {
+        QStringList entryHtmlList;
+        unsigned int index=0;
+        while(index<entryList.size() && index<3)
+        {
+            entryHtmlList << QStringLiteral(" - <a href=\"%1\">%2</a>")
+                             .arg(QString::fromStdString(entryList.at(index).link))
+                             .arg(QString::fromStdString(entryList.at(index).title));
+            index++;
+        }
+        newsText->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
+    }
+    Settings::settings.setValue("news",newsText->text());
+    newsText->setStyleSheet("#news{background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);}");
+    newsText->setVisible(true);
+}
+
+void MainScreen::openWebsite()
+{
+    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.first-world.info/")))
+        std::cerr << "MainScreen::openWebsite() failed" << std::endl;
+}
+
+void MainScreen::openFacebook()
+{
+    if(!QDesktopServices::openUrl(QUrl("https://www.facebook.com/CatchChallenger/")))
+        std::cerr << "MainScreen::openFacebook() failed" << std::endl;
+}
+
+void MainScreen::openUpdate()
+{
+    if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.first-world.info/download.html")))
+        std::cerr << "MainScreen::openFacebook() failed" << std::endl;
 }
