@@ -8,6 +8,7 @@
 #include "CustomButton.h"
 #include "CCWidget.h"
 #include "CCTitle.h"
+#include "FeedNews.h"
 
 namespace Ui {
 class MainScreen;
@@ -38,9 +39,23 @@ private:
     QLabel *newsWait;
     CustomButton *newsUpdate;
     QHBoxLayout *verticalLayoutNews;
+
+    bool haveUpdate;
 protected:
     void resizeEvent(QResizeEvent *e) override;
     void paintEvent(QPaintEvent *e) override;
+
+    #ifndef __EMSCRIPTEN__
+    void newUpdate(const std::string &version);
+    #endif
+    void feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList, std::string error=std::string());
+    void openWebsite();
+    void openFacebook();
+    void openUpdate();
+signals:
+    void goToOptions();
+    void goToSolo();
+    void goToMulti();
 };
 
 #endif // MAINSCREEN_H

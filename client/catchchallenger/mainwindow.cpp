@@ -90,33 +90,6 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     else
         ui->news->setVisible(false);
-    #ifndef __EMSCRIPTEN__
-    InternetUpdater::internetUpdater=new InternetUpdater();
-    if(!connect(InternetUpdater::internetUpdater,&InternetUpdater::newUpdate,this,&MainWindow::newUpdate))
-        abort();
-    #endif
-    FeedNews::feedNews=new FeedNews();
-    if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
-        qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
-    #ifndef NOSINGLEPLAYER
-    solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
-                              "/datapack/internal/",
-                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
-                              "/savegames/",false);
-    if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
-        abort();
-    if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
-        abort();
-    ui->stackedWidget->addWidget(solowindow);
-    if(ui->stackedWidget->indexOf(solowindow)<0)
-        ui->solo->hide();
-    #endif
-    #ifdef NOSINGLEPLAYER
-    ui->solo->hide();
-    #else
-    //work around QSS crash
-    solowindow->setBuggyStyle();
-    #endif
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
     ui->server_refresh->setEnabled(true);
