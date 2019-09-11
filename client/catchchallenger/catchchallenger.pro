@@ -7,6 +7,6 @@ include(../qt/multi.pri)
     include(../../server/catchchallenger-server-qt.pri)
     INCLUDEPATH += -I/usr/include/
 }
-include(specific.pri)
+#include(specific.pri)
 
 TARGET = catchchallenger

@@ -12,7 +12,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setApplicationName("client-ultimate");
+    a.setApplicationName("client");
     a.setOrganizationName("CatchChallenger");
     a.setStyle(QStyleFactory::create("Fusion"));
 
