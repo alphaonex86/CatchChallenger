@@ -1,8 +1,8 @@
   #include "MapVisualiserPlayerWithFight.h"
 
 #include "../../fight/interface/ClientFightEngine.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
+#include "../../../../general/base/CommonDatapack.h"
+#include "../../../../general/base/CommonDatapackServerSpec.h"
 
 #include <iostream>
 

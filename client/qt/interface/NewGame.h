@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include <QTimer>
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/GeneralStructures.h"
 
 namespace Ui {
 class NewGame;

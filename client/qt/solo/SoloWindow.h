@@ -10,8 +10,8 @@
 #include <QSpacerItem>
 
 #include "../QFakeSocket.h"
-#include "../../general/base/ChatParsing.h"
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/ChatParsing.h"
+#include "../../../general/base/GeneralStructures.h"
 #include "../Api_client_real.h"
 #include "../Api_client_virtual.h"
 #include "../render/MapController.h"

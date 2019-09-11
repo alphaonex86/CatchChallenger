@@ -2,7 +2,7 @@
 #define QmlMonsterGeneralInformations_H
 
 #include <QObject>
-#include "../../general/base/CommonDatapack.h"
+#include "../../../../../general/base/CommonDatapack.h"
 #include "../../../QtDatapackClientLoader.h"
 
 class QmlMonsterGeneralInformations : public QObject

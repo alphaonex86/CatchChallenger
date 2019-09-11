@@ -1,10 +1,10 @@
 #include "ClientFightEngine.h"
-#include "../../general/base/MoveOnTheMap.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../../../general/base/MoveOnTheMap.h"
+#include "../../../../general/base/GeneralVariable.h"
+#include "../../../../general/base/CommonDatapack.h"
 #include "../../Api_client_real.h"
 #include "../../FacilityLibClient.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../../general/base/FacilityLib.h"
 
 #include <QDebug>
 #include <iostream>
