@@ -35,7 +35,7 @@ void NormalServerGlobal::displayInfo()
             std::cout << "Unknown compiler" << std::endl;
         #endif
     #endif
-    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
+    std::cout << "CatchChallenger version: " << CatchChallenger::Version::str << std::endl;
     #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
     unsigned char masterheader[]=PROTOCOL_HEADER_MASTERSERVER;
     #endif

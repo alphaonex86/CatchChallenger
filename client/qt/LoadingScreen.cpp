@@ -25,7 +25,7 @@ LoadingScreen::LoadingScreen(QWidget *parent) :
     info->setStyleSheet("color:#401c02;");
     info->setWordWrap(true);
     version = new QLabel(widget);
-    version->setText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(CATCHCHALLENGER_VERSION));
+    version->setText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
     version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     QFont font = version->font();
     font.setPointSize(7);

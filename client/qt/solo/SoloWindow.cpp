@@ -195,9 +195,9 @@ void SoloWindow::SoloWindowListEntryEnvoluedDoubleClicked()
 void SoloWindow::setOnlySolo()
 {
     #ifdef CATCHCHALLENGER_GITCOMMIT
-    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
+    ui->version->setText(QString::fromStdString(CatchChallenger::Version::str)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
     #else
-    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
+    ui->version->setText(QString::fromStdString(CatchChallenger::Version::str));
     #endif
 }
 

@@ -31,7 +31,6 @@
 #include "../qt/Api_client_real.h"
 #include "../qt/render/MapController.h"
 #include "../qt/interface/BaseWindow.h"
-#include "../qt/interface/ListEntryEnvolued.h"
 #ifndef NOSINGLEPLAYER
 #include "../qt/solo/SoloWindow.h"
 #endif
@@ -42,31 +41,6 @@ namespace Ui {
 }
 
 class AddOrEditServer;
-
-class ConnexionInfo
-{
-public:
-    QString unique_code;
-    QString name;
-
-    //hightest priority
-    QString host;
-    uint16_t port;
-    //lower priority
-    QString ws;
-
-    uint32_t connexionCounter;
-    uint32_t lastConnexion;
-
-    QString register_page;
-    QString lost_passwd_page;
-    QString site_page;
-
-    QString proxyHost;
-    uint16_t proxyPort;
-
-    bool operator<(const ConnexionInfo &connexionInfo) const;
-};
 
 class MainWindow : public QMainWindow
 {
@@ -104,18 +78,7 @@ private slots:
     std::pair<std::string,std::string> getDatapackInformations(const std::string &filePath);
     void on_backDatapack_clicked();
     void on_deleteDatapack_clicked();
-    void displayServerList();
-    void on_server_add_clicked();
-    void server_add_finished();
-    void saveConnexionInfoList();
-    void on_server_select_clicked();
-    void on_server_remove_clicked();
-    void on_server_refresh_clicked();
     void on_login_cancel_clicked();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
-    std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void closeEvent(QCloseEvent *event);
     void downloadFile();
     void metaDataChanged();
@@ -153,20 +116,11 @@ private:
         ServerMode_None
     };
     ServerMode serverMode;
-    std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
-    AddOrEditServer *addServer;
     Ui::MainWindow *ui;
     void resetAll();
-    QStringList chat_list_player_pseudo;
-    QList<CatchChallenger::Player_type> chat_list_player_type;
-    QList<CatchChallenger::Chat_type> chat_list_type;
-    QList<QString> chat_list_text;
     QSettings settings;
-    QString lastMessageSend;
-    QTimer stopFlood;
-    int numberForFlood;
     bool haveShowDisconnectionReason;
     QStringList server_list;
     CatchChallenger::ConnectedSocket *socket;
@@ -176,14 +130,6 @@ private:
     #ifndef NOWEBSOCKET
     QWebSocket *realWebSocket;
     #endif
-    std::vector<ListEntryEnvolued *> datapack,server;
-    QHash<ListEntryEnvolued *,QString> datapackPathList;
-    QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
-    QSet<ListEntryEnvolued *> customServerConnexion;
-    ListEntryEnvolued * selectedDatapack;
-    ListEntryEnvolued * selectedServer;
-    QNetworkAccessManager qnam;
-    QNetworkReply *reply;
     #ifndef NOSINGLEPLAYER
     SoloWindow *solowindow;
     #endif

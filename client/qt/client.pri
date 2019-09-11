@@ -119,7 +119,10 @@ SOURCES += \
     $$PWD/MainScreen.cpp \
     $$PWD/CCTitle.cpp \
     $$PWD/Settings.cpp \
-    $$PWD/OptionsDialog.cpp
+    $$PWD/OptionsDialog.cpp \
+    $$PWD/Solo.cpp \
+    $$PWD/Multi.cpp \
+    $$PWD/Login.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -179,7 +182,10 @@ HEADERS  += \
     $$PWD/MainScreen.h \
     $$PWD/CCTitle.h \
     $$PWD/Settings.h \
-    $$PWD/OptionsDialog.h
+    $$PWD/OptionsDialog.h \
+    $$PWD/Solo.h \
+    $$PWD/Multi.h \
+    $$PWD/Login.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -190,7 +196,10 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/LanguagesSelect.ui \
     $$PWD/LoadingScreen.ui \
     $$PWD/MainScreen.ui \
-    $$PWD/OptionsDialog.ui
+    $$PWD/OptionsDialog.ui \
+    $$PWD/Solo.ui \
+    $$PWD/Multi.ui \
+    $$PWD/Login.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/../resources/resources-windows.rc
