@@ -69,7 +69,13 @@ private:
 
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
-    ListEntryEnvolued * selectedServer;
+    class SelectedServer
+    {
+    public:
+        QString unique_code;
+        bool isCustom;
+    };
+    SelectedServer selectedServer;//no selected if unique_code empty
     AddOrEditServer *addServer;
 
     QNetworkAccessManager qnam;

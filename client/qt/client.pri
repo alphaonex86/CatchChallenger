@@ -122,7 +122,9 @@ SOURCES += \
     $$PWD/OptionsDialog.cpp \
     $$PWD/Solo.cpp \
     $$PWD/Multi.cpp \
-    $$PWD/Login.cpp
+    $$PWD/Login.cpp \
+    $$PWD/AddServer.cpp \
+    $$PWD/AskKey.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -185,7 +187,9 @@ HEADERS  += \
     $$PWD/OptionsDialog.h \
     $$PWD/Solo.h \
     $$PWD/Multi.h \
-    $$PWD/Login.h
+    $$PWD/Login.h \
+    $$PWD/AddServer.h \
+    $$PWD/AskKey.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \
@@ -199,7 +203,9 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/OptionsDialog.ui \
     $$PWD/Solo.ui \
     $$PWD/Multi.ui \
-    $$PWD/Login.ui
+    $$PWD/Login.ui \
+    $$PWD/AddServer.ui \
+    $$PWD/AskKey.ui
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/../resources/resources-windows.rc

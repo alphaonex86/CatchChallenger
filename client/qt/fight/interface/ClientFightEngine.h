@@ -6,9 +6,9 @@
 #include <QHash>
 #include <QString>
 
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/fight/CommonFightEngine.h"
+#include "../../../../general/base/GeneralStructures.h"
+#include "../../../../general/base/CommonMap.h"
+#include "../../../../general/fight/CommonFightEngine.h"
 #include "../../Api_protocol_Qt.h"
 
 namespace CatchChallenger {
