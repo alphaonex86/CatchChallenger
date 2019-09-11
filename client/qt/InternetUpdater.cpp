@@ -48,9 +48,9 @@ void InternetUpdater::downloadFile()
 {
     QString catchChallengerVersion;
     if(Ultimate::ultimate.isUltimate())
-        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion="CatchChallenger Ultimate/"+QString::fromStdString(CatchChallenger::Version::str);
     else
-        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion="CatchChallenger/"+QString::fromStdString(CatchChallenger::Version::str);
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(GetOSDisplayString()));
     #endif
@@ -98,7 +98,7 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
-    if(newVersion==CATCHCHALLENGER_VERSION)
+    if(newVersion==CatchChallenger::Version::str)
     {
         reply->deleteLater();
         return;
@@ -116,7 +116,7 @@ void InternetUpdater::httpFinished()
 bool InternetUpdater::versionIsNewer(const std::string &version)
 {
     std::vector<std::string> versionANumber=stringsplit(version,'.');
-    std::vector<std::string> versionBNumber=stringsplit(std::string(CATCHCHALLENGER_VERSION),'.');
+    std::vector<std::string> versionBNumber=stringsplit(std::string(CatchChallenger::Version::str),'.');
     unsigned int index=0;
     int defaultReturnValue=true;
     while(index<versionANumber.size() && index<versionBNumber.size())

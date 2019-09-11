@@ -9,6 +9,7 @@
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/CommonSettingsCommon.h"
+#include "../../Ultimate.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -63,12 +64,13 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         QStringList extraInfo;
         if(!typeList.isEmpty())
             extraInfo << tr("Type: %1").arg(typeList.join(QStringLiteral(", ")));
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        if(!monsterExtraInfo.kind.empty())
-            extraInfo << tr("Kind: %1").arg(QString::fromStdString(monsterExtraInfo.kind));
-        if(!monsterExtraInfo.habitat.empty())
-            extraInfo << tr("Habitat: %1").arg(QString::fromStdString(monsterExtraInfo.habitat));
-        #endif
+        if(Ultimate::ultimate.isUltimate())
+        {
+            if(!monsterExtraInfo.kind.empty())
+                extraInfo << tr("Kind: %1").arg(QString::fromStdString(monsterExtraInfo.kind));
+            if(!monsterExtraInfo.habitat.empty())
+                extraInfo << tr("Habitat: %1").arg(QString::fromStdString(monsterExtraInfo.habitat));
+        }
         ui->monsterDetailsType->setText(extraInfo.join(QStringLiteral("<br />")));
     }
     ui->monsterDetailsName->setText(QString::fromStdString(monsterExtraInfo.name));
@@ -113,16 +115,17 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     }
     const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
     ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    if(monster.hp>(stat.hp/2))
-        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#1A8307\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
-    else if(monster.hp>(stat.hp/4))
-        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#B99C09\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    if(Ultimate::ultimate.isUltimate())
+    {
+        if(monster.hp>(stat.hp/2))
+            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#1A8307\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+        else if(monster.hp>(stat.hp/4))
+            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#B99C09\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+        else
+            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#BF0303\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    }
     else
-        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#BF0303\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
-    #else
-    ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("%1/%2").arg(monster.hp).arg(stat.hp));
-    #endif
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("%1/%2").arg(monster.hp).arg(stat.hp));
     ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
     ui->monsterDetailsStatXp->setText(tr("Xp: %1/%2").arg(monster.remaining_xp).arg(maxXp));
     ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
@@ -2088,11 +2091,10 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
     }
     else
         ui->learnSP->setVisible(false);
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
+    if(Ultimate::ultimate.isUltimate())
+        ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
                                QString::fromStdString(QtDatapackClientLoader::datapackLoader.monsterExtra.at(monster.monster).name))
                            .arg(monster.level));
-    #endif
     unsigned int sub_index=0;
     while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
     {

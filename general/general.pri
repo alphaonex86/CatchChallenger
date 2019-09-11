@@ -68,7 +68,8 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineBuff.cpp \
     $$PWD/fight/CommonFightEngineSkill.cpp \
     $$PWD/fight/CommonFightEngineWild.cpp \
-    $$PWD/fight/CommonFightEngineBase.cpp
+    $$PWD/fight/CommonFightEngineBase.cpp \
+    $$PWD/base/Version.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.h \
     $$PWD/base/ClientBase.h \
