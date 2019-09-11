@@ -33,6 +33,7 @@ Multi::Multi(QWidget *parent) :
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     selectedServer=NULL;
     downloadFile();
+    selectedServer=-1;
 }
 
 Multi::~Multi()
@@ -159,6 +160,11 @@ void Multi::serverListEntryEnvoluedClicked()
     ListEntryEnvolued * selectedSavegame=qobject_cast<ListEntryEnvolued *>(QObject::sender());
     if(selectedSavegame==NULL)
         return;
+    if(serverConnexion.find(selectedSavegame)==serverConnexion.cend())
+        return;
+    ConnexionInfo *connexionInfo=serverConnexion.at(selectedSavegame);
+    unsigned int index=0;
+    while(index<mergedConnexionInfoList.size())
     this->selectedServer=selectedSavegame;
     displayServerList();
 }
@@ -348,7 +354,7 @@ void Multi::saveConnexionInfoList()
 
 void Multi::serverListEntryEnvoluedDoubleClicked()
 {
-    on_server_select_clicked();
+    //on_server_select_clicked();
 }
 
 std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList()

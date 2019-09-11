@@ -1,7 +1,7 @@
 #include "../../QtDatapackClientLoader.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../../../general/base/CommonDatapack.h"
+#include "../../../../general/base/GeneralVariable.h"
+#include "../../../../general/base/FacilityLib.h"
 
 #include <QFile>
 #include <QByteArray>

@@ -2,7 +2,7 @@
 #define MAP_VISUALISER_PLAYER_H
 
 #include "MapVisualiser.h"
-#include "../../general/base/GeneralStructures.h"
+#include "../../../general/base/GeneralStructures.h"
 
 #include <QSet>
 #include <QString>
