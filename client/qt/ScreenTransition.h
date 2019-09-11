@@ -7,6 +7,9 @@
 #include "../qt/LoadingScreen.h"
 #include "OptionsDialog.h"
 #include "MainScreen.h"
+#include "Solo.h"
+#include "Multi.h"
+#include "Login.h"
 
 class ScreenTransition : public QWidget
 {
@@ -22,6 +25,9 @@ protected:
     void resizeEvent(QResizeEvent *) override;
     void toMainScreen();
     void openOptions();
+    void openSolo();
+    void openMulti();
+    void backMain();
     void closeOptions();
 private:
     CCBackground b;
@@ -31,6 +37,9 @@ private:
     QStackedWidget *m_aboveStack;
     OptionsDialog *o;
     MainScreen *m;
+    Solo *solo;
+    Multi *multi;
+    Login *login;
 };
 
 #endif // SCREENTRANSITION_H

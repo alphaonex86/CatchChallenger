@@ -172,7 +172,7 @@ void BaseServer::initAll()
 
 void BaseServer::preload_the_data()
 {
-    std::cout << "Preload data for server version " << CATCHCHALLENGER_VERSION << std::endl;
+    std::cout << "Preload data for server version " << CatchChallenger::Version::str << std::endl;
 
     if(dataLoaded)
         return;

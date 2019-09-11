@@ -15,6 +15,9 @@ ScreenTransition::ScreenTransition() :
     connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen);
     m=nullptr;
     o=nullptr;
+    solo=nullptr;
+    multi=nullptr;
+    login=nullptr;
 }
 
 ScreenTransition::~ScreenTransition()
@@ -86,9 +89,11 @@ void ScreenTransition::toMainScreen()
     {
         m=new MainScreen(this);
         connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions);
+        connect(m,&MainScreen::goToSolo,this,&ScreenTransition::openSolo);
+        connect(m,&MainScreen::goToMulti,this,&ScreenTransition::openMulti);
     }
     setForeground(m);
-    setWindowTitle(tr("CatchChallenger %1").arg(CATCHCHALLENGER_VERSION));
+    setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
 }
 
 void ScreenTransition::openOptions()
@@ -104,5 +109,31 @@ void ScreenTransition::openOptions()
 void ScreenTransition::closeOptions()
 {
     setAbove(nullptr);
+}
+
+void ScreenTransition::openSolo()
+{
+    if(solo==nullptr)
+    {
+        solo=new Solo(this);
+        connect(solo,&Solo::backMain,this,&ScreenTransition::backMain);
+    }
+    setForeground(solo);
+}
+
+void ScreenTransition::openMulti()
+{
+    if(multi==nullptr)
+    {
+        multi=new Multi(this);
+        connect(multi,&Multi::backMain,this,&ScreenTransition::backMain);
+        connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove);
+    }
+    setForeground(multi);
+}
+
+void ScreenTransition::backMain()
+{
+    setForeground(m);
 }
 

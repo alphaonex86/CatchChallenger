@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
         abort();
     }
 
-    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
+    std::cout << "CatchChallenger version: " << CatchChallenger::Version::str << std::endl;
 
     {
         DIR* dir = opendir("datapack/");
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    std::cout << "CatchChallenger version: " << CATCHCHALLENGER_VERSION << std::endl;
+    std::cout << "CatchChallenger version: " << CatchChallenger::Version::str << std::endl;
     if(argc<1)
     {
         std::cerr << "argc<1: wrong arg count" << std::endl;

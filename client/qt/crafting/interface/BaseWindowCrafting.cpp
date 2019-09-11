@@ -8,6 +8,7 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "ui_BaseWindow.h"
 #include "../../FacilityLibClient.h"
+#include "../../Ultimate.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -303,9 +304,8 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantFruitText->setText(QString());
         ui->labelPlantDescription->setText(QString());
         ui->labelPlantRequirementsAndRewards->setText(QString());
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        ui->labelPlantByDay->setText(QString());
-        #endif
+        if(Ultimate::ultimate.isUltimate())
+            ui->labelPlantByDay->setText(QString());
 
         ui->plantUse->setVisible(false);
         return;
@@ -339,51 +339,51 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                 ui->labelPlantRequirementsAndRewards->setText(QString());
             else
                 ui->labelPlantRequirementsAndRewards->setText(tr("Requirements: ")+requirements.join(QStringLiteral(", ")));
-            #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-            QStringList rewards_less_reputation,rewards_more_reputation;
+            if(Ultimate::ultimate.isUltimate())
             {
-                unsigned int index=0;
-                while(index<plant.rewards.reputation.size())
+                QStringList rewards_less_reputation,rewards_more_reputation;
                 {
-                    QString name=QStringLiteral("???");
-                    const ReputationRewards &reputationRewards=plant.rewards.reputation.at(index);
-                    if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+                    unsigned int index=0;
+                    while(index<plant.rewards.reputation.size())
                     {
-                        const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
-                        if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)!=
-                                QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
-                            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name).name);
+                        QString name=QStringLiteral("???");
+                        const ReputationRewards &reputationRewards=plant.rewards.reputation.at(index);
+                        if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+                        {
+                            const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
+                            if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)!=
+                                    QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
+                                name=QString::fromStdString(QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name).name);
+                        }
+                        if(reputationRewards.point<0)
+                            rewards_less_reputation.push_back(name);
+                        else if(reputationRewards.point>0)
+                            rewards_more_reputation.push_back(name);
+                        index++;
                     }
-                    if(reputationRewards.point<0)
-                        rewards_less_reputation.push_back(name);
-                    else if(reputationRewards.point>0)
-                        rewards_more_reputation.push_back(name);
-                    index++;
+                }
+                if(!rewards_less_reputation.empty() || !rewards_more_reputation.empty())
+                {
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
+                    if(!rewards_less_reputation.empty())
+                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
+                    if(!rewards_less_reputation.empty() && !rewards_more_reputation.empty())
+                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
+                    if(!rewards_more_reputation.empty())
+                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
                 }
             }
-            if(!rewards_less_reputation.empty() || !rewards_more_reputation.empty())
+        }
+        if(Ultimate::ultimate.isUltimate())
+            if(plant.fruits_seconds>0)
             {
-                ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
-                if(!rewards_less_reputation.empty())
-                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
-                if(!rewards_less_reputation.empty() && !rewards_more_reputation.empty())
-                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
-                if(!rewards_more_reputation.empty())
-                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
+                double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+                double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+                if(CommonDatapack::commonDatapack.items.item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.items.item.cend())
+                    ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
+                else
+                    ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
             }
-            #endif
-        }
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        if(plant.fruits_seconds>0)
-        {
-            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
-            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-            if(CommonDatapack::commonDatapack.items.item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.items.item.cend())
-                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
-            else
-                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
-        }
-        #endif
     }
     else
     {
@@ -392,14 +392,13 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantFruitImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
         ui->labelPlantRequirementsAndRewards->setText(QString());
-        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-        if(plant.fruits_seconds>0)
-        {
-            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
-            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-            ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
-        }
-        #endif
+        if(Ultimate::ultimate.isUltimate())
+            if(plant.fruits_seconds>0)
+            {
+                double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+                double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+            }
     }
 
     ui->labelPlantedImage->setPixmap(contentExtra.tileset->tileAt(0)->image().scaled(32,64));

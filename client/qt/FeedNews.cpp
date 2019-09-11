@@ -38,9 +38,9 @@ void FeedNews::downloadFile()
     #ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
     if(Ultimate::ultimate.isUltimate())
-        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
     else
-        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
     #endif
