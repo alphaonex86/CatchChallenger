@@ -1,9 +1,9 @@
 #include <QApplication>
-#include "../qt/LanguagesSelect.h"
-#include "../qt/ScreenTransition.h"
-#include "../qt/LocalListener.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "mainwindow.h"
+#include "qt/LanguagesSelect.h"
+#include "qt/ScreenTransition.h"
+#include "qt/LocalListener.h"
+#include "../general/base/FacilityLibGeneral.h"
+//#include "mainwindow.h"
 #include <iostream>
 #include <QFontDatabase>
 #include <QHBoxLayout>
@@ -44,14 +44,15 @@ int main(int argc, char *argv[])
     //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
 
     LanguagesSelect::languagesSelect=new LanguagesSelect();
-    MainWindow w;
+    /*MainWindow w;
     if(w.toQuit)
         return 523;
-    w.show();
+    w.show();*/
 
     ScreenTransition s;
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
     s.setMinimumSize(QSize(320,240));
+    s.showMaximized();
     QIcon icon;
     icon.addFile(":/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
