@@ -17,6 +17,13 @@ namespace Ui {
 class Multi;
 }
 
+class SelectedServer
+{
+public:
+    QString unique_code;
+    bool isCustom;
+};
+
 class Multi : public QWidget
 {
     Q_OBJECT
@@ -69,12 +76,6 @@ private:
 
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
-    class SelectedServer
-    {
-    public:
-        QString unique_code;
-        bool isCustom;
-    };
     SelectedServer selectedServer;//no selected if unique_code empty
     AddOrEditServer *addServer;
 
