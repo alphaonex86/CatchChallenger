@@ -18,6 +18,7 @@
 #include "../../general/base/Version.h"
 #include "PlatformMacro.h"
 #include <QNetworkRequest>
+#include <QDir>
 
 Multi::Multi(QWidget *parent) :
     QWidget(parent),
@@ -31,9 +32,10 @@ Multi::Multi(QWidget *parent) :
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
-    selectedServer=NULL;
     downloadFile();
-    selectedServer=-1;
+    selectedServer.unique_code.clear();
+    selectedServer.isCustom=false;
+    displayServerList();
 }
 
 Multi::~Multi()
@@ -43,12 +45,13 @@ Multi::~Multi()
 
 void Multi::displayServerList()
 {
-    QString unique_code;
-    if(serverConnexion.contains(selectedServer))
-    {
-        ConnexionInfo * connexionInfo=serverConnexion.value(selectedServer);
-        unique_code=connexionInfo->unique_code;
+    //clean the previous content
+    QHash<ListEntryEnvolued *,ConnexionInfo *>::const_iterator i = serverConnexion.constBegin();
+    while (i != serverConnexion.constEnd()) {
+        delete i.key();
+        ++i;
     }
+
     unsigned int index=0;
     serverConnexion.clear();
     if(mergedConnexionInfoList.empty())
@@ -59,12 +62,12 @@ void Multi::displayServerList()
     #endif
     index=0;
     std::cout << "display mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
-    if(selectedServer==NULL)
+    if(selectedServer.unique_code.isEmpty())
     {
         ui->server_remove->setEnabled(false);
         ui->server_edit->setEnabled(false);
     }
-    ui->server_select->setEnabled(selectedServer!=NULL);
+    ui->server_select->setEnabled(!selectedServer.unique_code.isEmpty());
     while(index<mergedConnexionInfoList.size())
     {
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -101,8 +104,6 @@ void Multi::displayServerList()
         if(connexionInfo.connexionCounter>0)
             lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((uint64_t)connexionInfo.lastConnexion*1000).toString());
         QString custom;
-        if(unique_code==connexionInfo.unique_code)
-            selectedServer=newEntry;
         QString stringPort;
         #ifndef NOTCPSOCKET
         if(!connexionInfo.host.isEmpty())
@@ -138,7 +139,7 @@ void Multi::displayServerList()
         }
         newEntry->setStyleSheet(QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}"));
 
-        if(newEntry==selectedServer)
+        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
         {
             newEntry->setStyleSheet(QStringLiteral("QLabel{border:1px solid #6b6;background-color:rgb(100,180,100,120);border-radius:10px;}QLabel::hover{border:1px solid #494;background-color:rgb(70,150,70,120);border-radius:10px;}"));
             ui->server_remove->setEnabled(connexionInfo.isCustom);
@@ -162,10 +163,9 @@ void Multi::serverListEntryEnvoluedClicked()
         return;
     if(serverConnexion.find(selectedSavegame)==serverConnexion.cend())
         return;
-    ConnexionInfo *connexionInfo=serverConnexion.at(selectedSavegame);
-    unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
-    this->selectedServer=selectedSavegame;
+    const ConnexionInfo * const connexionInfo=serverConnexion.value(selectedSavegame);
+    this->selectedServer.isCustom=connexionInfo->isCustom;
+    this->selectedServer.unique_code=connexionInfo->unique_code;
     displayServerList();
 }
 
@@ -244,25 +244,26 @@ void Multi::server_add_finished()
 
 void Multi::on_server_remove_clicked()
 {
-    if(selectedServer==NULL)
+    if(selectedServer.unique_code.isEmpty())
         return;
     unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {
-        ConnexionInfo * connexionInfo=serverConnexion[selectedServer];
-        if(connexionInfo==&mergedConnexionInfoList.at(index))
+        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
+        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
         {
-            if(!connexionInfo->isCustom)
+            if(!connexionInfo.isCustom)
                 return;
             mergedConnexionInfoList.erase(mergedConnexionInfoList.begin()+index);
             saveConnexionInfoList();
-            serverConnexion.remove(selectedServer);
-            selectedServer=NULL;
+            selectedServer.unique_code.clear();
+            selectedServer.isCustom=false;
             displayServerList();
-            break;
+            return;
         }
         index++;
     }
+    std::cerr << "remove server not found" << std::endl;
 }
 
 void Multi::httpFinished()
@@ -285,7 +286,9 @@ void Multi::httpFinished()
     std::cout << "Got new server list" << std::endl;
     ui->warning->setVisible(false);
     QByteArray content=reply->readAll();
-    QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
+    QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QDir().mkpath(wPath);
+    QFile cache(wPath+QStringLiteral("/server_list.xml"));
     if(cache.open(QIODevice::ReadWrite))
     {
         cache.write(content);
@@ -312,6 +315,8 @@ void Multi::httpFinished()
         }
         cache.close();
     }
+    else
+        std::cerr << "Can't write server list cache" << std::endl;
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
@@ -359,9 +364,9 @@ void Multi::serverListEntryEnvoluedDoubleClicked()
 
 std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList()
 {
-    if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
-        if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).isFile())
-            return loadXmlConnexionInfoList(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
+    QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    if(QFileInfo(wPath+"/server_list.xml").isFile())
+        return loadXmlConnexionInfoList(wPath+"/server_list.xml");
     return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
 }
 
@@ -397,11 +402,13 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
     bool ok;
     //load the content
     const tinyxml2::XMLElement *server = root->FirstChildElement("server");
+    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
     while(server!=NULL)
     {
         if(server->Attribute("unique_code")!=NULL)
         {
             ConnexionInfo connexionInfo;
+            connexionInfo.isCustom=false;
             connexionInfo.unique_code=server->Attribute("unique_code");
 
             if(server->Attribute("host")!=NULL)
@@ -427,7 +434,6 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
             if(server->Attribute("ws")!=NULL)
                 connexionInfo.ws=server->Attribute("ws");
             const tinyxml2::XMLElement *lang;
-            const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
             bool found=false;
             if(!language.empty() && language!="en")
             {
@@ -512,8 +518,6 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
                 connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
             //name
-            if(settings.contains(QStringLiteral("name")))
-                connexionInfo.name=settings.value("name").toString();
             settings.endGroup();
             if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
                 connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
@@ -701,6 +705,7 @@ void Multi::downloadFile()
     #ifndef __EMSCRIPTEN__
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     #endif
+
     reply = qnam.get(networkRequest);
     if(!connect(reply, &QNetworkReply::finished, this, &Multi::httpFinished))
         abort();
