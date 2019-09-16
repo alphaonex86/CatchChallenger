@@ -22,10 +22,12 @@
 
 Multi::Multi(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::Multi)
+    ui(new Ui::Multi),
+    addServer(nullptr),
+    reply(nullptr)
 {
     ui->setupUi(this);
-    connect(ui->back,&QPushButton::clicked,this,&Multi::backMain);
+    srand(time(0));
 
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
@@ -36,6 +38,17 @@ Multi::Multi(QWidget *parent) :
     selectedServer.unique_code.clear();
     selectedServer.isCustom=false;
     displayServerList();
+
+    if(!connect(ui->server_add,&QPushButton::clicked,this,&Multi::server_add_clicked))
+        abort();
+    if(!connect(ui->server_edit,&QPushButton::clicked,this,&Multi::server_add_clicked))
+        abort();
+    if(!connect(ui->server_remove,&QPushButton::clicked,this,&Multi::server_add_clicked))
+        abort();
+    if(!connect(ui->server_select,&QPushButton::clicked,this,&Multi::server_add_clicked))
+        abort();
+    if(!connect(ui->back,&QPushButton::clicked,this,&Multi::backMain))
+        abort();
 }
 
 Multi::~Multi()
@@ -169,7 +182,7 @@ void Multi::serverListEntryEnvoluedClicked()
     displayServerList();
 }
 
-void Multi::on_server_add_clicked()
+void Multi::server_add_clicked()
 {
     if(addServer!=nullptr)
         delete addServer;
@@ -178,35 +191,16 @@ void Multi::on_server_add_clicked()
         abort();
     if(!connect(addServer,&QDialog::rejected,this,&Multi::server_add_finished))
         abort();
-    addServer->show();
+    emit setAbove(addServer);
 }
 
 void Multi::server_add_finished()
 {
+    emit setAbove(nullptr);
     if(addServer==nullptr)
         return;
     if(!addServer->isOk())
         return;
-    if(addServer->type()==0)
-    {
-        if(!addServer->server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
-        {
-            QMessageBox::warning(this,tr("Error"),tr("The host seam don't be a valid hostname or ip"));
-            return;
-        }
-    }
-    else if(addServer->type()==1)
-    {
-        if(!addServer->server().startsWith("ws://") && !addServer->server().startsWith("wss://"))
-        {
-            QMessageBox::warning(this,tr("Error"),tr("The web socket url seam wrong, not start with ws:// or wss://"));
-            return;
-        }
-    }
-    else {
-        QMessageBox::warning(this,tr("Error"),tr("No TCP and websocket supported"));
-        return;
-    }
     #ifdef __EMSCRIPTEN__
     std::cerr << "AddOrEditServer returned" <<  std::endl;
     #endif
@@ -242,7 +236,7 @@ void Multi::server_add_finished()
     displayServerList();
 }
 
-void Multi::on_server_remove_clicked()
+void Multi::server_remove_clicked()
 {
     if(selectedServer.unique_code.isEmpty())
         return;
@@ -337,7 +331,21 @@ void Multi::saveConnexionInfoList()
             abort();
 
         if(connexionInfo.isCustom)
+        {
             settings.beginGroup(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
+            if(!connexionInfo.ws.isEmpty())
+            {
+                settings.setValue(QStringLiteral("ws"),connexionInfo.ws);
+                settings.remove("host");
+                settings.remove("port");
+            }
+            else {
+                settings.setValue(QStringLiteral("host"),connexionInfo.host);
+                settings.setValue(QStringLiteral("port"),connexionInfo.port);
+                settings.remove("ws");
+            }
+            settings.setValue(QStringLiteral("name"),connexionInfo.name);
+        }
         else
             settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo.unique_code));
         if(connexionInfo.connexionCounter>0)
@@ -348,7 +356,6 @@ void Multi::saveConnexionInfoList()
             settings.setValue(QStringLiteral("lastConnexion"),connexionInfo.lastConnexion);
         else
             settings.remove(QStringLiteral("lastConnexion"));
-        settings.setValue(QStringLiteral("name"),connexionInfo.name);
         settings.setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);
         settings.setValue(QStringLiteral("proxyPort"),connexionInfo.proxyPort);
         settings.endGroup();
@@ -563,116 +570,97 @@ bool Multi::ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
 std::vector<Multi::ConnexionInfo> Multi::loadConfigConnexionInfoList()
 {
     std::vector<ConnexionInfo> returnedVar;
-    QStringList connexionList;
-    QStringList nameList;
-    QStringList connexionCounterList;
-    QStringList lastConnexionList;
-    QStringList proxyList;
-    if(settings.contains(QStringLiteral("connexionList")))
-        connexionList=settings.value(QStringLiteral("connexionList")).toStringList();
-    if(settings.contains(QStringLiteral("proxyList")))
-        proxyList=settings.value(QStringLiteral("proxyList")).toStringList();
-    if(settings.contains(QStringLiteral("nameList")))
-        nameList=settings.value(QStringLiteral("nameList")).toStringList();
-    if(settings.contains(QStringLiteral("connexionCounterList")))
-        connexionCounterList=settings.value(QStringLiteral("connexionCounterList")).toStringList();
-    if(settings.contains(QStringLiteral("lastConnexionList")))
-        lastConnexionList=settings.value(QStringLiteral("lastConnexionList")).toStringList();
-    if(nameList.size()!=connexionList.size())
-        nameList.clear();
-    if(connexionCounterList.size()!=connexionList.size())
-        connexionCounterList.clear();
-    if(proxyList.size()!=connexionList.size())
-        proxyList.clear();
-    if(lastConnexionList.size()!=connexionList.size())
-        lastConnexionList.clear();
-    while(nameList.size()<connexionList.size())
-        nameList << QString();
-    while(proxyList.size()<connexionList.size())
-        proxyList << QString();
-    while(connexionCounterList.size()<connexionList.size())
-        connexionCounterList << QString();
-    while(lastConnexionList.size()<connexionList.size())
-        lastConnexionList << QString();
+    QStringList groups=settings.childGroups();
     int index=0;
-    const QRegularExpression regexConnexion(QStringLiteral("^[a-zA-Z0-9\\.\\-_:]+:[0-9]{1,5}$"));
-    const QRegularExpression hostRemove(QStringLiteral(":[0-9]{1,5}$"));
-    const QRegularExpression postRemove("^.*:");
-    while(index<connexionList.size())
+    while(index<groups.size())
     {
-        QString connexion=connexionList.at(index);
-        QString name=nameList.at(index);
-        QString connexionCounter=connexionCounterList.at(index);
-        QString lastConnexion=lastConnexionList.at(index);
-        QString proxy=proxyList.at(index);
-        if(connexion.contains(regexConnexion) || connexion.startsWith("ws://") || connexion.startsWith("wss://"))
+        const QString &groupName=groups.at(index);
+        settings.beginGroup(groupName);
+        if((settings.contains("host") && settings.contains("port")) || settings.contains("ws"))
         {
+            QString ws="";
+            if(settings.contains("ws"))
+                ws=settings.value("ws").toString();
+            QString Shost="";
+            if(settings.contains("host"))
+                Shost=settings.value("host").toString();
+            QString port_string="";
+            if(settings.contains("port"))
+                port_string=settings.value("port").toString();
+
+            QString name="";
+            if(settings.contains("name"))
+                name=settings.value("name").toString();
+            QString connexionCounter="0";
+            if(settings.contains("connexionCounter"))
+                connexionCounter=settings.value("connexionCounter").toString();
+            QString lastConnexion="0";
+            if(settings.contains("lastConnexion"))
+                lastConnexion=settings.value("lastConnexion").toString();
+
+            QString proxyHost="";
+            if(settings.contains("proxyHost"))
+                proxyHost=settings.value("proxyHost").toString();
+            QString proxyPort="0";
+            if(settings.contains("proxyPort"))
+                proxyPort=settings.value("proxyPort").toString();
+
             bool ok=true;
-            #ifndef NOTCPSOCKET
-            QString host=connexion;
-            uint16_t port=0;
-            #endif
-            if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
-            {}
+            ConnexionInfo connexionInfo;
+            if(!ws.isEmpty())
+                connexionInfo.ws=ws;
             else
             {
                 #ifndef NOTCPSOCKET
-                host=connexion;
-                host.remove(hostRemove);
-                QString port_string=connexion;
-                port_string.remove(postRemove);
-                port=static_cast<uint16_t>(port_string.toInt(&ok));
+                uint16_t port=static_cast<uint16_t>(port_string.toInt(&ok));
                 if(!ok)
                     qDebug() << "dropped connexion, port wrong: " << port_string;
+                else
+                {
+                    connexionInfo.host=Shost;
+                    connexionInfo.port=port;
+                }
                 #else
                 ok=false;
                 #endif
             }
+            if(groupName.startsWith("Custom-"))
+                connexionInfo.isCustom=true;
+            else if(groupName.startsWith("Xml-"))
+                connexionInfo.isCustom=false;
+            else
+                ok=false;
             if(ok)
             {
-                ConnexionInfo connexionInfo;
-                if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
-                {
-                    #ifndef NOWEBSOCKET
-                    connexionInfo.ws=connexion;
-                    #endif
-                }
-                else
-                {
-                    #ifndef NOTCPSOCKET
-                    connexionInfo.host=host;
-                    connexionInfo.port=port;
-                    #endif
-                }
+                if(groupName.startsWith("Custom-"))
+                    connexionInfo.unique_code=groupName.mid(7);
+                else //Xml-
+                    connexionInfo.unique_code=groupName.mid(7);
                 connexionInfo.name=name;
                 connexionInfo.connexionCounter=connexionCounter.toUInt(&ok);
                 if(!ok)
                 {
-                    qDebug() << "ignored bug for connexion : " << connexion << " connexionCounter";
+                    qDebug() << "ignored bug for connexion : connexionCounter";
                     connexionInfo.connexionCounter=0;
                 }
                 connexionInfo.lastConnexion=lastConnexion.toUInt(&ok);
                 if(!ok)
                 {
-                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion";
+                    qDebug() << "ignored bug for connexion : lastConnexion";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                 }
                 if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
                 {
-                    qDebug() << "ignored bug for connexion : " << connexion << " lastConnexion<time()";
+                    qDebug() << "ignored bug for connexion : lastConnexion<time()";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                 }
-                if(proxy.contains(regexConnexion))
+                if(!proxyHost.isEmpty())
                 {
-                    QString host=proxy;
-                    host.remove(hostRemove);
-                    QString proxy_port_string=proxy;
-                    proxy_port_string.remove(postRemove);
                     bool ok;
-                    uint16_t proxy_port=static_cast<uint16_t>(proxy_port_string.toInt(&ok));
+                    uint16_t proxy_port=static_cast<uint16_t>(proxyPort.toInt(&ok));
                     if(ok)
                     {
-                        connexionInfo.proxyHost=host;
+                        connexionInfo.proxyHost=proxyHost;
                         connexionInfo.proxyPort=proxy_port;
                     }
                 }
@@ -680,8 +668,9 @@ std::vector<Multi::ConnexionInfo> Multi::loadConfigConnexionInfoList()
             }
         }
         else
-            qDebug() << "dropped connexion, info seam wrong: " << connexion;
+            qDebug() << "dropped connexion, info seam wrong";
         index++;
+        settings.endGroup();
     }
     return returnedVar;
 }

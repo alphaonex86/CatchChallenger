@@ -9,6 +9,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QSettings>
+#include <QVBoxLayout>
+#include "CCWidget.h"
 
 class ListEntryEnvolued;
 class AddOrEditServer;
@@ -59,10 +61,10 @@ public:
     ~Multi();
     void displayServerList();
     void serverListEntryEnvoluedClicked();
-    void on_server_add_clicked();
+    void server_add_clicked();
     void server_add_finished();
-    void on_server_select_clicked();
-    void on_server_remove_clicked();
+    void server_select_clicked();
+    void server_remove_clicked();
     void saveConnexionInfoList();
     void serverListEntryEnvoluedDoubleClicked();
     std::vector<ConnexionInfo> loadXmlConnexionInfoList();

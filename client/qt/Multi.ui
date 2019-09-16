@@ -138,7 +138,7 @@ color: rgb(0, 0, 0);</string>
          </spacer>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_3">
+         <widget class="QPushButton" name="server_add">
           <property name="text">
            <string>Add</string>
           </property>
