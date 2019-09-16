@@ -1,8 +1,6 @@
 #include "AddServer.h"
 #include "ui_AddServer.h"
 
-#include <QMessageBox>
-
 #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
 #error no web and tcp socket selected
 #endif
@@ -20,6 +18,7 @@ AddOrEditServer::AddOrEditServer(QWidget *parent) :
             ui->server->setPlaceholderText("ws://www.server.com:9999/");
         #endif
     #endif
+    ui->warning->setVisible(false);
 }
 
 AddOrEditServer::~AddOrEditServer()
@@ -38,6 +37,7 @@ return ui->type->currentIndex();
         #if defined(NOWEBSOCKET)
         return 0;
         #else
+        #error add server but no tcp or web socket defined
         return -1;
         #endif
     #endif
@@ -70,8 +70,27 @@ void AddOrEditServer::on_ok_clicked()
 {
     if(ui->name->text()==QStringLiteral("Internal") || ui->name->text()==QStringLiteral("internal"))
     {
-        QMessageBox::warning(this,tr("Error"),tr("The name can't be \"internal\""));
+        ui->warning->setText(tr("The name can't be \"internal\""));
+        ui->warning->setVisible(true);
         return;
+    }
+    if(type()==0)
+    {
+        if(!server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
+        {
+            ui->warning->setText(tr("The host seam don't be a valid hostname or ip"));
+            ui->warning->setVisible(true);
+            return;
+        }
+    }
+    else if(type()==1)
+    {
+        if(!server().startsWith("ws://") && !server().startsWith("wss://"))
+        {
+            ui->warning->setText(tr("The web socket url seam wrong, not start with ws:// or wss://"));
+            ui->warning->setVisible(true);
+            return;
+        }
     }
     ok=true;
     accept();
@@ -147,4 +166,10 @@ void AddOrEditServer::on_type_currentIndexChanged(int index)
     default:
         return;
     }
+}
+
+void AddOrEditServer::on_cancel_clicked()
+{
+    ok=false;
+    reject();
 }
