@@ -80,7 +80,8 @@ SOURCES += \
     ../base/TinyXMLSettings.cpp \
     ../base/DatabaseFunction.cpp \
     ../base/StringWithReplacement.cpp \
-    TimerDetectTimeout.cpp
+    TimerDetectTimeout.cpp \
+    ../../general/base/Version.cpp
 
 HEADERS += \
     EpollClientLoginSlave.h \

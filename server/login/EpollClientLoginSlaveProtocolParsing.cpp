@@ -527,5 +527,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
 
 void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString)
 {
-    errorParsingLayer(errorString);
+    /*not parseNetworkReadError to do soft error, else crash on removeFromQueryReceived();
+     * used to prevent abort in case of: ERROR, dns resolution failed on: cc-server-bot.portable-datacenter.first-world.info, h_errno: 2 */
+    messageParsingLayer(errorString);
 }

@@ -704,7 +704,8 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
         //send the network reply
-        removeFromQueryReceived(query_id);
+        if(haveInputQuery(query_id))
+            removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         posOutput+=1;
@@ -723,7 +724,8 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
         //send the network reply
-        removeFromQueryReceived(query_id);
+        if(haveInputQuery(query_id))
+            removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
         posOutput+=1;

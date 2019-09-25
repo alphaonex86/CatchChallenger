@@ -80,7 +80,8 @@ SOURCES += \
     ../base/BaseServerMasterSendDatapack.cpp \
     ../base/DatabaseFunction.cpp \
     ../base/SqlFunction.cpp \
-    ../base/TinyXMLSettings.cpp
+    ../base/TinyXMLSettings.cpp \
+    ../../general/base/Version.cpp
 
 HEADERS += \
     EpollClientLoginMaster.h \

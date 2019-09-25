@@ -849,7 +849,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 /*static_cast<EpollClientLoginSlave * const>(client)
                 ->parseNetworkReadError("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");*/
                 //message done by LinkToGameServer::tryConnect()
-                static_cast<EpollClientLoginSlave * const>(client)->disconnectClient();
+                static_cast<EpollClientLoginSlave *>(client)->disconnectClient();
             }
             selectedServer.host.clear();
         }

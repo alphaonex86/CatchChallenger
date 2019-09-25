@@ -741,4 +741,9 @@ void ProtocolParsingInputOutput::storeInputQuery(const uint8_t &packetCode,const
     //register the size of the reply to send
     inputQueryNumberToPacketCode[queryNumber]=packetCode;
 }
+
+bool ProtocolParsingInputOutput::haveInputQuery(const uint8_t &queryNumber) const
+{
+    return inputQueryNumberToPacketCode[queryNumber]!=0x00;
+}
 #endif
