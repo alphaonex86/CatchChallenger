@@ -217,6 +217,7 @@ public:
     uint64_t getRXSize() const;
     #endif
     void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    bool haveInputQuery(const uint8_t &queryNumber) const;
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
 
     virtual void closeSocket() = 0;

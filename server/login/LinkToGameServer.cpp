@@ -68,7 +68,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
     server=gethostbyname(host);
     if(server==NULL)
     {
-        std::cerr << "ERROR, dns resolution failed on: " << host << ", h_errno: " << std::to_string(h_errno) << " (abort)" << std::endl;
+        std::cerr << "ERROR, dns resolution failed on: " << host << ", h_errno: " << std::to_string(h_errno) << std::endl;
         return -1;
     }
     sockaddr_in serv_addr;

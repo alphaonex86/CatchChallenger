@@ -76,7 +76,7 @@ void DatapackDownloaderBase::haveTheDatapack()
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
-        LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
+        LinkToGameServer * const clientLink=static_cast<LinkToGameServer *>(clientInSuspend.at(index));
         if(clientLink!=NULL)
             clientLink->sendDifferedA8Reply();
         index++;
@@ -104,7 +104,7 @@ void DatapackDownloaderBase::datapackDownloadError()
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
-        LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
+        LinkToGameServer * const clientLink=static_cast<LinkToGameServer *>(clientInSuspend.at(index));
         if(clientLink!=NULL)
             clientLink->disconnectClient();
         index++;

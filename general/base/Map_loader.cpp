@@ -112,7 +112,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 
         if (ret != Z_OK && ret != Z_STREAM_END)
         {
-            unsigned char * const val=reinterpret_cast<unsigned char * const>(output);
+            const unsigned char * const val=reinterpret_cast<unsigned char *>(output);
             if(val>strm.next_out)
             {
                 logZlibError(Z_STREAM_ERROR);
