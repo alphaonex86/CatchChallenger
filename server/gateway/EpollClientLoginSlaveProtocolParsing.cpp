@@ -247,6 +247,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                             parseNetworkReadError("linkToGameServer->sub.empty()");
                             return false;
                         }
+                    [[gnu::fallthrough]];
                     case DatapackStatus::Main:
                         if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()>1)
                         {

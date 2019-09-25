@@ -94,6 +94,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
                 case Direction_look_at_bottom:
                 case Direction_look_at_left:
                 direction=lookToMove(direction);
+                [[gnu::fallthrough]];
                 case Direction_move_at_top:
                 case Direction_move_at_right:
                 case Direction_move_at_bottom:

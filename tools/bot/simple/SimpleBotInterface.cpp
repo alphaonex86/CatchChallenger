@@ -81,5 +81,5 @@ QString SimpleBotInterface::name()
 
 QString SimpleBotInterface::version()
 {
-    return QStringLiteral("2.0.0.1 for CatchChallenger " CATCHCHALLENGER_VERSION);
+    return QStringLiteral("for CatchChallenger ")+QString::fromStdString(CatchChallenger::Version::str);
 }
