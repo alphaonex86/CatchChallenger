@@ -703,6 +703,10 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     //check if the server exists
     if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
+        //work around, previous disconnect do unable to send clean reply
+        disconnectClient();
+        return;
+
         //send the network reply
         if(haveInputQuery(query_id))
             removeFromQueryReceived(query_id);
@@ -723,6 +727,10 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     //send to master to know if the character is not already locked
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
+        //work around, previous disconnect do unable to send clean reply
+        disconnectClient();
+        return;
+
         //send the network reply
         if(haveInputQuery(query_id))
             removeFromQueryReceived(query_id);

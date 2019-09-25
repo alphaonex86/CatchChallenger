@@ -3,7 +3,6 @@
 
 #include <string>
 
-#define CATCHCHALLENGER_VERSION_PRIVATE "3.0.0.0"
 namespace CatchChallenger {
 class Version
 {
