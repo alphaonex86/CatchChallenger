@@ -50,7 +50,7 @@ void DatapackDownloaderMainSub::datapackDownloadError()
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
-        LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
+        LinkToGameServer * const clientLink=static_cast<LinkToGameServer *>(clientInSuspend.at(index));
         if(clientLink!=NULL)
             clientLink->disconnectClient();
         index++;
@@ -244,7 +244,7 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     unsigned int index=0;
     while(index<clientInSuspend.size())
     {
-        LinkToGameServer * const clientLink=static_cast<LinkToGameServer * const>(clientInSuspend.at(index));
+        LinkToGameServer * const clientLink=static_cast<LinkToGameServer *>(clientInSuspend.at(index));
         if(clientLink!=NULL)
             clientLink->sendDiffered93OrACReply();
         index++;
