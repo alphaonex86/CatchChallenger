@@ -104,7 +104,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
 
     memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
-    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_socktype = SOCK_STREAM; /* Datagram socket */
     hints.ai_flags = 0;
     hints.ai_protocol = 0;          /* Any protocol */
 
