@@ -14,6 +14,7 @@
 
 class ListEntryEnvolued;
 class AddOrEditServer;
+class Login;
 
 namespace Ui {
 class Multi;
@@ -63,7 +64,10 @@ public:
     void serverListEntryEnvoluedClicked();
     void server_add_clicked();
     void server_add_finished();
+    void server_edit_clicked();
+    void server_edit_finished();
     void server_select_clicked();
+    void server_select_finished();
     void server_remove_clicked();
     void saveConnexionInfoList();
     void serverListEntryEnvoluedDoubleClicked();
@@ -80,6 +84,7 @@ private:
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
     SelectedServer selectedServer;//no selected if unique_code empty
     AddOrEditServer *addServer;
+    Login *login;
 
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
@@ -87,6 +92,7 @@ private:
 signals:
     void backMain();
     void setAbove(QWidget *widget);//first plan popup
+    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
 };
 
 #endif // MULTI_H
