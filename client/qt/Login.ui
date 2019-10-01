@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
  <class>Login</class>
- <widget class="QWidget" name="Login">
+ <widget class="QDialog" name="Login">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -44,6 +44,21 @@
      </item>
      <item>
       <widget class="QWidget" name="widget" native="true">
+       <property name="minimumSize">
+        <size>
+         <width>493</width>
+         <height>271</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>493</width>
+         <height>271</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">#widget{background-image: url(:/CC/images/interface/message.png) 0 0 0 0 stretch stretch;}</string>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -95,7 +110,11 @@
            </spacer>
           </item>
           <item>
-           <widget class="QLineEdit" name="lineEditPass"/>
+           <widget class="QLineEdit" name="lineEditPass">
+            <property name="echoMode">
+             <enum>QLineEdit::Password</enum>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QToolButton" name="toolButton">
@@ -175,6 +194,19 @@
          </layout>
         </item>
         <item>
+         <widget class="QLabel" name="warning">
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 163);
+border: 1px solid rgb(255, 221, 50);
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
+          </property>
+          <property name="text">
+           <string notr="true">Warning</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
            <spacer name="horizontalSpacer_6">
@@ -210,7 +242,7 @@
            </spacer>
           </item>
           <item>
-           <widget class="QPushButton" name="login_cancel">
+           <widget class="QPushButton" name="cancel">
             <property name="text">
              <string>Cancel</string>
             </property>

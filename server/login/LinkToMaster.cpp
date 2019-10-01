@@ -35,8 +35,8 @@ LinkToMaster::LinkToMaster(
             PacketModeTransmission_Client
             #endif
             ),
-        EpollClient(infd),
-        stat(Stat::Connected)
+        stat(Stat::Connected),
+        EpollClient(infd)
 {
     flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
@@ -64,7 +64,6 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
     }
 
     //don't cache this
-    sockaddr_in serv_addr;
     {
         const size_t &size=strlen(host)+1;
         if(size>255)
@@ -73,54 +72,79 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             memcpy(LinkToMaster::host,host,size);
         LinkToMaster::port=port;
     }
+    LinkToMaster::linkToMasterSocketFd=-1;
 
-    LinkToMaster::linkToMasterSocketFd=socket(AF_INET, SOCK_STREAM, 0);
-    if(LinkToMaster::linkToMasterSocketFd<0)
+    const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
+    if(socketFd<0)
     {
         std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
         abort();
     }
-    struct hostent *server=gethostbyname(host);
-    if(server==NULL)
-    {
-        std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
-        abort();
-    }
-    //resolv the dns if needed
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(port);
+    //resolv again the dns
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+    int sfd, s;
 
-    std::cout << "Try connect to master " << host << ":" << port << " ..." << std::endl;
-    int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-    if(connStatusType<0)
-    {
-        unsigned int index=0;
-        while(index<considerDownAfterNumberOfTry && connStatusType<0)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
-            auto start = std::chrono::high_resolution_clock::now();
-            connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end-start;
-            index++;
-            if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
-            {
-                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-            }
-        }
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;          /* Any protocol */
+
+    s = getaddrinfo(host,std::to_string(port).c_str(), &hints, &result);
+    if (s != 0) {
+        std::cerr << "ERROR connecting to master server server on: " << host << ":" << port << ": " << gai_strerror(s) << std::endl;
+        return -1;
+    }
+
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sfd = socket(rp->ai_family, rp->ai_socktype,
+                     rp->ai_protocol);
+        if (sfd == -1)
+            continue;
+
+        std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ..." << std::endl;
+        int connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
+        std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 0" << std::endl;
         if(connStatusType<0)
         {
-            memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
-            std::cerr << "ERROR connecting to master server (abort): " << host << ":" << port << " ..." << std::endl;
-            abort();
+            std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 1" << std::endl;
+            unsigned int index=0;
+            while(index<considerDownAfterNumberOfTry && connStatusType<0)
+            {
+                std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
+                auto start = std::chrono::high_resolution_clock::now();
+                connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::milli> elapsed = end-start;
+                index++;
+                if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
+                {
+                    const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                }
+                std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 3" << std::endl;
+            }
+            std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 4" << std::endl;
         }
+        if(connStatusType>=0)
+        {
+            std::cout << "Connected to master server" << std::endl;
+            LinkToMaster::linkToMasterSocketFd=sfd;
+            haveTheFirstSslHeader=false;
+            freeaddrinfo(result);
+            return sfd;
+        }
+
+        ::close(sfd);
     }
-    std::cout << "Connected to master " << host << ":" << port << std::endl;
+    if (rp == NULL)               /* No address succeeded */
+        std::cerr << "ERROR No address succeeded, connecting to master server server on: " << host << ":" << port << std::endl;
+    else
+        std::cerr << "ERROR connecting to master server server on: " << host << ":" << port << std::endl;
+    freeaddrinfo(result);           /* No longer needed */
+
     haveTheFirstSslHeader=false;
 
     return LinkToMaster::linkToMasterSocketFd;
@@ -187,22 +211,8 @@ void LinkToMaster::connectInternal()
     }
     EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
-    struct hostent *server=gethostbyname(host);
-    if(server==NULL)
-    {
-        std::cerr << "ERROR, no such host to master server (abort)" << std::endl;
-        abort();
-    }
-
     //resolv the dns if needed
-    sockaddr_in serv_addr;
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(port);
-    int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+    int connStatusType=tryConnect(host,port,1,1);
     if(connStatusType<0)
     {
         stat=Stat::Unconnected;
@@ -276,9 +286,9 @@ bool LinkToMaster::disconnectClient()
             messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
             if(client->stat!=EpollClientLoginSlave::GameServerConnected)
             {
-                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                 ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                 ->closeSocket();
             }
         }
@@ -497,9 +507,9 @@ void LinkToMaster::detectTimeout()
                 if(client->stat!=EpollClientLoginSlave::GameServerConnected)
                 {
                     messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
-                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->closeSocket();
                 }
                 else

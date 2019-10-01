@@ -111,6 +111,11 @@ public:
     void breakNeedMoreData();
 
     void selectCharacter_ReturnToken(const uint8_t &query_id,const char * const token);
+    /*errorCode: 02 (Character not found)
+    03 (Character already connected/online or too recently disconnected)
+    04 (Server internal problem)
+    05 (Server not found)
+    08 (Too recently disconnected)*/
     void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
     void addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId);
     void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
@@ -118,6 +123,7 @@ public:
     void removeCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &errorString=std::string());
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     void parseNetworkReadError(const std::string &errorString);
+    void parseNetworkReadMessage(const std::string &errorString);
 
     LinkToGameServer *linkToGameServer;
     uint8_t charactersGroupIndex;
