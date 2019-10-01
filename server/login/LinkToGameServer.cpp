@@ -56,7 +56,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         abort();
     }
 
-    struct hostent *server;
+    //gethostbyname( deprecated
 
     const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(socketFd<0)
@@ -65,48 +65,68 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         abort();
     }
     //resolv again the dns
-    server=gethostbyname(host);
-    if(server==NULL)
-    {
-        std::cerr << "ERROR, dns resolution failed on: " << host << ", h_errno: " << std::to_string(h_errno) << std::endl;
+    struct addrinfo hints;
+    struct addrinfo *result, *rp;
+    int sfd, s;
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+    hints.ai_flags = 0;
+    hints.ai_protocol = 0;          /* Any protocol */
+
+    s = getaddrinfo(host,std::to_string(port).c_str(), &hints, &result);
+    if (s != 0) {
+        std::cerr << "ERROR connecting to game server server on: " << host << ":" << port << ": " << gai_strerror(s) << std::endl;
         return -1;
     }
-    sockaddr_in serv_addr;
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-         (char *)&serv_addr.sin_addr.s_addr,
-         server->h_length);
-    serv_addr.sin_port = htons(port);
 
-    std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ..." << std::endl;
-    int connStatusType=::connect(socketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-    if(connStatusType<0)
-    {
-        unsigned int index=0;
-        while(index<considerDownAfterNumberOfTry && connStatusType<0)
-        {
-            std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
-            auto start = std::chrono::high_resolution_clock::now();
-            connStatusType=::connect(socketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> elapsed = end-start;
-            index++;
-            if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
-            {
-                const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
-                std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-            }
-        }
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sfd = socket(rp->ai_family, rp->ai_socktype,
+                     rp->ai_protocol);
+        if (sfd == -1)
+            continue;
+
+        std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ..." << std::endl;
+        int connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
+        std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ... 0" << std::endl;
         if(connStatusType<0)
         {
-            std::cerr << "ERROR connecting to game server server (abort) on: " << host << ":" << port << std::endl;
-            return -1;
+            std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ... 1" << std::endl;
+            unsigned int index=0;
+            while(index<considerDownAfterNumberOfTry && connStatusType<0)
+            {
+                std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
+                auto start = std::chrono::high_resolution_clock::now();
+                connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
+                auto end = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<double, std::milli> elapsed = end-start;
+                index++;
+                if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
+                {
+                    const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+                }
+                std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ... 3" << std::endl;
+            }
+            std::cout << "Try connect to game server host: " << host << ", port: " << std::to_string(port) << " ... 4" << std::endl;
         }
-    }
-    std::cout << "Connected to game server" << std::endl;
+        if(connStatusType>=0)
+        {
+            std::cout << "Connected to game server" << std::endl;
+            freeaddrinfo(result);
+            return sfd;
+        }
 
-    return socketFd;
+        ::close(sfd);
+    }
+    if (rp == NULL)               /* No address succeeded */
+        std::cerr << "ERROR No address succeeded, connecting to game server server on: " << host << ":" << port << std::endl;
+    else
+        std::cerr << "ERROR connecting to game server server on: " << host << ":" << port << std::endl;
+    freeaddrinfo(result);           /* No longer needed */
+    return -1;
 }
 
 void LinkToGameServer::setConnexionSettings()

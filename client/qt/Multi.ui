@@ -146,6 +146,12 @@ color: rgb(0, 0, 0);</string>
         </item>
         <item>
          <widget class="QPushButton" name="server_edit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="toolTip">
+           <string>Todo</string>
+          </property>
           <property name="text">
            <string>Edit</string>
           </property>

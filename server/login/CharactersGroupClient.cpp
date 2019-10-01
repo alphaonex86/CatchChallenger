@@ -478,7 +478,7 @@ void CharactersGroupForLogin::addCharacterStep1_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep1_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
+    addCharacterStep1_return(static_cast<EpollClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 
@@ -541,7 +541,7 @@ void CharactersGroupForLogin::addCharacterStep2_object()
 {
     AddCharacterParam addCharacterParam=addCharacterParamList.front();
     addCharacterParamList.erase(addCharacterParamList.begin());
-    addCharacterStep2_return(static_cast<EpollClientLoginSlave * const>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
+    addCharacterStep2_return(static_cast<EpollClientLoginSlave *>(addCharacterParam.client),addCharacterParam.query_id,addCharacterParam.profileIndex,addCharacterParam.pseudo,addCharacterParam.monsterGroupId,addCharacterParam.skinId);
     databaseBaseCommon->clear();
 }
 

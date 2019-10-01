@@ -240,38 +240,38 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                         {
                             if(EpollClientLoginSlave::proxyMode==EpollClientLoginSlave::ProxyMode::Proxy)
                             {
-                                if(static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
+                                if(static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->stat!=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting)
                                 {
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadError("client in wrong state main ident: "+std::to_string(mainCodeType)+", reply size for 0207 wrong");
                                     return false;
                                 }
                                 //check again if the game server is not disconnected, don't check charactersGroupIndex because previously checked at EpollClientLoginSlave::selectCharacter()
-                                const uint8_t &charactersGroupIndex=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
-                                const uint32_t &serverUniqueKey=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
+                                const uint8_t &charactersGroupIndex=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->charactersGroupIndex;
+                                const uint32_t &serverUniqueKey=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)->serverUniqueKey;
                                 if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
                                 {
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadError("client server not found to proxy it main ident: "+std::to_string(mainCodeType)+", reply size for 0207 wrong");
                                     return false;
                                 }
                                 const CharactersGroupForLogin::InternalGameServer &server=CharactersGroupForLogin::list.at(charactersGroupIndex)->getServerInformation(serverUniqueKey);
 
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
                                 /// \todo do the async connect
                                 /// linkToGameServer->stat=Stat::Connecting;
                                 const int &socketFd=LinkToGameServer::tryConnect(server.host.c_str(),server.port,5,1);
                                 if(Q_LIKELY(socketFd>=0))
                                 {
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->linkToGameServer=linkToGameServer;
                                     linkToGameServer->queryIdToReconnect=dataForSelectedCharacterReturn.client_query_id;
                                     linkToGameServer->stat=LinkToGameServer::Stat::Connected;
-                                    linkToGameServer->client=static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client);
+                                    linkToGameServer->client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
                                     memcpy(linkToGameServer->tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
                                     //send the protocol
                                     //wait readTheFirstSslHeader() to sendProtocolHeader();
@@ -283,18 +283,22 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                 }
                                 else
                                 {
-                                    static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
-                                    ->parseNetworkReadError("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
-                                    return false;
+                                    /*static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    ->parseNetworkReadMessage("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");*/
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04);
+                                    static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
+                                    ->closeSocket();
+                                    //continue to clean, return true;//if false mean the master is the fault
                                 }
                             }
                             else
                             {
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->stat=EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected;
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->selectCharacter_ReturnToken(dataForSelectedCharacterReturn.client_query_id,data);
-                                static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                 ->closeSocket();
                             }
                         }
@@ -303,9 +307,9 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     {
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
-                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                            static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                             ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
-                            static_cast<EpollClientLoginSlave * const>(dataForSelectedCharacterReturn.client)
+                            static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                             ->closeSocket();
                         }
                     }

@@ -19,11 +19,13 @@
 #include "PlatformMacro.h"
 #include <QNetworkRequest>
 #include <QDir>
+#include "Login.h"
 
 Multi::Multi(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::Multi),
     addServer(nullptr),
+    login(nullptr),
     reply(nullptr)
 {
     ui->setupUi(this);
@@ -41,11 +43,11 @@ Multi::Multi(QWidget *parent) :
 
     if(!connect(ui->server_add,&QPushButton::clicked,this,&Multi::server_add_clicked))
         abort();
-    if(!connect(ui->server_edit,&QPushButton::clicked,this,&Multi::server_add_clicked))
+    if(!connect(ui->server_remove,&QPushButton::clicked,this,&Multi::server_remove_clicked))
         abort();
-    if(!connect(ui->server_remove,&QPushButton::clicked,this,&Multi::server_add_clicked))
+    if(!connect(ui->server_edit,&QPushButton::clicked,this,&Multi::server_edit_clicked))
         abort();
-    if(!connect(ui->server_select,&QPushButton::clicked,this,&Multi::server_add_clicked))
+    if(!connect(ui->server_select,&QPushButton::clicked,this,&Multi::server_select_clicked))
         abort();
     if(!connect(ui->back,&QPushButton::clicked,this,&Multi::backMain))
         abort();
@@ -236,6 +238,60 @@ void Multi::server_add_finished()
     displayServerList();
 }
 
+void Multi::server_edit_clicked()
+{
+    if(addServer!=nullptr)
+        delete addServer;
+    addServer=new AddOrEditServer(this);
+    if(!connect(addServer,&QDialog::accepted,this,&Multi::server_add_finished))
+        abort();
+    if(!connect(addServer,&QDialog::rejected,this,&Multi::server_add_finished))
+        abort();
+    emit setAbove(addServer);
+}
+
+void Multi::server_edit_finished()
+{
+    emit setAbove(nullptr);
+    if(addServer==nullptr)
+        return;
+    if(!addServer->isOk())
+        return;
+    #ifdef __EMSCRIPTEN__
+    std::cerr << "AddOrEditServer returned" <<  std::endl;
+    #endif
+    ConnexionInfo connexionInfo;
+    connexionInfo.connexionCounter=0;
+    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+
+    connexionInfo.name=addServer->name();
+    connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
+    connexionInfo.isCustom=true;
+
+    if(addServer->type()==0)
+    {
+        connexionInfo.port=addServer->port();
+        #ifndef NOTCPSOCKET
+        connexionInfo.host=addServer->server();
+        #endif
+        connexionInfo.ws.clear();
+    }
+    else
+    {
+        connexionInfo.port=0;
+        connexionInfo.host.clear();
+        #ifndef NOWEBSOCKET
+        connexionInfo.ws=addServer->server();
+        #endif
+    }
+
+    connexionInfo.proxyHost=addServer->proxyServer();
+    connexionInfo.proxyPort=addServer->proxyPort();
+    mergedConnexionInfoList.push_back(connexionInfo);
+    saveConnexionInfoList();
+    displayServerList();
+}
+
 void Multi::server_remove_clicked()
 {
     if(selectedServer.unique_code.isEmpty())
@@ -366,7 +422,7 @@ void Multi::saveConnexionInfoList()
 
 void Multi::serverListEntryEnvoluedDoubleClicked()
 {
-    //on_server_select_clicked();
+    server_select_clicked();
 }
 
 std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList()
@@ -716,3 +772,71 @@ void Multi::downloadFile()
     downloadFile();
 }*/
 
+
+void Multi::server_select_clicked()
+{
+    if(login!=nullptr)
+        delete login;
+    login=new Login(this);
+    if(!connect(login,&QDialog::accepted,this,&Multi::server_select_finished))
+        abort();
+    if(!connect(login,&QDialog::rejected,this,&Multi::server_select_finished))
+        abort();
+    if(selectedServer.isCustom)
+        settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
+    else
+        settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
+    if(settings.contains("last"))
+    {
+        const QString loginString=settings.value("last").toString();
+        login->setLogin(loginString);
+        settings.beginGroup("auth");
+        if(settings.contains(loginString))
+            login->setPass(settings.value(loginString).toString());
+        settings.endGroup();
+    }
+    settings.endGroup();
+    emit setAbove(login);
+}
+
+void Multi::server_select_finished()
+{
+    emit setAbove(nullptr);
+    if(login==nullptr)
+        return;
+    if(!login->isOk())
+        return;
+    #ifdef __EMSCRIPTEN__
+    std::cerr << "server_select_finished returned" <<  std::endl;
+    #endif
+
+    if(selectedServer.isCustom)
+        settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
+    else
+        settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
+    const QString loginString=login->getLogin();
+    settings.setValue("last",loginString);
+    if(login->getRememberPassword())
+    {
+        settings.beginGroup("auth");
+        settings.setValue(loginString,login->getPass());
+        settings.endGroup();
+    }
+    settings.endGroup();
+    settings.sync();
+    unsigned int index=0;
+    while(index<mergedConnexionInfoList.size())
+    {
+        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
+        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
+        {
+            connexionInfo.connexionCounter++;
+            saveConnexionInfoList();
+            displayServerList();//need be after connectTheExternalSocket() because it reset selectedServer
+            emit connectToServer(connexionInfo,loginString,login->getPass());
+            break;
+        }
+        index++;
+    }
+    abort();//todo
+}

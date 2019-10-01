@@ -529,5 +529,12 @@ void EpollClientLoginSlave::parseNetworkReadError(const std::string &errorString
 {
     /*not parseNetworkReadError to do soft error, else crash on removeFromQueryReceived();
      * used to prevent abort in case of: ERROR, dns resolution failed on: cc-server-bot.portable-datacenter.first-world.info, h_errno: 2 */
+    errorParsingLayer(errorString);
+}
+
+void EpollClientLoginSlave::parseNetworkReadMessage(const std::string &errorString)
+{
+    /*not parseNetworkReadError to do soft error, else crash on removeFromQueryReceived();
+     * used to prevent abort in case of: ERROR, dns resolution failed on: cc-server-bot.portable-datacenter.first-world.info, h_errno: 2 */
     messageParsingLayer(errorString);
 }
