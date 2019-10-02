@@ -128,12 +128,35 @@ void ScreenTransition::openMulti()
         multi=new Multi(this);
         connect(multi,&Multi::backMain,this,&ScreenTransition::backMain);
         connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove);
+        connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer);
     }
     setForeground(multi);
+}
+
+void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)
+{
+    Q_UNUSED(connexionInfo);
+    Q_UNUSED(login);
+    Q_UNUSED(pass);
+    setForeground(&l);
+    baseWindow=new CatchChallenger::BaseWindow();
+    connexionManager=new ConnexionManager(baseWindow);
+    connexionManager->connectToServer(connexionInfo,login,pass);
+}
+
+void ScreenTransition::errorString(std::string error)
+{
+    setForeground(m);
+    m->setError(error);
 }
 
 void ScreenTransition::backMain()
 {
     setForeground(m);
+}
+
+void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
+{
+    abort();
 }
 
