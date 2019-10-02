@@ -85,6 +85,8 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                     token=std::string(data+sizeof(uint8_t),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                     have_receive_protocol=true;
                     protocol_is_good();
+                    if(!login.empty())
+                        tryLogin(login,pass);
                     //std::cout << "Api_protocol::protocol_is_good(), stageConnexion==StageConnexion::Stage1" << std::endl;
                 }
                 else if(stageConnexion==StageConnexion::Stage4)

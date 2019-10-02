@@ -10,6 +10,8 @@
 #include "Solo.h"
 #include "Multi.h"
 #include "Login.h"
+#include "interface/BaseWindow.h"
+#include "ConnexionManager.h"
 
 class ScreenTransition : public QWidget
 {
@@ -29,6 +31,9 @@ protected:
     void openMulti();
     void backMain();
     void closeOptions();
+    void connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass);
+    void errorString(std::string error);
+    void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
 private:
     CCBackground b;
     LoadingScreen l;
@@ -40,6 +45,8 @@ private:
     Solo *solo;
     Multi *multi;
     Login *login;
+    CatchChallenger::BaseWindow *baseWindow;
+    ConnexionManager *connexionManager;
 };
 
 #endif // SCREENTRANSITION_H

@@ -20,7 +20,7 @@ class MainScreen : public QWidget
 public:
     explicit MainScreen(QWidget *parent = nullptr);
     ~MainScreen();
-    void updateWidgetPos();
+    void setError(const std::string &error);
 private:
     Ui::MainScreen *ui;
 
