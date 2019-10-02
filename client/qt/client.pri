@@ -124,7 +124,8 @@ SOURCES += \
     $$PWD/Multi.cpp \
     $$PWD/Login.cpp \
     $$PWD/AddServer.cpp \
-    $$PWD/AskKey.cpp
+    $$PWD/AskKey.cpp \
+    $$PWD/ConnexionManager.cpp
 
 HEADERS  += \
     $$PWD/render/TileLayerItem.h \
@@ -189,7 +190,8 @@ HEADERS  += \
     $$PWD/Multi.h \
     $$PWD/Login.h \
     $$PWD/AddServer.h \
-    $$PWD/AskKey.h
+    $$PWD/AskKey.h \
+    $$PWD/ConnexionManager.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

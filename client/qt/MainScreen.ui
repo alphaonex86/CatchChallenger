@@ -110,6 +110,19 @@
     </spacer>
    </item>
    <item>
+    <widget class="QLabel" name="warning">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(255, 255, 163);
+border: 1px solid rgb(255, 221, 50);
+border-radius:5px;
+color: rgb(0, 0, 0);</string>
+     </property>
+     <property name="text">
+      <string notr="true">Warning or error</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayoutUpdate">
      <item>
       <spacer name="horizontalSpacer_7">
@@ -173,7 +186,7 @@
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="res.qrc">:/CC/images/interface/star.png</pixmap>
+           <pixmap resource="../resources/client-resources.qrc">:/CC/images/interface/star.png</pixmap>
           </property>
          </widget>
         </item>
@@ -249,7 +262,7 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="res.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
  </resources>
  <connections/>
 </ui>
