@@ -12,7 +12,7 @@ MainScreen::MainScreen(QWidget *parent) :
 {
     ui->setupUi(this);
     setMinimumSize(QSize(320,240));
-
+    ui->warning->setVisible(false);
     updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",ui->widgetUpdate);
     updateButton->setMaximumSize(QSize(136,57));
     updateButton->setMinimumSize(QSize(136,57));
@@ -109,6 +109,12 @@ MainScreen::MainScreen(QWidget *parent) :
 MainScreen::~MainScreen()
 {
     delete ui;
+}
+
+void MainScreen::setError(const std::string &error)
+{
+    ui->warning->setVisible(true);
+    ui->warning->setText(QString::fromStdString(error));
 }
 
 void MainScreen::resizeEvent(QResizeEvent * e)

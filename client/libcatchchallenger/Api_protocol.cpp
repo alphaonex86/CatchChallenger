@@ -273,8 +273,9 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
 {
     if(!have_send_protocol)
     {
-        newError(std::string("Internal problem"),std::string("Have not send the protocol"));
-        return false;
+        this->login=login;
+        this->pass=pass;
+        return true;
     }
     if(is_logged)
     {
@@ -301,6 +302,8 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
     }
 
     packOutcommingQuery(0xA8,queryNumber(),outputData,sizeof(outputData));
+    this->login.clear();
+    this->pass.clear();
     return true;
 }
 
@@ -1745,6 +1748,8 @@ void Api_protocol::resetAll()
     last_step=255;
     last_direction=Direction_look_at_bottom;
     last_direction_is_set=false;
+    login.clear();
+    pass.clear();
 
     unloadSelection();
     isInTrade=false;

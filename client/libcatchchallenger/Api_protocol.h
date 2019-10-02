@@ -202,6 +202,10 @@ protected:
     std::string passHash;
     std::string loginHash;
 
+    //delayed call info
+    std::string login;
+    std::string pass;
+
     //server list
     int32_t selectedServerIndex;
     std::vector<ServerFromPoolForDisplay> serverOrdenedList;
