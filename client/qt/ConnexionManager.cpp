@@ -1,8 +1,10 @@
 #include "ConnexionManager.h"
 #include "Api_client_real.h"
+#include "LoadingScreen.h"
 #include <iostream>
+#include <QStandardPaths>
 
-ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow)
+ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow, LoadingScreen *l)
 {
     socket=nullptr;
     #ifndef NOTCPSOCKET
@@ -12,6 +14,8 @@ ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow)
     realWebSocket=nullptr;
     #endif
     this->baseWindow=baseWindow;
+    this->datapckFileSize=0;
+    this->l=l;
 }
 
 void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)
@@ -44,14 +48,17 @@ void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
         }
         #endif
         #ifndef NOWEBSOCKET
-        if(!connexionInfo.ws.isEmpty())
+        if(socket==nullptr)
         {
-            realWebSocket=new QWebSocket();
-            socket=new CatchChallenger::ConnectedSocket(realWebSocket);
-        }
-        else {
-            std::cerr << "ws is empty" << std::endl;
-            abort();
+            if(!connexionInfo.ws.isEmpty())
+            {
+                realWebSocket=new QWebSocket();
+                socket=new CatchChallenger::ConnectedSocket(realWebSocket);
+            }
+            else {
+                std::cerr << "ws is empty" << std::endl;
+                abort();
+            }
         }
         #endif
     #endif
@@ -63,8 +70,20 @@ void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&ConnexionManager::disconnected))
         abort();
     //connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&ConnexionManager::message,Qt::QueuedConnection);
-    /*if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::logged,Qt::QueuedConnection))
-        abort();*/
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::logged,Qt::QueuedConnection))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtdatapackSizeBase,       this,&ConnexionManager::QtdatapackSizeBase))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtdatapackSizeMain,       this,&ConnexionManager::QtdatapackSizeMain))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtdatapackSizeSub,       this,&ConnexionManager::QtdatapackSizeSub))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::progressingDatapackFileBase,       this,&ConnexionManager::progressingDatapackFileBase))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::progressingDatapackFileMain,       this,&ConnexionManager::progressingDatapackFileMain))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::progressingDatapackFileSub,       this,&ConnexionManager::progressingDatapackFileSub))
+        abort();
 
     if(!connexionInfo.proxyHost.isEmpty())
     {
@@ -120,7 +139,8 @@ void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     #endif
     connexionInfo.connexionCounter++;
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-    connectTheExternalSocket();
+    this->client=static_cast<CatchChallenger::Api_protocol_Qt *>(client);
+    connectTheExternalSocket(connexionInfo,client);
 }
 
 void ConnexionManager::disconnected(std::string reason)
@@ -148,20 +168,10 @@ void ConnexionManager::sslErrors(const QList<QSslError> &errors)
 }
 #endif
 
-void ConnexionManager::connectTheExternalSocket()
+void ConnexionManager::connectTheExternalSocket(Multi::ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client)
 {
-    if(selectedServer==NULL)
-    {
-        qDebug() << "selectedServer==NULL, fix it!";
-        abort();
-    }
-    if(!serverConnexion.contains(selectedServer))
-    {
-        qDebug() << "!serverConnexion.contains(selectedServer)";
-        abort();
-    }
     //continue the normal procedure
-    if(!serverConnexion.value(selectedServer)->proxyHost.isEmpty())
+    if(!connexionInfo.proxyHost.isEmpty())
     {
         QNetworkProxy proxy;
         #ifndef NOTCPSOCKET
@@ -173,14 +183,14 @@ void ConnexionManager::connectTheExternalSocket()
             proxy=realWebSocket->proxy();
         #endif
         proxy.setType(QNetworkProxy::Socks5Proxy);
-        proxy.setHostName(serverConnexion.value(selectedServer)->proxyHost);
-        proxy.setPort(serverConnexion.value(selectedServer)->proxyPort);
-        static_cast<CatchChallenger::Api_client_real *>(client)->setProxy(proxy);
+        proxy.setHostName(connexionInfo.proxyHost);
+        proxy.setPort(connexionInfo.proxyPort);
+        client->setProxy(proxy);
     }
 
     baseWindow->connectAllSignals();
-    baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
-    QDir datapack(serverToDatapachPath(selectedServer));
+    baseWindow->setMultiPlayer(true,client);
+    QDir datapack(serverToDatapachPath(connexionInfo));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {
@@ -189,6 +199,22 @@ void ConnexionManager::connectTheExternalSocket()
         }
     client->setDatapackPath(datapack.absolutePath().toStdString());
     baseWindow->stateChanged(QAbstractSocket::ConnectedState);
+}
+
+QString ConnexionManager::serverToDatapachPath(Multi::ConnexionInfo connexionInfo) const
+{
+    QDir datapack;
+    if(connexionInfo.isCustom)
+        datapack=QDir(QStringLiteral("%1/datapack/Customer-%2/")
+                      .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+                      .arg(connexionInfo.unique_code)
+                      );
+    else
+        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2")
+                      .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+                      .arg(connexionInfo.unique_code)
+                      );
+    return datapack.absolutePath();
 }
 
 /*QString ConnexionManager::serverToDatapachPath(ListEntryEnvolued * selectedServer) const
@@ -244,7 +270,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
             }
         }
         std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
-        if(!isVisible()
+        /*if(!isVisible()
                 #ifndef NOSINGLEPLAYER
                 && internalServer==NULL
                 #endif
@@ -252,14 +278,14 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
         {
             QCoreApplication::quit();
             return;
-        }
+        }*/
         if(client!=NULL)
             static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
-        if(client!=NULL && client->protocolWrong())
-            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
+        /*if(client!=NULL && client->protocolWrong())
+            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
         #ifndef NOSINGLEPLAYER
-        if(internalServer!=NULL)
-            internalServer->stop();
+        /*if(internalServer!=NULL)
+            internalServer->stop();*/
         #endif
         /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
         #ifndef NOTCPSOCKET
@@ -286,7 +312,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
             delete realSocket;
             realSocket=NULL;
         }*/
-        resetAll();
+        //resetAll();
         /*if(serverMode==ServerMode_Remote)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
     }
@@ -302,7 +328,7 @@ void ConnexionManager::error(QAbstractSocket::SocketError socketError)
     QString additionalText;
     if(!lastServer.isEmpty())
         additionalText=tr(" on %1").arg(lastServer);
-    resetAll();
+    //resetAll();
     switch(socketError)
     {
     case QAbstractSocket::RemoteHostClosedError:
@@ -314,12 +340,12 @@ void ConnexionManager::error(QAbstractSocket::SocketError socketError)
         if(realWebSocket!=NULL)
             return;
         #endif
-        if(haveShowDisconnectionReason)
+        /*if(haveShowDisconnectionReason)
         {
             haveShowDisconnectionReason=false;
             return;
-        }
-        QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server")+additionalText);
+        }*/
+        /*QMessageBox::information(this,tr("Connection closed"),tr("Connection closed by the server")+additionalText);
     break;
     case QAbstractSocket::ConnectionRefusedError:
         QMessageBox::information(this,tr("Connection closed"),tr("Connection refused by the server")+additionalText);
@@ -346,6 +372,70 @@ void ConnexionManager::error(QAbstractSocket::SocketError socketError)
         QMessageBox::information(this,tr("Connection closed"),tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText);
     break;
     default:
-        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError)+additionalText);
+        QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError)+additionalText);*/
+            qDebug() << tr("Connection closed by the server")+additionalText;
+        break;
+        case QAbstractSocket::ConnectionRefusedError:
+            qDebug() << tr("Connection refused by the server")+additionalText;
+        break;
+        case QAbstractSocket::SocketTimeoutError:
+            qDebug() << tr("Socket time out, server too long")+additionalText;
+        break;
+        case QAbstractSocket::HostNotFoundError:
+            qDebug() << tr("The host address was not found")+additionalText;
+        break;
+        case QAbstractSocket::SocketAccessError:
+            qDebug() << tr("The socket operation failed because the application lacked the required privileges")+additionalText;
+        break;
+        case QAbstractSocket::SocketResourceError:
+            qDebug() << tr("The local system ran out of resources")+additionalText;
+        break;
+        case QAbstractSocket::NetworkError:
+            qDebug() << tr("An error occurred with the network (Connection refused on game server?)")+additionalText;
+        break;
+        case QAbstractSocket::UnsupportedSocketOperationError:
+            qDebug() << tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)")+additionalText;
+        break;
+        case QAbstractSocket::SslHandshakeFailedError:
+            qDebug() << tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText;
+        break;
+        default:
+            qDebug() << tr("Connection error: %1").arg(socketError)+additionalText;
     }
+}
+
+void ConnexionManager::QtdatapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+{
+    (void)datapckFileNumber;
+    this->datapckFileSize=datapckFileSize;
+    l->progression(0,datapckFileSize);
+}
+
+void ConnexionManager::QtdatapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+{
+    (void)datapckFileNumber;
+    this->datapckFileSize=datapckFileSize;
+    l->progression(0,datapckFileSize);
+}
+
+void ConnexionManager::QtdatapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+{
+    (void)datapckFileNumber;
+    this->datapckFileSize=datapckFileSize;
+    l->progression(0,datapckFileSize);
+}
+
+void ConnexionManager::progressingDatapackFileBase(const uint32_t &size)
+{
+    l->progression(size,datapckFileSize);
+}
+
+void ConnexionManager::progressingDatapackFileMain(const uint32_t &size)
+{
+    l->progression(size,datapckFileSize);
+}
+
+void ConnexionManager::progressingDatapackFileSub(const uint32_t &size)
+{
+    l->progression(size,datapckFileSize);
 }
