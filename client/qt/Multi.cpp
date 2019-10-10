@@ -838,5 +838,4 @@ void Multi::server_select_finished()
         }
         index++;
     }
-    abort();//todo
 }
