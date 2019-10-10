@@ -20,9 +20,9 @@ class LoadingScreen : public QWidget
 public:
     explicit LoadingScreen(QWidget *parent = nullptr);
     ~LoadingScreen();
+    void progression(uint32_t size, uint32_t total);
 protected:
     void resizeEvent(QResizeEvent *event) override;
-    void progression(uint32_t size, uint32_t total);
     void canBeChanged();
     void dataIsParsed();
 private:

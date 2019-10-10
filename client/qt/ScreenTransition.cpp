@@ -12,7 +12,8 @@ ScreenTransition::ScreenTransition() :
     m_aboveStack->setVisible(false);
     setBackground(&b);
     setForeground(&l);
-    connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen);
+    if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen))
+        abort();
     m=nullptr;
     o=nullptr;
     solo=nullptr;
@@ -88,9 +89,12 @@ void ScreenTransition::toMainScreen()
     if(m==nullptr)
     {
         m=new MainScreen(this);
-        connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions);
-        connect(m,&MainScreen::goToSolo,this,&ScreenTransition::openSolo);
-        connect(m,&MainScreen::goToMulti,this,&ScreenTransition::openMulti);
+        if(!connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions))
+            abort();
+        if(!connect(m,&MainScreen::goToSolo,this,&ScreenTransition::openSolo))
+            abort();
+        if(!connect(m,&MainScreen::goToMulti,this,&ScreenTransition::openMulti))
+            abort();
     }
     setForeground(m);
     setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
@@ -101,7 +105,8 @@ void ScreenTransition::openOptions()
     if(o==nullptr)
     {
         o=new OptionsDialog(this);
-        connect(o,&OptionsDialog::quitOption,this,&ScreenTransition::closeOptions);
+        if(!connect(o,&OptionsDialog::quitOption,this,&ScreenTransition::closeOptions))
+            abort();
     }
     setAbove(o);
 }
@@ -116,7 +121,8 @@ void ScreenTransition::openSolo()
     if(solo==nullptr)
     {
         solo=new Solo(this);
-        connect(solo,&Solo::backMain,this,&ScreenTransition::backMain);
+        if(!connect(solo,&Solo::backMain,this,&ScreenTransition::backMain))
+            abort();
     }
     setForeground(solo);
 }
@@ -126,9 +132,12 @@ void ScreenTransition::openMulti()
     if(multi==nullptr)
     {
         multi=new Multi(this);
-        connect(multi,&Multi::backMain,this,&ScreenTransition::backMain);
-        connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove);
-        connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer);
+        if(!connect(multi,&Multi::backMain,this,&ScreenTransition::backMain))
+            abort();
+        if(!connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove))
+            abort();
+        if(!connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer))
+            abort();
     }
     setForeground(multi);
 }
@@ -140,8 +149,11 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     Q_UNUSED(pass);
     setForeground(&l);
     baseWindow=new CatchChallenger::BaseWindow();
-    connexionManager=new ConnexionManager(baseWindow);
+    connexionManager=new ConnexionManager(baseWindow,&l);
     connexionManager->connectToServer(connexionInfo,login,pass);
+    if(!connect(connexionManager,&ConnexionManager::logged,this,&ScreenTransition::logged))
+        abort();
+    l.progression(0,100);
 }
 
 void ScreenTransition::errorString(std::string error)
