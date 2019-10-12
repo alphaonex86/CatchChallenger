@@ -1334,8 +1334,8 @@ void BaseWindow::checkEvolution()
                     delete qQuickViewContainer;
                 animationWidget=new QQuickView();
                 qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-                qQuickViewContainer->setMinimumSize(QSize(800,600));
-                qQuickViewContainer->setMaximumSize(QSize(800,600));
+                qQuickViewContainer->setMinimumSize(QSize(width(),height()));
+                qQuickViewContainer->setMaximumSize(QSize(width(),height()));
                 qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
                 ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
                 //show the animation

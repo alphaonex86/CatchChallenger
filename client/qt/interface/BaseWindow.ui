@@ -10,23 +10,11 @@
     <height>600</height>
    </rect>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>800</width>
-    <height>600</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>800</width>
-    <height>600</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/client-resources.qrc">
+   <iconset resource="../../../server/all-server-resources.qrc">
     <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -65,7 +53,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>6</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -819,25 +807,6 @@ color: rgb(0, 0, 0);
                   <height>25</height>
                  </size>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton::hover {
-background-position:left center;
-}
-QPushButton::pressed {
-background-position:left bottom;
-}
-QPushButton { 
-background-image: url(:/images/interface/option-chest.png);
-border-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-padding-left:28px;
-padding-right:4px;
-padding-top:8px;
-padding-bottom:3px;
-background-attachment:fixed;
-}
-</string>
-                </property>
                 <property name="text">
                  <string>Bag</string>
                 </property>
@@ -856,23 +825,6 @@ background-attachment:fixed;
                   <width>110</width>
                   <height>25</height>
                  </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton::hover {
-background-position:left center;
-}
-QPushButton::pressed {
-background-position:left bottom;
-}
-QPushButton { 
-background-image: url(:/images/interface/option-player.png);
-border-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-padding-left:25px;
-padding-right:4px;
-padding-top:8px;
-padding-bottom:3px;
-}</string>
                 </property>
                 <property name="text">
                  <string>Player</string>
@@ -893,23 +845,6 @@ padding-bottom:3px;
                   <height>25</height>
                  </size>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton::hover {
-background-position:left center;
-}
-QPushButton::pressed {
-background-position:left bottom;
-}
-QPushButton { 
-background-image: url(:/images/interface/option-craft.png);
-border-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-padding-left:25px;
-padding-right:4px;
-padding-top:8px;
-padding-bottom:3px;
-}</string>
-                </property>
                 <property name="text">
                  <string>Crafting</string>
                 </property>
@@ -928,23 +863,6 @@ padding-bottom:3px;
                   <width>110</width>
                   <height>25</height>
                  </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton::hover {
-background-position:left center;
-}
-QPushButton::pressed {
-background-position:left bottom;
-}
-QPushButton { 
-	background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-padding-left:25px;
-padding-right:4px;
-padding-top:8px;
-padding-bottom:3px;
-}</string>
                 </property>
                 <property name="text">
                  <string>Monsters</string>
@@ -968,17 +886,8 @@ padding-bottom:3px;
                 <property name="toolTip">
                  <string>Options</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/option-options.png);
-border-image: url(:/images/empty.png);
-}</string>
+                <property name="text">
+                 <string>O</string>
                 </property>
                </widget>
               </item>
@@ -999,17 +908,8 @@ border-image: url(:/images/empty.png);
                 <property name="toolTip">
                  <string>Encyclopedia</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/option-map.png);
-border-image: url(:/images/empty.png);
-}</string>
+                <property name="text">
+                 <string>E</string>
                 </property>
                </widget>
               </item>
@@ -1030,17 +930,8 @@ border-image: url(:/images/empty.png);
                 <property name="toolTip">
                  <string>Admin</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/option-admin.png);
-border-image: url(:/images/empty.png);
-}</string>
+                <property name="text">
+                 <string>A</string>
                 </property>
                </widget>
               </item>
@@ -1107,7 +998,7 @@ background-image: url(:/images/light-white.png);
                  </size>
                 </property>
                 <property name="pixmap">
-                 <pixmap resource="../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
+                 <pixmap resource="../../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
                 </property>
                </widget>
               </item>
@@ -1164,7 +1055,7 @@ background-image: url(:/images/light-white.png);
 background-image: url(:/images/empty.png);</string>
                    </property>
                    <property name="pixmap">
-                    <pixmap resource="../resources/client-resources.qrc">:/images/interface/player.png</pixmap>
+                    <pixmap>:/images/interface/player.png</pixmap>
                    </property>
                   </widget>
                  </item>
@@ -1392,7 +1283,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                            <pixmap>:/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1451,7 +1342,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                            <pixmap>:/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1510,7 +1401,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../resources/client-resources.qrc">:/images/interface/player/point.png</pixmap>
+                            <pixmap>:/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1581,7 +1472,7 @@ background-repeat:no-repeat;
 background-position:center; </string>
                       </property>
                       <property name="pixmap">
-                       <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+                       <pixmap>:/images/player_default/front.png</pixmap>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
@@ -2068,7 +1959,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -2108,7 +1999,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/bag1.png</pixmap>
+             <pixmap>:/images/inventory/bag1.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="inventory_description">
@@ -3546,7 +3437,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/images/inventory/unknown-object.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="shopDescription">
@@ -3581,7 +3472,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+             <pixmap>:/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -4177,7 +4068,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/fight/plateform-background.png</pixmap>
+           <pixmap>:/images/interface/fight/plateform-background.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightPlateformTop">
@@ -4202,7 +4093,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/interface/fight/plateform-front.png</pixmap>
+           <pixmap>:/images/interface/fight/plateform-front.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightMonsterBottom">
@@ -4227,7 +4118,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../resources/client-resources.qrc">:/images/player_default/back.png</pixmap>
+           <pixmap>:/images/player_default/back.png</pixmap>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -4255,7 +4146,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+           <pixmap>:/images/player_default/front.png</pixmap>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -4872,7 +4763,7 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="pixmap">
-                <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+                <pixmap>:/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -5019,7 +4910,7 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="pixmap">
-                <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+                <pixmap>:/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -5346,7 +5237,7 @@ padding-bottom:3px;
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/monsters/default/front.png</pixmap>
+             <pixmap>:/images/monsters/default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -5426,7 +5317,7 @@ padding-bottom:3px;
               </size>
              </property>
              <property name="pixmap">
-              <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+              <pixmap>:/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -5451,7 +5342,7 @@ padding-bottom:3px;
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+              <pixmap>:/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -6255,7 +6146,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+             <pixmap>:/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -6401,7 +6292,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/monsters/default/front.png</pixmap>
+             <pixmap>:/images/monsters/default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -6429,7 +6320,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -6514,7 +6405,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -7229,7 +7120,7 @@ padding-bottom:3px;
            </property>
            <widget class="QWidget" name="tabEncyclopediaMonster">
             <attribute name="icon">
-             <iconset resource="../../fight/resources/client-resources-fight.qrc">
+             <iconset>
               <normaloff>:/images/monsters/default/small.png</normaloff>:/images/monsters/default/small.png</iconset>
             </attribute>
             <attribute name="title">
@@ -7292,7 +7183,7 @@ padding-bottom:3px;
            </widget>
            <widget class="QWidget" name="tabEncyclopediaItem">
             <attribute name="icon">
-             <iconset resource="../resources/client-resources-multi.qrc">
+             <iconset resource="../../resources/client-resources-multi.qrc">
               <normaloff>:/images/interface/server_list/star1.png</normaloff>:/images/interface/server_list/star1.png</iconset>
             </attribute>
             <attribute name="title">
@@ -7521,9 +7412,8 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/client-resources.qrc"/>
-  <include location="../../fight/resources/client-resources-fight.qrc"/>
-  <include location="../resources/client-resources-multi.qrc"/>
+  <include location="../../resources/client-resources-multi.qrc"/>
+  <include location="../../../server/all-server-resources.qrc"/>
  </resources>
  <connections>
   <connection>

@@ -116,5 +116,5 @@ void LoadingScreen::progression(uint32_t size,uint32_t total)
     if(size<=total)
         progressbar->setValue(size*100/total);
     else
-        abort();
+        progressbar->setValue(progressbar->maximum());//abort();
 }

@@ -93,8 +93,29 @@ void MapControllerMP::setScale(const float &scaleSize)
         qDebug() << QStringLiteral("scaleSize out of range 1-4: %1").arg(scaleSizeQReal);
         return;
     }
-    scale(scaleSizeQReal/static_cast<double>(this->scaleSize),scaleSizeQReal/static_cast<double>(this->scaleSize));
-    this->scaleSize=scaleSize;
+    //scaleSize 1: 32*16px = 512px
+    //scaleSize 4: 8*16px = 128px
+    const int w=width();
+    const int h=height();
+    double scaleSizeW=(double)w*scaleSize/512;
+    double scaleSizeH=(double)h*scaleSize/512;
+    double scaleSizeMax=scaleSizeW;
+    if(scaleSizeH>scaleSizeMax)
+        scaleSizeMax=scaleSizeH;
+    scaleSizeMax=(int)scaleSizeMax;
+    scale(scaleSizeMax/static_cast<double>(this->scaleSize),scaleSizeMax/static_cast<double>(this->scaleSize));
+    this->scaleSize=scaleSizeMax;
+    //update to real zoom
+}
+
+void MapControllerMP::updateScale()
+{
+    setScale(this->scaleSize);
+}
+
+void MapControllerMP::resizeEvent(QResizeEvent *event)
+{
+    updateScale();
 }
 
 const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &MapControllerMP::getOtherPlayerList() const

@@ -19,6 +19,8 @@ public:
     virtual void resetAll();
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     void setScale(const float &scaleSize);
+    void updateScale();
+    void resizeEvent(QResizeEvent *event);
 
     //the other player
     struct OtherPlayer
@@ -150,7 +152,7 @@ private:
         CatchChallenger::Direction direction;
     };
     std::vector<DelayedTeleportTo> delayedTeleportTo;
-    float scaleSize;
+    double scaleSize;
     bool isTeleported;
     static QFont playerpseudofont;
     static QPixmap *imgForPseudoAdmin;
