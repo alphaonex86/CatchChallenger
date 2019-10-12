@@ -505,6 +505,12 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
                       ", error");
                 return;
             }
+            /*if(ui->serverList->iconSize()>100)
+            {
+                itemServer->setIcon(0,BaseWindow::icon_server_list_stat3);
+            }
+            else
+                itemServer->setIcon(0,QIcon());*/
             index++;
         }
     }

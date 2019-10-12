@@ -24,8 +24,8 @@ std::string MapController::text_bot="bot";
 std::string MapController::text_slashtrainerpng="/trainer.png";
 std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
 
-#define IMAGEOVERSIZEWITDH 800*2*2
-#define IMAGEOVERSIZEHEIGHT 600*2*2
+/*#define IMAGEOVERSIZEWITDH 800*2*2
+#define IMAGEOVERSIZEHEIGHT 600*2*2*/
 
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
@@ -43,7 +43,7 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     imageOver=new QGraphicsPixmapItem();
     imageOver->setZValue(1000);
     if(centerOnPlayer)
-        imageOver->setPos(-800,-600);
+        imageOver->setPos(-width(),-height());
     else
         imageOver->setPos(0,0);
     updateColorTimer.setSingleShot(true);
@@ -593,7 +593,7 @@ void MapController::setColor(const QColor &color, const uint32_t &timeInMS)
         actualColor=color;
         tempColor=color;
         newColor=color;
-        QPixmap pixmap(IMAGEOVERSIZEWITDH,IMAGEOVERSIZEHEIGHT);
+        QPixmap pixmap(width()*4,height()*4);
         pixmap.fill(color);
         imageOver->setPixmap(pixmap);
         if(newColor.alpha()!=0)
@@ -747,7 +747,7 @@ void MapController::updateColor()
         }
     }
     tempColor=QColor(tempColor.red()+rdiff,tempColor.green()+gdiff,tempColor.blue()+bdiff,tempColor.alpha()+adiff);
-    QPixmap pixmap(IMAGEOVERSIZEWITDH,IMAGEOVERSIZEHEIGHT);
+    QPixmap pixmap(width()*4,height()*4);
     pixmap.fill(tempColor);
     imageOver->setPixmap(pixmap);
     if(tempColor==newColor)

@@ -492,6 +492,7 @@ protected slots:
     void updateConnectingStatus();
     char my_toupper(char ch);
     std::string str_toupper(std::string s);
+    void resizeEvent(QResizeEvent *event) override;
 private:
     Ui::BaseWindowUI *ui;
     QFrame *renderFrame;
