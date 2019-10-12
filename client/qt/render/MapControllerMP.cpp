@@ -103,6 +103,8 @@ void MapControllerMP::setScale(const float &scaleSize)
     if(scaleSizeH>scaleSizeMax)
         scaleSizeMax=scaleSizeH;
     scaleSizeMax=(int)scaleSizeMax;
+    if(scaleSizeMax<1.0)
+        scaleSizeMax=1.0;
     scale(scaleSizeMax/static_cast<double>(this->scaleSize),scaleSizeMax/static_cast<double>(this->scaleSize));
     this->scaleSize=scaleSizeMax;
     //update to real zoom
