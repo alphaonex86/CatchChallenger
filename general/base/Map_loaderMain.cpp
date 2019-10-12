@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <zstd.h>      // presumes zstd library is installed
+#include <map>
 
 using namespace CatchChallenger;
 
