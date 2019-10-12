@@ -264,7 +264,7 @@ BaseWindow::BaseWindow() :
     renderLayout->setContentsMargins(0, 0, 0, 0);
     renderLayout->setObjectName(QString::fromUtf8("renderLayout"));
     renderLayout->addWidget(mapController);
-    renderFrame->setGeometry(QRect(0, 0, 800, 516));
+    renderFrame->setGeometry(QRect(0, 0, width(), height()));
     renderFrame->lower();
     renderFrame->lower();
     renderFrame->lower();
@@ -348,6 +348,13 @@ BaseWindow::~BaseWindow()
     }
     else
         abort();
+}
+
+void BaseWindow::resizeEvent(QResizeEvent *event)
+{
+    Q_UNUSED(event);
+    renderFrame->setGeometry(QRect(0, 0, width(), height()));
+    mapController->updateScale();
 }
 
 void BaseWindow::connectAllSignals()
@@ -1839,6 +1846,8 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
         std::vector<uint16_t> keys;
         for(const auto n : QtDatapackClientLoader::datapackLoader.itemsExtra)
             keys.push_back(n.first);
+        if(keys.empty())
+            return;
         qSort(keys.begin(),keys.end());
         uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
