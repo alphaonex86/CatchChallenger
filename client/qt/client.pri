@@ -40,6 +40,9 @@ else
 {
 #    DEFINES += NOWEBSOCKET
 }
+android: {
+    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm64/usr/include/
+}
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets
 }
