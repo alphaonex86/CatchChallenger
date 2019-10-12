@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_PROTOCOL_H
 
 #include <vector>
+#include <map>
 
 #include "ClientStructures.h"
 #include "../../general/base/GeneralStructures.h"
