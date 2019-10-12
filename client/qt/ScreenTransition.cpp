@@ -169,6 +169,8 @@ void ScreenTransition::backMain()
 
 void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
-    abort();
+    setBackground(nullptr);
+    setForeground(baseWindow);
+    //baseWindow->updateConnectingStatus();
 }
 
