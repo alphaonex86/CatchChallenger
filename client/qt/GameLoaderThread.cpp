@@ -1,6 +1,6 @@
 #include "GameLoaderThread.h"
 
-#ifndef NOAUDIO
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../opusfile/opusfile.h"
 #include <QBuffer>
 #endif
@@ -18,7 +18,7 @@ void GameLoaderThread::run()
     {
         const QString &file=toLoad.at(index);
         if(file.endsWith(QStringLiteral(".opus"))) {
-            #ifndef NOAUDIO
+            #ifndef CATCHCHALLENGER_NOAUDIO
             QBuffer buffer;
             buffer.open(QBuffer::ReadWrite);
             QFile f(file);
