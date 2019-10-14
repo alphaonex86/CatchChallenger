@@ -76,6 +76,9 @@ color: rgb(0, 0, 0);</string>
         <property name="text">
          <string>Loading the servers list...</string>
         </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item>
