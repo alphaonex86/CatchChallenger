@@ -43,6 +43,7 @@ else
 }
 android: {
     INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm64/usr/include/
+    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm/usr/include/
     LIBS += -L/opt/qt/5.12.4/android_arm64_v8a/lib/
 }
 !contains(DEFINES, NOWEBSOCKET) {
