@@ -341,8 +341,6 @@ void Multi::httpFinished()
         return;
     }
     std::cout << "Got new server list" << std::endl;
-    ui->warning->setVisible(true);
-    ui->warning->setText(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
 
     QByteArray content=reply->readAll();
     QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
