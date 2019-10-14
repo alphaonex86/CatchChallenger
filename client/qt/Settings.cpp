@@ -2,7 +2,8 @@
 #include <QStandardPaths>
 #include <QDir>
 
-QSettings Settings::settings(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first(),QSettings::IniFormat);
+//QSettings Settings::settings(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first(),QSettings::IniFormat);
+QSettings Settings::settings;
 
 Settings::Settings()
 {

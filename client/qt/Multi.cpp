@@ -41,6 +41,7 @@ Multi::Multi(QWidget *parent) :
     selectedServer.unique_code.clear();
     selectedServer.isCustom=false;
     displayServerList();
+    ui->warning->setVisible(false);
 
     if(!connect(ui->server_add,&QPushButton::clicked,this,&Multi::server_add_clicked))
         abort();
@@ -207,7 +208,7 @@ void Multi::server_add_finished()
     if(!Settings::settings.isWritable())
     {
         ui->warning->setText(tr("Option is not writable"));
-        ui->warning->setVisible(false);
+        ui->warning->setVisible(true);
     }
     #ifdef __EMSCRIPTEN__
     std::cerr << "AddOrEditServer returned" <<  std::endl;
@@ -340,7 +341,9 @@ void Multi::httpFinished()
         return;
     }
     std::cout << "Got new server list" << std::endl;
-    ui->warning->setVisible(false);
+    ui->warning->setVisible(true);
+    ui->warning->setText(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first());
+
     QByteArray content=reply->readAll();
     QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     QDir().mkpath(wPath);
