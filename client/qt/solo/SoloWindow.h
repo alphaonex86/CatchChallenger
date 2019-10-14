@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QAbstractSocket>
-#include <QSettings>
 #include <QTimer>
 #include <QDateTime>
 #include <QSpacerItem>

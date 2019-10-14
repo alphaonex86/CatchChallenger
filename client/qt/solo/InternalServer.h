@@ -1,5 +1,4 @@
 #include <QString>
-#include <QSettings>
 #include <QTimer>
 
 #include "../../../server/base/ServerStructures.h"
@@ -20,7 +19,7 @@ class InternalServer : public QtServer
     Q_OBJECT
 public:
     /// \param settings ref is destroyed after this call
-    explicit InternalServer(QSettings &settings);
+    explicit InternalServer();
     virtual ~InternalServer();
 private slots:
     //starting function

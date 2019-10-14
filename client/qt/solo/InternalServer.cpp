@@ -12,21 +12,22 @@
 #include "InternalServer.h"
 #include "../../../server/base/GlobalServerData.h"
 #include "../../../general/base/FacilityLib.h"
+#include "../Settings.h"
 
 using namespace CatchChallenger;
 
 /// \param settings ref is destroyed after this call
-InternalServer::InternalServer(QSettings &settings) :
+InternalServer::InternalServer() :
     QtServer()
 {
     if(!connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection))
         abort();
     const QString &currentDate=QDateTime::currentDateTime().toString("ddMMyyyy");
-    if(settings.contains("gift"))
+    if(Settings::settings.contains("gift"))
     {
-        if(settings.value("gift")!=currentDate)
+        if(Settings::settings.value("gift")!=currentDate)
         {
-            settings.setValue("gift",currentDate);
+            Settings::settings.setValue("gift",currentDate);
             timerGift.setInterval(1000);
             timerGift.setSingleShot(true);
             if(!connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady,Qt::QueuedConnection))
@@ -36,7 +37,7 @@ InternalServer::InternalServer(QSettings &settings) :
         }
     }
     else
-        settings.setValue("gift",currentDate);
+        Settings::settings.setValue("gift",currentDate);
 }
 
 void InternalServer::serverIsReady()

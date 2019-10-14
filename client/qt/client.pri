@@ -8,7 +8,6 @@ DEFINES += CATCHCHALLENGER_CLIENT
 
 wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 android: DEFINES += CATCHCHALLENGER_NOAUDIO
-DEFINES += CATCHCHALLENGER_NOAUDIO
 # see the file ClientVariableAudio.h
 #DEFINES += CATCHCHALLENGER_NOAUDIO
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
@@ -51,6 +50,7 @@ android: {
 }
 
 SOURCES += \
+    $$PWD/Settings.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/ObjectGroupItem.cpp \
     $$PWD/render/MapVisualiserPlayer.cpp \
@@ -124,7 +124,6 @@ SOURCES += \
     $$PWD/GameLoaderThread.cpp \
     $$PWD/MainScreen.cpp \
     $$PWD/CCTitle.cpp \
-    $$PWD/Settings.cpp \
     $$PWD/OptionsDialog.cpp \
     $$PWD/Solo.cpp \
     $$PWD/Multi.cpp \
@@ -134,6 +133,7 @@ SOURCES += \
     $$PWD/ConnexionManager.cpp
 
 HEADERS  += \
+    $$PWD/Settings.h \
     $$PWD/render/TileLayerItem.h \
     $$PWD/render/ObjectGroupItem.h \
     $$PWD/render/MapVisualiserPlayer.h \
@@ -190,7 +190,6 @@ HEADERS  += \
     $$PWD/GameLoaderThread.h \
     $$PWD/MainScreen.h \
     $$PWD/CCTitle.h \
-    $$PWD/Settings.h \
     $$PWD/OptionsDialog.h \
     $$PWD/Solo.h \
     $$PWD/Multi.h \

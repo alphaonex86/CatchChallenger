@@ -8,6 +8,7 @@
 #include <QFontDatabase>
 #include <QHBoxLayout>
 #include <QStyleFactory>
+#include "qt/Options.h"
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +49,7 @@ int main(int argc, char *argv[])
     if(w.toQuit)
         return 523;
     w.show();*/
+    Options::options.loadVar();
 
     ScreenTransition s;
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
