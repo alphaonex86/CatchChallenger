@@ -7,6 +7,7 @@ class Settings
 {
 public:
     Settings();
+    // /data/user/0/org.qtprojet.example.catchchallenger/files
     static QSettings settings;
 };
 
