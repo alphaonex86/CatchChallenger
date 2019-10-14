@@ -3,38 +3,27 @@
 #include "PlatformMacro.h"
 #include "../../general/base/GeneralVariable.h"
 #include "../../general/base/cpp11addition.h"
+#include "Settings.h"
 #include <QCoreApplication>
-#include <QSettings>
 #include <iostream>
 
 Audio Audio::audio;
 
 Audio::Audio()
 {
-    QSettings settings;
-    if(!settings.contains(QStringLiteral("audio_init")) || settings.value(QStringLiteral("audio_init")).toInt()==2)
-    {
-        settings.setValue(QStringLiteral("audio_init"),1);
-        settings.sync();
+    //init audio here
+    m_format.setSampleRate(48000);
+    m_format.setChannelCount(2);
+    m_format.setSampleSize(16);
+    m_format.setCodec("audio/pcm");
+    m_format.setByteOrder(QAudioFormat::LittleEndian);
+    m_format.setSampleType(QAudioFormat::SignedInt);
 
-        //init audio here
-        m_format.setSampleRate(48000);
-        m_format.setChannelCount(2);
-        m_format.setSampleSize(16);
-        m_format.setCodec("audio/pcm");
-        m_format.setByteOrder(QAudioFormat::LittleEndian);
-        m_format.setSampleType(QAudioFormat::SignedInt);
-
-        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-        if (!info.isFormatSupported(m_format)) {
-            std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
-            return;
-        }
-
-        settings.setValue(QStringLiteral("audio_init"),2);
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(m_format)) {
+        std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
+        return;
     }
-    else
-        std::cerr << "Audio disabled due to previous crash" << std::endl;
 }
 
 QAudioFormat Audio::format() const

@@ -8,7 +8,6 @@
 #include <vector>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QSettings>
 #include <QVBoxLayout>
 #include "CCWidget.h"
 
@@ -88,7 +87,6 @@ private:
 
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
-    QSettings settings;
 signals:
     void backMain();
     void setAbove(QWidget *widget);//first plan popup

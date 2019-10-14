@@ -10,7 +10,6 @@
 #include <QWidget>
 #include <QMessageBox>
 #include <QAbstractSocket>
-#include <QSettings>
 #include <QTimer>
 #include <QTime>
 #include <QListWidgetItem>
@@ -580,7 +579,6 @@ private:
     QTimer updateRXTXTimer;
     uint64_t previousRXSize,previousTXSize;
     std::string toHtmlEntities(std::string text);
-    QSettings settings;
     bool haveShowDisconnectionReason;
     std::string toSmilies(std::string text);
     std::vector<std::string> server_list;

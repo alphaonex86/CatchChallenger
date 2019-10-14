@@ -20,6 +20,7 @@
 #include <QNetworkRequest>
 #include <QDir>
 #include "Login.h"
+#include "Settings.h"
 
 Multi::Multi(QWidget *parent) :
     QWidget(parent),
@@ -388,36 +389,36 @@ void Multi::saveConnexionInfoList()
 
         if(connexionInfo.isCustom)
         {
-            settings.beginGroup(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
+            Settings::settings.beginGroup(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
             if(!connexionInfo.ws.isEmpty())
             {
-                settings.setValue(QStringLiteral("ws"),connexionInfo.ws);
-                settings.remove("host");
-                settings.remove("port");
+                Settings::settings.setValue(QStringLiteral("ws"),connexionInfo.ws);
+                Settings::settings.remove("host");
+                Settings::settings.remove("port");
             }
             else {
-                settings.setValue(QStringLiteral("host"),connexionInfo.host);
-                settings.setValue(QStringLiteral("port"),connexionInfo.port);
-                settings.remove("ws");
+                Settings::settings.setValue(QStringLiteral("host"),connexionInfo.host);
+                Settings::settings.setValue(QStringLiteral("port"),connexionInfo.port);
+                Settings::settings.remove("ws");
             }
-            settings.setValue(QStringLiteral("name"),connexionInfo.name);
+            Settings::settings.setValue(QStringLiteral("name"),connexionInfo.name);
         }
         else
-            settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo.unique_code));
+            Settings::settings.beginGroup(QStringLiteral("Xml-%1").arg(connexionInfo.unique_code));
         if(connexionInfo.connexionCounter>0)
-            settings.setValue(QStringLiteral("connexionCounter"),connexionInfo.connexionCounter);
+            Settings::settings.setValue(QStringLiteral("connexionCounter"),connexionInfo.connexionCounter);
         else
-            settings.remove(QStringLiteral("connexionCounter"));
+            Settings::settings.remove(QStringLiteral("connexionCounter"));
         if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
-            settings.setValue(QStringLiteral("lastConnexion"),connexionInfo.lastConnexion);
+            Settings::settings.setValue(QStringLiteral("lastConnexion"),connexionInfo.lastConnexion);
         else
-            settings.remove(QStringLiteral("lastConnexion"));
-        settings.setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);
-        settings.setValue(QStringLiteral("proxyPort"),connexionInfo.proxyPort);
-        settings.endGroup();
+            Settings::settings.remove(QStringLiteral("lastConnexion"));
+        Settings::settings.setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);
+        Settings::settings.setValue(QStringLiteral("proxyPort"),connexionInfo.proxyPort);
+        Settings::settings.endGroup();
         index++;
     }
-    settings.sync();
+    Settings::settings.sync();
 }
 
 void Multi::serverListEntryEnvoluedDoubleClicked()
@@ -547,10 +548,10 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
                     lang = lang->NextSiblingElement("lang");
                 }
             }
-            settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
-            if(settings.contains(QStringLiteral("connexionCounter")))
+            Settings::settings.beginGroup(QStringLiteral("Xml-%1").arg(server->Attribute("unique_code")));
+            if(Settings::settings.contains(QStringLiteral("connexionCounter")))
             {
-                connexionInfo.connexionCounter=settings.value("connexionCounter").toUInt(&ok);
+                connexionInfo.connexionCounter=Settings::settings.value("connexionCounter").toUInt(&ok);
                 if(!ok)
                     connexionInfo.connexionCounter=0;
             }
@@ -558,22 +559,22 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
                 connexionInfo.connexionCounter=0;
 
             //proxy
-            if(settings.contains(QStringLiteral("proxyPort")))
+            if(Settings::settings.contains(QStringLiteral("proxyPort")))
             {
-                connexionInfo.proxyPort=static_cast<uint16_t>(settings.value("proxyPort").toUInt(&ok));
+                connexionInfo.proxyPort=static_cast<uint16_t>(Settings::settings.value("proxyPort").toUInt(&ok));
                 if(!ok)
                     connexionInfo.proxyPort=9050;
             }
             else
                 connexionInfo.proxyPort=9050;
-            if(settings.contains(QStringLiteral("proxyHost")))
-                connexionInfo.proxyHost=settings.value(QStringLiteral("proxyHost")).toString();
+            if(Settings::settings.contains(QStringLiteral("proxyHost")))
+                connexionInfo.proxyHost=Settings::settings.value(QStringLiteral("proxyHost")).toString();
             else
                 connexionInfo.proxyHost=QString();
 
-            if(settings.contains(QStringLiteral("lastConnexion")))
+            if(Settings::settings.contains(QStringLiteral("lastConnexion")))
             {
-                connexionInfo.lastConnexion=settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
+                connexionInfo.lastConnexion=Settings::settings.value(QStringLiteral("lastConnexion")).toUInt(&ok);
                 if(!ok)
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
             }
@@ -581,7 +582,7 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
                 connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
             //name
-            settings.endGroup();
+            Settings::settings.endGroup();
             if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
                 connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
             returnedVar.push_back(connexionInfo);
@@ -626,40 +627,40 @@ bool Multi::ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
 std::vector<Multi::ConnexionInfo> Multi::loadConfigConnexionInfoList()
 {
     std::vector<ConnexionInfo> returnedVar;
-    QStringList groups=settings.childGroups();
+    QStringList groups=Settings::settings.childGroups();
     int index=0;
     while(index<groups.size())
     {
         const QString &groupName=groups.at(index);
-        settings.beginGroup(groupName);
-        if((settings.contains("host") && settings.contains("port")) || settings.contains("ws"))
+        Settings::settings.beginGroup(groupName);
+        if((Settings::settings.contains("host") && Settings::settings.contains("port")) || Settings::settings.contains("ws"))
         {
             QString ws="";
-            if(settings.contains("ws"))
-                ws=settings.value("ws").toString();
+            if(Settings::settings.contains("ws"))
+                ws=Settings::settings.value("ws").toString();
             QString Shost="";
-            if(settings.contains("host"))
-                Shost=settings.value("host").toString();
+            if(Settings::settings.contains("host"))
+                Shost=Settings::settings.value("host").toString();
             QString port_string="";
-            if(settings.contains("port"))
-                port_string=settings.value("port").toString();
+            if(Settings::settings.contains("port"))
+                port_string=Settings::settings.value("port").toString();
 
             QString name="";
-            if(settings.contains("name"))
-                name=settings.value("name").toString();
+            if(Settings::settings.contains("name"))
+                name=Settings::settings.value("name").toString();
             QString connexionCounter="0";
-            if(settings.contains("connexionCounter"))
-                connexionCounter=settings.value("connexionCounter").toString();
+            if(Settings::settings.contains("connexionCounter"))
+                connexionCounter=Settings::settings.value("connexionCounter").toString();
             QString lastConnexion="0";
-            if(settings.contains("lastConnexion"))
-                lastConnexion=settings.value("lastConnexion").toString();
+            if(Settings::settings.contains("lastConnexion"))
+                lastConnexion=Settings::settings.value("lastConnexion").toString();
 
             QString proxyHost="";
-            if(settings.contains("proxyHost"))
-                proxyHost=settings.value("proxyHost").toString();
+            if(Settings::settings.contains("proxyHost"))
+                proxyHost=Settings::settings.value("proxyHost").toString();
             QString proxyPort="0";
-            if(settings.contains("proxyPort"))
-                proxyPort=settings.value("proxyPort").toString();
+            if(Settings::settings.contains("proxyPort"))
+                proxyPort=Settings::settings.value("proxyPort").toString();
 
             bool ok=true;
             ConnexionInfo connexionInfo;
@@ -726,7 +727,7 @@ std::vector<Multi::ConnexionInfo> Multi::loadConfigConnexionInfoList()
         else
             qDebug() << "dropped connexion, info seam wrong";
         index++;
-        settings.endGroup();
+        Settings::settings.endGroup();
     }
     return returnedVar;
 }
@@ -783,19 +784,19 @@ void Multi::server_select_clicked()
     if(!connect(login,&QDialog::rejected,this,&Multi::server_select_finished))
         abort();
     if(selectedServer.isCustom)
-        settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
+        Settings::settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
     else
-        settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
-    if(settings.contains("last"))
+        Settings::settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
+    if(Settings::settings.contains("last"))
     {
-        const QString loginString=settings.value("last").toString();
+        const QString loginString=Settings::settings.value("last").toString();
         login->setLogin(loginString);
-        settings.beginGroup("auth");
-        if(settings.contains(loginString))
-            login->setPass(settings.value(loginString).toString());
-        settings.endGroup();
+        Settings::settings.beginGroup("auth");
+        if(Settings::settings.contains(loginString))
+            login->setPass(Settings::settings.value(loginString).toString());
+        Settings::settings.endGroup();
     }
-    settings.endGroup();
+    Settings::settings.endGroup();
     emit setAbove(login);
 }
 
@@ -811,19 +812,19 @@ void Multi::server_select_finished()
     #endif
 
     if(selectedServer.isCustom)
-        settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
+        Settings::settings.beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
     else
-        settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
+        Settings::settings.beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
     const QString loginString=login->getLogin();
-    settings.setValue("last",loginString);
+    Settings::settings.setValue("last",loginString);
     if(login->getRememberPassword())
     {
-        settings.beginGroup("auth");
-        settings.setValue(loginString,login->getPass());
-        settings.endGroup();
+        Settings::settings.beginGroup("auth");
+        Settings::settings.setValue(loginString,login->getPass());
+        Settings::settings.endGroup();
     }
-    settings.endGroup();
-    settings.sync();
+    Settings::settings.endGroup();
+    Settings::settings.sync();
     unsigned int index=0;
     while(index<mergedConnexionInfoList.size())
     {

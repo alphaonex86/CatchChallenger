@@ -2,7 +2,6 @@
 #define OPTIONS_H
 
 #include <QObject>
-#include <QSettings>
 #include <QStringList>
 
 class Options : public QObject
@@ -13,6 +12,7 @@ private:
     ~Options();
 public:
     static Options options;
+    void loadVar();
     uint16_t getFPS() const;
     bool getLimitedFPS() const;
     uint16_t getFinalFPS() const;
@@ -45,7 +45,6 @@ private:
     std::string language;
     int indexDevice;
     QStringList devices;
-    QSettings settings;
 };
 
 #endif // OPTIONS_H
