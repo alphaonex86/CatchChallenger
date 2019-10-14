@@ -50,6 +50,12 @@
      </item>
      <item>
       <widget class="QScrollArea" name="scrollArea">
+       <property name="minimumSize">
+        <size>
+         <width>280</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="styleSheet">
         <string notr="true">#scrollArea{background-color: rgb(119, 151, 255,0);}</string>
        </property>
@@ -59,9 +65,9 @@
        <widget class="QWidget" name="scrollAreaWidgetContents">
         <property name="geometry">
          <rect>
-          <x>-60</x>
+          <x>0</x>
           <y>0</y>
-          <width>197</width>
+          <width>278</width>
           <height>330</height>
          </rect>
         </property>
