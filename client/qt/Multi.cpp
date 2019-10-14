@@ -207,7 +207,7 @@ void Multi::server_add_finished()
         return;
     if(!Settings::settings.isWritable())
     {
-        ui->warning->setText(tr("Option is not writable"));
+        ui->warning->setText(tr("Option is not writable")+": "+QString::number(Settings::settings.status()));
         ui->warning->setVisible(true);
     }
     #ifdef __EMSCRIPTEN__
