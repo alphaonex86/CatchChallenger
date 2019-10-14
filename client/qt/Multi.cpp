@@ -204,6 +204,11 @@ void Multi::server_add_finished()
         return;
     if(!addServer->isOk())
         return;
+    if(!Settings::settings.isWritable())
+    {
+        ui->warning->setText(tr("Option is not writable"));
+        ui->warning->setVisible(false);
+    }
     #ifdef __EMSCRIPTEN__
     std::cerr << "AddOrEditServer returned" <<  std::endl;
     #endif
