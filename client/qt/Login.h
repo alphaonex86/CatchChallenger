@@ -25,6 +25,8 @@ private slots:
     void on_cancel_clicked();
     void on_lineEditLogin_returnPressed();
     void on_lineEditPass_returnPressed();
+    void on_toolButton_triggered(QAction *);
+    void on_toolButton_toggled(bool);
 private:
     Ui::Login *ui;
     bool ok;
