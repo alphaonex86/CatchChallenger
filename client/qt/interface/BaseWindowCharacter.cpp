@@ -251,7 +251,8 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
 
 void BaseWindow::updateServerList()
 {
-    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();//do a crash due to reference
+    //const std::vector<ServerFromPoolForDisplay> serverOrdenedList=client->getServerOrdenedList();
     //do the grouping for characterGroup count
     {
         serverByCharacterGroup.clear();

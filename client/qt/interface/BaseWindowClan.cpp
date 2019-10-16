@@ -72,7 +72,8 @@ void BaseWindow::clanDissolved()
 
 void BaseWindow::updateClanDisplay()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();//do a crash due to reference
+    //const CatchChallenger::Player_private_and_public_informations playerInformations=client->get_player_informations_ro();
     ui->tabWidgetTrainerCard->setTabEnabled(4,playerInformations.clan!=0);
     ui->clanGrouBoxNormal->setVisible(!playerInformations.clan_leader);
     ui->clanGrouBoxLeader->setVisible(playerInformations.clan_leader);
