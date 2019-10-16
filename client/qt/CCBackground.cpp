@@ -16,6 +16,7 @@ CCBackground::CCBackground(QWidget *parent) :
     connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
     connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
     connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
+    startAnimation();
 }
 
 void CCBackground::startAnimation()
