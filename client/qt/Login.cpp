@@ -117,3 +117,19 @@ void Login::on_pushButtonTryLogin_clicked()
     ok=true;
     accept();
 }
+
+void Login::on_toolButton_triggered(QAction *)
+{
+    if(ui->lineEditPass->echoMode()==QLineEdit::EchoMode::Password)
+        ui->lineEditPass->setEchoMode(QLineEdit::EchoMode::Normal);
+    else
+        ui->lineEditPass->setEchoMode(QLineEdit::EchoMode::Password);
+}
+
+void Login::on_toolButton_toggled(bool)
+{
+    if(ui->lineEditPass->echoMode()==QLineEdit::EchoMode::Password)
+        ui->lineEditPass->setEchoMode(QLineEdit::EchoMode::Normal);
+    else
+        ui->lineEditPass->setEchoMode(QLineEdit::EchoMode::Password);
+}
