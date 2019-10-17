@@ -265,8 +265,8 @@ void EpollPostgresql::syncDisconnect()
     }
     if(!setBlocking(0))
     {
-       std::cerr << "pg blocking error" << std::endl;
-       return;
+       std::cerr << "pg blocking error: errno: " << errno << std::endl;
+       //return; continue to try again
     }
     PQfinish(conn);
     conn=NULL;

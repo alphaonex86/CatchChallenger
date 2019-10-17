@@ -770,13 +770,15 @@ int main(int argc, char *argv[])
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         client->tryReconnect();
-                        continue;
                     }
-                    //ready to read
-                    if(events[i].events & EPOLLIN)
-                        client->parseIncommingData();
-                    if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
-                        client->tryReconnect();
+                    else
+                    {
+                        //ready to read
+                        if(events[i].events & EPOLLIN)
+                            client->parseIncommingData();
+                        if(events[i].events & EPOLLHUP || events[i].events & EPOLLRDHUP)
+                            client->tryReconnect();
+                    }
                 }
                 break;
                 #endif

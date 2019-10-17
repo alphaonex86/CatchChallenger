@@ -474,10 +474,10 @@ void MainWindow::load_settings()
 
         //rates
         settings->beginGroup("rates");
-        CommonSettingsServer::commonSettingsServer.rates_xp             = stringtodouble(settings->value("xp_normal"));
-        CommonSettingsServer::commonSettingsServer.rates_gold			= stringtodouble(settings->value("gold_normal"));
-        CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtodouble(settings->value("xp_pow_normal"));
-        CommonSettingsServer::commonSettingsServer.rates_drop			= stringtodouble(settings->value("drop_normal"));
+        CommonSettingsServer::commonSettingsServer.rates_xp             = stringtodouble(settings->value("xp_normal"))*1000;
+        CommonSettingsServer::commonSettingsServer.rates_gold			= stringtodouble(settings->value("gold_normal"))*1000;
+        CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtodouble(settings->value("xp_pow_normal"))*1000;
+        CommonSettingsServer::commonSettingsServer.rates_drop			= stringtodouble(settings->value("drop_normal"))*1000;
         //formatedServerSettings.rates_xp_premium                         = stringtodouble(settings->value("xp_premium"));
         //formatedServerSettings.rates_gold_premium                       = stringtodouble(settings->value("gold_premium"));
         /*CommonSettingsCommon::commonSettingsCommon.rates_shiny		= stringtodouble(settings->value("shiny_normal"));
@@ -938,10 +938,10 @@ void MainWindow::load_settings()
     }
 
     {
-        ui->rates_xp_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_xp);
-        ui->rates_gold_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_gold);
-        ui->rates_xp_pow_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
-        ui->rates_drop_normal->setValue(CommonSettingsServer::commonSettingsServer.rates_drop);
+        ui->rates_xp_normal->setValue((float)CommonSettingsServer::commonSettingsServer.rates_xp/1000.0);
+        ui->rates_gold_normal->setValue((float)CommonSettingsServer::commonSettingsServer.rates_gold/1000.0);
+        ui->rates_xp_pow_normal->setValue((float)CommonSettingsServer::commonSettingsServer.rates_xp_pow/1000.0);
+        ui->rates_drop_normal->setValue((float)CommonSettingsServer::commonSettingsServer.rates_drop/1000.0);
     }
 
     {
@@ -1086,10 +1086,10 @@ void MainWindow::send_settings()
     formatedServerSettings.compressionLevel                     = ui->compressionLevel->value();
 
     //rates
-    CommonSettingsServer::commonSettingsServer.rates_xp			= ui->rates_xp_normal->value();
-    CommonSettingsServer::commonSettingsServer.rates_gold		= ui->rates_gold_normal->value();
-    CommonSettingsServer::commonSettingsServer.rates_xp_pow     = ui->rates_xp_pow_normal->value();
-    CommonSettingsServer::commonSettingsServer.rates_drop		= ui->rates_drop_normal->value();
+    CommonSettingsServer::commonSettingsServer.rates_xp			= ui->rates_xp_normal->value()*1000;
+    CommonSettingsServer::commonSettingsServer.rates_gold		= ui->rates_gold_normal->value()*1000;
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow     = ui->rates_xp_pow_normal->value()*1000;
+    CommonSettingsServer::commonSettingsServer.rates_drop		= ui->rates_drop_normal->value()*1000;
 
     //chat allowed
     CommonSettingsServer::commonSettingsServer.chat_allow_all		= ui->chat_allow_all->isChecked();

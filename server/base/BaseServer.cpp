@@ -78,12 +78,13 @@ BaseServer::BaseServer() :
     CommonSettingsCommon::commonSettingsCommon.max_pseudo_size        = 20;
     CommonSettingsCommon::commonSettingsCommon.character_delete_time  = 604800; // 7 day
     #endif
-    CommonSettingsServer::commonSettingsServer.rates_gold             = 1.0;
-    CommonSettingsServer::commonSettingsServer.rates_drop             = 1.0;
-    CommonSettingsServer::commonSettingsServer.rates_xp               = 1.0;
-    CommonSettingsServer::commonSettingsServer.rates_xp_pow           = 1.0;
+    CommonSettingsServer::commonSettingsServer.rates_gold             = 1000;//this is value *1000, then 1.0
+    CommonSettingsServer::commonSettingsServer.rates_drop             = 1000;//this is value *1000, then 1.0
+    CommonSettingsServer::commonSettingsServer.rates_xp               = 1000;//this is value *1000, then 1.0
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow           = 1000;//this is value *1000, then 1.0
     CommonSettingsServer::commonSettingsServer.factoryPriceChange     = 20;
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=30;
+    CommonSettingsServer::commonSettingsServer.everyBodyIsRoot           = false;//this is value *1000, then 1.0
     GlobalServerData::serverSettings.fightSync                         = GameServerSettings::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.positionTeleportSync              = true;
     GlobalServerData::serverSettings.secondToPositionSync              = 0;

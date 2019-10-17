@@ -4,7 +4,7 @@ git pull
 cd /home/user/
 mkdir /home/user/build && cd /home/user/build
 qmake -r /home/user/src/client/catchchallenger.pro CONFIG+=debug ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so
-qmake -r /home/user/src/client/catchchallenger.pro ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so
+#qmake -r /home/user/src/client/catchchallenger.pro ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so
 make -j5
 make install INSTALL_ROOT=/home/user/build/dist/
 #make install INSTALL_ROOT=/home/user/dist/

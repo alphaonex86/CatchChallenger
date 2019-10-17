@@ -127,7 +127,7 @@ public:
     };
     MapController *mapController;
 protected:
-    void changeEvent(QEvent *e);
+    void changeEvent(QEvent *e) override;
     //static void customMessageHandler(QtMsgType type, const QMessageLogContext &context, const std::string &msg);
     static QFile debugFile;
     static uint8_t debugFileStatus;

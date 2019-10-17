@@ -47,6 +47,7 @@ LinkToMaster::LinkToMaster(
         index++;
     }
     memset(LinkToMaster::queryNumberToCharacterGroup,0x00,sizeof(LinkToMaster::queryNumberToCharacterGroup));
+    reconnectTime=0;
 }
 
 LinkToMaster::~LinkToMaster()
@@ -77,7 +78,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
     const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(socketFd<0)
     {
-        std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
+        std::cerr << "ERROR opening socket to master server at tryConnect() (abort), errno: " << errno << std::endl;
         abort();
     }
     //resolv again the dns
@@ -97,6 +98,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         return -1;
     }
 
+    std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... -1" << std::endl;
     for (rp = result; rp != NULL; rp = rp->ai_next) {
         sfd = socket(rp->ai_family, rp->ai_socktype,
                      rp->ai_protocol);
@@ -128,6 +130,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             }
             std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 4" << std::endl;
         }
+        std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 5" << std::endl;
         if(connStatusType>=0)
         {
             std::cout << "Connected to master server" << std::endl;
@@ -136,6 +139,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
             freeaddrinfo(result);
             return sfd;
         }
+        std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 6" << std::endl;
 
         ::close(sfd);
     }
@@ -206,7 +210,7 @@ void LinkToMaster::connectInternal()
     LinkToMaster::linkToMasterSocketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(LinkToMaster::linkToMasterSocketFd<0)
     {
-        std::cerr << "ERROR opening socket to master server (abort)" << std::endl;
+        std::cerr << "ERROR opening socket to master server at connectInternal (abort), errno: " << errno << std::endl;
         abort();
     }
     EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
@@ -219,7 +223,7 @@ void LinkToMaster::connectInternal()
         return;
     }
     haveTheFirstSslHeader=false;
-    if(connStatusType==0)
+    if(connStatusType>=0)
     {
         stat=Stat::Connected;
         std::cout << "(Re)Connected to master" << std::endl;
@@ -260,6 +264,7 @@ void LinkToMaster::readTheFirstSslHeader()
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
     EpollSocket::make_non_blocking(LinkToMaster::linkToMasterSocketFd);
+    reconnectTime=0;
     sendProtocolHeader();
 }
 
@@ -377,6 +382,12 @@ void LinkToMaster::tryReconnect()
     else
     {
         std::cout << "Try reconnect to master..." << std::endl;
+        if(reconnectTime<=0)
+            reconnectTime=50;
+        std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
+        reconnectTime+=500;
+        if(reconnectTime>600*1000)
+            reconnectTime=600*1000;
         do
         {
             stat=Stat::Connecting;

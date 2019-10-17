@@ -303,7 +303,12 @@ int main(int argc, char *argv[])
                     //ready to read
                     client->parseIncommingData();
                     if(events[i].events & EPOLLRDHUP)
+                    {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        std::cerr << "master link epoll EPOLLRDHUP: " << events[i].events << std::endl;
+                        #endif
                         client->tryReconnect();
+                    }
                 }
                 break;
                 case BaseClassSwitch::EpollObjectType::GameLink:

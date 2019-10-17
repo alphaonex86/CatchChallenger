@@ -106,8 +106,10 @@ void CommonDatapackServerSpec::applyMonstersRate()
     for(const auto& n : CommonDatapack::commonDatapack.monsters) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters[n.first];
         monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
+        monster.give_xp/=1000;
         monster.give_sp*=CommonSettingsServer::commonSettingsServer.rates_xp;
-        monster.powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+        monster.give_xp/=1000;
+        monster.powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)/1000;
         monster.level_to_xp.clear();
         int index=0;
         while(index<CATCHCHALLENGER_MONSTER_LEVEL_MAX)

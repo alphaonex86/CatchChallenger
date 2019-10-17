@@ -17,6 +17,7 @@ public:
     bool autoLearn;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
+    bool everyBodyIsRoot;
     uint32_t waitBeforeConnectAfterKick;
     std::vector<char> datapackHashServerMain;
     std::vector<char> datapackHashServerSub;
@@ -27,10 +28,10 @@ public:
     std::string exportedXml;
 
     //rates
-    float rates_xp;
-    float rates_xp_pow;
-    float rates_drop;
-    float rates_gold;
+    uint32_t rates_xp;//*1000 of real rate
+    uint32_t rates_xp_pow;//*1000 of real rate
+    uint32_t rates_drop;//*1000 of real rate
+    uint32_t rates_gold;//*1000 of real rate
 
     //chat allowed
     bool chat_allow_all;

@@ -117,6 +117,7 @@ void MapControllerMP::updateScale()
 
 void MapControllerMP::resizeEvent(QResizeEvent *event)
 {
+    Q_UNUSED(event);
     updateScale();
 }
 

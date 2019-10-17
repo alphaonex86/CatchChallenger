@@ -305,7 +305,7 @@ signals:
     void QtmarketWithdrawMonster(const PlayerMonster &playerMonster);
 
 public:
-    std::string getLanguage() const;
+    std::string getLanguage() const override;
 protected:
     ConnectedSocket *socket;
 };
