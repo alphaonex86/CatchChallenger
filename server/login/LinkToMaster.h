@@ -42,6 +42,7 @@ public:
     std::string httpDatapackMirror;
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
+    unsigned int reconnectTime;
 
     static LinkToMaster *linkToMaster;
     static int linkToMasterSocketFd;

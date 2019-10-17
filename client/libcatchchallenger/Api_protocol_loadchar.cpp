@@ -131,34 +131,34 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     pos+=sizeof(uint8_t);
 
 
-    if((size-pos)<(int)sizeof(float))
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_xp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.rates_xp=*reinterpret_cast<const float *>(data+pos);
-    pos+=sizeof(float);
-    if((size-pos)<(int)sizeof(float))
+    CommonSettingsServer::commonSettingsServer.rates_xp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos))/1000;
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_gold, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.rates_gold=*reinterpret_cast<const float *>(data+pos);
-    pos+=sizeof(float);
-    if((size-pos)<(int)sizeof(float))
+    CommonSettingsServer::commonSettingsServer.rates_gold=le32toh(*reinterpret_cast<const uint32_t *>(data+pos))/1000;
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the chat_allow_all, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.rates_xp_pow=*reinterpret_cast<const float *>(data+pos);
-    pos+=sizeof(float);
-    if((size-pos)<(int)sizeof(float))
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow=le32toh(*reinterpret_cast<const uint32_t *>(data+pos))/1000;
+    pos+=sizeof(uint32_t);
+    if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_gold, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    CommonSettingsServer::commonSettingsServer.rates_drop=*reinterpret_cast<const float *>(data+pos);
-    pos+=sizeof(float);
+    CommonSettingsServer::commonSettingsServer.rates_drop=le32toh(*reinterpret_cast<const uint32_t *>(data+pos))/1000;
+    pos+=sizeof(uint32_t);
 
     if((size-pos)<(int)sizeof(uint8_t))
     {
@@ -322,6 +322,13 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
         else
             CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.clear();
     }
+    if((size-pos)<(int)sizeof(uint8_t))
+    {
+        parseError("Procotol wrong or corrupted",std::string("wrong size to get the rates_gold, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        return false;
+    }
+    CommonSettingsServer::commonSettingsServer.everyBodyIsRoot=data[pos];
+    pos+=sizeof(uint8_t);
     haveDatapackMainSubCode();
 
     if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())//for bit array

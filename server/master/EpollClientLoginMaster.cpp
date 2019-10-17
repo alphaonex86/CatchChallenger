@@ -9,6 +9,8 @@
 
 using namespace CatchChallenger;
 
+std::unordered_set<std::string> EpollClientLoginMaster::wrongProtocolEmited;
+
 EpollClientLoginMaster::EpollClientLoginMaster(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx

@@ -170,7 +170,7 @@ std::unordered_map<uint16_t,BotFight> FightLoader::loadFight(const std::string &
                         {
                             if(gain->Attribute("cash")!=NULL)
                             {
-                                const uint32_t &cash=stringtouint32(gain->Attribute("cash"),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold;
+                                const uint32_t &cash=stringtouint32(gain->Attribute("cash"),&ok)*CommonSettingsServer::commonSettingsServer.rates_gold/1000;
                                 if(ok)
                                     botFight.cash+=cash;
                                 else

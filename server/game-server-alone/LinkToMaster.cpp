@@ -28,6 +28,8 @@ LinkToMaster *LinkToMaster::linkToMaster=NULL;
 int LinkToMaster::linkToMasterSocketFd=-1;
 bool LinkToMaster::haveTheFirstSslHeader=false;
 sockaddr_in LinkToMaster::serv_addr;
+char LinkToMaster::host[];
+uint16_t LinkToMaster::port=0;
 
 LinkToMaster::LinkToMaster(
         #ifdef SERVERSSL
@@ -58,6 +60,7 @@ LinkToMaster::LinkToMaster(
         queryNumberList[index]=index;
         index++;
     }
+    reconnectTime=0;
 }
 
 LinkToMaster::~LinkToMaster()
@@ -77,6 +80,15 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         abort();
     }
 
+    //don't cache this
+    {
+        const size_t &size=strlen(host)+1;
+        if(size>255)
+            memcpy(LinkToMaster::host,host,256);
+        else
+            memcpy(LinkToMaster::host,host,size);
+        LinkToMaster::port=port;
+    }
     LinkToMaster::linkToMasterSocketFd=-1;
 
     const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
@@ -220,14 +232,14 @@ void LinkToMaster::connectInternal()
     }
     EpollClient::reopen(LinkToMaster::linkToMasterSocketFd);
 
-    int connStatusType=::connect(LinkToMaster::linkToMasterSocketFd,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
+    int connStatusType=tryConnect(host,port,1,1);
     if(connStatusType<0)
     {
         stat=Stat::Unconnected;
         return;
     }
     haveTheFirstSslHeader=false;
-    if(connStatusType==0)
+    if(connStatusType>=0)
     {
         stat=Stat::Connected;
         std::cout << "(Re)Connected to master" << std::endl;
@@ -273,6 +285,7 @@ void LinkToMaster::readTheFirstSslHeader()
         std::cerr << "unable to make to socket non blocking" << std::endl;
         abort();
     }*/
+    reconnectTime=0;
     sendProtocolHeader();
 }
 
@@ -627,6 +640,12 @@ void LinkToMaster::tryReconnect()
     else
     {
         std::cout << "Try reconnect to master..." << std::endl;
+        if(reconnectTime<=0)
+            reconnectTime=50;
+        std::this_thread::sleep_for(std::chrono::milliseconds(reconnectTime));
+        reconnectTime+=500;
+        if(reconnectTime>600*1000)
+            reconnectTime=600*1000;
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
         if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
