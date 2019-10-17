@@ -229,6 +229,7 @@ int main(int argc, char *argv[])
                                     client->socketString+=sbuf;
                                     //always concat to ": "
                                     client->socketString+=": ";
+                                    client->ip=hbuf;
                                 }
                             }
                             epoll_event event;

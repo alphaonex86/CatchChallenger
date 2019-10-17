@@ -373,34 +373,34 @@ void ConnexionManager::error(QAbstractSocket::SocketError socketError)
     break;
     default:
         QMessageBox::information(this,tr("Connection error"),tr("Connection error: %1").arg(socketError)+additionalText);*/
-            qDebug() << tr("Connection closed by the server")+additionalText;
+            errorString((tr("Connection closed by the server")+additionalText).toStdString());
         break;
         case QAbstractSocket::ConnectionRefusedError:
-            qDebug() << tr("Connection refused by the server")+additionalText;
+            errorString((tr("Connection refused by the server")+additionalText).toStdString());
         break;
         case QAbstractSocket::SocketTimeoutError:
-            qDebug() << tr("Socket time out, server too long")+additionalText;
+            errorString((tr("Socket time out, server too long")+additionalText).toStdString());
         break;
         case QAbstractSocket::HostNotFoundError:
-            qDebug() << tr("The host address was not found")+additionalText;
+            errorString((tr("The host address was not found")+additionalText).toStdString());
         break;
         case QAbstractSocket::SocketAccessError:
-            qDebug() << tr("The socket operation failed because the application lacked the required privileges")+additionalText;
+            errorString((tr("The socket operation failed because the application lacked the required privileges")+additionalText).toStdString());
         break;
         case QAbstractSocket::SocketResourceError:
-            qDebug() << tr("The local system ran out of resources")+additionalText;
+            errorString((tr("The local system ran out of resources")+additionalText).toStdString());
         break;
         case QAbstractSocket::NetworkError:
-            qDebug() << tr("An error occurred with the network (Connection refused on game server?)")+additionalText;
+            errorString((tr("An error occurred with the network (Connection refused on game server?)")+additionalText).toStdString());
         break;
         case QAbstractSocket::UnsupportedSocketOperationError:
-            qDebug() << tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)")+additionalText;
+            errorString((tr("The requested socket operation is not supported by the local operating system (e.g., lack of IPv6 support)")+additionalText).toStdString());
         break;
         case QAbstractSocket::SslHandshakeFailedError:
-            qDebug() << tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText;
+            errorString((tr("The SSL/TLS handshake failed, so the connection was closed")+additionalText).toStdString());
         break;
         default:
-            qDebug() << tr("Connection error: %1").arg(socketError)+additionalText;
+            errorString((tr("Connection error: %1").arg(socketError)+additionalText).toStdString());
     }
 }
 

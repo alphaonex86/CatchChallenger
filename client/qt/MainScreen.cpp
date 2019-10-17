@@ -195,7 +195,7 @@ void MainScreen::paintEvent(QPaintEvent * e)
 
     ui->widget->setMinimumSize(9+solo->width()+9,9+centerWidget+9);
     //ui->widget->adjustSize();
-    if((height()-(9+6+6+ui->widget->height()+6+6+9))<(unsigned int)news->minimumHeight())
+    if(((unsigned int)height()-(9+6+6+ui->widget->height()+6+6+9))<(unsigned int)news->minimumHeight())
         news->setVisible(false);
     else
         news->setVisible(true);
@@ -222,6 +222,7 @@ void MainScreen::paintEvent(QPaintEvent * e)
 #ifndef __EMSCRIPTEN__
 void MainScreen::newUpdate(const std::string &version)
 {
+    Q_UNUSED(version);
     haveUpdate=true;
     QWidget::update();
     /*

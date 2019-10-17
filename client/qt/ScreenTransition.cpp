@@ -1,6 +1,34 @@
 #include "ScreenTransition.h"
 #include "GameLoader.h"
 #include "../../general/base/Version.h"
+#ifdef Q_OS_ANDROID
+#include <QtAndroidExtras>
+#endif
+
+#ifdef Q_OS_ANDROID
+void keep_screen_on(bool on) {
+  QtAndroid::runOnAndroidThread([on]{
+    QAndroidJniObject activity = QtAndroid::androidActivity();
+    if (activity.isValid()) {
+      QAndroidJniObject window =
+          activity.callObjectMethod("getWindow", "()Landroid/view/Window;");
+
+      if (window.isValid()) {
+        const int FLAG_KEEP_SCREEN_ON = 128;
+        if (on) {
+          window.callMethod<void>("addFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        } else {
+          window.callMethod<void>("clearFlags", "(I)V", FLAG_KEEP_SCREEN_ON);
+        }
+      }
+    }
+    QAndroidJniEnvironment env;
+    if (env->ExceptionCheck()) {
+      env->ExceptionClear();
+    }
+  });
+}
+#endif
 
 ScreenTransition::ScreenTransition() :
     QWidget()
@@ -19,6 +47,10 @@ ScreenTransition::ScreenTransition() :
     solo=nullptr;
     multi=nullptr;
     login=nullptr;
+
+    #ifdef Q_OS_ANDROID
+    keep_screen_on(true);
+    #endif
 }
 
 ScreenTransition::~ScreenTransition()
@@ -153,14 +185,18 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     connexionManager->connectToServer(connexionInfo,login,pass);
     if(!connect(connexionManager,&ConnexionManager::logged,this,&ScreenTransition::logged))
         abort();
+    if(!connect(connexionManager,&ConnexionManager::errorString,this,&ScreenTransition::errorString))
+        abort();
+    if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer))
+        abort();
     l.progression(0,100);
 }
 
-void ScreenTransition::errorString(std::string error)
+/*void ScreenTransition::errorString(std::string error)
 {
     setForeground(m);
     m->setError(error);
-}
+}*/
 
 void ScreenTransition::backMain()
 {
@@ -169,8 +205,24 @@ void ScreenTransition::backMain()
 
 void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
+    Q_UNUSED(characterEntryList);
     setBackground(nullptr);
     setForeground(baseWindow);
     //baseWindow->updateConnectingStatus();
+}
+
+void ScreenTransition::disconnectedFromServer()
+{
+    setBackground(&b);
+    setForeground(m);
+    setAbove(nullptr);
+}
+
+void ScreenTransition::errorString(std::string error)
+{
+    setBackground(&b);
+    setForeground(m);
+    setAbove(nullptr);
+    m->setError(error);
 }
 

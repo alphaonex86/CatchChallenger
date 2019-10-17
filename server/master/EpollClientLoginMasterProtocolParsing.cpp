@@ -76,12 +76,33 @@ bool EpollClientLoginMaster::parseInputBeforeLogin(const uint8_t &mainCodeType,c
                     *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/
                     //errorParsingLayer("Wrong protocol magic number");
+                    if(wrongProtocolEmited.size()<20)
+                    {
+                        if(wrongProtocolEmited.find(ip)==wrongProtocolEmited.cend())
+                        {
+                            std::cerr << socketString << "wrong protocol header, master: "
+                                      << binarytoHexa(EpollClientLoginMaster::protocolHeaderToMatch,sizeof(EpollClientLoginMaster::protocolHeaderToMatch))
+                                      << ", remote: "
+                                      << binarytoHexa(data,size)
+                                      << std::endl;
+
+                            wrongProtocolEmited.insert(ip);
+                        }
+                    }
                     disconnectClient();
                     return false;
                 }
             }
             else
             {
+                if(wrongProtocolEmited.size()<20)
+                {
+                    if(wrongProtocolEmited.find(ip)==wrongProtocolEmited.cend())
+                    {
+                        std::cerr << socketString << "wrong protocol size" << std::endl;
+                        wrongProtocolEmited.insert(ip);
+                    }
+                }
                 /*don't send packet to prevent DDOS
                 *(EpollClientLoginMaster::protocolReplyProtocolNotSupported+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginMaster::protocolReplyProtocolNotSupported));*/

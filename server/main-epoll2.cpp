@@ -168,10 +168,10 @@ void send_settings(
 
     //rates
     settings->beginGroup("rates");
-    CommonSettingsServer::commonSettingsServer.rates_xp             = stringtofloat(settings->value("xp_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_gold			= stringtofloat(settings->value("gold_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtofloat(settings->value("xp_pow_normal"));
-    CommonSettingsServer::commonSettingsServer.rates_drop			= stringtofloat(settings->value("drop_normal"));
+    CommonSettingsServer::commonSettingsServer.rates_xp             = stringtofloat(settings->value("xp_normal"))*1000;
+    CommonSettingsServer::commonSettingsServer.rates_gold			= stringtofloat(settings->value("gold_normal"))*1000;
+    CommonSettingsServer::commonSettingsServer.rates_xp_pow			= stringtofloat(settings->value("xp_pow_normal"))*1000;
+    CommonSettingsServer::commonSettingsServer.rates_drop			= stringtofloat(settings->value("drop_normal"))*1000;
     //formatedServerSettings.rates_xp_premium                         = stringtodouble(settings->value("xp_premium"));
     //formatedServerSettings.rates_gold_premium                       = stringtodouble(settings->value("gold_premium"));
     /*CommonSettingsCommon::commonSettingsCommon.rates_shiny		= stringtodouble(settings->value("shiny_normal"));

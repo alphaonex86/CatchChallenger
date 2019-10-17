@@ -149,8 +149,8 @@ void CommonDatapack::parseMonsters()
             CommonSettingsServer::commonSettingsServer.rates_xp_pow<=0 || static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)==1.0)
     {
         monsterRateApplied=false;
-        CommonSettingsServer::commonSettingsServer.rates_xp=1.0;
-        CommonSettingsServer::commonSettingsServer.rates_xp_pow=1.0;
+        CommonSettingsServer::commonSettingsServer.rates_xp=1000;//*1000 of real rate
+        CommonSettingsServer::commonSettingsServer.rates_xp_pow=1000;//*1000 of real rate
     }
     else
         monsterRateApplied=true;

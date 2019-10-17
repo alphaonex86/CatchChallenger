@@ -58,7 +58,7 @@ public:
     void resetAll();
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
 protected:
-    void run();
+    void run() override;
     void emitdatapackParsed() override;
     void emitdatapackParsedMainSub() override;
     void emitdatapackChecksumError() override;
@@ -72,10 +72,10 @@ signals:
     void datapackChecksumError();
 private:
     QPixmap *mDefaultInventoryImage;
-    std::string getLanguage();
+    std::string getLanguage() override;
 private slots:
     void parsePlantsExtra();
-    void parseItemsExtra();
+    void parseItemsExtra() override;
     void parseMonstersExtra();
     void parseBuffExtra();
     void parseTileset();

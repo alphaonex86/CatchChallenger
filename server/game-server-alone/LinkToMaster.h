@@ -45,6 +45,8 @@ public:
     std::string httpDatapackMirror;
     //to unordered reply
     std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> selectCharacterClients;
+    unsigned int reconnectTime;
+
     static char protocolReplyNoMoreToken[7];
     static char protocolReplyAlreadyConnectedToken[7];
     static char protocolReplyGetToken[6+CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
@@ -110,6 +112,8 @@ private:
     std::string logicalGroup;
     bool askMoreMaxClanIdInProgress;
     bool askMoreMaxMonsterIdInProgress;
+    static char host[256];
+    static uint16_t port;
 };
 }
 
