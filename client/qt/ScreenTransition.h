@@ -34,6 +34,7 @@ protected:
     void connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass);
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
+    void disconnectedFromServer();
 private:
     CCBackground b;
     LoadingScreen l;

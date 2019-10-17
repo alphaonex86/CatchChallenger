@@ -17,6 +17,7 @@ public:
 signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
+    void disconnectedFromServer();
 public slots:
     void disconnected(std::string reason);
     #ifndef __EMSCRIPTEN__

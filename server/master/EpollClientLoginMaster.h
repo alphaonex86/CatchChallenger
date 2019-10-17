@@ -9,6 +9,7 @@
 #include <random>
 #include <string>
 #include <regex>
+#include <set>
 
 #define BASE_PROTOCOL_MAGIC_SIZE 9
 
@@ -60,6 +61,7 @@ public:
     EpollClientLoginMasterStat stat;
     std::mt19937 rng;
     std::string socketString;
+    std::string ip;
     uint32_t uniqueKey;
     CharactersGroup *charactersGroupForGameServer;
     CharactersGroup::InternalGameServer *charactersGroupForGameServerInformation;
@@ -141,6 +143,7 @@ private:
 
     bool parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
     void updateConsoleCountServer();
+    static std::unordered_set<std::string> wrongProtocolEmited;
 
     friend class CheckTimeoutGameServer;
 };

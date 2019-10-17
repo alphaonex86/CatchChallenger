@@ -209,13 +209,13 @@ void BaseServer::preload_other()
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.dontSendPseudo;
         posOutput+=1;
-        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp);
         posOutput+=4;
-        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_gold);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_gold);
         posOutput+=4;
-        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
         posOutput+=4;
-        *reinterpret_cast<float *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_drop);
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.rates_drop);
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.chat_allow_all;
         posOutput+=1;
@@ -291,6 +291,10 @@ void BaseServer::preload_other()
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
+        //everyBodyIsRoot
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.everyBodyIsRoot;
+        posOutput+=1;
+
 
         if(Client::characterIsRightFinalStepHeader!=NULL)
             delete Client::characterIsRightFinalStepHeader;

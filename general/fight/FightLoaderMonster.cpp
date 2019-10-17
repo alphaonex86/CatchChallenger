@@ -246,7 +246,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                     }
                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-                    powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow);
+                    powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)/1000.0;
                     #endif
                     #endif
                     if(ok)
@@ -307,13 +307,13 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                     }
                     if(ok)
                     {
-                        monster.give_xp=stringtouint32(item->Attribute("give_xp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                        monster.give_xp=stringtouint32(item->Attribute("give_xp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp/1000;
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child->Name(): " << item->Name() << std::endl;
                     }
                     if(ok)
                     {
-                        monster.give_sp=stringtouint32(item->Attribute("give_sp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp;
+                        monster.give_sp=stringtouint32(item->Attribute("give_sp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp/1000;
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child->Name(): " << item->Name() << std::endl;
                     }
@@ -616,7 +616,7 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(monster.give_xp!=0)
-                            if((monster.xp_for_max_level*CommonSettingsServer::commonSettingsServer.rates_xp/monster.give_xp)>150)
+                            if((monster.xp_for_max_level*CommonSettingsServer::commonSettingsServer.rates_xp/1000/monster.give_xp)>150)
                                 std::cerr << "Warning: you need more than " << monster.xp_for_max_level/monster.give_xp << " monster(s) to pass the last level, prefer do that's with the rate for the monster id: " << id << std::endl;
                         #endif
                         #endif
