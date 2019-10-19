@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="30" height="30" tilewidth="16" tileheight="16" infinite="0" nextobjectid="48">
+ <tileset firstgid="1" source="terra.tsx"/>
+ <tileset firstgid="1025" source="wood.tsx"/>
+ <tileset firstgid="2049" source="rename.tsx"/>
+ <tileset firstgid="3073" source="building-small.tsx"/>
+ <tileset firstgid="4097" source="invisible.tsx"/>
+ <tileset firstgid="4113" source="animations.tsx"/>
+ <tileset firstgid="5137" source="inside-decoration.tsx"/>
+ <tileset firstgid="6161" source="missing.tsx"/>
+ <tileset firstgid="6161" source="t1.tsx"/>
+ <tileset firstgid="7185" source="t2.tsx"/>
+ <tileset firstgid="8209" source="t3.tsx"/>
+ <layer name="Walkable" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDfUBAIgBAAAAshoBAP4yGTIZMhkyGROgMKdjMAOMD0FqcbKl9VvZmSz1y6L3qnj+USL94JzmNFOx2nuqjfaHcrSm
+  </data>
+ </layer>
+ <layer name="Dirt" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDbUAACAAAOEZBQARwQ99DykkkMAOxv//AAs=
+  </data>
+ </layer>
+ <layer name="OverWalkable" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDbUFAPQDAADRGQAA0tMZAPHy8zEZMxkRGgAAEvQZcRHxGREZAAASFDFREcAZAADBGQAAwhnV3+NRExrjGlEZAABSUxkANaAQ0Yg1AMACCwaOY36knidp6C9nf370ExLzg/Qs1Jjl0tNL2g40LJ9LEEcxLfVoGNl5QiC+7f8L8d92BrIenT3znLMhvoTjqdlQ9F5Oj+4ef0bmjvEyzS1iIf5099xepV9nAoXY7FU+6N7umJDpJ9QRf0EB
+  </data>
+ </layer>
+ <layer name="Grass" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDe0AADAAAB8Q3xAHgCCDDw2m3SBq+Mv2oC4gtZN94wcj
+  </data>
+ </layer>
+ <layer name="LedgesBottom" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDYUAACAAAB4BAwBVQMFuwCv1ARY=
+  </data>
+ </layer>
+ <layer name="Water" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDbUAACAAANEQBQDdww/tPVCQQAI7GA/zAyw=
+  </data>
+ </layer>
+ <layer name="Lava" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDbUAACAAALERBQDNww/tPVCQQAI7GE/zAyw=
+  </data>
+ </layer>
+ <layer name="WaterOver" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDaUCAMQDAAC5AAAAugAAALvWAAAA1wAAANgA2QAAANoAAADb9gAAAPcAAAD4APkAAAD6AAAA+xYBAAAXAQAAGAEABwA6wHk/0z2Lm2hmdhY30czsDPMDLA==
+  </data>
+ </layer>
+ <layer name="Collisions" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDSUJAHKNJClwaxAEzJnJMzwypZmZKABOuQCcaYdsB8h2yAFE2Q2XyHz/3WQmd/Y0D09nQnk6C+F18DJ4FbwINF7Gw3gXk7zIg7zHcyzJK/KCvB4vxyxexaN4E4qz2qw0q8wKM87bPM3LPMwcXsNjeAvqsrKsKqtoBe3yLK/yogcBBDxR9ANNKE8H4vQwcBI4SZwiPhsnhVNCR6DRBgfBJGS2dPCCImA2ANMIid/A94i90KARpxESv4HvkXvIId3bpViM1iRcT2Vw2mLFHNssprvZAF7r0924zQFf497gXLqIbTylsS/8lJxoE94W0jX6VpmrTkgA2HNB5i9xPS+qeVpzo0CHKBid+Z7d596e9mD15k2sEUqVkKqN6nNL71EC2FAef/4ayvw=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="30" height="30">
+  <data encoding="base64" compression="zstd">
+   KLUv/WAQDX0DAPQDAAAlBQAAJgUAARAAsR0AALIdAACzHQAAtB0AALUdsRwAALIcAACzHAAAtBwAALUcMR0AADIdAAAzHQAANB0ADwBNbATdmBMqK2QKcDhcKTDzhTUCATTgagWbjS18AZ7lDJHVJUDqnINqj/IDLA==
+  </data>
+ </layer>
+ <objectgroup name="Moving">
+  <object id="31" type="rescue" gid="4098" x="240" y="432" width="16" height="16"/>
+  <object id="32" type="door" gid="4177" x="144" y="416" width="16" height="16">
+   <properties>
+    <property name="map" type="file" value="house1.tmx"/>
+    <property name="x" type="int" value="5"/>
+    <property name="y" type="int" value="13"/>
+   </properties>
+  </object>
+  <object id="33" type="door" gid="4273" x="240" y="416" width="16" height="16">
+   <properties>
+    <property name="map" type="file" value="house2.tmx"/>
+    <property name="x" type="int" value="9"/>
+    <property name="y" type="int" value="28"/>
+   </properties>
+  </object>
+  <object id="34" name="gym" type="door" gid="4145" x="336" y="416" width="16" height="16">
+   <properties>
+    <property name="map" type="file" value="gym.tmx"/>
+    <property name="x" type="int" value="9"/>
+    <property name="y" type="int" value="19"/>
+   </properties>
+  </object>
+  <object id="47" name="Cave" type="teleport on it" gid="4099" x="384" y="160" width="16" height="16">
+   <properties>
+    <property name="map" type="file" value="cave.tmx"/>
+    <property name="x" type="int" value="4"/>
+    <property name="y" type="int" value="15"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <objectgroup name="Object">
+  <object id="19" x="80" y="352" width="120" height="19">
+   <text wrap="1">Quest+Industry</text>
+  </object>
+  <object id="20" x="200" y="352" width="82.3125" height="19">
+   <text wrap="1">Shop/Heal</text>
+  </object>
+  <object id="22" x="304" y="336" width="82.3125" height="19">
+   <text wrap="1">Gym/TP</text>
+  </object>
+  <object id="24" name="Test Water/Lava+animation" x="80" y="144" width="144" height="80"/>
+  <object id="25" name="Missing tileset" x="32" y="96" width="16" height="16"/>
+  <object id="26" name="Animated" x="288" y="208" width="16" height="16"/>
+  <object id="27" name="Test not accessible tile" x="64" y="288" width="16" height="16"/>
+  <object id="28" name="NPC" type="bot" gid="4097" x="304" y="272" width="16" height="16">
+   <properties>
+    <property name="file" type="file" value="city-bots.xml"/>
+    <property name="id" type="int" value="3"/>
+    <property name="lookAt" value="move"/>
+    <property name="skin" value="kid1"/>
+   </properties>
+  </object>
+  <object id="36" name="buggy NPC" type="bot" gid="4097" x="304" y="144" width="16" height="16">
+   <properties>
+    <property name="file" type="file" value="city"/>
+    <property name="id" type="int" value="9999"/>
+    <property name="lookAt" value="bottom"/>
+    <property name="skin" value="kid1"/>
+   </properties>
+  </object>
+  <object id="37" type="bot" gid="4097" x="304" y="448" width="16" height="16">
+   <properties>
+    <property name="file" type="file" value="city-bots.xml"/>
+    <property name="id" type="int" value="4"/>
+   </properties>
+  </object>
+  <object id="38" type="bot" gid="4097" x="32" y="128" width="16" height="16">
+   <properties>
+    <property name="file" type="file" value="city-bots.xml"/>
+    <property name="id" type="int" value="1"/>
+   </properties>
+  </object>
+  <object id="44" type="bot" gid="4097" x="288" y="320" width="16" height="16">
+   <properties>
+    <property name="file" type="file" value="city-bots.xml"/>
+    <property name="id" type="int" value="2"/>
+   </properties>
+  </object>
+  <object id="45" name="Trap for bot" x="64" y="448" width="32" height="32">
+   <properties>
+    <property name="comment" value="Some simple bot will go to catch monster and be blocked"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <imagelayer name="Image Layer 1"/>
+ <group name="Group 1"/>
+</map>

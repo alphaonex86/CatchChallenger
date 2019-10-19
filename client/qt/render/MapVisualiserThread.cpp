@@ -24,6 +24,12 @@ MapVisualiserThread::MapVisualiserThread()
     #endif
     hideTheDoors=false;
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+
+    debugTags=false;
+    tagTileset=nullptr;
+    tagTilesetIndex=0;
+    stopIt=false;
+    hideTheDoors=false;
 }
 
 MapVisualiserThread::~MapVisualiserThread()
@@ -143,12 +149,12 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
-            if(QtDatapackClientLoader::datapackLoader.itemOnMap.find(resolvedFileName)!=
-                    QtDatapackClientLoader::datapackLoader.itemOnMap.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemOnMap.find(resolvedFileName)!=
+                    QtDatapackClientLoader::datapackLoader->itemOnMap.cend())
             {
-                if(QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
-                        QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName).cend())
-                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName)
+                if(QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
+                        QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName).cend())
+                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName)
                             .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
@@ -156,7 +162,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             else
             {
                 QStringList keys;
-                for(auto kv : QtDatapackClientLoader::datapackLoader.itemOnMap)
+                for(auto kv : QtDatapackClientLoader::datapackLoader->itemOnMap)
                     keys.push_back(QString::fromStdString(kv.first));
                 qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                             .arg(QString::fromStdString(resolvedFileName))
@@ -166,21 +172,24 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             index++;
         }
     }
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(QtDatapackClientLoader::datapackLoader.fullMapPathToId.find(resolvedFileName)==
-            QtDatapackClientLoader::datapackLoader.fullMapPathToId.cend())
+    #if defined(CATCHCHALLENGER_EXTRA_CHECK) && ! defined(MAPVISUALISER)
+    if(QtDatapackClientLoader::datapackLoader->fullMapPathToId.find(resolvedFileName)==
+            QtDatapackClientLoader::datapackLoader->fullMapPathToId.cend())
     {
         mLastError="Map id unresolved "+resolvedFileName;
         QStringList keys;
-        for(auto kv : QtDatapackClientLoader::datapackLoader.fullMapPathToId)
+        for(auto kv : QtDatapackClientLoader::datapackLoader->fullMapPathToId)
             keys.push_back(QString::fromStdString(kv.first));
         qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
+    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->fullMapPathToId.at(resolvedFileName);
+    #else
+    tempMapObject->logicalMap.id                                    = 1;
     #endif
-    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader.fullMapPathToId.at(resolvedFileName);
+
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
@@ -278,7 +287,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
     tempMapObject->objectGroup->setName("objectGroup for player layer");
 
     //add a tags
-    if(debugTags)
+    if(debugTags && tagTileset)
     {
         Tiled::MapObject * tagMapObject = new Tiled::MapObject();
         Tiled::Cell cell=tagMapObject->cell();

@@ -37,11 +37,9 @@ class MapVisualiser : public QGraphicsView
     Q_OBJECT
 
 public:
-    explicit MapVisualiser(const bool &debugTags=false, const bool &useCache=true);
+    explicit MapVisualiser(const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
     ~MapVisualiser();
 
-    bool showFPS();
-    void setShowFPS(const bool &showFPS);
     void setTargetFPS(int targetFPS);
     virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 
@@ -67,8 +65,6 @@ protected:
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
     QTime timeUpdateFPS;
-    QGraphicsSimpleTextItem *FPSText;
-    bool mShowFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
@@ -101,6 +97,7 @@ protected slots:
 signals:
     void loadOtherMapAsync(const std::string &fileName);
     void mapDisplayed(const std::string &fileName);
+    void newFPSvalue(const unsigned int FPS);
 };
 
 #endif

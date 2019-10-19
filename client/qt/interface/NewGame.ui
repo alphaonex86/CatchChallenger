@@ -26,7 +26,7 @@
    <string>New game</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#NewGame{background-image: url(:/images/player-select.png);}</string>
+   <string notr="true">#NewGame{background-image: url(:/CC/images/player-select.png);}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -143,8 +143,8 @@
    <item>
     <widget class="QLineEdit" name="pseudo">
      <property name="styleSheet">
-      <string notr="true">background-image: url(:/images/light-white.png);
-border-image: url(:/images/empty.png);</string>
+      <string notr="true">background-image: url(:/CC/images/light-white.png);
+border-image: url(:/CC/images/empty.png);</string>
      </property>
      <property name="placeholderText">
       <string>pseudo</string>

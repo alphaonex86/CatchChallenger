@@ -77,7 +77,7 @@ void BaseWindow::newProfileFinished()
     characterEntry.character_id=0;
     characterEntry.delete_time_left=0;
     characterEntry.last_connect=QDateTime::currentMSecsSinceEpoch()/1000;
-    //characterEntry.mapId=QtDatapackClientLoader::datapackLoader.mapToId.value(profile.map);
+    //characterEntry.mapId=QtDatapackClientLoader::datapackLoader->mapToId.value(profile.map);
     characterEntry.played_time=0;
     characterEntry.pseudo=nameGame.pseudo();
     if(characterEntry.pseudo.find(" ")!=std::string::npos)
@@ -95,8 +95,7 @@ void BaseWindow::newProfileFinished()
     if((characterEntryListInWaiting.size()+characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())
             >=CommonSettingsCommon::commonSettingsCommon.max_character)
         ui->character_add->setEnabled(false);
-    ui->stackedWidget->setCurrentWidget(ui->page_init);
-    ui->label_connecting_status->setText(tr("Creating your new character"));
+    emit toLoading(tr("Creating your new character"));
 }
 
 void BaseWindow::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
@@ -153,15 +152,15 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(QString::fromStdString(text));
-        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader.skins.size())
+        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader->skins.size())
             item->setIcon(QIcon(
                               QString::fromStdString(client->datapackPathBase())+
                               DATAPACK_BASE_PATH_SKIN+
-                              QString::fromStdString(QtDatapackClientLoader::datapackLoader.skins.at(characterEntry.skinId))+
+                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(characterEntry.skinId))+
                               "/front.png"
                               ));
         else
-            item->setIcon(QIcon(QStringLiteral(":/images/player_default/front.png")));
+            item->setIcon(QIcon(QStringLiteral(":/CC/images/player_default/front.png")));
         ui->characterEntryList->addItem(item);
         index++;
     }
@@ -227,10 +226,9 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
     const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     client->selectCharacter(serverOrdenedList.at(serverSelected).charactersGroupIndex,
                             serverOrdenedList.at(serverSelected).uniqueKey,item->data(99).toUInt(),serverSelected);
-    ui->stackedWidget->setCurrentWidget(ui->page_init);
-    ui->label_connecting_status->setText(tr("Selecting your character"));
+    emit toLoading(tr("Selecting your character"));
 
-    QDir dir(QString::fromStdString(client->datapackPathBase())+"/loading/");
+    /*QDir dir(QString::fromStdString(client->datapackPathBase())+"/loading/");
     dir.setFilter(QDir::Files | QDir::NoSymLinks | QDir::NoDotAndDotDot);
     dir.setSorting(QDir::Size | QDir::Reversed);
 
@@ -242,10 +240,10 @@ void BaseWindow::on_characterEntryList_itemDoubleClicked(QListWidgetItem *item)
         if(!image.isNull())
             ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(\""+fileInfo.absoluteFilePath()+"\")  0 0 0 0 stretch stretch;border-width: 0px;}");
         else
-            ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
+            ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/CC/images/empty.png);border-width: 0px;}");
     }
     else
-        ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}");
+        ui->frameLoading->setStyleSheet("#frameLoading {border-image: url(:/CC/images/empty.png);border-width: 0px;}");*/
 }
 
 
@@ -286,25 +284,25 @@ void BaseWindow::updateServerList()
     //reload, bug if before init
     if(icon_server_list_star1.isNull())
     {
-        BaseWindow::icon_server_list_star1=QIcon(":/images/interface/server_list/star1.png");
+        BaseWindow::icon_server_list_star1=QIcon(":/CC/images/interface/server_list/star1.png");
         if(BaseWindow::icon_server_list_star1.isNull())
             abort();
-        BaseWindow::icon_server_list_star2=QIcon(":/images/interface/server_list/star2.png");
-        BaseWindow::icon_server_list_star3=QIcon(":/images/interface/server_list/star3.png");
-        BaseWindow::icon_server_list_star4=QIcon(":/images/interface/server_list/star4.png");
-        BaseWindow::icon_server_list_star5=QIcon(":/images/interface/server_list/star5.png");
-        BaseWindow::icon_server_list_star6=QIcon(":/images/interface/server_list/star6.png");
-        BaseWindow::icon_server_list_stat1=QIcon(":/images/interface/server_list/stat1.png");
-        BaseWindow::icon_server_list_stat2=QIcon(":/images/interface/server_list/stat2.png");
-        BaseWindow::icon_server_list_stat3=QIcon(":/images/interface/server_list/stat3.png");
-        BaseWindow::icon_server_list_stat4=QIcon(":/images/interface/server_list/stat4.png");
-        BaseWindow::icon_server_list_bug=QIcon(":/images/interface/server_list/bug.png");
+        BaseWindow::icon_server_list_star2=QIcon(":/CC/images/interface/server_list/star2.png");
+        BaseWindow::icon_server_list_star3=QIcon(":/CC/images/interface/server_list/star3.png");
+        BaseWindow::icon_server_list_star4=QIcon(":/CC/images/interface/server_list/star4.png");
+        BaseWindow::icon_server_list_star5=QIcon(":/CC/images/interface/server_list/star5.png");
+        BaseWindow::icon_server_list_star6=QIcon(":/CC/images/interface/server_list/star6.png");
+        BaseWindow::icon_server_list_stat1=QIcon(":/CC/images/interface/server_list/stat1.png");
+        BaseWindow::icon_server_list_stat2=QIcon(":/CC/images/interface/server_list/stat2.png");
+        BaseWindow::icon_server_list_stat3=QIcon(":/CC/images/interface/server_list/stat3.png");
+        BaseWindow::icon_server_list_stat4=QIcon(":/CC/images/interface/server_list/stat4.png");
+        BaseWindow::icon_server_list_bug=QIcon(":/CC/images/interface/server_list/bug.png");
         if(BaseWindow::icon_server_list_bug.isNull())
             abort();
-        icon_server_list_color.push_back(QIcon(":/images/colorflags/0.png"));
-        icon_server_list_color.push_back(QIcon(":/images/colorflags/1.png"));
-        icon_server_list_color.push_back(QIcon(":/images/colorflags/2.png"));
-        icon_server_list_color.push_back(QIcon(":/images/colorflags/3.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/0.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/1.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/2.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/3.png"));
     }
     //do the average value
     {

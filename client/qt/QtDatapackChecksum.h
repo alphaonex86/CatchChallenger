@@ -21,8 +21,8 @@ public:
     ~QtDatapackChecksum();
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
     void stopThread();
-private:
     static QThread thread;
+private:
     #endif
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
 public slots:

@@ -14,8 +14,8 @@
    <string notr="true">CatchChallenger</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../../../server/all-server-resources.qrc">
-    <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
+   <iconset resource="../../resources/client-resources.qrc">
+    <normaloff>:/CC/images/catchchallenger.png</normaloff>:/CC/images/catchchallenger.png</iconset>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
    <property name="spacing">
@@ -53,126 +53,9 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>3</number>
+        <number>2</number>
        </property>
-       <widget class="QWidget" name="page_init">
-        <property name="styleSheet">
-         <string notr="true">#page_init{background-image: url(:/images/background.jpg);}</string>
-        </property>
-        <layout class="QVBoxLayout" name="_2sdgdf">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QFrame" name="frameLoading">
-           <property name="autoFillBackground">
-            <bool>false</bool>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}</string>
-           </property>
-           <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
-           </property>
-           <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
-           </property>
-           <layout class="QVBoxLayout" name="verticalLayout_40">
-            <item>
-             <spacer name="spacer">
-              <property name="orientation">
-               <enum>Qt::Vertical</enum>
-              </property>
-              <property name="sizeHint" stdset="0">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-             </spacer>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="_2">
-              <item>
-               <spacer name="horizontalSpacer_loading_9">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_connecting_status">
-                <property name="font">
-                 <font>
-                  <pointsize>15</pointsize>
-                  <weight>75</weight>
-                  <bold>true</bold>
-                 </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-background-color: rgba(0, 0, 0, 128);</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="horizontalSpacer_loading_10">
-                <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>40</width>
-                  <height>20</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="QLabel" name="loadingTip">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(255, 255, 163);
-border: 1px solid rgb(255, 221, 50);
-border-radius:5px;
-color: rgb(0, 0, 0);</string>
-              </property>
-              <property name="text">
-               <string>Tip: Use tabulation key (tab) to change the focus of the selection</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-           <zorder>spacer</zorder>
-           <zorder>loadingTip</zorder>
-          </widget>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="page_serverList">
-        <property name="styleSheet">
-         <string notr="true">#page_serverList{background-image: url(:/images/background.jpg);}</string>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout_36">
          <item>
           <widget class="QTreeWidget" name="serverList">
@@ -266,9 +149,6 @@ color: rgb(0, 0, 0);</string>
         </layout>
        </widget>
        <widget class="QWidget" name="page_character">
-        <property name="styleSheet">
-         <string notr="true">#page_character{background-image: url(:/images/background.jpg);}</string>
-        </property>
         <layout class="QVBoxLayout" name="verticalLayout_34">
          <item>
           <widget class="QListWidget" name="characterEntryList">
@@ -581,8 +461,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
                   </property>
                  </widget>
@@ -758,7 +638,7 @@ color: rgb(0, 0, 0);
             </size>
            </property>
            <property name="styleSheet">
-            <string notr="true">#frame_main_display_bottom{background-image: url(:/images/interface/baroption.png);}</string>
+            <string notr="true">#frame_main_display_bottom{background-image: url(:/CC/images/interface/baroption.png);}</string>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_64">
             <property name="spacing">
@@ -949,6 +829,16 @@ color: rgb(0, 0, 0);
                </spacer>
               </item>
               <item>
+               <widget class="QLabel" name="FPS">
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(230, 230, 230);</string>
+                </property>
+                <property name="text">
+                 <string>5FPS</string>
+                </property>
+               </widget>
+              </item>
+              <item>
                <widget class="QLabel" name="label_ultimate">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -969,11 +859,7 @@ color: rgb(0, 0, 0);
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">#label_ultimate
-{
-border: 1px solid #343434;
-background-image: url(:/images/light-white.png);
-}</string>
+                 <string notr="true">background-color: rgb(230, 230, 230);</string>
                 </property>
                 <property name="text">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://shop.first-world.info/en/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0057ae;&quot;&gt;Buy Ultimate&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -997,8 +883,11 @@ background-image: url(:/images/light-white.png);
                   <height>16</height>
                  </size>
                 </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(230, 230, 230);</string>
+                </property>
                 <property name="pixmap">
-                 <pixmap resource="../../resources/client-resources-multi.qrc">:/images/multi/slow.png</pixmap>
+                 <pixmap resource="../../resources/client-resources-multi.qrc">:/CC/images/multi/slow.png</pixmap>
                 </property>
                </widget>
               </item>
@@ -1017,11 +906,7 @@ background-image: url(:/images/light-white.png);
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">#frame_main_display_interface_player
-{
-border: 1px solid #343434;
-background-image: url(:/images/light-white.png);
-}</string>
+                 <string notr="true">background-color: rgb(230, 230, 230);</string>
                 </property>
                 <layout class="QHBoxLayout" name="horizontalLayout_11">
                  <property name="leftMargin">
@@ -1052,10 +937,10 @@ background-image: url(:/images/light-white.png);
                    </property>
                    <property name="styleSheet">
                     <string notr="true">border: 0px;
-background-image: url(:/images/empty.png);</string>
+background-image: url(:/CC/images/empty.png);</string>
                    </property>
                    <property name="pixmap">
-                    <pixmap>:/images/interface/player.png</pixmap>
+                    <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player.png</pixmap>
                    </property>
                   </widget>
                  </item>
@@ -1063,7 +948,7 @@ background-image: url(:/images/empty.png);</string>
                   <widget class="QLabel" name="label_interface_number_of_player">
                    <property name="styleSheet">
                     <string notr="true">border: 0px;
-background-image: url(:/images/empty.png);
+background-image: url(:/CC/images/empty.png);
 color: rgb(0, 0, 0);</string>
                    </property>
                    <property name="text">
@@ -1099,8 +984,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
                 </property>
                </widget>
@@ -1114,7 +999,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_player">
         <property name="styleSheet">
-         <string notr="true">#page_player{background-image: url(:/images/interface/player/background.jpg);}</string>
+         <string notr="true">#page_player{background-image: url(:/CC/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_8">
          <property name="spacing">
@@ -1283,7 +1168,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap>:/images/interface/player/point.png</pixmap>
+                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1342,7 +1227,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap>:/images/interface/player/point.png</pixmap>
+                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1401,7 +1286,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap>:/images/interface/player/point.png</pixmap>
+                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1467,12 +1352,12 @@ border: 1px solid rgb(64, 136, 192);</string>
                        </size>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">background-image: url(:/images/interface/player/player_background.png);
+                       <string notr="true">background-image: url(:/CC/images/interface/player/player_background.png);
 background-repeat:no-repeat;
 background-position:center; </string>
                       </property>
                       <property name="pixmap">
-                       <pixmap>:/images/player_default/front.png</pixmap>
+                       <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
@@ -1527,7 +1412,7 @@ border-radius: 5px;
                  <item>
                   <widget class="QTextBrowser" name="questDetails">
                    <property name="styleSheet">
-                    <string notr="true">#questDetails{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+                    <string notr="true">#questDetails{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::NoFrame</enum>
@@ -1583,7 +1468,7 @@ border-radius: 5px;
                <item>
                 <widget class="QTextBrowser" name="finishedQuests">
                  <property name="styleSheet">
-                  <string notr="true">#finishedQuests{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+                  <string notr="true">#finishedQuests{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::NoFrame</enum>
@@ -1913,8 +1798,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -1925,7 +1810,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_inventory">
         <property name="styleSheet">
-         <string notr="true">#page_inventory{background-image: url(:/images/inventory/background.jpg);}
+         <string notr="true">#page_inventory{background-image: url(:/CC/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1947,7 +1832,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="inventory_layout">
            <property name="styleSheet">
-            <string notr="true">#inventory_layout{background-image: url(:/images/inventory/interface.png);}</string>
+            <string notr="true">#inventory_layout{background-image: url(:/CC/images/inventory/interface.png);}</string>
            </property>
            <widget class="QLabel" name="inventory_image">
             <property name="geometry">
@@ -1959,7 +1844,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/inventory/unknown-object.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1980,7 +1865,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Inventory</string>
@@ -1999,7 +1884,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/inventory/bag1.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/bag1.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="inventory_description">
@@ -2034,7 +1919,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#inventory{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#inventory{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -2081,8 +1966,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -2155,8 +2040,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -2191,8 +2076,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -2227,8 +2112,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -2260,408 +2145,9 @@ padding-bottom:3px;
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_options">
-        <property name="styleSheet">
-         <string notr="true">#page_options{background-image: url(:/images/background.jpg);}
-</string>
-        </property>
-        <layout class="QVBoxLayout" name="verticalLayout_13">
-         <item>
-          <layout class="QGridLayout" name="gridLayout">
-           <item row="0" column="0">
-            <widget class="QGroupBox" name="groupBox_Options_Displayer">
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="title">
-              <string>Display</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_6">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_6">
-                <item>
-                 <widget class="QCheckBox" name="checkBoxLimitFPS">
-                  <property name="text">
-                   <string>Limit FPS to:</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QSpinBox" name="spinBoxMaxFPS">
-                  <property name="maximumSize">
-                   <size>
-                    <width>50</width>
-                    <height>16777215</height>
-                   </size>
-                  </property>
-                  <property name="minimum">
-                   <number>16</number>
-                  </property>
-                  <property name="value">
-                   <number>25</number>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_58">
-                <item>
-                 <widget class="QCheckBox" name="forceZoom">
-                  <property name="text">
-                   <string>Force zoom</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QSlider" name="zoom">
-                  <property name="minimum">
-                   <number>1</number>
-                  </property>
-                  <property name="maximum">
-                   <number>4</number>
-                  </property>
-                  <property name="value">
-                   <number>2</number>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <spacer name="verticalSpacer_4">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>164</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QGroupBox" name="groupBox_Options_Multiplayer">
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="title">
-              <string>Multiplayer</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_10">
-              <item>
-               <widget class="QCheckBox" name="checkBoxShowPseudo">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="text">
-                 <string>Show the pseudo</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBoxShowPlayerType">
-                <property name="enabled">
-                 <bool>false</bool>
-                </property>
-                <property name="toolTip">
-                 <string>Show if is admin, developer, premium, normal</string>
-                </property>
-                <property name="text">
-                 <string>Show the player type</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="verticalSpacer_6">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>167</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QGroupBox" name="groupBox">
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="title">
-              <string>Sound</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_11">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_56">
-                <item>
-                 <widget class="QLabel" name="label_25">
-                  <property name="text">
-                   <string>Volume</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_49">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QSlider" name="audioVolume">
-                  <property name="styleSheet">
-                   <string notr="true">background-image: url(:/images/empty.png);</string>
-                  </property>
-                  <property name="maximum">
-                   <number>100</number>
-                  </property>
-                  <property name="value">
-                   <number>100</number>
-                  </property>
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_59">
-                <item>
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>Device</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_56">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QComboBox" name="audiodevice"/>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <spacer name="verticalSpacer_13">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QGroupBox" name="groupBox_2">
-             <property name="styleSheet">
-              <string notr="true">background-image: url(:/images/light-white.png);color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="title">
-              <string>Informations</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_9">
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_13">
-                <item>
-                 <widget class="QLabel" name="label_11">
-                  <property name="text">
-                   <string>Input:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_20">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QLabel" name="labelInput">
-                  <property name="text">
-                   <string>0KB/s</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_20">
-                <item>
-                 <widget class="QLabel" name="label_12">
-                  <property name="text">
-                   <string>Output:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_21">
-                  <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QLabel" name="labelOutput">
-                  <property name="text">
-                   <string>0KB/s</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="labelLastReplyTime">
-                <property name="text">
-                 <string>Last reply time: ?</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="labelQueryList">
-                <property name="text">
-                 <string>Running query: ? Query with worse time: ?</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <spacer name="verticalSpacer_12">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <spacer name="verticalSpacer_7">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>230</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_14">
-           <item>
-            <spacer name="horizontalSpacer">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QToolButton" name="toolButton_quit_options">
-             <property name="minimumSize">
-              <size>
-               <width>22</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>22</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="styleSheet">
-              <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
-}</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="page_plants">
         <property name="styleSheet">
-         <string notr="true">#page_plants{background-image: url(:/images/interface/player/background.jpg);}</string>
+         <string notr="true">#page_plants{background-image: url(:/CC/images/interface/player/background.jpg);}</string>
         </property>
         <widget class="QFrame" name="framePlantsLeft">
          <property name="geometry">
@@ -2685,7 +2171,7 @@ border-image: url(:/images/empty.png);
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#framePlantsLeft{background-image: url(:/images/interface/plants-left.png);}</string>
+          <string notr="true">#framePlantsLeft{background-image: url(:/CC/images/interface/plants-left.png);}</string>
          </property>
          <widget class="QLabel" name="labelPlantImage">
           <property name="geometry">
@@ -2946,8 +2432,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -3005,7 +2491,7 @@ padding-bottom:3px;
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#framePlantsRight{background-image: url(:/images/interface/plants-right.png);}</string>
+          <string notr="true">#framePlantsRight{background-image: url(:/CC/images/interface/plants-right.png);}</string>
          </property>
          <widget class="QLabel" name="labelPlantInventoryTitle">
           <property name="geometry">
@@ -3041,7 +2527,7 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">#listPlantList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+           <string notr="true">#listPlantList{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
@@ -3086,15 +2572,15 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
          </property>
         </widget>
        </widget>
        <widget class="QWidget" name="page_crafting">
         <property name="styleSheet">
-         <string notr="true">#page_crafting{background-image: url(:/images/interface/player/background.jpg);}</string>
+         <string notr="true">#page_crafting{background-image: url(:/CC/images/interface/player/background.jpg);}</string>
         </property>
         <widget class="QFrame" name="frameCraftingLeft">
          <property name="geometry">
@@ -3118,7 +2604,7 @@ border-image: url(:/images/empty.png);
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#frameCraftingLeft{background-image: url(:/images/interface/crafting-left.png);}</string>
+          <string notr="true">#frameCraftingLeft{background-image: url(:/CC/images/interface/crafting-left.png);}</string>
          </property>
          <widget class="QLabel" name="labelCraftingImage">
           <property name="geometry">
@@ -3187,7 +2673,7 @@ border-image: url(:/images/empty.png);
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">#listCraftingMaterials{background-image: url(:/images/empty.png);
+           <string notr="true">#listCraftingMaterials{background-image: url(:/CC/images/empty.png);
 color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
@@ -3235,8 +2721,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -3271,7 +2757,7 @@ padding-bottom:3px;
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#frameCraftingRight{background-image: url(:/images/interface/crafting-right.png);}</string>
+          <string notr="true">#frameCraftingRight{background-image: url(:/CC/images/interface/crafting-right.png);}</string>
          </property>
          <widget class="QListWidget" name="listCraftingList">
           <property name="geometry">
@@ -3283,7 +2769,7 @@ padding-bottom:3px;
            </rect>
           </property>
           <property name="styleSheet">
-           <string notr="true">#listCraftingList{background-image: url(:/images/empty.png);
+           <string notr="true">#listCraftingList{background-image: url(:/CC/images/empty.png);
 color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
@@ -3353,15 +2839,15 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
          </property>
         </widget>
        </widget>
        <widget class="QWidget" name="page_shop">
         <property name="styleSheet">
-         <string notr="true">#page_shop{background-image: url(:/images/inventory/background.jpg);}
+         <string notr="true">#page_shop{background-image: url(:/CC/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -3383,7 +2869,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="shop_layout">
            <property name="styleSheet">
-            <string notr="true">#shop_layout{background-image: url(:/images/inventory/shop.png);}</string>
+            <string notr="true">#shop_layout{background-image: url(:/CC/images/inventory/shop.png);}</string>
            </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
@@ -3418,7 +2904,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Shop</string>
@@ -3437,7 +2923,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/inventory/unknown-object.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="shopDescription">
@@ -3472,7 +2958,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/player_default/front.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -3523,8 +3009,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -3538,7 +3024,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#shopItemList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#shopItemList{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -3579,8 +3065,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -3635,7 +3121,7 @@ padding-bottom:3px;
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/images/interface/fight/fight-bottom-bar.png);}</string>
+          <string notr="true">#stackedWidgetFightBottomBar{background-image: url(:/CC/images/interface/fight/fight-bottom-bar.png);}</string>
          </property>
          <property name="currentIndex">
           <number>1</number>
@@ -3684,8 +3170,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -3771,8 +3257,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/big-button-attack.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/big-button-attack.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 }</string>
                </property>
@@ -3803,8 +3289,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/big-button-attack.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/big-button-attack.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 }</string>
                </property>
@@ -3865,8 +3351,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/big-button-attack.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/big-button-attack.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 }</string>
                </property>
@@ -3897,8 +3383,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/big-button-attack.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/big-button-attack.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 }</string>
                </property>
@@ -3982,8 +3468,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -4018,8 +3504,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -4068,7 +3554,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap>:/images/interface/fight/plateform-background.png</pixmap>
+           <pixmap resource="../fight/resources/client-resources-fight.qrc">:/CC/images/interface/fight/plateform-background.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightPlateformTop">
@@ -4093,7 +3579,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap>:/images/interface/fight/plateform-front.png</pixmap>
+           <pixmap resource="../fight/resources/client-resources-fight.qrc">:/CC/images/interface/fight/plateform-front.png</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightMonsterBottom">
@@ -4118,7 +3604,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap>:/images/player_default/back.png</pixmap>
+           <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/back.png</pixmap>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -4146,7 +3632,7 @@ padding-bottom:3px;
            </size>
           </property>
           <property name="pixmap">
-           <pixmap>:/images/player_default/front.png</pixmap>
+           <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
           </property>
           <property name="alignment">
            <set>Qt::AlignCenter</set>
@@ -4175,7 +3661,7 @@ padding-bottom:3px;
           </property>
           <property name="styleSheet">
            <string notr="true">#frameFightTop{
-background-image: url(:/images/interface/fight/labelTop.png);
+background-image: url(:/CC/images/interface/fight/labelTop.png);
 padding:6px 14px 6px 6px;
 }</string>
           </property>
@@ -4207,7 +3693,7 @@ padding:6px 14px 6px 6px;
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">background-image: url(:/images/empty.png);</string>
+                <string notr="true">background-image: url(:/CC/images/empty.png);</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -4334,7 +3820,7 @@ padding:6px 14px 6px 6px;
           </property>
           <property name="styleSheet">
            <string notr="true">#frameFightBottom{
-background-image: url(:/images/interface/fight/labelBottom.png);
+background-image: url(:/CC/images/interface/fight/labelBottom.png);
 padding:6px 6px 6px 14px;
 }
 </string>
@@ -4367,7 +3853,7 @@ padding:6px 6px 6px 14px;
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">background-image: url(:/images/empty.png);</string>
+                <string notr="true">background-image: url(:/CC/images/empty.png);</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::NoFrame</enum>
@@ -4596,7 +4082,7 @@ padding:6px 6px 6px 14px;
            </rect>
           </property>
           <property name="pixmap">
-           <pixmap>:/images/interface/fight/background.jpg</pixmap>
+           <pixmap>:/CC/images/interface/fight/background.jpg</pixmap>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightForeground">
@@ -4624,7 +4110,7 @@ padding:6px 6px 6px 14px;
        </widget>
        <widget class="QWidget" name="page_monster">
         <property name="styleSheet">
-         <string notr="true">#page_monster{background-image: url(:/images/interface/player/background.jpg);}</string>
+         <string notr="true">#page_monster{background-image: url(:/CC/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_33">
          <item>
@@ -4735,8 +4221,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -4747,7 +4233,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_trade">
         <property name="styleSheet">
-         <string notr="true">#page_trade{background-image: url(:/images/interface/player/background.jpg);}</string>
+         <string notr="true">#page_trade{background-image: url(:/CC/images/interface/player/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_22">
          <item>
@@ -4763,7 +4249,7 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="pixmap">
-                <pixmap>:/images/player_default/front.png</pixmap>
+                <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -4910,7 +4396,7 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="pixmap">
-                <pixmap>:/images/player_default/front.png</pixmap>
+                <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
@@ -5047,8 +4533,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -5059,7 +4545,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_learn">
         <property name="styleSheet">
-         <string notr="true">#page_learn{background-image: url(:/images/inventory/background.jpg);}
+         <string notr="true">#page_learn{background-image: url(:/CC/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_35">
@@ -5081,7 +4567,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="learn_layout">
            <property name="styleSheet">
-            <string notr="true">#learn_layout{background-image: url(:/images/interface/learn.png);}</string>
+            <string notr="true">#learn_layout{background-image: url(:/CC/images/interface/learn.png);}</string>
            </property>
            <widget class="QToolButton" name="learnQuit">
             <property name="geometry">
@@ -5112,8 +4598,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -5144,7 +4630,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);
 color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
@@ -5202,8 +4688,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -5237,7 +4723,7 @@ padding-bottom:3px;
              </size>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/monsters/default/front.png</pixmap>
+             <pixmap resource="../fight/resources/client-resources-fight.qrc">:/CC/images/monsters/default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -5253,7 +4739,7 @@ padding-bottom:3px;
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#learnAttackList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#learnAttackList{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -5297,7 +4783,7 @@ padding-bottom:3px;
        </widget>
        <widget class="QWidget" name="page_warehouse">
         <property name="styleSheet">
-         <string notr="true">#page_warehouse{background-image: url(:/images/inventory/background.jpg);}</string>
+         <string notr="true">#page_warehouse{background-image: url(:/CC/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_26">
          <item>
@@ -5317,7 +4803,7 @@ padding-bottom:3px;
               </size>
              </property>
              <property name="pixmap">
-              <pixmap>:/images/player_default/front.png</pixmap>
+              <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -5342,7 +4828,7 @@ padding-bottom:3px;
               <string/>
              </property>
              <property name="pixmap">
-              <pixmap>:/images/player_default/front.png</pixmap>
+              <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -5795,8 +5281,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -5807,7 +5293,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_zonecatch">
         <property name="styleSheet">
-         <string notr="true">#page_zonecatch{background-image: url(:/images/inventory/background.jpg);}</string>
+         <string notr="true">#page_zonecatch{background-image: url(:/CC/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_50">
          <item>
@@ -5910,7 +5396,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_factory">
         <property name="styleSheet">
-         <string notr="true">#page_factory{background-image: url(:/images/inventory/background.jpg);}
+         <string notr="true">#page_factory{background-image: url(:/CC/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_51">
@@ -5932,7 +5418,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="factory_layout">
            <property name="styleSheet">
-            <string notr="true">#factory_layout{background-image: url(:/images/inventory/factory.png);}</string>
+            <string notr="true">#factory_layout{background-image: url(:/CC/images/inventory/factory.png);}</string>
            </property>
            <widget class="QLabel" name="label_17">
             <property name="geometry">
@@ -5961,7 +5447,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Resources</string>
@@ -5997,7 +5483,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string>Products</string>
@@ -6035,8 +5521,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -6077,8 +5563,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -6119,8 +5605,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -6146,7 +5632,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/player_default/front.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -6162,7 +5648,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#factoryProducts{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#factoryProducts{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6190,7 +5676,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#factoryResources{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#factoryResources{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6246,7 +5732,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_monsterdetails">
         <property name="styleSheet">
-         <string notr="true">#page_monsterdetails{background-image: url(:/images/inventory/background.jpg);}</string>
+         <string notr="true">#page_monsterdetails{background-image: url(:/CC/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_32">
          <property name="spacing">
@@ -6267,7 +5753,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="monsterdetails_layout">
            <property name="styleSheet">
-            <string notr="true">#monsterdetails_layout{background-image: url(:/images/interface/monsterdetails.png);}
+            <string notr="true">#monsterdetails_layout{background-image: url(:/CC/images/interface/monsterdetails.png);}
 </string>
            </property>
            <widget class="QLabel" name="monsterDetailsImage">
@@ -6292,7 +5778,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/monsters/default/front.png</pixmap>
+             <pixmap resource="../fight/resources/client-resources-fight.qrc">:/CC/images/monsters/default/front.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -6320,7 +5806,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/inventory/unknown-object.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -6353,7 +5839,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Name</string>
@@ -6405,7 +5891,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap>:/images/inventory/unknown-object.png</pixmap>
+             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -6421,7 +5907,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#monsterDetailsSkills{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#monsterDetailsSkills{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6606,8 +6092,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -6668,7 +6154,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
              <enum>QFrame::NoFrame</enum>
@@ -6701,7 +6187,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_market">
         <property name="styleSheet">
-         <string notr="true">#page_market{background-image: url(:/images/inventory/background.jpg);}</string>
+         <string notr="true">#page_market{background-image: url(:/CC/images/inventory/background.jpg);}</string>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_55">
          <property name="spacing">
@@ -6722,7 +6208,7 @@ border-image: url(:/images/empty.png);
          <item>
           <widget class="QFrame" name="market_layout">
            <property name="styleSheet">
-            <string notr="true">#market_layout{background-image: url(:/images/inventory/market.png);}</string>
+            <string notr="true">#market_layout{background-image: url(:/CC/images/inventory/market.png);}</string>
            </property>
            <widget class="QLabel" name="monsterDetailsName_2">
             <property name="geometry">
@@ -6751,7 +6237,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Object</string>
@@ -6787,7 +6273,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Monster</string>
@@ -6823,7 +6309,7 @@ border-image: url(:/images/empty.png);
              </font>
             </property>
             <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);color: rgb(0, 0, 0);</string>
+             <string notr="true">background-image: url(:/CC/images/inventory/type.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="text">
              <string notr="true">Own</string>
@@ -6861,8 +6347,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
             </property>
            </widget>
@@ -6892,7 +6378,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#marketObject{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#marketObject{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6911,7 +6397,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#marketMonster{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#marketMonster{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6930,7 +6416,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#marketOwnObject{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#marketOwnObject{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6949,7 +6435,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="styleSheet">
-             <string notr="true">#marketOwnMonster{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
+             <string notr="true">#marketOwnMonster{background-image: url(:/CC/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="iconSize">
              <size>
@@ -6987,8 +6473,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -7029,8 +6515,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -7071,8 +6557,8 @@ QPushButton::pressed {
 background-position:left bottom;
 }
 QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/button-generic.png);
+border-image: url(:/CC/images/empty.png);
 color: rgb(255, 255, 255);
 padding-left:4px;
 padding-right:4px;
@@ -7109,7 +6595,7 @@ padding-bottom:3px;
        </widget>
        <widget class="QWidget" name="page_encyclopedia">
         <property name="styleSheet">
-         <string notr="true">#page_encyclopedia{background-image: url(:/images/inventory/background.jpg);}
+         <string notr="true">#page_encyclopedia{background-image: url(:/CC/images/inventory/background.jpg);}
 </string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_37">
@@ -7120,8 +6606,8 @@ padding-bottom:3px;
            </property>
            <widget class="QWidget" name="tabEncyclopediaMonster">
             <attribute name="icon">
-             <iconset>
-              <normaloff>:/images/monsters/default/small.png</normaloff>:/images/monsters/default/small.png</iconset>
+             <iconset resource="../fight/resources/client-resources-fight.qrc">
+              <normaloff>:/CC/images/monsters/default/small.png</normaloff>:/CC/images/monsters/default/small.png</iconset>
             </attribute>
             <attribute name="title">
              <string>Monster</string>
@@ -7184,7 +6670,7 @@ padding-bottom:3px;
            <widget class="QWidget" name="tabEncyclopediaItem">
             <attribute name="icon">
              <iconset resource="../../resources/client-resources-multi.qrc">
-              <normaloff>:/images/interface/server_list/star1.png</normaloff>:/images/interface/server_list/star1.png</iconset>
+              <normaloff>:/CC/images/interface/server_list/star1.png</normaloff>:/CC/images/interface/server_list/star1.png</iconset>
             </attribute>
             <attribute name="title">
              <string>Item</string>
@@ -7280,8 +6766,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -7292,7 +6778,7 @@ border-image: url(:/images/empty.png);
        </widget>
        <widget class="QWidget" name="page_admin">
         <property name="styleSheet">
-         <string notr="true">#page_admin{background-image: url(:/images/background.jpg);}</string>
+         <string notr="true">#page_admin{background-image: url(:/CC/images/background.jpg);}</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
@@ -7394,8 +6880,8 @@ QToolButton::pressed {
 background-position:left bottom;
 }
 QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
+background-image: url(:/CC/images/interface/quit.png);
+border-image: url(:/CC/images/empty.png);
 }</string>
              </property>
             </widget>
@@ -7412,8 +6898,9 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
+  <include location="../fight/resources/client-resources-fight.qrc"/>
+  <include location="../../resources/client-resources.qrc"/>
   <include location="../../resources/client-resources-multi.qrc"/>
-  <include location="../../../server/all-server-resources.qrc"/>
  </resources>
  <connections>
   <connection>

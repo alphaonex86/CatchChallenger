@@ -1,5 +1,6 @@
 #include "OptionsV.h"
-#include "../../client/base/LanguagesSelect.h"
+#include "../../client/qt/LanguagesSelect.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 
 #include <QApplication>
 #include <QDebug>
@@ -11,15 +12,20 @@ int main(int argc, char *argv[])
 #ifdef Q_WS_X11
     QApplication::setGraphicsSystem(QStringLiteral("raster"));
 #endif
+    qRegisterMetaType<std::string>("std::string");
 
     QApplication a(argc, argv);
+    a.setQuitOnLastWindowClosed(false);
     LanguagesSelect::languagesSelect=new LanguagesSelect();
     a.setOrganizationDomain(QStringLiteral("catchchallenger"));
     a.setApplicationName(QStringLiteral("Map visualiser"));
     a.setApplicationVersion(QStringLiteral("1.0"));
+    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
 
     OptionsV options;
     options.show();
 
-    return a.exec();
+    const int r=a.exec();
+    delete QtDatapackClientLoader::datapackLoader;
+    return r;
 }

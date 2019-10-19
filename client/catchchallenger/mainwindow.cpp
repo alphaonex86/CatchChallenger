@@ -1308,7 +1308,7 @@ void MainWindow::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
         else
         {
             ui->news->setToolTip(QString::fromStdString(error));
-            ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
+            ui->news->setStyleSheet("#news{background-color: rgb(220, 220, 240);\nborder: 1px solid rgb(100, 150, 240);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\nbackground-image: url(:/CC/images/multi/warning.png);\nbackground-repeat: no-repeat;\nbackground-position: right;}");
         }
         return;
     }

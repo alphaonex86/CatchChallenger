@@ -14,7 +14,7 @@
    <string>New profile</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#NewProfile{background-image: url(:/images/background.jpg);}
+   <string notr="true">#NewProfile{background-image: url(:/CC/images/background.jpg);}
 </string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -54,7 +54,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="styleSheet">
-      <string notr="true">#groupBox{background-image: url(:/images/light-white.png);}
+      <string notr="true">#groupBox{background-image: url(:/CC/images/light-white.png);}
 </string>
      </property>
      <property name="title">

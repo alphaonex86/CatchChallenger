@@ -22,7 +22,7 @@
 
     <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
 
-    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="catchchallenger" android:icon="@drawable/icon">
+    <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="catchchallenger" android:icon="@mipmap/icon">
         <activity android:configChanges="screenLayout|screenSize|orientation|smallestScreenSize|layoutDirection|keyboard|keyboardHidden" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="catchchallenger" android:screenOrientation="landscape" android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

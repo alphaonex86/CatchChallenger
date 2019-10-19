@@ -1,11 +1,10 @@
 INCLUDEPATH += ../../general/libtiled/
 DEPENDPATH += ../../general/libtiled/
-LIBS *= -ltiled
 
-include(../../client/base/client.pri)
+include(../../client/qt/client.pri)
 include(../../general/general.pri)
-include(../../client/base/solo.pri)
-include(../../client/base/multi.pri)
+include(../../client/qt/solo.pri)
+include(../../client/qt/multi.pri)
 include(../../server/catchchallenger-server-qt.pri)
 
 TEMPLATE = app
@@ -32,5 +31,7 @@ RESOURCES += \
 
 FORMS += \
     OptionsV.ui
+
+DEFINES += NOTHREADS MAPVISUALISER
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc

@@ -628,7 +628,7 @@ void DatapackClientLoader::parseItemsExtra()
     while(file_index<fileList.size())
     {
         const std::string &file=datapackPath+DATAPACK_BASE_PATH_ITEM+fileList.at(file_index);
-        if(CatchChallenger::FacilityLibGeneral::isFile(file))
+        if(!CatchChallenger::FacilityLibGeneral::isFile(file))
         {
             file_index++;
             continue;
@@ -655,7 +655,9 @@ void DatapackClientLoader::parseItemsExtra()
             continue;
         }
 
-        const std::string &folder=CatchChallenger::FacilityLibGeneral::getFolderFromFile(file);
+        std::string folder=CatchChallenger::FacilityLibGeneral::getFolderFromFile(file);
+        if(!stringEndsWith(folder,"/") && !stringEndsWith(folder,"\\"))
+            folder+="/";
         //load the content
         bool ok;
         const tinyxml2::XMLElement *item = root->FirstChildElement("item");
@@ -678,7 +680,7 @@ void DatapackClientLoader::parseItemsExtra()
                             std::cerr << "For parse item: Have not image attribute: child.Name(): "
                                         << item->Name() << " "
                                         << file << std::endl;
-                            itemExtra.imagePath=":/images/inventory/unknown-object.png";
+                            itemExtra.imagePath=":/CC/images/inventory/unknown-object.png";
                         }
 
                         //load the name
@@ -1366,7 +1368,7 @@ void DatapackClientLoader::parseZoneExtra()
     std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
     while(index<returnList.size())
     {
-        const std::string &stringPath=returnList.at(index);
+        const std::string &stringPath=temp+returnList.at(index);
         if(!CatchChallenger::FacilityLibGeneral::isFile(stringPath))
         {
             index++;
@@ -1482,7 +1484,7 @@ void DatapackClientLoader::parseSkillsExtra()
     unsigned int file_index=0;
     while(file_index<returnList.size())
     {
-        const std::string &file=returnList.at(file_index);
+        const std::string &file=temp+returnList.at(file_index);
         if(!CatchChallenger::FacilityLibGeneral::isFile(file))
         {
             file_index++;
@@ -1743,7 +1745,7 @@ void DatapackClientLoader::parseBotFightsExtra()
     unsigned int file_index=0;
     while(file_index<returnList.size())
     {
-        const std::string &file=returnList.at(file_index);
+        const std::string &file=temp+returnList.at(file_index);
         if(CatchChallenger::FacilityLibGeneral::isFile(file))
         {
             const std::string &file=returnList.at(file_index);
@@ -1861,6 +1863,8 @@ void DatapackClientLoader::parseBotFightsExtra()
                 item = item->NextSiblingElement("fight");
             }
         }
+        else
+            std::cerr << "file not found bot fight extra: " << file << std::endl;
         file_index++;
     }
 

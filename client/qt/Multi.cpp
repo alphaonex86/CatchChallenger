@@ -116,7 +116,7 @@ void Multi::displayServerList()
         QString name;
         QString star;
         if(connexionInfo.connexionCounter>0)
-            star+=QStringLiteral("<img src=\":/images/interface/top.png\" alt=\"\" />");
+            star+=QStringLiteral("<img src=\":/CC/images/interface/top.png\" alt=\"\" />");
         QString lastConnexion;
         if(connexionInfo.connexionCounter>0)
             lastConnexion=tr("Last connexion: %1").arg(QDateTime::fromMSecsSinceEpoch((uint64_t)connexionInfo.lastConnexion*1000).toString());
