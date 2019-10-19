@@ -23,13 +23,13 @@ void QtDatapackClientLoader::parsePlantsExtra()
         {
             const std::string &path=basePath+std::to_string(i->first)+text_dotgif;
             if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
-                if(!plant.tileset->loadFromImage(QImage(QStringLiteral(":/images/plant/unknow_plant.png")),QStringLiteral(":/images/plant/unknow_plant.png")))
+                if(!plant.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png")))
                     qDebug() << "Unable the load the default plant tileset";
         }
-        QtDatapackClientLoader::datapackLoader.QtplantExtra[i->first]=plant;
+        QtDatapackClientLoader::datapackLoader->QtplantExtra[i->first]=plant;
         itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.plants[i->first].itemUsed]=i->first;
         ++i;
     }
 
-    qDebug() << QStringLiteral("%1 plant(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.QtplantExtra.size());
+    qDebug() << QStringLiteral("%1 plant(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->QtplantExtra.size());
 }

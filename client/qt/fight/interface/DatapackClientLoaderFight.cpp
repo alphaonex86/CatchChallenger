@@ -216,7 +216,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
                             QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             if(QtmonsterExtraEntry.front.isNull())
                             {
-                                monsterExtraEntry.frontPath=":/images/monsters/default/front.png";
+                                monsterExtraEntry.frontPath=":/CC/images/monsters/default/front.png";
                                 QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                             }
                         }
@@ -228,7 +228,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
                             QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             if(QtmonsterExtraEntry.back.isNull())
                             {
-                                monsterExtraEntry.backPath=":/images/monsters/default/back.png";
+                                monsterExtraEntry.backPath=":/CC/images/monsters/default/back.png";
                                 QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
                             }
                         }
@@ -237,11 +237,11 @@ void QtDatapackClientLoader::parseMonstersExtra()
                         {
                             QtmonsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.gif");
                             if(QtmonsterExtraEntry.thumb.isNull())
-                                QtmonsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+                                QtmonsterExtraEntry.thumb=QPixmap(":/CC/images/monsters/default/small.png");
                         }
                         QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
-                        QtDatapackClientLoader::datapackLoader.monsterExtra[id]=monsterExtraEntry;
-                        QtDatapackClientLoader::datapackLoader.QtmonsterExtra[id]=QtmonsterExtraEntry;
+                        QtDatapackClientLoader::datapackLoader->monsterExtra[id]=monsterExtraEntry;
+                        QtDatapackClientLoader::datapackLoader->QtmonsterExtra[id]=QtmonsterExtraEntry;
                     }
                 }
             }
@@ -257,25 +257,25 @@ void QtDatapackClientLoader::parseMonstersExtra()
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
     {
-        if(QtDatapackClientLoader::datapackLoader.monsterExtra.find(i->first)==
-                QtDatapackClientLoader::datapackLoader.monsterExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(i->first)==
+                QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
             QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
             QtDatapackClientLoader::QtMonsterExtra QtmonsterExtraEntry;
             monsterExtraEntry.name=tr("Unknown").toStdString();
             monsterExtraEntry.description=tr("Unknown").toStdString();
-            QtmonsterExtraEntry.front=QPixmap(":/images/monsters/default/front.png");
-            QtmonsterExtraEntry.back=QPixmap(":/images/monsters/default/back.png");
-            QtmonsterExtraEntry.thumb=QPixmap(":/images/monsters/default/small.png");
+            QtmonsterExtraEntry.front=QPixmap(":/CC/images/monsters/default/front.png");
+            QtmonsterExtraEntry.back=QPixmap(":/CC/images/monsters/default/back.png");
+            QtmonsterExtraEntry.thumb=QPixmap(":/CC/images/monsters/default/small.png");
             QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
-            QtDatapackClientLoader::datapackLoader.monsterExtra[i->first]=monsterExtraEntry;
-            QtDatapackClientLoader::datapackLoader.QtmonsterExtra[i->first]=QtmonsterExtraEntry;
+            QtDatapackClientLoader::datapackLoader->monsterExtra[i->first]=monsterExtraEntry;
+            QtDatapackClientLoader::datapackLoader->QtmonsterExtra[i->first]=QtmonsterExtraEntry;
         }
         ++i;
     }
 
-    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.monsterExtra.size());
+    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterExtra.size());
 }
 
 
@@ -417,9 +417,9 @@ void QtDatapackClientLoader::parseBuffExtra()
                             QtmonsterBuffExtraEntry.icon=QIcon(QString::fromStdString(gifFile));
                         const QList<QSize> &availableSizes=QtmonsterBuffExtraEntry.icon.availableSizes();
                         if(QtmonsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
-                            QtmonsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/images/interface/buff.png"));
-                        QtDatapackClientLoader::datapackLoader.monsterBuffsExtra[id]=monsterBuffExtraEntry;
-                        QtDatapackClientLoader::datapackLoader.QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
+                            QtmonsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/CC/images/interface/buff.png"));
+                        QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[id]=monsterBuffExtraEntry;
+                        QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
                     }
                 }
             }
@@ -435,20 +435,20 @@ void QtDatapackClientLoader::parseBuffExtra()
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
     {
-        if(QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.find(i->first)==
-                QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(i->first)==
+                QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
             QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
             QtDatapackClientLoader::QtMonsterExtra::QtBuff QtmonsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
-            QtmonsterBuffExtraEntry.icon=QIcon(":/images/interface/buff.png");
-            QtDatapackClientLoader::datapackLoader.monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
-            QtDatapackClientLoader::datapackLoader.QtmonsterBuffsExtra[i->first]=QtmonsterBuffExtraEntry;
+            QtmonsterBuffExtraEntry.icon=QIcon(":/CC/images/interface/buff.png");
+            QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
+            QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[i->first]=QtmonsterBuffExtraEntry;
         }
         ++i;
     }
 
-    qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader.monsterBuffsExtra.size());
+    qDebug() << QStringLiteral("%1 buff(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.size());
 }

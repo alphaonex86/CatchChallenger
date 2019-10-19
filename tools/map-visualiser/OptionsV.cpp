@@ -26,20 +26,25 @@ void OptionsV::on_browse_clicked()
 
 void OptionsV::on_load_clicked()
 {
-    mapController=new MapControllerV(ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),ui->cache->isChecked());
+    mapController=new MapControllerV(ui->centerOnPlayer->isChecked(),ui->debugTags->isChecked(),
+                                     ui->cache->isChecked(),ui->opengl->isChecked());
 
-    mapController->setShowFPS(ui->showFPS->isChecked());
-    if(ui->doubleSize->isChecked())
-        mapController->setScale(2);
-    else
-        mapController->setScale(1);
+    //mapController->setShowFPS(ui->showFPS->isChecked());
+    mapController->setScale(ui->doubleSize->value());
     if(ui->limitFPS->isChecked())
         mapController->setTargetFPS(ui->targetFPS->value());
     else
         mapController->setTargetFPS(0);
     mapController->setBotNumber(ui->botCount->value());
 
+    mapController->current_map=ui->baseFile->text().toStdString();
     mapController->viewMap(ui->baseFile->text());
 
+    //QApplication::setQuitOnLastWindowClosed(true);
     close();
+}
+
+void OptionsV::on_baseFile_textChanged(const QString &arg1)
+{
+    ui->load->setEnabled(!arg1.isEmpty());
 }

@@ -27,7 +27,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/client-resources.qrc">
-    <normaloff>:/images/catchchallenger.png</normaloff>:/images/catchchallenger.png</iconset>
+    <normaloff>:/CC/images/catchchallenger.png</normaloff>:/CC/images/catchchallenger.png</iconset>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
@@ -143,7 +143,7 @@
                  <widget class="QScrollArea" name="scrollArea">
                   <property name="styleSheet">
                    <string notr="true">QScrollArea {
-	background-image: url(:/images/light-white.png);
+	background-image: url(:/CC/images/light-white.png);
 border: 1px solid #000;
 }
 QLabel { padding:2px; }</string>
@@ -393,7 +393,7 @@ border-radius:5px;</string>
            <widget class="QToolButton" name="languages">
             <property name="icon">
              <iconset resource="../resources/client-resources.qrc">
-              <normaloff>:/images/interface/languages.png</normaloff>:/images/interface/languages.png</iconset>
+              <normaloff>:/CC/images/interface/languages.png</normaloff>:/CC/images/interface/languages.png</iconset>
             </property>
             <property name="iconSize">
              <size>

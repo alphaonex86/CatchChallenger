@@ -221,6 +221,7 @@ private slots:
     void animationFinished();
     void evolutionCanceled();
     void teleportConditionNotRespected(const std::string &text);
+    void newFPSvalue(const unsigned int FPS);
     static std::string reputationRequirementsToText(const ReputationRequirements &reputationRequirements);
 
     //datapack
@@ -747,6 +748,9 @@ signals:
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
     #endif
+    void toLoading(QString text=QString());
+    void goToServerList();
+    void goToMap();
 };
 }
 

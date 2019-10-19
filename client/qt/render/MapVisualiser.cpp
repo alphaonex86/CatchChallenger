@@ -9,13 +9,14 @@
 #include <QFileInfo>
 #include <QPointer>
 #include <QMessageBox>
-/*#include <QGLFormat>
-#include <QGLWidget>*/
+#include <QGLFormat>
+#include <QGLWidget>
 #include <QLabel>
+#include <QPixmapCache>
 
 #include "../../../general/base/MoveOnTheMap.h"
 
-MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
+MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &openGL) :
     mScene(new QGraphicsScene(this)),
     mark(NULL)
 {
@@ -26,9 +27,15 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     if(!connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection))
         abort();
 
+    if(openGL)
+        setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
+    setRenderHint(QPainter::HighQualityAntialiasing,false);
+    setRenderHint(QPainter::SmoothPixmapTransform,false);
+    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
     setCacheMode(QGraphicsView::CacheBackground);
+    QPixmapCache::setCacheLimit(102400);
 
     mapVisualiserThread.debugTags=debugTags;
     this->debugTags=debugTags;
@@ -38,15 +45,13 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     timeUpdateFPS.restart();
     frameCounter=0;
     timeRender.restart();
-    waitRenderTime=30;
+    waitRenderTime=40;
     timerRender.setSingleShot(true);
     if(!connect(&timerRender,&QTimer::timeout,this,&MapVisualiser::render))
         abort();
     if(!connect(&timerUpdateFPS,&QTimer::timeout,this,&MapVisualiser::updateFPS))
         abort();
     timerUpdateFPS.start();
-    FPSText=NULL;
-    mShowFPS=false;
 
     mapItem=new MapItem(NULL,useCache);
     if(!connect(mapItem,&MapItem::eventOnMap,this,&MapVisualiser::eventOnMap))
@@ -58,7 +63,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     setScene(mScene);
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);*/
-    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState);
+    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState | QGraphicsView::IndirectPainting);
     setBackgroundBrush(Qt::black);
     setFrameStyle(0);
 
@@ -70,27 +75,15 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache) :
     tagTilesetIndex=0;
     markPathFinding=new Tiled::Tileset(QStringLiteral("mark path finding"),16,24);
     {
-        QImage image(QStringLiteral(":/images/map/marker.png"));
+        QImage image(QStringLiteral(":/CC/images/map/marker.png"));
         if(image.isNull())
             qDebug() << "Unable to load the image for marker because is null";
-        else if(!markPathFinding->loadFromImage(image,QStringLiteral(":/images/map/marker.png")))
+        else if(!markPathFinding->loadFromImage(image,QStringLiteral(":/CC/images/map/marker.png")))
             qDebug() << "Unable to load the image for marker";
     }
 
     mScene->addItem(mapItem);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
-
-    FPSText=new QGraphicsSimpleTextItem(mapItem);
-    FPSText->setVisible(mShowFPS);
-    mScene->addItem(FPSText);
-    FPSText->setPos(2,2);
-    QFont bold;
-    bold.setBold(true);
-    FPSText->setFont(bold);
-    FPSText->setPen(QPen(Qt::black));
-    FPSText->setBrush(Qt::white);
-    setShowFPS(mShowFPS);
-
     render();
 }
 
@@ -132,7 +125,7 @@ void MapVisualiser::paintEvent(QPaintEvent * event)
 
     uint32_t elapsed=timeRender.elapsed();
     if(waitRenderTime<=elapsed)
-        timerRender.start(0);
+        timerRender.start(1);
     else
         timerRender.start(waitRenderTime-elapsed);
 
@@ -142,24 +135,12 @@ void MapVisualiser::paintEvent(QPaintEvent * event)
 
 void MapVisualiser::updateFPS()
 {
-    if(FPSText!=NULL && mShowFPS)
-        FPSText->setText(QStringLiteral("%1 FPS").arg((int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed()));
+    const unsigned int FPS=(int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
+    emit newFPSvalue(FPS);
 
     frameCounter=0;
     timeUpdateFPS.restart();
     timerUpdateFPS.start();
-}
-
-bool MapVisualiser::showFPS()
-{
-    return mShowFPS;
-}
-
-void MapVisualiser::setShowFPS(const bool &showFPS)
-{
-    mShowFPS=showFPS;
-    if(FPSText!=NULL)
-        FPSText->setVisible(showFPS);
 }
 
 void MapVisualiser::setTargetFPS(int targetFPS)

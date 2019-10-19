@@ -156,7 +156,7 @@
 }
 
 QSlider::handle:horizontal {
-    image: url(:/images/interface/sliderH.png);
+    image: url(:/CC/images/interface/sliderH.png);
     height: 26px;
     width: 35px;
     margin: -4px -9px;

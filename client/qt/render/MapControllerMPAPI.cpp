@@ -57,15 +57,15 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         #endif
         return false;
     }
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
     {
         /// \bug here pass after delete a party, create a new
-        emit error("mapId greater than QtDatapackClientLoader::datapackLoader.maps.size(): "+
-                   std::to_string(QtDatapackClientLoader::datapackLoader.maps.size()));
+        emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
+                   std::to_string(QtDatapackClientLoader::datapackLoader->maps.size()));
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
     //current player
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
@@ -114,7 +114,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         otherPlayer.pendingMonsterMoves.clear();
         otherPlayer.stepAlternance=false;
 
-        const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader.maps.at(mapId)))
+        const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
                 .absoluteFilePath().toStdString();
         if(all_map.find(mapPath)==all_map.cend())
         {
@@ -190,19 +190,19 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                     if(player.type==CatchChallenger::Player_type_gm)
                     {
                         if(imgForPseudoAdmin==NULL)
-                            imgForPseudoAdmin=new QPixmap(":/images/chat/admin.png");
+                            imgForPseudoAdmin=new QPixmap(":/CC/images/chat/admin.png");
                         painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoAdmin);
                     }
                     if(player.type==CatchChallenger::Player_type_dev)
                     {
                         if(imgForPseudoDev==NULL)
-                            imgForPseudoDev=new QPixmap(":/images/chat/developer.png");
+                            imgForPseudoDev=new QPixmap(":/CC/images/chat/developer.png");
                         painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoDev);
                     }
                     if(player.type==CatchChallenger::Player_type_premium)
                     {
                         if(imgForPseudoPremium==NULL)
-                            imgForPseudoPremium=new QPixmap(":/images/chat/premium.png");
+                            imgForPseudoPremium=new QPixmap(":/CC/images/chat/premium.png");
                         painter.drawPixmap(destRect.width(),(destRect.height()-14)/2,40,14,*imgForPseudoPremium);
                     }
                 }
@@ -212,19 +212,19 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                 if(player.type==CatchChallenger::Player_type_gm)
                 {
                     if(imgForPseudoAdmin==NULL)
-                        imgForPseudoAdmin=new QPixmap(":/images/chat/admin.png");
+                        imgForPseudoAdmin=new QPixmap(":/CC/images/chat/admin.png");
                     pix=*imgForPseudoAdmin;
                 }
                 if(player.type==CatchChallenger::Player_type_dev)
                 {
                     if(imgForPseudoDev==NULL)
-                        imgForPseudoDev=new QPixmap(":/images/chat/developer.png");
+                        imgForPseudoDev=new QPixmap(":/CC/images/chat/developer.png");
                     pix=*imgForPseudoDev;
                 }
                 if(player.type==CatchChallenger::Player_type_premium)
                 {
                     if(imgForPseudoPremium==NULL)
-                        imgForPseudoPremium=new QPixmap(":/images/chat/premium.png");
+                        imgForPseudoPremium=new QPixmap(":/CC/images/chat/premium.png");
                     pix=*imgForPseudoPremium;
                 }
             }
@@ -758,7 +758,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     qDebug() << QStringLiteral("reinsert_player(%1)").arg(id);
     #endif
 
-    /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, QtDatapackClientLoader::datapackLoader.maps relative path
+    /// \warning search by loop because otherPlayerList.value(id).current_map is the full path, QtDatapackClientLoader::datapackLoader->maps relative path
     std::string tempCurrentMap=otherPlayerList.at(id).current_map;
     //if not found, search into sub
     if(all_map.find(tempCurrentMap)==all_map.cend() && !client->subDatapackCode().empty())
@@ -780,7 +780,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     if(all_map.find(tempCurrentMap)==all_map.cend())
     {
         qDebug() << "internal problem, revert map (" << QString::fromStdString(otherPlayerList.at(id).current_map)
-                 << ") index is wrong (" << QString::fromStdString(stringimplode(QtDatapackClientLoader::datapackLoader.maps,";")) << ")";
+                 << ") index is wrong (" << QString::fromStdString(stringimplode(QtDatapackClientLoader::datapackLoader->maps,";")) << ")";
         if(!inReplayMode)
         {
             DelayedReinsertSingle tempItem;

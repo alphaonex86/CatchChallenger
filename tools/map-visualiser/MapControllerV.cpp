@@ -5,8 +5,8 @@
 #include <QCoreApplication>
 #include <QDebug>
 
-MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
+MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &openGL) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,openGL)
 {
     setWindowIcon(QIcon(":/icon.png"));
 
@@ -359,12 +359,24 @@ void MapControllerV::unloadPlayerFromCurrentMap()
 bool MapControllerV::viewMap(const QString &fileName)
 {
     loadOtherMap(fileName.toStdString());
+    return true;
+}
+
+bool MapControllerV::asyncMapLoaded(const std::string &fileName, Map_full * tempMapObject)
+{
+    MapVisualiser::asyncMapLoaded(fileName,tempMapObject);
     if(current_map.empty())
     {
         QMessageBox::critical(this,"Error",QString::fromStdString(mLastError));
         return false;
     }
-    MapVisualiserThread::Map_full *map=all_map[current_map];
+    if(tempMapObject==NULL)
+    {
+        //to support border missing map QMessageBox::critical(this,"Error",QString::fromStdString(mLastError));
+        return false;
+    }
+    all_map[fileName]=tempMapObject;
+    Map_full *map=tempMapObject;
 
     render();
 

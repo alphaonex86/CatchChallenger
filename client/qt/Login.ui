@@ -120,7 +120,7 @@
            <widget class="QToolButton" name="toolButton">
             <property name="icon">
              <iconset resource="../resources/client-resources-multi.qrc">
-              <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
+              <normaloff>:/CC/images/multi/showpassword.png</normaloff>:/CC/images/multi/showpassword.png</iconset>
             </property>
             <property name="checkable">
              <bool>true</bool>

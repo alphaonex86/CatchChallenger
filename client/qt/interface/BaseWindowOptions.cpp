@@ -9,7 +9,7 @@ using namespace CatchChallenger;
 
 void CatchChallenger::BaseWindow::on_forceZoom_toggled(bool checked)
 {
-    if(checked)
+/*    if(checked)
     {
         ui->zoom->setEnabled(false);
         ui->forceZoom->setChecked(true);
@@ -25,15 +25,15 @@ void CatchChallenger::BaseWindow::on_forceZoom_toggled(bool checked)
         ui->zoom->setValue(CommonDatapack::commonDatapack.layersOptions.zoom);
         mapController->setScale(CommonDatapack::commonDatapack.layersOptions.zoom);
         Options::options.setForcedZoom(0);
-    }
+    }*/
 }
 
 void CatchChallenger::BaseWindow::on_zoom_valueChanged(int value)
 {
-    if(!ui->zoom->isEnabled())
+/*    if(!ui->zoom->isEnabled())
         return;
     Options::options.setForcedZoom(static_cast<uint8_t>(value));
-    mapController->setScale(value);
+    mapController->setScale(value);*/
 }
 
 void BaseWindow::on_checkBoxLimitFPS_toggled(bool checked)
@@ -44,7 +44,7 @@ void BaseWindow::on_checkBoxLimitFPS_toggled(bool checked)
 
 void BaseWindow::on_spinBoxMaxFPS_editingFinished()
 {
-    Options::options.setFPS(static_cast<uint16_t>(ui->spinBoxMaxFPS->value()));
+    //Options::options.setFPS(static_cast<uint16_t>(ui->spinBoxMaxFPS->value()));
     mapController->setTargetFPS(Options::options.getFinalFPS());
 }
 
@@ -58,15 +58,15 @@ void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 
 void BaseWindow::loadSettings()
 {
-    ui->audioVolume->setValue(Options::options.getAudioVolume());
+    /*ui->audioVolume->setValue(Options::options.getAudioVolume());
     ui->checkBoxLimitFPS->setChecked(Options::options.getLimitedFPS());
     ui->spinBoxMaxFPS->setValue(Options::options.getFPS());
-    mapController->setTargetFPS(Options::options.getFinalFPS());
+    mapController->setTargetFPS(Options::options.getFinalFPS());*/
 }
 
 void BaseWindow::loadSettingsWithDatapack()
 {
-    const uint8_t &forcedZoom=Options::options.getForcedZoom();
+    /*const uint8_t &forcedZoom=Options::options.getForcedZoom();
     if(forcedZoom==0)
     {
         ui->zoom->setEnabled(false);
@@ -81,5 +81,5 @@ void BaseWindow::loadSettingsWithDatapack()
         ui->zoom->setValue(forcedZoom);
         mapController->setScale(Options::options.getForcedZoom());
         ui->zoom->setEnabled(true);
-    }
+    }*/
 }

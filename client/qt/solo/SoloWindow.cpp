@@ -500,8 +500,8 @@ std::string SoloWindow::getMapZone(const std::string &file)
 std::string SoloWindow::getZoneName(const std::string &zone)
 {
     //open and quick check the file
-    std::string file(QtDatapackClientLoader::datapackLoader.getDatapackPath()+
-                     QtDatapackClientLoader::datapackLoader.getMainDatapackPath()+
+    std::string file(QtDatapackClientLoader::datapackLoader->getDatapackPath()+
+                     QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
                      DATAPACK_BASE_PATH_ZONE2+zone+".xml");
     //open and quick check the file
     tinyxml2::XMLDocument domDocument;
@@ -539,8 +539,8 @@ std::string SoloWindow::getZoneName(const std::string &zone)
 //work around QSS crash
 void SoloWindow::setBuggyStyle()
 {
-    ui->page->setStyleSheet("#page{background-image: url(:/images/background.jpg);}");
-    ui->frame_login_2->setStyleSheet("#frame_login_2{background-image: url(:/images/savegame-select.png);}");
+    ui->page->setStyleSheet("#page{background-image: url(:/CC/images/background.jpg);}");
+    ui->frame_login_2->setStyleSheet("#frame_login_2{background-image: url(:/CC/images/savegame-select.png);}");
 }
 
 void SoloWindow::on_SaveGame_Delete_clicked()
