@@ -150,7 +150,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                             if(fightCollisionBot==NULL)
                             {
                                 fightCollisionBot=new Tiled::Tileset(QStringLiteral("fightCollisionBot"),16,16);
-                                fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/images/fightCollisionBot.png")),QStringLiteral(":/images/fightCollisionBot.png"));
+                                fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/CC/images/fightCollisionBot.png")),QStringLiteral(":/CC/images/fightCollisionBot.png"));
                             }
                         }
                         temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,static_cast<uint8_t>(fightCollisionBot->tileCount()));

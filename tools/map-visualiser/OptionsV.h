@@ -20,6 +20,8 @@ public:
 private slots:
     void on_browse_clicked();
     void on_load_clicked();
+    void on_baseFile_textChanged(const QString &arg1);
+
 private:
     Ui::OptionsV *ui;
     MapControllerV *mapController;

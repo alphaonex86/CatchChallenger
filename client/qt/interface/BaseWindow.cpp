@@ -164,17 +164,17 @@ BaseWindow::BaseWindow() :
     disableIntoListBrush=QBrush(QColor(200,20,20));
 
     //connect the datapack loader
-    if(!connect(&QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection))
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  this,                                   &BaseWindow::datapackParsed,Qt::QueuedConnection))
         abort();
-    if(!connect(&QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection))
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,           this,                                   &BaseWindow::datapackParsedMainSub,Qt::QueuedConnection))
         abort();
-    if(!connect(&QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection))
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackChecksumError,           this,                                   &BaseWindow::datapackChecksumError,Qt::QueuedConnection))
         abort();
-    if(!connect(this,                                   &BaseWindow::parseDatapack,                             &QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapack,Qt::QueuedConnection))
+    if(!connect(this,                                   &BaseWindow::parseDatapack,                             QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapack,Qt::QueuedConnection))
         abort();
-    if(!connect(this,                                   &BaseWindow::parseDatapackMainSub,                      &QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
+    if(!connect(this,                                   &BaseWindow::parseDatapackMainSub,                      QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
         abort();
-    if(!connect(&QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  mapController,           &MapController::datapackParsed,Qt::QueuedConnection))
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  mapController,           &MapController::datapackParsed,Qt::QueuedConnection))
         abort();
     if(!connect(this,                                   &BaseWindow::datapackParsedMainSubMap,                  mapController,        &MapController::datapackParsedMainSub,Qt::QueuedConnection))
         abort();
@@ -197,6 +197,8 @@ BaseWindow::BaseWindow() :
     if(!connect(mapController,&MapController::repelEffectIsOver,     this,&BaseWindow::repelEffectIsOver))
         abort();
     if(!connect(mapController,&MapController::teleportConditionNotRespected, this,&BaseWindow::teleportConditionNotRespected,Qt::QueuedConnection))
+        abort();
+    if(!connect(mapController,&MapController::newFPSvalue,          this,&BaseWindow::newFPSvalue,Qt::QueuedConnection))
         abort();
 
     #ifndef CATCHCHALLENGER_NOAUDIO
@@ -287,7 +289,7 @@ BaseWindow::BaseWindow() :
     if(Ultimate::ultimate.isUltimate())
     {
         {
-            QFile file(":/images/interface/repeatable.png");
+            QFile file(":/CC/images/interface/repeatable.png");
             if(file.open(QIODevice::ReadOnly))
             {
                 imagesInterfaceRepeatableString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"Repeatable\" title=\"Repeatable\" />").arg(QString(file.readAll().toBase64())).toStdString();
@@ -295,7 +297,7 @@ BaseWindow::BaseWindow() :
             }
         }
         {
-            QFile file(":/images/interface/in-progress.png");
+            QFile file(":/CC/images/interface/in-progress.png");
             if(file.open(QIODevice::ReadOnly))
             {
                 imagesInterfaceInProgressString=QStringLiteral("<img src=\"data:image/png;base64,%1\" alt=\"In progress\" title=\"In progress\" />").arg(QString(file.readAll().toBase64())).toStdString();
@@ -707,14 +709,14 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
 
             QPixmap image;
             std::string name;
-            if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                image=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(item).image;
-                name=QtDatapackClientLoader::datapackLoader.itemsExtra.at(item).name;
+                image=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(item).image;
+                name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name;
             }
             else
             {
-                image=QtDatapackClientLoader::datapackLoader.defaultInventoryImage();
+                image=QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
                 name="id: %1"+std::to_string(item);
             }
 
@@ -845,7 +847,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     QList<QListWidgetItem *> items=ui->inventory->selectedItems();
     if(items.size()!=1)
     {
-        ui->inventory_image->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->inventory_image->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->inventory_name->setText("");
         ui->inventory_description->setText(tr("Select an object"));
         ui->inventoryInformation->setVisible(false);
@@ -854,19 +856,19 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(items_graphical.at(item))==
-            QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(items_graphical.at(item))==
+            QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
         ui->inventoryInformation->setVisible(false);
         ui->inventoryUse->setVisible(false);
         ui->inventoryDestroy->setVisible(!inSelection);
-        ui->inventory_image->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->inventory_image->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->inventory_name->setText(tr("Unknown name"));
         ui->inventory_description->setText(tr("Unknown description"));
         return;
     }
-    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader.itemsExtra.at(items_graphical.at(item));
-    const QtDatapackClientLoader::QtItemExtra &Qtcontent=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(items_graphical.at(item));
+    const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->itemsExtra.at(items_graphical.at(item));
+    const QtDatapackClientLoader::QtItemExtra &Qtcontent=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(items_graphical.at(item));
     ui->inventoryDestroy->setVisible(!inSelection);
     ui->inventory_image->setPixmap(Qtcontent.image);
     ui->inventory_name->setText(QString::fromStdString(content.name));
@@ -874,8 +876,8 @@ void BaseWindow::on_inventory_itemSelectionChanged()
 
     ui->inventoryInformation->setVisible(!inSelection &&
                                          /* is a plant */
-                                         QtDatapackClientLoader::datapackLoader.itemToPlants.find(items_graphical.at(item))!=
-                                         QtDatapackClientLoader::datapackLoader.itemToPlants.cend()
+                                         QtDatapackClientLoader::datapackLoader->itemToPlants.find(items_graphical.at(item))!=
+                                         QtDatapackClientLoader::datapackLoader->itemToPlants.cend()
                                          );
     bool isRecipe=false;
     {
@@ -1069,11 +1071,11 @@ void BaseWindow::forcedEvent(const uint8_t &event,const uint8_t &event_value)
     this->events[event]=event_value;
     //color
     {
-        if(QtDatapackClientLoader::datapackLoader.visualCategories.find(type)!=
-                QtDatapackClientLoader::datapackLoader.visualCategories.cend())
+        if(QtDatapackClientLoader::datapackLoader->visualCategories.find(type)!=
+                QtDatapackClientLoader::datapackLoader->visualCategories.cend())
         {
             const std::vector<QtDatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
-                    QtDatapackClientLoader::datapackLoader.visualCategories.at(type).conditions;
+                    QtDatapackClientLoader::datapackLoader->visualCategories.at(type).conditions;
             unsigned int index=0;
             while(index<conditions.size())
             {
@@ -1092,7 +1094,7 @@ void BaseWindow::forcedEvent(const uint8_t &event,const uint8_t &event_value)
             }
             if(index==conditions.size())
             {
-                QtDatapackClientLoader::CCColor defaultColor=QtDatapackClientLoader::datapackLoader.visualCategories.at(type).defaultColor;
+                QtDatapackClientLoader::CCColor defaultColor=QtDatapackClientLoader::datapackLoader->visualCategories.at(type).defaultColor;
                 mapController->setColor(QColor(defaultColor.r,defaultColor.g,defaultColor.b,defaultColor.a),15000);
             }
         }
@@ -1117,7 +1119,7 @@ void BaseWindow::updateRXTX()
         previousTXSize=TXSize;
     double RXSpeed=(RXSize-previousRXSize)*1000/updateRXTXTimeElapsed;
     double TXSpeed=(TXSize-previousTXSize)*1000/updateRXTXTimeElapsed;
-    if(RXSpeed<1024)
+    /*if(RXSpeed<1024)
         ui->labelInput->setText(QStringLiteral("%1B/s").arg(RXSpeed,0,'g',0));
     else if(RXSpeed<10240)
         ui->labelInput->setText(QStringLiteral("%1KB/s").arg(RXSpeed/1024,0,'g',1));
@@ -1128,7 +1130,7 @@ void BaseWindow::updateRXTX()
     else if(TXSpeed<10240)
         ui->labelOutput->setText(QStringLiteral("%1KB/s").arg(TXSpeed/1024,0,'g',1));
     else
-        ui->labelOutput->setText(QStringLiteral("%1KB/s").arg(TXSpeed/1024,0,'g',0));
+        ui->labelOutput->setText(QStringLiteral("%1KB/s").arg(TXSpeed/1024,0,'g',0));*/
     #ifdef DEBUG_CLIENT_NETWORK_USAGE
     if(RXSpeed>0 && TXSpeed>0)
         qDebug() << QStringLiteral("received: %1B/s, transmited: %2B/s").arg(RXSpeed).arg(TXSpeed);
@@ -1257,12 +1259,12 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
 {
     if(point==0)
         return;
-    if(QtDatapackClientLoader::datapackLoader.reputationNameToId.find(type)==QtDatapackClientLoader::datapackLoader.reputationNameToId.cend())
+    if(QtDatapackClientLoader::datapackLoader->reputationNameToId.find(type)==QtDatapackClientLoader::datapackLoader->reputationNameToId.cend())
     {
         emit error("Unknow reputation: "+type);
         return;
     }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader.reputationNameToId.at(type);
+    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->reputationNameToId.at(type);
     PlayerReputation playerReputation;
     if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
         playerReputation=client->player_informations.reputation.at(reputationId);
@@ -1286,20 +1288,20 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
     const std::string &reputationCodeName=CommonDatapack::commonDatapack.reputation.at(reputationId).name;
     if(old_level<playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
             showTip(tr("You have better reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have better reputation into %1")
                     .arg("???").toStdString());
     }
     else if(old_level>playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
             showTip(tr("You have worse reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have worse reputation into %1")
                     .arg("???").toStdString());
@@ -1324,7 +1326,7 @@ std::string BaseWindow::parseHtmlToDisplay(const std::string &htmlContent)
         newContent.remove(quest);
     }
     newContent.replace("href=\"http","style=\"color:#BB9900;\" href=\"http",Qt::CaseInsensitive);
-    newContent.replace(QRegularExpression("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/images/link.png\" alt=\"\" /></a>");
+    newContent.replace(QRegularExpression("(href=\"http[^>]+>[^<]+)</a>"),"\\1 <img src=\":/CC/images/link.png\" alt=\"\" /></a>");
     return newContent.toStdString();
 }
 
@@ -1389,9 +1391,9 @@ void BaseWindow::on_inventoryDestroy_clicked()
         quantity=quantity_temp;
     }
     QMessageBox::StandardButton button;
-    if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 %2?")
-                                     .arg(quantity).arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name))
+                                     .arg(quantity).arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name))
                                      ,QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     else
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?")
@@ -1440,18 +1442,18 @@ void BaseWindow::on_inventoryInformation_clicked()
         return;
     }
     const uint16_t itemFound=items_graphical.at(item);
-    if(QtDatapackClientLoader::datapackLoader.itemToPlants.find(itemFound)!=
-            QtDatapackClientLoader::datapackLoader.itemToPlants.cend())
+    if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemFound)!=
+            QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
     {
-        if(plants_items_to_graphical.find(QtDatapackClientLoader::datapackLoader.itemToPlants.at(itemFound))==plants_items_to_graphical.cend())
+        if(plants_items_to_graphical.find(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound))==plants_items_to_graphical.cend())
         {
             qDebug() << QStringLiteral("on_inventoryInformation_clicked() is not into plant list: item: %1, plant: %2")
-                        .arg(itemFound).arg(QtDatapackClientLoader::datapackLoader.itemToPlants.at(itemFound));
+                        .arg(itemFound).arg(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound));
             return;
         }
         ui->listPlantList->reset();
         ui->stackedWidget->setCurrentWidget(ui->page_plants);
-        plants_items_to_graphical.at(QtDatapackClientLoader::datapackLoader.itemToPlants.at(itemFound))->setSelected(true);
+        plants_items_to_graphical.at(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound))->setSelected(true);
         on_listPlantList_itemSelectionChanged();
     }
     else
@@ -1463,7 +1465,7 @@ void BaseWindow::on_inventoryInformation_clicked()
 
 void BaseWindow::on_toolButtonOptions_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page_options);
+    //ui->stackedWidget->setCurrentWidget(ui->page_options);
 }
 
 void BaseWindow::addCash(const uint32_t &cash)
@@ -1667,6 +1669,12 @@ void BaseWindow::teleportConditionNotRespected(const std::string &text)
     showTip(text);
 }
 
+void BaseWindow::newFPSvalue(const unsigned int FPS)
+{
+    ui->FPS->setVisible(true);
+    ui->FPS->setText(QString::number(FPS)+"FPS");
+}
+
 void BaseWindow::changeDeviceIndex(int device)
 {
     if(device==-1)
@@ -1681,7 +1689,7 @@ void BaseWindow::changeDeviceIndex(int device)
 
 void BaseWindow::lastReplyTime(const uint32_t &time)
 {
-    ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
+    //ui->labelLastReplyTime->setText(tr("Last reply time: %1ms").arg(time));
     if(lastReplyTimeValue<=TIMEINMSTOBESLOW || lastReplyTimeSince.elapsed()>TIMETOSHOWTHETURTLE)
     {
         lastReplyTimeValue=time;
@@ -1717,7 +1725,7 @@ void BaseWindow::detectSlowDown()
                 worseQueryTime=time;
         }
     }
-    if(queryCount>0)
+    /*if(queryCount>0)
         ui->labelQueryList->setText(
                     tr("Running query: %1 (%3 and %4), query with worse time: %2ms")
                     .arg(queryCount)
@@ -1726,7 +1734,7 @@ void BaseWindow::detectSlowDown()
                     .arg(QString::fromStdString(stringimplode(middleQueryList,";")))
                     );
     else
-        ui->labelQueryList->setText(tr("No query running"));
+        ui->labelQueryList->setText(tr("No query running"));*/
     updateTheTurtle();
 }
 
@@ -1797,7 +1805,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto n : QtDatapackClientLoader::datapackLoader.monsterExtra)
+        for(const auto n : QtDatapackClientLoader::datapackLoader->monsterExtra)
             keys.push_back(n.first);
         qSort(keys.begin(),keys.end());
         uint16_t max=keys.back();
@@ -1807,8 +1815,8 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
         while (i<max && i<keys.size())
         {
             const uint16_t &monsterId=keys.at(i);
-            const QtDatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader.monsterExtra.at(monsterId);
-            const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader.QtmonsterExtra.at(monsterId);
+            const QtDatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monsterId);
+            const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monsterId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=monsterId;
             if(informations.encyclopedia_monster[bitgetUp/8] & (1<<(7-bitgetUp%8)))
@@ -1823,7 +1831,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
                 item->setTextColor(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
-                item->setIcon(QIcon(":/images/monsters/default/small.png"));
+                item->setIcon(QIcon(":/CC/images/monsters/default/small.png"));
                 if(ui->checkBoxEncyclopediaMonsterKnown->isChecked())
                     firstFound=false;
             }
@@ -1844,7 +1852,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto n : QtDatapackClientLoader::datapackLoader.itemsExtra)
+        for(const auto n : QtDatapackClientLoader::datapackLoader->itemsExtra)
             keys.push_back(n.first);
         if(keys.empty())
             return;
@@ -1856,8 +1864,8 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
         while (i<max && i<keys.size())
         {
             const uint16_t &itemId=keys.at(i);
-            const QtDatapackClientLoader::ItemExtra &itemsExtra=QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId);
-            const QtDatapackClientLoader::QtItemExtra &QtitemsExtra=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(itemId);
+            const QtDatapackClientLoader::ItemExtra &itemsExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId);
+            const QtDatapackClientLoader::QtItemExtra &QtitemsExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(itemId);
             QListWidgetItem *item=new QListWidgetItem();
             const uint16_t &bitgetUp=itemId;
             if(informations.encyclopedia_item[bitgetUp/8] & (1<<(7-bitgetUp%8)))
@@ -1872,7 +1880,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
                 item->setTextColor(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
-                //item->setIcon(QIcon(":/images/monsters/default/small.png"));
+                //item->setIcon(QIcon(":/CC/images/monsters/default/small.png"));
                 if(ui->checkBoxEncyclopediaItemKnown->isChecked())
                     firstFound=false;
             }
@@ -1941,11 +1949,11 @@ void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
 {
     ui->listAllItem->clear();
     const std::string &text=ui->itemFilterAdmin->text().toUpper().toStdString();
-    for (const auto &n : QtDatapackClientLoader::datapackLoader.itemsExtra)
+    for (const auto &n : QtDatapackClientLoader::datapackLoader->itemsExtra)
     {
         const uint16_t &itemId=n.first;
         const QtDatapackClientLoader::ItemExtra &itemsExtra=n.second;
-        const QtDatapackClientLoader::QtItemExtra &QtitemsExtra=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(itemId);
+        const QtDatapackClientLoader::QtItemExtra &QtitemsExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(itemId);
         const std::string up=str_toupper(itemsExtra.name);
         if(text.empty() || up.find(text) != std::string::npos || std::to_string(itemId).find(text) != std::string::npos)
         {

@@ -24,7 +24,7 @@
 #include <QCryptographicHash>
 #include <iostream>
 
-QtDatapackClientLoader QtDatapackClientLoader::datapackLoader;
+QtDatapackClientLoader *QtDatapackClientLoader::datapackLoader=nullptr;
 
 /*const std::string QtDatapackClientLoader::text_list="list";
 const std::string QtDatapackClientLoader::text_reputation="reputation";
@@ -116,12 +116,12 @@ QPixmap QtDatapackClientLoader::defaultInventoryImage()
     return *mDefaultInventoryImage;
 }
 
+#ifndef NOTHREADS
 void QtDatapackClientLoader::run()
 {
-    #ifndef NOTHREADS
     exec();
-    #endif
 }
+#endif
 
 void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
@@ -142,7 +142,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
 {
     DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode);
     if(mDefaultInventoryImage==NULL)
-        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/images/inventory/unknown-object.png"));
+        mDefaultInventoryImage=new QPixmap(QStringLiteral(":/CC/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(
                 datapackPath,mainDatapackCode,subDatapackCode);
 
@@ -242,7 +242,12 @@ void QtDatapackClientLoader::parseItemsExtra()
 {
     DatapackClientLoader::parseItemsExtra();
     for( const auto& n : itemsExtra ) {
-        QtitemsExtra[n.first].image=QPixmap(QString::fromStdString(n.second.imagePath));
+        QString path=QString::fromStdString(n.second.imagePath);
+        QPixmap pix(path);
+        if(pix.isNull())
+            qDebug() << "bug: " << path;
+        else
+            QtitemsExtra[n.first].image=pix;
     }
 }
 

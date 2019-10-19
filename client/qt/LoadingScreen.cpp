@@ -118,3 +118,11 @@ void LoadingScreen::progression(uint32_t size,uint32_t total)
     else
         progressbar->setValue(progressbar->maximum());//abort();
 }
+
+void LoadingScreen::setText(QString text)
+{
+    if(!text.isEmpty())
+        info->setText(text);
+    else
+        info->setText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+}

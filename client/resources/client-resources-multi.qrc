@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/">
+    <qresource prefix="/CC">
         <file>images/smiles/face-wink.png</file>
         <file>images/smiles/face-angel.png</file>
         <file>images/smiles/face-embarrassed.png</file>

@@ -2,7 +2,7 @@ include(../libcatchchallenger/lib.pri)
 include(../qt/tiled/tiled.pri)
 
 QT       += gui network core widgets
-QT       += qml quick
+QT       += qml quick opengl
 
 DEFINES += CATCHCHALLENGER_CLIENT
 

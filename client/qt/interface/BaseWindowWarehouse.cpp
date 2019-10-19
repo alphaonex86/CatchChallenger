@@ -126,7 +126,7 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
         i = 1;
     else
         i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:")
-              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)),
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)),
                                  0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
@@ -159,7 +159,7 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
         i = 1;
     else
         i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:")
-                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra.at(itemId).name)),
+                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)),
                                  0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
