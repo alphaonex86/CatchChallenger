@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QStyleFactory>
 #include "qt/Options.h"
+#include "qt/QtDatapackChecksum.h"
 
 int main(int argc, char *argv[])
 {
@@ -56,15 +57,21 @@ int main(int argc, char *argv[])
     s.setMinimumSize(QSize(320,240));
     s.showMaximized();
     QIcon icon;
-    icon.addFile(":/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
+    icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
     s.show();
     /*LoadingScreen l;
     l.show();*/
+    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     const auto returnCode=a.exec();
     /*if(w.toQuit)
         return 523;
     else
         return returnCode;*/
+    delete QtDatapackClientLoader::datapackLoader;
+    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
+    CatchChallenger::QtDatapackChecksum::thread.quit();
+    CatchChallenger::QtDatapackChecksum::thread.wait();
+    #endif
     return returnCode;
 }

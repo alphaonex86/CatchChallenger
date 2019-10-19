@@ -71,12 +71,12 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
     {
         if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
         {
-            if(QtDatapackClientLoader::datapackLoader.plantOnMap.find(fileName)!=
-                    QtDatapackClientLoader::datapackLoader.plantOnMap.cend())
+            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(fileName)!=
+                    QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
             {
                 if(plantOnMap==NULL)
                     abort();
-                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::datapackLoader.plantOnMap.at(fileName);
+                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::datapackLoader->plantOnMap.at(fileName);
                 for (const auto &n : plantCoor) {
                     const uint16_t indexOfMap=n.second;
                     if(plantOnMap->size()>1000000)
@@ -89,12 +89,12 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=static_cast<uint32_t>(playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000);
-                        if(QtDatapackClientLoader::datapackLoader.fullMapPathToId.find(fileName)!=
-                                QtDatapackClientLoader::datapackLoader.fullMapPathToId.cend())
-                            insert_plant(QtDatapackClientLoader::datapackLoader.fullMapPathToId.at(fileName),
+                        if(QtDatapackClientLoader::datapackLoader->fullMapPathToId.find(fileName)!=
+                                QtDatapackClientLoader::datapackLoader->fullMapPathToId.cend())
+                            insert_plant(QtDatapackClientLoader::datapackLoader->fullMapPathToId.at(fileName),
                             static_cast<uint8_t>(x),static_cast<uint8_t>(y),playerPlant.plant,static_cast<uint16_t>(seconds_to_mature));
                         else
-                            qDebug() << "!QtDatapackClientLoader::datapackLoader.fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
+                            qDebug() << "!QtDatapackClientLoader::datapackLoader->fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
                     }
                 }
             }
@@ -348,13 +348,13 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
     if(!QFile(QString::fromStdString(skinPath)).exists())
     {
         qDebug() << "Unable the load the bot tileset (not found):" << QString::fromStdString(skinPath);
-        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
     else if(!botDisplay->tileset->loadFromImage(QImage(QString::fromStdString(skinPath)),QString::fromStdString(skinPath)))
     {
         qDebug() << "Unable the load the bot tileset";
-        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/images/player_default/trainer.png")),QStringLiteral(":/images/player_default/trainer.png")))
+        if(!botDisplay->tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png")))
             qDebug() << "Unable the load the default bot tileset";
     }
 
@@ -376,7 +376,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         if(botFlags==NULL)
         {
             botFlags=new Tiled::Tileset(QStringLiteral("botflags"),16,16);
-            botFlags->loadFromImage(QImage(QStringLiteral(":/images/flags.png")),QStringLiteral(":/images/flags.png"));
+            botFlags->loadFromImage(QImage(QStringLiteral(":/CC/images/flags.png")),QStringLiteral(":/CC/images/flags.png"));
             TemporaryTile::empty=botFlags->tileAt(15);
         }
 

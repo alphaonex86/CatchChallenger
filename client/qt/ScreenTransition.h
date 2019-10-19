@@ -35,6 +35,9 @@ protected:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     void disconnectedFromServer();
+    void toLoading(QString text);
+    void goToServerList();
+    void goToMap();
 private:
     CCBackground b;
     LoadingScreen l;

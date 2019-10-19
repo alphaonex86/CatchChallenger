@@ -43,7 +43,7 @@ GameLoader::GameLoader()
     }
     #endif
     {
-        QDirIterator it(":/images/", QDirIterator::Subdirectories);
+        QDirIterator it(":/CC/images/", QDirIterator::Subdirectories);
         while (it.hasNext()) {
             QString file=it.next();
             if(

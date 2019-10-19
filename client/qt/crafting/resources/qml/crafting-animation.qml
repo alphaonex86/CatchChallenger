@@ -12,7 +12,7 @@ Rectangle {
     property real offsetY    : (height / 5);
 
     Image {
-        source: "qrc:/images/interface/player/background.jpg";
+        source: "qrc:/CC/images/interface/player/background.jpg";
         smooth: false;
         anchors {
             left: parent.left;

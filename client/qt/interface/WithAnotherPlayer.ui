@@ -12,7 +12,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/client-resources.qrc">
-    <normaloff>:/images/interface/player.png</normaloff>:/images/interface/player.png</iconset>
+    <normaloff>:/CC/images/interface/player.png</normaloff>:/CC/images/interface/player.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -45,7 +45,7 @@
         </size>
        </property>
        <property name="pixmap">
-        <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
+        <pixmap resource="../resources/client-resources.qrc">:/CC/images/player_default/front.png</pixmap>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

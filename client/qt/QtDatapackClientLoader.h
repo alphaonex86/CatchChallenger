@@ -29,7 +29,7 @@ class QtDatapackClientLoader
 {
     Q_OBJECT
 public:
-    static QtDatapackClientLoader datapackLoader;
+    static QtDatapackClientLoader *datapackLoader;//pointer to control the init
     explicit QtDatapackClientLoader();
     ~QtDatapackClientLoader();
     struct QtItemExtra
@@ -58,7 +58,9 @@ public:
     void resetAll();
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
 protected:
+    #ifndef NOTHREADS
     void run() override;
+    #endif
     void emitdatapackParsed() override;
     void emitdatapackParsedMainSub() override;
     void emitdatapackChecksumError() override;

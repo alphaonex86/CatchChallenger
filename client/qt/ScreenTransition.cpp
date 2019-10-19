@@ -189,6 +189,12 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
         abort();
     if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer))
         abort();
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::toLoading,this,&ScreenTransition::toLoading))
+        abort();
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToServerList,this,&ScreenTransition::goToServerList))
+        abort();
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToMap,this,&ScreenTransition::goToMap))
+        abort();
     l.progression(0,100);
 }
 
@@ -197,6 +203,15 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     setForeground(m);
     m->setError(error);
 }*/
+
+void ScreenTransition::toLoading(QString text)
+{
+    setBackground(&b);
+    setForeground(&l);
+    if(m_foregroundStack->indexOf(&l)!=m_foregroundStack->currentIndex())
+        l.progression(0,100);
+    l.setText(text);
+}
 
 void ScreenTransition::backMain()
 {
@@ -224,5 +239,19 @@ void ScreenTransition::errorString(std::string error)
     setForeground(m);
     setAbove(nullptr);
     m->setError(error);
+}
+
+void ScreenTransition::goToServerList()
+{
+    setBackground(&b);
+    setForeground(baseWindow);
+    setAbove(nullptr);
+}
+
+void ScreenTransition::goToMap()
+{
+    setBackground(&b);
+    setForeground(baseWindow);
+    setAbove(nullptr);
 }
 

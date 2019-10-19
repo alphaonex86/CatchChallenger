@@ -26,9 +26,9 @@ void BaseWindow::insert_plant(const uint32_t &mapId, const uint8_t &x, const uin
 {
     Q_UNUSED(plant_id);
     Q_UNUSED(seconds_to_mature);
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader.maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
         return;
     }
     cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
@@ -36,9 +36,9 @@ void BaseWindow::insert_plant(const uint32_t &mapId, const uint8_t &x, const uin
 
 void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
 {
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader.maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader.maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
         return;
     }
     cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
@@ -83,14 +83,14 @@ void BaseWindow::seed_planted(const bool &ok)
         //do the rewards
         {
             const uint16_t &itemId=seed_in_waiting.front().seedItemId;
-            if(QtDatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==
-                    QtDatapackClientLoader::datapackLoader.itemToPlants.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==
+                    QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
-            const uint8_t &plant=QtDatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
+            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
             appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
         }
     }
@@ -154,24 +154,24 @@ void BaseWindow::load_plant_inventory()
     auto i=playerInformations.items.begin();
     while(i!=playerInformations.items.cend())
     {
-        if(QtDatapackClientLoader::datapackLoader.itemToPlants.find(i->first)!=
-                QtDatapackClientLoader::datapackLoader.itemToPlants.cend())
+        if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(i->first)!=
+                QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
         {
-            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader.itemToPlants.at(i->first);
+            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->itemToPlants.at(i->first);
             QListWidgetItem *item;
             item=new QListWidgetItem();
             plants_items_to_graphical[plantId]=item;
             plants_items_graphical[item]=plantId;
-            if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(i->first)!=
-                    QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(i->first)!=
+                    QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra[i->first].image);
-                item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[i->first].name)+
+                item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[i->first].image);
+                item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[i->first].name)+
                         "\n"+tr("Quantity: %1").arg(i->second));
             }
             else
             {
-                item->setIcon(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+                item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
                 item->setText(QStringLiteral("item id: %1").arg(i->first)+"\n"+tr("Quantity: %1").arg(i->second));
             }
             if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
@@ -211,17 +211,17 @@ void BaseWindow::load_crafting_inventory()
                     !=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
-                if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId)!=
-                        QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId)!=
+                        QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
                             .doItemId].image);
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
                             .doItemId].name));
                 }
                 else
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
                     item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId));
                 }
                 crafting_recipes_items_to_graphical[recipe]=item;
@@ -246,13 +246,13 @@ std::string BaseWindow::reputationRequirementsToText(const ReputationRequirement
         return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
     const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)==
-            QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)==
+            QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
     {
-        std::cerr << "!QtDatapackClientLoader::datapackLoader.reputationExtra.contains("+reputation.name+")" << std::endl;
+        std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
         return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name);
+    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
@@ -286,7 +286,7 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
     if(items.size()!=1)
     {
-        ui->labelPlantImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelPlantImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->labelPlantName->setText(tr("Select a plant"));
 
         ui->labelPlantedImage->setPixmap(QPixmap());
@@ -311,14 +311,14 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader.QtplantExtra[plants_items_graphical[item]];
+    const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->QtplantExtra[plants_items_graphical[item]];
     const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
 
-    if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(plant.itemUsed)!=
-            QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(plant.itemUsed)!=
+            QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        const QtDatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader.itemsExtra.at(plant.itemUsed);
-        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader.QtitemsExtra.at(plant.itemUsed);
+        const QtDatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(plant.itemUsed);
+        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(plant.itemUsed);
         ui->labelPlantImage->setPixmap(QtitemExtra.image);
         ui->labelPlantName->setText(QString::fromStdString(itemExtra.name));
         ui->labelPlantFruitImage->setPixmap(QtitemExtra.image);
@@ -351,9 +351,9 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                         if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
                         {
                             const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
-                            if(QtDatapackClientLoader::datapackLoader.reputationExtra.find(reputation.name)!=
-                                    QtDatapackClientLoader::datapackLoader.reputationExtra.cend())
-                                name=QString::fromStdString(QtDatapackClientLoader::datapackLoader.reputationExtra.at(reputation.name).name);
+                            if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)!=
+                                    QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+                                name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name).name);
                         }
                         if(reputationRewards.point<0)
                             rewards_less_reputation.push_back(name);
@@ -387,9 +387,9 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
     }
     else
     {
-        ui->labelPlantImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelPlantImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->labelPlantName->setText(tr("Unknow plant (%1)").arg(plant.itemUsed));
-        ui->labelPlantFruitImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelPlantFruitImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
         ui->labelPlantRequirementsAndRewards->setText(QString());
         if(Ultimate::ultimate.isUltimate())
@@ -472,7 +472,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
     {
-        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->labelCraftingDetails->setText(tr("Select a recipe"));
         ui->craftingUse->setVisible(false);
         return;
@@ -483,16 +483,16 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name
     QString name;
-    if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(content.doItemId)!=
-            QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.doItemId)!=
+            QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].name);
-        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader.QtitemsExtra[content.doItemId].image);
+        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].name);
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.doItemId].image);
     }
     else
     {
         name=tr("Unknow item (%1)").arg(content.doItemId);
-        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
     }
     ui->labelCraftingDetails->setText(tr("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
 
@@ -506,16 +506,16 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     {
         //load the material item
         item=new QListWidgetItem();
-        if(QtDatapackClientLoader::datapackLoader.itemsExtra.find(content.materials.at(index).item)!=
-                QtDatapackClientLoader::datapackLoader.itemsExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.materials.at(index).item)!=
+                QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         {
-            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].name);
-            item->setIcon(QtDatapackClientLoader::datapackLoader.QtitemsExtra[content.materials.at(index).item].image);
+            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].name);
+            item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.materials.at(index).item].image);
         }
         else
         {
             nameMaterials=tr("Unknow item (%1)").arg(content.materials.at(index).item);
-            item->setIcon(QtDatapackClientLoader::datapackLoader.defaultInventoryImage());
+            item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         }
 
         //load the quantity into the inventory
@@ -565,7 +565,7 @@ void BaseWindow::on_craftingUse_clicked()
         while(sub_index<content.materials.at(index).quantity)
         {
             mIngredients.push_back(QUrl::fromLocalFile(
-                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[content.materials.at(index).item].imagePath)
+                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].imagePath)
                                    ).toEncoded());
             sub_index++;
         }
@@ -589,9 +589,9 @@ void BaseWindow::on_craftingUse_clicked()
     pair.second=content.quantity;
     productOfRecipeInUsing.push_back(pair);
     mProduct=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[content.doItemId].imagePath)).toEncoded();
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].imagePath)).toEncoded();
     mRecipe=QUrl::fromLocalFile(
-                QString::fromStdString(QtDatapackClientLoader::datapackLoader.itemsExtra[content.itemToLearn].imagePath)).toEncoded();
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.itemToLearn].imagePath)).toEncoded();
     //update the UI
     load_inventory();
     load_plant_inventory();
