@@ -24,7 +24,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->verticalLayout->addWidget(p);
     setStyleSheet("");
 
-    CCprogressbar *progressbar=new CCprogressbar();
+    /*CCprogressbar *progressbar=new CCprogressbar();
     progressbar->setValue(25);
     ui->verticalLayout->addWidget(progressbar);
     progressbar->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::MinimumExpanding);
@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     CCWidget *widget=new CCWidget();
     ui->verticalLayout->addWidget(widget);
-    widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::MinimumExpanding);
+    widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::MinimumExpanding);*/
 
     //showFullScreen();
 }

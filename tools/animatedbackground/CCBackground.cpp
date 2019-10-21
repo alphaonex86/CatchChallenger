@@ -1,6 +1,12 @@
 #include "CCBackground.h"
 #include <QPainter>
 #include <QTime>
+#include <chrono>
+#include <iostream>
+
+unsigned int CCBackground::timeToDraw;
+unsigned int CCBackground::timeDraw;
+std::chrono::time_point<std::chrono::steady_clock> CCBackground::timeFromStart;
 
 CCBackground::CCBackground(QWidget *parent) :
     QWidget(parent)
@@ -16,6 +22,8 @@ CCBackground::CCBackground(QWidget *parent) :
     connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot);
     connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot);
     connect(&updateTimer,&QTimer::timeout,this,&CCBackground::update);
+    startAnimation();
+    timeFromStart=std::chrono::steady_clock::now();
 }
 
 void CCBackground::startAnimation()
@@ -116,6 +124,8 @@ void CCBackground::paintEvent(QPaintEvent *)
         treefront=QPixmap(":/treefront.png");
         if(treefront.isNull())
             abort();
+        ddd=treefront;
+        ddd.scaled(width(),height());
         if(targetZoom>1)
         {
             scalePix(cloud,targetZoom);
@@ -181,6 +191,17 @@ void CCBackground::paintEvent(QPaintEvent *)
 
     paint.drawPixmap(width()*2/3/*66%*/-sun.width()/2,sunOffset,sun.width(),    sun.height(),    sun);
     paint.drawPixmap(width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
+    auto start = std::chrono::steady_clock::now();
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);
+    auto end = std::chrono::steady_clock::now();
+    timeToDraw=std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    timeDraw++;
 
     if(benchmark)
     {
