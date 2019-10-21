@@ -1,4 +1,5 @@
 #include "CustomButton.h"
+#include "CCBackground.h"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>
@@ -38,6 +39,9 @@ CustomButton::~CustomButton()
 
 void CustomButton::paintEvent(QPaintEvent *)
 {
+    auto end = std::chrono::steady_clock::now();
+    unsigned int time=std::chrono::duration_cast<std::chrono::milliseconds>(end - CCBackground::timeFromStart).count();
+    setText(QString::number(CCBackground::timeToDraw)+"-"+QString::number(CCBackground::timeDraw*1000/time));
     QPainter paint;
     paint.begin(this);
     if(pressed) {

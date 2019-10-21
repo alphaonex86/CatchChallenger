@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QPixmap>
 #include <QTimer>
+#include <chrono>
 
 class CCBackground : public QWidget
 {
@@ -12,6 +13,10 @@ public:
     void paintEvent(QPaintEvent *) override;
     void startAnimation();
     void stopAnimation();
+
+    static unsigned int timeToDraw;
+    static unsigned int timeDraw;
+    static std::chrono::time_point<std::chrono::steady_clock> timeFromStart;
 private:
     QPixmap cloud,grass,sun,treeback,treefront;
     void scalePix(QPixmap &pix,unsigned int zoom);
@@ -26,6 +31,7 @@ private:
     QTimer grassTimer,treebackTimer,treefrontTimer;
     QTimer updateTimer;
     bool benchmark;
+    QPixmap ddd;
     std::vector<unsigned int> results;
 };
 
