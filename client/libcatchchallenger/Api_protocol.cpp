@@ -459,7 +459,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const std::string &te
     char buffer[2+text.size()];
     buffer[0]=(uint8_t)chatType;
     buffer[1]=(uint8_t)text.size();
-    memcmp(buffer,text.data(),text.size());
+    memcpy(buffer+2,text.data(),text.size());
     packOutcommingData(0x03,buffer,sizeof(buffer));
 }
 

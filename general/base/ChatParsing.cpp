@@ -52,13 +52,13 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
         case Player_type_normal://normal player
         break;
         case Player_type_premium://premium player
-            returned_html+="<img src=\":/images/chat/premium.png\" alt\"\" />";
+            returned_html+="<img src=\":/CC/images/chat/premium.png\" alt\"\" />";
         break;
         case Player_type_gm://gm
-            returned_html+="<img src=\":/images/chat/admin.png\" alt\"\" />";
+            returned_html+="<img src=\":/CC/images/chat/admin.png\" alt\"\" />";
         break;
         case Player_type_dev://dev
-            returned_html+="<img src=\":/images/chat/developer.png\" alt\"\" />";
+            returned_html+="<img src=\":/CC/images/chat/developer.png\" alt\"\" />";
         break;
         default:
         break;
