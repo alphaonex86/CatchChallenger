@@ -30,17 +30,31 @@ SOURCES += \
     qopusfile/internal.c \
     qopusfile/opusfile.c \
     qopusfile/info.c \
-    qopusfile/stream.cpp
+    qopusfile/stream.cpp \
+    libogg/bitwise.c \
+    libogg/framing.c
 
 HEADERS += \
         MainWindow.h \
     qopusfile/internal.h \
-    qopusfile/opusfile.h
+    qopusfile/opusfile.h \
+    libogg/ogg.h \
+    libogg/os_types.h
+
+android: {
+    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm64/usr/include/
+    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm/usr/include/
+    LIBS += -L/opt/qt/5.12.4/android_arm64_v8a/lib/
+    LIBS += -L/opt/qt/5.12.4/android_armv7/lib/
+}
 
 FORMS += \
         MainWindow.ui
 
-LIBS += -lopus -logg
+linux:LIBS += -lopus
+macx:LIBS += -lopus
+win32:LIBS += -lopus
+wasm:LIBS += -Lopus
 
 RESOURCES += \
     res.qrc
