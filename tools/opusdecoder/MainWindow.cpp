@@ -15,6 +15,40 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    QString lastok;
+    QAudioFormat format;
+    format.setSampleRate(ui->SampleRate->value());//48000
+    format.setChannelCount(ui->ChannelCount->value());//2
+    format.setSampleSize(ui->SampleSize->value());//16
+    format.setCodec("audio/pcm");//audio/pcm
+    format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());//LittleEndian
+    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());//SignedInt
+
+    for (int SampleRate : { 22050,32000,44100,48000 })
+        for (int ChannelCount : { 1,2 })
+            for (int SampleSize : { 24,8,16 })
+                for (QAudioFormat::Endian ByteOrder : { QAudioFormat::Endian::BigEndian,QAudioFormat::Endian::LittleEndian })
+                    for (QAudioFormat::SampleType SampleType : { QAudioFormat::SampleType::Unknown, QAudioFormat::SampleType::UnSignedInt, QAudioFormat::SampleType::Float, QAudioFormat::SampleType::SignedInt })
+                    {
+                        QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+
+                        format.setSampleRate(SampleRate);//48000
+                        format.setChannelCount(ChannelCount);//2
+                        format.setSampleSize(SampleSize);//16
+                        format.setByteOrder(ByteOrder);//LittleEndian
+                        format.setSampleType(SampleType);//SignedInt
+
+                        if(info.isFormatSupported(format))
+                            lastok=QString::number(SampleRate)
+                                    +","+QString::number(ChannelCount)
+                                    +","+QString::number(SampleSize)
+                                    +","+QString::number(ByteOrder)
+                                    +","+QString::number(SampleType);
+                    }
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    ui->codeclist->setText(info.supportedCodecs().join(";")+": "+lastok);
 }
 
 MainWindow::~MainWindow()
@@ -26,17 +60,23 @@ void MainWindow::on_convert_clicked()
 {
     QAudioOutput* audio;
     QAudioFormat format;
-    format.setSampleRate(ui->SampleRate->value());
-    format.setChannelCount(ui->ChannelCount->value());
-    format.setSampleSize(ui->SampleSize->value());
-    format.setCodec(ui->Codec->text());
-    format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());
-    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());
+    format.setSampleRate(ui->SampleRate->value());//48000
+    format.setChannelCount(ui->ChannelCount->value());//2
+    format.setSampleSize(ui->SampleSize->value());//16
+    format.setCodec(ui->Codec->text());//audio/pcm
+    format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());//LittleEndian
+    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());//SignedInt
 
     QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(format)) {
         ui->statusBar->showMessage("audio format not supported by backend, cannot play audio");
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
+        ui->codeclist->setText("bad: "+ui->Codec->text()+": "+QString::number(ui->SampleRate->value())
+                               +","+QString::number(ui->ChannelCount->value())
+                               +","+QString::number(ui->SampleSize->value())
+                               +","+QString::number(ui->ByteOrder->currentIndex())
+                               +","+QString::number(ui->SampleType->currentIndex())
+                               );
         return;
     }
     ui->statusBar->showMessage("audio format is supported by backend");
@@ -47,7 +87,7 @@ void MainWindow::on_convert_clicked()
 
 
 
-    QFile f("file.opus");
+    QFile f(":/file.opus");
     if(!f.open(QFile::ReadOnly))
         abort();
     const QByteArray data=f.readAll();

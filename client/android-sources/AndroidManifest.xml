@@ -20,7 +20,11 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false"/>
     <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
 
-    <supports-screens android:largeScreens="true" android:normalScreens="true" android:anyDensity="true" android:smallScreens="true"/>
+    <supports-screens android:largeScreens="false" android:normalScreens="false" android:anyDensity="false" android:smallScreens="true"/>
+    <compatible-screens>
+    <screen android:screenSize="small"
+            android:screenDensity="480" />
+    </compatible-screens>
 
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="catchchallenger" android:icon="@mipmap/icon">
         <activity android:configChanges="screenLayout|screenSize|orientation|smallestScreenSize|layoutDirection|keyboard|keyboardHidden" android:name="org.qtproject.qt5.android.bindings.QtActivity" android:label="catchchallenger" android:screenOrientation="landscape" android:launchMode="singleTop">

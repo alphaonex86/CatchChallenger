@@ -13,7 +13,7 @@ class MapControllerMP : public MapVisualiserPlayerWithFight
 {
     Q_OBJECT
 public:
-    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
+    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
     ~MapControllerMP();
 
     virtual void resetAll();
@@ -162,7 +162,6 @@ private:
 
     CatchChallenger::Api_protocol_Qt * client;
 private slots:
-    bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
     void finalOtherPlayerStep(OtherPlayer &otherPlayer);
@@ -177,6 +176,7 @@ private slots:
     void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
     void unloadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
 protected slots:
+    bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
     virtual void finalPlayerStep(bool parseKey=true);
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);

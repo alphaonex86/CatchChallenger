@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache)
+MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &openGL) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,openGL)
 {
     this->events=events;
     repel_step=0;

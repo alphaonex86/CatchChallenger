@@ -9,8 +9,8 @@ QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
 QPixmap * MapControllerMP::imgForPseudoDev=NULL;
 QPixmap * MapControllerMP::imgForPseudoPremium=NULL;
 
-MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTags, const bool &useCache) :
-    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags,useCache)
+MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTags, const bool &useCache, const bool &openGL) :
+    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags,useCache,openGL)
 {
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
