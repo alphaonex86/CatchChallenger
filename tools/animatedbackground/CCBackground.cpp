@@ -193,12 +193,12 @@ void CCBackground::paintEvent(QPaintEvent *)
     paint.drawPixmap(width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
     auto start = std::chrono::steady_clock::now();
     paint.drawPixmap(0,0,width(),height(),ddd);
+    /*paint.drawPixmap(0,0,width(),height(),ddd);
     paint.drawPixmap(0,0,width(),height(),ddd);
     paint.drawPixmap(0,0,width(),height(),ddd);
     paint.drawPixmap(0,0,width(),height(),ddd);
     paint.drawPixmap(0,0,width(),height(),ddd);
-    paint.drawPixmap(0,0,width(),height(),ddd);
-    paint.drawPixmap(0,0,width(),height(),ddd);
+    paint.drawPixmap(0,0,width(),height(),ddd);//*/
     auto end = std::chrono::steady_clock::now();
     timeToDraw=std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     timeDraw++;

@@ -4,9 +4,11 @@
 #include <QMessageBox>
 #include <QCoreApplication>
 #include <QDebug>
+#include <iostream>
 
 MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &openGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,openGL)
+    //MapControllerMP(centerOnPlayer,debugTags,useCache,openGL)
 {
     setWindowIcon(QIcon(":/icon.png"));
 
@@ -22,12 +24,40 @@ MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,
     timerBotMove.start(66);
     timerBotManagement.start(3000);
     forcePlayerTileset("player_skin.png");
+    FPS=0;
+    if(!connect(this,&MapVisualiser::newFPSvalue,this,&MapControllerV::updateFPS))
+        abort();
+    FPSMapObject=nullptr;
+
+    qRegisterMetaType<uint8_t>("uint8_t");
+    qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
+    qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
+    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+    qRegisterMetaType<std::vector<std::pair<uint8_t,CatchChallenger::Direction> > >("std::vector<std::pair<uint8_t,CatchChallenger::Direction> >");
+    qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
+    qRegisterMetaType<std::vector<std::pair<CatchChallenger::Direction,uint8_t> > >("std::vector<std::pair<CatchChallenger::Direction,uint8_t> >");
+    qRegisterMetaType<std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > >("std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >");
+    if(!connect(&pathFinding,&PathFinding::result,this,&MapControllerV::pathFindingResult))
+        abort();
 }
 
 MapControllerV::~MapControllerV()
 {
+    pathFinding.cancel();
     //delete playerTileset;
     delete botTileset;
+}
+
+void MapControllerV::moveStepSlot()
+{
+    MapVisualiserPlayer::moveStepSlot();
+    if(FPSMapObject!=nullptr)
+    {
+        FPSMapObject->setX(MapVisualiserPlayer::getX());
+        FPSMapObject->setY(MapVisualiserPlayer::getY());
+    }
 }
 
 void MapControllerV::setScale(int scaleSize)
@@ -346,6 +376,52 @@ void MapControllerV::loadPlayerFromCurrentMap()
     }
 
     botManagement();*/
+
+    {
+        QPixmap pix=getFPSPixmap();
+        FPSMapObject = new Tiled::MapObject();
+        FPSMapObject->setName("FPSMapObject");
+        FPSTileset = new Tiled::Tileset(QString(),pix.width(),pix.height());
+        FPSTileset->addTile(pix);
+        Tiled::Cell cell=FPSMapObject->cell();
+        cell.tile=FPSTileset->tileAt(0);
+        FPSMapObject->setCell(cell);
+
+        Tiled::ObjectGroup * objectGroup=all_map.at(current_map)->objectGroup;
+        if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(objectGroup)->addObject(FPSMapObject);
+        else
+            abort();
+        FPSMapObject->setX(MapVisualiserPlayer::getX());
+        FPSMapObject->setY(MapVisualiserPlayer::getY());
+    }
+}
+
+void MapControllerV::updateFPS(const unsigned int FPS)
+{
+    this->FPS=FPS;
+    if(FPSMapObject!=nullptr)
+        FPSTileset->tileAt(0)->setImage(getFPSPixmap());
+}
+
+QPixmap MapControllerV::getFPSPixmap()
+{
+    QPixmap pix;
+    QRectF destRect;
+    {
+        QPixmap pix(50,10);
+        QPainter painter(&pix);
+        QRectF sourceRec(0.0,0.0,50.0,10.0);
+        destRect=painter.boundingRect(sourceRec,Qt::TextSingleLine,QString::number(FPS)+"FPS");
+    }
+    pix=QPixmap(destRect.width(),destRect.height());
+    //draw the text & image
+    {
+        pix.fill(Qt::transparent);
+        QPainter painter(&pix);
+        painter.drawText(QRectF(0.0,0.0,destRect.width(),destRect.height()),Qt::TextSingleLine,QString::number(FPS)+"FPS");
+    }
+    return pix;
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
@@ -407,7 +483,130 @@ bool MapControllerV::asyncMapLoaded(const std::string &fileName, Map_full * temp
     return true;
 }
 
-bool MapControllerV::nextPathStep()
+CatchChallenger::Direction MapControllerV::moveFromPath()
 {
+    const std::pair<uint8_t,uint8_t> pos(getPos());
+    const uint8_t &x=pos.first;
+    const uint8_t &y=pos.second;
+    CatchChallenger::Orientation orientation;
+    if(pathList.size()>1)
+    {
+        PathResolved::StartPoint startPoint=pathList.back().startPoint;
+        if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+        {
+            while(pathList.size()>1)
+                pathList.erase(pathList.cbegin());
+        }
+
+        PathResolved &pathFirst=pathList.front();
+        std::pair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.front();
+        orientation=pathFirstUnit.first;
+        pathFirstUnit.second--;
+        if(pathFirstUnit.second==0)
+        {
+            pathFirst.path.erase(pathFirst.path.cbegin());
+            if(pathFirst.path.empty())
+            {
+                pathList.erase(pathList.cbegin());
+                if(!pathList.empty())
+                {
+                    PathResolved::StartPoint startPoint=pathList.back().startPoint;
+                    if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                    {
+                    }
+                    else
+                        pathList.clear();
+                }
+            }
+        }
+    }
+    else
+    {
+        PathResolved &pathFirst=pathList.front();
+        std::pair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.front();
+        orientation=pathFirstUnit.first;
+        pathFirstUnit.second--;
+        if(pathFirstUnit.second==0)
+        {
+            pathFirst.path.erase(pathFirst.path.cbegin());
+            if(pathFirst.path.empty())
+            {
+                pathList.erase(pathList.cbegin());
+                if(!pathList.empty())
+                {
+                    PathResolved::StartPoint startPoint=pathList.back().startPoint;
+                    if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                    {
+                    }
+                    else
+                        pathList.clear();
+                }
+            }
+        }
+    }
+
+    if(orientation==CatchChallenger::Orientation_bottom)
+        return CatchChallenger::Direction_move_at_bottom;
+    if(orientation==CatchChallenger::Orientation_top)
+        return CatchChallenger::Direction_move_at_top;
+    if(orientation==CatchChallenger::Orientation_left)
+        return CatchChallenger::Direction_move_at_left;
+    if(orientation==CatchChallenger::Orientation_right)
+        return CatchChallenger::Direction_move_at_right;
+    return CatchChallenger::Direction_move_at_bottom;
+}
+
+void MapControllerV::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
+{
+    const std::pair<uint8_t,uint8_t> pos(getPos());
+    const uint8_t &thisx=pos.first;
+    const uint8_t &thisy=pos.second;
+    if(event==CatchChallenger::MapEvent_SimpleClick)
+    {
+        if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
+        {
+            MapVisualiser::eventOnMap(event,tempMapObject,x,y);
+            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
+            if(pathList.empty())
+            {
+                while(pathList.size()>1)
+                    pathList.pop_back();
+                //pathList.clear();
+            }
+        }
+    }
+}
+
+bool MapControllerV::nextPathStep()//true if have step
+{
+    if(!pathList.empty())
+    {
+        const CatchChallenger::Direction &direction=MapControllerV::moveFromPath();
+        return MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
+    }
     return false;
 }
+
+void MapControllerV::pathFindingResult(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path)
+{
+    if(!path.empty())
+    {
+        if(path.front().second==0)
+        {
+            std::cerr << "MapControllerV::pathFindingResult(): path.first().second==0" << std::endl;
+            //pathFindingNotFound();
+            return;
+        }
+        MapVisualiserPlayer::pathFindingResultInternal(pathList,current_map,x,y,path);
+    }
+    /*else
+        pathFindingNotFound();*/
+}
+
+void MapControllerV::keyPressParse()
+{
+    pathFinding.cancel();
+    pathList.clear();
+    MapVisualiserPlayer::keyPressParse();
+}
+
