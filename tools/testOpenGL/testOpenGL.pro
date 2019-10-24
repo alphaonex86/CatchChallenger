@@ -1,6 +1,6 @@
 INCLUDEPATH += ../../general/libtiled/
 DEPENDPATH += ../../general/libtiled/
-DEFINES += CATCHCHALLENGER_NOAUDIO
+DEFINES += CATCHCHALLENGER_NOAUDIO NOWEBSOCKET
 
 include(../../client/qt/client.pri)
 include(../../general/general.pri)
