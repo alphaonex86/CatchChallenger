@@ -495,22 +495,22 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         for ( auto &n : simplifiedMapList ) {
             if(n.second.dirt!=NULL)
             {
-                delete n.second.dirt;
+                delete[] n.second.dirt;
                 n.second.dirt=NULL;
             }
             if(n.second.ledges!=NULL)
             {
-                delete n.second.ledges;
+                delete[] n.second.ledges;
                 n.second.ledges=NULL;
             }
             if(n.second.walkable!=NULL)
             {
-                delete n.second.walkable;
+                delete[] n.second.walkable;
                 n.second.walkable=NULL;
             }
             if(n.second.monstersCollisionMap!=NULL)
             {
-                delete n.second.monstersCollisionMap;
+                delete[] n.second.monstersCollisionMap;
                 n.second.monstersCollisionMap=NULL;
             }
         }
