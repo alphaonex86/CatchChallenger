@@ -17,8 +17,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     map_to_send_temp.border.top.x_offset=0;
     map_to_send_temp.border.left.y_offset=0;
     map_to_send_temp.border.right.y_offset=0;
-    map_to_send_temp.xmlRoot=NULL;
-    map_to_send_temp.monstersCollisionMap=NULL;
+    map_to_send_temp.xmlRoot=nullptr;
+    map_to_send_temp.monstersCollisionMap=nullptr;
     map_to_send_temp.width=0;
     map_to_send_temp.height=0;
 
@@ -49,12 +49,12 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
     #endif
     const tinyxml2::XMLElement * root = domDocument->RootElement();
-    if(root==NULL)
+    if(root==nullptr)
     {
         error=file+", tryLoadMap(): no root balise found for the xml file";
         return false;
     }
-    if(root->Name()==NULL)
+    if(root->Name()==nullptr)
     {
         error=file+", tryLoadMap(): \"map\" root balise not found 2 for the xml file";
         return false;
@@ -66,7 +66,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //get the width
-    if(root->Attribute("width")==NULL)
+    if(root->Attribute("width")==nullptr)
     {
         error="the root node has not the attribute \"width\"";
         return false;
@@ -79,7 +79,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     }
 
     //get the height
-    if(root->Attribute("height")==NULL)
+    if(root->Attribute("height")==nullptr)
     {
         error="the root node has not the attribute \"height\"";
         return false;
@@ -105,12 +105,12 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     //properties
     const tinyxml2::XMLElement * child = root->FirstChildElement("properties");
-    if(child!=NULL)
+    if(child!=nullptr)
     {
         const tinyxml2::XMLElement * SubChild=child->FirstChildElement("property");
-        while(SubChild!=NULL)
+        while(SubChild!=nullptr)
         {
-            if(SubChild->Attribute("name")!=NULL && SubChild->Attribute("value")!=NULL)
+            if(SubChild->Attribute("name")!=nullptr && SubChild->Attribute("value")!=nullptr)
                 map_to_send_temp.property[std::string(SubChild->Attribute("name"))]=
                         std::string(SubChild->Attribute("value"));
             else
@@ -124,7 +124,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     int8_t tilewidth=16;
     int8_t tileheight=16;
-    if(root->Attribute("tilewidth")!=NULL)
+    if(root->Attribute("tilewidth")!=nullptr)
     {
         tilewidth=stringtouint8(root->Attribute("tilewidth"),&ok);
         if(!ok)
@@ -133,7 +133,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             tilewidth=16;
         }
     }
-    if(root->Attribute("tileheight")!=NULL)
+    if(root->Attribute("tileheight")!=nullptr)
     {
         tileheight=stringtouint8(root->Attribute("tileheight"),&ok);
         if(!ok)
@@ -145,18 +145,18 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     // objectgroup
     child = root->FirstChildElement("objectgroup");
-    while(child!=NULL)
+    while(child!=nullptr)
     {
-        if(child->Attribute("name")==NULL)
+        if(child->Attribute("name")==nullptr)
             std::cerr << "Has not attribute \"name\": child->Name(): " << child->Name() << ")";
         else
         {
             if(strcmp(child->Attribute("name"),"Moving")==0)
             {
                 const tinyxml2::XMLElement *SubChild=child->FirstChildElement("object");
-                while(SubChild!=NULL)
+                while(SubChild!=nullptr)
                 {
-                    if(SubChild->Attribute("x")!=NULL && SubChild->Attribute("y")!=NULL)
+                    if(SubChild->Attribute("x")!=nullptr && SubChild->Attribute("y")!=nullptr)
                     {
                         const uint32_t &object_x=stringtouint32(SubChild->Attribute("x"),&ok)/tilewidth;
                         if(!ok)
@@ -174,7 +174,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << ", file: " << file << std::endl;
-                            else if(SubChild->Attribute("type")==NULL)
+                            else if(SubChild->Attribute("type")==nullptr)
                                 std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                             else
                             {
@@ -182,7 +182,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
                                 std::unordered_map<std::string,std::string> property_text;
                                 const tinyxml2::XMLElement *prop=SubChild->FirstChildElement("properties");
-                                if(prop!=NULL)
+                                if(prop!=nullptr)
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP
                                     std::cerr << "Wrong conversion with y: child->Name(): " << prop->Name()
@@ -190,9 +190,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                 << "), file: " << fileName << std::endl;
                                     #endif
                                     const tinyxml2::XMLElement *property=prop->FirstChildElement("property");
-                                    while(property!=NULL)
+                                    while(property!=nullptr)
                                     {
-                                        if(property->Attribute("name")!=NULL && property->Attribute("value")!=NULL)
+                                        if(property->Attribute("name")!=nullptr && property->Attribute("value")!=nullptr)
                                             property_text[std::string(property->Attribute("name"))]=
                                                     std::string(property->Attribute("value"));
                                         property = property->NextSiblingElement("property");
@@ -307,7 +307,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         new_tp.condition.data.fightBot=0;
                                         new_tp.condition.data.item=0;
                                         new_tp.condition.data.quest=0;
-                                        new_tp.conditionUnparsed=NULL;
+                                        new_tp.conditionUnparsed=nullptr;
                                         new_tp.destination_x = stringtouint8(property_text.at("x"),&ok);
                                         if(ok)
                                         {
@@ -377,9 +377,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             if(strcmp(child->Attribute("name"),"Object")==0)
             {
                 const tinyxml2::XMLElement * SubChild=child->FirstChildElement("object");
-                while(SubChild!=NULL)
+                while(SubChild!=nullptr)
                 {
-                    if(SubChild->Attribute("x")!=NULL && SubChild->Attribute("y")!=NULL)
+                    if(SubChild->Attribute("x")!=nullptr && SubChild->Attribute("y")!=nullptr)
                     {
                         const uint32_t &object_x=stringtouint32(SubChild->Attribute("x"),&ok)/tilewidth;
                         if(!ok)
@@ -397,18 +397,18 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << ", file: " << file << std::endl;
-                            else if(SubChild->Attribute("type")!=NULL)
+                            else if(SubChild->Attribute("type")!=nullptr)
                             {
                                 const std::string &type=SubChild->Attribute("type");
 
                                 std::unordered_map<std::string,std::string> property_text;
                                 const tinyxml2::XMLElement * prop=SubChild->FirstChildElement("properties");
-                                if(prop!=NULL)
+                                if(prop!=nullptr)
                                 {
                                     const tinyxml2::XMLElement * property=prop->FirstChildElement("property");
-                                    while(property!=NULL)
+                                    while(property!=nullptr)
                                     {
-                                        if(property->Attribute("name")!=NULL && property->Attribute("value")!=NULL)
+                                        if(property->Attribute("name")!=nullptr && property->Attribute("value")!=nullptr)
                                             property_text[std::string(property->Attribute("name"))]=
                                                     std::string(property->Attribute("value"));
                                         property = property->NextSiblingElement("property");
@@ -508,9 +508,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     // layer
     child = root->FirstChildElement("layer");
-    while(child!=NULL)
+    while(child!=nullptr)
     {
-        if(child->Attribute("name")==NULL)
+        if(child->Attribute("name")==nullptr)
         {
             error=std::string("Has not attribute \"name\": child->Name(): ")+child->Name()+", file: "+file;
             return false;
@@ -519,17 +519,17 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         {
             const tinyxml2::XMLElement *data=child->FirstChildElement("data");
             const std::string name=child->Attribute("name");
-            if(data==NULL)
+            if(data==nullptr)
             {
                 error=std::string("Is Element for layer is null: ")+data->Name()+" and name: "+name+", file: "+file;
                 return false;
             }
-            else if(data->Attribute("encoding")==NULL)
+            else if(data->Attribute("encoding")==nullptr)
             {
                 error=std::string("Has not attribute \"base64\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
             }
-            else if(data->Attribute("compression")==NULL)
+            else if(data->Attribute("compression")==nullptr)
             {
                 error=std::string("Has not attribute \"zlib\": child->Name(): ")+data->Name()+", file: "+file;
                 return false;
@@ -557,7 +557,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             else
             {
                 std::string base64text;
-                if(data->GetText()!=NULL)
+                if(data->GetText()!=nullptr)
                 base64text=FacilityLibGeneral::dropPrefixAndSuffixLowerThen33(data->GetText());
                 const std::vector<char> &compressedData=base64toBinary(base64text);
                 if(!compressedData.empty())
@@ -584,7 +584,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     if((uint32_t)decompressedSize!=map_to_send_temp.height*map_to_send_temp.width*4)
                     {
                         error=std::string("map binary size (")+std::to_string(dataRaw.size())+") != "+std::to_string(map_to_send_temp.height)+"x"+std::to_string(map_to_send_temp.width)+"x4";
-                        if(data->GetText()!=NULL)
+                        if(data->GetText()!=nullptr)
                             std::cerr << "base64 dump: \"" << data->GetText() << "\"" << std::endl;
                         return false;
                     }
@@ -735,27 +735,27 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     if(Walkable.size()>0)
         map_to_send_temp.parsed_layer.walkable	= new bool[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send_temp.parsed_layer.walkable	= NULL;
+        map_to_send_temp.parsed_layer.walkable	= nullptr;
     map_to_send_temp.parsed_layer.monstersCollisionMap		= new uint8_t[map_to_send_temp.width*map_to_send_temp.height];
     if(Dirt.size()>0)
         map_to_send_temp.parsed_layer.dirt		= new bool[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send_temp.parsed_layer.dirt		= NULL;
+        map_to_send_temp.parsed_layer.dirt		= nullptr;
     if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
         map_to_send_temp.parsed_layer.ledges		= new uint8_t[map_to_send_temp.width*map_to_send_temp.height];
     else
-        map_to_send_temp.parsed_layer.ledges		= NULL;
+        map_to_send_temp.parsed_layer.ledges		= nullptr;
 
     uint32_t x=0;
     uint32_t y=0;
 
-    char * WalkableBin=NULL;
-    char * CollisionsBin=NULL;
-    char * DirtBin=NULL;
-    char * LedgesRightBin=NULL;
-    char * LedgesLeftBin=NULL;
-    char * LedgesBottomBin=NULL;
-    char * LedgesTopBin=NULL;
+    char * WalkableBin=nullptr;
+    char * CollisionsBin=nullptr;
+    char * DirtBin=nullptr;
+    char * LedgesRightBin=nullptr;
+    char * LedgesLeftBin=nullptr;
+    char * LedgesBottomBin=nullptr;
+    char * LedgesTopBin=nullptr;
     std::vector<std::vector<char> > MonsterCollisionBin;
     {
         if(rawSize==(uint32_t)Walkable.size())
@@ -787,31 +787,31 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         y=0;
         while(y<map_to_send_temp.height)
         {
-            if(WalkableBin!=NULL)
+            if(WalkableBin!=nullptr)
                 walkable=WalkableBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || WalkableBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 walkable=false;
-            if(CollisionsBin!=NULL)
+            if(CollisionsBin!=nullptr)
                 collisions=CollisionsBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || CollisionsBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 collisions=false;
-            if(DirtBin!=NULL)
+            if(DirtBin!=nullptr)
                 dirt=DirtBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || DirtBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 dirt=false;
-            if(LedgesRightBin!=NULL)
+            if(LedgesRightBin!=nullptr)
                 ledgesRight=LedgesRightBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesRightBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesRight=false;
-            if(LedgesLeftBin!=NULL)
+            if(LedgesLeftBin!=nullptr)
                 ledgesLeft=LedgesLeftBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesLeftBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesLeft=false;
-            if(LedgesBottomBin!=NULL)
+            if(LedgesBottomBin!=nullptr)
                 ledgesBottom=LedgesBottomBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesBottomBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesBottom=false;
-            if(LedgesTopBin!=NULL)
+            if(LedgesTopBin!=nullptr)
                 ledgesTop=LedgesTopBin[x*4+y*map_to_send_temp.width*4+0]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+1]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+2]!=0x00 || LedgesTopBin[x*4+y*map_to_send_temp.width*4+3]!=0x00;
             else
                 ledgesTop=false;
@@ -962,9 +962,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         while(y<this->map_to_send.height)
                         {
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
-                            if(value!=0 && map_to_send_temp.parsed_layer.walkable!=NULL && map_to_send_temp.parsed_layer.walkable[x+y*this->map_to_send.width])
+                            if(value!=0 && map_to_send_temp.parsed_layer.walkable!=nullptr && map_to_send_temp.parsed_layer.walkable[x+y*this->map_to_send.width])
                             {
-                                if(map_to_send_temp.parsed_layer.ledges==NULL || map_to_send_temp.parsed_layer.ledges[x+y*this->map_to_send.width]==(uint8_t)ParsedLayerLedges_NoLedges)
+                                if(map_to_send_temp.parsed_layer.ledges==nullptr || map_to_send_temp.parsed_layer.ledges[x+y*this->map_to_send.width]==(uint8_t)ParsedLayerLedges_NoLedges)
                                 {
                                     if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
                                         this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
@@ -996,14 +996,14 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         {
             if(this->map_to_send.parsed_layer.monstersCollisionList.empty())
             {
-                delete this->map_to_send.parsed_layer.monstersCollisionMap;
-                this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
+                delete[] this->map_to_send.parsed_layer.monstersCollisionMap;
+                this->map_to_send.parsed_layer.monstersCollisionMap=nullptr;
             }
             if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.front().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.front().walkOn.empty())
             {
                 this->map_to_send.parsed_layer.monstersCollisionList.clear();
-                delete this->map_to_send.parsed_layer.monstersCollisionMap;
-                this->map_to_send.parsed_layer.monstersCollisionMap=NULL;
+                delete[] this->map_to_send.parsed_layer.monstersCollisionMap;
+                this->map_to_send.parsed_layer.monstersCollisionMap=nullptr;
             }
         }
     }
