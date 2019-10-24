@@ -226,6 +226,13 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         simplifiedMapList=this->simplifiedMapList;
         this->simplifiedMapList.clear();
     }
+    if(simplifiedMapList.find(current_map)==simplifiedMapList.cend())
+    {
+        tryCancel=false;
+        emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >());
+        std::cerr << "bug: simplifiedMapList.find(current_map)==simplifiedMapList.cend()" << std::endl;
+        return;
+    }
     if(simplifiedMapList.at(current_map).walkable==NULL)
         std::cout << "PathFinding::canGoOn() walkable is NULL for " << current_map << std::endl;
     //resolv the path
