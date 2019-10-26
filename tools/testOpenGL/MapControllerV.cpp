@@ -1,5 +1,6 @@
 #include "MapControllerV.h"
 #include "../../general/base/MoveOnTheMap.h"
+#include "../../client/qt/CustomButton.h"
 
 #include <QMessageBox>
 #include <QCoreApplication>
@@ -11,7 +12,13 @@ MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,
     //MapControllerMP(centerOnPlayer,debugTags,useCache,openGL)
 {
     setWindowIcon(QIcon(":/icon.png"));
-
+    /*setStyleSheet("background: transparent");
+    setWindowFlags(Qt::FramelessWindowHint);*/
+    setAttribute(Qt::WA_TranslucentBackground);
+    viewport()->setAutoFillBackground(false);
+    QPalette p = viewport()->palette();
+      p.setColor(QPalette::Base, Qt::transparent);
+      viewport()->setPalette(p);
     botTileset = new Tiled::Tileset("bot",16,24);
     botTileset->loadFromImage(QImage(":/bot_skin.png"),":/bot_skin.png");
     botNumber = 0;
@@ -40,6 +47,13 @@ MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Direction,uint8_t> > >("std::vector<std::pair<CatchChallenger::Direction,uint8_t> >");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > >("std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >");
     if(!connect(&pathFinding,&PathFinding::result,this,&MapControllerV::pathFindingResult))
+        abort();
+
+    CustomButton *quit=new CustomButton(":/CC/images/interface/button.png");
+    quit->setText("Quit");
+    quit->move(256,256);
+    mScene->addWidget(quit);
+    if(!connect(quit,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
 }
 
