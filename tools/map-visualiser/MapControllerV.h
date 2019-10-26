@@ -3,6 +3,7 @@
 
 #include "../../client/qt/render/MapVisualiserPlayer.h"
 #include "../../client/qt/render/MapVisualiserOrder.h"
+#include "../../client/qt/render/PathFinding.h"
 
 class MapControllerV : public MapVisualiserPlayer
 {
@@ -37,6 +38,8 @@ private:
     quint16 botNumber;
     Tiled::Tileset * botTileset;
 
+    PathFinding pathFinding;
+    std::vector<PathResolved> pathList;
     QTimer timerBotMove;
     QTimer timerBotManagement;
     bool nextPathStep();
@@ -44,6 +47,10 @@ private slots:
     void botMove();
     void botManagement();
     bool botMoveStepSlot(Bot *bot);
+    CatchChallenger::Direction moveFromPath();
+    void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
+    void pathFindingResult(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path);
+    void keyPressParse();
 
     //call after enter on new map
     void loadPlayerFromCurrentMap();
