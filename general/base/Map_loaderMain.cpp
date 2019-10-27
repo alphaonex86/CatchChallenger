@@ -833,7 +833,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=253;
             else if((walkable || monsterCollision) && !collisions && !dirt &&
                     !ledgesBottom && !ledgesRight && !ledgesLeft && !ledgesTop)
-                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=255;
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=0;
             else
                 map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=254;
 
@@ -850,7 +850,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             {
                 const Map_semi_teleport &map_semi_teleport=map_to_send_temp.teleport.at(index);
                 if(map_semi_teleport.source_x<map_to_send_temp.width && map_semi_teleport.source_y<map_to_send_temp.height)
-                    map_to_send_temp.parsed_layer.simplifiedMap[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=255;
+                    map_to_send_temp.parsed_layer.simplifiedMap[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=0;
                 else
                     std::cerr << "teleporter out of map on " << file << ", source: " << std::to_string(map_semi_teleport.source_x) << "," << std::to_string(map_semi_teleport.source_y) << std::endl;
                 index++;
@@ -898,15 +898,16 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     bool previousHaveMonsterWarn=false;
     {
         this->map_to_send.parsed_layer.simplifiedMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
-        memset(this->map_to_send.parsed_layer.simplifiedMap,0,this->map_to_send.width*this->map_to_send.height);
+        memcpy(this->map_to_send.parsed_layer.simplifiedMap,map_to_send_temp.parsed_layer.simplifiedMap,this->map_to_send.width*this->map_to_send.height);
 
+        //link to monster zone id
         {
             auto i=mapLayerContentForMonsterCollision.begin();
             while(i!=mapLayerContentForMonsterCollision.cend())
             {
-                if(zoneNumber.find(i->first)!=zoneNumber.cend())
+                const std::string &zoneName=i->first;
+                if(zoneNumber.find(zoneName)!=zoneNumber.cend())
                 {
-                    const std::string &zoneName=i->first;
                     const uint8_t &zoneId=zoneNumber.at(zoneName);
                     uint8_t x=0;
                     while(x<this->map_to_send.width)
@@ -916,7 +917,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         {
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
                             const uint8_t &val=map_to_send_temp.parsed_layer.simplifiedMap[x+y*this->map_to_send.width];
-                            if(value!=0 && (val==255 || val<200))
+                            if(value!=0 && val<200)
                             {
                                 if(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]==0)
                                     this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]=zoneId;
@@ -941,20 +942,6 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                     }
                 }
                 ++i;
-            }
-        }
-
-        {
-            if(this->map_to_send.parsed_layer.monstersCollisionList.empty())
-            {
-                delete[] this->map_to_send.parsed_layer.simplifiedMap;
-                this->map_to_send.parsed_layer.simplifiedMap=nullptr;
-            }
-            if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.front().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.front().walkOn.empty())
-            {
-                this->map_to_send.parsed_layer.monstersCollisionList.clear();
-                delete[] this->map_to_send.parsed_layer.simplifiedMap;
-                this->map_to_send.parsed_layer.simplifiedMap=nullptr;
             }
         }
     }
