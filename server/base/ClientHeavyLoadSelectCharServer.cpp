@@ -285,8 +285,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             }
         }
     }
-    //plants
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     {
         const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(18),&ok);
         const char * const raw_plants=plants.data();
@@ -373,7 +371,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             }
         }
     }
-    #endif
     //quest
     {
         const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);

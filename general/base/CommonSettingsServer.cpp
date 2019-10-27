@@ -4,7 +4,6 @@ CommonSettingsServer CommonSettingsServer::commonSettingsServer;
 
 CommonSettingsServer::CommonSettingsServer()
 {
-    plantOnlyVisibleByPlayer=false;
     forcedSpeed=0;
     useSP=false;
     autoLearn=false;

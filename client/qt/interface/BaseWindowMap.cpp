@@ -76,34 +76,20 @@ bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map,
 //return -1 if not found, else the index
 int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const
 {
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-    {
-        unsigned int index=0;
-        while(index<map->plantList.size())
-        {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-                return index;
-            index++;
-        }
+    if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(map->map_file)==
+            QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
         return -1;
-    }
-    else
-    {
-        if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(map->map_file)==
-                QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
-            return -1;
-        const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->plantOnMap.at(map->map_file);
-        if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-            return -1;
-        unsigned int index=0;
-        while(index<map->plantList.size())
-        {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-                return index;
-            index++;
-        }
+    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->plantOnMap.at(map->map_file);
+    if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
         return -1;
+    unsigned int index=0;
+    while(index<map->plantList.size())
+    {
+        if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+            return index;
+        index++;
     }
+    return -1;
 }
 
 void BaseWindow::actionOnNothing()
@@ -126,31 +112,16 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
             uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
             if(map->plantList.at(index)->mature_at<=current_time)
             {
-                if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-                {
-                    ClientPlantInCollecting clientPlantInCollecting;
-                    clientPlantInCollecting.map=map->map_file;
-                    clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
-                    clientPlantInCollecting.seconds_to_mature=0;
-                    clientPlantInCollecting.x=x;
-                    clientPlantInCollecting.y=y;
-                    plant_collect_in_waiting.push_back(clientPlantInCollecting);
-                    addQuery(QueryType_CollectPlant);
-                    emit collectMaturePlant();
-                }
-                else
-                {
-                    if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(map->map_file)==
-                            QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
-                        return;
-                    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->plantOnMap.at(map->map_file);
-                    if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-                        return;
-                    emit collectMaturePlant();
+                if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(map->map_file)==
+                        QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+                    return;
+                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->plantOnMap.at(map->map_file);
+                if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
+                    return;
+                emit collectMaturePlant();
 
-                    client->remove_plant(mapController->getMap(map->map_file)->logicalMap.id,x,y);
-                    client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
-                }
+                client->remove_plant(mapController->getMap(map->map_file)->logicalMap.id,x,y);
+                client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
             }
             else
                 showTip(tr("This plant is growing and can't be collected").toStdString());

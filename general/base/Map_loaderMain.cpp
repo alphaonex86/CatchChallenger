@@ -732,19 +732,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     null_data[2]=0x00;
     null_data[3]=0x00;*/
 
-    if(Walkable.size()>0)
-        map_to_send_temp.parsed_layer.walkable	= new bool[map_to_send_temp.width*map_to_send_temp.height];
-    else
-        map_to_send_temp.parsed_layer.walkable	= nullptr;
-    map_to_send_temp.parsed_layer.monstersCollisionMap		= new uint8_t[map_to_send_temp.width*map_to_send_temp.height];
-    if(Dirt.size()>0)
-        map_to_send_temp.parsed_layer.dirt		= new bool[map_to_send_temp.width*map_to_send_temp.height];
-    else
-        map_to_send_temp.parsed_layer.dirt		= nullptr;
-    if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
-        map_to_send_temp.parsed_layer.ledges		= new uint8_t[map_to_send_temp.width*map_to_send_temp.height];
-    else
-        map_to_send_temp.parsed_layer.ledges		= nullptr;
+    map_to_send_temp.parsed_layer.simplifiedMap		= new uint8_t[map_to_send_temp.width*map_to_send_temp.height];
 
     uint32_t x=0;
     uint32_t y=0;
@@ -827,63 +815,28 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 index++;
             }
 
-            if(Walkable.size()>0)
-                map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=(walkable || monsterCollision) && !collisions && !dirt;
-            if(Dirt.size()>0)
+            if(dirt)
             {
-                if(dirt)
-                {
-                    Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
-                    dirtOnMap_Semi.point.x=static_cast<uint8_t>(x);
-                    dirtOnMap_Semi.point.y=static_cast<uint8_t>(y);
-                    map_to_send_temp.dirts.push_back(dirtOnMap_Semi);
-                }
-                map_to_send_temp.parsed_layer.dirt[x+y*map_to_send_temp.width]=dirt;
+                Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
+                dirtOnMap_Semi.point.x=static_cast<uint8_t>(x);
+                dirtOnMap_Semi.point.y=static_cast<uint8_t>(y);
+                map_to_send_temp.dirts.push_back(dirtOnMap_Semi);
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=249;
             }
-            if(LedgesRight.size()>0 || LedgesLeft.size()>0 || LedgesBottom.size()>0 || LedgesTop.size()>0)
-            {
-                map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_NoLedges;
-                if(ledgesLeft)
-                {
-                    if(ledgesRight || ledgesBottom || ledgesTop)
-                    {
-                        std::cerr << "Multiple ledges at the same place, do colision for left" << std::endl;
-                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
-                    }
-                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
-                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesLeft;
-                }
-                if(ledgesRight)
-                {
-                    if(ledgesLeft || ledgesBottom || ledgesTop)
-                    {
-                        std::cerr << "Multiple ledges at the same place, do colision for right" << std::endl;
-                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
-                    }
-                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
-                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesRight;
-                }
-                if(ledgesTop)
-                {
-                    if(ledgesRight || ledgesBottom || ledgesLeft)
-                    {
-                        std::cerr << "Multiple ledges at the same place, do colision for top" << std::endl;
-                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
-                    }
-                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
-                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesTop;
-                }
-                if(ledgesBottom)
-                {
-                    if(ledgesRight || ledgesLeft || ledgesTop)
-                    {
-                        std::cerr << "Multiple ledges at the same place, do colision for bottom" << std::endl;
-                        map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width]=false;
-                    }
-                    else if(map_to_send_temp.parsed_layer.walkable[x+y*map_to_send_temp.width])
-                        map_to_send_temp.parsed_layer.ledges[x+y*map_to_send_temp.width]=(uint8_t)ParsedLayerLedges_LedgesBottom;
-                }
-            }
+            else if(ledgesLeft)
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=250;
+            else if(ledgesRight)
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=251;
+            else if(ledgesTop)
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=252;
+            else if(ledgesBottom)
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=253;
+            else if((walkable || monsterCollision) && !collisions && !dirt &&
+                    !ledgesBottom && !ledgesRight && !ledgesLeft && !ledgesTop)
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=255;
+            else
+                map_to_send_temp.parsed_layer.simplifiedMap[x+y*map_to_send_temp.width]=254;
+
             y++;
         }
         x++;
@@ -897,7 +850,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             {
                 const Map_semi_teleport &map_semi_teleport=map_to_send_temp.teleport.at(index);
                 if(map_semi_teleport.source_x<map_to_send_temp.width && map_semi_teleport.source_y<map_to_send_temp.height)
-                    map_to_send_temp.parsed_layer.walkable[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=true;
+                    map_to_send_temp.parsed_layer.simplifiedMap[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=255;
                 else
                     std::cerr << "teleporter out of map on " << file << ", source: " << std::to_string(map_semi_teleport.source_x) << "," << std::to_string(map_semi_teleport.source_y) << std::endl;
                 index++;
@@ -913,7 +866,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 {
                     if(bot.property_text.find("skin")!=bot.property_text.cend() &&
                             (bot.property_text.find("lookAt")==bot.property_text.cend() || bot.property_text.at("lookAt")!="move"))
-                        map_to_send_temp.parsed_layer.walkable[bot.point.x+bot.point.y*map_to_send_temp.width]=false;
+                        map_to_send_temp.parsed_layer.simplifiedMap[bot.point.x+bot.point.y*map_to_send_temp.width]=254;
                 }
                 else
                     std::cerr << "bot out of map on " << file << ", source: " << std::to_string(bot.point.x) << "," << std::to_string(bot.point.y) << std::endl;
@@ -926,7 +879,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                 if(item_semi.point.x<map_to_send_temp.width && item_semi.point.y<map_to_send_temp.height)
                 {
                     if(item_semi.visible && item_semi.infinite)
-                        map_to_send_temp.parsed_layer.walkable[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=false;
+                        map_to_send_temp.parsed_layer.simplifiedMap[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=254;
                 }
                 else
                     std::cerr << "item out of map on " << file << ", source: " << std::to_string(item_semi.point.x) << "," << std::to_string(item_semi.point.y) << std::endl;
@@ -944,8 +897,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     bool previousHaveMonsterWarn=false;
     {
-        this->map_to_send.parsed_layer.monstersCollisionMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
-        memset(this->map_to_send.parsed_layer.monstersCollisionMap,0,this->map_to_send.width*this->map_to_send.height);
+        this->map_to_send.parsed_layer.simplifiedMap=new uint8_t[this->map_to_send.width*this->map_to_send.height];
+        memset(this->map_to_send.parsed_layer.simplifiedMap,0,this->map_to_send.width*this->map_to_send.height);
 
         {
             auto i=mapLayerContentForMonsterCollision.begin();
@@ -962,26 +915,24 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         while(y<this->map_to_send.height)
                         {
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
-                            if(value!=0 && map_to_send_temp.parsed_layer.walkable!=nullptr && map_to_send_temp.parsed_layer.walkable[x+y*this->map_to_send.width])
+                            const uint8_t &val=map_to_send_temp.parsed_layer.simplifiedMap[x+y*this->map_to_send.width];
+                            if(value!=0 && (val==255 || val<200))
                             {
-                                if(map_to_send_temp.parsed_layer.ledges==nullptr || map_to_send_temp.parsed_layer.ledges[x+y*this->map_to_send.width]==(uint8_t)ParsedLayerLedges_NoLedges)
+                                if(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]==0)
+                                    this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]=zoneId;
+                                else if(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]==zoneId)
+                                {}//ignore, same zone
+                                else
                                 {
-                                    if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==0)
-                                        this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;
-                                    else if(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]==zoneId)
-                                    {}//ignore, same zone
-                                    else
+                                    if(!previousHaveMonsterWarn)
                                     {
-                                        if(!previousHaveMonsterWarn)
-                                        {
-                                            std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
-                                                      << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width])
-                                                      << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]).layer
-                                                      << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
-                                            previousHaveMonsterWarn=true;
-                                        }
-                                        this->map_to_send.parsed_layer.monstersCollisionMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
+                                        std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
+                                                  << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width])
+                                                  << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]).layer
+                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
+                                        previousHaveMonsterWarn=true;
                                     }
+                                    this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
                             }
                             y++;
@@ -996,14 +947,14 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
         {
             if(this->map_to_send.parsed_layer.monstersCollisionList.empty())
             {
-                delete[] this->map_to_send.parsed_layer.monstersCollisionMap;
-                this->map_to_send.parsed_layer.monstersCollisionMap=nullptr;
+                delete[] this->map_to_send.parsed_layer.simplifiedMap;
+                this->map_to_send.parsed_layer.simplifiedMap=nullptr;
             }
             if(this->map_to_send.parsed_layer.monstersCollisionList.size()==1 && this->map_to_send.parsed_layer.monstersCollisionList.front().actionOn.empty() && this->map_to_send.parsed_layer.monstersCollisionList.front().walkOn.empty())
             {
                 this->map_to_send.parsed_layer.monstersCollisionList.clear();
-                delete[] this->map_to_send.parsed_layer.monstersCollisionMap;
-                this->map_to_send.parsed_layer.monstersCollisionMap=nullptr;
+                delete[] this->map_to_send.parsed_layer.simplifiedMap;
+                this->map_to_send.parsed_layer.simplifiedMap=nullptr;
             }
         }
     }

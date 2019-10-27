@@ -46,9 +46,6 @@ DdosBuffer<uint16_t,3> Client::generalChatDrop;
 DdosBuffer<uint16_t,3> Client::clanChatDrop;
 DdosBuffer<uint16_t,3> Client::privateChatDrop;
 std::vector<uint32_t> Client::marketObjectUniqueIdList;
-#ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-std::queue<Client::PlantInWaiting> Client::plant_list_in_waiting;
-#endif
 
 std::vector<uint8_t> Client::selectCharacterQueryId;
 std::vector<uint16_t> Client::simplifiedIdList;

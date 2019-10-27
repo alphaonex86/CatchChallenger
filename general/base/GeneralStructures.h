@@ -106,143 +106,9 @@ enum RecipeUsage : uint8_t
 enum Plant_collect : uint8_t
 {
     Plant_collect_correctly_collected=0x01,
-    Plant_collect_empty_dirt=0x02,
+    /*Plant_collect_empty_dirt=0x02,
     Plant_collect_owned_by_another_player=0x03,
-    Plant_collect_impossible=0x04
-};
-
-struct Reputation
-{
-    std::vector<int32_t> reputation_positive/*start with 0*/,reputation_negative;
-    /*server only*/
-    int reverse_database_id;
-    std::string name;
-};
-
-struct ReputationRewards
-{
-    uint8_t reputationId;
-    int32_t point;
-};
-
-struct ReputationRequirements
-{
-    uint8_t reputationId;
-    uint8_t level;
-    bool positif;
-};
-
-struct QuestRequirements
-{
-    uint16_t quest;
-    bool inverse;
-};
-
-struct Plant
-{
-    uint16_t itemUsed;
-    uint32_t fruits_seconds;
-    //float quantity;//splited into 2 integer
-    uint16_t fix_quantity;
-    uint16_t random_quantity;
-    //minimal memory impact at exchange of drop dual xml parse
-    uint16_t sprouted_seconds;
-    uint16_t taller_seconds;
-    uint16_t flowering_seconds;
-    struct Requirements
-    {
-        std::vector<ReputationRequirements> reputation;
-    };
-    Requirements requirements;
-    struct Rewards
-    {
-        std::vector<ReputationRewards> reputation;
-    };
-    Rewards rewards;
-};
-
-struct Item
-{
-    uint32_t price;//if 0 you can't sell or buy it
-    bool consumeAtUse;
-};
-
-struct Trap
-{
-    float bonus_rate;
-};
-
-struct MonsterItemEffect
-{
-    MonsterItemEffectType type;
-    union Data {
-       uint32_t hp;
-       uint8_t buff;
-    } data;
-};
-
-struct MonsterItemEffectOutOfFight
-{
-    MonsterItemEffectTypeOutOfFight type;
-    union Data {
-       uint8_t level;
-    } data;
-};
-
-struct ItemFull
-{
-    std::unordered_map<uint16_t, std::vector<MonsterItemEffect> > monsterItemEffect;
-    std::unordered_map<uint16_t, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > evolutionItem;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<uint16_t/*monster*/> > itemToLearn;
-    std::unordered_map<uint16_t, uint32_t> repel;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
-    CATCHCHALLENGER_TYPE_ITEM itemMaxId;
-    std::unordered_map<uint16_t, Trap> trap;
-};
-
-struct LayersOptions
-{
-    uint8_t zoom;
-};
-
-struct IndustryLink
-{
-    uint16_t industry;
-    struct Requirements
-    {
-        std::vector<ReputationRequirements> reputation;
-    };
-    Requirements requirements;
-    struct Rewards
-    {
-        std::vector<ReputationRewards> reputation;
-    };
-    Rewards rewards;
-};
-
-struct Industry
-{
-    uint64_t time;//should not be too short
-    uint32_t cycletobefull;
-    struct Resource
-    {
-        CATCHCHALLENGER_TYPE_ITEM item;
-        uint32_t quantity;
-    };
-    struct Product
-    {
-        CATCHCHALLENGER_TYPE_ITEM item;
-        uint32_t quantity;
-    };
-    std::vector<Resource> resources;
-    std::vector<Product> products;
-};
-
-struct Event
-{
-    std::string name;
-    std::vector<std::string > values;
+    Plant_collect_impossible=0x04*/
 };
 
 enum ObjectUsage : uint8_t
@@ -385,13 +251,7 @@ struct Player_private_and_public_informations
         std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
         //here to send at character login
         std::unordered_set<uint16_t> itemOnMap;
-        #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
-            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-            #endif
-        #else
-            std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-        #endif
+        std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
         std::unordered_map<uint16_t, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
@@ -399,13 +259,7 @@ struct Player_private_and_public_informations
         std::set<ActionAllow> allow;
         //here to send at character login
         std::set<uint16_t> itemOnMap;
-        #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
-            #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-            #endif
-        #else
-            std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-        #endif
+        std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
         std::map<uint16_t, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
         std::map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
@@ -453,24 +307,6 @@ enum MapConditionType : uint8_t
     MapConditionType_FightBot=0x04
 };
 
-struct MapCondition
-{
-    MapConditionType type;
-    union Data {
-       uint16_t quest;
-       uint16_t item;
-       uint16_t fightBot;
-    } data;
-};
-
-struct MapMonster
-{
-    uint16_t id;
-    uint8_t minLevel;
-    uint8_t maxLevel;
-    uint8_t luck;
-};
-
 enum ParsedLayerLedges : uint8_t
 {
     ParsedLayerLedges_NoLedges=0x00,
@@ -480,10 +316,453 @@ enum ParsedLayerLedges : uint8_t
     ParsedLayerLedges_LedgesBottom=0x04
 };
 
-struct MonstersCollisionValue
+enum QuantityType : uint8_t
 {
-    std::vector<uint32_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
-    std::vector<uint32_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
+    QuantityType_Quantity,
+    QuantityType_Percent
+};
+
+enum ApplyOn : uint8_t
+{
+    ApplyOn_AloneEnemy=0x01,
+    ApplyOn_AllEnemy=0x02,
+    ApplyOn_Themself=0x04,
+    ApplyOn_AllAlly=0x08,
+    ApplyOn_Nobody=0x00
+};
+
+enum Place : uint8_t
+{
+    OnPlayer=0,
+    WareHouse=1,
+    Market=2
+};
+
+struct ItemToSellOrBuy
+{
+    CATCHCHALLENGER_TYPE_ITEM object;
+    uint32_t price;
+    uint32_t quantity;
+};
+
+struct City
+{
+    struct Capture
+    {
+        enum Frequency : uint8_t
+        {
+            Frequency_week=0x01,
+            Frequency_month=0x02
+        };
+        Frequency frenquency;
+        enum Day : uint8_t
+        {
+            Monday=0x01,
+            Tuesday=0x02,
+            Wednesday=0x03,
+            Thursday=0x04,
+            Friday=0x05,
+            Saturday=0x06,
+            Sunday=0x07
+        };
+        Day day;
+        uint8_t hour,minute;
+    };
+    Capture capture;
+};
+
+struct IndustryStatus
+{
+    uint64_t last_update;
+    std::unordered_map<uint32_t,uint32_t> resources;
+    std::unordered_map<uint32_t,uint32_t> products;
+};
+
+enum MonstersCollisionType : uint8_t
+{
+    MonstersCollisionType_WalkOn=0x00,
+    MonstersCollisionType_ActionOn=0x01
+};
+
+/** --------------- used to parse, but useless when datapack is loaded ------------ **/
+struct MonstersCollision
+{
+    MonstersCollisionType type;
+    CATCHCHALLENGER_TYPE_ITEM item;
+    std::string tile;
+    std::string layer;
+    std::vector<std::string> monsterTypeList;
+    std::vector<std::string> defautMonsterTypeList;
+    std::string background;
+    struct MonstersCollisionEvent
+    {
+        uint8_t event;
+        uint8_t event_value;
+        std::vector<std::string > monsterTypeList;
+    };
+    std::vector<MonstersCollisionEvent> events;
+};
+
+struct Type
+{
+    std::string name;
+    std::unordered_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
+};
+
+/** ---------------- Static datapack for serialiser ------------------------ **/
+
+class Reputation
+{
+public:
+    std::vector<int32_t> reputation_positive/*start with 0*/,reputation_negative;
+    /*server only*/
+    int reverse_database_id;
+    std::string name;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << reputation_positive << reputation_negative << reverse_database_id << name;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> reputation_positive >> reputation_negative >> reverse_database_id >> name;
+    }
+    #endif
+};
+
+class ReputationRewards
+{
+public:
+    uint8_t reputationId;
+    int32_t point;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << reputationId << point;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> reputationId >> point;
+    }
+    #endif
+};
+
+class ReputationRequirements
+{
+public:
+    uint8_t reputationId;
+    uint8_t level;
+    bool positif;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << reputationId << level << positif;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> reputationId >> level >> positif;
+    }
+    #endif
+};
+
+class QuestRequirements
+{
+public:
+    uint16_t quest;
+    bool inverse;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << quest << inverse;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> quest >> inverse;
+    }
+    #endif
+};
+
+class Plant
+{
+public:
+    uint16_t itemUsed;
+    uint32_t fruits_seconds;
+    //float quantity;//splited into 2 integer
+    uint16_t fix_quantity;
+    uint16_t random_quantity;
+    //minimal memory impact at exchange of drop dual xml parse
+    uint16_t sprouted_seconds;
+    uint16_t taller_seconds;
+    uint16_t flowering_seconds;
+    struct Requirements
+    {
+        std::vector<ReputationRequirements> reputation;
+    };
+    Requirements requirements;
+    struct Rewards
+    {
+        std::vector<ReputationRewards> reputation;
+    };
+    Rewards rewards;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << itemUsed << fruits_seconds << fix_quantity << random_quantity << sprouted_seconds << taller_seconds << flowering_seconds;
+        buf << (uint8_t)requirements.reputation.size();
+        for(auto const& v: requirements.reputation)
+            buf << v;
+        buf << (uint8_t)rewards.reputation.size();
+        for(auto const& v: rewards.reputation)
+            buf << v;
+    }
+    template <class B>
+    void parse(B& buf) {
+      buf >> itemUsed >> fruits_seconds >> fix_quantity >> random_quantity >> sprouted_seconds >> taller_seconds >> flowering_seconds;
+      uint8_t vectorsize=0;
+      buf >> vectorsize;
+      for(unsigned int i=0; i<vectorsize; i++) {
+          ReputationRequirements reputationRequirement;
+          buf >> reputationRequirement;
+          requirements.reputation.push_back(reputationRequirement);
+      }
+      buf >> vectorsize;
+      for(unsigned int i=0; i<vectorsize; i++) {
+          ReputationRewards reputationRewards;
+          buf >> reputationRewards;
+          rewards.reputation.push_back(reputationRewards);
+      }
+    }
+    #endif
+};
+
+class Item
+{
+public:
+    uint32_t price;//if 0 you can't sell or buy it
+    bool consumeAtUse;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << price << consumeAtUse;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> price >> consumeAtUse;
+    }
+    #endif
+};
+
+class Trap
+{
+public:
+    float bonus_rate;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << bonus_rate;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> bonus_rate;
+    }
+    #endif
+};
+
+class MonsterItemEffect
+{
+public:
+    MonsterItemEffectType type;
+    union Data {
+       uint32_t hp;
+       uint8_t buff;
+    } data;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << type << data;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> type >> data;
+    }
+    #endif
+};
+
+class MonsterItemEffectOutOfFight
+{
+public:
+    MonsterItemEffectTypeOutOfFight type;
+    union Data {
+       uint8_t level;
+    } data;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << type << data;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> type >> data;
+    }
+    #endif
+};
+
+class ItemFull
+{
+public:
+    std::unordered_map<uint16_t, std::vector<MonsterItemEffect> > monsterItemEffect;
+    std::unordered_map<uint16_t, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > evolutionItem;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<uint16_t/*monster*/> > itemToLearn;
+    std::unordered_map<uint16_t, uint32_t> repel;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
+    CATCHCHALLENGER_TYPE_ITEM itemMaxId;
+    std::unordered_map<uint16_t, Trap> trap;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << monsterItemEffect << monsterItemEffectOutOfFight << evolutionItem << itemToLearn << repel << item << itemMaxId << trap;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> monsterItemEffect >> monsterItemEffectOutOfFight >> evolutionItem >> itemToLearn >> repel >> item >> itemMaxId >> trap;
+    }
+    #endif
+};
+
+class LayersOptions
+{
+public:
+    uint8_t zoom;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << zoom;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> zoom;
+    }
+    #endif
+};
+
+class IndustryLink
+{
+public:
+    uint16_t industry;
+    struct Requirements
+    {
+        std::vector<ReputationRequirements> reputation;
+    };
+    Requirements requirements;
+    struct Rewards
+    {
+        std::vector<ReputationRewards> reputation;
+    };
+    Rewards rewards;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << industry << requirements << rewards;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> industry >> requirements >> rewards;
+    }
+    #endif
+};
+
+class Industry
+{
+public:
+    uint64_t time;//should not be too short
+    uint32_t cycletobefull;
+    struct Resource
+    {
+        CATCHCHALLENGER_TYPE_ITEM item;
+        uint32_t quantity;
+    };
+    struct Product
+    {
+        CATCHCHALLENGER_TYPE_ITEM item;
+        uint32_t quantity;
+    };
+    std::vector<Resource> resources;
+    std::vector<Product> products;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << time << cycletobefull << resources << products;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> time >> cycletobefull >> resources >> products;
+    }
+    #endif
+};
+
+class Event
+{
+public:
+    std::string name;
+    std::vector<std::string> values;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << name << values;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> name >> values;
+    }
+    #endif
+};
+
+class MapCondition
+{
+public:
+    MapConditionType type;
+    union Data {
+       uint16_t quest;
+       uint16_t item;
+       uint16_t fightBot;
+    } data;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << type << data;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> type >> data;
+    }
+    #endif
+};
+
+class MapMonster
+{
+public:
+    uint16_t id;
+    uint8_t minLevel;
+    uint8_t maxLevel;
+    uint8_t luck;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << id << minLevel << maxLevel << luck;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> id >> minLevel >> maxLevel << luck;
+    }
+    #endif
+};
+
+class MonstersCollisionValue
+{
+public:
+    std::vector<uint8_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
+    std::vector<uint8_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
     //it's the dynamic part
     struct MonstersCollisionValueOnCondition
     {
@@ -499,23 +778,37 @@ struct MonstersCollisionValue
     };
     std::vector<MonstersCollisionContent> walkOnMonsters;
     std::vector<std::vector<MapMonster> > actionOnMonsters;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << walkOn << actionOn << walkOnMonsters << actionOnMonsters;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> walkOn >> actionOn >> walkOnMonsters >> actionOnMonsters;
+    }
+    #endif
 };
 
 struct ParsedLayer
 {
-    bool *walkable;//walkable if !=false mean !=0
-    uint8_t *monstersCollisionMap;
+    /// \warning not serialisable directly, lack uint8_t * size, serialise out of there
+public:
+    /* 255 walkable
+     * 254 not walkable
+     * 253 ParsedLayerLedges_LedgesBottom
+     * 252 ParsedLayerLedges_LedgesTop
+     * 251 ParsedLayerLedges_LedgesRight
+     * 250 ParsedLayerLedges_LedgesLeft
+     * 249 dirt
+     * 200 - 248 reserved */
+    uint8_t *simplifiedMap;
     std::vector<MonstersCollisionValue> monstersCollisionList;
-    //bool *grass;
-    bool *dirt;
-    //not stored as ParsedLayerLedges to prevent memory space unused
-    uint8_t *ledges;
 };
 
-
-
-struct CrafingRecipe
+class CrafingRecipe
 {
+public:
     CATCHCHALLENGER_TYPE_ITEM itemToLearn;
     CATCHCHALLENGER_TYPE_ITEM doItemId;
     uint16_t quantity;
@@ -536,22 +829,38 @@ struct CrafingRecipe
         std::vector<ReputationRewards> reputation;
     };
     Rewards rewards;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << itemToLearn << doItemId << quantity << success << materials << requirements << rewards;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> itemToLearn >> doItemId >> quantity >> success >> materials >> requirements >> rewards;
+    }
+    #endif
 };
 
-struct Shop
+class Shop
 {
+public:
     std::vector<uint32_t> prices;
     std::vector<CATCHCHALLENGER_TYPE_ITEM> items;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << prices << items;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> prices >> items;
+    }
+    #endif
 };
 
-enum QuantityType : uint8_t
+class Buff
 {
-    QuantityType_Quantity,
-    QuantityType_Percent
-};
-
-struct Buff
-{
+public:
     enum Duration : uint8_t
     {
         Duration_Always,
@@ -584,27 +893,40 @@ struct Buff
         uint8_t durationNumberOfTurn;
     };
     std::vector<GeneralEffect> level;//first entry is buff level 1
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << level;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> level;
+    }
+    #endif
 };
 
-enum ApplyOn : uint8_t
+class MonsterDrops
 {
-    ApplyOn_AloneEnemy=0x01,
-    ApplyOn_AllEnemy=0x02,
-    ApplyOn_Themself=0x04,
-    ApplyOn_AllAlly=0x08,
-    ApplyOn_Nobody=0x00
-};
-
-struct MonsterDrops
-{
+public:
     uint16_t item;
     uint32_t quantity_min;
     uint32_t quantity_max;
     uint8_t luck;//seam be 0 to 100
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << item << quantity_min << quantity_max << luck;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> item >> quantity_min >> quantity_max >> luck;
+    }
+    #endif
 };
 
-struct Skill
+class Skill
 {
+public:
     enum AttackReturnCase : uint8_t
     {
         AttackReturnCase_NormalAttack=0x01,
@@ -666,18 +988,21 @@ struct Skill
     };
     std::vector<Skill::SkillList> level;//first is level 1
     uint8_t type;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << level << type;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> level >> type;
+    }
+    #endif
 };
 
-enum Place : uint8_t
+class Monster
 {
-    OnPlayer=0,
-    WareHouse=1,
-    Market=2
-};
-
-struct Monster
-{
-    int8_t ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+public:
     struct Stat
     {
         uint32_t hp;
@@ -689,15 +1014,12 @@ struct Monster
         uint32_t speed;
         #endif
     };
-    Stat stat;
     struct AttackToLearn
     {
         uint8_t learnAtLevel;
         uint16_t learnSkill;
         uint8_t learnSkillLevel;
     };
-    std::vector<AttackToLearn> learn;
-
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     enum EvolutionType : uint8_t
     {
@@ -714,6 +1036,11 @@ struct Monster
         } data;
         uint16_t evolveTo;
     };
+    struct AttackToLearnByItem
+    {
+        uint16_t learnSkill;
+        uint8_t learnSkillLevel;
+    };
 
     std::vector<uint8_t> type;
     uint8_t catch_rate;///< 0 to 255 (255 = very easy)
@@ -722,29 +1049,46 @@ struct Monster
     uint32_t give_sp;
     uint32_t give_xp;
     std::vector<uint32_t> level_to_xp;//first is xp to level 1
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
+    std::vector<Evolution> evolutions;
     #ifdef CATCHCHALLENGER_CLIENT
     double powerVar;
     #endif
-
-    struct AttackToLearnByItem
-    {
-        uint16_t learnSkill;
-        uint8_t learnSkillLevel;
-    };
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
-    std::vector<Evolution> evolutions;
+    #endif
+    std::vector<AttackToLearn> learn;
+    Stat stat;
+    int8_t ratio_gender;///< -1 for no gender, 0 only male, 100 only female
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf
+            #ifndef CATCHCHALLENGER_CLASS_MASTER
+            << type << catch_rate << egg_step << xp_for_max_level << give_sp << give_xp << level_to_xp << learnByItem << evolutions
+            #ifdef CATCHCHALLENGER_CLIENT
+            << powerVar
+            #endif
+            #endif
+            << learn << stat << ratio_gender
+               ;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf
+            #ifndef CATCHCHALLENGER_CLASS_MASTER
+            >> type >> catch_rate >> egg_step >> xp_for_max_level >> give_sp >> give_xp >> level_to_xp >> learnByItem >> evolutions
+            #ifdef CATCHCHALLENGER_CLIENT
+            >> powerVar
+            #endif
+            #endif
+            >> learn >> stat >> ratio_gender
+               ;
+    }
     #endif
 };
 
-struct ItemToSellOrBuy
+class Quest
 {
-    CATCHCHALLENGER_TYPE_ITEM object;
-    uint32_t price;
-    uint32_t quantity;
-};
-
-struct Quest
-{
+public:
     struct Item
     {
         CATCHCHALLENGER_TYPE_ITEM item;
@@ -784,57 +1128,45 @@ struct Quest
     Requirements requirements;
     Rewards rewards;
     std::vector<Step> steps;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << id << repeatable << requirements << rewards << steps;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> id >> repeatable >> requirements >> rewards >> steps;
+    }
+    #endif
 };
 
-struct City
+class BotFight
 {
-    struct Capture
-    {
-        enum Frequency : uint8_t
-        {
-            Frequency_week=0x01,
-            Frequency_month=0x02
-        };
-        Frequency frenquency;
-        enum Day : uint8_t
-        {
-            Monday=0x01,
-            Tuesday=0x02,
-            Wednesday=0x03,
-            Thursday=0x04,
-            Friday=0x05,
-            Saturday=0x06,
-            Sunday=0x07
-        };
-        Day day;
-        uint8_t hour,minute;
-    };
-    Capture capture;
-};
-
-struct BotFight
-{
+public:
     struct BotFightMonster
     {
         uint16_t id;
         uint8_t level;
         std::vector<PlayerMonster::PlayerSkill> attacks;
     };
-    std::vector<BotFightMonster> monsters;
-    uint32_t cash;
     struct Item
     {
         CATCHCHALLENGER_TYPE_ITEM id;
         uint32_t quantity;
     };
+    std::vector<BotFightMonster> monsters;
+    uint32_t cash;
     std::vector<Item> items;
-};
-
-struct IndustryStatus
-{
-    uint64_t last_update;
-    std::unordered_map<uint32_t,uint32_t> resources;
-    std::unordered_map<uint32_t,uint32_t> products;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << monsters << cash << items;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> monsters >> cash >> items;
+    }
+    #endif
 };
 
 class Profile
@@ -864,10 +1196,21 @@ public:
     std::vector<Reputation> reputations;
     std::vector<Item> items;
     std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile*/
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << forcedskin << cash << monstergroup << reputations << items << databaseId;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> forcedskin >> cash >> monstergroup >> reputations >> items >> databaseId;
+    }
+    #endif
 };
 
-struct ServerSpecProfile
+class ServerSpecProfile
 {
+public:
     void * mapPointer;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
@@ -876,36 +1219,17 @@ struct ServerSpecProfile
     /// \todo support multiple map start, change both:
     std::string mapString;
     std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile*/
-};
-
-enum MonstersCollisionType : uint8_t
-{
-    MonstersCollisionType_WalkOn=0x00,
-    MonstersCollisionType_ActionOn=0x01
-};
-
-struct MonstersCollision
-{
-    MonstersCollisionType type;
-    CATCHCHALLENGER_TYPE_ITEM item;
-    std::string tile;
-    std::string layer;
-    std::vector<std::string> monsterTypeList;
-    std::vector<std::string> defautMonsterTypeList;
-    std::string background;
-    struct MonstersCollisionEvent
-    {
-        uint8_t event;
-        uint8_t event_value;
-        std::vector<std::string > monsterTypeList;
-    };
-    std::vector<MonstersCollisionEvent> events;
-};
-
-struct Type
-{
-    std::string name;
-    std::unordered_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << x << y << orientation << mapString << databaseId;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> x >> y >> orientation >> mapString >> databaseId;
+        mapPointer=nullptr;
+    }
+    #endif
 };
 
 }

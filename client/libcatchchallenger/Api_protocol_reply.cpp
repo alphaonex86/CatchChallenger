@@ -685,59 +685,6 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
         }
         break;
 
-        //Use seed into dirt
-        case 0x83:
-        {
-            if((size-pos)<(int)(sizeof(uint8_t)))
-            {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
-                           ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
-                              );
-                return false;
-            }
-            uint8_t returnCode=data[pos];
-            pos+=sizeof(uint8_t);
-            if(returnCode==0x01)
-                seed_planted(true);
-            else if(returnCode==0x02)
-                seed_planted(false);
-            else
-            {
-                parseError("Procotol wrong or corrupted","bad return code to use seed: "+std::to_string(returnCode));
-                return false;
-            }
-        }
-        break;
-        //Collect mature plant
-        case 0x84:
-        {
-            if((size-pos)<(int)(sizeof(uint8_t)))
-            {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
-                           ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
-                              );
-                return false;
-            }
-            uint8_t returnCode=data[pos];
-            pos+=sizeof(uint8_t);
-            switch(returnCode)
-            {
-                case 0x01:
-                case 0x02:
-                case 0x03:
-                case 0x04:
-                    plant_collected((Plant_collect)returnCode);
-                break;
-                default:
-                parseError("Procotol wrong or corrupted","unknown return code with main ident: "+
-                           std::to_string(packetCode)+", and queryNumber: "+
-                           std::to_string(queryNumber)+", line: "+
-                           std::string(__FILE__)+":"+std::to_string(__LINE__)
-                           );
-                return false;
-            }
-        }
-        break;
         //Usage of recipe
         case 0x85:
         {

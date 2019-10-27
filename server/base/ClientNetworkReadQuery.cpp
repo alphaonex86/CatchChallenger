@@ -42,27 +42,6 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
     }
     switch(packetCode)
     {
-        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        //Use seed into dirt
-        case 0x83:
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint8_t))
-            {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                return;
-            }
-            #endif
-            const uint8_t &plant_id=*data;
-            plantSeed(queryNumber,plant_id);
-            return;
-        }
-        break;
-        //Collect mature plant
-        case 0x84:
-            collectPlant(queryNumber);
-        break;
-        #endif
         //Usage of recipe
         case 0x85:
         {
