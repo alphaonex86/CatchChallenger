@@ -377,7 +377,7 @@ bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint
     if(map.parsed_layer.simplifiedMap==NULL)
         return false;
     const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
-    return val==255 || val<200;
+    return val<200;
 }
 
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
@@ -391,7 +391,10 @@ MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, cons
 {
     if(map.parsed_layer.simplifiedMap==NULL)
         return MonstersCollisionValue();
-    return map.parsed_layer.monstersCollisionList.at(map.parsed_layer.simplifiedMap[x+y*(map.width)]);
+    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    if(map.parsed_layer.monstersCollisionList.size()<=val)
+        return MonstersCollisionValue();
+    return map.parsed_layer.monstersCollisionList.at(val);
 }
 
 bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)

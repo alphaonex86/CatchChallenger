@@ -794,7 +794,7 @@ struct ParsedLayer
 {
     /// \warning not serialisable directly, lack uint8_t * size, serialise out of there
 public:
-    /* 255 walkable
+    /* 0 walkable: index = 0 for monster is used into cave
      * 254 not walkable
      * 253 ParsedLayerLedges_LedgesBottom
      * 252 ParsedLayerLedges_LedgesTop
@@ -803,6 +803,8 @@ public:
      * 249 dirt
      * 200 - 248 reserved */
     uint8_t *simplifiedMap;
+    /* 0 cave def
+     * 1-199 monster def and condition */
     std::vector<MonstersCollisionValue> monstersCollisionList;
 };
 
