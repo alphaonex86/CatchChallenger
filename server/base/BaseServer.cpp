@@ -6,6 +6,8 @@
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/Version.h"
+#include "../../general/hps/hps.h"
+#include <fstream>
 
 using namespace CatchChallenger;
 
@@ -49,11 +51,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
     CommonSettingsServer::commonSettingsServer.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer=true;
-    #else
-    CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer=false;
-    #endif
     CommonSettingsServer::commonSettingsServer.useSP                  = true;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
@@ -182,28 +179,40 @@ void BaseServer::preload_the_data()
     preload_industries_call=false;
     preload_market_items_call=false;
     GlobalServerData::serverPrivateVariables.stopIt=false;
+    preload_the_randomData();
 
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
+
+    //load from cache here
+    std::ifstream in_file("cache-hps.bin", std::ifstream::binary);
+    if(in_file.good())
     {
-        const auto &now = msFrom1970();
-        CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
-        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
-        const auto &after = msFrom1970();
-        std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
+        CommonDatapack::commonDatapack.plants = hps::from_stream<std::unordered_map<uint8_t,Plant> >(in_file);
+
+        preload_dictionary_map();
     }
-    timeDatapack = msFrom1970();
-    preload_the_randomData();
-    preload_randomBlock();
-    preload_the_events();
-    preload_the_ddos();
-    preload_the_datapack();
-    preload_the_gift();
-    preload_the_skin();
-    preload_the_players();
-    preload_monsters_drops();
-    preload_the_map();
-    baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
+    else
+    {
+        {
+            const auto &now = msFrom1970();
+            CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
+            CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
+            const auto &after = msFrom1970();
+            std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
+        }
+        timeDatapack = msFrom1970();
+        preload_randomBlock();
+        preload_the_events();
+        preload_the_ddos();
+        preload_the_datapack();
+        preload_the_gift();
+        preload_the_skin();
+        preload_the_players();
+        preload_monsters_drops();
+        preload_the_map();
+        baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
+    }
     preload_dictionary_map();
 
     /*

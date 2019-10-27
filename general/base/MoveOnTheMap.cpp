@@ -319,10 +319,12 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
 
 CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.ledges==NULL)
+    if(map.parsed_layer.simplifiedMap==NULL)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
-    const uint8_t &i=map.parsed_layer.ledges[x+y*(map.width)];
-    return static_cast<ParsedLayerLedges>((uint32_t)i);
+    const uint8_t &i=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    if(i<250 || i>253)
+        return CatchChallenger::ParsedLayerLedges_NoLedges;
+    return static_cast<ParsedLayerLedges>((uint32_t)i-250+1);
 }
 
 bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
@@ -372,23 +374,24 @@ bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, c
 
 bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.walkable==NULL)
+    if(map.parsed_layer.simplifiedMap==NULL)
         return false;
-    return map.parsed_layer.walkable[x+y*(map.width)];
+    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    return val==255 || val<200;
 }
 
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.dirt==NULL)
+    if(map.parsed_layer.simplifiedMap==NULL)
         return false;
-    return map.parsed_layer.dirt[x+y*(map.width)];
+    return map.parsed_layer.simplifiedMap[x+y*(map.width)]==249;
 }
 
 MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.monstersCollisionMap==NULL)
+    if(map.parsed_layer.simplifiedMap==NULL)
         return MonstersCollisionValue();
-    return map.parsed_layer.monstersCollisionList.at(map.parsed_layer.monstersCollisionMap[x+y*(map.width)]);
+    return map.parsed_layer.monstersCollisionList.at(map.parsed_layer.simplifiedMap[x+y*(map.width)]);
 }
 
 bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)

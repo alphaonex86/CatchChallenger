@@ -11,9 +11,7 @@ using namespace CatchChallenger;
 
 bool Client::checkCollision()
 {
-    if(map->parsed_layer.walkable==NULL)
-        return false;
-    if(!map->parsed_layer.walkable[x+y*map->width])
+    if(!MoveOnTheMap::isWalkable(*map,x,y))
     {
         errorOutput("move at "+std::to_string(temp_direction)+", can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+map->map_file);
         return false;
@@ -300,18 +298,9 @@ void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,c
                                     ","+std::to_string(x)+
                                     ","+std::to_string(y)+
                                     ","+std::to_string((uint8_t)orientation)+")");
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    bool mapChange=this->map!=map;
-    if(mapChange)
-        removeNearPlant();
-    #endif
     MapBasicMove::teleportValidatedTo(map,x,y,orientation);
     if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    if(mapChange)
-        sendNearPlant();
-    #endif
 }
 
 Direction Client::lookToMove(const Direction &direction)

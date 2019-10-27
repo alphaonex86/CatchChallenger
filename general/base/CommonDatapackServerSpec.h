@@ -24,6 +24,16 @@ public:
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     static CommonDatapackServerSpec commonDatapackServerSpec;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << botFights << botFightsMaxId << quests << shops << serverProfileList << monsterDrops;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> botFights >> botFightsMaxId >> quests >> shops >> serverProfileList >> monsterDrops;
+    }
+    #endif
 private:
     bool isParsedSpec;
     bool parsingSpec;

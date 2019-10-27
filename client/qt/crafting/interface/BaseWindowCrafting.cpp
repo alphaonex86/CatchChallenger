@@ -117,7 +117,7 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
             showTip(tr("Plant collected").toStdString());//the item is send by another message with the protocol
         break;
-        case Plant_collect_empty_dirt:
+        /*case Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt").toStdString());
         break;
         case Plant_collect_owned_by_another_player:
@@ -131,13 +131,11 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             mapController->insert_plant_full(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y,
                                              plant_collect_in_waiting.front().plant_id,plant_collect_in_waiting.front().seconds_to_mature);
             cancelAllPlantQuery(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y);
-        break;
+        break;*/
         default:
             qDebug() << "BaseWindow::plant_collected(): unknown return";
         break;
     }
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        plant_collect_in_waiting.erase(plant_collect_in_waiting.cbegin());
 }
 
 void BaseWindow::load_plant_inventory()

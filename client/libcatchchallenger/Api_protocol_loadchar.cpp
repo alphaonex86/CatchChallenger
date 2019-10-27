@@ -62,13 +62,6 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     }
     cityCapture(captureRemainingTime,captureFrequencyType);
 
-    if((size-pos)<(int)sizeof(uint8_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer=data[pos];
-    pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -105,16 +98,6 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     }
     CommonSettingsServer::commonSettingsServer.useSP=data[pos];
     pos+=sizeof(uint8_t);
-    if((size-pos)<(int)sizeof(uint8_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the tcpCork, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    //CommonSettingsServer::commonSettingsServer.tcpCork=data[pos];
-    pos+=sizeof(uint8_t);
-    {
-        //socket->setTcpCork(CommonSettingsServer::commonSettingsServer.tcpCork);->ignored for now
-    }
     if((size-pos)<(int)sizeof(uint8_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -904,7 +887,6 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
 
     //plant on map
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
     {
         if((size-pos)<(int)sizeof(uint16_t))
         {
