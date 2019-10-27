@@ -193,8 +193,6 @@ void BaseServer::preload_other()
         posOutput+=1;
 
         //common settings
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer;
-        posOutput+=1;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick);
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
@@ -202,8 +200,6 @@ void BaseServer::preload_other()
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.forcedSpeed;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.useSP;
-        posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsServer::commonSettingsServer.autoLearn;
         posOutput+=1;

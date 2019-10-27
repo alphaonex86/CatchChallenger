@@ -616,7 +616,7 @@ void MapVisualiserPlayer::moveStepSlot()
                     current_monster_map=map->map_file;
                     if(old_all_map.find(current_monster_map)==old_all_map.cend())
                         std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-                    if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                    if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
                         resetMonsterTile();
                     loadMonsterFromCurrentMap();
                 }
@@ -657,7 +657,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 emit inWaitingOfMap();
             loadOtherMap(current_map);
             hideNotloadedMap();
-            if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+            if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
                 resetMonsterTile();
             return;
         }

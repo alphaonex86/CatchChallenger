@@ -12,9 +12,6 @@ namespace CatchChallenger {
 class CommonMap
 {
 public:
-    //the index is position (x+y*width)
-    ParsedLayer parsed_layer;
-
     struct Map_Border
     {
         struct Map_BorderContent_TopBottom
@@ -32,10 +29,6 @@ public:
         Map_BorderContent_LeftRight left;
         Map_BorderContent_LeftRight right;
     };
-    Map_Border border;
-    std::vector<CommonMap *> near_map;//only the border (left, right, top, bottom) AND them self
-
-    std::vector<CommonMap *> linked_map;//not only the border, with tp, door, ...
     struct Teleporter
     {
         uint8_t source_x,source_y;/*source*/
@@ -43,6 +36,9 @@ public:
         CommonMap *map;
         MapCondition condition;
     };
+
+    Map_Border border;
+
     Teleporter* teleporter;//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
     uint8_t teleporter_list_size;
 
@@ -51,6 +47,9 @@ public:
     uint8_t height;//why uint16_t if a map is not allowed be more than 255?
     uint32_t group;
     uint32_t id;
+
+    //the index is position (x+y*width)
+    ParsedLayer parsed_layer;
 
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;

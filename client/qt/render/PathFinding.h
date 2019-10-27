@@ -37,10 +37,15 @@ public slots:
 private:
     struct SimplifiedMapForPathFinding
     {
-        bool *walkable;
-        uint8_t *monstersCollisionMap;//to know if have the item
-        bool *dirt;
-        uint8_t *ledges;
+        /* 255 walkable
+         * 254 not walkable
+         * 253 ParsedLayerLedges_LedgesBottom
+         * 252 ParsedLayerLedges_LedgesTop
+         * 251 ParsedLayerLedges_LedgesRight
+         * 250 ParsedLayerLedges_LedgesLeft
+         * 249 dirt
+         * 200 - 248 reserved */
+        uint8_t *simplifiedMap;//to know if have the item
 
         uint8_t width,height;
 

@@ -404,13 +404,6 @@ struct ServerPrivateVariables
     std::unordered_map<uint32_t,IndustryStatus> industriesStatus;
     std::vector<uint8_t> events;
 
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    //plant
-    std::vector<uint32_t> plantUsedId;
-    std::vector<uint32_t> plantUnusedId;
-    uint32_t maxPlantId;
-    #endif
-
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp
     {

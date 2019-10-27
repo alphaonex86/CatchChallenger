@@ -11,7 +11,6 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     std::string httpDatapackMirrorServer;
     #endif
-    bool plantOnlyVisibleByPlayer;
     uint8_t forcedSpeed;
     bool useSP;
     bool autoLearn;

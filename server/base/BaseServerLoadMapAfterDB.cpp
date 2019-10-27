@@ -87,12 +87,6 @@ void BaseServer::preload_map_semi_after_db_id()
                 }
 
                 MapServer::PlantOnMap plantOnMap;
-                #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                plantOnMap.plant=0;//plant id
-                plantOnMap.character=0;//player id
-                plantOnMap.mature_at=0;//timestamp when is mature
-                plantOnMap.player_owned_expire_at=0;//timestamp when is mature
-                #endif
                 plantOnMap.pointOnMapDbCode=pointOnMapDbCode;
                 mapServer->plants[pair]=plantOnMap;
 

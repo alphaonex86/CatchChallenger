@@ -149,10 +149,7 @@ bool BaseServer::preload_the_map()
 
                 mapServer->width			= 0;
                 mapServer->height			= 0;
-                mapServer->parsed_layer.dirt=NULL;
-                mapServer->parsed_layer.ledges=NULL;
-                mapServer->parsed_layer.monstersCollisionMap=NULL;
-                mapServer->parsed_layer.walkable=NULL;
+                mapServer->parsed_layer.simplifiedMap=NULL;
                 mapServer->map_file		= sortFileName;
 
                 map_name.push_back(sortFileName);
@@ -406,95 +403,6 @@ bool BaseServer::preload_the_map()
                           << std::endl;
             GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->border.right.map=NULL;
         }
-        index++;
-    }
-
-    //resolv the near map
-    index=0;
-    while(index<semi_loaded_map.size())
-    {
-        CommonMap * const currentTempMap=GlobalServerData::serverPrivateVariables.map_list.at(map_name.at(index));
-        if(currentTempMap->border.bottom.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
-                ==
-                currentTempMap->near_map.end())
-        {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
-            if(currentTempMap->border.left.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.right.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
-        }
-
-        if(currentTempMap->border.top.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
-                ==
-                currentTempMap->near_map.end()
-                )
-        {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.left.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.right.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
-        }
-
-        if(currentTempMap->border.right.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
-                ==
-                currentTempMap->near_map.end()
-                )
-        {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
-            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
-        }
-
-        if(currentTempMap->border.left.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
-                ==
-                currentTempMap->near_map.end()
-                )
-        {
-            GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
-                    ==
-                    currentTempMap->near_map.end())
-                GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
-        }
-
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->linked_map=GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map;
-        //the teleporter
-        {
-            unsigned int index=0;
-            while(index<currentTempMap->teleporter_list_size)
-            {
-                const CatchChallenger::CommonMap::Teleporter &teleporter=currentTempMap->teleporter[index];
-                if(!vectorcontainsAtLeastOne(currentTempMap->linked_map,teleporter.map))
-                    currentTempMap->linked_map.push_back(teleporter.map);
-                index++;
-            }
-        }
-
-        GlobalServerData::serverPrivateVariables.map_list[map_name.at(index)]->near_map.push_back(currentTempMap);
         index++;
     }
 

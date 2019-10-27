@@ -62,10 +62,10 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
         messageFightEngine("map: "+map.map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
-    if(map.parsed_layer.monstersCollisionMap==NULL)
+    if(map.parsed_layer.simplifiedMap==NULL)
         return true;
 
-    uint8_t zoneCode=map.parsed_layer.monstersCollisionMap[x+y*map.width];
+    uint8_t zoneCode=map.parsed_layer.simplifiedMap[x+y*map.width];
     const MonstersCollisionValue &monstersCollisionValue=map.parsed_layer.monstersCollisionList.at(zoneCode);
     if(monstersCollisionValue.walkOn.empty())
         return true;

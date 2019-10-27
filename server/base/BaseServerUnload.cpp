@@ -133,9 +133,6 @@ void BaseServer::unload_the_map()
         GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
     }
     botIdLoaded.clear();
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    GlobalServerData::serverPrivateVariables.plantUsedId.clear();
-    #endif
 }
 
 void BaseServer::unload_the_skin()

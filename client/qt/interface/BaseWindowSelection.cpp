@@ -445,14 +445,11 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_inventory();
             qDebug() << QStringLiteral("send seed for: %1").arg(plantId);
             emit useSeed(plantId);
-            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
-            {
-                client->seed_planted(true);
-                client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
-                                     seedInWaiting.x,seedInWaiting.y,plantId,
-                                     static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
-                                     );
-            }
+            client->seed_planted(true);
+            client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
+                                 seedInWaiting.x,seedInWaiting.y,plantId,
+                                 static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
+                                 );
         }
         break;
         case ObjectType_UseInFight:
