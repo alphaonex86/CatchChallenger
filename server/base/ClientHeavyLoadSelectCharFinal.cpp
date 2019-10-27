@@ -337,8 +337,6 @@ void Client::characterIsRightFinalStep()
         }
     }
 
-    //send plant on map
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     const auto &time=sFrom1970();
     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.plantOnMap.size());
     posOutput+=2;
@@ -360,7 +358,6 @@ void Client::characterIsRightFinalStep()
         posOutput+=2;
         ++i;
     }
-    #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->map==NULL)

@@ -28,6 +28,7 @@ protected:
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
+    std::vector<CommonMap*> get_linked_map() const;
 private:
     static MapVisibilityAlgorithm_WithBorder_StoreOnSender *current_client;//static to drop down the memory
     //overwrite

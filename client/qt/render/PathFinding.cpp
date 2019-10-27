@@ -47,86 +47,64 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
     std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;
     //load the data
     for ( const auto &n : all_map ) {
-        if(n.second->displayed)
+        const Map_full * const map=n.second;
+        if(map->displayed)
         {
             SimplifiedMapForPathFinding simplifiedMap;
-            simplifiedMap.width=n.second->logicalMap.width;
-            simplifiedMap.height=n.second->logicalMap.height;
-            if(n.second->logicalMap.parsed_layer.dirt==NULL)
-                simplifiedMap.dirt=NULL;
+            simplifiedMap.width=map->logicalMap.width;
+            simplifiedMap.height=map->logicalMap.height;
+            if(map->logicalMap.parsed_layer.simplifiedMap==NULL)
+                simplifiedMap.simplifiedMap=NULL;
             else
             {
-                simplifiedMap.dirt=new bool[simplifiedMap.width*simplifiedMap.height];
-                memcpy(simplifiedMap.dirt,n.second->logicalMap.parsed_layer.dirt,simplifiedMap.width*simplifiedMap.height);
-            }
-            if(n.second->logicalMap.parsed_layer.ledges==NULL)
-                simplifiedMap.ledges=NULL;
-            else
-            {
-                simplifiedMap.ledges=new uint8_t[simplifiedMap.width*simplifiedMap.height];
-                memcpy(simplifiedMap.ledges,n.second->logicalMap.parsed_layer.ledges,simplifiedMap.width*simplifiedMap.height);
-            }
-            if(n.second->logicalMap.parsed_layer.walkable==NULL)
-            {
-                std::cout << "PathFinding n.second->logicalMap.parsed_layer.walkable " << n.first << std::endl;
-                simplifiedMap.walkable=NULL;
-            }
-            else
-            {
-                simplifiedMap.walkable=new bool[simplifiedMap.width*simplifiedMap.height];
-                memcpy(simplifiedMap.walkable,n.second->logicalMap.parsed_layer.walkable,simplifiedMap.width*simplifiedMap.height);
-            }
-            if(n.second->logicalMap.parsed_layer.monstersCollisionMap==NULL)
-                simplifiedMap.monstersCollisionMap=NULL;
-            else
-            {
-                simplifiedMap.monstersCollisionMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
-                memcpy(simplifiedMap.monstersCollisionMap,n.second->logicalMap.parsed_layer.monstersCollisionMap,simplifiedMap.width*simplifiedMap.height);
+                simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
+                memcpy(simplifiedMap.simplifiedMap,map->logicalMap.parsed_layer.simplifiedMap,simplifiedMap.width*simplifiedMap.height);
             }
             simplifiedMapList[n.first]=simplifiedMap;
         }
     }
     //resolv the border
     for ( const auto &n : simplifiedMapList ) {
-        if(all_map.find(all_map.at(n.first)->logicalMap.border_semi.bottom.fileName)!=all_map.cend())
+        const std::string &mapString=n.first;
+        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.bottom.fileName)!=all_map.cend())
         {
-            simplifiedMapList[n.first].border.bottom.map=&simplifiedMapList[all_map.at(n.first)->logicalMap.border_semi.bottom.fileName];
-            simplifiedMapList[n.first].border.bottom.x_offset=all_map.at(n.first)->logicalMap.border_semi.bottom.x_offset;
+            simplifiedMapList[mapString].border.bottom.map=&simplifiedMapList[all_map.at(mapString)->logicalMap.border_semi.bottom.fileName];
+            simplifiedMapList[mapString].border.bottom.x_offset=all_map.at(mapString)->logicalMap.border_semi.bottom.x_offset;
         }
         else
         {
-            simplifiedMapList[n.first].border.bottom.map=NULL;
-            simplifiedMapList[n.first].border.bottom.x_offset=0;
+            simplifiedMapList[mapString].border.bottom.map=NULL;
+            simplifiedMapList[mapString].border.bottom.x_offset=0;
         }
-        if(all_map.find(all_map.at(n.first)->logicalMap.border_semi.left.fileName)!=all_map.cend())
+        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.left.fileName)!=all_map.cend())
         {
-            simplifiedMapList[n.first].border.left.map=&simplifiedMapList[all_map.at(n.first)->logicalMap.border_semi.left.fileName];
-            simplifiedMapList[n.first].border.left.y_offset=all_map.at(n.first)->logicalMap.border_semi.left.y_offset;
-        }
-        else
-        {
-            simplifiedMapList[n.first].border.left.map=NULL;
-            simplifiedMapList[n.first].border.left.y_offset=0;
-        }
-        if(all_map.find(all_map.at(n.first)->logicalMap.border_semi.right.fileName)!=all_map.cend())
-        {
-            simplifiedMapList[n.first].border.right.map=&simplifiedMapList[all_map.at(n.first)->logicalMap.border_semi.right.fileName];
-            simplifiedMapList[n.first].border.right.y_offset=all_map.at(n.first)->logicalMap.border_semi.right.y_offset;
+            simplifiedMapList[mapString].border.left.map=&simplifiedMapList[all_map.at(mapString)->logicalMap.border_semi.left.fileName];
+            simplifiedMapList[mapString].border.left.y_offset=all_map.at(mapString)->logicalMap.border_semi.left.y_offset;
         }
         else
         {
-            simplifiedMapList[n.first].border.right.map=NULL;
-            simplifiedMapList[n.first].border.right.y_offset=0;
+            simplifiedMapList[mapString].border.left.map=NULL;
+            simplifiedMapList[mapString].border.left.y_offset=0;
         }
-        if(all_map.find(all_map.at(n.first)->logicalMap.border_semi.top.fileName)!=all_map.cend())
+        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.right.fileName)!=all_map.cend())
         {
-            simplifiedMapList[n.first].border.top.map=&simplifiedMapList[all_map.at(n.first)->logicalMap.border_semi.top.fileName];
-            simplifiedMapList[n.first].border.top.x_offset=all_map.at(n.first)->logicalMap.border_semi.top.x_offset;
+            simplifiedMapList[mapString].border.right.map=&simplifiedMapList[all_map.at(mapString)->logicalMap.border_semi.right.fileName];
+            simplifiedMapList[mapString].border.right.y_offset=all_map.at(mapString)->logicalMap.border_semi.right.y_offset;
         }
         else
         {
-            simplifiedMapList[n.first].border.top.map=NULL;
-            simplifiedMapList[n.first].border.top.x_offset=0;
+            simplifiedMapList[mapString].border.right.map=NULL;
+            simplifiedMapList[mapString].border.right.y_offset=0;
+        }
+        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.top.fileName)!=all_map.cend())
+        {
+            simplifiedMapList[mapString].border.top.map=&simplifiedMapList[all_map.at(mapString)->logicalMap.border_semi.top.fileName];
+            simplifiedMapList[mapString].border.top.x_offset=all_map.at(mapString)->logicalMap.border_semi.top.x_offset;
+        }
+        else
+        {
+            simplifiedMapList[mapString].border.top.map=NULL;
+            simplifiedMapList[mapString].border.top.x_offset=0;
         }
     }
     //load for thread and unload if needed
@@ -139,17 +117,8 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
 
 bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y)
 {
-    bool walkable;
-    if(simplifiedMapForPathFinding.walkable==NULL)
-        walkable=false;
-    else
-        walkable=simplifiedMapForPathFinding.walkable[x+y*(simplifiedMapForPathFinding.width)];
-    bool dirt;
-    if(simplifiedMapForPathFinding.dirt==NULL)
-        dirt=false;
-    else
-        dirt=simplifiedMapForPathFinding.dirt[x+y*(simplifiedMapForPathFinding.width)];
-    return dirt || walkable;
+    const uint8_t &var=simplifiedMapForPathFinding.simplifiedMap[x+y*(simplifiedMapForPathFinding.width)];
+    return var==255 || var<200;
 }
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -233,7 +202,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         std::cerr << "bug: simplifiedMapList.find(current_map)==simplifiedMapList.cend()" << std::endl;
         return;
     }
-    if(simplifiedMapList.at(current_map).walkable==NULL)
+    if(simplifiedMapList.at(current_map).simplifiedMap==nullptr)
         std::cout << "PathFinding::canGoOn() walkable is NULL for " << current_map << std::endl;
     //resolv the path
     if(!tryCancel)
@@ -500,25 +469,11 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
     //drop the local variable
     {
         for ( auto &n : simplifiedMapList ) {
-            if(n.second.dirt!=NULL)
+            SimplifiedMapForPathFinding simplifiedMapForPathFinding=n.second;
+            if(simplifiedMapForPathFinding.simplifiedMap!=NULL)
             {
-                delete[] n.second.dirt;
-                n.second.dirt=NULL;
-            }
-            if(n.second.ledges!=NULL)
-            {
-                delete[] n.second.ledges;
-                n.second.ledges=NULL;
-            }
-            if(n.second.walkable!=NULL)
-            {
-                delete[] n.second.walkable;
-                n.second.walkable=NULL;
-            }
-            if(n.second.monstersCollisionMap!=NULL)
-            {
-                delete[] n.second.monstersCollisionMap;
-                n.second.monstersCollisionMap=NULL;
+                delete[] simplifiedMapForPathFinding.simplifiedMap;
+                simplifiedMapForPathFinding.simplifiedMap=NULL;
             }
         }
     }

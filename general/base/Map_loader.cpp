@@ -142,14 +142,8 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 
 void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
 {
-    if(parsed_layer.dirt!=NULL)
-        delete parsed_layer.dirt;
-    if(parsed_layer.monstersCollisionMap!=NULL)
-        delete parsed_layer.monstersCollisionMap;
-    if(parsed_layer.ledges!=NULL)
-        delete parsed_layer.ledges;
-    if(parsed_layer.walkable!=NULL)
-        delete parsed_layer.walkable;
+    if(parsed_layer.simplifiedMap!=nullptr)
+        delete[] parsed_layer.simplifiedMap;
 }
 
 bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer)

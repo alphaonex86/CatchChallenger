@@ -382,16 +382,8 @@ private:
     void sendLocalChatText(const std::string &text);
     //seed
     void seedValidated();
-    void plantSeed(
-        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        const uint8_t &query_id,
-        #endif
-        const uint8_t &plant_id);
-    void collectPlant(
-            #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-            const uint8_t &query_id
-            #endif
-            );
+    void plantSeed(const uint8_t &plant_id);
+    void collectPlant();
 
     void createMemoryClan();
     Direction lookToMove(const Direction &direction);
@@ -455,10 +447,8 @@ private:
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
     void syncDatabaseAllow();
-    #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
     //plant
     bool syncDatabasePlant();
-    #endif
     //item on map
     bool syncDatabaseItemOnMap();
     //reputation
@@ -644,33 +634,18 @@ private:
     void ejectToClan();
 
     void insertClientOnMap(CommonMap *map);
-    void removeClientOnMap(CommonMap *map
-                                   #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-                                   , const bool &withDestroy=false
-                                   #endif
-                        );
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    void sendNearPlant();
-    void removeNearPlant();
-    #endif
+    void removeClientOnMap(CommonMap *map);
 
     void errorFightEngine(const std::string &error);
     void messageFightEngine(const std::string &message) const;
 
     struct PlantInWaiting
     {
-        #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        uint8_t query_id;
-        #endif
         uint8_t plant_id;
         CommonMap *map;
         uint8_t x,y;
     };
-    #ifndef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-    static std::queue<PlantInWaiting> plant_list_in_waiting;
-    #else
     std::queue<PlantInWaiting> plant_list_in_waiting;
-    #endif
 
     bool parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply

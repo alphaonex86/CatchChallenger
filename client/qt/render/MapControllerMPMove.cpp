@@ -340,7 +340,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.current_monster_map=map->map_file;
                 if(old_all_map.find(otherPlayer.current_monster_map)==old_all_map.cend())
                     std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-                if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
                     resetOtherMonsterTile(otherPlayer);
                 loadOtherMonsterFromCurrentMap(otherPlayer);
             }
@@ -384,7 +384,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 unloadOtherPlayerFromMap(otherPlayer);
                 otherPlayer.presumed_map=all_map.at(map->map_file);
                 loadOtherPlayerFromMap(otherPlayer);
-                if(!vectorcontainsAtLeastOne(old_map->near_map,map))
+                if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
                     resetOtherMonsterTile(otherPlayer);
             }
         }

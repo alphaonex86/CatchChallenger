@@ -33,6 +33,8 @@ public:
         bool infinite;
         uint16_t indexOfItemOnMap;//to see if the player have get it, DatapackClientLoader::std::unordered_map<QString,std::unordered_map<QPair<uint8_t,uint8_t>,uint16_t> > itemOnMap;
     };
+    std::vector<CommonMap *> near_map;//only the border (left, right, top, bottom) AND them self
+    std::vector<CommonMap *> linked_map;//not only the border, with tp, door, ...
 
     std::vector<Map_semi_teleport> teleport_semi;
     std::vector<std::string> teleport_condition_texts;

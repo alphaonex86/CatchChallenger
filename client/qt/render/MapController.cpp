@@ -69,7 +69,6 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
 {
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
-        if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
         {
             if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(fileName)!=
                     QtDatapackClientLoader::datapackLoader->plantOnMap.cend())

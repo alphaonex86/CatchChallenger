@@ -191,20 +191,6 @@ int main(int argc, char *argv[])
             std::cerr << "Proxy not supported" << std::endl;
             return EXIT_FAILURE;
         }
-        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
-        if(!CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
-        {
-            std::cerr << "plantOnlyVisibleByPlayer at false but server compiled with plantOnlyVisibleByPlayer at true, recompil to change this options" << std::endl;
-            return EXIT_FAILURE;
-        }
-        #else
-        if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer)
-        {
-            qDebug() << "plantOnlyVisibleByPlayer at true but server compiled with plantOnlyVisibleByPlayer at false, recompil to change this options";
-            return EXIT_FAILURE;
-        }
-        #endif
-
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             if(

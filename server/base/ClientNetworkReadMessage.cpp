@@ -693,7 +693,6 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         case 0x18:
             takeAnObjectOnMap();
         break;
-        #ifdef CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER
         //Use seed into dirt
         case 0x19:
         {
@@ -713,14 +712,6 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         case 0x1A:
             collectPlant();
         break;
-        #else
-        //continous switch to improve the performance
-        case 0x19:
-        case 0x1A:
-            errorOutput("unknown main ident: "+std::to_string(packetCode)+" CATCHCHALLENGER_GAMESERVER_PLANTBYPLAYER is not def");
-            return false;
-        break;
-        #endif
         //Quest start
         case 0x1B:
         {

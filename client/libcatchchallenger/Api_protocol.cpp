@@ -640,10 +640,7 @@ void Api_protocol::useSeed(const uint8_t &plant_id)
     }
     char outputData[1];
     outputData[0]=plant_id;
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        packOutcommingQuery(0x83,queryNumber(),outputData,sizeof(outputData));
-    else
-        packOutcommingData(0x19,outputData,sizeof(outputData));
+    packOutcommingData(0x19,outputData,sizeof(outputData));
 }
 
 void Api_protocol::monsterMoveUp(const uint8_t &number)
@@ -1447,10 +1444,7 @@ void Api_protocol::collectMaturePlant()
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        packOutcommingQuery(0x84,queryNumber(),NULL,0);
-    else
-        packOutcommingData(0x1A,NULL,0);
+    packOutcommingData(0x1A,NULL,0);
 }
 
 //crafting

@@ -27,6 +27,23 @@ MapVisibilityAlgorithm_WithBorder_StoreOnSender::~MapVisibilityAlgorithm_WithBor
     extraStop();
 }
 
+std::vector<CommonMap *> MapVisibilityAlgorithm_WithBorder_StoreOnSender::get_linked_map() const
+{
+    std::vector<CommonMap *> linked_map;
+    linked_map.push_back(map);
+    if(map->border.bottom.map!=nullptr)
+        linked_map.push_back(map->border.bottom.map);
+    if(map->border.top.map!=nullptr)
+        linked_map.push_back(map->border.top.map);
+    if(map->border.right.map!=nullptr)
+        linked_map.push_back(map->border.right.map);
+    if(map->border.left.map!=nullptr)
+        linked_map.push_back(map->border.left.map);
+    for(unsigned int i=0; i<map->teleporter_list_size; i++)
+        linked_map.push_back(map->teleporter[i].map);
+    return linked_map;
+}
+
 void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
 {
     Map_server_MapVisibility_WithBorder_StoreOnSender *temp_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map);
@@ -101,10 +118,11 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::insertClient()
     //border map
     {
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
+        std::vector<CommonMap *> linked_map=get_linked_map();
+        const uint8_t &border_map_loop_size=static_cast<uint8_t>(linked_map.size());
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(linked_map.at(border_map_index));
             const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
             //insert border player on current player
             if(temp_map->showWithBorder)
@@ -207,11 +225,12 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient(const uint8_t &
     }
     const SIMPLIFIED_PLAYER_ID_TYPE &thisSimplifiedId=public_and_private_informations.public_informations.simplifiedId;
     //border map
+    std::vector<CommonMap*> linked_map=get_linked_map();
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
+    const uint8_t &border_map_loop_size=static_cast<uint8_t>(linked_map.size());
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(linked_map.at(border_map_index));
         const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
         if(temp_border_map->showWithBorder)
         {
@@ -355,11 +374,12 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::removeClient()
 
     //border map
     {
+        std::vector<CommonMap*> linked_map=get_linked_map();
         uint8_t border_map_index=0;
-        const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
+        const uint8_t &border_map_loop_size=static_cast<uint8_t>(linked_map.size());
         while(border_map_index<border_map_loop_size)
         {
-            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
+            Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(linked_map.at(border_map_index));
             const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
             //remove border client on this
             if(Q_LIKELY(temp_map->showWithBorder==true))
@@ -438,11 +458,12 @@ void MapVisibilityAlgorithm_WithBorder_StoreOnSender::reinsertCurrentPlayerOnlyT
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("reinsertOnlyTheBorderClients() "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
+    std::vector<CommonMap*> linked_map=get_linked_map();
     uint8_t border_map_index=0;
-    const uint8_t &border_map_loop_size=static_cast<uint8_t>(map->linked_map.size());
+    const uint8_t &border_map_loop_size=static_cast<uint8_t>(linked_map.size());
     while(border_map_index<border_map_loop_size)
     {
-        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(map->linked_map.at(border_map_index));
+        Map_server_MapVisibility_WithBorder_StoreOnSender *temp_border_map=static_cast<Map_server_MapVisibility_WithBorder_StoreOnSender*>(linked_map.at(border_map_index));
         const uint16_t &loop_size=static_cast<uint16_t>(temp_border_map->clients.size());
         uint16_t index=0;
         while(index<loop_size)
