@@ -5,7 +5,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items,uint16_t &crafingRecipesMaxId)
+std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > DatapackGeneralLoader::loadCraftingRecipes(const std::string &file,const std::unordered_map<uint16_t, Item> &items,uint16_t &crafingRecipesMaxId)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
@@ -16,7 +16,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
             index++;
         }
     }
-    std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
+    std::unordered_map<uint16_t,CraftingRecipe> crafingRecipes;
     std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -33,7 +33,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
         if(loadOkay!=0)
         {
             std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-            return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+            return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
         }
         #ifndef EPOLLCATCHCHALLENGERSERVER
     }
@@ -42,17 +42,17 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     if(root==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", no root balise found for the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(root->Name()==NULL)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found 2 for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
     }
     if(strcmp(root->Name(),"recipes")!=0)
     {
         std::cerr << "Unable to open the file: " << file << ", \"recipes\" root balise not found for reputation of the xml file" << std::endl;
-        return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+        return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
     }
 
     //load the content
@@ -99,7 +99,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                 if(crafingRecipes.find(id)==crafingRecipes.cend())
                 {
                     ok=true;
-                    CatchChallenger::CrafingRecipe recipe;
+                    CatchChallenger::CraftingRecipe recipe;
                     recipe.doItemId=doItemId;
                     recipe.itemToLearn=itemToLearn;
                     recipe.quantity=quantity;
@@ -202,7 +202,7 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
                                 std::cerr << "preload_crafting_recipes() material itemId in not into items list for crafting recipe file: " << file << ": child->Name(): " << material->Name() << std::endl;
                                 break;
                             }
-                            CatchChallenger::CrafingRecipe::Material newMaterial;
+                            CatchChallenger::CraftingRecipe::Material newMaterial;
                             newMaterial.item=itemId;
                             newMaterial.quantity=quantity;
                             unsigned int index=0;
@@ -293,6 +293,6 @@ std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
     #endif
-    return std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
+    return std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> >(crafingRecipes,itemToCrafingRecipes);
 }
 #endif

@@ -566,13 +566,13 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
     }
 
     //is crafting recipe
-    if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.find(itemId)!=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
     {
         Player_private_and_public_informations informations=client->get_player_informations();
-        const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+        const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(itemId);
 
         //check if have the requirements
-        const CrafingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(recipeId);
+        const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(recipeId);
         if(!haveReputationRequirements(recipe.requirements.reputation))
         {
             std::string string;

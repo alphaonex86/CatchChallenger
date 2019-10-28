@@ -449,10 +449,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             delete public_and_private_informations.recipes;
             public_and_private_informations.recipes=NULL;
         }
-        public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-        memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1))
-            memcpy(public_and_private_informations.recipes,data_raw,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1);
+        public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+        memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1))
+            memcpy(public_and_private_informations.recipes,data_raw,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
         else
             memcpy(public_and_private_informations.recipes,data_raw,data.size());
     }

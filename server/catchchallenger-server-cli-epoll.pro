@@ -2,6 +2,7 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 
 include(../general/general.pri)
 include(catchchallenger-server.pri)
+include(../general/hps/hps.pri)
 
 QT       -= gui widgets network sql
 #QT       -= core xml
