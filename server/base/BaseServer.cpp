@@ -148,6 +148,18 @@ BaseServer::~BaseServer()
         }
 }
 
+void BaseServer::setSave(const std::string &file)
+{
+    save=file;
+    load.clear();
+}
+
+void BaseServer::setLoad(const std::string &file)
+{
+    load=file;
+    save.clear();
+}
+
 void BaseServer::closeDB()
 {
     if(GlobalServerData::serverPrivateVariables.db_server!=NULL)
@@ -183,16 +195,69 @@ void BaseServer::preload_the_data()
 
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
+    preload_the_ddos();
+    preload_randomBlock();
 
     //load from cache here
-    std::ifstream in_file("cache-hps.bin", std::ifstream::binary);
-    if(in_file.good())
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    std::ifstream in_file(load, std::ifstream::binary);
+    if(in_file.good() && in_file.is_open())
     {
-        CommonDatapack::commonDatapack.plants = hps::from_stream<std::unordered_map<uint8_t,Plant> >(in_file);
+        {
+            const auto &now = msFrom1970();
+            hps::from_stream(in_file,CommonDatapack::commonDatapack);
+            hps::from_stream(in_file,CommonDatapackServerSpec::commonDatapackServerSpec);
+            const auto &after = msFrom1970();
+            std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
+        }
+        timeDatapack = msFrom1970();
 
-        preload_dictionary_map();
+        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.randomData);
+        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.events);
+        hps::from_stream(in_file,CommonSettingsCommon::commonSettingsCommon.datapackHashBase);
+        hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerMain);
+        hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerSub);
+        hps::from_stream(in_file,BaseServerMasterSendDatapack::datapack_file_hash_cache_base);
+        hps::from_stream(in_file,Client::datapack_file_hash_cache_main);
+        hps::from_stream(in_file,Client::datapack_file_hash_cache_sub);
+        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.skinList);
+        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.monsterDrops);
+        unsigned int mapListSize=0;
+        hps::from_stream(in_file,mapListSize);
+        GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*mapListSize));
+        for(unsigned int i=0; i<mapListSize; i++)
+        {
+            switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+            {
+                case MapVisibilityAlgorithmSelection_Simple:
+                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_Simple_StoreOnSender;
+                break;
+                case MapVisibilityAlgorithmSelection_WithBorder:
+                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_WithBorder_StoreOnSender;
+                break;
+                case MapVisibilityAlgorithmSelection_None:
+                default:
+                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new MapServer;
+                break;
+            }
+        }
+        for(unsigned int i=0; i<mapListSize; i++)
+        {
+            MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
+            std::string string;
+            uint32_t id;
+            hps::from_stream(in_file,id);
+            hps::from_stream(in_file,string);
+            hps::from_stream(in_file,*map);
+            GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
+            GlobalServerData::serverPrivateVariables.map_list[string]=map;
+        }
+
+        baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
+
     }
     else
+    #endif
     {
         {
             const auto &now = msFrom1970();
@@ -202,17 +267,54 @@ void BaseServer::preload_the_data()
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
-        preload_randomBlock();
         preload_the_events();
-        preload_the_ddos();
         preload_the_datapack();
-        preload_the_gift();
         preload_the_skin();
-        preload_the_players();
         preload_monsters_drops();
         preload_the_map();
-        baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
+        baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        if(!save.empty())
+        {
+            std::ofstream out_file(save, std::ofstream::binary);
+            hps::to_stream(CommonDatapack::commonDatapack, out_file);
+            hps::to_stream(CommonDatapackServerSpec::commonDatapackServerSpec, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.randomData, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.events, out_file);
+            hps::to_stream(CommonSettingsCommon::commonSettingsCommon.datapackHashBase, out_file);
+            hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerMain, out_file);
+            hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerSub, out_file);
+            hps::to_stream(BaseServerMasterSendDatapack::datapack_file_hash_cache_base, out_file);
+            hps::to_stream(Client::datapack_file_hash_cache_main, out_file);
+            hps::to_stream(Client::datapack_file_hash_cache_sub, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.skinList, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, out_file);
+            unsigned int mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
+            hps::to_stream(mapListSize, out_file);
+
+            std::unordered_map<const CommonMap *,std::string> map_list_reverse;
+            for (const auto x : GlobalServerData::serverPrivateVariables.map_list)
+                  map_list_reverse[x.second]=x.first;
+            std::unordered_map<std::string,uint32_t> id_map_to_map_reverse;
+            for (const auto x : GlobalServerData::serverPrivateVariables.id_map_to_map)
+                  id_map_to_map_reverse[x.second]=x.first;
+
+            for(unsigned int i=0; i<mapListSize; i++)
+            {
+                const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
+                const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
+                const uint32_t &id=id_map_to_map_reverse.at(string);
+                hps::to_stream(id, out_file);
+                hps::to_stream(string, out_file);
+                hps::to_stream(*map, out_file);
+            }
+        }
+        #endif
     }
+
+    preload_the_gift();
+    preload_dictionary_map();
+    preload_the_players();
     preload_dictionary_map();
 
     /*
@@ -268,7 +370,7 @@ void BaseServer::SQL_common_load_finish()
 void BaseServer::preload_finish()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CommonDatapack::commonDatapack.crafingRecipesMaxId==0)
+    if(CommonDatapack::commonDatapack.craftingRecipesMaxId==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.crafingRecipesMaxId==0" << std::endl;
         abort();

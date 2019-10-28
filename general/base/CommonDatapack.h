@@ -25,19 +25,21 @@ public:
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::unordered_map<uint8_t,Plant> plants;
-    std::unordered_map<uint16_t,CrafingRecipe> crafingRecipes;
-    std::unordered_map<uint16_t,uint16_t> itemToCrafingRecipes;
-    uint16_t crafingRecipesMaxId;
+    std::unordered_map<uint16_t,CraftingRecipe> craftingRecipes;
+    std::unordered_map<uint16_t,uint16_t> itemToCraftingRecipes;
+    uint16_t craftingRecipesMaxId;
     std::unordered_map<uint8_t,Buff> monsterBuffs;
     ItemFull items;
     std::unordered_map<uint16_t,Industry> industries;
     std::unordered_map<uint16_t,IndustryLink> industriesLink;
-    std::vector<MonstersCollision> monstersCollision;//never more than 255
-    std::vector<Type> types;
     LayersOptions layersOptions;
     std::vector<Event> events;
 
     bool monsterRateApplied;
+
+    //temp
+    std::vector<MonstersCollision> monstersCollision;//never more than 255
+    std::vector<Type> types;
     #endif
     std::vector<Reputation> reputation;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
     std::unordered_map<uint16_t,Monster> monsters;
@@ -53,8 +55,12 @@ public:
     void serialize(B& buf) const {
         buf
                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                << plants << crafingRecipes << itemToCrafingRecipes << crafingRecipesMaxId << monsterBuffs << items << industries << industriesLink << monstersCollision
-                << types << layersOptions << events << monsterRateApplied
+                << plants << craftingRecipes << itemToCraftingRecipes << craftingRecipesMaxId << monsterBuffs << items << industries << industriesLink
+                #ifdef CATCHCHALLENGER_CLIENT
+                << monstersCollision
+                #endif
+                //<< types
+                << layersOptions << events << monsterRateApplied
                 #endif
                 << reputation << monsters << monstersMaxId << monsterSkills << profileList
                ;
@@ -63,8 +69,12 @@ public:
     void parse(B& buf) {
         buf
                 #ifndef CATCHCHALLENGER_CLASS_MASTER
-                >> plants >> crafingRecipes >> itemToCrafingRecipes >> crafingRecipesMaxId >> monsterBuffs >> items >> industries >> industriesLink >> monstersCollision
-                >> types >> layersOptions >> events >> monsterRateApplied
+                >> plants >> craftingRecipes >> itemToCraftingRecipes >> craftingRecipesMaxId >> monsterBuffs >> items >> industries >> industriesLink
+                #ifdef CATCHCHALLENGER_CLIENT
+                >> monstersCollision
+                #endif
+                //>> types
+                >> layersOptions >> events >> monsterRateApplied
                 #endif
                 >> reputation >> monsters >> monstersMaxId >> monsterSkills >> profileList
                ;

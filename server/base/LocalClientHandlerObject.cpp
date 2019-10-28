@@ -214,15 +214,15 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
     if(CommonDatapack::commonDatapack.items.item.at(itemId).consumeAtUse)
         removeObject(itemId);
     //if is crafting recipe
-    if(CommonDatapack::commonDatapack.itemToCrafingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
+    if(CommonDatapack::commonDatapack.itemToCraftingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
     {
-        const uint16_t &recipeId=CommonDatapack::commonDatapack.itemToCrafingRecipes.at(itemId);
+        const uint16_t &recipeId=CommonDatapack::commonDatapack.itemToCraftingRecipes.at(itemId);
         if(public_and_private_informations.recipes[recipeId/8] & (1<<(7-recipeId%8)))
         {
             errorOutput("Can't use the object: "+std::to_string(itemId)+", recipe already registred");
             return;
         }
-        if(!haveReputationRequirements(CommonDatapack::commonDatapack.crafingRecipes.at(recipeId).requirements.reputation))
+        if(!haveReputationRequirements(CommonDatapack::commonDatapack.craftingRecipes.at(recipeId).requirements.reputation))
         {
             errorOutput("The player have not the requirement: "+std::to_string(recipeId)+" to to learn crafting recipe");
             return;
@@ -249,7 +249,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         //add into db, bit to save
         {
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_recipe.asyncWrite({
-                        binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.crafingRecipesMaxId/8+1),
+                        binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1),
                         std::to_string(character_id)
                         });
         }

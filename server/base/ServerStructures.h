@@ -378,8 +378,8 @@ struct ServerPrivateVariables
     std::unordered_map<uint32_t,Clan *> clanList;
 
     //map
-    std::unordered_map<std::string,CommonMap *> map_list;
     CommonMap ** flat_map_list;
+    std::unordered_map<std::string,CommonMap *> map_list;
     std::unordered_map<uint32_t,std::string > id_map_to_map;
     int8_t sizeofInsertRequest;
 

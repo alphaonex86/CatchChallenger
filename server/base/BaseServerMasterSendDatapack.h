@@ -20,10 +20,21 @@ public:
 
     static std::unordered_map<std::string,uint8_t> skinList;
 
-    struct DatapackCacheFile
+    class DatapackCacheFile
     {
+    public:
         //uint32_t mtime;
         uint32_t partialHash;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << partialHash;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> partialHash;
+        }
+        #endif
     };
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION

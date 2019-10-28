@@ -21,7 +21,7 @@ CommonDatapack::CommonDatapack()
     #endif
     monstersMaxId=0;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    crafingRecipesMaxId=0;
+    craftingRecipesMaxId=0;
     #endif
 }
 
@@ -94,11 +94,11 @@ void CommonDatapack::parseIndustries()
 void CommonDatapack::parseCraftingRecipes()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    crafingRecipesMaxId=0;
-    std::pair<std::unordered_map<uint16_t,CrafingRecipe>,std::unordered_map<uint16_t,uint16_t> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item,crafingRecipesMaxId);
-    crafingRecipes=multipleVariables.first;
-    itemToCrafingRecipes=multipleVariables.second;
-    std::cout << crafingRecipes.size() << " crafting recipe(s) loaded" << std::endl;
+    craftingRecipesMaxId=0;
+    std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > multipleVariables=DatapackGeneralLoader::loadCraftingRecipes(datapackPath+DATAPACK_BASE_PATH_CRAFTING+"recipes.xml",items.item,craftingRecipesMaxId);
+    craftingRecipes=multipleVariables.first;
+    itemToCraftingRecipes=multipleVariables.second;
+    std::cout << craftingRecipes.size() << " crafting recipe(s) loaded" << std::endl;
     #endif
 }
 
@@ -220,16 +220,16 @@ void CommonDatapack::unload()
     parsing=true;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     plants.clear();
-    crafingRecipes.clear();
+    craftingRecipes.clear();
     events.clear();
-    crafingRecipesMaxId=0;
+    craftingRecipesMaxId=0;
     #endif // CATCHCHALLENGER_CLASS_MASTER
     reputation.clear();
     monsters.clear();
     monsterSkills.clear();
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterBuffs.clear();
-    itemToCrafingRecipes.clear();
+    itemToCraftingRecipes.clear();
     items.item.clear();
     items.trap.clear();
     items.monsterItemEffect.clear();
