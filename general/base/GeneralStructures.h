@@ -579,11 +579,11 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << type << data;
+        buf << type << data.hp;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> type >> data;
+        buf >> type >> data.hp;
     }
     #endif
 };
@@ -598,11 +598,11 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << type << data;
+        buf << type << data.level;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> type >> data;
+        buf >> type >> data.level;
     }
     #endif
 };
@@ -730,11 +730,13 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << type << data;
+        buf << (uint8_t)type << data.quest;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> type >> data;
+        uint8_t temp=0;
+        buf >> temp >> data.quest;
+        type=(MapConditionType)temp;
     }
     #endif
 };
@@ -753,7 +755,7 @@ public:
     }
     template <class B>
     void parse(B& buf) {
-        buf >> id >> minLevel >> maxLevel << luck;
+        buf >> id >> minLevel >> maxLevel >> luck;
     }
     #endif
 };
@@ -808,7 +810,7 @@ public:
     std::vector<MonstersCollisionValue> monstersCollisionList;
 };
 
-class CrafingRecipe
+class CraftingRecipe
 {
 public:
     CATCHCHALLENGER_TYPE_ITEM itemToLearn;
@@ -1029,14 +1031,25 @@ public:
         EvolutionType_Item,
         EvolutionType_Trade
     };
-    struct Evolution
+    class Evolution
     {
+    public:
         EvolutionType type;
         union Data {
            int8_t level;
            uint16_t item;
         } data;
         uint16_t evolveTo;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << type << data.item << evolveTo;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> type >> data.item >> evolveTo;
+        }
+        #endif
     };
     struct AttackToLearnByItem
     {
@@ -1091,38 +1104,114 @@ public:
 class Quest
 {
 public:
-    struct Item
+    class Item
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM item;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> quantity;
+        }
+        #endif
     };
-    struct ItemMonster
+    class ItemMonster
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM item;
         std::vector<uint16_t> monsters;
         uint8_t rate;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << monsters << rate;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> monsters >> rate;
+        }
+        #endif
     };
-    struct Requirements
+    class Requirements
     {
+    public:
         std::vector<QuestRequirements> quests;
         std::vector<ReputationRequirements> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << quests << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> quests >> reputation;
+        }
+        #endif
     };
-    struct Rewards
+    class Rewards
     {
+    public:
         std::vector<Item> items;
         std::vector<ReputationRewards> reputation;
         std::vector<ActionAllow> allow;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << items << reputation;
+            buf << (uint8_t)allow.size();
+            for(auto const& v: allow)
+                buf << (uint8_t)v;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> items >> reputation;
+            uint8_t vectorsize=0;
+            buf >> vectorsize;
+            for(unsigned int i=0; i<vectorsize; i++) {
+                uint8_t value=0;
+                buf >> value;
+                allow.push_back((ActionAllow)value);
+            }
+        }
+        #endif
     };
-    struct StepRequirements
+    class StepRequirements
     {
+    public:
         std::vector<Item> items;
         std::vector<uint16_t> fightId;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << items << fightId;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> items >> fightId;
+        }
+        #endif
     };
-    struct Step
+    class Step
     {
+    public:
         std::vector<ItemMonster> itemsMonster;
         StepRequirements requirements;
         std::vector<uint16_t> bots;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << itemsMonster << requirements << bots;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> itemsMonster >> requirements >> bots;
+        }
+        #endif
     };
 
     uint16_t id;
@@ -1174,23 +1263,56 @@ public:
 class Profile
 {
 public:
-    struct Reputation
+    class Reputation
     {
+    public:
         //struct Reputation have int reverse_database_id; uint8_t reputationDatabaseId;//datapack order, can can need the dicionary to db resolv
         uint8_t internalIndex;
         int8_t level;
         int32_t point;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << internalIndex << level << point;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> internalIndex >> level >> point;
+        }
+        #endif
     };
-    struct Monster
+    class Monster
     {
+    public:
         uint16_t id;
         uint8_t level;
         uint16_t captured_with;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << id << level << captured_with;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> id >> level >> captured_with;
+        }
+        #endif
     };
-    struct Item
+    class Item
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM id;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << id << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> id >> quantity;
+        }
+        #endif
     };
     std::vector<uint8_t> forcedskin;
     uint64_t cash;
