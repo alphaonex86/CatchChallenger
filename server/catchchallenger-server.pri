@@ -1,7 +1,5 @@
 TEMPLATE = app
 
-include(../general/hps/hps.pri)
-
 DEFINES += TILED_ZLIB
 LIBS += -lz
 

@@ -199,28 +199,28 @@ void BaseWindow::load_crafting_inventory()
         return;
     }
     uint16_t index=0;
-    while(index<=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipesMaxId)
+    while(index<=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipesMaxId)
     {
         uint16_t recipe=index;
         if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
         {
             //load the material item
-            if(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.find(recipe)
-                    !=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.find(recipe)
+                    !=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
-                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId)!=
+                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId)!=
                         QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
                             .doItemId].image);
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe]
+                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
                             .doItemId].name));
                 }
                 else
                 {
                     item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
-                    item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[recipe].doItemId));
+                    item->setText(tr("Unknow item: %1").arg(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId));
                 }
                 crafting_recipes_items_to_graphical[recipe]=item;
                 crafting_recipes_items_graphical[item]=recipe;
@@ -476,7 +476,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *itemMaterials=displayedItems.first();
-    const CatchChallenger::CrafingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[crafting_recipes_items_graphical[itemMaterials]];
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[crafting_recipes_items_graphical[itemMaterials]];
 
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name
@@ -546,7 +546,7 @@ void BaseWindow::on_craftingUse_clicked()
     if(displayedItems.size()!=1)
         return;
     QListWidgetItem *selectedItem=displayedItems.first();
-    const CatchChallenger::CrafingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes[crafting_recipes_items_graphical[selectedItem]];
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[crafting_recipes_items_graphical[selectedItem]];
 
     QStringList mIngredients;
     QString mRecipe;
@@ -596,7 +596,7 @@ void BaseWindow::on_craftingUse_clicked()
     on_listCraftingList_itemSelectionChanged();
     //send to the network
     client->useRecipe(crafting_recipes_items_graphical.at(selectedItem));
-    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(
                                 crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
     //create animation widget
     if(animationWidget!=NULL)

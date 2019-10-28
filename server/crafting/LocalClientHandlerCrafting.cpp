@@ -35,7 +35,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint16_t &recipe_id)
         errorOutput("The player have not this recipe registred: "+std::to_string(recipe_id));
         return;
     }
-    const CrafingRecipe &recipe=CommonDatapack::commonDatapack.crafingRecipes.at(recipe_id);
+    const CraftingRecipe &recipe=CommonDatapack::commonDatapack.craftingRecipes.at(recipe_id);
     //check if have material
     unsigned int index=0;
     while(index<recipe.materials.size())

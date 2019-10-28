@@ -882,13 +882,13 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     bool isRecipe=false;
     {
         /* is a recipe */
-        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes
                 .find(items_graphical.at(item))!=
-                CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend();
+                CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend();
         if(isRecipe)
         {
-            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(items_graphical.at(item));
-            const CrafingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.crafingRecipes.at(recipeId);
+            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(items_graphical.at(item));
+            const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(recipeId);
             if(!haveReputationRequirements(recipe.requirements.reputation))
             {
                 std::string string;
@@ -1343,10 +1343,10 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
         {
             const uint16_t item=objectInUsing.front();
             //is crafting recipe
-            if(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.find(item)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.find(item)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
             {
-                client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCrafingRecipes.at(item));
+                client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(item));
                 load_crafting_inventory();
             }
             else if(CommonDatapack::commonDatapack.items.trap.find(item)!=CommonDatapack::commonDatapack.items.trap.cend())

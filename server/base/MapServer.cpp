@@ -77,3 +77,16 @@ unsigned int MapServer::playerToFullInsert(const Client * const client, char * c
     posOutput+=2;
     return posOutput;
 }
+
+#ifdef CATCHCHALLENGER_CACHE_HPS
+CommonMap * MapServer::posToPointer(const int32_t &pos)
+{
+    if(pos==-1)
+        return nullptr;
+    if((uint32_t)pos<GlobalServerData::serverPrivateVariables.map_list.size())
+        return GlobalServerData::serverPrivateVariables.flat_map_list[pos];
+    else
+        abort();
+    return nullptr;
+}
+#endif

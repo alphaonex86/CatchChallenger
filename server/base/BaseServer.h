@@ -37,6 +37,8 @@ public:
     void setSettings(const GameServerSettings &settings);
     GameServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
+    void setSave(const std::string &file);
+    void setLoad(const std::string &file);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void load_clan_max_id();
@@ -212,6 +214,9 @@ protected:
     bool preload_market_monsters_prices_call;
     bool preload_industries_call;
     bool preload_market_items_call;
+
+    std::string save;
+    std::string load;
 
     static std::regex regexXmlFile;
 };

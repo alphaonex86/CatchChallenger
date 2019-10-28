@@ -5,6 +5,7 @@
 #include "../../general/base/GeneralStructures.h"
 #include "../crafting/MapServerCrafting.h"
 #include "../VariableServer.h"
+#include "GlobalServerData.h"
 
 #include <vector>
 
@@ -28,12 +29,23 @@ public:
 
     //at last to improve the other variable cache
     std::vector<Client *> clientsForBroadcast;//frequent remove/insert due to map change
-    struct ItemOnMap
+    class ItemOnMap
     {
+    public:
         uint16_t pointOnMapDbCode;
 
         uint16_t item;
         bool infinite;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << pointOnMapDbCode << item << infinite;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> pointOnMapDbCode >> item >> infinite;
+        }
+        #endif
     };
     std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//first is x,y, second is db code, item
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
@@ -41,34 +53,138 @@ public:
     template <class B>
     void serialize(B& buf) const {
         //CommonMap
-        buf << border << teleporter_list_size;
+        std::unordered_map<void *,int32_t> pointer_to_pos;
+        pointer_to_pos[nullptr]=-1;
+        for(unsigned int i=0; i<GlobalServerData::serverPrivateVariables.map_list.size(); i++)
+            pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
+        buf << border.bottom.x_offset << pointer_to_pos.at(border.bottom.map);
+        buf << border.left.y_offset << pointer_to_pos.at(border.left.map);
+        buf << border.right.y_offset << pointer_to_pos.at(border.right.map);
+        buf << border.top.x_offset << pointer_to_pos.at(border.top.map);
+        buf << teleporter_list_size;
         for(unsigned int i=0; i<teleporter_list_size; i++)
-            buf << teleporter[i];
+        {
+            const Teleporter &tp=teleporter[i];
+            buf << tp.condition << tp.destination_x << tp.destination_y
+                << pointer_to_pos.at(tp.map)
+                << tp.source_x << tp.source_y;
+        }
         buf << width << height << group << id << parsed_layer.monstersCollisionList;
-        buf << std::string(parsed_layer.simplifiedMap,width*height);
-        buf << shops << learn << heal << market << zonecapture << botsFight << botsFightTrigger;
+        buf << std::string((char *)parsed_layer.simplifiedMap,width*height);
+        buf << (uint8_t)shops.size();
+        for (const auto x : shops)
+              buf << x.first << x.second;
+        buf << (uint8_t)learn.size();
+        for (const auto x : learn)
+              buf << x.first << x.second;
+        buf << (uint8_t)heal.size();
+        for (const auto x : heal)
+              buf << x.first << x.second;
+        buf << (uint8_t)market.size();
+        for (const auto x : market)
+              buf << x.first << x.second;
+        buf << (uint8_t)zonecapture.size();
+        for (const auto x : zonecapture)
+              buf << x.first << x.second;
+        buf << (uint8_t)botsFight.size();
+        for (const auto x : botsFight)
+              buf << x.first << x.second;
+        buf << (uint8_t)botsFightTrigger.size();
+        for (const auto x : botsFightTrigger)
+              buf << x.first << x.second;
         //MapServerCrafting
         buf << plants;
         //server map
-        buf << rescue << reverse_db_id << pointOnMap_Item;
+        buf << (uint8_t)rescue.size();
+        for (const auto x : rescue)
+              buf << x.first << (uint8_t)x.second;
+        buf << reverse_db_id << pointOnMap_Item;
     }
+    static CommonMap * posToPointer(const int32_t &pos);
     template <class B>
     void parse(B& buf) {
         //CommonMap
-        buf >> border >> teleporter_list_size;
+        int32_t pos=0;
+        buf >> border.bottom.x_offset >> pos;
+        border.bottom.map=posToPointer(pos);
+        buf >> border.left.y_offset >> pos;
+        border.left.map=posToPointer(pos);
+        buf >> border.right.y_offset >> pos;
+        border.right.map=posToPointer(pos);
+        buf >> border.top.x_offset >> pos;
+        border.top.map=posToPointer(pos);
+        buf >> teleporter_list_size;
         teleporter=(CommonMap::Teleporter *)malloc(sizeof(CommonMap::Teleporter)*teleporter_list_size);
         for(unsigned int i=0; i<teleporter_list_size; i++)
-            buf >> teleporter[i];
+        {
+            Teleporter &tp=teleporter[i];
+            buf >> tp.condition >> tp.destination_x >> tp.destination_y
+                >> pos
+                >> tp.source_x >> tp.source_y;
+            tp.map=posToPointer(pos);
+        }
         buf >> width >> height >> group >> id >> parsed_layer.monstersCollisionList;
         std::string rawData;
         buf >> rawData;
         parsed_layer.simplifiedMap=(uint8_t *)malloc(rawData.size());
         memcpy(parsed_layer.simplifiedMap,rawData.data(),rawData.size());
-        buf >> shops >> learn >> heal >> market >> zonecapture >> botsFight >> botsFightTrigger;
-        //MapServerCrafting
+        uint8_t smallsize=0;
+        std::pair<uint8_t,uint8_t> posXY;posXY.first=0;posXY.second=0;
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            std::vector<uint16_t> value;
+            buf >> posXY >> value;
+            shops[posXY]=value;
+        }
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            buf >> posXY.first >> posXY.second;
+            learn.insert(posXY);
+        }
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            buf >> posXY.first >> posXY.second;
+            heal.insert(posXY);
+        }
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            buf >> posXY.first >> posXY.second;
+            market.insert(posXY);
+        }
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            std::string value;
+            buf >> posXY >> value;
+            zonecapture[posXY]=value;
+        }
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            std::vector<uint16_t> value;
+            buf >> posXY >> value;
+            botsFight[posXY]=value;
+        }
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            std::vector<uint16_t> value;
+            buf >> posXY >> value;
+            botsFightTrigger[posXY]=value;
+        }
+       //MapServerCrafting
         buf >> plants;
         //server map
-        buf >> rescue << reverse_db_id << pointOnMap_Item;
+        buf >> smallsize;
+        for(uint8_t i=0; i<smallsize; i++)
+        {
+            uint8_t value;
+            buf >> posXY >> value;
+            rescue[posXY]=(Orientation)value;
+        }
+        buf >> reverse_db_id >> pointOnMap_Item;
     }
     #endif
 };
