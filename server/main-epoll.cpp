@@ -390,6 +390,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     server->initialize_the_database_prepared_query();
+    const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin";
+    if(argc==2 && strcmp(argv[1],"save")==0)
+        server->setSave(datapackCache);
+    else
+        server->setLoad(datapackCache);
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;

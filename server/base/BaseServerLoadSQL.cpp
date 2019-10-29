@@ -334,6 +334,11 @@ void BaseServer::preload_industries_return()
     }
     std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;
 
+    if(!save.empty())
+    {
+        ::exit(0);
+        return;
+    }
     preload_finish();
 }
 
