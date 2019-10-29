@@ -313,7 +313,6 @@ void BaseServer::preload_the_data()
     }
 
     preload_the_gift();
-    preload_dictionary_map();
     preload_the_players();
     preload_dictionary_map();
 

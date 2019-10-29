@@ -191,11 +191,22 @@ class PublicPlayerMonster
 class PlayerMonster : public PublicPlayerMonster
 {
     public:
-    struct PlayerSkill
+    class PlayerSkill
     {
+    public:
         uint16_t skill;
         uint8_t level;//start at 1
         uint8_t endurance;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << skill << level << endurance;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> skill >> level >> endurance;
+        }
+        #endif
     };
     uint32_t remaining_xp;
     uint32_t sp;
@@ -579,11 +590,13 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << type << data.hp;
+        buf << (uint8_t)type << data.hp;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> type >> data.hp;
+        uint8_t value=0;
+        buf >> value >> data.hp;
+        type=(MonsterItemEffectType)value;
     }
     #endif
 };
@@ -598,11 +611,13 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << type << data.level;
+        buf << (uint8_t)type << data.level;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> type >> data.level;
+        uint8_t value=0;
+        buf >> value >> data.level;
+        type=(MonsterItemEffectTypeOutOfFight)value;
     }
     #endif
 };
@@ -650,14 +665,36 @@ class IndustryLink
 {
 public:
     uint16_t industry;
-    struct Requirements
+    class Requirements
     {
+    public:
         std::vector<ReputationRequirements> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> reputation;
+        }
+        #endif
     };
     Requirements requirements;
-    struct Rewards
+    class Rewards
     {
+    public:
         std::vector<ReputationRewards> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> reputation;
+        }
+        #endif
     };
     Rewards rewards;
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -677,15 +714,37 @@ class Industry
 public:
     uint64_t time;//should not be too short
     uint32_t cycletobefull;
-    struct Resource
+    class Resource
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM item;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> quantity;
+        }
+        #endif
     };
-    struct Product
+    class Product
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM item;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> quantity;
+        }
+        #endif
     };
     std::vector<Resource> resources;
     std::vector<Product> products;
@@ -766,17 +825,39 @@ public:
     std::vector<uint8_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> walkOn;
     std::vector<uint8_t/*index into CatchChallenger::CommonDatapack::commonDatapack.monstersCollision*/> actionOn;
     //it's the dynamic part
-    struct MonstersCollisionValueOnCondition
+    class MonstersCollisionValueOnCondition
     {
+    public:
         uint8_t event;
         uint8_t event_value;
         std::vector<MapMonster> monsters;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << event << event_value << monsters;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> event >> event_value >> monsters;
+        }
+        #endif
     };
     //static part pre-computed
-    struct MonstersCollisionContent
+    class MonstersCollisionContent
     {
+    public:
         std::vector<MapMonster> defaultMonsters;
         std::vector<MonstersCollisionValueOnCondition> conditions;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << defaultMonsters << conditions;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> defaultMonsters >> conditions;
+        }
+        #endif
     };
     std::vector<MonstersCollisionContent> walkOnMonsters;
     std::vector<std::vector<MapMonster> > actionOnMonsters;
@@ -817,20 +898,53 @@ public:
     CATCHCHALLENGER_TYPE_ITEM doItemId;
     uint16_t quantity;
     uint8_t success;//0-100
-    struct Material
+    class Material
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM item;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> quantity;
+        }
+        #endif
     };
     std::vector<Material> materials;
-    struct Requirements
+    class Requirements
     {
+    public:
         std::vector<ReputationRequirements> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> reputation;
+        }
+        #endif
     };
     Requirements requirements;
-    struct Rewards
+    class Rewards
     {
+    public:
         std::vector<ReputationRewards> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> reputation;
+        }
+        #endif
     };
     Rewards rewards;
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -871,8 +985,9 @@ public:
         Duration_ThisFight,
         Duration_NumberOfTurn
     };
-    struct Effect
+    class Effect
     {
+    public:
         enum EffectOn : uint8_t
         {
             EffectOn_HP,
@@ -882,19 +997,57 @@ public:
         EffectOn on;
         int32_t quantity;
         QuantityType type;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << (uint8_t)on << quantity << (uint8_t)type;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            uint8_t valueB=0;
+            buf >> value >> quantity >> valueB;
+            on=(EffectOn)value;
+            type=(QuantityType)valueB;
+        }
+        #endif
     };
-    struct EffectInWalk
+    class EffectInWalk
     {
+    public:
         Effect effect;
         uint32_t steps;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << effect << steps;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> effect >> steps;
+        }
+        #endif
     };
-    struct GeneralEffect
+    class GeneralEffect
     {
+    public:
         std::vector<EffectInWalk> walk;
         std::vector<Effect> fight;
         float capture_bonus;
         Duration duration;
         uint8_t durationNumberOfTurn;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << walk << fight << capture_bonus << (uint8_t)duration << durationNumberOfTurn;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> walk >> fight >> capture_bonus >> value >> durationNumberOfTurn;
+            duration=(Duration)value;
+        }
+        #endif
     };
     std::vector<GeneralEffect> level;//first entry is buff level 1
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -937,24 +1090,65 @@ public:
         AttackReturnCase_MonsterChange=0x02,
         AttackReturnCase_ItemUsage=0x03
     };
-    struct BuffEffect
+    class BuffEffect
     {
+    public:
         uint8_t buff;
         ApplyOn on;
         uint8_t level;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << buff << (uint8_t)on << level;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> buff >> value >> level;
+            on=(ApplyOn)value;
+        }
+        #endif
     };
-    struct LifeEffect
+    class LifeEffect
     {
+    public:
         int32_t quantity;
         QuantityType type;
         ApplyOn on;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << quantity << (uint8_t)type << (uint8_t)on;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            uint8_t valueB=0;
+            buf >> quantity >> value >> valueB;
+            type=(QuantityType)value;
+            on=(ApplyOn)valueB;
+        }
+        #endif
     };
-    struct LifeEffectReturn
+    class LifeEffectReturn
     {
+    public:
         int32_t quantity;
         ApplyOn on;
         bool critical;
         float effective;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << quantity << (uint8_t)on << critical << effective;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> quantity >> value >> critical >> effective;
+            on=(ApplyOn)value;
+        }
+        #endif
     };
     struct AttackReturn
     {
@@ -971,24 +1165,56 @@ public:
         PublicPlayerMonster publicPlayerMonster;
         //use objet on monster if item!=0
         bool on_current_monster;
-        CATCHCHALLENGER_TYPE_ITEM item;
     };
-    struct Buff
+    class Buff
     {
+    public:
         uint8_t success;
         BuffEffect effect;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << success << effect;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> success >> effect;
+        }
+        #endif
     };
-    struct Life
+    class Life
     {
+    public:
         uint8_t success;
         LifeEffect effect;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << success << effect;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> success >> effect;
+        }
+        #endif
     };
-    struct SkillList
+    class SkillList
     {
+    public:
         std::vector<Buff> buff;
         std::vector<Life> life;
         uint8_t endurance;
         uint32_t sp_to_learn;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << buff << life << endurance << sp_to_learn;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> buff >> life >> endurance >> sp_to_learn;
+        }
+        #endif
     };
     std::vector<Skill::SkillList> level;//first is level 1
     uint8_t type;
@@ -1007,8 +1233,9 @@ public:
 class Monster
 {
 public:
-    struct Stat
+    class Stat
     {
+    public:
         uint32_t hp;
         #ifndef CATCHCHALLENGER_CLASS_MASTER
         uint32_t attack;
@@ -1017,12 +1244,39 @@ public:
         uint32_t special_defense;
         uint32_t speed;
         #endif
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << hp;
+            #ifndef CATCHCHALLENGER_CLASS_MASTER
+            buf << attack << defense << special_attack << special_defense << speed;
+            #endif
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> hp;
+            #ifndef CATCHCHALLENGER_CLASS_MASTER
+            buf >> attack >> defense >> special_attack >> special_defense >> speed;
+            #endif
+        }
+        #endif
     };
-    struct AttackToLearn
+    class AttackToLearn
     {
+    public:
         uint8_t learnAtLevel;
         uint16_t learnSkill;
         uint8_t learnSkillLevel;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << learnAtLevel << learnSkill << learnSkillLevel;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> learnAtLevel >> learnSkill >> learnSkillLevel;
+        }
+        #endif
     };
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     enum EvolutionType : uint8_t
@@ -1043,18 +1297,31 @@ public:
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << type << data.item << evolveTo;
+            buf << (uint8_t)type << data.item << evolveTo;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> type >> data.item >> evolveTo;
+            uint8_t value=0;
+            buf >> value >> data.item >> evolveTo;
+            type=(EvolutionType)value;
         }
         #endif
     };
-    struct AttackToLearnByItem
+    class AttackToLearnByItem
     {
+    public:
         uint16_t learnSkill;
         uint8_t learnSkillLevel;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << learnSkill << learnSkillLevel;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> learnSkill >> learnSkillLevel;
+        }
+        #endif
     };
 
     std::vector<uint8_t> type;
@@ -1234,16 +1501,38 @@ public:
 class BotFight
 {
 public:
-    struct BotFightMonster
+    class BotFightMonster
     {
+    public:
         uint16_t id;
         uint8_t level;
         std::vector<PlayerMonster::PlayerSkill> attacks;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << id << level << attacks;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> id >> level >> attacks;
+        }
+        #endif
     };
-    struct Item
+    class Item
     {
+    public:
         CATCHCHALLENGER_TYPE_ITEM id;
         uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << id << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> id >> quantity;
+        }
+        #endif
     };
     std::vector<BotFightMonster> monsters;
     uint32_t cash;
@@ -1346,11 +1635,13 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << x << y << orientation << mapString << databaseId;
+        buf << x << y << (uint8_t)orientation << mapString << databaseId;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> x >> y >> orientation >> mapString >> databaseId;
+        uint8_t value=0;
+        buf >> x >> y >> value >> mapString >> databaseId;
+        orientation=(Orientation)value;
         mapPointer=nullptr;
     }
     #endif
