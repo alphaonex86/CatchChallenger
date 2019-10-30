@@ -27,11 +27,21 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << botFights << botFightsMaxId << quests << shops << serverProfileList << monsterDrops;
+        buf << botFights;
+        buf << botFightsMaxId;
+        buf << quests;
+        buf << shops;
+        buf << serverProfileList;
+        buf << monsterDrops;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> botFights >> botFightsMaxId >> quests >> shops >> serverProfileList >> monsterDrops;
+        buf >> botFights;
+        buf >> botFightsMaxId;
+        buf >> quests;
+        buf >> shops;
+        buf >> serverProfileList;
+        buf >> monsterDrops;
     }
     #endif
 private:

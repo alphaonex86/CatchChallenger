@@ -47,6 +47,10 @@ class StreamInputBuffer {
     return *this;
   }
 
+  inline size_t tellg() const {
+      return (size_t)stream->tellg() - (size_t)STREAM_INPUT_BUFFER_SIZE + (size_t)pos;
+  }
+
  private:
   std::istream* const stream;
 
