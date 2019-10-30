@@ -203,40 +203,42 @@ void BaseServer::preload_the_data()
     std::ifstream in_file(load, std::ifstream::binary);
     if(in_file.good() && in_file.is_open())
     {
-        size_t lastSize=0;
+        hps::StreamInputBuffer serialBuffer(in_file);
+        size_t lastSize=serialBuffer.tellg();
         {
             const auto &now = msFrom1970();
-            hps::from_stream(in_file,CommonDatapack::commonDatapack);
-            std::cout << "commonDatapack size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-            hps::from_stream(in_file,CommonDatapackServerSpec::commonDatapackServerSpec);
-            std::cout << "commonDatapackServerSpec size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
+            serialBuffer >> CommonDatapack::commonDatapack;
+            std::cout << "commonDatapack size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+            serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
+            std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
             const auto &after = msFrom1970();
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
+        const auto &now = msFrom1970();
 
-        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.randomData);
-        std::cout << "randomData size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.events);
-        std::cout << "events size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-        hps::from_stream(in_file,CommonSettingsCommon::commonSettingsCommon.datapackHashBase);
-        hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerMain);
-        hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerSub);
-        std::cout << "hash size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
+        serialBuffer >> GlobalServerData::serverPrivateVariables.randomData;
+        std::cout << "randomData size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        serialBuffer >> GlobalServerData::serverPrivateVariables.events;
+        std::cout << "events size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        serialBuffer >> CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
+        serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
+        serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
+        std::cout << "hash size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-        hps::from_stream(in_file,BaseServerMasterSendDatapack::datapack_file_hash_cache_base);
-        std::cout << "datapack_file_hash_cache_base size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-        hps::from_stream(in_file,Client::datapack_file_hash_cache_main);
-        std::cout << "datapack_file_hash_cache_main size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-        hps::from_stream(in_file,Client::datapack_file_hash_cache_sub);
-        std::cout << "datapack_file_hash_cache_sub size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
+        serialBuffer >> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
+        std::cout << "datapack_file_hash_cache_base size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        serialBuffer >> Client::datapack_file_hash_cache_main;
+        std::cout << "datapack_file_hash_cache_main size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        serialBuffer >> Client::datapack_file_hash_cache_sub;
+        std::cout << "datapack_file_hash_cache_sub size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
         #endif
-        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.skinList);
-        std::cout << "skinList size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
-        hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.monsterDrops);
-        std::cout << "monsterDrops size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
+        serialBuffer >> GlobalServerData::serverPrivateVariables.skinList;
+        std::cout << "skinList size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
+        std::cout << "monsterDrops size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
         unsigned int mapListSize=0;
-        hps::from_stream(in_file,mapListSize);
+        serialBuffer >> mapListSize;
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*mapListSize));
         for(unsigned int i=0; i<mapListSize; i++)
         {
@@ -259,13 +261,15 @@ void BaseServer::preload_the_data()
             MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             std::string string;
             uint32_t id;
-            hps::from_stream(in_file,id);
-            hps::from_stream(in_file,string);
-            hps::from_stream(in_file,*map);
+            serialBuffer >> id;
+            serialBuffer >> string;
+            serialBuffer >> *map;
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
         }
-        std::cout << "map size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
+        std::cout << "map size: " << ((int32_t)serialBuffer.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer.tellg();
+        const auto &after = msFrom1970();
+        std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
 
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
 
@@ -281,11 +285,14 @@ void BaseServer::preload_the_data()
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
+        const auto &now = msFrom1970();
         preload_the_events();
         preload_the_datapack();
         preload_the_skin();
         preload_monsters_drops();
         preload_the_map();
+        const auto &after = msFrom1970();
+        std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
         #ifdef CATCHCHALLENGER_CACHE_HPS
         if(!save.empty())
