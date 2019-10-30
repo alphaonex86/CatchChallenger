@@ -217,9 +217,11 @@ void BaseServer::preload_the_data()
         hps::from_stream(in_file,CommonSettingsCommon::commonSettingsCommon.datapackHashBase);
         hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerMain);
         hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerSub);
+        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         hps::from_stream(in_file,BaseServerMasterSendDatapack::datapack_file_hash_cache_base);
         hps::from_stream(in_file,Client::datapack_file_hash_cache_main);
         hps::from_stream(in_file,Client::datapack_file_hash_cache_sub);
+        #endif
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.skinList);
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.monsterDrops);
         unsigned int mapListSize=0;
@@ -284,9 +286,11 @@ void BaseServer::preload_the_data()
             hps::to_stream(CommonSettingsCommon::commonSettingsCommon.datapackHashBase, out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerMain, out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerSub, out_file);
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
             hps::to_stream(BaseServerMasterSendDatapack::datapack_file_hash_cache_base, out_file);
             hps::to_stream(Client::datapack_file_hash_cache_main, out_file);
             hps::to_stream(Client::datapack_file_hash_cache_sub, out_file);
+            #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.skinList, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, out_file);
             unsigned int mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();

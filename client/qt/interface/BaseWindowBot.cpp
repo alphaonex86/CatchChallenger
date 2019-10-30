@@ -110,7 +110,11 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     const tinyxml2::XMLElement * stepXml=actualBot.step.at(step);
     if(strcmp(stepXml->Attribute("type"),"text")==0)
     {
+        #ifndef CATCHCHALLENGER_BOT
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #else
+        const std::string language("en");
+        #endif
         auto text = stepXml->FirstChildElement("text");
         if(!language.empty() && language!=BaseWindow::text_en)
             while(text!=NULL)

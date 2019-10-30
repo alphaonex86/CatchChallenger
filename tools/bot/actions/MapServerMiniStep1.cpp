@@ -23,27 +23,27 @@ bool MapServerMini::preload_step1()
                 const std::pair<uint8_t,uint8_t> p(x,y);
                 QString zone;
                 bool walkable=false;
-                if(this->parsed_layer.walkable!=NULL)
-                    if(this->parsed_layer.walkable[x+y*this->width])
-                        walkable=true;
-                if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
+                if(this->parsed_layer.simplifiedMap!=nullptr)
                 {
-                    const MapServerMini::ItemOnMap &itemOnMap=pointOnMap_Item.at(p);
-                    if((itemOnMap.infinite && itemOnMap.visible) || (itemOnMap.visible && !walkable))
-                        zone+="itemonmap"+QString::number(x)+","+QString::number(y);
-                    //walkable=true;
-                }
-                if(walkable)
-                    zone+="w";
-                if(this->parsed_layer.monstersCollisionMap!=NULL)
-                    if(this->parsed_layer.monstersCollisionMap[x+y*this->width])
-                        zone+="m"+QString::number(this->parsed_layer.monstersCollisionMap[x+y*this->width]);
-                if(this->parsed_layer.dirt!=NULL)
-                    if(this->parsed_layer.dirt[x+y*this->width])
+                    const uint8_t &var=this->parsed_layer.simplifiedMap[x+y*this->width];
+                    if(var==0)
+                        walkable=true;
+                    if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())
+                    {
+                        const MapServerMini::ItemOnMap &itemOnMap=pointOnMap_Item.at(p);
+                        if((itemOnMap.infinite && itemOnMap.visible) || (itemOnMap.visible && !walkable))
+                            zone+="itemonmap"+QString::number(x)+","+QString::number(y);
+                        //walkable=true;
+                    }
+                    if(walkable)
+                        zone+="w";
+                    if(var>0 && var<200)
+                        zone+="m"+QString::number(var);
+                    if(var==249)
                         zone+="d";
-                if(this->parsed_layer.ledges!=NULL)
-                    if(this->parsed_layer.ledges[x+y*this->width])
-                        zone+="l"+QString::number(this->parsed_layer.ledges[x+y*this->width]);
+                    if(var)
+                        zone+="l"+QString::number(var-250);
+                }
 
                 if(botOnMap.find(p)!=botOnMap.cend())
                 {

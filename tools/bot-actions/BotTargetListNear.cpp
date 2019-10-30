@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/base/DatapackClientLoader.h"
-#include "../../client/fight/interface/ClientFightEngine.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../client/qt/fight/interface/ClientFightEngine.h"
 #include "MapBrowse.h"
 
 std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock,const unsigned int &depth)
@@ -305,11 +305,11 @@ std::string BotTargetList::graphLocalMap()
                 if(layer.name!="Lost layer" || !content.empty())
                 {
                     bool isledge=false;
-                    if(!block.block.empty() && mapServer->parsed_layer.ledges!=NULL)
+                    if(!block.block.empty() && mapServer->parsed_layer.simplifiedMap!=NULL)
                     {
                         const std::pair<uint8_t,uint8_t> &coord=block.block.front();
-                        isledge=(mapServer->parsed_layer.ledges[coord.first+coord.second*mapServer->width]!=
-                                CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges);
+                        const uint8_t &val=mapServer->parsed_layer.simplifiedMap[coord.first+coord.second*mapServer->width];
+                        isledge=(val>=250 && val<=253);
                     }
                     if(!isledge)
                     {
@@ -469,7 +469,7 @@ bool operator==(const CatchChallenger::MapCondition& lhs, const CatchChallenger:
     //return std::memcmp(&lhs,&rhs,sizeof(CatchChallenger::MapCondition))==0;//produce bug
 }
 
-BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol *api,
+BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchChallenger::Api_protocol_Qt *api,
                const MapServerMini::BlockObject * const currentBlockObject,const MapServerMini::BlockObject * const blockObject)
 {
     const CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations_ro();

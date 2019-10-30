@@ -1,8 +1,8 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
 include(../../general/general.pri)
-include(../../client/base/client.pri)
-include(../../client/base/multi.pri)
+include(../../client/qt/client.pri)
+include(../../client/qt/multi.pri)
 include(../bot/actions/Actions.pri)
 
 QT       += core gui xml network sql

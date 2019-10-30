@@ -66,7 +66,11 @@ void NewProfile::loadProfileText()
     {
         ProfileText profile;
         const tinyxml2::XMLElement * startItem=xmlList.at(index);
+        #ifndef CATCHCHALLENGER_BOT
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #else
+        const std::string language("en");
+        #endif
         bool found=false;
         const tinyxml2::XMLElement * name = startItem->FirstChildElement("name");
         if(!language.empty() && language!="en")
