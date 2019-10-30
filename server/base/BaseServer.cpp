@@ -203,27 +203,38 @@ void BaseServer::preload_the_data()
     std::ifstream in_file(load, std::ifstream::binary);
     if(in_file.good() && in_file.is_open())
     {
+        size_t lastSize=0;
         {
             const auto &now = msFrom1970();
             hps::from_stream(in_file,CommonDatapack::commonDatapack);
+            std::cout << "commonDatapack size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
             hps::from_stream(in_file,CommonDatapackServerSpec::commonDatapackServerSpec);
+            std::cout << "commonDatapackServerSpec size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
             const auto &after = msFrom1970();
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
         timeDatapack = msFrom1970();
 
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.randomData);
+        std::cout << "randomData size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.events);
+        std::cout << "events size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         hps::from_stream(in_file,CommonSettingsCommon::commonSettingsCommon.datapackHashBase);
         hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerMain);
         hps::from_stream(in_file,CommonSettingsServer::commonSettingsServer.datapackHashServerSub);
+        std::cout << "hash size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         hps::from_stream(in_file,BaseServerMasterSendDatapack::datapack_file_hash_cache_base);
+        std::cout << "datapack_file_hash_cache_base size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         hps::from_stream(in_file,Client::datapack_file_hash_cache_main);
+        std::cout << "datapack_file_hash_cache_main size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         hps::from_stream(in_file,Client::datapack_file_hash_cache_sub);
+        std::cout << "datapack_file_hash_cache_sub size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         #endif
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.skinList);
+        std::cout << "skinList size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         hps::from_stream(in_file,GlobalServerData::serverPrivateVariables.monsterDrops);
+        std::cout << "monsterDrops size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
         unsigned int mapListSize=0;
         hps::from_stream(in_file,mapListSize);
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*mapListSize));
@@ -254,6 +265,7 @@ void BaseServer::preload_the_data()
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
         }
+        std::cout << "map size: " << ((int32_t)in_file.tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=in_file.tellg();
 
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
 
@@ -278,21 +290,32 @@ void BaseServer::preload_the_data()
         #ifdef CATCHCHALLENGER_CACHE_HPS
         if(!save.empty())
         {
+            size_t lastSize=0;
             std::ofstream out_file(save, std::ofstream::binary);
             hps::to_stream(CommonDatapack::commonDatapack, out_file);
+            std::cout << "commonDatapack size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(CommonDatapackServerSpec::commonDatapackServerSpec, out_file);
+            std::cout << "commonDatapackServerSpec size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.randomData, out_file);
+            std::cout << "randomData size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.events, out_file);
+            std::cout << "events size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(CommonSettingsCommon::commonSettingsCommon.datapackHashBase, out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerMain, out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerSub, out_file);
+            std::cout << "hash size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
             hps::to_stream(BaseServerMasterSendDatapack::datapack_file_hash_cache_base, out_file);
+            std::cout << "datapack_file_hash_cache_base size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(Client::datapack_file_hash_cache_main, out_file);
+            std::cout << "datapack_file_hash_cache_main size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(Client::datapack_file_hash_cache_sub, out_file);
+            std::cout << "datapack_file_hash_cache_sub size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.skinList, out_file);
+            std::cout << "other data size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, out_file);
+            std::cout << "monsterDrops size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
             unsigned int mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
             hps::to_stream(mapListSize, out_file);
 
@@ -312,6 +335,7 @@ void BaseServer::preload_the_data()
                 hps::to_stream(string, out_file);
                 hps::to_stream(*map, out_file);
             }
+            std::cout << "map size: " << ((uint32_t)out_file.tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file.tellp();
         }
         #endif
     }
