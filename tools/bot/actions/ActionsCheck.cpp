@@ -7,7 +7,7 @@ void ActionsAction::showTip(const QString &text)
     std::cout << text.toStdString() << std::endl;
 }
 
-void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList)
+void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList)
 {
     QList<CatchChallenger::ReputationRewards> reputationListTemp;
     unsigned int index=0;
@@ -19,7 +19,7 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,c
     appendReputationRewards(api,reputationListTemp);
 }
 
-void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,const QList<CatchChallenger::ReputationRewards> &reputationList)
+void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *api,const QList<CatchChallenger::ReputationRewards> &reputationList)
 {
     int index=0;
     while(index<reputationList.size())
@@ -32,7 +32,7 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol *api,c
     //show_reputation();
 }
 
-bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList)
+bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol_Qt *api,const std::vector<CatchChallenger::ReputationRequirements> &reputationList)
 {
     QList<CatchChallenger::ReputationRequirements> reputationListTemp;
     unsigned int index=0;
@@ -44,7 +44,7 @@ bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protoc
     return haveReputationRequirements(api,reputationListTemp);
 }
 
-bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol *api, const QList<CatchChallenger::ReputationRequirements> &reputationList)
+bool ActionsAction::haveReputationRequirements(const CatchChallenger::Api_protocol_Qt *api, const QList<CatchChallenger::ReputationRequirements> &reputationList)
 {
     int index=0;
     while(index<reputationList.size())

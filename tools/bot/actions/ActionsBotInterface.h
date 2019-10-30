@@ -81,7 +81,7 @@ public:
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
         CatchChallenger::ClientFightEngine *fightEngine;
         QTime lastFightAction;
-        CatchChallenger::Api_protocol *api;
+        CatchChallenger::Api_protocol_Qt  *api;
         std::map<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
         std::set<QString> viewedPlayers;
 
@@ -110,13 +110,13 @@ public:
     QVariant getValue(const QString &variable);
     bool setValue(const QString &variable,const QVariant &value);
     QStringList variablesList();
-    virtual void removeClient(CatchChallenger::Api_protocol *api);
+    virtual void removeClient(CatchChallenger::Api_protocol_Qt  *api);
     QString name();
     QString version();
-    virtual void insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    static std::map<CatchChallenger::Api_protocol *,Player> clientList;
+    virtual void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    static std::map<CatchChallenger::Api_protocol_Qt  *,Player> clientList;
     //not into clientList because clientList is not initialised when receive the signals (due to delay of map loading)
-    static std::map<CatchChallenger::Api_protocol *,std::vector<DelayedMapPlayerChange> > delayedMessage;
+    static std::map<CatchChallenger::Api_protocol_Qt  *,std::vector<DelayedMapPlayerChange> > delayedMessage;
 protected:
     bool randomText;
     bool globalChatRandomReply;

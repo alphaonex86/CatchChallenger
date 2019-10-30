@@ -472,7 +472,11 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
     bool ok;
     //load the content
     const tinyxml2::XMLElement *server = root->FirstChildElement("server");
+    #ifndef CATCHCHALLENGER_BOT
     const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    #else
+    const std::string language("en");
+    #endif
     while(server!=NULL)
     {
         if(server->Attribute("unique_code")!=NULL)

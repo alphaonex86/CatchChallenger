@@ -3,12 +3,13 @@
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/FacilityLibGeneral.h"
-#include "../../client/base/DatapackClientLoader.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 
 #include <regex>
 #include <string>
 #include <vector>
 #include <iostream>
+#include <QCoreApplication>
 
 bool ActionsAction::preload_the_map()
 {
@@ -373,21 +374,21 @@ bool ActionsAction::preload_the_map()
     index=0;
     while(index<size)
     {
-        CatchChallenger::CommonMap * const currentTempMap=map_list.at(map_name.at(index));
+        MapServerMini * const currentTempMap=static_cast<MapServerMini *>(map_list.at(map_name.at(index)));
         if(currentTempMap->border.bottom.map!=NULL &&
                 std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
                 ==
                 currentTempMap->near_map.end())
         {
-            map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
             if(currentTempMap->border.left.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
             if(currentTempMap->border.right.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
         }
 
         if(currentTempMap->border.top.map!=NULL &&
@@ -396,15 +397,15 @@ bool ActionsAction::preload_the_map()
                 currentTempMap->near_map.end()
                 )
         {
-            map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
             if(currentTempMap->border.left.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
             if(currentTempMap->border.right.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
         }
 
         if(currentTempMap->border.right.map!=NULL &&
@@ -413,15 +414,15 @@ bool ActionsAction::preload_the_map()
                 currentTempMap->near_map.end()
                 )
         {
-            map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.right.map);
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
             if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
             if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
         if(currentTempMap->border.left.map!=NULL &&
@@ -430,18 +431,18 @@ bool ActionsAction::preload_the_map()
                 currentTempMap->near_map.end()
                 )
         {
-            map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.left.map);
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
             if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.top.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
             if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
                     ==
                     currentTempMap->near_map.end())
-                map_list[map_name.at(index)]->near_map.push_back(currentTempMap->border.bottom.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
         }
 
-        map_list[map_name.at(index)]->linked_map=map_list[map_name.at(index)]->near_map;
+        static_cast<MapServerMini *>(map_list[map_name.at(index)])->linked_map=static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map;
         //the teleporter
         {
             unsigned int index=0;
@@ -454,7 +455,7 @@ bool ActionsAction::preload_the_map()
             }
         }
 
-        map_list[map_name.at(index)]->near_map.push_back(currentTempMap);
+        static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap);
         index++;
     }
 

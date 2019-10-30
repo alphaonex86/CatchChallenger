@@ -56,7 +56,11 @@ void QtDatapackClientLoader::parseMonstersExtra()
             continue;
         }
 
+        #ifndef CATCHCHALLENGER_BOT
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #else
+        const std::string language("en");
+        #endif
         //load the content
         bool ok;
         const tinyxml2::XMLElement *item = root->FirstChildElement("monster");
@@ -324,7 +328,11 @@ void QtDatapackClientLoader::parseBuffExtra()
             continue;
         }
 
+        #ifndef CATCHCHALLENGER_BOT
         const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #else
+        const std::string language("en");
+        #endif
         //load the content
         bool ok;
         const tinyxml2::XMLElement *item = root->FirstChildElement("buff");
