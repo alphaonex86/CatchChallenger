@@ -3,10 +3,10 @@
 
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/FacilityLib.h"
-#include "../../client/base/FacilityLibClient.h"
+#include "../../client/qt/FacilityLibClient.h"
 #include "../bot/actions/ActionsAction.h"
-#include "../../client/base/DatapackClientLoader.h"
-#include "../../client/base/LanguagesSelect.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../client/qt/LanguagesSelect.h"
 
 #include <QNetworkProxy>
 #include <QMessageBox>
@@ -132,7 +132,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->groupBox_char->setEnabled(false);
     ui->groupBox_Server->setEnabled(false);
 
-    LanguagesSelect::languagesSelect=new LanguagesSelect();
+    //LanguagesSelect::languagesSelect=new LanguagesSelect();
     botTargetList=NULL;
 }
 
@@ -206,21 +206,21 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
         ActionsAction::clientList[api]=newPlayer;
         newPlayer.fightEngine->setClient(api);
 
-        if(!connect(api,&CatchChallenger::Api_protocol::Qthave_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qthave_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::Qtadd_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtadd_to_inventory,   actionsAction,&ActionsAction::add_to_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::Qtremove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtremove_to_inventory,actionsAction,&ActionsAction::remove_to_inventory_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::QtsetEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtsetEvents,   actionsAction,&ActionsAction::setEvents_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::QtnewEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtnewEvent,actionsAction,&ActionsAction::newEvent_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::Qtrandom_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtrandom_seeds,actionsAction,&ActionsAction::newRandomNumber_slot,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::QtmonsterCatch,actionsAction,&ActionsAction::monsterCatch))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtmonsterCatch,actionsAction,&ActionsAction::monsterCatch))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol::QtteleportTo,actionsAction,&ActionsAction::teleportTo))
+        if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtteleportTo,actionsAction,&ActionsAction::teleportTo))
             abort();
     }
     else
@@ -522,7 +522,7 @@ void MainWindow::datapackIsReady()
         ui->autoCreateCharacter->setEnabled(true);
         ui->groupBox_char->setEnabled(true);
     }
-    DatapackClientLoader::datapackLoader.parseDatapack(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
+    QtDatapackClientLoader::datapackLoader->parseDatapack(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
 }
 
 void MainWindow::datapackMainSubIsReady()
@@ -530,7 +530,7 @@ void MainWindow::datapackMainSubIsReady()
     if(!CommonSettingsServer::commonSettingsServer.chat_allow_all && !CommonSettingsServer::commonSettingsServer.chat_allow_local)
     {
     }
-    DatapackClientLoader::datapackLoader.parseDatapackMainSub(
+    QtDatapackClientLoader::datapackLoader->parseDatapackMainSub(
                 CommonSettingsServer::commonSettingsServer.mainDatapackCode,
                 CommonSettingsServer::commonSettingsServer.subDatapackCode
                 );
@@ -544,11 +544,11 @@ void MainWindow::on_autoCreateCharacter_stateChanged(int arg1)
 
 void MainWindow::all_player_connected()
 {
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+    /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
     {
         QMessageBox::critical(this,tr("Error"),tr("Only the plant by player is supported for now!"));
         QCoreApplication::exit(555);
-    }
+    }*/
     qDebug() << "MainWindow::all_player_connected()";
 }
 

@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/base/DatapackClientLoader.h"
-#include "../../client/fight/interface/ClientFightEngine.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../client/qt/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "../../general/base/CommonSettingsCommon.h"
 #include "../../general/base/FacilityLib.h"
@@ -55,7 +55,7 @@ void BotTargetList::updatePlayerStep()
     }
 
     for (const auto &n:actionsAction->clientList) {
-        CatchChallenger::Api_protocol *api=n.first;
+        CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
             abort();
@@ -488,8 +488,8 @@ void BotTargetList::updatePlayerStep()
                     }
                     CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
                     std::pair<uint8_t,uint8_t> p(x,y);
-                    std::string mapQtString=DatapackClientLoader::datapackLoader.getDatapackPath()+
-                            DatapackClientLoader::datapackLoader.getMainDatapackPath()+
+                    std::string mapQtString=QtDatapackClientLoader::datapackLoader->getDatapackPath()+
+                            QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
                             mapServer->map_file;
                     if(!stringEndsWith(mapQtString,".tmx"))
                         mapQtString+=".tmx";
@@ -577,13 +577,13 @@ void BotTargetList::updatePlayerStep()
                         {
                             bool haveSeedToPlant=false;
                             const uint32_t &itemId=BotTargetList::getSeedToPlant(api,&haveSeedToPlant);
-                            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==DatapackClientLoader::datapackLoader.itemToPlants.cend())
+                            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
                                 abort();
-                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
-                            if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
+                            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
+                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
                                 abort();
                             const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &mapS=
-                                    DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
+                                    QtDatapackClientLoader::datapackLoader->plantOnMap.at(mapQtString);
                             if(mapS.find(p)==mapS.cend())
                                 abort();
                             const uint16_t &indexOnMapPlant=mapS.at(p);
@@ -603,47 +603,28 @@ void BotTargetList::updatePlayerStep()
                                 playerInformations.plantOnMap[indexOnMapPlant]=playerPlant;
                             }
                             else
-                            {
-                                if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
-                                    abort();
                                 abort();
-                            }
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         {
-                            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(player.target.extra/*itemUsed*/);
-                            if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
+                            //const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(player.target.extra/*itemUsed*/);
+                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
                                 abort();
                             const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &pS=
-                                    DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
+                                    QtDatapackClientLoader::datapackLoader->plantOnMap.at(mapQtString);
                             if(pS.find(p)==pS.cend())
                                 abort();
                             const uint16_t &indexOnMapPlant=pS.at(p);
-                            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
-                                if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
-                                    abort();
+                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                                abort();
                             if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
                                 abort();
                             std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->collectMaturePlant();
-                            if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-                            {
-                                ActionsBotInterface::Player::ClientPlantInCollecting clientPlantInCollecting;
-                                clientPlantInCollecting.indexOnMap=indexOnMapPlant;
-                                clientPlantInCollecting.plant_id=plant;
-                                clientPlantInCollecting.seconds_to_mature=0;
-                                player.plant_collect_in_waiting.push_back(clientPlantInCollecting);
-                            }
-                            else
-                            {
-                                if(DatapackClientLoader::datapackLoader.plantOnMap.find(mapQtString)==DatapackClientLoader::datapackLoader.plantOnMap.cend())
-                                    abort();
-                                const auto &pS=DatapackClientLoader::datapackLoader.plantOnMap.at(mapQtString);
-                                if(pS.find(p)==pS.cend())
-                                    abort();
-                                playerInformations.plantOnMap.erase(indexOnMapPlant);
-                            }
+                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+                                abort();
+                            playerInformations.plantOnMap.erase(indexOnMapPlant);
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:

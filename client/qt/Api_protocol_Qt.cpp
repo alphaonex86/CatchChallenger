@@ -782,11 +782,15 @@ void Api_protocol_Qt::marketWithdrawMonster(const PlayerMonster &playerMonster)
 
 std::string Api_protocol_Qt::getLanguage() const
 {
-    #ifndef BOTTESTCONNECT
-    if(LanguagesSelect::languagesSelect==NULL)
+    #ifndef CATCHCHALLENGER_BOT
+        #ifndef BOTTESTCONNECT
+        if(LanguagesSelect::languagesSelect==NULL)
+            return "en";
+        else
+            return LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #else
         return "en";
-    else
-        return LanguagesSelect::languagesSelect->getCurrentLanguages();
+        #endif
     #else
     return "en";
     #endif

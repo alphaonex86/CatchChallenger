@@ -59,21 +59,21 @@ public:
     void checkDuplicatePointOnMap_Item(const std::map<std::pair<uint8_t,uint8_t>,MapServerMini::ItemOnMap/*,pairhash*/> &pointOnMap_Item);
     #endif
     void startPlayerMove();
-    void startPlayerMove(CatchChallenger::Api_protocol *api);
+    void startPlayerMove(CatchChallenger::Api_protocol_Qt *api);
     void autoStartAction();
     void updateFightStats();
     void teleportTo();
     void monsterCatch(const bool &success);
     static void finishTheLocalStep(ActionsAction::Player &player);
-    static ZoneAccessible nextZoneIsAccessible(const CatchChallenger::Api_protocol *api, const MapServerMini::BlockObject * const currentBlockObject, const MapServerMini::BlockObject * const blockObject);
+    static ZoneAccessible nextZoneIsAccessible(const CatchChallenger::Api_protocol_Qt *api, const MapServerMini::BlockObject * const currentBlockObject, const MapServerMini::BlockObject * const blockObject);
     static bool canGoFromBlockToBlock(const MapServerMini::BlockObject * const from,
                                       const MapServerMini::BlockObject * const to,
                                       const unsigned int maxDepthGoBack = 10);
-    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol * const api, QListWidget *listGUI=NULL);
-    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
-    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget);
-    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget, const MapServerMini *player_map=NULL, const uint8_t &player_x=0, const uint8_t &player_y=0);
-    std::vector<std::string> contentToGUI_internal(const CatchChallenger::Api_protocol * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget, const MapServerMini *player_map, const uint8_t &player_x, const uint8_t &player_y);
+    std::vector<std::string> contentToGUI(const MapServerMini::BlockObject * const blockObject, const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI=NULL);
+    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster);
+    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget);
+    std::vector<std::string> contentToGUI(const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget, const MapServerMini *player_map=NULL, const uint8_t &player_x=0, const uint8_t &player_y=0);
+    std::vector<std::string> contentToGUI_internal(const CatchChallenger::Api_protocol_Qt * const api, QListWidget *listGUI, const std::unordered_map<const MapServerMini::BlockObject *, MapServerMini::BlockObjectPathFinding> &resolvedBlockList, const bool &displayTooHard, bool dirt, bool itemOnMap, bool fight, bool shop, bool heal, bool wildMonster, ActionsBotInterface::GlobalTarget &bestTarget, const MapServerMini *player_map, const uint8_t &player_x, const uint8_t &player_y);
     uint16_t mapPointDistanceNormalised(uint8_t x1,uint8_t y1,uint8_t x2,uint8_t y2);
     std::string graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock, const unsigned int &depth=2);
     std::string graphLocalMap();
@@ -93,7 +93,7 @@ public:
             unsigned int &destinationIndexSelected,
             bool *ok);
     static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &returnPath);
-    static uint32_t getSeedToPlant(const CatchChallenger::Api_protocol *api, bool *haveSeedToPlant=NULL);
+    static uint32_t getSeedToPlant(const CatchChallenger::Api_protocol_Qt *api, bool *haveSeedToPlant=NULL);
 signals:
     void start_preload_the_map();
 private slots:

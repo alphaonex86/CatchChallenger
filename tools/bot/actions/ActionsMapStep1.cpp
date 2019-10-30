@@ -8,6 +8,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <QCoreApplication>
 
 bool ActionsAction::preload_other_pre()
 {
@@ -94,7 +95,7 @@ void ActionsAction::loadFinishedReemitTheDelayedFunction()
 {
     allMapIsLoaded=true;
     for(const auto& n:delayedMessage) {
-        CatchChallenger::Api_protocol *api=n.first;
+        CatchChallenger::Api_protocol_Qt  *api=n.first;
         const std::vector<DelayedMapPlayerChange> &delayedMapPlayerChangeList=n.second;
 
         unsigned int index=0;

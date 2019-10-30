@@ -1,8 +1,8 @@
 #include "BotTargetList.h"
 #include "SocialChat.h"
 #include "ui_BotTargetList.h"
-#include "../../client/base/DatapackClientLoader.h"
-#include "../../client/fight/interface/ClientFightEngine.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../client/qt/fight/interface/ClientFightEngine.h"
 #include "../../general/base/CommonSettingsServer.h"
 #include "MapBrowse.h"
 #include "TargetFilter.h"
@@ -52,9 +52,9 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
             const QString &qtpseudo=QString::fromStdString(player_private_and_public_informations.public_informations.pseudo);
             ui->bots->addItem(qtpseudo);
             pseudoToBot[qtpseudo]=client;
-            if(!connect(client->api,&CatchChallenger::Api_protocol::QtteleportTo,this,&BotTargetList::teleportTo))
+            if(!connect(client->api,&CatchChallenger::Api_protocol_Qt::QtteleportTo,this,&BotTargetList::teleportTo))
                 abort();
-            if(!connect(client->api,&CatchChallenger::Api_protocol::QtmonsterCatch,this,&BotTargetList::monsterCatch))
+            if(!connect(client->api,&CatchChallenger::Api_protocol_Qt::QtmonsterCatch,this,&BotTargetList::monsterCatch))
                 abort();
         }
         ++i;
@@ -236,7 +236,7 @@ void BotTargetList::loadAllBotsInformation2()
     //waitScreen.hide();
 
     for (const auto &n:ActionsBotInterface::clientList) {
-        CatchChallenger::Api_protocol * const api=n.first;
+        CatchChallenger::Api_protocol_Qt * const api=n.first;
         //ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(i.value());
         if(api->getCaracterSelected())
         {
@@ -358,7 +358,7 @@ void BotTargetList::startPlayerMove()
     ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
 }
 
-void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
+void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol_Qt *api)
 {
     if(actionsAction->clientList.find(api)==actionsAction->clientList.cend())
         return;
@@ -366,7 +366,7 @@ void BotTargetList::startPlayerMove(CatchChallenger::Api_protocol *api)
     ActionsBotInterface::Player &player=actionsAction->clientList[api];
 
     /*for (const auto &n:actionsAction->clientList) {
-        CatchChallenger::Api_protocol *api=n.first;
+        CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(player.api->getCaracterSelected())
         {
@@ -1648,7 +1648,7 @@ void BotTargetList::autoStartAction()
     if(MainWindow::multipleBotConnexion.haveAnError())
         return;
 
-    CatchChallenger::Api_protocol * apiSelectedClient=NULL;
+    CatchChallenger::Api_protocol_Qt * apiSelectedClient=NULL;
     const QList<QListWidgetItem*> &selectedItems=ui->bots->selectedItems();
     if(selectedItems.size()==1)
     {
@@ -1660,7 +1660,7 @@ void BotTargetList::autoStartAction()
     }
 
     for (const auto &n:actionsAction->clientList) {
-        CatchChallenger::Api_protocol *api=n.first;
+        CatchChallenger::Api_protocol_Qt *api=n.first;
         ActionsAction::Player &player=actionsAction->clientList[api];
         if(actionsAction->id_map_to_map.find(player.mapId)==actionsAction->id_map_to_map.cend())
             abort();

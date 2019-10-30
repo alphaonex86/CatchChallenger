@@ -133,6 +133,8 @@ public:
         uint32_t weight;
     };
 
+    std::vector<CommonMap *> near_map;//only the border (left, right, top, bottom) AND them self
+    std::vector<CommonMap *> linked_map;//not only the border, with tp, door, ...
     std::vector<MapParsedForBot> step;
     uint8_t min_x,max_x,min_y,max_y;
 
@@ -143,9 +145,11 @@ public:
 public:
     void displayConsoleMap(const MapParsedForBot &currentStep) const;
     bool mapIsValid(const MapParsedForBot &currentStep) const;
-    void targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock, const unsigned int &depth=2,const CatchChallenger::Api_protocol *api=NULL) const;
+    void targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock,
+                         const unsigned int &depth=2,const CatchChallenger::Api_protocol_Qt *api=NULL) const;
     std::unordered_set<const MapServerMini *> getValidMaps(const unsigned int &depth=2) const;
-    std::unordered_set<const BlockObject *> getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps, const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol *api=NULL) const;
+    std::unordered_set<const BlockObject *> getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,
+                                                               const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol_Qt *api=NULL) const;
     void resolvBlockPath(const BlockObject * blockToExplore,
                          std::unordered_map<const BlockObject *, BlockObjectPathFinding> &resolvedBlock,
                          const std::unordered_set<const BlockObject *> &accessibleBlock,

@@ -1,7 +1,7 @@
 #include "SocialChat.h"
 #include "ui_SocialChat.h"
-#include "../../client/base/DatapackClientLoader.h"
-#include "../../client/base/Api_client_real.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../client/qt/Api_client_real.h"
 #include "../../general/base/ChatParsing.h"
 #include "DatabaseBot.h"
 
@@ -61,15 +61,15 @@ void SocialChat::showEvent(QShowEvent * event)
 {
     bool first=true;
     for (const auto &n:ActionsBotInterface::clientList) {
-        CatchChallenger::Api_protocol * const api=n.first;
+        CatchChallenger::Api_protocol_Qt * const api=n.first;
         ActionsBotInterface::Player &client=const_cast<ActionsBotInterface::Player &>(n.second);
         if(client.api->getCaracterSelected())
         {
             if(first==true)
             {
-                if(!connect(client.api,&CatchChallenger::Api_protocol::Qtnew_system_text,this,&SocialChat::new_system_text))
+                if(!connect(client.api,&CatchChallenger::Api_protocol_Qt::Qtnew_system_text,this,&SocialChat::new_system_text))
                     abort();
-                if(!connect(client.api,&CatchChallenger::Api_protocol::Qtnew_chat_text,this,&SocialChat::new_chat_text))
+                if(!connect(client.api,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,this,&SocialChat::new_chat_text))
                     abort();
                 first=false;
             }
@@ -84,11 +84,11 @@ void SocialChat::showEvent(QShowEvent * event)
                 abort();
             }
 
-            if(!connect(api,&CatchChallenger::Api_protocol::Qtinsert_player,            this,&SocialChat::insert_player))
+            if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtinsert_player,            this,&SocialChat::insert_player))
                 abort();
-            if(!connect(api,&CatchChallenger::Api_protocol::QtdropAllPlayerOnTheMap,    this,&SocialChat::dropAllPlayerOnTheMap))
+            if(!connect(api,&CatchChallenger::Api_protocol_Qt::QtdropAllPlayerOnTheMap,    this,&SocialChat::dropAllPlayerOnTheMap))
                 abort();
-            if(!connect(api,&CatchChallenger::Api_protocol::Qtremove_player,            this,&SocialChat::remove_player))
+            if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtremove_player,            this,&SocialChat::remove_player))
                 abort();
         }
     }
@@ -148,7 +148,7 @@ void SocialChat::loadPlayerInformation()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * api=pseudoToBot.value(pseudo);
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
@@ -183,7 +183,7 @@ void SocialChat::loadPlayerInformation()
     }
 
     //front image
-    if(playerInformations.public_informations.skinId<DatapackClientLoader::datapackLoader.skins.size())
+    if(playerInformations.public_informations.skinId<QtDatapackClientLoader::datapackLoader->skins.size())
         ui->labelImageAvatar->setPixmap(getFrontSkin(playerInformations.public_informations.skinId));
 
     {
@@ -239,8 +239,8 @@ QPixmap SocialChat::getFrontSkin(const QString &skinName)
 
 QPixmap SocialChat::getFrontSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)DatapackClientLoader::datapackLoader.skins.size())
-        return getFrontSkin(QString::fromStdString(DatapackClientLoader::datapackLoader.skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
+        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
     else
         return getFrontSkin(QString());
 }
@@ -264,8 +264,8 @@ QPixmap SocialChat::getBackSkin(const QString &skinName)
 
 QPixmap SocialChat::getBackSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)DatapackClientLoader::datapackLoader.skins.size())
-        return getFrontSkin(QString::fromStdString(DatapackClientLoader::datapackLoader.skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
+        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
     else
         return getFrontSkin(QString());
 }
@@ -289,8 +289,8 @@ QPixmap SocialChat::getTrainerSkin(const QString &skinName)
 
 QPixmap SocialChat::getTrainerSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)DatapackClientLoader::datapackLoader.skins.size())
-        return getTrainerSkin(QString::fromStdString(DatapackClientLoader::datapackLoader.skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
+        return getTrainerSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
     else
         return getTrainerSkin(QString());
 }
@@ -303,27 +303,27 @@ QString SocialChat::getTrainerSkinPath(const QString &skin)
 QString SocialChat::getSkinPath(const QString &skinName,const QString &type)
 {
     {
-        QFileInfo pngFile(QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
+        QFileInfo pngFile(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.png").arg(type));
         if(pngFile.exists())
             return pngFile.absoluteFilePath();
     }
     {
-        QFileInfo gifFile(QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
+        QFileInfo gifFile(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+DATAPACK_BASE_PATH_SKIN+skinName+QStringLiteral("/%1.gif").arg(type));
         if(gifFile.exists())
             return gifFile.absoluteFilePath();
     }
-    QDir folderList(QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())+DATAPACK_BASE_PATH_SKINBASE);
+    QDir folderList(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+DATAPACK_BASE_PATH_SKINBASE);
     const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
     int entryListIndex=0;
     while(entryListIndex<entryList.size())
     {
         {
-            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(pngFile.exists())
                 return pngFile.absoluteFilePath();
         }
         {
-            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(QString::fromStdString(DatapackClientLoader::datapackLoader.getDatapackPath())).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())).arg(entryList.at(entryListIndex)).arg(skinName).arg(type));
             if(gifFile.exists())
                 return gifFile.absoluteFilePath();
         }
@@ -608,7 +608,7 @@ void SocialChat::update_chat()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * api=pseudoToBot.value(pseudo);
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.at(api);
@@ -668,7 +668,7 @@ void SocialChat::on_globalChatText_returnPressed()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * api=pseudoToBot.value(pseudo);
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
@@ -793,7 +793,7 @@ void SocialChat::dropAllPlayerOnTheMap()
     updateVisiblePlayers(api);
 }
 
-void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
+void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol_Qt *api)
 {
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
@@ -807,7 +807,7 @@ void SocialChat::updatePlayerKnownList(CatchChallenger::Api_protocol *api)
         globalChatText_updateCompleter();
 }
 
-void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol *api)
+void SocialChat::updateVisiblePlayers(CatchChallenger::Api_protocol_Qt *api)
 {
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
@@ -881,7 +881,7 @@ void SocialChat::globalChatText_updateCompleter()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * const api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * const api=pseudoToBot.value(pseudo);
 
     QSet<QString> viewedPlayers;
     for(const auto &n:ActionsBotInterface::clientList[api].viewedPlayers)
@@ -959,7 +959,7 @@ void SocialChat::on_chatSpecText_returnPressed()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * api=pseudoToBot.value(pseudo);
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
 
@@ -1109,7 +1109,7 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
     const QString &pseudo=selectedItems.at(0)->text();
     if(!pseudoToBot.contains(pseudo))
         return;
-    CatchChallenger::Api_protocol * api=pseudoToBot.value(pseudo);
+    CatchChallenger::Api_protocol_Qt * api=pseudoToBot.value(pseudo);
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
     const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.at(api);

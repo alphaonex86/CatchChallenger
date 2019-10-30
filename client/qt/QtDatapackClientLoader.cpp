@@ -253,6 +253,10 @@ void QtDatapackClientLoader::parseItemsExtra()
 
 std::string QtDatapackClientLoader::getLanguage()
 {
+    #ifndef CATCHCHALLENGER_BOT
     return LanguagesSelect::languagesSelect->getCurrentLanguages();
+    #else
+    return "en";
+    #endif
 }
 

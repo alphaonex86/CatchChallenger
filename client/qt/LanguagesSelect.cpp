@@ -11,6 +11,7 @@
 #include <QLibraryInfo>
 #include <iostream>
 
+#ifndef CATCHCHALLENGER_BOT
 LanguagesSelect *LanguagesSelect::languagesSelect=NULL;
 
 LanguagesSelect::LanguagesSelect() :
@@ -256,3 +257,4 @@ void LanguagesSelect::on_ok_clicked()
     updateContent();
     close();
 }
+#endif

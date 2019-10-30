@@ -1,6 +1,6 @@
 #include "MapServerMini.h"
 #include <iostream>
-#include "../../client/base/DatapackClientLoader.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "ActionsAction.h"
@@ -37,7 +37,8 @@ std::unordered_set<const MapServerMini *> MapServerMini::getValidMaps(const unsi
     return validMaps;
 }
 
-std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol *api) const
+std::unordered_set<const MapServerMini::BlockObject *> MapServerMini::getAccessibleBlock(const std::unordered_set<const MapServerMini *> &validMaps,
+                                                                                         const BlockObject * const currentNearBlock,const CatchChallenger::Api_protocol_Qt  *api) const
 {
     // only the accessible block
     if(currentNearBlock->map!=this)
@@ -191,7 +192,7 @@ void MapServerMini::resolvBlockPath(const BlockObject * blockToExplore,
     }
 }
 
-void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock, const unsigned int &depth,const CatchChallenger::Api_protocol *api) const
+void MapServerMini::targetBlockList(const BlockObject * const currentNearBlock, std::unordered_map<const BlockObject *,BlockObjectPathFinding> &resolvedBlock, const unsigned int &depth,const CatchChallenger::Api_protocol_Qt  *api) const
 {
     const std::unordered_set<const MapServerMini *> &validMaps=getValidMaps(depth);
     const std::unordered_set<const BlockObject *> &accessibleBlock=getAccessibleBlock(validMaps,currentNearBlock,api);

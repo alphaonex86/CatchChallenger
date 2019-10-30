@@ -1,15 +1,12 @@
 #include "MapServerMini.h"
-#include "../../client/base/DatapackClientLoader.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 #include "../../general/base/GeneralVariable.h"
 
 QList<QColor> MapServerMini::colorsList;
 
 MapServerMini::MapServerMini()
 {
-    parsed_layer.walkable=NULL;
-    parsed_layer.monstersCollisionMap=NULL;
-    parsed_layer.dirt=NULL;
-    parsed_layer.ledges=NULL;
+    parsed_layer.simplifiedMap=NULL;
     teleporter=NULL;
 }
 
@@ -20,17 +17,17 @@ bool MapServerMini::preload_other_pre()
 
 bool MapServerMini::preload_post_subdatapack()
 {
-    std::string resolvedFileName=DatapackClientLoader::datapackLoader.getDatapackPath()+
-            DatapackClientLoader::datapackLoader.getMainDatapackPath()+
+    std::string resolvedFileName=QtDatapackClientLoader::datapackLoader->getDatapackPath()+
+            QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
             map_file;
     if(!stringEndsWith(resolvedFileName,".tmx"))
         resolvedFileName+=".tmx";
     for (auto it = pointOnMap_Item.begin(); it != pointOnMap_Item.end(); ++it) { // calls a_map.begin() and a_map.end()
         const std::pair<uint8_t,uint8_t> &pair=it->first;
         MapServerMini::ItemOnMap &itemOnMap=it->second;
-        if(DatapackClientLoader::datapackLoader.itemOnMap.find(resolvedFileName)!=DatapackClientLoader::datapackLoader.itemOnMap.cend())
+        if(QtDatapackClientLoader::datapackLoader->itemOnMap.find(resolvedFileName)!=QtDatapackClientLoader::datapackLoader->itemOnMap.cend())
         {
-            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &item=DatapackClientLoader::datapackLoader.itemOnMap.at(resolvedFileName);
+            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &item=QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName);
             const std::pair<uint8_t,uint8_t> QtPoint(pair.first,pair.second);
             if(item.find(QtPoint)!=item.cend())
             {
