@@ -1,6 +1,6 @@
 #include "MapServerMini.h"
 #include <iostream>
-#include "../../client/base/DatapackClientLoader.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonDatapackServerSpec.h"
 #include "ActionsAction.h"
@@ -46,7 +46,7 @@ bool MapServerMini::preload_step2()
                     currentCodeZoneStep1=step1.map[x+y*this->width];
                     step2.map[x+y*this->width]=lastCodeZone;
                     const MapParsedForBot::Layer &step1Layer=step1.layers.at(step1.map[x+y*this->width]-1);
-                    if(parsed_layer.walkable!=NULL && parsed_layer.walkable[x+y*this->width]!=false)
+                    if(parsed_layer.simplifiedMap!=NULL && parsed_layer.simplifiedMap[x+y*this->width]<200)
                     {
                         preload_step2_addNearTileToScanList(scanList,x,y);
                         while(!scanList.empty())
@@ -232,6 +232,7 @@ bool MapServerMini::preload_step2b()
     mapConditionEmpty.data.quest=0;
 
     //link the internal block
+    if(this->parsed_layer.simplifiedMap!=nullptr)
     {
         uint8_t y=0;
         while(y<this->height)
@@ -242,7 +243,7 @@ bool MapServerMini::preload_step2b()
                 const uint16_t codeZone=step2.map[x+y*this->width];
                 if(codeZone!=0)
                 {
-                    if(this->parsed_layer.ledges==NULL || this->parsed_layer.ledges[x+y*this->width]==CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
+                    if(this->parsed_layer.simplifiedMap[x+y*this->width]<200)
                     {
                         //check the right move
                         {
@@ -260,15 +261,12 @@ bool MapServerMini::preload_step2b()
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                if(casted_map->parsed_layer.ledges!=NULL)
-                                {
-                                    if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]==
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
-                                        needrepeate=true;
-                                    else if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]!=
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
-                                        break;
-                                }
+                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
+                                        CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
+                                    needrepeate=true;
+                                else if(val<250 || val>253)
+                                    break;
                                 const MapParsedForBot &otherStep2=casted_map->step[1];
                                 otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
@@ -297,15 +295,12 @@ bool MapServerMini::preload_step2b()
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                if(casted_map->parsed_layer.ledges!=NULL)
-                                {
-                                    if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]==
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
-                                        needrepeate=true;
-                                    else if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]!=
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
-                                        break;
-                                }
+                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
+                                        CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
+                                    needrepeate=true;
+                                else if(val<250 || val>253)
+                                    break;
                                 const MapParsedForBot &otherStep2=casted_map->step[1];
                                 otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
@@ -334,15 +329,12 @@ bool MapServerMini::preload_step2b()
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                if(casted_map->parsed_layer.ledges!=NULL)
-                                {
-                                    if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]==
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
-                                        needrepeate=true;
-                                    else if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]!=
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
-                                        break;
-                                }
+                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
+                                        CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
+                                    needrepeate=true;
+                                else if(val<250 || val>253)
+                                    break;
                                 const MapParsedForBot &otherStep2=casted_map->step[1];
                                 otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
                             } while(needrepeate);
@@ -369,16 +361,11 @@ bool MapServerMini::preload_step2b()
                                 if(!canMove)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                if(casted_map->parsed_layer.ledges!=NULL)
-                                {
-                                    if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]==
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
-                                        needrepeate=true;
-                                    else if(casted_map->parsed_layer.ledges[current_x+current_y*casted_map->width]!=
-                                            CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_NoLedges)
-                                        break;
-                                }
-                                else
+                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
+                                        CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
+                                    needrepeate=true;
+                                else if(val<250 || val>253)
                                     break;
                                 const MapParsedForBot &otherStep2=casted_map->step[1];
                                 otherCodeZone=otherStep2.map[current_x+current_y*casted_map->width];
@@ -401,6 +388,7 @@ bool MapServerMini::preload_step2b()
     }
 
     //The teleporter
+    if(parsed_layer.simplifiedMap!=nullptr)
     {
         unsigned int index=0;
         while(index<teleporter_list_size)
@@ -409,7 +397,7 @@ bool MapServerMini::preload_step2b()
             const uint8_t x=teleporterEntry.source_x,y=teleporterEntry.source_y;
             const uint16_t &codeZone=step2.map[x+y*this->width];
             //if current not dirt or other not walkable layer
-            if(parsed_layer.walkable!=NULL && parsed_layer.walkable[x+y*this->width]!=false)
+            if(parsed_layer.simplifiedMap[x+y*this->width]!=254)
             {
                 if(codeZone!=0)
                 {
@@ -424,7 +412,7 @@ bool MapServerMini::preload_step2b()
                         const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap->width];
                         if(otherCodeZone!=0)
                             //if the other not dirt or other not walkable layer
-                            if(nextMap->parsed_layer.walkable!=NULL && nextMap->parsed_layer.walkable[newx+newy*nextMap->width]!=false)
+                            if(nextMap->parsed_layer.simplifiedMap[newx+newy*nextMap->width]!=254)
                             {
                                 BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
                                 addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y,teleporterEntry.condition);
@@ -466,7 +454,7 @@ bool MapServerMini::preload_step2c()
                     //wild monster (and their object, day cycle)
 
                     //dirt
-                    if(parsedLayer.dirt!=NULL)
+                    if(parsedLayer.simplifiedMap!=nullptr)
                     {
                         int y=0;
                         while(y<this->height)
@@ -474,7 +462,7 @@ bool MapServerMini::preload_step2c()
                             int x=0;
                             while(x<this->width)
                             {
-                                if(currentStep.map[x+y*this->width]!=0 && parsedLayer.dirt[x+y*this->width]==true)
+                                if(currentStep.map[x+y*this->width]!=0 && parsedLayer.simplifiedMap[x+y*this->width]==249)
                                 {
                                     const uint16_t &codeZone=currentStep.map[x+y*this->width];
                                     std::pair<uint8_t,uint8_t> newDirtPoint{x,y};
@@ -577,7 +565,7 @@ bool MapServerMini::preload_step2c()
                     }
 
                     //detect the wild monster
-                    if(parsedLayer.monstersCollisionMap!=NULL)
+                    if(parsedLayer.simplifiedMap!=nullptr)
                     {
                         int y=0;
                         while(y<this->height)
@@ -588,7 +576,7 @@ bool MapServerMini::preload_step2c()
                                 if(currentStep.map[x+y*this->width]!=0)
                                 {
                                     const uint16_t &codeZone=currentStep.map[x+y*this->width];
-                                    const uint8_t &monsterCode=parsedLayer.monstersCollisionMap[x+y*this->width];
+                                    const uint8_t &monsterCode=parsedLayer.simplifiedMap[x+y*this->width];
                                     if(monsterCode<parsedLayer.monstersCollisionList.size())
                                     {
                                         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);

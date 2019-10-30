@@ -1,8 +1,8 @@
 #include "ActionsAction.h"
-#include "../../client/base/DatapackClientLoader.h"
+#include "../../client/qt/QtDatapackClientLoader.h"
 #include "../../general/base/CommonDatapack.h"
 #include "../../general/base/CommonSettingsServer.h"
-#include "../../client/base/Api_client_real.h"
+#include "../../client/qt/Api_client_real.h"
 
 #include <QMessageBox>
 #include <QString>
@@ -13,7 +13,7 @@ void ActionsAction::seed_planted_slot(const bool &ok)
     seed_planted(api,ok);
 }
 
-void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &ok)
+void ActionsAction::seed_planted(CatchChallenger::Api_protocol_Qt *api,const bool &ok)
 {
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
@@ -26,13 +26,13 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol *api,const bool &
         //do the rewards
         {
             const uint32_t &itemId=player.seed_in_waiting.front().seedItemId;
-            if(DatapackClientLoader::datapackLoader.itemToPlants.find(itemId)==DatapackClientLoader::datapackLoader.itemToPlants.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
             {
                 qDebug() << "Item is not a plant";
                 QMessageBox::critical(NULL,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
                 return;
             }
-            const uint8_t &plant=DatapackClientLoader::datapackLoader.itemToPlants.at(itemId);
+            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
             appendReputationRewards(api,CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
         }
     }
@@ -51,7 +51,7 @@ void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &s
     plant_collected(api,stat);
 }
 
-void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const CatchChallenger::Plant_collect &stat)
+void ActionsAction::plant_collected(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Plant_collect &stat)
 {
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
@@ -67,23 +67,23 @@ void ActionsAction::plant_collected(CatchChallenger::Api_protocol *api,const Cat
             showTip(tr("Plant collected"));//the item is send by another message with the protocol
             playerInformations.plantOnMap.erase(plantInCollecting.indexOnMap);
         break;
-        case CatchChallenger::Plant_collect_empty_dirt:
+        /*case CatchChallenger::Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt"));
         break;
         case CatchChallenger::Plant_collect_owned_by_another_player:
             showTip(tr("This plant had been planted recently by another player"));
-            /*mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
-            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);*/
+            //mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            //cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
         break;
         case CatchChallenger::Plant_collect_impossible:
             showTip(tr("This plant can't be collected"));
-            /*mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
-            cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);*/
-        break;
+            //mapController->insert_plant_full(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y,plant_collect_in_waiting.first().plant_id,plant_collect_in_waiting.first().seconds_to_mature);
+            //cancelAllPlantQuery(plant_collect_in_waiting.first().map,plant_collect_in_waiting.first().x,plant_collect_in_waiting.first().y);
+        break;*/
         default:
             qDebug() << "BaseWindow::plant_collected(): unknown return";
         break;
     }
-    if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-        player.plant_collect_in_waiting.erase(player.plant_collect_in_waiting.cbegin());
+    /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+        player.plant_collect_in_waiting.erase(player.plant_collect_in_waiting.cbegin());*/
 }

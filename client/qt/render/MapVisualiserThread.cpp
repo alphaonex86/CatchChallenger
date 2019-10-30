@@ -23,7 +23,11 @@ MapVisualiserThread::MapVisualiserThread()
     start(QThread::IdlePriority);
     #endif
     hideTheDoors=false;
+    #ifndef CATCHCHALLENGER_BOT
     language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    #else
+    language="en";
+    #endif
 
     debugTags=false;
     tagTileset=nullptr;

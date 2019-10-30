@@ -1165,6 +1165,7 @@ public:
         PublicPlayerMonster publicPlayerMonster;
         //use objet on monster if item!=0
         bool on_current_monster;
+        CATCHCHALLENGER_TYPE_ITEM item;
     };
     class Buff
     {

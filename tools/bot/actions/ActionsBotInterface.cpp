@@ -2,8 +2,8 @@
 #include "../../general/base/Version.h"
 #include <iostream>
 
-std::map<CatchChallenger::Api_protocol *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
-std::map<CatchChallenger::Api_protocol *,std::vector<ActionsBotInterface::DelayedMapPlayerChange> > ActionsBotInterface::delayedMessage;
+std::map<CatchChallenger::Api_protocol_Qt  *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
+std::map<CatchChallenger::Api_protocol_Qt  *,std::vector<ActionsBotInterface::DelayedMapPlayerChange> > ActionsBotInterface::delayedMessage;
 
 ActionsBotInterface::ActionsBotInterface() :
     randomText(false),
@@ -46,7 +46,7 @@ QStringList ActionsBotInterface::variablesList()
     return QStringList() << QString("move") << QString("randomText") << QString("bugInDirection") << QString("globalChatRandomReply");
 }
 
-void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
     (void)direction;
     CatchChallenger::Player_private_and_public_informations &playerApi=api->get_player_informations();
@@ -59,7 +59,7 @@ void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol *api,const
     newPlayer.canMoveOnMap=true;
 }
 
-void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol *api)
+void ActionsBotInterface::removeClient(CatchChallenger::Api_protocol_Qt  *api)
 {
     std::cerr << "ActionsBotInterface::removeClient" << std::endl;
     clientList.erase(api);
@@ -72,5 +72,5 @@ QString ActionsBotInterface::name()
 
 QString ActionsBotInterface::version()
 {
-    return QStringLiteral("1.0.0.0 for CatchChallenger " CATCHCHALLENGER_VERSION);
+    return QStringLiteral("1.0.0.0 for CatchChallenger ")+QString::fromStdString(CatchChallenger::Version::str);
 }
