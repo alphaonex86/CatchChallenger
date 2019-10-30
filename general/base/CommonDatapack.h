@@ -53,31 +53,53 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf
-                #ifndef CATCHCHALLENGER_CLASS_MASTER
-                << plants << craftingRecipes << itemToCraftingRecipes << craftingRecipesMaxId << monsterBuffs << items << industries << industriesLink
-                #ifdef CATCHCHALLENGER_CLIENT
-                << monstersCollision
-                #endif
-                //<< types
-                << layersOptions << events << monsterRateApplied
-                #endif
-                << reputation << monsters << monstersMaxId << monsterSkills << profileList
-               ;
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
+        buf << plants;
+        buf << craftingRecipes;
+        buf << itemToCraftingRecipes;
+        buf << craftingRecipesMaxId;
+        buf << monsterBuffs;
+        buf << items;
+        buf << industries;
+        buf << industriesLink;
+        #ifdef CATCHCHALLENGER_CLIENT
+        buf << monstersCollision;
+        #endif
+        //<< types
+        buf << layersOptions;
+        buf << events;
+        buf << monsterRateApplied;
+        #endif
+        buf << reputation;
+        buf << monsters;
+        buf << monstersMaxId;
+        buf << monsterSkills;
+        buf << profileList;
     }
     template <class B>
     void parse(B& buf) {
-        buf
-                #ifndef CATCHCHALLENGER_CLASS_MASTER
-                >> plants >> craftingRecipes >> itemToCraftingRecipes >> craftingRecipesMaxId >> monsterBuffs >> items >> industries >> industriesLink
-                #ifdef CATCHCHALLENGER_CLIENT
-                >> monstersCollision
-                #endif
-                //>> types
-                >> layersOptions >> events >> monsterRateApplied
-                #endif
-                >> reputation >> monsters >> monstersMaxId >> monsterSkills >> profileList
-               ;
+        #ifndef CATCHCHALLENGER_CLASS_MASTER
+        buf >> plants;
+        buf >> craftingRecipes;
+        buf >> itemToCraftingRecipes;
+        buf >> craftingRecipesMaxId;
+        buf >> monsterBuffs;
+        buf >> items;
+        buf >> industries;
+        buf >> industriesLink;
+        #ifdef CATCHCHALLENGER_CLIENT
+        buf >> monstersCollision;
+        #endif
+        //<< types
+        buf >> layersOptions;
+        buf >> events;
+        buf >> monsterRateApplied;
+        #endif
+        buf >> reputation;
+        buf >> monsters;
+        buf >> monstersMaxId;
+        buf >> monsterSkills;
+        buf >> profileList;
     }
     #endif
 private:
