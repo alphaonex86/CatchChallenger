@@ -5,6 +5,7 @@
 #include <iostream>
 #include <QDesktopServices>
 #include "Settings.h"
+#include <QScreen>
 
 MainScreen::MainScreen(QWidget *parent) :
     QWidget(parent),
@@ -70,7 +71,7 @@ MainScreen::MainScreen(QWidget *parent) :
     #endif
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainScreen::feedEntryList))
-        qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
+        std::cerr << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed" << std::endl;
     #ifndef NOSINGLEPLAYER
     /*solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",

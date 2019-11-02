@@ -195,7 +195,6 @@ void send_settings(
     CommonSettingsServer::commonSettingsServer.chat_allow_all         = stringtobool(settings->value("allow-all"));
     CommonSettingsServer::commonSettingsServer.chat_allow_local		= stringtobool(settings->value("allow-local"));
     CommonSettingsServer::commonSettingsServer.chat_allow_private		= stringtobool(settings->value("allow-private"));
-    //CommonSettingsServer::commonSettingsServer.chat_allow_aliance		= stringtobool(settings->value("allow-aliance"));
     CommonSettingsServer::commonSettingsServer.chat_allow_clan		= stringtobool(settings->value("allow-clan"));
     settings->endGroup();
 
@@ -504,4 +503,9 @@ void send_settings(
 
     server->setSettings(formatedServerSettings);
     server->setNormalSettings(formatedServerNormalSettings);
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    server->setMaster(master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry);
+    #endif
+    #endif
 }

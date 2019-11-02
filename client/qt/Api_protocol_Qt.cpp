@@ -9,6 +9,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QStandardPaths>
+#include <QCryptographicHash>
 
 using namespace CatchChallenger;
 

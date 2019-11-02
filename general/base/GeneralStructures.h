@@ -356,10 +356,12 @@ struct ItemToSellOrBuy
     uint32_t quantity;
 };
 
-struct City
+class City
 {
-    struct Capture
+public:
+    class Capture
     {
+    public:
         enum Frequency : uint8_t
         {
             Frequency_week=0x01,
@@ -378,8 +380,33 @@ struct City
         };
         Day day;
         uint8_t hour,minute;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << (uint8_t)frenquency << (uint8_t)day << hour << minute;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> value;
+            frenquency=(Frequency)value;
+            buf >> value;
+            day=(Day)value;
+            buf >> hour >> minute;
+        }
+        #endif
     };
     Capture capture;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << capture;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> capture;
+    }
+    #endif
 };
 
 struct IndustryStatus
@@ -432,11 +459,11 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << reputation_positive << reputation_negative << reverse_database_id << name;
+        buf << reputation_positive << reputation_negative/* << reverse_database_id loaded after db*/ << name;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> reputation_positive >> reputation_negative >> reverse_database_id >> name;
+        buf >> reputation_positive >> reputation_negative/* >> reverse_database_id loaded after db*/ >> name;
     }
     #endif
 };
