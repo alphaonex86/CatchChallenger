@@ -212,6 +212,7 @@ void EpollServer::unload_the_data()
 void EpollServer::setNormalSettings(const NormalServerSettings &settings)
 {
     normalServerSettings=settings;
+    BaseServer::setNormalSettings(settings);
     loadAndFixSettings();
 }
 
