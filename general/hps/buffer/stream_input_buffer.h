@@ -7,7 +7,11 @@
 
 namespace hps {
 
-constexpr size_t STREAM_INPUT_BUFFER_SIZE = 1 << 16;
+#ifdef CATCHCHALLENGER_CLIENT
+constexpr size_t STREAM_INPUT_BUFFER_SIZE = 65536;
+#else
+constexpr size_t STREAM_INPUT_BUFFER_SIZE = 4096;
+#endif
 
 class StreamInputBuffer {
  public:

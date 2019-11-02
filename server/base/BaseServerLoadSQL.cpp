@@ -334,11 +334,13 @@ void BaseServer::preload_industries_return()
     }
     std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;
 
-    if(!save.empty())
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(out_file!=nullptr)
     {
         ::exit(0);
         return;
     }
+    #endif
     preload_finish();
 }
 

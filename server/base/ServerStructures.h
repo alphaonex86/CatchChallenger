@@ -105,13 +105,13 @@ struct LoginServerSettings
     bool announce;
 };
 
-struct GameServerSettings
+class GameServerSettings
 {
+public:
     CompressionType compressionType;
     uint8_t compressionLevel;
     bool sendPlayerNumber;
     bool anonymous;
-    bool benchmark;
     //fight
     bool pvp;
     uint16_t max_players;//not common because if null info not send, if == 1 then internal
@@ -133,8 +133,9 @@ struct GameServerSettings
     bool positionTeleportSync;
     uint32_t secondToPositionSync;//0 is disabled
 
-    struct Database
+    class Database
     {
+    public:
         std::string file;
         std::string host;
         std::string db;
@@ -144,6 +145,19 @@ struct GameServerSettings
         DatabaseBase::DatabaseType tryOpenType;
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << file << host << db << login << pass << (uint8_t)tryOpenType << tryInterval << considerDownAfterNumberOfTry;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> file >> host >> db >> login >> pass >> value;
+            tryOpenType=(DatabaseBase::DatabaseType)value;
+            buf >> tryInterval >> considerDownAfterNumberOfTry;
+        }
+        #endif
     };
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     Database database_login;
@@ -159,31 +173,68 @@ struct GameServerSettings
     bool automatic_account_creation;
 
     //visibility algorithm
-    struct MapVisibility
+    class MapVisibility
     {
+    public:
         MapVisibilityAlgorithmSelection mapVisibilityAlgorithm;
 
-        struct MapVisibility_Simple
+        class MapVisibility_Simple
         {
+        public:
             uint16_t max;
             uint16_t reshow;
             bool reemit;
+            #ifdef CATCHCHALLENGER_CACHE_HPS
+            template <class B>
+            void serialize(B& buf) const {
+                buf << max << reshow << reemit;
+            }
+            template <class B>
+            void parse(B& buf) {
+                buf >> max >> reshow >> reemit;
+            }
+            #endif
         };
         MapVisibility_Simple simple;
-        struct MapVisibility_WithBorder
+        class MapVisibility_WithBorder
         {
+        public:
             uint16_t maxWithBorder;
             uint16_t reshowWithBorder;
             uint16_t max;
             uint16_t reshow;
+            #ifdef CATCHCHALLENGER_CACHE_HPS
+            template <class B>
+            void serialize(B& buf) const {
+                buf << maxWithBorder << reshowWithBorder << max << reshow;
+            }
+            template <class B>
+            void parse(B& buf) {
+                buf >> maxWithBorder >> reshowWithBorder >> max >> reshow;
+            }
+            #endif
         };
         MapVisibility_WithBorder withBorder;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << (uint8_t)mapVisibilityAlgorithm << simple << withBorder;
+        }
+        template <class B>
+        void parse(B& buf) {
+            uint8_t value=0;
+            buf >> value;
+            mapVisibilityAlgorithm=(MapVisibilityAlgorithmSelection)value;
+            buf >> simple >> withBorder;
+        }
+        #endif
     };
     MapVisibility mapVisibility;
 
     //DDOS algorithm
-    struct DDOS
+    class DDOS
     {
+    public:
         #ifdef CATCHCHALLENGER_DDOS_FILTER
         uint8_t kickLimitMove;
         uint8_t kickLimitChat;
@@ -193,17 +244,42 @@ struct GameServerSettings
         int dropGlobalChatMessageGeneral;
         int dropGlobalChatMessageLocalClan;
         int dropGlobalChatMessagePrivate;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << kickLimitMove << kickLimitChat << kickLimitOther
+                << computeAverageValueTimeInterval << dropGlobalChatMessageGeneral
+                << dropGlobalChatMessageLocalClan << dropGlobalChatMessagePrivate;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> kickLimitMove >> kickLimitChat >> kickLimitOther
+                >> computeAverageValueTimeInterval >> dropGlobalChatMessageGeneral
+                >> dropGlobalChatMessageLocalClan >> dropGlobalChatMessagePrivate;
+        }
+        #endif
     };
     DDOS ddos;
 
     //city
     City city;
 
-    struct ProgrammedEvent
+    class ProgrammedEvent
     {
+    public:
         std::string value;
         uint16_t cycle;//mins
         uint16_t offset;//mins
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << value << cycle << offset;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> value >> cycle >> offset;
+        }
+        #endif
     };
     std::unordered_map<std::string/*type, example: day*/,std::unordered_map<std::string/*groupName, example: day/night*/,ProgrammedEvent> > programmedEventList;
 
@@ -212,6 +288,116 @@ struct GameServerSettings
     //content
     std::string server_message;
     std::string daillygift;
+
+#ifdef CATCHCHALLENGER_CACHE_HPS
+template <class B>
+void serialize(B& buf) const {
+    buf << (uint8_t)compressionType;
+    buf << compressionLevel;
+    buf << sendPlayerNumber;
+    buf << anonymous;
+    //fight
+    buf << pvp;
+    buf << max_players;//not common because if null info not send, if == 1 then internal
+
+    //the listen, implicit on the client
+    buf << dontSendPlayerType;
+    buf << teleportIfMapNotFoundOrOutOfMap;
+    buf << everyBodyIsRoot;
+    buf << datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
+
+    buf << (uint8_t)fightSync;
+    buf << positionTeleportSync;
+    buf << secondToPositionSync;//0 is disabled
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    buf << database_login;
+    buf << database_base;
+    #endif
+    buf << database_common;
+    buf << database_server;
+
+    buf << common_blobversion_datapack;
+    buf << server_blobversion_datapack;
+
+    //connection
+    buf << automatic_account_creation;
+
+    //visibility algorithm
+    buf << mapVisibility;
+
+    //DDOS algorithm
+    buf << ddos;
+
+    //city
+    buf << city;
+
+    buf << programmedEventList;
+
+    buf << std::string(private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
+    //content
+    buf << server_message;
+    buf << daillygift;
+}
+template <class B>
+void parse(B& buf) {
+    uint8_t smallTemp=0;
+    buf >> smallTemp;
+    compressionType=(CompressionType)smallTemp;
+    buf >> compressionLevel;
+    buf >> sendPlayerNumber;
+    buf >> anonymous;
+    //fight
+    buf >> pvp;
+    buf >> max_players;//not common because if null info not send, if == 1 then internal
+
+    //the listen, implicit on the client
+    buf >> dontSendPlayerType;
+    buf >> teleportIfMapNotFoundOrOutOfMap;
+    buf >> everyBodyIsRoot;
+    buf >> datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
+
+    buf >> smallTemp;
+    fightSync=(FightSync)smallTemp;
+    buf >> positionTeleportSync;
+    buf >> secondToPositionSync;//0 is disabled
+
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    buf >> database_login;
+    buf >> database_base;
+    #endif
+    buf >> database_common;
+    buf >> database_server;
+
+    buf >> common_blobversion_datapack;
+    buf >> server_blobversion_datapack;
+
+    //connection
+    buf >> automatic_account_creation;
+
+    //visibility algorithm
+    buf >> mapVisibility;
+
+    //DDOS algorithm
+    buf >> ddos;
+
+    //city
+    buf >> city;
+
+    buf >> programmedEventList;
+
+    std::string str;
+    buf >> str;
+    if(str.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
+        abort();
+    memcpy(private_token_statclient,str.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+
+    //content
+    buf >> server_message;
+    buf >> daillygift;
+}
+#endif
 };
 
 struct CityStatus

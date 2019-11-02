@@ -21,7 +21,7 @@ StringWithReplacement::~StringWithReplacement()
 {
     if(preparedQuery!=NULL)
     {
-        delete preparedQuery;
+        delete[] preparedQuery;
         preparedQuery=NULL;
     }
 }
@@ -118,7 +118,7 @@ void StringWithReplacement::set(const std::string &query)
             //previousStringPos=size;
             *reinterpret_cast<uint16_t *>(preparedQueryTemp+1)=pos-3-(numberOfReplace*2+1);
             //copy
-            preparedQuery=(unsigned char *)malloc(pos+1);
+            preparedQuery=new unsigned char[pos+1];
             memcpy(preparedQuery,preparedQueryTemp,pos);
             if(((uint32_t)*reinterpret_cast<uint16_t *>(preparedQuery+1)+1+100)>=sizeof(composeBuffer))
             {
