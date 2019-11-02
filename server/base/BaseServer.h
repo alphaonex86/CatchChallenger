@@ -17,6 +17,9 @@
 #include "../../general/base/Map_loader.h"
 #include "../../general/base/ProtocolParsing.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include "../../general/hps/hps.h"
+#endif
 #include "ServerStructures.h"
 #include "ClientWithSocket.h"
 #include "MapServer.h"
@@ -35,10 +38,24 @@ public:
     explicit BaseServer();
     virtual ~BaseServer();
     void setSettings(const GameServerSettings &settings);
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    void setMaster(const std::string &master_host, const uint16_t &master_port,
+                   const uint8_t &master_tryInterval, const uint8_t &master_considerDownAfterNumberOfTry);
+    #endif
+    #endif
     GameServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
+    #ifdef CATCHCHALLENGER_CACHE_HPS
     void setSave(const std::string &file);
     void setLoad(const std::string &file);
+    bool binaryCacheIsOpen() const;
+    NormalServerSettings loadSettingsFromBinaryCache(std::string &master_host,
+                                                     uint16_t &master_port,
+                                                     uint8_t &master_tryInterval,
+                                                     uint8_t &master_considerDownAfterNumberOfTry);
+    void setNormalSettings(const NormalServerSettings &normalServerSettings);
+    #endif
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void load_clan_max_id();
@@ -215,8 +232,11 @@ protected:
     bool preload_industries_call;
     bool preload_market_items_call;
 
-    std::string save;
-    std::string load;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    std::ifstream *in_file;
+    hps::StreamInputBuffer *serialBuffer;
+    std::ofstream *out_file;
+    #endif
 
     static std::regex regexXmlFile;
 };

@@ -124,27 +124,49 @@ int main(int argc, char *argv[])
 
     bool datapack_loaded=false;
 
-    if(!CatchChallenger::FacilityLibGeneral::isFile(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/informations.xml"))
-    {
-        std::cerr << "No datapack found into: " << FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath) << "/datapack/" << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    settings=new TinyXMLSettings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/server-properties.xml");
-    NormalServerGlobal::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
-
-    if(!Epoll::epoll.init())
-        return EPOLLERR;
-
     #ifdef SERVERSSL
     server=new EpollSslServer();
     #else
     server=new EpollServer();
     #endif
 
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin";
+    const bool save=argc==2 && strcmp(argv[1],"save")==0;
+    if(save)
+        server->setSave(datapackCache);
+    else
+        server->setLoad(datapackCache);
+    #endif
+
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(save || !server->binaryCacheIsOpen())
+    #endif
+        if(!CatchChallenger::FacilityLibGeneral::isFile(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/informations.xml"))
+        {
+            std::cerr << "No datapack found into: " << FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath) << "/datapack/" << std::endl;
+            return EXIT_FAILURE;
+        }
+
+    #if defined(CATCHCHALLENGER_CACHE_HPS) && !defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
+    if(save || !server->binaryCacheIsOpen())
+    #endif
+    {
+        settings=new TinyXMLSettings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/server-properties.xml");
+        NormalServerGlobal::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
+    }
+
+    if(!Epoll::epoll.init())
+        return EPOLLERR;
+
     //before linkToMaster->registerGameServer() to have the correct settings loaded
     //after server to have the settings
-    send_settings(server,settings,master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry);
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(!save && server->binaryCacheIsOpen())
+        server->setNormalSettings(server->loadSettingsFromBinaryCache(master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry));
+    else
+    #endif
+        send_settings(server,settings,master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry);
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
@@ -390,11 +412,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     server->initialize_the_database_prepared_query();
-    const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin";
-    if(argc==2 && strcmp(argv[1],"save")==0)
-        server->setSave(datapackCache);
-    else
-        server->setLoad(datapackCache);
 
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;

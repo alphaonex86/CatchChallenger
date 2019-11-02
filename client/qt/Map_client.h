@@ -42,6 +42,7 @@ public:
     std::vector<Map_to_send::Map_Point> bot_spawn_points;
 
     Map_semi_border border_semi;
+    uint32_t group;
 
     Map_client();
 

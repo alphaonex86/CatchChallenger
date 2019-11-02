@@ -55,7 +55,7 @@ public:
         //CommonMap
         std::unordered_map<void *,int32_t> pointer_to_pos;
         pointer_to_pos[nullptr]=-1;
-        for(unsigned int i=0; i<GlobalServerData::serverPrivateVariables.map_list.size(); i++)
+        for(int32_t i=0; i<(int32_t)GlobalServerData::serverPrivateVariables.map_list.size(); i++)
             pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
         buf << border.bottom.x_offset << pointer_to_pos.at(border.bottom.map);
         buf << border.left.y_offset << pointer_to_pos.at(border.left.map);
@@ -69,7 +69,11 @@ public:
                 << pointer_to_pos.at(tp.map)
                 << tp.source_x << tp.source_y;
         }
-        buf << width << height << group << id << parsed_layer.monstersCollisionList;
+        buf << width;
+        buf << height;
+        //buf << group;
+        buf << id;
+        buf << parsed_layer.monstersCollisionList;
         buf << std::string((char *)parsed_layer.simplifiedMap,width*height);
         buf << (uint8_t)shops.size();
         for (const auto x : shops)
@@ -100,6 +104,7 @@ public:
               buf << x.first << (uint8_t)x.second;
         buf << reverse_db_id << pointOnMap_Item;
     }
+    static uint32_t mapListSize;
     static CommonMap * posToPointer(const int32_t &pos);
     template <class B>
     void parse(B& buf) {
@@ -123,7 +128,11 @@ public:
                 >> tp.source_x >> tp.source_y;
             tp.map=posToPointer(pos);
         }
-        buf >> width >> height >> group >> id >> parsed_layer.monstersCollisionList;
+        buf >> width;
+        buf >> height;
+        //buf >> group;
+        buf >> id;
+        buf >> parsed_layer.monstersCollisionList;
         std::string rawData;
         buf >> rawData;
         parsed_layer.simplifiedMap=(uint8_t *)malloc(rawData.size());
@@ -143,11 +152,13 @@ public:
             buf >> posXY.first >> posXY.second;
             learn.insert(posXY);
         }
+        buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
             buf >> posXY.first >> posXY.second;
             heal.insert(posXY);
         }
+        buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
             buf >> posXY.first >> posXY.second;

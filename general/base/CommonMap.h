@@ -45,7 +45,7 @@ public:
     std::string map_file;
     uint8_t width;//why uint16_t if a map is not allowed be more than 255?
     uint8_t height;//why uint16_t if a map is not allowed be more than 255?
-    uint32_t group;
+    //uint32_t group;
     uint32_t id;
 
     //the index is position (x+y*width)

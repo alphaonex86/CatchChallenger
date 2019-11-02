@@ -5,6 +5,10 @@
 
 using namespace CatchChallenger;
 
+#ifdef CATCHCHALLENGER_CACHE_HPS
+uint32_t MapServer::mapListSize=0;
+#endif
+
 MapServer::MapServer() :
     localChatDropTotalCache(0),
     localChatDropNewValue(0),
@@ -83,7 +87,7 @@ CommonMap * MapServer::posToPointer(const int32_t &pos)
 {
     if(pos==-1)
         return nullptr;
-    if((uint32_t)pos<GlobalServerData::serverPrivateVariables.map_list.size())
+    if((uint32_t)pos<mapListSize)
         return GlobalServerData::serverPrivateVariables.flat_map_list[pos];
     else
         abort();

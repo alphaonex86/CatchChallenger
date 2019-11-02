@@ -2,6 +2,7 @@
 #include "GlobalServerData.h"
 #include "StaticText.h"
 #include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonSettingsCommon.h"
 #include <sys/stat.h>
 
 /// \todo solve disconnecting/destroy during the SQL loading
@@ -11,6 +12,8 @@ using namespace CatchChallenger;
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_base()
 {
+    if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
+        return std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>();
     if(GlobalServerData::serverSettings.datapackCache==-1)
         return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
     else if(GlobalServerData::serverSettings.datapackCache==0)

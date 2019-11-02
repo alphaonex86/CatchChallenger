@@ -175,17 +175,20 @@ void BaseServer::preload_the_datapack()
                     {
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                        SHA256_CTX hashFile;
-                        if(SHA224_Init(&hashFile)!=1)
+                        if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
-                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                            abort();
+                            SHA256_CTX hashFile;
+                            if(SHA224_Init(&hashFile)!=1)
+                            {
+                                std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                                abort();
+                            }
+                            SHA224_Update(&hashFile,data.data(),data.size());
+                            BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
+                            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                            ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                            BaseServerMasterSendDatapack::datapack_file_hash_cache_base[fileName]=cacheFile;
                         }
-                        SHA224_Update(&hashFile,data.data(),data.size());
-                        BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                        BaseServerMasterSendDatapack::datapack_file_hash_cache_base[fileName]=cacheFile;
                         #endif
                         #endif
 
@@ -311,17 +314,20 @@ void BaseServer::preload_the_datapack()
                     #endif
                     {
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                        SHA256_CTX hashFile;
-                        if(SHA224_Init(&hashFile)!=1)
+                        if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
-                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                            abort();
+                            SHA256_CTX hashFile;
+                            if(SHA224_Init(&hashFile)!=1)
+                            {
+                                std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                                abort();
+                            }
+                            SHA224_Update(&hashFile,data.data(),data.size());
+                            BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
+                            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                            ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                            Client::datapack_file_hash_cache_main[fileName]=cacheFile;
                         }
-                        SHA224_Update(&hashFile,data.data(),data.size());
-                        BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                        Client::datapack_file_hash_cache_main[fileName]=cacheFile;
                         #endif
 
                         SHA224_Update(&hashMain,data.data(),data.size());
@@ -390,18 +396,21 @@ void BaseServer::preload_the_datapack()
                     #endif
 
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-                    //switch the data to correct hash or drop it
-                    SHA256_CTX hashFile;
-                    if(SHA224_Init(&hashFile)!=1)
+                    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                     {
-                        std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                        abort();
+                        //switch the data to correct hash or drop it
+                        SHA256_CTX hashFile;
+                        if(SHA224_Init(&hashFile)!=1)
+                        {
+                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
+                            abort();
+                        }
+                        SHA224_Update(&hashFile,data.data(),data.size());
+                        BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
+                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
+                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                        Client::datapack_file_hash_cache_sub[fileName]=cacheFile;
                     }
-                    SHA224_Update(&hashFile,data.data(),data.size());
-                    BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                    SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                    ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-                    Client::datapack_file_hash_cache_sub[fileName]=cacheFile;
                     #endif
 
                     SHA224_Update(&hashSub,data.data(),data.size());
@@ -420,19 +429,21 @@ void BaseServer::preload_the_datapack()
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    if(BaseServerMasterSendDatapack::datapack_file_hash_cache_base.size()==0)
-    {
-        std::cout << "0 file for datapack loaded base (abort)" << std::endl;
-        abort();
-    }
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
+        if(BaseServerMasterSendDatapack::datapack_file_hash_cache_base.size()==0)
+        {
+            std::cout << "0 file for datapack loaded base (abort)" << std::endl;
+            abort();
+        }
     #endif
     #endif
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    if(Client::datapack_file_hash_cache_main.size()==0)
-    {
-        std::cout << "0 file for datapack loaded main (abort)" << std::endl;
-        abort();
-    }
+    if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
+        if(Client::datapack_file_hash_cache_main.size()==0)
+        {
+            std::cout << "0 file for datapack loaded main (abort)" << std::endl;
+            abort();
+        }
 
     std::cout << BaseServerMasterSendDatapack::datapack_file_hash_cache_base.size()
               << " file for datapack loaded base, "

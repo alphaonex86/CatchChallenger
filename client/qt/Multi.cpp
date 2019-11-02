@@ -21,6 +21,7 @@
 #include <QDir>
 #include "Login.h"
 #include "Settings.h"
+#include <QDebug>
 
 Multi::Multi(QWidget *parent) :
     QWidget(parent),

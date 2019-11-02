@@ -119,6 +119,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                         if(filedesc!=NULL)
                         {
                             const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
+                            if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
                             {
                                 SHA256_CTX hashFile;
                                 if(SHA224_Init(&hashFile)!=1)

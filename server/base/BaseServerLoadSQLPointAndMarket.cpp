@@ -79,7 +79,7 @@ void BaseServer::preload_pointOnMap_item_return()
                 {
                     MapServer * const map_server=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
                     if(map_server==NULL)
-                        std::cerr << "preload_itemOnMap_return(): map == NULL for this id, map not found: " << map_id << std::endl;
+                        std::cerr << "preload_pointOnMap_item_return(): map == NULL for this id, map not found: " << map_id << std::endl;
                     else
                     {
                         const uint32_t &x=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
@@ -216,7 +216,7 @@ void BaseServer::preload_pointOnMap_plant_return()
                 {
                     MapServer * const map_server=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
                     if(map_server==NULL)
-                        std::cerr << "preload_itemOnMap_return(): map == NULL for this id, map not found: " << map_id << std::endl;
+                        std::cerr << "preload_pointOnMap_plant_return(): map == NULL for this id, map not found: " << map_id << std::endl;
                     else
                     {
                         const uint32_t &x=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
@@ -473,14 +473,14 @@ void BaseServer::preload_market_items()
     preload_market_items_call=true;
     std::cout << GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.size() << " SQL monster list loaded" << std::endl;
 
-    Client::marketObjectUniqueIdList.clear();
+    /*lot of memory Client::marketObjectUniqueIdList.clear();
     Client::marketObjectUniqueIdList.reserve(65535);
     int index=0;
     while(index<=65535)
     {
         Client::marketObjectUniqueIdList.push_back(static_cast<uint16_t>(index));
         index++;
-    }
+    }*/
     //do the query
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
