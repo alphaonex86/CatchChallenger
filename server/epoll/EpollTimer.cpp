@@ -89,6 +89,7 @@ bool EpollTimer::start(const unsigned int &msec, unsigned int offset)
         return false;
     }
     epoll_event event;
+    memset(&event,0,sizeof(event));
     event.data.ptr = this;
     event.events = EPOLLIN;
     if(Epoll::epoll.ctl(EPOLL_CTL_ADD,tfd,&event) < 0)

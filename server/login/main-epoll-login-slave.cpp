@@ -210,6 +210,7 @@ int main(int argc, char *argv[])
                                 }
                             }
                             epoll_event event;
+                            memset(&event,0,sizeof(event));
                             event.data.ptr = client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT | EPOLLHUP;
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
@@ -338,7 +339,8 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
                         //disconnected, remove the object
 
-                        client->disconnectClient();
+                        if(client!=nullptr)
+                            client->disconnectClient();
 
                         elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
                         elementsToDeleteSize++;

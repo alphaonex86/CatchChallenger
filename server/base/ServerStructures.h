@@ -334,7 +334,7 @@ void serialize(B& buf) const {
 
     buf << programmedEventList;
 
-    buf << std::string(private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    buf.write((char *)private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
     //content
     buf << server_message;
@@ -387,11 +387,7 @@ void parse(B& buf) {
 
     buf >> programmedEventList;
 
-    std::string str;
-    buf >> str;
-    if(str.size()!=TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-        abort();
-    memcpy(private_token_statclient,str.data(),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+    buf.read(private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
     //content
     buf >> server_message;

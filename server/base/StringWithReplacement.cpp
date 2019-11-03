@@ -30,7 +30,7 @@ void StringWithReplacement::set(const std::string &query)
 {
     if(preparedQuery!=NULL)
     {
-        delete preparedQuery;
+        delete[] preparedQuery;
         preparedQuery=NULL;
     }
     if((query.size()+16+2)>=65535 || (query.size()+16+2)>=sizeof(composeBuffer))
