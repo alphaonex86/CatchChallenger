@@ -907,9 +907,11 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                     {
                         const CatchChallenger::MonstersCollision &monstersCollision=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
                         if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
                         {
-                            monsterMapObject->setVisible((monstersCollision.tile.empty() && pendingMonsterMoves.size()>=1) ||
+                            monsterMapObject->setVisible((monstersCollisionTemp.tile.empty() && pendingMonsterMoves.size()>=1) ||
                                                          (pendingMonsterMoves.size()==1 && !inMove)
                                                          );
                         }
@@ -929,12 +931,14 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             {
                 const CatchChallenger::MonstersCollision &monstersCollision=
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                        CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
                 if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
                 {
                     //change tile if needed (water to walk transition)
-                    if(monstersCollision.tile!=lastTileset)
+                    if(monstersCollisionTemp.tile!=lastTileset)
                     {
-                        lastTileset=monstersCollision.tile;
+                        lastTileset=monstersCollisionTemp.tile;
                         if(playerTilesetCache.find(lastTileset)!=playerTilesetCache.cend())
                             playerTileset=playerTilesetCache.at(lastTileset);
                         else

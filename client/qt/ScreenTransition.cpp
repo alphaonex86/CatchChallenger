@@ -228,6 +228,7 @@ void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::Cha
 
 void ScreenTransition::disconnectedFromServer()
 {
+    baseWindow->resetAll();
     setBackground(&b);
     setForeground(m);
     setAbove(nullptr);

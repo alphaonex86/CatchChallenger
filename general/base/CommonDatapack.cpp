@@ -167,7 +167,14 @@ void CommonDatapack::parseMonsters()
 void CommonDatapack::parseMonstersCollision()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    monstersCollision=DatapackGeneralLoader::loadMonstersCollision(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    monstersCollisionTemp=DatapackGeneralLoader::loadMonstersCollision(datapackPath+DATAPACK_BASE_PATH_MAPBASE+"layers.xml",CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.events);
+    for(const MonstersCollisionTemp &i : monstersCollisionTemp)
+    {
+        MonstersCollision value;
+        value.item=i.item;
+        value.type=i.type;
+        monstersCollision.push_back(value);
+    }
     std::cout << monstersCollision.size() << " monster(s) collisions loaded" << std::endl;
     #endif
 }

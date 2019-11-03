@@ -315,6 +315,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
         //resetAll();
         /*if(serverMode==ServerMode_Remote)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
+        emit disconnectedFromServer();
     }
     if(baseWindow!=NULL)
         baseWindow->stateChanged(socketState);
