@@ -220,6 +220,7 @@ bool EpollPostgresql::syncConnectInternal(bool infinityTry)
             std::cerr << "Unable to apply tcp no delay" << std::endl;
     }
     epoll_event event;
+    memset(&event,0,sizeof(event));
     event.events = EPOLLOUT | EPOLLIN | EPOLLRDHUP | EPOLLERR | EPOLLET;
     event.data.ptr = this;
 

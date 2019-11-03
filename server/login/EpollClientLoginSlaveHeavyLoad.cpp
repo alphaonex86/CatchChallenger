@@ -455,7 +455,7 @@ void EpollClientLoginSlave::server_list_return(const uint8_t &serverCount,char *
                 memcpy(EpollClientLoginSlave::loginGood+tempSize,i->second.rawData,i->second.rawDataSize);
                 tempSize+=i->second.rawDataSize;
                 //remove the old buffer
-                delete i->second.rawData;
+                delete[] i->second.rawData;
                 ++i;
             }
         }

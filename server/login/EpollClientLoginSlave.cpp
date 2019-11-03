@@ -68,7 +68,7 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     }
 
     if(socketString!=NULL)
-        delete socketString;
+        delete[] socketString;
     {
         unsigned int index=0;
 

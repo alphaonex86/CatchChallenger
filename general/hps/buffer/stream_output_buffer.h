@@ -51,6 +51,13 @@ class StreamOutputBuffer {
     return *this;
   }
 
+  inline ssize_t tellp() const {
+      if(stream->tellp()>0)
+        return (ssize_t)stream->tellp() + pos;
+      else
+        return pos;
+  }
+
  private:
   std::ostream* const stream;
 

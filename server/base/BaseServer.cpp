@@ -11,8 +11,6 @@
 
 using namespace CatchChallenger;
 
-std::regex BaseServer::regexXmlFile=std::regex("^[a-zA-Z0-9 _-]+\\.xml$");
-
 BaseServer::BaseServer() :
     stat(Down),
     dataLoaded(false)
@@ -184,9 +182,7 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
                                                              uint8_t &master_tryInterval,
                                                              uint8_t &master_considerDownAfterNumberOfTry)
 {
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
     *serialBuffer >> GlobalServerData::serverSettings;
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.useSP;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.autoLearn;
@@ -207,7 +203,6 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.chat_allow_local;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.chat_allow_private;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.chat_allow_clan;
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
     NormalServerSettings normalServerSettings;
     *serialBuffer >> normalServerSettings.proxy;
@@ -215,10 +210,8 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
     *serialBuffer >> normalServerSettings.server_ip;
     *serialBuffer >> normalServerSettings.server_port;
     *serialBuffer >> normalServerSettings.useSsl;
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
     setSettings(GlobalServerData::serverSettings);
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     (void)master_host;
@@ -231,7 +224,6 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
     *serialBuffer >> master_tryInterval;
     *serialBuffer >> master_considerDownAfterNumberOfTry;
     #endif
-    std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
     return normalServerSettings;
 }
@@ -279,13 +271,11 @@ void BaseServer::preload_the_data()
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(in_file!=nullptr)
     {
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
         size_t lastSize=serialBuffer->tellg();
         {
             const auto &now = msFrom1970();
             *serialBuffer >> CommonDatapack::commonDatapack;
             std::cout << "commonDatapack size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-            std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
             *serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
             std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
             const auto &after = msFrom1970();
@@ -293,7 +283,6 @@ void BaseServer::preload_the_data()
         }
         timeDatapack = msFrom1970();
         const auto &now = msFrom1970();
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
 
         *serialBuffer >> GlobalServerData::serverPrivateVariables.randomData;
         std::cout << "randomData size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
@@ -302,7 +291,6 @@ void BaseServer::preload_the_data()
         *serialBuffer >> CommonSettingsCommon::commonSettingsCommon.datapackHashBase;
         *serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerMain;
         *serialBuffer >> CommonSettingsServer::commonSettingsServer.datapackHashServerSub;
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
         std::cout << "hash size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
         *serialBuffer >> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
@@ -311,19 +299,12 @@ void BaseServer::preload_the_data()
         std::cout << "datapack_file_hash_cache_main size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> Client::datapack_file_hash_cache_sub;
         std::cout << "datapack_file_hash_cache_sub size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
         #endif
         *serialBuffer >> GlobalServerData::serverPrivateVariables.skinList;
         std::cout << "skinList size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> MapServer::mapListSize;
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
-        if(MapServer::mapListSize>4000000000)
-        {
-            std::cerr << "MapServer::mapListSize>4000000000 (abort)" << std::endl;
-            abort();
-        }
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*MapServer::mapListSize));
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
         {
@@ -343,28 +324,17 @@ void BaseServer::preload_the_data()
         }
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
         {
-            std::cout << __LINE__ << " stream id: " << i << std::endl;
             MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             std::string string;
-            uint32_t id;
-            std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
+            uint32_t id=0;
             *serialBuffer >> id;
-            std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
-            *serialBuffer >> string;
-            if(string.empty())
-            {
-                std::cerr << "string.empty() at map deserialise (abort)" << std::endl;
+            if(id>4000000000)
                 abort();
-            }
-            std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
+            *serialBuffer >> string;
             *serialBuffer >> *map;
-            std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
-            if(i==0)
-                std::cout << "single map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;
         }
-        std::cout << __LINE__ << " stream pos: " << serialBuffer->tellg() << std::endl;
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
@@ -396,12 +366,9 @@ void BaseServer::preload_the_data()
         if(out_file!=nullptr)
         {
             size_t lastSize=0;
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             hps::to_stream(CommonDatapack::commonDatapack, *out_file);
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             std::cout << "commonDatapack size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(CommonDatapackServerSpec::commonDatapackServerSpec, *out_file);
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             std::cout << "commonDatapackServerSpec size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.randomData, *out_file);
             std::cout << "randomData size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
@@ -410,17 +377,14 @@ void BaseServer::preload_the_data()
             hps::to_stream(CommonSettingsCommon::commonSettingsCommon.datapackHashBase, *out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerMain, *out_file);
             hps::to_stream(CommonSettingsServer::commonSettingsServer.datapackHashServerSub, *out_file);
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             std::cout << "hash size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             hps::to_stream(BaseServerMasterSendDatapack::datapack_file_hash_cache_base, *out_file);
             std::cout << "datapack_file_hash_cache_base size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(Client::datapack_file_hash_cache_main, *out_file);
             std::cout << "datapack_file_hash_cache_main size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(Client::datapack_file_hash_cache_sub, *out_file);
             std::cout << "datapack_file_hash_cache_sub size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             #endif
             hps::to_stream(GlobalServerData::serverPrivateVariables.skinList, *out_file);
             std::cout << "other data size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
@@ -428,7 +392,6 @@ void BaseServer::preload_the_data()
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             uint32_t mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
             hps::to_stream(mapListSize, *out_file);
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
 
             std::unordered_map<const CommonMap *,std::string> map_list_reverse;
             for (const auto x : GlobalServerData::serverPrivateVariables.map_list)
@@ -443,21 +406,16 @@ void BaseServer::preload_the_data()
             lastSize=out_file->tellp();
             for(unsigned int i=0; i<mapListSize; i++)
             {
-                std::cout << __LINE__ << " stream id: " << i << std::endl;
                 const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
                 const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
                 const uint32_t &id=id_map_to_map_reverse.at(string);
-                std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
                 hps::to_stream(id, *out_file);
                 idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-                std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
                 hps::to_stream(string, *out_file);
                 pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-                std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
                 hps::to_stream(*map, *out_file);
                 mapSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
             }
-            std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
             std::cout << "map id size: " << idSize << "B" << std::endl;
             std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
             std::cout << "map size: " << mapSize << "B" << std::endl;
@@ -986,12 +944,10 @@ void BaseServer::setMaster(
     const uint8_t &master_tryInterval,
     const uint8_t &master_considerDownAfterNumberOfTry)
 {
-    std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
     hps::to_stream(master_host, *out_file);
     hps::to_stream(master_port, *out_file);
     hps::to_stream(master_tryInterval, *out_file);
     hps::to_stream(master_considerDownAfterNumberOfTry, *out_file);
-    std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
 }
 #endif
 #endif
@@ -1009,9 +965,7 @@ void BaseServer::setSettings(const GameServerSettings &settings)
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(out_file!=nullptr)
     {
-        std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
         hps::to_stream(GlobalServerData::serverSettings, *out_file);
-        std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
 
         hps::to_stream(CommonSettingsServer::commonSettingsServer.useSP, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.autoLearn, *out_file);
@@ -1032,7 +986,6 @@ void BaseServer::setSettings(const GameServerSettings &settings)
         hps::to_stream(CommonSettingsServer::commonSettingsServer.chat_allow_local, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.chat_allow_private, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.chat_allow_clan, *out_file);
-        std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
     }
     #endif
 }
@@ -1042,13 +995,11 @@ void BaseServer::setNormalSettings(const NormalServerSettings &normalServerSetti
 {
     if(out_file!=nullptr)
     {
-        std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
         hps::to_stream(normalServerSettings.proxy, *out_file);
         hps::to_stream(normalServerSettings.proxy_port, *out_file);
         hps::to_stream(normalServerSettings.server_ip, *out_file);
         hps::to_stream(normalServerSettings.server_port, *out_file);
         hps::to_stream(normalServerSettings.useSsl, *out_file);
-        std::cout << __LINE__ << " stream pos: " << out_file->tellp() << std::endl;
     }
 }
 #endif

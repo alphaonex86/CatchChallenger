@@ -1,6 +1,9 @@
 #include "BaseServer.h"
 #include "GlobalServerData.h"
 #include "DictionaryServer.h"
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include <fstream>
+#endif
 
 #include "../../general/base/CommonSettingsCommon.h"
 
@@ -337,8 +340,18 @@ void BaseServer::preload_industries_return()
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(out_file!=nullptr)
     {
+        out_file->flush();
+        out_file->close();
+        delete out_file;
         ::exit(0);
         return;
+    }
+    if(serialBuffer!=nullptr)
+        delete serialBuffer;
+    if(in_file!=nullptr)
+    {
+        in_file->close();
+        delete in_file;
     }
     #endif
     preload_finish();
