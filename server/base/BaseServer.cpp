@@ -275,6 +275,11 @@ void BaseServer::preload_the_data()
         {
             const auto &now = msFrom1970();
             *serialBuffer >> CommonDatapack::commonDatapack;
+            if(CommonDatapack::commonDatapack.monstersCollision.empty())
+            {
+                std::cerr << "CommonDatapack::commonDatapack.monstersCollision.empty() (abort)" << std::endl;
+                abort();
+            }
             std::cout << "commonDatapack size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
             *serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
             std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
@@ -324,18 +329,27 @@ void BaseServer::preload_the_data()
         }
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
         {
-            MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             std::string string;
             uint32_t id=0;
             *serialBuffer >> id;
             if(id>4000000000)
                 abort();
             *serialBuffer >> string;
+            MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             *serialBuffer >> *map;
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
         }
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
+
+        if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+        {
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=
+                    static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size()));
+            memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size());
+            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
+        }
+
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
 

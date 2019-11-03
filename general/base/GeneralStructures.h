@@ -423,10 +423,13 @@ enum MonstersCollisionType : uint8_t
 };
 
 /** --------------- used to parse, but useless when datapack is loaded ------------ **/
-struct MonstersCollision
+struct MonstersCollisionTemp
 {
+    //needed at runtime
     MonstersCollisionType type;
     CATCHCHALLENGER_TYPE_ITEM item;
+
+    //temporary to parse
     std::string tile;
     std::string layer;
     std::vector<std::string> monsterTypeList;
@@ -448,6 +451,27 @@ struct Type
 };
 
 /** ---------------- Static datapack for serialiser ------------------------ **/
+
+class MonstersCollision
+{
+public:
+    //needed at runtime
+    MonstersCollisionType type;
+    CATCHCHALLENGER_TYPE_ITEM item;
+
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << (uint8_t)type << item;
+    }
+    template <class B>
+    void parse(B& buf) {
+        uint8_t value=0;
+        buf >> value >> item;
+        type=(MonstersCollisionType)value;
+    }
+    #endif
+};
 
 class Reputation
 {

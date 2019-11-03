@@ -658,7 +658,9 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                     {
                         const CatchChallenger::MonstersCollision &monstersCollision=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
-                        const bool needBeVisible=(monstersCollision.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
+                        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
+                        const bool needBeVisible=(monstersCollisionTemp.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
                                 (otherPlayer.pendingMonsterMoves.size()==1 && !otherPlayer.inMove);
                         const bool wasVisible=otherPlayer.monsterMapObject->isVisible();
                         otherPlayer.monsterMapObject->setVisible(needBeVisible);
@@ -680,10 +682,12 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
             {
                 const CatchChallenger::MonstersCollision &monstersCollision=
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                        CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
                 //change tile if needed (water to walk transition)
-                if(monstersCollision.tile!=otherPlayer.lastTileset)
+                if(monstersCollisionTemp.tile!=otherPlayer.lastTileset)
                 {
-                    otherPlayer.lastTileset=monstersCollision.tile;
+                    otherPlayer.lastTileset=monstersCollisionTemp.tile;
                     if(playerTilesetCache.find(otherPlayer.lastTileset)!=playerTilesetCache.cend())
                         otherPlayer.playerTileset=playerTilesetCache.at(otherPlayer.lastTileset);
                     else

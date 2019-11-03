@@ -693,11 +693,12 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             unsigned int index=0;
                             while(index<CommonDatapack::commonDatapack.monstersCollision.size())
                             {
-                                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer==name)
+                                const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index);
+                                if(monstersCollisionTemp.layer==name)
                                 {
                                     mapLayerContentForMonsterCollision[name]=dataRaw;
                                     {
-                                        const std::vector<std::string> &monsterTypeListText=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                                        const std::vector<std::string> &monsterTypeListText=monstersCollisionTemp.monsterTypeList;
                                         unsigned int monsterTypeListIndex=0;
                                         while(monsterTypeListIndex<monsterTypeListText.size())
                                         {
@@ -929,8 +930,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     {
                                         std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
                                                   << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width])
-                                                  << " (" << CommonDatapack::commonDatapack.monstersCollision.at(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]).layer
-                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollision.at(zoneId).layer << ")" << std::endl;
+                                                  << " (" << CommonDatapack::commonDatapack.monstersCollisionTemp
+                                                     .at(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]).layer
+                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollisionTemp.at(zoneId).layer
+                                                  << ")" << std::endl;
                                         previousHaveMonsterWarn=true;
                                     }
                                     this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
