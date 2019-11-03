@@ -41,9 +41,10 @@ LinkToGameServer::~LinkToGameServer()
 {
     if(client!=NULL)
     {
+        //linkToGameServer=NULL before closeSocket, else segfault
+        client->linkToGameServer=NULL;
         client->closeSocket();
         //break the link
-        client->linkToGameServer=NULL;
         client=NULL;
     }
 }
