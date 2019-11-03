@@ -193,9 +193,9 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
+            if(CommonDatapack::commonDatapack.monstersCollisionTemp.at(index).layer.empty())
             {
-                caveName=CommonDatapack::commonDatapack.monstersCollision.at(index).monsterTypeList;
+                caveName=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index).monsterTypeList;
                 break;
             }
             index++;
@@ -241,8 +241,9 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         unsigned int index=0;
         while(index<CommonDatapack::commonDatapack.monstersCollision.size())
         {
-            const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
-            const std::vector<std::string> &searchList=monstersCollision.defautMonsterTypeList;
+            //const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
+            const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index);
+            const std::vector<std::string> &searchList=monstersCollisionTemp.defautMonsterTypeList;
             unsigned int index_search=0;
             while(index_search<searchList.size())
             {
@@ -254,20 +255,20 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
             {
                 uint8_t tempZoneNumberIndex=0;
                 //cave
-                if(CommonDatapack::commonDatapack.monstersCollision.at(index).layer.empty())
+                if(monstersCollisionTemp.layer.empty())
                 {}
                 //not cave
-                else if(vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,CommonDatapack::commonDatapack.monstersCollision.at(index).layer))
+                else if(vectorcontainsAtLeastOne(detectedMonsterCollisionLayer,monstersCollisionTemp.layer))
                 {
-                    if(zoneNumber.find(CommonDatapack::commonDatapack.monstersCollision.at(index).layer)==zoneNumber.cend())
+                    if(zoneNumber.find(monstersCollisionTemp.layer)==zoneNumber.cend())
                     {
-                        zoneNumber[CommonDatapack::commonDatapack.monstersCollision.at(index).layer]=zoneNumberIndex;
+                        zoneNumber[monstersCollisionTemp.layer]=zoneNumberIndex;
                         this->map_to_send.parsed_layer.monstersCollisionList.push_back(MonstersCollisionValue());//create
                         tempZoneNumberIndex=zoneNumberIndex;
                         zoneNumberIndex++;
                     }
                     else
-                        tempZoneNumberIndex=zoneNumber.at(CommonDatapack::commonDatapack.monstersCollision.at(index).layer);
+                        tempZoneNumberIndex=zoneNumber.at(monstersCollisionTemp.layer);
                 }
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
@@ -282,9 +283,9 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
                         MonstersCollisionValue::MonstersCollisionContent monstersCollisionContent;
                         monstersCollisionContent.defaultMonsters=monsterTypeList.at(searchList.at(index_search));
                         unsigned int event_index=0;
-                        while(event_index<monstersCollision.events.size())
+                        while(event_index<monstersCollisionTemp.events.size())
                         {
-                            const MonstersCollision::MonstersCollisionEvent &monstersCollisionEvent=monstersCollision.events.at(event_index);
+                            const MonstersCollisionTemp::MonstersCollisionEvent &monstersCollisionEvent=monstersCollisionTemp.events.at(event_index);
                             const std::vector<std::string> &searchList=monstersCollisionEvent.monsterTypeList;
                             unsigned int index_search=0;
                             while(index_search<searchList.size())

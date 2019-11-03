@@ -21,12 +21,12 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
 {
     if(fightCollisionBot!=NULL)
     {
-        delete fightCollisionBot;
+        delete[] fightCollisionBot;
         fightCollisionBot=NULL;
     }
     if(botAlreadyBeaten!=NULL)
     {
-        delete botAlreadyBeaten;
+        delete[] botAlreadyBeaten;
         botAlreadyBeaten=NULL;
     }
 }
@@ -35,7 +35,7 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
 {
     if(this->botAlreadyBeaten!=NULL)
     {
-        delete this->botAlreadyBeaten;
+        delete[] this->botAlreadyBeaten;
         this->botAlreadyBeaten=NULL;
     }
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId)

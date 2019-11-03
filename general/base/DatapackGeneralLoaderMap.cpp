@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items,const std::vector<Event> &events)
+std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(const std::string &file, const std::unordered_map<uint16_t, Item> &items,const std::vector<Event> &events)
 {
     std::unordered_map<std::string,uint8_t> eventStringToId;
     std::unordered_map<std::string,std::unordered_map<std::string,uint8_t> > eventListingToId;
@@ -27,7 +27,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
             index++;
         }
     }
-    std::vector<MonstersCollision> returnVar;
+    std::vector<MonstersCollisionTemp> returnVar;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     //open and quick check the file
@@ -77,7 +77,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
         else
         {
             ok=true;
-            MonstersCollision monstersCollision;
+            MonstersCollisionTemp monstersCollision;
             if(strcmp(monstersCollisionItem->Attribute("type"),"walkOn")==0)
                 monstersCollision.type=MonstersCollisionType_WalkOn;
             else if(strcmp(monstersCollisionItem->Attribute("type"),"actionOn")==0)
@@ -144,7 +144,7 @@ std::vector<MonstersCollision> DatapackGeneralLoader::loadMonstersCollision(cons
                                 const auto & list=eventListingToId.at(eventItem->Attribute("id"));
                                 if(list.find(eventItem->Attribute("value"))!=list.cend())
                                 {
-                                    MonstersCollision::MonstersCollisionEvent event;
+                                    MonstersCollisionTemp::MonstersCollisionEvent event;
                                     event.event=eventStringToId.at(eventItem->Attribute("id"));
                                     event.event_value=eventListingToId.at(eventItem->Attribute("id")).at(eventItem->Attribute("value"));
                                     event.monsterTypeList=stringsplit(eventItem->Attribute("monsterType"),';');

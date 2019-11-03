@@ -586,13 +586,16 @@ void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, co
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
-        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollision &monstersCollision=
+                CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || playerInformations.items.find(monstersCollision.item)!=playerInformations.items.cend())
         {
-            if(!monstersCollision.background.empty())
+            if(!monstersCollisionTemp.background.empty())
             {
                 const QString &baseSearch=QString::fromStdString(client->datapackPathBase())+DATAPACK_BASE_PATH_MAPBASE+
-                        QString::fromStdString(monstersCollision.background);
+                        QString::fromStdString(monstersCollisionTemp.background);
                 if(QFile(baseSearch+"/background.png").exists())
                     ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/background.jpg").exists() &&
