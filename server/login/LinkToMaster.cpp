@@ -163,6 +163,7 @@ void LinkToMaster::setConnexionSettings()
     }
     {
         epoll_event event;
+        memset(&event,0,sizeof(event));
         event.data.ptr = LinkToMaster::linkToMaster;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToMaster::linkToMasterSocketFd, &event);

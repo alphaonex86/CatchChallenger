@@ -8,6 +8,7 @@
 #include "GlobalServerData.h"
 
 #include <vector>
+#include <iostream>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
@@ -74,7 +75,7 @@ public:
         //buf << group;
         buf << id;
         buf << parsed_layer.monstersCollisionList;
-        buf << std::string((char *)parsed_layer.simplifiedMap,width*height);
+        buf.write((char *)parsed_layer.simplifiedMap,width*height);
         buf << (uint8_t)shops.size();
         for (const auto x : shops)
               buf << x.first << x.second;
@@ -133,10 +134,8 @@ public:
         //buf >> group;
         buf >> id;
         buf >> parsed_layer.monstersCollisionList;
-        std::string rawData;
-        buf >> rawData;
-        parsed_layer.simplifiedMap=(uint8_t *)malloc(rawData.size());
-        memcpy(parsed_layer.simplifiedMap,rawData.data(),rawData.size());
+        parsed_layer.simplifiedMap=(uint8_t *)malloc(width*height);
+        buf.read((char *)parsed_layer.simplifiedMap,width*height);
         uint8_t smallsize=0;
         std::pair<uint8_t,uint8_t> posXY;posXY.first=0;posXY.second=0;
         buf >> smallsize;

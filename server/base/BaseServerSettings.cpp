@@ -7,7 +7,7 @@ using namespace CatchChallenger;
 
 void BaseServer::loadAndFixSettings()
 {
-    GlobalServerData::serverPrivateVariables.server_message=stringregexsplit(GlobalServerData::serverSettings.server_message,std::regex("[\n\r]+"));
+    GlobalServerData::serverPrivateVariables.server_message=stringsplit(GlobalServerData::serverSettings.server_message,'\n');
     while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
     {
         std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, remove: " << GlobalServerData::serverPrivateVariables.server_message.at(GlobalServerData::serverPrivateVariables.server_message.size()-1) << std::endl;

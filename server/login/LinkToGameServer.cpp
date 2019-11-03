@@ -138,7 +138,7 @@ void LinkToGameServer::setConnexionSettings()
     }
     {
         epoll_event event;
-        event.data.u64=0;
+        memset(&event,0,sizeof(event));
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, socketFd, &event);
@@ -218,9 +218,10 @@ bool LinkToGameServer::disconnectClient()
 {
     if(client!=NULL)
     {
+        //linkToGameServer=NULL before closeSocket, else segfault
+        client->linkToGameServer=NULL;
         client->closeSocket();
         //break the link
-        client->linkToGameServer=NULL;
         client=NULL;
     }
     EpollClient::close();

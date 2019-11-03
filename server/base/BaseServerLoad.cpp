@@ -106,7 +106,7 @@ bool BaseServer::preload_zone_init()
     unsigned int index=0;
     while(index<entryListZone.size())
     {
-        if(!regex_search(entryListZone.at(index).name,regexXmlFile))
+        if(!stringEndsWith(entryListZone.at(index).name,".xml"))
         {
             std::cerr << entryListZone.at(index).name << " the zone file name not match" << std::endl;
             index++;

@@ -114,6 +114,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             }
 
             epoll_event event;
+            memset(&event,0,sizeof(event));
             event.data.ptr = this;
             event.events = EPOLLIN | EPOLLOUT | EPOLLET;
             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, sfd, &event);

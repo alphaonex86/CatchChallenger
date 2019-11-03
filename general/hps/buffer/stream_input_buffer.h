@@ -2,7 +2,6 @@
 #define JL2922_HPS_STREAM_INPUT_BUFFER_H
 
 #include <cstring>
-#include <iostream>
 #include "../serializer.h"
 
 namespace hps {
@@ -21,18 +20,16 @@ class StreamInputBuffer {
   }
 
   void read(char* content, size_t length) {
-    if (pos + length > STREAM_INPUT_BUFFER_SIZE) {
+    while(pos + length > STREAM_INPUT_BUFFER_SIZE)
+    {
       const size_t n_avail = STREAM_INPUT_BUFFER_SIZE - pos;
       read_core(content, n_avail);
       length -= n_avail;
       content += n_avail;
-      if (length > STREAM_INPUT_BUFFER_SIZE) {
-        stream->read(content, length);
-        load();
-        return;
-      }
       load();
     }
+    if(length==0)
+        return;
     read_core(content, length);
   }
 
@@ -51,8 +48,11 @@ class StreamInputBuffer {
     return *this;
   }
 
-  inline size_t tellg() const {
-      return (size_t)stream->tellg() - (size_t)STREAM_INPUT_BUFFER_SIZE + (size_t)pos;
+  inline ssize_t tellg() const {
+      if(stream->tellg()>0)
+        return (ssize_t)stream->tellg() - (ssize_t)STREAM_INPUT_BUFFER_SIZE + (size_t)pos;
+      else
+        return (size_t)pos;
   }
 
  private:
@@ -68,7 +68,10 @@ class StreamInputBuffer {
   }
 
   void load() {
-    stream->read(buffer, STREAM_INPUT_BUFFER_SIZE);
+      //const size_t oldpos=stream->tellg();
+      stream->read(buffer, STREAM_INPUT_BUFFER_SIZE);
+      //const size_t size=stream->tellg()-oldpos;
+    //std::cout << "read: " << size << " " << binarytoHexa(buffer,size) << std::endl;
     pos = 0;
   }
 };

@@ -237,8 +237,6 @@ protected:
     hps::StreamInputBuffer *serialBuffer;
     std::ofstream *out_file;
     #endif
-
-    static std::regex regexXmlFile;
 };
 }
 
