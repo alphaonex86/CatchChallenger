@@ -10,4 +10,4 @@ include(qt/multi.pri)
 
 TARGET = catchchallenger
 
-SOURCES += main.cpp
+SOURCES += qtopengl/main.cpp
