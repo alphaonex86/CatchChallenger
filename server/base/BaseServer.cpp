@@ -7,6 +7,7 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/Version.h"
 #include "../../general/hps/hps.h"
+#include "DictionaryServer.h"
 #include <fstream>
 
 using namespace CatchChallenger;
@@ -958,10 +959,13 @@ void BaseServer::setMaster(
     const uint8_t &master_tryInterval,
     const uint8_t &master_considerDownAfterNumberOfTry)
 {
-    hps::to_stream(master_host, *out_file);
-    hps::to_stream(master_port, *out_file);
-    hps::to_stream(master_tryInterval, *out_file);
-    hps::to_stream(master_considerDownAfterNumberOfTry, *out_file);
+    if(out_file!=nullptr)
+    {
+        hps::to_stream(master_host, *out_file);
+        hps::to_stream(master_port, *out_file);
+        hps::to_stream(master_tryInterval, *out_file);
+        hps::to_stream(master_considerDownAfterNumberOfTry, *out_file);
+    }
 }
 #endif
 #endif
