@@ -136,9 +136,6 @@ protected:
     virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
-    void preload_plant_on_map_sql();
-    static void preload_plant_on_map_static(void *object);
-    void preload_plant_on_map_return();
     void preload_monsters_drops();
     void load_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);

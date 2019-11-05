@@ -12,7 +12,6 @@ namespace CatchChallenger {
 class DictionaryServer
 {
 public:
-    static std::vector<MapServer *> dictionary_map_database_to_internal;
     ///used only at map loading, \see BaseServer::preload_the_map()
     static std::map<std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> > dictionary_pointOnMap_item_internal_to_database;
     static std::map<std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/> > dictionary_pointOnMap_plant_internal_to_database;
@@ -24,7 +23,7 @@ public:
         uint8_t y;
         /** \warning can have entry in database but not into datapack, deleted
          * used only to send to player the correct pos */
-        uint16_t datapack_index_item;
+        uint16_t datapack_index_item;//just the number of insert item, index++, not linked with DB id
     };
     struct MapAndPointPlant
     {
@@ -33,12 +32,12 @@ public:
         uint8_t y;
         /** \warning can have entry in database but not into datapack, deleted
          * used only to send to player the correct pos */
-        uint16_t datapack_index_plant;
+        uint16_t datapack_index_plant;//just the number of insert item, index++, not linked with DB id
     };
-    static std::vector<MapAndPointItem> dictionary_pointOnMap_item_database_to_internal;
-    static std::vector<MapAndPointPlant> dictionary_pointOnMap_plant_database_to_internal;
-    static uint16_t datapack_index_temp_for_item;
-    static uint16_t datapack_index_temp_for_plant;
+    //used at runtime (at player loading)
+    static std::vector<MapServer *> dictionary_map_database_to_internal;
+    static std::vector<MapAndPointItem> dictionary_pointOnMap_item_database_to_internal;//start with null item, not map to improvement performance due to high density
+    static std::vector<MapAndPointPlant> dictionary_pointOnMap_plant_database_to_internal;//start with null item, not map to improvement performance due to high density
 };
 }
 

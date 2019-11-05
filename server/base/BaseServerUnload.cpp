@@ -45,7 +45,6 @@ void BaseServer::unload_the_data()
     #endif
     unload_profile();
     unload_the_visibility_algorithm();
-    unload_the_plant_on_map();
     unload_the_map();
     unload_the_bots();
     unload_the_skin();

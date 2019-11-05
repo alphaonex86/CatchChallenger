@@ -12,8 +12,8 @@ void BaseServer::preload_map_semi_after_db_id()
         abort();
     }
 
-    DictionaryServer::datapack_index_temp_for_item=0;
-    DictionaryServer::datapack_index_temp_for_plant=0;
+    uint16_t datapack_index_temp_for_item=0;
+    uint16_t datapack_index_temp_for_plant=0;
     unsigned int indexMapSemi=0;
     while(indexMapSemi<semi_loaded_map.size())
     {
@@ -104,8 +104,8 @@ void BaseServer::preload_map_semi_after_db_id()
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=dirt.point.x;
                     mapAndPoint.y=dirt.point.y;
-                    mapAndPoint.datapack_index_plant=DictionaryServer::datapack_index_temp_for_plant;
-                    DictionaryServer::datapack_index_temp_for_plant++;
+                    mapAndPoint.datapack_index_plant=datapack_index_temp_for_plant;
+                    datapack_index_temp_for_plant++;
                 }
                 index++;
             }
@@ -197,8 +197,8 @@ void BaseServer::preload_map_semi_after_db_id()
                     mapAndPoint.map=mapServer;
                     mapAndPoint.x=item.point.x;
                     mapAndPoint.y=item.point.y;
-                    mapAndPoint.datapack_index_item=DictionaryServer::datapack_index_temp_for_item;
-                    DictionaryServer::datapack_index_temp_for_item++;
+                    mapAndPoint.datapack_index_item=datapack_index_temp_for_item;
+                    datapack_index_temp_for_item++;
                 }
                 index++;
             }

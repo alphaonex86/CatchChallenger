@@ -93,7 +93,7 @@ void Client::plantSeed(const uint8_t &plant_id)
     //check if is dirt
     if(static_cast<MapServer *>(map)->plants.find(std::pair<uint8_t,uint8_t>(x,y))==static_cast<MapServer *>(map)->plants.cend())
     {
-        errorOutput("Try put seed out of the dirt");
+        errorOutput("Try put seed out of the dirt: "+std::to_string(x)+","+std::to_string(y));
         return;
     }
     //check if is free

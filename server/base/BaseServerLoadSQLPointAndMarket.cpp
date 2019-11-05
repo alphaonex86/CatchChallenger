@@ -57,10 +57,20 @@ void BaseServer::preload_pointOnMap_item_static(void *object)
 
 void BaseServer::preload_pointOnMap_item_return()
 {
+    DictionaryServer::MapAndPointItem nullvalue;
+    nullvalue.datapack_index_item=0;
+    nullvalue.map=nullptr;
+    nullvalue.x=0;
+    nullvalue.y=0;
+
+    uint16_t datapack_index_temp_for_plant=0;
+    unsigned int itemCount=0;
+    unsigned int itemValidatedCount=0;
     bool ok;
     dictionary_pointOnMap_maxId_item=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
+        itemCount++;
         const uint16_t &id=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
             std::cerr << "preload_itemOnMap_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
@@ -100,6 +110,7 @@ void BaseServer::preload_pointOnMap_item_return()
                                         std::cerr << "preload_itemOnMap_return(): y out of range: " << y << ", for " << map_id << std::endl;
                                     else
                                     {
+                                        itemValidatedCount++;
                                         const auto &pair=std::pair<uint8_t,uint8_t>(x,y);
                                         //const std::string &map_file=map_server->map_file;
 
@@ -113,7 +124,26 @@ void BaseServer::preload_pointOnMap_item_return()
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;*/
 
                                         //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
-                                        DictionaryServer::dictionary_pointOnMap_item_internal_to_database[map_server->map_file][pair]=id;
+                                        //if no new map (datapack cache)
+                                        if(serialBuffer!=nullptr)
+                                        {
+                                            //directly store
+                                            map_server->pointOnMap_Item[pair].pointOnMapDbCode=id;
+
+                                            while(DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size()<=id)
+                                                DictionaryServer::dictionary_pointOnMap_item_database_to_internal.push_back(nullvalue);
+
+                                            DictionaryServer::MapAndPointItem value;
+                                            value.datapack_index_item=datapack_index_temp_for_plant;
+                                            value.map=map_server;
+                                            value.x=x;
+                                            value.y=y;
+                                            DictionaryServer::dictionary_pointOnMap_item_database_to_internal[id]=value;
+                                            datapack_index_temp_for_plant++;
+                                        }
+                                        else
+                                        //post processing (temp var)
+                                            DictionaryServer::dictionary_pointOnMap_item_internal_to_database[map_server->map_file][pair]=id;
                                     }
                                 }
                             }
@@ -125,7 +155,10 @@ void BaseServer::preload_pointOnMap_item_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
-        std::cout << DictionaryServer::dictionary_pointOnMap_item_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
+        if(serialBuffer!=nullptr)
+            std::cout << itemCount << "," << itemValidatedCount << " SQL plant parsed" << std::endl;
+        else
+            std::cout << DictionaryServer::dictionary_pointOnMap_item_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
         #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -194,24 +227,34 @@ void BaseServer::preload_pointOnMap_plant_static(void *object)
 
 void BaseServer::preload_pointOnMap_plant_return()
 {
+    DictionaryServer::MapAndPointPlant nullvalue;
+    nullvalue.datapack_index_plant=0;
+    nullvalue.map=nullptr;
+    nullvalue.x=0;
+    nullvalue.y=0;
+    uint16_t datapack_index_temp_for_plant=0;
+
+    unsigned int plantCount=0;
+    unsigned int plantValidatedCount=0;
     bool ok;
     dictionary_pointOnMap_maxId_plant=0;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
+        plantCount++;
         const uint16_t &id=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)
-            std::cerr << "preload_itemOnMap_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
+            std::cerr << "preload_pointOnMap_plant_return(): Id not found: " << GlobalServerData::serverPrivateVariables.db_server->value(0) << std::endl;
         else
         {
             if(dictionary_pointOnMap_maxId_plant<id)
                 dictionary_pointOnMap_maxId_plant=id;//here to prevent later bug create problem with max id
             const uint32_t &map_id=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
             if(!ok)
-                std::cerr << "preload_itemOnMap_return(): map id not number: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << std::endl;
+                std::cerr << "preload_pointOnMap_plant_return(): map id not number: " << GlobalServerData::serverPrivateVariables.db_server->value(1) << std::endl;
             else
             {
                 if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
-                    std::cerr << "preload_itemOnMap_return(): map out of range: " << map_id << std::endl;
+                    std::cerr << "preload_pointOnMap_plant_return(): map out of range: " << map_id << std::endl;
                 else
                 {
                     MapServer * const map_server=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
@@ -225,18 +268,19 @@ void BaseServer::preload_pointOnMap_plant_return()
                         else
                         {
                             if(x>255 || x>=map_server->width)
-                                std::cerr << "preload_itemOnMap_return(): x out of range: " << x << ", for " << map_id << std::endl;
+                                std::cerr << "preload_pointOnMap_plant_return(): x out of range: " << x << ", for " << map_id << std::endl;
                             else
                             {
                                 const uint32_t &y=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
                                 if(!ok)
-                                    std::cerr << "preload_itemOnMap_return(): y not number: " << GlobalServerData::serverPrivateVariables.db_server->value(3) << ", for " << map_id << std::endl;
+                                    std::cerr << "preload_pointOnMap_plant_return(): y not number: " << GlobalServerData::serverPrivateVariables.db_server->value(3) << ", for " << map_id << std::endl;
                                 else
                                 {
                                     if(y>255 || y>=map_server->height)
-                                        std::cerr << "preload_itemOnMap_return(): y out of range: " << y << ", for " << map_id << std::endl;
+                                        std::cerr << "preload_pointOnMap_plant_return(): y out of range: " << y << ", for " << map_id << std::endl;
                                     else
                                     {
+                                        plantValidatedCount++;
                                         const auto &pair=std::pair<uint8_t,uint8_t>(x,y);
                                         //const std::string &map_file=map_server->map_file;
 
@@ -250,7 +294,27 @@ void BaseServer::preload_pointOnMap_plant_return()
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;*/
 
                                         //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
-                                        DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[map_server->map_file][pair]=id;
+
+                                        //if no new map (datapack cache)
+                                        if(serialBuffer!=nullptr)
+                                        {
+                                            //directly store
+                                            map_server->plants[pair].pointOnMapDbCode=id;
+
+                                            while(DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=id)
+                                                DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.push_back(nullvalue);
+
+                                            DictionaryServer::MapAndPointPlant value;
+                                            value.datapack_index_plant=datapack_index_temp_for_plant;
+                                            value.map=map_server;
+                                            value.x=x;
+                                            value.y=y;
+                                            DictionaryServer::dictionary_pointOnMap_plant_database_to_internal[id]=value;
+                                            datapack_index_temp_for_plant++;
+                                        }
+                                        else
+                                        //post processing (temporary)
+                                            DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[map_server->map_file][pair]=id;
                                     }
                                 }
                             }
@@ -262,7 +326,10 @@ void BaseServer::preload_pointOnMap_plant_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
-        std::cout << DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.size() << " SQL plant on map dictionary" << std::endl;
+        if(serialBuffer!=nullptr)
+            std::cout << plantCount << "," << plantValidatedCount << " SQL plant parsed" << std::endl;
+        else
+            std::cout << DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.size() << " SQL plant on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
         #ifndef EPOLLCATCHCHALLENGERSERVER
