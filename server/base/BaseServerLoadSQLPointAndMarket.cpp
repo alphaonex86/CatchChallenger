@@ -124,6 +124,7 @@ void BaseServer::preload_pointOnMap_item_return()
                                         DictionaryServer::dictionary_pointOnMap_database_to_internal[id]=mapAndPoint;*/
 
                                         //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
+                                        #ifdef CATCHCHALLENGER_CACHE_HPS
                                         //if no new map (datapack cache)
                                         if(serialBuffer!=nullptr)
                                         {
@@ -142,6 +143,7 @@ void BaseServer::preload_pointOnMap_item_return()
                                             datapack_index_temp_for_plant++;
                                         }
                                         else
+                                        #endif
                                         //post processing (temp var)
                                             DictionaryServer::dictionary_pointOnMap_item_internal_to_database[map_server->map_file][pair]=id;
                                     }
@@ -155,9 +157,11 @@ void BaseServer::preload_pointOnMap_item_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
+        #ifdef CATCHCHALLENGER_CACHE_HPS
         if(serialBuffer!=nullptr)
             std::cout << itemCount << "," << itemValidatedCount << " SQL plant parsed" << std::endl;
         else
+        #endif
             std::cout << DictionaryServer::dictionary_pointOnMap_item_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
@@ -296,6 +300,7 @@ void BaseServer::preload_pointOnMap_plant_return()
                                         //std::string,std::map<std::pair<uint8_t/*x*/,uint8_t/*y*/>,uint16_t/*db code*/,pairhash>
 
                                         //if no new map (datapack cache)
+                                        #ifdef CATCHCHALLENGER_CACHE_HPS
                                         if(serialBuffer!=nullptr)
                                         {
                                             //directly store
@@ -313,6 +318,7 @@ void BaseServer::preload_pointOnMap_plant_return()
                                             datapack_index_temp_for_plant++;
                                         }
                                         else
+                                        #endif
                                         //post processing (temporary)
                                             DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[map_server->map_file][pair]=id;
                                     }
@@ -326,9 +332,11 @@ void BaseServer::preload_pointOnMap_plant_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
+        #ifdef CATCHCHALLENGER_CACHE_HPS
         if(serialBuffer!=nullptr)
             std::cout << plantCount << "," << plantValidatedCount << " SQL plant parsed" << std::endl;
         else
+        #endif
             std::cout << DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.size() << " SQL plant on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();

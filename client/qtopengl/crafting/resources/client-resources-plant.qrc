@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/CC">
+        <file>images/plant/unknow_plant.png</file>
+        <file>images/interface/crafting-left.png</file>
+        <file>images/interface/crafting-right.png</file>
+        <file>images/interface/plants-left.png</file>
+        <file>images/interface/plants-right.png</file>
+        <file>images/interface/option-craft.png</file>
+        <file>qml/crafting-animation.qml</file>
+    </qresource>
+</RCC>
