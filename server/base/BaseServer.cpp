@@ -7,7 +7,6 @@
 #include "../../general/base/FacilityLib.h"
 #include "../../general/base/Version.h"
 #include "../../general/hps/hps.h"
-#include "DictionaryServer.h"
 #include <fstream>
 
 using namespace CatchChallenger;
