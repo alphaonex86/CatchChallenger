@@ -4,12 +4,15 @@
 #include <QWidget>
 #include <QPixmap>
 #include <QTimer>
+#include <chrono>
+#include <QGraphicsItem>
 
-class CCBackground : public QWidget
+class CCBackground : public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
-    CCBackground(QWidget *parent = nullptr);
-    void paintEvent(QPaintEvent *) override;
+    CCBackground(QGraphicsItem *parent = nullptr);
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void startAnimation();
     void stopAnimation();
 private:
@@ -18,14 +21,14 @@ private:
     void grassSlot();
     void treebackSlot();
     void treefrontSlot();
-    unsigned int getTargetZoom();
-    void update();
+    unsigned int getTargetZoom(QWidget *widget);
+    void updateSlot();
+    QRectF boundingRect() const override;
 
     unsigned int zoom;
     int grassMove,treebackMove,treefrontMove;
     QTimer grassTimer,treebackTimer,treefrontTimer;
     QTimer updateTimer;
-    bool benchmark;
     std::vector<unsigned int> results;
 };
 
