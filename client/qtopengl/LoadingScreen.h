@@ -1,39 +1,34 @@
 #ifndef LOADINGSCREEN_H
 #define LOADINGSCREEN_H
 
-#include <QWidget>
-#include <QHBoxLayout>
-#include <QLabel>
+#include <QGraphicsItem>
 #include <QTimer>
 #include "CCWidget.h"
 #include "CCprogressbar.h"
-#include "GameLoader.h"
 
 namespace Ui {
 class LoadingScreen;
 }
 
-class LoadingScreen : public QWidget
+class LoadingScreen : public QGraphicsItem
 {
     Q_OBJECT
 
 public:
-    explicit LoadingScreen(QWidget *parent = nullptr);
+    explicit LoadingScreen();
     ~LoadingScreen();
     void progression(uint32_t size, uint32_t total);
     void setText(QString text);
 protected:
-    void resizeEvent(QResizeEvent *event) override;
     void canBeChanged();
     void dataIsParsed();
 private:
     Ui::LoadingScreen *ui;
     CCWidget *widget;
-    QHBoxLayout *horizontalLayout;
-    QLabel *teacher;
-    QLabel *info;
+    QGraphicsSimpleTextItem *teacher;
+    QGraphicsSimpleTextItem *info;
     CCprogressbar *progressbar;
-    QLabel *version;
+    QGraphicsSimpleTextItem *version;
     QTimer timer;
     bool doTheNext;
 signals:

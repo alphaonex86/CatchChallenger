@@ -1,14 +1,14 @@
 #ifndef CustomButton_H
 #define CustomButton_H
 
-#include <QPushButton>
+#include <QGraphicsWidget>
 
-class CustomButton : public QPushButton
+class CustomButton : public QGraphicsWidget
 {
 public:
     CustomButton(QString pix, QWidget *parent = nullptr);
     ~CustomButton();
-    void paintEvent(QPaintEvent *) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void setText(const QString &text);
     void setOutlineColor(const QColor &color);
     void setFont(const QFont &font);

@@ -7,9 +7,21 @@
 #include "../QInfiniteBuffer.h"
 #endif
 
+#include <QWidget>
+#include <QMessageBox>
 #include <QAbstractSocket>
 #include <QTimer>
 #include <QTime>
+#include <QListWidgetItem>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QTextBrowser>
+#include <QHBoxLayout>
+#include <QLineEdit>
+#include <QComboBox>
+#include <QMovie>
+#include <QQuickView>
+#include <QTreeWidgetItem>
 #include <unordered_set>
 #include <set>
 #include <map>
