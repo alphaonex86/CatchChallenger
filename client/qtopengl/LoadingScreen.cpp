@@ -1,13 +1,8 @@
 #include "LoadingScreen.h"
-#include "ui_LoadingScreen.h"
 #include "../../general/base/Version.h"
 
-LoadingScreen::LoadingScreen(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::LoadingScreen)
+LoadingScreen::LoadingScreen()
 {
-    ui->setupUi(this);
-
     widget = new CCWidget(this);
     widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
     widget->setMinimumSize(QSize(180,100));

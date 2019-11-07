@@ -1,17 +1,14 @@
 #ifndef CCprogressbar_H
 #define CCprogressbar_H
 
-#include <QProgressBar>
-#include <QPaintEvent>
-#include <QResizeEvent>
+#include <QGraphicsWidget>
 
-class CCprogressbar : public QProgressBar
+class CCprogressbar : public QGraphicsWidget
 {
 public:
     CCprogressbar(QWidget *parent = nullptr);
     virtual ~CCprogressbar();
-    void paintEvent(QPaintEvent *) override;
-    void resizeEvent(QResizeEvent *event) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 private:
     QPixmap backgroundLeft,backgroundMiddle,backgroundRight;
     QPixmap barLeft,barMiddle,barRight;

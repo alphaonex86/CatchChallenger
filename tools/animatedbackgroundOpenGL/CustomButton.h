@@ -1,30 +1,31 @@
 #ifndef CustomButton_H
 #define CustomButton_H
 
-#include <QPushButton>
+#include <QGraphicsWidget>
 
-class CustomButton : public QPushButton
+class CustomButton : public QGraphicsWidget
 {
+    Q_OBJECT
 public:
-    CustomButton(QString pix, QWidget *parent = nullptr);
+    CustomButton(QString pix);
     ~CustomButton();
-    void paintEvent(QPaintEvent *) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void setText(const QString &text);
     void setFont(const QFont &font);
 protected:
-    void enterEvent(QEvent *e) override;
-    void leaveEvent(QEvent *e) override;
-    void mousePressEvent(QMouseEvent *e) override;
-    void mouseReleaseEvent(QMouseEvent *e) override;
-    bool hasHeightForWidth() const override;
-    int heightForWidth(int w) const override;
+    /*void enterEvent(QEvent *e) override;
+    void leaveEvent(QEvent *e) override;*/
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
 private:
     QPixmap scaledBackground,scaledBackgroundPressed,scaledBackgroundOver;
     QString background;
     bool over;
     bool pressed;
-    QPainterPath *textPath;
+    QString text;
     QFont *font;
+signals:
+    void clicked();
 };
 
 #endif // PROGRESSBARDARK_H

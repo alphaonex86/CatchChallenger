@@ -18,12 +18,14 @@ MainWindow::MainWindow() :
     setMinimumHeight(60);
     setMinimumWidth(60);
 
-    /*p=new CustomButton(":/quit.png",m_CCBackground);
-    p->setText(tr("Normal"));
-    if(!connect(p,&CustomButton::clicked,&QCoreApplication::quit))
+    CustomButton *button=new CustomButton(":/quit.png");
+    button->setText(tr("X"));
+    if(!connect(button,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
+    button->setPos(0,0);
+    button->setMaximumSize(200,50);
     //ui->verticalLayout->addWidget(p);
-    setStyleSheet("");*/
+    setStyleSheet("");
 
     /*CCprogressbar *progressbar=new CCprogressbar();
     progressbar->setValue(25);
@@ -89,6 +91,7 @@ MainWindow::MainWindow() :
     mScene->setSceneRect(QRectF(0,0,width(),height()));
 
     mScene->addItem(m_CCBackground);
+    mScene->addItem(button);
 
     render();
 

@@ -2,29 +2,27 @@
 #define SCREENTRANSITION_H
 
 #include <QWidget>
-#include <QStackedWidget>
-#include "../qt/CCBackground.h"
-#include "../qt/LoadingScreen.h"
-#include "OptionsDialog.h"
+#include "CCBackground.h"
+#include "LoadingScreen.h"
+//#include "OptionsDialog.h"
 #include "MainScreen.h"
-#include "Solo.h"
+//#include "Solo.h"
 #include "Multi.h"
-#include "Login.h"
-#include "interface/BaseWindow.h"
+//#include "Login.h"
+//#include "interface/BaseWindow.h"
 #include "ConnexionManager.h"
 
-class ScreenTransition : public QWidget
+class ScreenTransition : public QGraphicsView
 {
     Q_OBJECT
 public:
     explicit ScreenTransition();
     ~ScreenTransition();
-    void setBackground(QWidget *widget);
-    void setForeground(QWidget *widget);
-    void setAbove(QWidget *widget);//first plan popup
+    void setBackground(QGraphicsItem *widget);
+    void setForeground(QGraphicsItem *widget);
+    void setAbove(QGraphicsItem *widget);//first plan popup
 protected:
-    void paintEvent(QPaintEvent *) override;
-    void resizeEvent(QResizeEvent *) override;
+//    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void toMainScreen();
     void openOptions();
     void openSolo();
@@ -41,12 +39,12 @@ protected:
 private:
     CCBackground b;
     LoadingScreen l;
-    QStackedWidget *m_backgroundStack;
-    QStackedWidget *m_foregroundStack;
-    QStackedWidget *m_aboveStack;
-    OptionsDialog *o;
+    QGraphicsItem *m_backgroundStack;
+    QGraphicsItem *m_foregroundStack;
+    QGraphicsItem *m_aboveStack;
+    //OptionsDialog *o;
     MainScreen *m;
-    Solo *solo;
+    //Solo *solo;
     Multi *multi;
     Login *login;
     CatchChallenger::BaseWindow *baseWindow;
