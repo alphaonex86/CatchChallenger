@@ -1,15 +1,15 @@
 #include <QApplication>
-#include "qt/LanguagesSelect.h"
-#include "qt/ScreenTransition.h"
-#include "qt/LocalListener.h"
+#include "../qt/LanguagesSelect.h"
+#include "ScreenTransition.h"
+#include "../qt/LocalListener.h"
+#include "../qt/QtDatapackClientLoader.h"
 #include "../general/base/FacilityLibGeneral.h"
 //#include "mainwindow.h"
 #include <iostream>
 #include <QFontDatabase>
-#include <QHBoxLayout>
 #include <QStyleFactory>
-#include "qt/Options.h"
-#include "qt/QtDatapackChecksum.h"
+#include "../qt/Options.h"
+#include "../qt/QtDatapackChecksum.h"
 
 int main(int argc, char *argv[])
 {
@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
+    //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
     QFont font("Comic Sans MS");
     font.setStyleHint(QFont::Monospace);
     //font.setBold(true);
@@ -43,13 +44,7 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
-
     LanguagesSelect::languagesSelect=new LanguagesSelect();
-    /*MainWindow w;
-    if(w.toQuit)
-        return 523;
-    w.show();*/
     Options::options.loadVar();
 
     ScreenTransition s;
@@ -60,14 +55,8 @@ int main(int argc, char *argv[])
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
     s.show();
-    /*LoadingScreen l;
-    l.show();*/
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     const auto returnCode=a.exec();
-    /*if(w.toQuit)
-        return 523;
-    else
-        return returnCode;*/
     delete QtDatapackClientLoader::datapackLoader;
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
     CatchChallenger::QtDatapackChecksum::thread.quit();

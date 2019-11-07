@@ -1,13 +1,13 @@
 #ifndef CCWidget_H
 #define CCWidget_H
 
-#include <QWidget>
+#include <QGraphicsWidget>
 
-class CCWidget : public QWidget
+class CCWidget : public QGraphicsWidget
 {
 public:
     CCWidget(QWidget *parent = nullptr);
-    void paintEvent(QPaintEvent *) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     unsigned int currentBorderSize() const;
 private:
     QPixmap tr,tm,tl,mr,mm,ml,br,bm,bl;

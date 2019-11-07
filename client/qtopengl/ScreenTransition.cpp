@@ -31,8 +31,15 @@ void keep_screen_on(bool on) {
 #endif
 
 ScreenTransition::ScreenTransition() :
-    QWidget()
+    mScene(new QGraphicsScene(this))
 {
+    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    setRenderHint(QPainter::Antialiasing,false);
+    setRenderHint(QPainter::TextAntialiasing,false);
+    setRenderHint(QPainter::HighQualityAntialiasing,false);
+    setRenderHint(QPainter::SmoothPixmapTransform,false);
+    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+    
     m_backgroundStack=new QStackedWidget(this);
     m_foregroundStack=new QStackedWidget(this);
     m_aboveStack=new QStackedWidget(this);
