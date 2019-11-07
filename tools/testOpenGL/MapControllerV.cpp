@@ -50,7 +50,7 @@ MapControllerV::MapControllerV(const bool &centerOnPlayer,const bool &debugTags,
         abort();
 
     CustomButton *quit=new CustomButton(":/CC/images/interface/button.png");
-    quit->setText("Quit");
+    quit->setText("x");
     quit->move(256,256);
     mScene->addWidget(quit);
     if(!connect(quit,&CustomButton::clicked,&QCoreApplication::quit))

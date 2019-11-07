@@ -57,10 +57,109 @@ SOURCES += \
     $$PWD/main.cpp \
     $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
-    $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp
+    $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp \
+    $$PWD/LanguagesSelect.cpp \
+    $$PWD/CCTitle.cpp \
+    $$PWD/ConnexionManager.cpp \
+    $$PWD/LoadingScreen.cpp \
+    $$PWD/CCWidget.cpp \
+    $$PWD/CustomButton.cpp \
+    $$PWD/MainScreen.cpp \
+    $$PWD/Map_client.cpp \
+    $$PWD/ScreenTransition.cpp \
+    $$PWD/Multi.cpp \
+    $$PWD/OptionsDialog.cpp \
+    $$PWD/CCBackground.cpp \
+    $$PWD/CCprogressbar.cpp \
+    $$PWD/render/MapController.cpp \
+    $$PWD/render/MapControllerCrafting.cpp \
+    $$PWD/render/MapControllerMP.cpp \
+    $$PWD/render/MapControllerMPAPI.cpp \
+    $$PWD/render/MapControllerMPMove.cpp \
+    $$PWD/render/MapDoor.cpp \
+    $$PWD/render/MapItem.cpp \
+    $$PWD/render/MapMark.cpp \
+    $$PWD/render/MapObjectItem.cpp \
+    $$PWD/render/MapVisualiser-map.cpp \
+    $$PWD/render/MapVisualiser.cpp \
+    $$PWD/render/MapVisualiserOrder.cpp \
+    $$PWD/render/MapVisualiserPlayer.cpp \
+    $$PWD/render/MapVisualiserPlayerWithFight.cpp \
+    $$PWD/render/MapVisualiserThread.cpp \
+    $$PWD/render/ObjectGroupItem.cpp \
+    $$PWD/render/PathFinding.cpp \
+    $$PWD/render/PreparedLayer.cpp \
+    $$PWD/render/TemporaryTile.cpp \
+    $$PWD/render/TileLayerItem.cpp \
+    $$PWD/render/TriggerAnimation.cpp \
+    $$PWD/interface/BaseWindow.cpp \
+    $$PWD/interface/BaseWindowBot.cpp \
+    $$PWD/interface/BaseWindowCharacter.cpp \
+    $$PWD/interface/BaseWindowCity.cpp \
+    $$PWD/interface/BaseWindowClan.cpp \
+    $$PWD/interface/BaseWindowCrafting.cpp \
+    $$PWD/interface/BaseWindowFactory.cpp \
+    $$PWD/interface/BaseWindowFight.cpp \
+    $$PWD/interface/BaseWindowFightNextAction.cpp \
+    $$PWD/interface/BaseWindowLoad.cpp \
+    $$PWD/interface/BaseWindowMap.cpp \
+    $$PWD/interface/BaseWindowMarket.cpp \
+    $$PWD/interface/BaseWindowOptions.cpp \
+    $$PWD/interface/BaseWindowSelection.cpp \
+    $$PWD/interface/BaseWindowShop.cpp \
+    $$PWD/interface/BaseWindowWarehouse.cpp \
+    $$PWD/interface/Chat.cpp \
+    $$PWD/interface/ClientFightEngine.cpp \
+    $$PWD/interface/DatapackClientLoaderCrafting.cpp \
+    $$PWD/interface/DatapackClientLoaderFight.cpp \
+    $$PWD/interface/GetPrice.cpp \
+    $$PWD/interface/ListEntryEnvolued.cpp \
+    $$PWD/interface/NewGame.cpp \
+    $$PWD/interface/NewProfile.cpp \
+    $$PWD/interface/WithAnotherPlayer.cpp
 
 HEADERS  += \
-    $$PWD/../../general/base/tinyXML2/tinyxml2.h
+    $$PWD/../../general/base/tinyXML2/tinyxml2.h \
+    $$PWD/LanguagesSelect.h \
+    $$PWD/CCprogressbar.h \
+    $$PWD/ClientStructures.h \
+    $$PWD/CCTitle.h \
+    $$PWD/ConnexionManager.h \
+    $$PWD/CCWidget.h \
+    $$PWD/CustomButton.h \
+    $$PWD/LoadingScreen.h \
+    $$PWD/DisplayStructures.h \
+    $$PWD/MainScreen.h \
+    $$PWD/Map_client.h \
+    $$PWD/OptionsDialog.h \
+    $$PWD/ScreenTransition.h \
+    $$PWD/Multi.h \
+    $$PWD/CCBackground.h \
+    $$PWD/render/MapController.h \
+    $$PWD/render/MapControllerMP.h \
+    $$PWD/render/MapDoor.h \
+    $$PWD/render/MapItem.h \
+    $$PWD/render/MapMark.h \
+    $$PWD/render/MapObjectItem.h \
+    $$PWD/render/MapVisualiser.h \
+    $$PWD/render/MapVisualiserOrder.h \
+    $$PWD/render/MapVisualiserPlayer.h \
+    $$PWD/render/MapVisualiserPlayerWithFight.h \
+    $$PWD/render/MapVisualiserThread.h \
+    $$PWD/render/ObjectGroupItem.h \
+    $$PWD/render/PathFinding.h \
+    $$PWD/render/PreparedLayer.h \
+    $$PWD/render/TemporaryTile.h \
+    $$PWD/render/TileLayerItem.h \
+    $$PWD/render/TriggerAnimation.h \
+    $$PWD/interface/BaseWindow.h \
+    $$PWD/interface/Chat.h \
+    $$PWD/interface/ClientFightEngine.h \
+    $$PWD/interface/GetPrice.h \
+    $$PWD/interface/ListEntryEnvolued.h \
+    $$PWD/interface/NewGame.h \
+    $$PWD/interface/NewProfile.h \
+    $$PWD/interface/WithAnotherPlayer.h
 
 RESOURCES += $$PWD/../resources/client-resources-multi.qrc
 DEFINES += CATCHCHALLENGER_MULTI
@@ -88,3 +187,6 @@ SOURCES += $$PWD/../qt/solo/InternalServer.cpp \
 HEADERS  += $$PWD/../qt/solo/InternalServer.h \
     $$PWD/../qt/solo/SoloWindow.h
 }
+
+DISTFILES += \
+    $$PWD/client.pri

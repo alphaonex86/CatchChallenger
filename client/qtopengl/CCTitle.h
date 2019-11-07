@@ -1,9 +1,9 @@
 #ifndef CCTitle_H
 #define CCTitle_H
 
-#include <QLabel>
+#include <QGraphicsWidget>
 
-class CCTitle : public QLabel
+class CCTitle : public QGraphicsWidget
 {
 public:
     CCTitle(QWidget *parent = nullptr);

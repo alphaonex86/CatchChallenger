@@ -8,7 +8,7 @@
 #include "CustomButton.h"
 #include "CCWidget.h"
 #include "CCTitle.h"
-#include "FeedNews.h"
+#include "../qt/FeedNews.h"
 
 namespace Ui {
 class MainScreen;
