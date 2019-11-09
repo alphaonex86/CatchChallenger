@@ -7,7 +7,7 @@ class CustomButton : public QGraphicsWidget
 {
     Q_OBJECT
 public:
-    CustomButton(QString pix);
+    CustomButton(QString pix,QGraphicsItem *parent = nullptr);
     ~CustomButton();
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void setText(const QString &text);
@@ -17,6 +17,10 @@ protected:
     void leaveEvent(QEvent *e) override;*/
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+
+    /*QRectF outlineRect() const;
+    QRectF boundingRect() const;
+    QPainterPath shape() const;*/
 private:
     QPixmap scaledBackground,scaledBackgroundPressed,scaledBackgroundOver;
     QString background;
