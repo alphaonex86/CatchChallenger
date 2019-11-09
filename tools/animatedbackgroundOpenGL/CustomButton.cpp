@@ -4,8 +4,10 @@
 #include <QEvent>
 #include <QMouseEvent>
 #include <iostream>
+#include <QApplication>
 
-CustomButton::CustomButton(QString pix)
+CustomButton::CustomButton(QString pix, QGraphicsItem *parent) :
+    QGraphicsWidget(parent)
 {
     font=new QFont();
     font->setFamily("Comic Sans MS");
@@ -101,6 +103,7 @@ void CustomButton::leaveEvent(QEvent *e)
 
 void CustomButton::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    std::cerr << "Item Mouse Pressed" << std::endl;
     pressed=true;
     QGraphicsWidget::mousePressEvent(event);
 }
@@ -111,3 +114,30 @@ void CustomButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     QGraphicsWidget::mouseReleaseEvent(event);
     emit clicked();
 }
+
+/*QRectF CustomButton::outlineRect() const
+{
+    const int iPadding = 8;
+    QFontMetricsF metrics = QFontMetricsF(QApplication::font());
+    QRectF rect = metrics.boundingRect("dfgdfg");
+    rect.adjust(-iPadding, -iPadding, +iPadding, +iPadding);
+    rect.translate(-rect.center());
+    return rect;
+}
+
+QRectF CustomButton::boundingRect() const
+{
+    const int iMargin = 1;
+    return outlineRect().adjusted(-iMargin, -iMargin, +iMargin, +iMargin);
+
+}
+
+QPainterPath CustomButton::shape() const
+{
+    QRectF rect = outlineRect();
+
+    QPainterPath path;
+    path.addRect(rect);
+
+    return path;
+}*/
