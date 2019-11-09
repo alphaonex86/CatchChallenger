@@ -21,6 +21,7 @@ public:
     ~MainWindow();
 protected:
     void resizeEvent(QResizeEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
 private:
     Ui::MainWindow *ui;
     CCBackground *m_CCBackground;

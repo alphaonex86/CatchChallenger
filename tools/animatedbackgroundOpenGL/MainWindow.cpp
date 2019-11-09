@@ -7,10 +7,18 @@
 #include <QPushButton>
 #include <QGLFormat>
 #include <QGLWidget>
+#include <iostream>
 
 MainWindow::MainWindow() :
     mScene(new QGraphicsScene(this))
 {
+    /*void QGraphicsSceneMouseEvent::mousePressedEvent(*e){
+int x = e.scenePos().x();
+qDebug()x;
+}*/
+ /*   QGraphicsView::mousePressEvent(QGraphicsSceneMouseEvent *event){
+qDebug()<<event->scenePos();
+}*/
     //ui->setupUi(this);
 
     m_CCBackground=new CCBackground();
@@ -18,7 +26,7 @@ MainWindow::MainWindow() :
     setMinimumHeight(60);
     setMinimumWidth(60);
 
-    CustomButton *button=new CustomButton(":/quit.png");
+    CustomButton *button=new CustomButton(":/quit.png",m_CCBackground);
     button->setText(tr("X"));
     if(!connect(button,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
@@ -129,6 +137,11 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     p->setMaximumWidth(w);
     p->setMaximumHeight(h);*/
     //p->setText(text);
+}
+
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << event->x() << "," << event->y() << std::endl;
 }
 
 void MainWindow::render()
