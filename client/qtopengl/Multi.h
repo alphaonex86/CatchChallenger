@@ -15,10 +15,6 @@ class ListEntryEnvolued;
 class AddOrEditServer;
 class Login;
 
-namespace Ui {
-class Multi;
-}
-
 class SelectedServer
 {
 public:
@@ -26,7 +22,7 @@ public:
     bool isCustom;
 };
 
-class Multi : public QWidget
+class Multi : public QObject, public QGraphicsItem
 {
     Q_OBJECT
 
@@ -57,9 +53,9 @@ public:
         bool operator<(const ConnexionInfo &connexionInfo) const;
     };
 
-    explicit Multi(QWidget *parent = nullptr);
+    explicit Multi(QGraphicsItem *parent = nullptr);
     ~Multi();
-    void displayServerList();
+/*    void displayServerList();
     void serverListEntryEnvoluedClicked();
     void server_add_clicked();
     void server_add_finished();
@@ -77,8 +73,6 @@ public:
     void httpFinished();
     void downloadFile();
 private:
-    Ui::Multi *ui;
-
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
     SelectedServer selectedServer;//no selected if unique_code empty
@@ -89,8 +83,8 @@ private:
     QNetworkReply *reply;
 signals:
     void backMain();
-    void setAbove(QWidget *widget);//first plan popup
-    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
+    void setAbove(QGraphicsItem *widget);//first plan popup
+    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);*/
 };
 
 #endif // MULTI_H

@@ -4,8 +4,8 @@
 #include <QMouseEvent>
 #include <iostream>
 
-CustomButton::CustomButton(QString pix,QWidget *parent) :
-    QPushButton(parent)
+CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
     textPath=nullptr;
 
@@ -21,6 +21,8 @@ CustomButton::CustomButton(QString pix,QWidget *parent) :
     outlineColor=QColor(217,145,0);
     percent=85;
     cache=nullptr;
+
+    m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
 }
 
 CustomButton::~CustomButton()
@@ -42,19 +44,17 @@ CustomButton::~CustomButton()
     }
 }
 
-void CustomButton::paintEvent(QPaintEvent *)
+void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    if(cache!=nullptr && !cache->isNull() && cache->width()==width() && cache->height()==height())
+    if(cache!=nullptr && !cache->isNull() && cache->width()==m_boundingRect.width() && cache->height()==m_boundingRect.height())
     {
-        QPainter paint;
-        paint.begin(this);
-        paint.drawPixmap(0,0,width(),height(),*cache);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
-    QImage image(width(),height(),QImage::Format_ARGB32);
+    QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
     paint.begin(&image);
@@ -66,8 +66,8 @@ void CustomButton::paintEvent(QPaintEvent *)
         scaledBackground=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
     else
         scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
-    scaledBackground=scaledBackground.scaled(width(),height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    paint.drawPixmap(0,0,width(),height(),scaledBackground);
+    scaledBackground=scaledBackground.scaled(m_boundingRect.width(),m_boundingRect.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+    paint.drawPixmap(0,0,m_boundingRect.width(),m_boundingRect.height(),scaledBackground);
     updateTextPath();
 
     if(textPath!=nullptr)
@@ -87,15 +87,14 @@ void CustomButton::paintEvent(QPaintEvent *)
     *cache=QPixmap::fromImage(image);
 
     {
-        QPainter paint;
-        paint.begin(this);
-        paint.drawPixmap(0,0,width(),height(),*cache);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
+        return;
     }
 }
 
 void CustomButton::setText(const QString &text)
 {
-    QPushButton::setText(text);
+    this->m_text=text;
     updateTextPath();
 }
 
@@ -107,14 +106,14 @@ bool CustomButton::setPointSize(uint8_t size)
 
 void CustomButton::updateTextPath()
 {
-    const QString &text=QPushButton::text();
+    const QString &text=this->m_text;
     if(textPath!=nullptr)
         delete textPath;
     QPainterPath tempPath;
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
-    const int h=height();
+    const int h=m_boundingRect.height();
     int newHeight=0;
     if(pressed)
         newHeight=(h*(percent+20)/100);
@@ -122,7 +121,7 @@ void CustomButton::updateTextPath()
         newHeight=(h*percent/100);
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
-    textPath->addText(width()/2-rect.width()/2, tempHeight, *font, text);
+    textPath->addText(m_boundingRect.width()/2-rect.width()/2, tempHeight, *font, text);
 }
 
 bool CustomButton::updateTextPercent(uint8_t percent)
@@ -150,24 +149,17 @@ void CustomButton::setOutlineColor(const QColor &color)
     this->outlineColor=color;
 }
 
-void CustomButton::mousePressEvent(QMouseEvent *e)
+void CustomButton::setPressed(const bool &pressed)
 {
-    pressed=true;
+    this->pressed=pressed;
     if(cache!=nullptr)
     {
         delete cache;
         cache=nullptr;
     }
-    QPushButton::mousePressEvent(e);
 }
 
-void CustomButton::mouseReleaseEvent(QMouseEvent *e)
+QRectF CustomButton::boundingRect() const
 {
-    pressed=false;
-    if(cache!=nullptr)
-    {
-        delete cache;
-        cache=nullptr;
-    }
-    QPushButton::mouseReleaseEvent(e);
+    return m_boundingRect;
 }

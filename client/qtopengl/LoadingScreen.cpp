@@ -1,56 +1,45 @@
 #include "LoadingScreen.h"
+#include "../qt/GameLoader.h"
 #include "../../general/base/Version.h"
 
 LoadingScreen::LoadingScreen()
 {
     widget = new CCWidget(this);
-    widget->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-    widget->setMinimumSize(QSize(180,100));
-    widget->setMaximumSize(QSize(800,300));
-    horizontalLayout = new QHBoxLayout(widget);
-    horizontalLayout->setContentsMargins(24, 24, 24, 24);
-    teacher = new QLabel(widget);
-    teacher->setMaximumSize(QSize(189, 206));
-    teacher->setMinimumSize(QSize(189, 206));
+    teacher = new QGraphicsPixmapItem(widget);
     teacher->setPixmap(QPixmap(":/CC/images/interface/teacher.png"));
-    horizontalLayout->addWidget(teacher);
-    info = new QLabel(widget);
-    horizontalLayout->addWidget(info);
-    info->setText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
-    info->setStyleSheet("color:#401c02;");
-    info->setWordWrap(true);
-    version = new QLabel(widget);
-    version->setText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
-    version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+    info = new QGraphicsTextItem(widget);
+    info->setPlainText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+    info->setDefaultTextColor(QColor(64,28,02));
+    version = new QGraphicsTextItem(widget);
+    version->setPlainText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
+    //version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     QFont font = version->font();
     font.setPointSize(7);
     version->setFont(font);
-    ui->verticalLayout->insertWidget(0,version);
-
-    ui->horizontalLayout_2->insertWidget(1,widget);
     progressbar=new CCprogressbar(this);
     progressbar->setMaximum(100);
     progressbar->setMinimum(0);
     progressbar->setValue(0);
-    ui->verticalLayout->insertWidget(ui->verticalLayout->count(),progressbar);
 
     if(GameLoader::gameLoader==nullptr)
         GameLoader::gameLoader=new GameLoader();
-    connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression);
-    connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed);
+    if(!QObject::connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression))
+        abort();
+    if(!QObject::connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed))
+        abort();
 
     timer.setSingleShot(true);
-    connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged);
+    if(!QObject::connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged))
+        abort();
     timer.start(1000);
     doTheNext=false;
 }
 
 LoadingScreen::~LoadingScreen()
 {
-    delete ui;
 }
 
-void LoadingScreen::resizeEvent(QResizeEvent *)
+/*void LoadingScreen::resizeEvent(QResizeEvent *)
 {
     widget->updateGeometry();
     if(width()<400 || height()<320)
@@ -85,7 +74,7 @@ void LoadingScreen::resizeEvent(QResizeEvent *)
         font.setPointSize(14);
     }
     version->setFont(font);
-}
+}*/
 
 void LoadingScreen::canBeChanged()
 {
@@ -102,7 +91,7 @@ void LoadingScreen::dataIsParsed()
     else
     {
         doTheNext=true;
-        info->setText(tr("%1 is loaded").arg("<b>CatchChallenger</b>"));
+        info->setPlainText(tr("%1 is loaded").arg("<b>CatchChallenger</b>"));
     }
 }
 
@@ -117,7 +106,16 @@ void LoadingScreen::progression(uint32_t size,uint32_t total)
 void LoadingScreen::setText(QString text)
 {
     if(!text.isEmpty())
-        info->setText(text);
+        info->setPlainText(text);
     else
-        info->setText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+        info->setPlainText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+}
+
+void LoadingScreen::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
+{
+}
+
+QRectF LoadingScreen::boundingRect() const
+{
+    return QRectF();
 }
