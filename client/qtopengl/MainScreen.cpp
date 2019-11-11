@@ -1,29 +1,22 @@
 #include "MainScreen.h"
-#include "ui_MainScreen.h"
-#include "InternetUpdater.h"
-#include "FeedNews.h"
+#include "../qt/InternetUpdater.h"
+#include "../qt/FeedNews.h"
 #include <iostream>
 #include <QDesktopServices>
-#include "Settings.h"
+#include "../qt/Settings.h"
 #include <QScreen>
 
-MainScreen::MainScreen(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::MainScreen)
+MainScreen::MainScreen(QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
-    ui->setupUi(this);
-    setMinimumSize(QSize(320,240));
-    ui->warning->setVisible(false);
+/*    setMinimumSize(QSize(320,240));
+    //ui->warning->setVisible(false);
     updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",ui->widgetUpdate);
-    updateButton->setMaximumSize(QSize(136,57));
-    updateButton->setMinimumSize(QSize(136,57));
     updateButton->setText(tr("Update!"));
     updateButton->setOutlineColor(QColor(44,117,0));
     updateButton->setPointSize(20);
-    ui->horizontalLayoutUpdateFull->addWidget(updateButton);
     title=new CCTitle(ui->widgetUpdate);
     title->setText("Update!");
-    ui->verticalLayoutUpdateTitle->insertWidget(0,title);
 
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     solo->setText("Solo");
@@ -40,13 +33,6 @@ MainScreen::MainScreen(QWidget *parent) :
     website->setPointSize(28);
     website->updateTextPercent(75);
     news=new CCWidget(this);
-
-    ui->horizontalLayoutBottom->insertWidget(1,news);
-    ui->verticalLayoutMiddle->insertWidget(0,solo);
-    ui->verticalLayoutMiddle->insertWidget(1,multi);
-    ui->horizontalLayoutMiddle->insertWidget(0,options);
-    ui->horizontalLayoutMiddle->insertWidget(1,facebook);
-    ui->horizontalLayoutMiddle->insertWidget(2,website);
 
     verticalLayoutNews = new QHBoxLayout(news);
     verticalLayoutNews->setSpacing(6);
@@ -73,7 +59,7 @@ MainScreen::MainScreen(QWidget *parent) :
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainScreen::feedEntryList))
         std::cerr << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed" << std::endl;
     #ifndef NOSINGLEPLAYER
-    /*solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
+    *//*solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",
                               QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
                               "/savegames/",false);
@@ -83,7 +69,7 @@ MainScreen::MainScreen(QWidget *parent) :
         abort();
     ui->stackedWidget->addWidget(solowindow);
     if(ui->stackedWidget->indexOf(solowindow)<0)
-        solo->hide();*/
+        solo->hide();*//*
     #endif
     #ifdef NOSINGLEPLAYER
     solo->hide();
@@ -104,15 +90,14 @@ MainScreen::MainScreen(QWidget *parent) :
     if(!connect(options,&QPushButton::clicked,this,&MainScreen::goToOptions))
         abort();
 
-    haveUpdate=false;
+    haveUpdate=false;*/
 }
 
 MainScreen::~MainScreen()
 {
-    delete ui;
 }
 
-void MainScreen::setError(const std::string &error)
+/*void MainScreen::setError(const std::string &error)
 {
     ui->warning->setVisible(true);
     ui->warning->setText(QString::fromStdString(error));
@@ -226,9 +211,9 @@ void MainScreen::newUpdate(const std::string &version)
     Q_UNUSED(version);
     haveUpdate=true;
     QWidget::update();
-    /*
+    *//*
     ui->update->setText(QString::fromStdString(InternetUpdater::getText(version)));
-    ui->update->setVisible(true);*/
+    ui->update->setVisible(true);*//*
 }
 #endif
 
@@ -284,3 +269,4 @@ void MainScreen::openUpdate()
     if(!QDesktopServices::openUrl(QUrl("https://catchchallenger.first-world.info/download.html")))
         std::cerr << "MainScreen::openFacebook() failed" << std::endl;
 }
+*/

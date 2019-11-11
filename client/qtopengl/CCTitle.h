@@ -3,17 +3,21 @@
 
 #include <QGraphicsWidget>
 
-class CCTitle : public QGraphicsWidget
+class CCTitle : public QGraphicsItem
 {
 public:
-    CCTitle(QWidget *parent = nullptr);
+    CCTitle(QGraphicsItem *parent = nullptr);
     ~CCTitle();
-    void paintEvent(QPaintEvent *) override;
     void setText(const QString &text);
     void setOutlineColor(const QColor &color);
     void setFont(const QFont &font);
     QFont getFont() const;
     bool setPointSize(uint8_t size);
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *) override;
+    QRectF boundingRect() const override;
+    void setPressed(const bool &pressed);
+    void setPos(qreal ax, qreal ay);
 protected:
     void updateTextPath();
 private:
@@ -22,6 +26,9 @@ private:
     QFont *font;
     QColor outlineColor;
     int lastwidth,lastheight;
+    QString text;
+
+    QRectF m_boundingRect;
 };
 
 #endif // CCTitle_H

@@ -14,17 +14,15 @@ namespace Ui {
 class MainScreen;
 }
 
-class MainScreen : public QWidget
+class MainScreen : public QObject, public QGraphicsItem
 {
     Q_OBJECT
 public:
-    explicit MainScreen(QWidget *parent = nullptr);
+    explicit MainScreen(QGraphicsItem *parent = nullptr);
     ~MainScreen();
-    void setError(const std::string &error);
+//    void setError(const std::string &error);
 private:
-    Ui::MainScreen *ui;
-
-    QLabel *update;
+/*    QLabel *update;
     QLabel *updateStar;
     QLabel *updateText;
     CCTitle *title;
@@ -38,7 +36,6 @@ private:
     QLabel *newsText;
     QLabel *newsWait;
     CustomButton *newsUpdate;
-    QHBoxLayout *verticalLayoutNews;
 
     bool haveUpdate;
 protected:
@@ -55,7 +52,7 @@ protected:
 signals:
     void goToOptions();
     void goToSolo();
-    void goToMulti();
+    void goToMulti();*/
 };
 
 #endif // MAINSCREEN_H

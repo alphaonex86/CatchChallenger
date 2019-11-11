@@ -22,6 +22,7 @@ public:
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
 private:
     Ui::MainWindow *ui;
     CCBackground *m_CCBackground;
@@ -30,6 +31,7 @@ private:
     QGraphicsTextItem* simpleText;
     QGraphicsPixmapItem *image;
     QGraphicsPixmapItem *imageText;
+    CustomButton *button;
 
     uint8_t waitRenderTime;
     QTimer timerRender;

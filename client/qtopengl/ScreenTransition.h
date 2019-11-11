@@ -49,6 +49,7 @@ private:
     Login *login;
     CatchChallenger::BaseWindow *baseWindow;
     ConnexionManager *connexionManager;
+    QGraphicsScene *mScene;
 };
 
 #endif // SCREENTRANSITION_H

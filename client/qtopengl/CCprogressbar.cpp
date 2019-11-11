@@ -1,8 +1,8 @@
 #include "CCprogressbar.h"
 #include <QPainter>
 
-CCprogressbar::CCprogressbar(QWidget *parent) :
-    QProgressBar(parent)
+CCprogressbar::CCprogressbar(QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
     textPath=nullptr;
 
@@ -12,7 +12,11 @@ CCprogressbar::CCprogressbar(QWidget *parent) :
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
-    setMaximumHeight(82);
+    m_boundingRect=QRectF(0.0,0.0,200.0,82.0);
+
+    m_value=0;
+    m_min=0;
+    m_max=0;
 }
 
 CCprogressbar::~CCprogressbar()
@@ -29,9 +33,14 @@ CCprogressbar::~CCprogressbar()
     }
 }
 
-void CCprogressbar::paintEvent(QPaintEvent *)
+QRectF CCprogressbar::boundingRect() const
 {
-    if(backgroundLeft.isNull() || backgroundLeft.height()!=height())
+    return m_boundingRect;
+}
+
+void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
+{
+    if(backgroundLeft.isNull() || backgroundLeft.height()!=m_boundingRect.height())
     {
         QPixmap background(":/CC/images/interface/Pbarbackground.png");
         if(background.isNull())
@@ -39,7 +48,7 @@ void CCprogressbar::paintEvent(QPaintEvent *)
         QPixmap bar(":/CC/images/interface/Pbarforeground.png");
         if(bar.isNull())
             abort();
-        if(height()==background.height())
+        if(m_boundingRect.height()==background.height())
         {
             backgroundLeft=background.copy(0,0,41,82);
             backgroundMiddle=background.copy(41,0,824,82);
@@ -50,54 +59,52 @@ void CCprogressbar::paintEvent(QPaintEvent *)
         }
         else
         {
-            backgroundLeft=background.copy(0,0,41,82).scaledToHeight(height(),Qt::SmoothTransformation);
-            backgroundMiddle=background.copy(41,0,824,82).scaledToHeight(height(),Qt::SmoothTransformation);
-            backgroundRight=background.copy(865,0,41,82).scaledToHeight(height(),Qt::SmoothTransformation);
-            barLeft=bar.copy(0,0,26,82).scaledToHeight(height(),Qt::SmoothTransformation);
-            barMiddle=bar.copy(26,0,620,82).scaledToHeight(height(),Qt::SmoothTransformation);
-            barRight=bar.copy(646,0,26,82).scaledToHeight(height(),Qt::SmoothTransformation);
+            backgroundLeft=background.copy(0,0,41,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            backgroundMiddle=background.copy(41,0,824,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            backgroundRight=background.copy(865,0,41,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            barLeft=bar.copy(0,0,26,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            barMiddle=bar.copy(26,0,620,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            barRight=bar.copy(646,0,26,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
         }
     }
-    QPainter paint;
-    paint.begin(this);
-    paint.drawPixmap(0,0,backgroundLeft.width(),    backgroundLeft.height(),    backgroundLeft);
-    paint.drawPixmap(backgroundLeft.width(),        0,
-                     width()-backgroundLeft.width()-backgroundRight.width(),    backgroundLeft.height(),backgroundMiddle);
-    paint.drawPixmap(width()-backgroundRight.width(),0,                         backgroundRight.width(),    backgroundRight.height(),backgroundRight);
+    painter->drawPixmap(0,0,backgroundLeft.width(),    backgroundLeft.height(),    backgroundLeft);
+    painter->drawPixmap(backgroundLeft.width(),        0,
+                     m_boundingRect.width()-backgroundLeft.width()-backgroundRight.width(),    backgroundLeft.height(),backgroundMiddle);
+    painter->drawPixmap(m_boundingRect.width()-backgroundRight.width(),0,                         backgroundRight.width(),    backgroundRight.height(),backgroundRight);
 
-    int startX=18*height()/82;
-    int size=width()-startX-startX;
+    int startX=18*m_boundingRect.height()/82;
+    int size=m_boundingRect.width()-startX-startX;
     int inpixel=value()*size/maximum();
     if(inpixel<(barLeft.width()+barRight.width()))
     {
         if(inpixel>0)
         {
             QPixmap barLeftC=barLeft.copy(0,0,inpixel/2,barLeft.height());
-            paint.drawPixmap(startX,0,barLeftC.width(),           barLeftC.height(),           barLeftC);
+            painter->drawPixmap(startX,0,barLeftC.width(),           barLeftC.height(),           barLeftC);
             const unsigned int pixelremaining=inpixel-barLeftC.width();
             if(pixelremaining>0)
             {
 
                 QPixmap barRightC=barRight.copy(barRight.width()-pixelremaining,0,pixelremaining,barRight.height());
-                paint.drawPixmap(startX+barLeftC.width(),               0,
+                painter->drawPixmap(startX+barLeftC.width(),               0,
                              barRightC.width(),                  barRightC.height(),barRightC);
             }
         }
     }
     else {
-        paint.drawPixmap(startX,0,barLeft.width(),           barLeft.height(),           barLeft);
+        painter->drawPixmap(startX,0,barLeft.width(),           barLeft.height(),           barLeft);
         const unsigned int pixelremaining=inpixel-(barLeft.width()+barRight.width());
         if(pixelremaining>0)
-            paint.drawPixmap(startX+barLeft.width(),          0,                          pixelremaining,           barMiddle.height(),barMiddle);
-        paint.drawPixmap(startX+barLeft.width()+pixelremaining,  0,barRight.width(),                  barRight.height(),barRight);
+            painter->drawPixmap(startX+barLeft.width(),          0,                          pixelremaining,           barMiddle.height(),barMiddle);
+        painter->drawPixmap(startX+barLeft.width()+pixelremaining,  0,barRight.width(),                  barRight.height(),barRight);
     }
 
-    if(isTextVisible())
+    if(false)
     {
-        const unsigned int fontheight=height()/4;
+        const unsigned int fontheight=m_boundingRect.height()/4;
         if(fontheight>=11)
         {
-            QString text=format();
+            QString text="%p";
             text.replace("%p",QString::number(value()*100/maximum()));
 
             if(oldText!=text)
@@ -109,27 +116,54 @@ void CCprogressbar::paintEvent(QPaintEvent *)
                 tempPath.addText(0, 0, *font, text);
                 QRectF rect=tempPath.boundingRect();
                 textPath=new QPainterPath();
-                const int h=height();
+                const int h=m_boundingRect.height();
                 const int newHeight=h*95/100;
                 const int p=font->pointSize();
                 const int tempHeight=newHeight/2+p/2;
-                textPath->addText(width()/2-rect.width()/2, tempHeight, *font, text);
+                textPath->addText(m_boundingRect.width()/2-rect.width()/2, tempHeight, *font, text);
 
                 oldText=text;
             }
 
-            paint.setRenderHint(QPainter::Antialiasing);
+            painter->setRenderHint(QPainter::Antialiasing);
             int penWidth=1;
             if(fontheight>16)
                 penWidth=2;
-            paint.setPen(QPen(QColor(14,102,0)/*penColor*/, penWidth/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-            paint.setBrush(Qt::white);
-            paint.drawPath(*textPath);
+            painter->setPen(QPen(QColor(14,102,0)/*penColor*/, penWidth/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+            painter->setBrush(Qt::white);
+            painter->drawPath(*textPath);
         }
     }
 }
 
-void CCprogressbar::resizeEvent(QResizeEvent *)
+void CCprogressbar::setMaximum(const int &value)
 {
-    oldText.clear();
+    this->m_max=value;
 }
+
+void CCprogressbar::setMinimum(const int &value)
+{
+    this->m_min=value;
+}
+
+void CCprogressbar::setValue(const int &value)
+{
+    this->m_value=value;
+}
+
+int CCprogressbar::maximum()
+{
+    return this->m_max;
+}
+
+int CCprogressbar::minimum()
+{
+    return this->m_min;
+}
+
+int CCprogressbar::value()
+{
+    return this->m_value;
+}
+
+
