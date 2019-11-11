@@ -108,8 +108,8 @@ void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
             realWebSocket->setProxy(proxy);
         #endif
     }
-    baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
-    baseWindow->stateChanged(QAbstractSocket::ConnectingState);
+    /*baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
+    baseWindow->stateChanged(QAbstractSocket::ConnectingState);*/
     #ifndef NOTCPSOCKET
     if(realSslSocket!=nullptr)
     {
@@ -149,7 +149,7 @@ void ConnexionManager::disconnected(std::string reason)
     emit errorString(reason);
     /*if(serverConnexion.contains(selectedServer))
         lastServerIsKick[serverConnexion.value(selectedServer)->host]=true;*/
-    baseWindow->resetAll();
+    //baseWindow->resetAll();
 }
 
 #ifndef __EMSCRIPTEN__
@@ -188,8 +188,8 @@ void ConnexionManager::connectTheExternalSocket(Multi::ConnexionInfo connexionIn
         client->setProxy(proxy);
     }
 
-    baseWindow->connectAllSignals();
-    baseWindow->setMultiPlayer(true,client);
+    /*baseWindow->connectAllSignals();
+    baseWindow->setMultiPlayer(true,client);*/
     QDir datapack(serverToDatapachPath(connexionInfo));
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
@@ -198,7 +198,7 @@ void ConnexionManager::connectTheExternalSocket(Multi::ConnexionInfo connexionIn
             return;
         }
     client->setDatapackPath(datapack.absolutePath().toStdString());
-    baseWindow->stateChanged(QAbstractSocket::ConnectedState);
+    //baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
 
 QString ConnexionManager::serverToDatapachPath(Multi::ConnexionInfo connexionInfo) const
@@ -317,8 +317,8 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
         emit disconnectedFromServer();
     }
-    if(baseWindow!=NULL)
-        baseWindow->stateChanged(socketState);
+    /*if(baseWindow!=NULL)
+        baseWindow->stateChanged(socketState);*/
 }
 
 void ConnexionManager::error(QAbstractSocket::SocketError socketError)

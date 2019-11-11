@@ -1,12 +1,11 @@
 #include "Multi.h"
-#include "ui_Multi.h"
 #include "interface/ListEntryEnvolued.h"
 #include "../../general/base/FacilityLibGeneral.h"
 #include "../../general/base/tinyXML2/tinyxml2.h"
 #include "../../general/base/cpp11addition.h"
-#include "ClientVariable.h"
+#include "../qt/ClientVariable.h"
 #include "LanguagesSelect.h"
-#include "AddServer.h"
+//#include "AddServer.h"
 #include <iostream>
 #include <QRegularExpression>
 #include <QMessageBox>
@@ -14,23 +13,21 @@
 #include <QStandardPaths>
 #include <utime.h>
 #include <QFileInfo>
-#include "Ultimate.h"
+//#include "Ultimate.h"
 #include "../../general/base/Version.h"
-#include "PlatformMacro.h"
+//#include "PlatformMacro.h"
 #include <QNetworkRequest>
 #include <QDir>
-#include "Login.h"
-#include "Settings.h"
+//#include "Login.h"
+#include "../qt/Settings.h"
 #include <QDebug>
 
-Multi::Multi(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::Multi),
+Multi::Multi(QGraphicsItem *parent) :
+    QGraphicsItem(parent)/*,
     addServer(nullptr),
     login(nullptr),
     reply(nullptr)
 {
-    ui->setupUi(this);
     srand(time(0));
 
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
@@ -42,7 +39,7 @@ Multi::Multi(QWidget *parent) :
     selectedServer.unique_code.clear();
     selectedServer.isCustom=false;
     displayServerList();
-    ui->warning->setVisible(false);
+*//*    ui->warning->setVisible(false);
 
     if(!connect(ui->server_add,&QPushButton::clicked,this,&Multi::server_add_clicked))
         abort();
@@ -53,14 +50,14 @@ Multi::Multi(QWidget *parent) :
     if(!connect(ui->server_select,&QPushButton::clicked,this,&Multi::server_select_clicked))
         abort();
     if(!connect(ui->back,&QPushButton::clicked,this,&Multi::backMain))
-        abort();
-}
+        abort();*//*
+}*/
+{}
 
 Multi::~Multi()
 {
-    delete ui;
 }
-
+/*
 void Multi::displayServerList()
 {
     //clean the previous content
@@ -766,14 +763,14 @@ void Multi::downloadFile()
     reply = qnam.get(networkRequest);
     if(!connect(reply, &QNetworkReply::finished, this, &Multi::httpFinished))
         abort();
-    /*if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
-        abort(); seam buggy*/
+    //if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
+        //abort(); seam buggy
     ui->warning->setVisible(true);
     ui->warning->setText(tr("Loading the server list..."));
     //ui->server_refresh->setEnabled(false);
 }
 
-/*void Multi::on_server_refresh_clicked()
+*//*void Multi::on_server_refresh_clicked()
 {
     if(reply!=NULL)
     {
@@ -782,7 +779,7 @@ void Multi::downloadFile()
         reply=NULL;
     }
     downloadFile();
-}*/
+}*//*
 
 
 void Multi::server_select_clicked()
@@ -851,3 +848,4 @@ void Multi::server_select_finished()
         index++;
     }
 }
+*/

@@ -10,7 +10,7 @@ namespace Ui {
 class LoadingScreen;
 }
 
-class LoadingScreen : public QGraphicsItem
+class LoadingScreen : public QObject, public QGraphicsItem
 {
     Q_OBJECT
 
@@ -19,16 +19,19 @@ public:
     ~LoadingScreen();
     void progression(uint32_t size, uint32_t total);
     void setText(QString text);
+
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
+    QRectF boundingRect() const override;
 protected:
     void canBeChanged();
     void dataIsParsed();
 private:
     Ui::LoadingScreen *ui;
     CCWidget *widget;
-    QGraphicsSimpleTextItem *teacher;
-    QGraphicsSimpleTextItem *info;
+    QGraphicsPixmapItem *teacher;
+    QGraphicsTextItem *info;
     CCprogressbar *progressbar;
-    QGraphicsSimpleTextItem *version;
+    QGraphicsTextItem *version;
     QTimer timer;
     bool doTheNext;
 signals:

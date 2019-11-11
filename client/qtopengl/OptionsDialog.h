@@ -4,26 +4,20 @@
 #include <QWidget>
 #include "CCWidget.h"
 
-namespace Ui {
-class OptionsDialog;
-}
-
-class OptionsDialog : public QWidget
+class OptionsDialog : public QObject, public QGraphicsItem
 {
     Q_OBJECT
-
 public:
-    explicit OptionsDialog(QWidget *parent = nullptr);
+    explicit OptionsDialog(QGraphicsItem *parent = nullptr);
     ~OptionsDialog();
-    void resizeEvent(QResizeEvent * e);
+/*    void resizeEvent(QResizeEvent * e);
 private slots:
     void on_close_clicked();
 
 private:
-    Ui::OptionsDialog *ui;
     CCWidget *w;
 signals:
-    void quitOption();
+    void quitOption();*/
 };
 
 #endif // OPTIONSDIALOG_H

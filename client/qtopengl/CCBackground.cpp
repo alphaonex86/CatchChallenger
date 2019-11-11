@@ -4,15 +4,14 @@
 #include <chrono>
 #include <iostream>
 
-unsigned int CCBackground::timeToDraw;
+/*unsigned int CCBackground::timeToDraw;
 unsigned int CCBackground::timeDraw;
-std::chrono::time_point<std::chrono::steady_clock> CCBackground::timeFromStart;
+std::chrono::time_point<std::chrono::steady_clock> CCBackground::timeFromStart;*/
 
 CCBackground::CCBackground(QGraphicsItem *parent) :
     QGraphicsItem(parent)
 {
     zoom=0;
-    benchmark=true;
     grassMove=0;
     treebackMove=0;
     treefrontMove=0;
@@ -25,7 +24,7 @@ CCBackground::CCBackground(QGraphicsItem *parent) :
     if(!QObject::connect(&updateTimer,&QTimer::timeout,this,&CCBackground::updateSlot))
         abort();
     startAnimation();
-    timeFromStart=std::chrono::steady_clock::now();
+    //timeFromStart=std::chrono::steady_clock::now();
 }
 
 QRectF CCBackground::boundingRect() const

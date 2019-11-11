@@ -1,7 +1,7 @@
 include(../libcatchchallenger/lib.pri)
 include(../qt/tiled/tiled.pri)
 
-QT       += gui network core widgets opengl
+QT       += gui network core widgets opengl xml
 
 DEFINES += CATCHCHALLENGER_CLIENT
 
@@ -71,52 +71,28 @@ SOURCES += \
     $$PWD/OptionsDialog.cpp \
     $$PWD/CCBackground.cpp \
     $$PWD/CCprogressbar.cpp \
-    $$PWD/render/MapController.cpp \
-    $$PWD/render/MapControllerCrafting.cpp \
-    $$PWD/render/MapControllerMP.cpp \
-    $$PWD/render/MapControllerMPAPI.cpp \
-    $$PWD/render/MapControllerMPMove.cpp \
-    $$PWD/render/MapDoor.cpp \
-    $$PWD/render/MapItem.cpp \
-    $$PWD/render/MapMark.cpp \
-    $$PWD/render/MapObjectItem.cpp \
-    $$PWD/render/MapVisualiser-map.cpp \
-    $$PWD/render/MapVisualiser.cpp \
-    $$PWD/render/MapVisualiserOrder.cpp \
-    $$PWD/render/MapVisualiserPlayer.cpp \
-    $$PWD/render/MapVisualiserPlayerWithFight.cpp \
-    $$PWD/render/MapVisualiserThread.cpp \
-    $$PWD/render/ObjectGroupItem.cpp \
-    $$PWD/render/PathFinding.cpp \
-    $$PWD/render/PreparedLayer.cpp \
-    $$PWD/render/TemporaryTile.cpp \
-    $$PWD/render/TileLayerItem.cpp \
-    $$PWD/render/TriggerAnimation.cpp \
-    $$PWD/interface/BaseWindow.cpp \
-    $$PWD/interface/BaseWindowBot.cpp \
-    $$PWD/interface/BaseWindowCharacter.cpp \
-    $$PWD/interface/BaseWindowCity.cpp \
-    $$PWD/interface/BaseWindowClan.cpp \
-    $$PWD/interface/BaseWindowCrafting.cpp \
-    $$PWD/interface/BaseWindowFactory.cpp \
-    $$PWD/interface/BaseWindowFight.cpp \
-    $$PWD/interface/BaseWindowFightNextAction.cpp \
-    $$PWD/interface/BaseWindowLoad.cpp \
-    $$PWD/interface/BaseWindowMap.cpp \
-    $$PWD/interface/BaseWindowMarket.cpp \
-    $$PWD/interface/BaseWindowOptions.cpp \
-    $$PWD/interface/BaseWindowSelection.cpp \
-    $$PWD/interface/BaseWindowShop.cpp \
-    $$PWD/interface/BaseWindowWarehouse.cpp \
-    $$PWD/interface/Chat.cpp \
-    $$PWD/interface/ClientFightEngine.cpp \
-    $$PWD/interface/DatapackClientLoaderCrafting.cpp \
-    $$PWD/interface/DatapackClientLoaderFight.cpp \
-    $$PWD/interface/GetPrice.cpp \
-    $$PWD/interface/ListEntryEnvolued.cpp \
-    $$PWD/interface/NewGame.cpp \
-    $$PWD/interface/NewProfile.cpp \
-    $$PWD/interface/WithAnotherPlayer.cpp
+    $$PWD/../qt/Api_client_real.cpp \
+    $$PWD/../qt/Api_client_real_base.cpp \
+    $$PWD/../qt/Api_client_real_main.cpp \
+    $$PWD/../qt/Api_client_real_sub.cpp \
+    $$PWD/../qt/Api_client_virtual.cpp \
+    $$PWD/../qt/Api_protocol_Qt.cpp \
+    $$PWD/../qt/QtDatapackChecksum.cpp \
+    $$PWD/../qt/QtDatapackClientLoader.cpp \
+    $$PWD/../qt/QZstdDecodeThread.cpp \
+    $$PWD/../qt/InternetUpdater.cpp \
+    $$PWD/../qt/FeedNews.cpp \
+    $$PWD/../qt/ConnectedSocket.cpp \
+    $$PWD/../qt/GameLoader.cpp \
+    $$PWD/../tarcompressed/TarDecode.cpp \
+    $$PWD/../tarcompressed/ZstdDecode.cpp \
+    $$PWD/../qt/fight/interface/ClientFightEngine.cpp \
+    $$PWD/../qt/fight/interface/DatapackClientLoaderFight.cpp \
+    $$PWD/../qt/crafting/interface/DatapackClientLoaderCrafting.cpp \
+    $$PWD/../qt/Ultimate.cpp \
+    $$PWD/../qt/GameLoaderThread.cpp \
+    $$PWD/../qt/ExtraSocket.cpp \
+    $$PWD/../qt/Settings.cpp
 
 HEADERS  += \
     $$PWD/../../general/base/tinyXML2/tinyxml2.h \
@@ -135,31 +111,23 @@ HEADERS  += \
     $$PWD/ScreenTransition.h \
     $$PWD/Multi.h \
     $$PWD/CCBackground.h \
-    $$PWD/render/MapController.h \
-    $$PWD/render/MapControllerMP.h \
-    $$PWD/render/MapDoor.h \
-    $$PWD/render/MapItem.h \
-    $$PWD/render/MapMark.h \
-    $$PWD/render/MapObjectItem.h \
-    $$PWD/render/MapVisualiser.h \
-    $$PWD/render/MapVisualiserOrder.h \
-    $$PWD/render/MapVisualiserPlayer.h \
-    $$PWD/render/MapVisualiserPlayerWithFight.h \
-    $$PWD/render/MapVisualiserThread.h \
-    $$PWD/render/ObjectGroupItem.h \
-    $$PWD/render/PathFinding.h \
-    $$PWD/render/PreparedLayer.h \
-    $$PWD/render/TemporaryTile.h \
-    $$PWD/render/TileLayerItem.h \
-    $$PWD/render/TriggerAnimation.h \
-    $$PWD/interface/BaseWindow.h \
-    $$PWD/interface/Chat.h \
-    $$PWD/interface/ClientFightEngine.h \
-    $$PWD/interface/GetPrice.h \
-    $$PWD/interface/ListEntryEnvolued.h \
-    $$PWD/interface/NewGame.h \
-    $$PWD/interface/NewProfile.h \
-    $$PWD/interface/WithAnotherPlayer.h
+    $$PWD/../qt/Api_client_real.h \
+    $$PWD/../qt/Api_client_virtual.h \
+    $$PWD/../qt/Api_protocol_Qt.h \
+    $$PWD/../qt/QtDatapackChecksum.h \
+    $$PWD/../qt/QtDatapackClientLoader.h \
+    $$PWD/../qt/QZstdDecodeThread.h \
+    $$PWD/../qt/InternetUpdater.h \
+    $$PWD/../qt/FeedNews.h \
+    $$PWD/../qt/ConnectedSocket.h \
+    $$PWD/../qt/GameLoader.h \
+    $$PWD/../tarcompressed/TarDecode.h \
+    $$PWD/../tarcompressed/ZstdDecode.h \
+    $$PWD/../qt/fight/interface/ClientFightEngine.h \
+    $$PWD/../qt/Ultimate.h \
+    $$PWD/../qt/GameLoaderThread.h \
+    $$PWD/../qt/ExtraSocket.h \
+    $$PWD/../qt/Settings.h
 
 RESOURCES += $$PWD/../resources/client-resources-multi.qrc
 DEFINES += CATCHCHALLENGER_MULTI

@@ -1,10 +1,12 @@
 #include "CCWidget.h"
 #include <QPainter>
 
-CCWidget::CCWidget(QWidget *parent) :
-    QWidget(parent)
+CCWidget::CCWidget(QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
     oldratio=0;
+    m_w=0;
+    m_h=0;
 }
 
 unsigned int CCWidget::imageBorderSize() const
@@ -35,7 +37,12 @@ unsigned int CCWidget::imageBorderSize() const
     return min;
 }
 
-void CCWidget::paintEvent(QPaintEvent *)
+QRectF CCWidget::boundingRect() const
+{
+    return QRectF();
+}
+
+void CCWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     const int min=imageBorderSize();
 
@@ -67,22 +74,42 @@ void CCWidget::paintEvent(QPaintEvent *)
             br=br.scaledToHeight(min,Qt::SmoothTransformation);
         }
     }
-    QPainter paint;
-    paint.begin(this);
-    paint.drawPixmap(0,             0,min,          min,tl);
-    paint.drawPixmap(min,           0,width()-min*2,min,tm);
-    paint.drawPixmap(width()-min,   0,min,          min,tr);
 
-    paint.drawPixmap(0,             min,min,          height()-min*2,ml);
-    paint.drawPixmap(min,           min,width()-min*2,height()-min*2,mm);
-    paint.drawPixmap(width()-min,   min,min,          height()-min*2,mr);
+    painter->drawPixmap(0,             0,min,          min,tl);
+    painter->drawPixmap(min,           0,width()-min*2,min,tm);
+    painter->drawPixmap(width()-min,   0,min,          min,tr);
 
-    paint.drawPixmap(0,             height()-min,min,           min,bl);
-    paint.drawPixmap(min,           height()-min,width()-min*2, min,bm);
-    paint.drawPixmap(width()-min,   height()-min,min,           min,br);
+    painter->drawPixmap(0,             min,min,          height()-min*2,ml);
+    painter->drawPixmap(min,           min,width()-min*2,height()-min*2,mm);
+    painter->drawPixmap(width()-min,   min,min,          height()-min*2,mr);
+
+    painter->drawPixmap(0,             height()-min,min,           min,bl);
+    painter->drawPixmap(min,           height()-min,width()-min*2, min,bm);
+    painter->drawPixmap(width()-min,   height()-min,min,           min,br);
 }
 
 unsigned int CCWidget::currentBorderSize() const
 {
     return imageBorderSize()/2;
 }
+
+void CCWidget::setWidth(const int &w)
+{
+    this->m_w=w;
+}
+
+void CCWidget::setHeight(const int &h)
+{
+    this->m_h=h;
+}
+
+int CCWidget::width() const
+{
+    return m_w;
+}
+
+int CCWidget::height() const
+{
+    return m_h;
+}
+
