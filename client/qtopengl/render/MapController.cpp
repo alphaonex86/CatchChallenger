@@ -1,6 +1,6 @@
 #include "MapController.h"
-#include "../QtDatapackClientLoader.h"
-#include "../Api_client_real.h"
+#include "../../qt/QtDatapackClientLoader.h"
+#include "../../qt/Api_client_real.h"
 #include "../../../general/base/CommonDatapack.h"
 #include "../../../general/base/CommonDatapackServerSpec.h"
 #include "../../../general/base/CommonSettingsServer.h"

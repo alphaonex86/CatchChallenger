@@ -1,7 +1,7 @@
 #include "Api_protocol_Qt.h"
 #include "LanguagesSelect.h"
 #ifndef NOTCPSOCKET
-#include "SslCert.h"
+//#include "SslCert.h"
 #include <QSslKey>
 #endif
 #include <iostream>
@@ -155,7 +155,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
                 if(socket->sslSocket->mode()==QSslSocket::UnencryptedMode)
                 {
                     #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
-                    SslCert sslCert(NULL);
+                    /*SslCert sslCert(NULL);
                     sslCert.exec();
                     if(sslCert.validated())
                         saveCert(certFile.fileName().toStdString());
@@ -163,7 +163,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
                     {
                         socket->sslSocket->disconnectFromHost();
                         return;
-                    }
+                    }*/
                     #endif
                 }
                 else if(certFile.open(QIODevice::ReadOnly))
@@ -171,7 +171,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
                     if(socket->sslSocket->peerCertificate().publicKey().toPem()!=certFile.readAll())
                     {
                         #if (!defined(CATCHCHALLENGER_VERSION_SOLO) || defined(CATCHCHALLENGER_MULTI)) && ! defined(BOTTESTCONNECT)
-                        SslCert sslCert(NULL);
+                        /*SslCert sslCert(NULL);
                         sslCert.exec();
                         if(sslCert.validated())
                             saveCert(certFile.fileName().toStdString());
@@ -179,7 +179,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
                         {
                             socket->sslSocket->disconnectFromHost();
                             return;
-                        }
+                        }*/
                         #endif
                     }
                     certFile.close();
@@ -222,13 +222,13 @@ void Api_protocol_Qt::saveCert(const std::string &file)
         if(certFile.open(QIODevice::WriteOnly))
         {
             qDebug() << "Register the certificate into" << certFile.fileName();
-            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
+            /*qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::Organization);
             qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::CommonName);
             qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::LocalityName);
             qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::OrganizationalUnitName);
             qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::CountryName);
             qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::StateOrProvinceName);
-            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);
+            qDebug() << socket->sslSocket->peerCertificate().issuerInfo(QSslCertificate::EmailAddress);*/
             certFile.write(socket->sslSocket->peerCertificate().publicKey().toPem());
             certFile.close();
         }

@@ -4,8 +4,8 @@
 #include <QMouseEvent>
 #include <iostream>
 
-CCTitle::CCTitle(QWidget *parent) :
-    QLabel(parent)
+CCTitle::CCTitle(QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
     textPath=nullptr;
 
@@ -41,28 +41,26 @@ CCTitle::~CCTitle()
     }
 }
 
-void CCTitle::paintEvent(QPaintEvent *)
+void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    if(cache!=nullptr && !cache->isNull() && cache->width()==width() && cache->height()==height())
+    if(cache!=nullptr && !cache->isNull() && cache->width()==m_boundingRect.width() && cache->height()==m_boundingRect.height())
     {
-        QPainter paint;
-        paint.begin(this);
-        paint.drawPixmap(0,0,width(),height(),*cache);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
 
-    QImage image(width(),height(),QImage::Format_ARGB32);
+    QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
     paint.begin(&image);
-    if(lastwidth!=width() || lastheight!=height())
+    if(lastwidth!=m_boundingRect.width() || lastheight!=m_boundingRect.height())
     {
         updateTextPath();
-        lastwidth=width();
-        lastheight=height();
+        lastwidth=m_boundingRect.width();
+        lastheight=m_boundingRect.height();
     }
 
     if(textPath!=nullptr)
@@ -82,16 +80,17 @@ void CCTitle::paintEvent(QPaintEvent *)
 
     *cache=QPixmap::fromImage(image);
 
-    {
-        QPainter paint;
-        paint.begin(this);
-        paint.drawPixmap(0,0,width(),height(),*cache);
-    }
+    painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
+}
+
+QRectF CCTitle::boundingRect() const
+{
+    return QRectF();
 }
 
 void CCTitle::setText(const QString &text)
 {
-    QLabel::setText(text);
+    this->text=text;
     updateTextPath();
 }
 
@@ -103,23 +102,23 @@ bool CCTitle::setPointSize(uint8_t size)
 
 void CCTitle::updateTextPath()
 {
-    const QString &text=QLabel::text();
+    const QString &text=this->text;
     if(textPath!=nullptr)
         delete textPath;
     QPainterPath tempPath;
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
-    int newHeight=height();
+    int newHeight=m_boundingRect.height();
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
-    const Qt::Alignment a=alignment();
+    const Qt::Alignment a=Qt::AlignCenter;//alignment();
     if(a.testFlag(Qt::AlignLeft))
         textPath->addText(0, tempHeight-1, *font, text);
     else if(a.testFlag(Qt::AlignRight))
-        textPath->addText(width()-rect.width(), tempHeight-1, *font, text);
+        textPath->addText(m_boundingRect.width()-rect.width(), tempHeight-1, *font, text);
     else
-        textPath->addText(width()/2-rect.width()/2, tempHeight-1, *font, text);
+        textPath->addText(m_boundingRect.width()/2-rect.width()/2, tempHeight-1, *font, text);
 }
 
 void CCTitle::setFont(const QFont &font)

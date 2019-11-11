@@ -7,7 +7,7 @@
 #include <QApplication>
 
 CustomButton::CustomButton(QString pix, QGraphicsItem *parent) :
-    QGraphicsWidget(parent)
+    QGraphicsItem(parent)
 {
     font=new QFont();
     font->setFamily("Comic Sans MS");
@@ -15,11 +15,12 @@ CustomButton::CustomButton(QString pix, QGraphicsItem *parent) :
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
-    setMaximumSize(QSize(223,92));
+    //setMaximumSize(QSize(223,92));
 
     pressed=false;
     over=false;
     background=pix;
+    m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
 }
 
 CustomButton::~CustomButton()
@@ -31,6 +32,11 @@ CustomButton::~CustomButton()
     }
 }
 
+QRectF CustomButton::boundingRect() const
+{
+    return m_boundingRect;
+}
+
 void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     Q_UNUSED(option);
@@ -38,40 +44,40 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *opti
     unsigned int time=std::chrono::duration_cast<std::chrono::milliseconds>(end - CCBackground::timeFromStart).count();
     setText(QString::number(CCBackground::timeToDraw)+"-"+QString::number(CCBackground::timeDraw*1000/time));
     if(pressed) {
-            if(scaledBackgroundPressed.width()!=widget->width() || scaledBackgroundPressed.height()!=widget->height())
+            if(scaledBackgroundPressed.width()!=m_boundingRect.width() || scaledBackgroundPressed.height()!=m_boundingRect.height())
             {
                 QPixmap temp(background);
                 scaledBackgroundPressed=temp.copy(0,temp.height()/3,temp.width(),temp.height()/3);
-                scaledBackgroundPressed=scaledBackgroundPressed.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+                scaledBackgroundPressed=scaledBackgroundPressed.scaled(m_boundingRect.width(),m_boundingRect.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
             }
-            painter->drawPixmap(0,0,widget->width(),widget->height(),scaledBackgroundPressed);
+            painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),scaledBackgroundPressed);
     } else if(over) {
-        if(scaledBackgroundOver.width()!=widget->width() || scaledBackgroundOver.height()!=widget->height())
+        if(scaledBackgroundOver.width()!=m_boundingRect.width() || scaledBackgroundOver.height()!=m_boundingRect.height())
         {
             QPixmap temp(background);
             scaledBackgroundOver=temp.copy(0,temp.height()/3*2,temp.width(),temp.height()/3);
-            scaledBackgroundOver=scaledBackgroundOver.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            scaledBackgroundOver=scaledBackgroundOver.scaled(m_boundingRect.width(),m_boundingRect.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
         }
-        painter->drawPixmap(0,0,widget->width(),widget->height(),scaledBackgroundOver);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),scaledBackgroundOver);
     } else {
-        if(scaledBackground.width()!=widget->width() || scaledBackground.height()!=widget->height())
+        if(scaledBackground.width()!=m_boundingRect.width() || scaledBackground.height()!=m_boundingRect.height())
         {
             QPixmap temp(background);
             scaledBackground=temp.copy(0,0,temp.width(),temp.height()/3);
-            scaledBackground=scaledBackground.scaled(widget->width(),widget->height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            scaledBackground=scaledBackground.scaled(m_boundingRect.width(),m_boundingRect.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
         }
-        painter->drawPixmap(0,0,widget->width(),widget->height(),scaledBackground);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),scaledBackground);
     }
 
     QPainterPath tempPath;
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     QPainterPath textPath;
-    const int h=widget->height();
+    const int h=m_boundingRect.height();
     const int newHeight=(h*80/100);
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
-    textPath.addText(widget->width()/2-rect.width()/2, tempHeight, *font, text);
+    textPath.addText(m_boundingRect.x()+m_boundingRect.width()/2-rect.width()/2, tempHeight+m_boundingRect.y(), *font, text);
 
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setPen(QPen(QColor(217,145,0)/*penColor*/, 2/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
@@ -89,6 +95,22 @@ void CustomButton::setFont(const QFont &font)
     *this->font=font;
 }
 
+void CustomButton::emitclicked()
+{
+    emit clicked();
+}
+
+void CustomButton::setPressed(const bool &pressed)
+{
+    this->pressed=pressed;
+}
+
+void CustomButton::setPos(qreal ax, qreal ay)
+{
+    m_boundingRect.setX(ax);
+    m_boundingRect.setY(ay);
+}
+
 /*void CustomButton::enterEvent(QEvent *e)
 {
     over=true;
@@ -101,19 +123,19 @@ void CustomButton::leaveEvent(QEvent *e)
     QPushButton::leaveEvent(e);
 }*/
 
-void CustomButton::mousePressEvent(QGraphicsSceneMouseEvent *event)
+/*void CustomButton::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     std::cerr << "Item Mouse Pressed" << std::endl;
     pressed=true;
-    QGraphicsWidget::mousePressEvent(event);
+    QGraphicsItem::mousePressEvent(event);
 }
 
 void CustomButton::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     pressed=false;
-    QGraphicsWidget::mouseReleaseEvent(event);
-    emit clicked();
-}
+    QGraphicsItem::mouseReleaseEvent(event);
+ //   emit clicked();
+}*/
 
 /*QRectF CustomButton::outlineRect() const
 {

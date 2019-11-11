@@ -1,11 +1,10 @@
 #include "ScreenTransition.h"
-#include "GameLoader.h"
+#include "../qt/GameLoader.h"
 #include "../../general/base/Version.h"
+#include <QGLWidget>
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
-#endif
 
-#ifdef Q_OS_ANDROID
 void keep_screen_on(bool on) {
   QtAndroid::runOnAndroidThread([on]{
     QAndroidJniObject activity = QtAndroid::androidActivity();
@@ -39,19 +38,17 @@ ScreenTransition::ScreenTransition() :
     setRenderHint(QPainter::HighQualityAntialiasing,false);
     setRenderHint(QPainter::SmoothPixmapTransform,false);
     setRenderHint(QPainter::NonCosmeticDefaultPen,true);
-    
-    m_backgroundStack=new QStackedWidget(this);
-    m_foregroundStack=new QStackedWidget(this);
-    m_aboveStack=new QStackedWidget(this);
-    m_aboveStack->addWidget(new QWidget());
-    m_aboveStack->setVisible(false);
+
+    m_backgroundStack=nullptr;
+    m_foregroundStack=nullptr;
+    m_aboveStack=nullptr;
     setBackground(&b);
     setForeground(&l);
     if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen))
         abort();
     m=nullptr;
-    o=nullptr;
-    solo=nullptr;
+    /*o=nullptr;
+    solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
 
@@ -64,68 +61,36 @@ ScreenTransition::~ScreenTransition()
 {
 }
 
-void ScreenTransition::paintEvent(QPaintEvent *)
-{
-}
-
-void ScreenTransition::resizeEvent(QResizeEvent *)
+void ScreenTransition::setBackground(QGraphicsItem *widget)
 {
     if(m_backgroundStack!=nullptr)
-    {
-        m_backgroundStack->setMinimumSize(size());
-        m_backgroundStack->setMaximumSize(size());
-    }
+        scene()->removeItem(m_backgroundStack);
+    m_backgroundStack=widget;
+    if(widget!=nullptr)
+        scene()->addItem(m_backgroundStack);
+}
+
+void ScreenTransition::setForeground(QGraphicsItem *widget)
+{
     if(m_foregroundStack!=nullptr)
-    {
-        m_foregroundStack->setMinimumSize(size());
-        m_foregroundStack->setMaximumSize(size());
-    }
+        scene()->removeItem(m_foregroundStack);
+    m_foregroundStack=widget;
+    if(widget!=nullptr)
+        scene()->addItem(m_foregroundStack);
+}
+
+void ScreenTransition::setAbove(QGraphicsItem *widget)
+{
     if(m_aboveStack!=nullptr)
-    {
-        m_aboveStack->setMinimumSize(size());
-        m_aboveStack->setMaximumSize(size());
-    }
-}
-
-void ScreenTransition::setBackground(QWidget *widget)
-{
+        scene()->removeItem(m_aboveStack);
+    m_aboveStack=widget;
     if(widget!=nullptr)
-    {
-        if(m_backgroundStack->indexOf(widget)<0)
-            m_backgroundStack->addWidget(widget);
-        m_backgroundStack->setCurrentWidget(widget);
-    }
-}
-
-void ScreenTransition::setForeground(QWidget *widget)
-{
-    if(widget!=nullptr)
-    {
-        if(m_foregroundStack->indexOf(widget)<0)
-            m_foregroundStack->addWidget(widget);
-        m_foregroundStack->setCurrentWidget(widget);
-    }
-}
-
-void ScreenTransition::setAbove(QWidget *widget)
-{
-    if(widget!=nullptr)
-    {
-        if(m_aboveStack->indexOf(widget)<0)
-            m_aboveStack->addWidget(widget);
-        m_aboveStack->setCurrentWidget(widget);
-        m_aboveStack->setVisible(true);
-    }
-    else
-    {
-        m_aboveStack->setVisible(false);
-        m_aboveStack->setCurrentIndex(0);
-    }
+        scene()->addItem(m_aboveStack);
 }
 
 void ScreenTransition::toMainScreen()
 {
-    if(m==nullptr)
+    /*if(m==nullptr)
     {
         m=new MainScreen(this);
         if(!connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions))
@@ -136,18 +101,18 @@ void ScreenTransition::toMainScreen()
             abort();
     }
     setForeground(m);
-    setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
+    setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));*/
 }
 
 void ScreenTransition::openOptions()
 {
-    if(o==nullptr)
+/*    if(o==nullptr)
     {
         o=new OptionsDialog(this);
         if(!connect(o,&OptionsDialog::quitOption,this,&ScreenTransition::closeOptions))
             abort();
     }
-    setAbove(o);
+    setAbove(o);*/
 }
 
 void ScreenTransition::closeOptions()
@@ -157,18 +122,18 @@ void ScreenTransition::closeOptions()
 
 void ScreenTransition::openSolo()
 {
-    if(solo==nullptr)
+    /*if(solo==nullptr)
     {
         solo=new Solo(this);
         if(!connect(solo,&Solo::backMain,this,&ScreenTransition::backMain))
             abort();
     }
-    setForeground(solo);
+    setForeground(solo);*/
 }
 
 void ScreenTransition::openMulti()
 {
-    if(multi==nullptr)
+/*    if(multi==nullptr)
     {
         multi=new Multi(this);
         if(!connect(multi,&Multi::backMain,this,&ScreenTransition::backMain))
@@ -178,7 +143,7 @@ void ScreenTransition::openMulti()
         if(!connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer))
             abort();
     }
-    setForeground(multi);
+    setForeground(multi);*/
 }
 
 void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)
@@ -187,7 +152,7 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
     Q_UNUSED(login);
     Q_UNUSED(pass);
     setForeground(&l);
-    baseWindow=new CatchChallenger::BaseWindow();
+    //baseWindow=new CatchChallenger::BaseWindow();
     connexionManager=new ConnexionManager(baseWindow,&l);
     connexionManager->connectToServer(connexionInfo,login,pass);
     if(!connect(connexionManager,&ConnexionManager::logged,this,&ScreenTransition::logged))
@@ -196,12 +161,12 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
         abort();
     if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer))
         abort();
-    if(!connect(baseWindow,&CatchChallenger::BaseWindow::toLoading,this,&ScreenTransition::toLoading))
+    /*if(!connect(baseWindow,&CatchChallenger::BaseWindow::toLoading,this,&ScreenTransition::toLoading))
         abort();
     if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToServerList,this,&ScreenTransition::goToServerList))
         abort();
     if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToMap,this,&ScreenTransition::goToMap))
-        abort();
+        abort();*/
     l.progression(0,100);
 }
 
@@ -213,11 +178,11 @@ void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QStrin
 
 void ScreenTransition::toLoading(QString text)
 {
-    setBackground(&b);
-    setForeground(&l);
-    if(m_foregroundStack->indexOf(&l)!=m_foregroundStack->currentIndex())
+    if(m_foregroundStack!=&l)
         l.progression(0,100);
     l.setText(text);
+    setBackground(&b);
+    setForeground(&l);
 }
 
 void ScreenTransition::backMain()
@@ -229,37 +194,37 @@ void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::Cha
 {
     Q_UNUSED(characterEntryList);
     setBackground(nullptr);
-    setForeground(baseWindow);
+    //setForeground(baseWindow);
     //baseWindow->updateConnectingStatus();
 }
 
 void ScreenTransition::disconnectedFromServer()
 {
-    baseWindow->resetAll();
+    //baseWindow->resetAll();
     setBackground(&b);
-    setForeground(m);
+    //setForeground(m);
     setAbove(nullptr);
 }
 
 void ScreenTransition::errorString(std::string error)
 {
     setBackground(&b);
-    setForeground(m);
+    //setForeground(m);
     setAbove(nullptr);
-    m->setError(error);
+    //m->setError(error);
 }
 
 void ScreenTransition::goToServerList()
 {
     setBackground(&b);
-    setForeground(baseWindow);
+    //setForeground(baseWindow);
     setAbove(nullptr);
 }
 
 void ScreenTransition::goToMap()
 {
     setBackground(&b);
-    setForeground(baseWindow);
+    //setForeground(baseWindow);
     setAbove(nullptr);
 }
 

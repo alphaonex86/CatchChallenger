@@ -26,12 +26,12 @@ qDebug()<<event->scenePos();
     setMinimumHeight(60);
     setMinimumWidth(60);
 
-    CustomButton *button=new CustomButton(":/quit.png",m_CCBackground);
+    button=new CustomButton(":/quit.png");
     button->setText(tr("X"));
     if(!connect(button,&CustomButton::clicked,&QCoreApplication::quit))
         abort();
     button->setPos(0,0);
-    button->setMaximumSize(200,50);
+    //button->setMaximumSize(200,50);
     //ui->verticalLayout->addWidget(p);
     setStyleSheet("");
 
@@ -50,11 +50,11 @@ qDebug()<<event->scenePos();
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     setViewport(new QGLWidget(QGLFormat(QGL::DoubleBuffer)));
-    setRenderHint(QPainter::Antialiasing,false);
+    /*setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
     setRenderHint(QPainter::HighQualityAntialiasing,false);
     setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+    setRenderHint(QPainter::NonCosmeticDefaultPen,true);*/
     show();
 
     timerUpdateFPS.setSingleShot(true);
@@ -141,7 +141,21 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << event->x() << "," << event->y() << std::endl;
+    const uint8_t x=event->x();
+    const uint8_t y=event->y();
+    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    if(button->boundingRect().contains(x,y))
+        button->setPressed(true);
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event)
+{
+    const uint8_t x=event->x();
+    const uint8_t y=event->y();
+    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    if(button->boundingRect().contains(x,y))
+        button->emitclicked();
+    button->setPressed(false);
 }
 
 void MainWindow::render()

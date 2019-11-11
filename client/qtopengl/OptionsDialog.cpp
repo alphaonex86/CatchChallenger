@@ -1,27 +1,23 @@
 #include "OptionsDialog.h"
-#include "ui_OptionsDialog.h"
 
-OptionsDialog::OptionsDialog(QWidget *parent) :
-    QWidget(parent),
-    ui(new Ui::OptionsDialog)
+OptionsDialog::OptionsDialog(QGraphicsItem *parent) :
+    QGraphicsItem(parent)
 {
-    ui->setupUi(this);
-    w=new CCWidget();
+/*    w=new CCWidget();
     w->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 
     QHBoxLayout *verticalLayoutNews = new QHBoxLayout(w);
     verticalLayoutNews->addWidget(ui->scrollArea);
     //ui->scrollArea->setParent(w);
     ui->horizontalLayoutMiddle->insertWidget(1,w);
-    //w->show();
+    //w->show();*/
 }
 
 OptionsDialog::~OptionsDialog()
 {
-    delete ui;
 }
 
-void OptionsDialog::resizeEvent(QResizeEvent * e)
+/*void OptionsDialog::resizeEvent(QResizeEvent * e)
 {
     unsigned int b=w->currentBorderSize();
     Q_UNUSED(b);
@@ -36,3 +32,4 @@ void OptionsDialog::on_close_clicked()
 {
     emit quitOption();
 }
+*/
