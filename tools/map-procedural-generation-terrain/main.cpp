@@ -4,9 +4,9 @@
 #include <QFile>
 #include <iostream>
 
-#include "../../client/tiled/tiled_mapwriter.h"
-#include "../../client/tiled/tiled_mapobject.h"
-#include "../../client/tiled/tiled_objectgroup.h"
+#include "../../client/qt/tiled/tiled_mapwriter.h"
+#include "../../client/qt/tiled/tiled_mapobject.h"
+#include "../../client/qt/tiled/tiled_objectgroup.h"
 
 #include "znoise/headers/Simplex.hpp"
 #include "VoronioForTiledMapTmx.h"

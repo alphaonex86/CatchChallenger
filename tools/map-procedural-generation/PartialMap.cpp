@@ -1,11 +1,11 @@
 #include "PartialMap.h"
 
-#include "../../client/tiled/tiled_mapwriter.h"
-#include "../../client/tiled/tiled_mapreader.h"
-#include "../../client/tiled/tiled_mapobject.h"
-#include "../../client/tiled/tiled_objectgroup.h"
-#include "../../client/tiled/tiled_tileset.h"
-#include "../../client/tiled/tiled_tile.h"
+#include "../../client/qt/tiled/tiled_mapwriter.h"
+#include "../../client/qt/tiled/tiled_mapreader.h"
+#include "../../client/qt/tiled/tiled_mapobject.h"
+#include "../../client/qt/tiled/tiled_objectgroup.h"
+#include "../../client/qt/tiled/tiled_tileset.h"
+#include "../../client/qt/tiled/tiled_tile.h"
 #include "../../general/base/cpp11addition.h"
 
 #include <QDir>

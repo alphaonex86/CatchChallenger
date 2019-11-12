@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="2" height="3" tilewidth="16" tileheight="16" infinite="0" nextobjectid="5">
  <tileset firstgid="1" source="../dest/map/tileset/invisible.tsx"/>
- <tileset firstgid="17" source="../dest/map/tileset/stairs.tsx"/>
+ <tileset firstgid="17" source="../../../CatchChallenger-datapack/map/tileset/t1.tsx"/>
  <layer name="Walkable" width="2" height="3">
   <data encoding="base64" compression="zstd">
    KLUv/SAYRQAAEAAAAQAKwAI=
@@ -9,7 +9,7 @@
  </layer>
  <layer name="Collisions" width="2" height="3">
   <data encoding="base64" compression="zstd">
-   KLUv/SAYwQAAEwAAABQAAAAYAAAAGQAAABoAAAAVAAAA
+   KLUv/SAYbQAAKAAAPgIAAgDgjAFgAQ==
   </data>
  </layer>
  <objectgroup name="Moving">
