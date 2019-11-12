@@ -33,9 +33,9 @@ ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
     setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-    setRenderHint(QPainter::Antialiasing,false);
-    setRenderHint(QPainter::TextAntialiasing,false);
-    setRenderHint(QPainter::HighQualityAntialiasing,false);
+    setRenderHint(QPainter::Antialiasing,true);
+    setRenderHint(QPainter::TextAntialiasing,true);
+    setRenderHint(QPainter::HighQualityAntialiasing,true);
     setRenderHint(QPainter::SmoothPixmapTransform,false);
     setRenderHint(QPainter::NonCosmeticDefaultPen,true);
 
@@ -64,28 +64,28 @@ ScreenTransition::~ScreenTransition()
 void ScreenTransition::setBackground(QGraphicsItem *widget)
 {
     if(m_backgroundStack!=nullptr)
-        scene()->removeItem(m_backgroundStack);
+        mScene->removeItem(m_backgroundStack);
     m_backgroundStack=widget;
     if(widget!=nullptr)
-        scene()->addItem(m_backgroundStack);
+        mScene->addItem(m_backgroundStack);
 }
 
 void ScreenTransition::setForeground(QGraphicsItem *widget)
 {
     if(m_foregroundStack!=nullptr)
-        scene()->removeItem(m_foregroundStack);
+        mScene->removeItem(m_foregroundStack);
     m_foregroundStack=widget;
     if(widget!=nullptr)
-        scene()->addItem(m_foregroundStack);
+        mScene->addItem(m_foregroundStack);
 }
 
 void ScreenTransition::setAbove(QGraphicsItem *widget)
 {
     if(m_aboveStack!=nullptr)
-        scene()->removeItem(m_aboveStack);
+        mScene->removeItem(m_aboveStack);
     m_aboveStack=widget;
     if(widget!=nullptr)
-        scene()->addItem(m_aboveStack);
+        mScene->addItem(m_aboveStack);
 }
 
 void ScreenTransition::toMainScreen()

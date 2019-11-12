@@ -1,4 +1,4 @@
-include(../../client/tiled/tiled.pri)
+include(../../client/qt/tiled/tiled.pri)
 
 TEMPLATE = app
 TARGET = map-procedural-generation-terrain

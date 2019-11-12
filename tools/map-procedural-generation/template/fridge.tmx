@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="1" height="3" tilewidth="16" tileheight="16" infinite="0" nextobjectid="2">
- <tileset firstgid="1" source="../dest/map/tileset/stairs.tsx"/>
  <tileset firstgid="11" source="../dest/map/tileset/inside-mobilier.tsx"/>
  <tileset firstgid="1035" source="../dest/map/tileset/inside-terra.tsx"/>
  <tileset firstgid="2059" source="../dest/map/tileset/invisible.tsx"/>

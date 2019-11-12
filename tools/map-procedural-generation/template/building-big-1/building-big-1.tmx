@@ -3,30 +3,19 @@
  <tileset firstgid="1" source="../../dest/map/tileset/building-small.tsx"/>
  <tileset firstgid="1025" source="../../dest/map/tileset/terra.tsx"/>
  <tileset firstgid="2049" source="../../dest/map/tileset/invisible.tsx"/>
- <layer name="OnGrass" width="9" height="6">
-  <data encoding="base64" compression="zlib">
-   eJxjYBieAAAA2AAB
-  </data>
- </layer>
+ <tileset firstgid="2065" source="../../dest/map/tileset/t2.tsx"/>
  <layer name="Collisions" width="9" height="6">
   <data encoding="base64" compression="zlib">
-   eJytwwsSgQAUAMA3mZFQx+jncwwKuf8JEOUM9hB2ZiP+45FEPH05+vbj5OzX5SIidWXm2o1bcwtLK2sbW3fuPXj05NnO3otXbw7e/QHbuQ0M
+   eJxjYCAefORkYPgExJ+B+AsQf+XEVCPIxcAgBMTCQCwCxKJctFNjCBQzAmJjIDYBYlMkNQDaoAfR
   </data>
  </layer>
  <layer name="WalkBehind" width="9" height="6">
   <data encoding="base64" compression="zlib">
-   eJzNwwkRgCAAADDO/jlQQYih4JeJxWB3i0sIq5u7yexhsXp62ezePr5+/s5mAFDrDTk=
+   eJxjYICAjZwMDJuAeDMQbwHirZwMQxoAAN8BA60=
   </data>
  </layer>
  <objectgroup name="Moving">
-  <object id="12" type="teleport on push" gid="2051" x="16" y="80" width="16" height="16">
-   <properties>
-    <property name="map" value="floor-0"/>
-    <property name="x" value="5"/>
-    <property name="y" value="10"/>
-   </properties>
-  </object>
-  <object id="13" type="teleport on push" gid="2051" x="112" y="80" width="16" height="16">
+  <object id="13" type="teleport on push" gid="2051" x="64" y="96" width="16" height="16">
    <properties>
     <property name="map" value="floor-0"/>
     <property name="x" value="5"/>

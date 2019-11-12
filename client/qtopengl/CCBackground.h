@@ -12,7 +12,7 @@ class CCBackground : public QObject, public QGraphicsItem
     Q_OBJECT
 public:
     CCBackground(QGraphicsItem *parent = nullptr);
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget) override;
     void startAnimation();
     void stopAnimation();
 private:
