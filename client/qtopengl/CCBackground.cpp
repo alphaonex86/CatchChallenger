@@ -98,7 +98,7 @@ unsigned int CCBackground::getTargetZoom(QWidget *widget)
     return targetZoom;
 }
 
-void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
     QTime time;
     time.restart();
