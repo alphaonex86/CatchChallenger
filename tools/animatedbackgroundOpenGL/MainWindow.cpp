@@ -115,28 +115,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     mScene->setSceneRect(QRectF(0,0,width(),height()));
     (void)event;
-    /*m_CCBackground->setMinimumSize(size());
-    m_CCBackground->setMaximumSize(size());
-
-    QString text;
-    switch (rand()%4) {
-    case 0:
-        text="f";
-        break;
-    case 1:
-        text="quit";
-        break;
-    default:
-        text="фхцчшщ";
-        break;
-    }*/
-    /*const int w=rand()%173+50;
-    const int h=rand()%73+20;
-    p->setMinimumWidth(w);
-    p->setMinimumHeight(h);
-    p->setMaximumWidth(w);
-    p->setMaximumHeight(h);*/
-    //p->setText(text);
 }
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
