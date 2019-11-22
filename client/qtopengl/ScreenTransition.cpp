@@ -1,6 +1,7 @@
 #include "ScreenTransition.h"
 #include "../qt/GameLoader.h"
 #include "../../general/base/Version.h"
+#include <iostream>
 #include <QGLWidget>
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
@@ -32,12 +33,12 @@ void keep_screen_on(bool on) {
 ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
-    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    /*setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
     setRenderHint(QPainter::Antialiasing,true);
     setRenderHint(QPainter::TextAntialiasing,true);
     setRenderHint(QPainter::HighQualityAntialiasing,true);
     setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+    setRenderHint(QPainter::NonCosmeticDefaultPen,true);*/
 
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
@@ -52,13 +53,68 @@ ScreenTransition::ScreenTransition() :
     multi=nullptr;
     login=nullptr;
 
+    timerUpdateFPS.setSingleShot(true);
+    timerUpdateFPS.setInterval(1000);
+    timeUpdateFPS.restart();
+    frameCounter=0;
+    timeRender.restart();
+    waitRenderTime=40;
+    timerRender.setSingleShot(true);
+    if(!connect(&timerRender,&QTimer::timeout,this,&ScreenTransition::render))
+        abort();
+    if(!connect(&timerUpdateFPS,&QTimer::timeout,this,&ScreenTransition::updateFPS))
+        abort();
+    timerUpdateFPS.start();
+
+    setScene(mScene);
+    mScene->setSceneRect(QRectF(0,0,width(),height()));
+    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState | QGraphicsView::IndirectPainting);
+    setBackgroundBrush(Qt::black);
+    setFrameStyle(0);
+    viewport()->setAttribute(Qt::WA_StaticContents);
+    viewport()->setAttribute(Qt::WA_TranslucentBackground);
+    viewport()->setAttribute(Qt::WA_NoSystemBackground);
+    setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+
     #ifdef Q_OS_ANDROID
     keep_screen_on(true);
     #endif
+
+    imageText=new QGraphicsPixmapItem();
+    mScene->addItem(imageText);
+    imageText->setPos(0,0);
+
+    render();
+    setTargetFPS(100);
 }
 
 ScreenTransition::~ScreenTransition()
 {
+}
+
+void ScreenTransition::resizeEvent(QResizeEvent *event)
+{
+    mScene->setSceneRect(QRectF(0,0,width(),height()));
+    (void)event;
+}
+
+void ScreenTransition::mousePressEvent(QMouseEvent *event)
+{
+    const uint8_t x=event->x();
+    const uint8_t y=event->y();
+    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    /*if(button->boundingRect().contains(x,y))
+        button->setPressed(true);*/
+}
+
+void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
+{
+    const uint8_t x=event->x();
+    const uint8_t y=event->y();
+    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    /*if(button->boundingRect().contains(x,y))
+        button->emitclicked();
+    button->setPressed(false);*/
 }
 
 void ScreenTransition::setBackground(QGraphicsItem *widget)
@@ -226,5 +282,58 @@ void ScreenTransition::goToMap()
     setBackground(&b);
     //setForeground(baseWindow);
     setAbove(nullptr);
+}
+
+void ScreenTransition::render()
+{
+    mScene->setSceneRect(QRectF(0,0,width(),height()));
+    //mScene->update();
+    viewport()->update();
+}
+
+void ScreenTransition::paintEvent(QPaintEvent * event)
+{
+    mScene->setSceneRect(QRectF(0,0,width(),height()));
+    timeRender.restart();
+
+    QGraphicsView::paintEvent(event);
+
+    uint32_t elapsed=timeRender.elapsed();
+    if(waitRenderTime<=elapsed)
+        timerRender.start(1);
+    else
+        timerRender.start(waitRenderTime-elapsed);
+
+    if(frameCounter<65535)
+        frameCounter++;
+}
+
+void ScreenTransition::updateFPS()
+{
+    const unsigned int FPS=(int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
+    emit newFPSvalue(FPS);
+    QImage pix(50,40,QImage::Format_ARGB32_Premultiplied);
+    pix.fill(Qt::transparent);
+    QPainter p(&pix);
+    p.setPen(QPen(Qt::green));
+    p.setFont(QFont("Times", 12, QFont::Bold));
+    p.drawText(pix.rect(), Qt::AlignCenter,QString::number(FPS));
+    imageText->setPixmap(QPixmap::fromImage(pix));
+
+    frameCounter=0;
+    timeUpdateFPS.restart();
+    timerUpdateFPS.start();
+}
+
+void ScreenTransition::setTargetFPS(int targetFPS)
+{
+    if(targetFPS==0)
+        waitRenderTime=0;
+    else
+    {
+        waitRenderTime=static_cast<uint8_t>(static_cast<float>(1000.0)/(float)targetFPS);
+        if(waitRenderTime<1)
+            waitRenderTime=1;
+    }
 }
 
