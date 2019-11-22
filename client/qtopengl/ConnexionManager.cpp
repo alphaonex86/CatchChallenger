@@ -205,7 +205,7 @@ QString ConnexionManager::serverToDatapachPath(Multi::ConnexionInfo connexionInf
 {
     QDir datapack;
     if(connexionInfo.isCustom)
-        datapack=QDir(QStringLiteral("%1/datapack/Customer-%2/")
+        datapack=QDir(QStringLiteral("%1/datapack/Custom-%2/")
                       .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
                       .arg(connexionInfo.unique_code)
                       );

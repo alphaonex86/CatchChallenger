@@ -22,6 +22,10 @@ public:
     void setForeground(QGraphicsItem *widget);
     void setAbove(QGraphicsItem *widget);//first plan popup
 protected:
+    void resizeEvent(QResizeEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+protected:
 //    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void toMainScreen();
     void openOptions();
@@ -36,6 +40,13 @@ protected:
     void toLoading(QString text);
     void goToServerList();
     void goToMap();
+    void render();
+    void paintEvent(QPaintEvent * event) override;
+
+    void updateFPS();
+    void setTargetFPS(int targetFPS);
+signals:
+    void newFPSvalue(const unsigned int FPS);
 private:
     CCBackground b;
     LoadingScreen l;
@@ -50,6 +61,14 @@ private:
     CatchChallenger::BaseWindow *baseWindow;
     ConnexionManager *connexionManager;
     QGraphicsScene *mScene;
+    QGraphicsPixmapItem *imageText;
+
+    uint8_t waitRenderTime;
+    QTimer timerRender;
+    QTime timeRender;
+    uint16_t frameCounter;
+    QTimer timerUpdateFPS;
+    QTime timeUpdateFPS;
 };
 
 #endif // SCREENTRANSITION_H
