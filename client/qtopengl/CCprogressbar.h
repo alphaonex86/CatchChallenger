@@ -11,8 +11,8 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     QRectF boundingRect() const override;
-    void setPressed(const bool &pressed);
     void setPos(qreal ax, qreal ay);
+    void setSize(qreal width, qreal height);
 
     void setMaximum(const int &value);
     void setMinimum(const int &value);
@@ -26,6 +26,7 @@ private:
     QPainterPath *textPath;
     QFont *font;
     QString oldText;
+    QPixmap *cache;
 
     QRectF m_boundingRect;
     int m_value,m_min,m_max;

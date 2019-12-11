@@ -46,7 +46,7 @@ CustomButton::~CustomButton()
 
 void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    if(cache!=nullptr && !cache->isNull() && cache->width()==m_boundingRect.width() && cache->height()==m_boundingRect.height())
+    if(cache!=nullptr)
     {
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
@@ -94,12 +94,22 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
 
 void CustomButton::setText(const QString &text)
 {
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     this->m_text=text;
     updateTextPath();
 }
 
 bool CustomButton::setPointSize(uint8_t size)
 {
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     font->setPointSize(size);
     return true;
 }
@@ -126,6 +136,11 @@ void CustomButton::updateTextPath()
 
 bool CustomButton::updateTextPercent(uint8_t percent)
 {
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
     if(percent>100)
         return false;
     this->percent=percent;
@@ -137,6 +152,11 @@ bool CustomButton::updateTextPercent(uint8_t percent)
 void CustomButton::setFont(const QFont &font)
 {
     *this->font=font;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
 }
 
 QFont CustomButton::getFont() const
