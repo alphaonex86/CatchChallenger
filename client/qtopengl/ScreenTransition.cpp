@@ -33,12 +33,12 @@ void keep_screen_on(bool on) {
 ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
-    /*setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
     setRenderHint(QPainter::Antialiasing,true);
     setRenderHint(QPainter::TextAntialiasing,true);
     setRenderHint(QPainter::HighQualityAntialiasing,true);
     setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setRenderHint(QPainter::NonCosmeticDefaultPen,true);*/
+    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
 
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
@@ -102,7 +102,8 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
 {
     const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) "
+              << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
 }
@@ -111,7 +112,8 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
 {
     const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
+              << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
