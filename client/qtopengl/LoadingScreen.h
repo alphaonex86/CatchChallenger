@@ -20,7 +20,7 @@ public:
     void progression(uint32_t size, uint32_t total);
     void setText(QString text);
 
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
     QRectF boundingRect() const override;
 protected:
     void canBeChanged();

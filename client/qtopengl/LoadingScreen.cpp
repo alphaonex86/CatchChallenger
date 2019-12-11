@@ -1,6 +1,7 @@
 #include "LoadingScreen.h"
 #include "../qt/GameLoader.h"
 #include "../../general/base/Version.h"
+#include <QWidget>
 
 LoadingScreen::LoadingScreen()
 {
@@ -31,7 +32,7 @@ LoadingScreen::LoadingScreen()
     timer.setSingleShot(true);
     if(!QObject::connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged))
         abort();
-    timer.start(1000);
+    //timer.start(1000);
     doTheNext=false;
 }
 
@@ -111,8 +112,13 @@ void LoadingScreen::setText(QString text)
         info->setPlainText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
 }
 
-void LoadingScreen::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
+void LoadingScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
+    progressbar->setPos(10,widget->height()-82-10);
+    progressbar->setSize(widget->width()-10-10,82);
+    this->widget->setPos(widget->width()/2-500/2,widget->height()/2-270/2);
+    this->widget->setWidth(500);
+    this->widget->setHeight(270);
 }
 
 QRectF LoadingScreen::boundingRect() const
