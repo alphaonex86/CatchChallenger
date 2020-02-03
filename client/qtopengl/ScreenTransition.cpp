@@ -40,6 +40,7 @@ ScreenTransition::ScreenTransition() :
     setRenderHint(QPainter::SmoothPixmapTransform,false);
     setRenderHint(QPainter::NonCosmeticDefaultPen,true);
 
+    mousePress=nullptr;
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
     m_aboveStack=nullptr;
@@ -102,24 +103,50 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
 {
     const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) "
+    std::cerr << "void ScreenTransition::mousePressEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
+    if(mousePress!=nullptr)
+    {
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(event);
+        mousePress=nullptr;
+    }
+    if(m_aboveStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(event);
+        mousePress=m_aboveStack;
+    }
+    else if(m_foregroundStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(event);
+        mousePress=m_foregroundStack;
+    }
 }
 
 void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
 {
     const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
+    std::cerr << "void ScreenTransition::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
+    mousePress=nullptr;
+    if(m_aboveStack!=nullptr)
+    {
+        m_aboveStack->mouseReleaseEventXY(event);
+        mousePress=m_aboveStack;
+    }
+    else if(m_foregroundStack!=nullptr)
+    {
+        m_foregroundStack->mouseReleaseEventXY(event);
+        mousePress=m_foregroundStack;
+    }
 }
 
-void ScreenTransition::setBackground(QGraphicsItem *widget)
+void ScreenTransition::setBackground(ScreenInput *widget)
 {
     if(m_backgroundStack!=nullptr)
         mScene->removeItem(m_backgroundStack);
@@ -128,8 +155,14 @@ void ScreenTransition::setBackground(QGraphicsItem *widget)
         mScene->addItem(m_backgroundStack);
 }
 
-void ScreenTransition::setForeground(QGraphicsItem *widget)
+void ScreenTransition::setForeground(ScreenInput *widget)
 {
+    if(mousePress!=nullptr)
+    {
+        QMouseEvent event(QEvent::MouseButtonRelease,QPointF(0.0,0.0),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(&event);
+        mousePress=nullptr;
+    }
     if(m_foregroundStack!=nullptr)
         mScene->removeItem(m_foregroundStack);
     m_foregroundStack=widget;
@@ -137,8 +170,14 @@ void ScreenTransition::setForeground(QGraphicsItem *widget)
         mScene->addItem(m_foregroundStack);
 }
 
-void ScreenTransition::setAbove(QGraphicsItem *widget)
+void ScreenTransition::setAbove(ScreenInput *widget)
 {
+    if(mousePress!=nullptr)
+    {
+        QMouseEvent event(QEvent::MouseButtonRelease,QPointF(0.0,0.0),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(&event);
+        mousePress=nullptr;
+    }
     if(m_aboveStack!=nullptr)
         mScene->removeItem(m_aboveStack);
     m_aboveStack=widget;
@@ -148,9 +187,9 @@ void ScreenTransition::setAbove(QGraphicsItem *widget)
 
 void ScreenTransition::toMainScreen()
 {
-    /*if(m==nullptr)
+    if(m==nullptr)
     {
-        m=new MainScreen(this);
+        m=new MainScreen();
         if(!connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions))
             abort();
         if(!connect(m,&MainScreen::goToSolo,this,&ScreenTransition::openSolo))
@@ -159,7 +198,7 @@ void ScreenTransition::toMainScreen()
             abort();
     }
     setForeground(m);
-    setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));*/
+    setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
 }
 
 void ScreenTransition::openOptions()
@@ -269,7 +308,8 @@ void ScreenTransition::errorString(std::string error)
     setBackground(&b);
     //setForeground(m);
     setAbove(nullptr);
-    //m->setError(error);
+    if(m!=nullptr)
+        m->setError(error);
 }
 
 void ScreenTransition::goToServerList()

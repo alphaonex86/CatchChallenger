@@ -1,16 +1,17 @@
 #ifndef LOADINGSCREEN_H
 #define LOADINGSCREEN_H
 
-#include <QGraphicsItem>
 #include <QTimer>
+#include <QDateTime>
 #include "CCWidget.h"
 #include "CCprogressbar.h"
+#include "ScreenInput.h"
 
 namespace Ui {
 class LoadingScreen;
 }
 
-class LoadingScreen : public QObject, public QGraphicsItem
+class LoadingScreen : public QObject, public ScreenInput
 {
     Q_OBJECT
 
@@ -25,6 +26,7 @@ public:
 protected:
     void canBeChanged();
     void dataIsParsed();
+    void updateProgression();
 private:
     Ui::LoadingScreen *ui;
     CCWidget *widget;
@@ -33,6 +35,9 @@ private:
     CCprogressbar *progressbar;
     QGraphicsTextItem *version;
     QTimer timer;
+    QTimer slowDownProgressionTimer;
+    uint8_t lastProgression;
+    uint8_t timerProgression;
     bool doTheNext;
 signals:
     void finished();
