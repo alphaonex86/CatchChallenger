@@ -103,6 +103,12 @@ void CCWidget::setHeight(const int &h)
     this->m_h=h;
 }
 
+void CCWidget::setSize(const int &w,const int &h)
+{
+    this->m_w=w;
+    this->m_h=h;
+}
+
 int CCWidget::width() const
 {
     return m_w;

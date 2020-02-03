@@ -8,8 +8,7 @@
 unsigned int CCBackground::timeDraw;
 std::chrono::time_point<std::chrono::steady_clock> CCBackground::timeFromStart;*/
 
-CCBackground::CCBackground(QGraphicsItem *parent) :
-    QGraphicsItem(parent)
+CCBackground::CCBackground()
 {
     zoom=0;
     grassMove=0;

@@ -90,13 +90,18 @@ QRectF CCTitle::boundingRect() const
 
 void CCTitle::setText(const QString &text)
 {
+    if(this->text==text)
+        return;
     this->text=text;
     updateTextPath();
 }
 
 bool CCTitle::setPointSize(uint8_t size)
 {
+    if(font->pointSize()==size)
+        return true;
     font->setPointSize(size);
+    updateTextPath();
     return true;
 }
 

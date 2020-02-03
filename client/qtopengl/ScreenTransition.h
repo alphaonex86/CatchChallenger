@@ -11,6 +11,7 @@
 //#include "Login.h"
 //#include "interface/BaseWindow.h"
 #include "ConnexionManager.h"
+#include "ScreenInput.h"
 
 class ScreenTransition : public QGraphicsView
 {
@@ -18,9 +19,9 @@ class ScreenTransition : public QGraphicsView
 public:
     explicit ScreenTransition();
     ~ScreenTransition();
-    void setBackground(QGraphicsItem *widget);
-    void setForeground(QGraphicsItem *widget);
-    void setAbove(QGraphicsItem *widget);//first plan popup
+    void setBackground(ScreenInput *widget);
+    void setForeground(ScreenInput *widget);
+    void setAbove(ScreenInput *widget);//first plan popup
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
@@ -50,9 +51,9 @@ signals:
 private:
     CCBackground b;
     LoadingScreen l;
-    QGraphicsItem *m_backgroundStack;
-    QGraphicsItem *m_foregroundStack;
-    QGraphicsItem *m_aboveStack;
+    ScreenInput *m_backgroundStack;
+    ScreenInput *m_foregroundStack;
+    ScreenInput *m_aboveStack;
     //OptionsDialog *o;
     MainScreen *m;
     //Solo *solo;
@@ -62,6 +63,7 @@ private:
     ConnexionManager *connexionManager;
     QGraphicsScene *mScene;
     QGraphicsPixmapItem *imageText;
+    ScreenInput *mousePress;
 
     uint8_t waitRenderTime;
     QTimer timerRender;

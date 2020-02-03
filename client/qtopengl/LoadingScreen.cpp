@@ -7,12 +7,12 @@ LoadingScreen::LoadingScreen()
 {
     widget = new CCWidget(this);
     teacher = new QGraphicsPixmapItem(widget);
-    teacher->setPixmap(QPixmap(":/CC/images/interface/teacher.png"));
+    teacher->setPixmap(GameLoader::gameLoader->getImage(":/CC/images/interface/teacher.png"));
     info = new QGraphicsTextItem(widget);
-    info->setPlainText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+    info->setHtml(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
     info->setDefaultTextColor(QColor(64,28,02));
-    version = new QGraphicsTextItem(widget);
-    version->setPlainText(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
+    version = new QGraphicsTextItem(this);
+    version->setHtml(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
     //version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     QFont font = version->font();
     font.setPointSize(7);
@@ -34,48 +34,19 @@ LoadingScreen::LoadingScreen()
         abort();
     //timer.start(1000);
     doTheNext=false;
+
+    //slow down progression
+    slowDownProgressionTimer.setSingleShot(false);
+    slowDownProgressionTimer.start(10);//20x
+    if(!QObject::connect(&slowDownProgressionTimer,&QTimer::timeout,this,&LoadingScreen::updateProgression))
+        abort();
+    lastProgression=0;
+    timerProgression=0;
 }
 
 LoadingScreen::~LoadingScreen()
 {
 }
-
-/*void LoadingScreen::resizeEvent(QResizeEvent *)
-{
-    widget->updateGeometry();
-    if(width()<400 || height()<320)
-    {
-        teacher->setVisible(false);
-        widget->setMinimumHeight(100);
-    }
-    else
-    {
-        teacher->setVisible(true);
-        widget->setMinimumHeight(260);
-    }
-    horizontalLayout->setContentsMargins(
-                widget->currentBorderSize(),widget->currentBorderSize(),
-                widget->currentBorderSize(),widget->currentBorderSize()
-                );
-
-    QFont font = version->font();
-    if(height()<500)
-    {
-        progressbar->setMinimumHeight(0);
-        font.setPointSize(9);
-    }
-    else if(height()<800)
-    {
-        progressbar->setMinimumHeight(45);
-        font.setPointSize(11);
-    }
-    else
-    {
-        progressbar->setMinimumHeight(55);
-        font.setPointSize(14);
-    }
-    version->setFont(font);
-}*/
 
 void LoadingScreen::canBeChanged()
 {
@@ -92,14 +63,37 @@ void LoadingScreen::dataIsParsed()
     else
     {
         doTheNext=true;
-        info->setPlainText(tr("%1 is loaded").arg("<b>CatchChallenger</b>"));
+        info->setHtml(tr("%1 is loaded").arg("<b>CatchChallenger</b>"));
+    }
+}
+
+void LoadingScreen::updateProgression()
+{
+    if(timerProgression<100)
+    {
+        timerProgression+=5;
+        if(timerProgression<lastProgression)
+            progressbar->setValue(timerProgression);
+        else
+            progressbar->setValue(lastProgression);
+    }
+    if(timerProgression>=100)
+    {
+        canBeChanged();
+        slowDownProgressionTimer.stop();
     }
 }
 
 void LoadingScreen::progression(uint32_t size,uint32_t total)
 {
     if(size<=total)
-        progressbar->setValue(size*100/total);
+    {
+        lastProgression=size*100/total;
+        if(timerProgression<lastProgression)
+            progressbar->setValue(timerProgression);
+        else
+            progressbar->setValue(lastProgression);
+    }
     else
         progressbar->setValue(progressbar->maximum());//abort();
 }
@@ -107,18 +101,61 @@ void LoadingScreen::progression(uint32_t size,uint32_t total)
 void LoadingScreen::setText(QString text)
 {
     if(!text.isEmpty())
-        info->setPlainText(text);
+        info->setHtml(text);
     else
-        info->setPlainText(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+        info->setHtml(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
 }
 
 void LoadingScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
-    progressbar->setPos(10,widget->height()-82-10);
-    progressbar->setSize(widget->width()-10-10,82);
-    this->widget->setPos(widget->width()/2-500/2,widget->height()/2-270/2);
-    this->widget->setWidth(500);
-    this->widget->setHeight(270);
+    int progressBarHeight=82;
+    if(widget->height()<800)
+    {
+        progressBarHeight=widget->height()/10;
+        if(progressBarHeight<24)
+            progressBarHeight=24;
+    }
+    progressbar->setPos(10,widget->height()-progressBarHeight-10);
+    progressbar->setSize(widget->width()-10-10,progressBarHeight);
+
+    if(widget->width()<800 || widget->height()<600)
+    {
+        int w=widget->width()-20;
+        if(w>500)
+            w=500;
+        int h=widget->height()-40-progressBarHeight;
+        if(h>100)
+            h=100;
+        this->widget->setWidth(w);
+        this->widget->setHeight(h);
+        this->widget->setPos(widget->width()/2-this->widget->width()/2,(widget->height()-progressBarHeight)/2-this->widget->height()/2);
+
+        teacher->setVisible(false);
+        info->setPos(this->widget->currentBorderSize(),h/2-info->boundingRect().height()/2);
+    }
+    else
+    {
+        if(widget->width()<500+20)
+            this->widget->setWidth(widget->width()-20);
+        else
+            this->widget->setWidth(500);
+        this->widget->setHeight(270-20);
+        this->widget->setPos(widget->width()/2-this->widget->width()/2,widget->height()/2-this->widget->height()/2);
+
+        teacher->setVisible(true);
+        teacher->setPos(24,19);
+        info->setPos(24+teacher->pixmap().width()+10,120);
+    }
+
+    version->setPos(widget->width()-version->shape().boundingRect().width()-10,5);
+    QFont font = version->font();
+    if(widget->height()<500)
+        font.setPointSize(9);
+    else if(widget->height()<800)
+        font.setPointSize(11);
+    else
+        font.setPointSize(14);
+    version->setFont(font);
 }
 
 QRectF LoadingScreen::boundingRect() const

@@ -122,3 +122,11 @@ void GameLoader::threadFinished()
         emit dataIsParsed();
     }
 }
+
+QPixmap GameLoader::getImage(const QString &path) const
+{
+    if(this!=nullptr && images.contains(path))
+        return images.value(path);
+    else
+        return QPixmap(path);
+}
