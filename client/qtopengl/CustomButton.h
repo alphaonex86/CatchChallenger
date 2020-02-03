@@ -19,6 +19,9 @@ public:
     QRectF boundingRect() const override;
     void setPressed(const bool &pressed);
     void setPos(qreal ax, qreal ay);
+    void setSize(uint16_t w,uint16_t h);
+    int width();
+    int height();
 protected:
     void updateTextPath();
 private:

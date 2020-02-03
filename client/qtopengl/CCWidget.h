@@ -12,6 +12,7 @@ public:
     QRectF boundingRect() const override;
     void setWidth(const int &w);
     void setHeight(const int &h);
+    void setSize(const int &w,const int &h);
     int width() const;
     int height() const;
 private:

@@ -5,13 +5,13 @@
 #include <QPixmap>
 #include <QTimer>
 #include <chrono>
-#include <QGraphicsItem>
+#include "ScreenInput.h"
 
-class CCBackground : public QObject, public QGraphicsItem
+class CCBackground : public QObject, public ScreenInput
 {
     Q_OBJECT
 public:
-    CCBackground(QGraphicsItem *parent = nullptr);
+    CCBackground();
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget) override;
     void startAnimation();
     void stopAnimation();
