@@ -164,6 +164,8 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
 
 void CCprogressbar::setMaximum(const int &value)
 {
+    if(this->m_max==value)
+        return;
     this->m_max=value;
     if(cache!=nullptr)
     {
@@ -174,6 +176,8 @@ void CCprogressbar::setMaximum(const int &value)
 
 void CCprogressbar::setMinimum(const int &value)
 {
+    if(this->m_min==value)
+        return;
     this->m_min=value;
     if(cache!=nullptr)
     {
@@ -184,6 +188,8 @@ void CCprogressbar::setMinimum(const int &value)
 
 void CCprogressbar::setValue(const int &value)
 {
+    if(this->m_value==value)
+        return;
     this->m_value=value;
     if(cache!=nullptr)
     {

@@ -1,30 +1,28 @@
 #ifndef MAINSCREEN_H
 #define MAINSCREEN_H
 
-#include <QMainWindow>
-#include <QWidget>
-#include <QLabel>
-#include <QHBoxLayout>
 #include "CustomButton.h"
 #include "CCWidget.h"
 #include "CCTitle.h"
+#include "ScreenInput.h"
 #include "../qt/FeedNews.h"
 
 namespace Ui {
 class MainScreen;
 }
 
-class MainScreen : public QObject, public QGraphicsItem
+class MainScreen : public QObject, public ScreenInput
 {
     Q_OBJECT
 public:
-    explicit MainScreen(QGraphicsItem *parent = nullptr);
+    explicit MainScreen();
     ~MainScreen();
-//    void setError(const std::string &error);
+    void setError(const std::string &error);
+    QRectF boundingRect() const override;
 private:
-/*    QLabel *update;
-    QLabel *updateStar;
-    QLabel *updateText;
+    QGraphicsTextItem *update;
+    QGraphicsTextItem *updateStar;
+    QGraphicsTextItem *updateText;
     CCTitle *title;
     CustomButton *updateButton;
     CustomButton *solo;
@@ -33,14 +31,20 @@ private:
     CustomButton *facebook;
     CustomButton *website;
     CCWidget *news;
-    QLabel *newsText;
-    QLabel *newsWait;
+    QGraphicsTextItem *newsText;
+    QGraphicsPixmapItem *newsWait;
     CustomButton *newsUpdate;
+    QGraphicsTextItem *warning;
+    QString warningString;
+    std::vector<FeedNews::FeedEntry> entryList;
+    uint8_t currentNewsType;
 
     bool haveUpdate;
 protected:
-    void resizeEvent(QResizeEvent *e) override;
-    void paintEvent(QPaintEvent *e) override;
+    void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
+    void mousePressEventXY(QMouseEvent *event) override;
+    void mouseReleaseEventXY(QMouseEvent *event) override;
+    void updateNews();
 
     #ifndef __EMSCRIPTEN__
     void newUpdate(const std::string &version);
@@ -52,7 +56,7 @@ protected:
 signals:
     void goToOptions();
     void goToSolo();
-    void goToMulti();*/
+    void goToMulti();
 };
 
 #endif // MAINSCREEN_H

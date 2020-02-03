@@ -17,6 +17,8 @@ public:
     #ifndef NOAUDIO
     QHash<QString,QByteArray> musics;
     #endif
+    QPixmap getImage(const QString &path) const;
+protected:
     QHash<QString,QPixmap> images;
 private:
     void threadFinished();

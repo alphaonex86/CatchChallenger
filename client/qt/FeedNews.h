@@ -16,9 +16,9 @@ class FeedNews : public QObject
 public:
     struct FeedEntry
     {
-        std::string title;
-        std::string link;
-        std::string description;
+        QString title;
+        QString link;
+        QString description;
         QDateTime pubDate;
     };
     explicit FeedNews();

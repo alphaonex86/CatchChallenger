@@ -139,10 +139,10 @@ void FeedNews::loadRss(const tinyxml2::XMLElement *root)
             if(!date.isValid())
                 pubDate.clear();
             FeedEntry rssEntry;
-            rssEntry.description=description;
-            rssEntry.title=title;
+            rssEntry.description=QString::fromStdString(description);
+            rssEntry.title=QString::fromStdString(title);
             rssEntry.pubDate=date;
-            rssEntry.link=link;
+            rssEntry.link=QString::fromStdString(link);
             entryList.push_back(rssEntry);
             item = item->NextSiblingElement("item");
         }
@@ -185,10 +185,10 @@ void FeedNews::loadAtom(const tinyxml2::XMLElement *root)
         if(!date.isValid())
             pubDate.clear();
         FeedEntry rssEntry;
-        rssEntry.description=description;
-        rssEntry.title=title;
+        rssEntry.description=QString::fromStdString(description);
+        rssEntry.title=QString::fromStdString(title);
         rssEntry.pubDate=date;
-        rssEntry.link=link;
+        rssEntry.link=QString::fromStdString(link);
         entryList.push_back(rssEntry);
         item = item->NextSiblingElement("entry");
     }

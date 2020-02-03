@@ -1,4 +1,5 @@
 #include "CustomButton.h"
+#include "../qt/GameLoader.h"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>
@@ -23,6 +24,32 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
     cache=nullptr;
 
     m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
+}
+
+void CustomButton::setSize(uint16_t w,uint16_t h)
+{
+    if(m_boundingRect.width()==w && m_boundingRect.height()==h)
+        return;
+    m_boundingRect=QRectF(0.0,0.0,w,h);
+    if(cache!=nullptr)
+        delete cache;
+    cache=nullptr;
+    updateTextPath();
+}
+
+void CustomButton::setPos(qreal ax, qreal ay)
+{
+    QGraphicsItem::setPos(ax,ay);
+}
+
+int CustomButton::width()
+{
+    return m_boundingRect.width();
+}
+
+int CustomButton::height()
+{
+    return m_boundingRect.height();
 }
 
 CustomButton::~CustomButton()
@@ -59,7 +86,7 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     QPainter paint;
     paint.begin(&image);
     QPixmap scaledBackground;
-    QPixmap temp(background);
+    QPixmap temp(GameLoader::gameLoader->getImage(background));
     if(temp.isNull())
         abort();
     if(pressed)
@@ -94,6 +121,8 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
 
 void CustomButton::setText(const QString &text)
 {
+    if(this->m_text==text)
+        return;
     if(cache!=nullptr)
     {
         delete cache;
@@ -105,6 +134,8 @@ void CustomButton::setText(const QString &text)
 
 bool CustomButton::setPointSize(uint8_t size)
 {
+    if(font->pointSize()==size)
+        return true;
     if(cache!=nullptr)
     {
         delete cache;
@@ -136,6 +167,8 @@ void CustomButton::updateTextPath()
 
 bool CustomButton::updateTextPercent(uint8_t percent)
 {
+    if(this->percent==percent)
+        return true;
     if(cache!=nullptr)
     {
         delete cache;
