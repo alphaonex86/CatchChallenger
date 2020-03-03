@@ -318,8 +318,8 @@ void MainScreen::mousePressEventXY(QMouseEvent *event)
     const uint8_t y=event->y();
     std::cerr << "void MainScreen::mousePressEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
-    /*if(button->boundingRect().contains(x,y))
-        button->setPressed(true);*/
+    if(solo->boundingRect().contains(x,y))
+        solo->setPressed(true);
 }
 
 void MainScreen::mouseReleaseEventXY(QMouseEvent *event)
@@ -328,7 +328,7 @@ void MainScreen::mouseReleaseEventXY(QMouseEvent *event)
     const uint8_t y=event->y();
     std::cerr << "void MainScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
-    /*if(button->boundingRect().contains(x,y))
-        button->emitclicked();
-    button->setPressed(false);*/
+    if(solo->boundingRect().contains(x,y))
+        solo->clicked();
+    solo->setPressed(false);
 }

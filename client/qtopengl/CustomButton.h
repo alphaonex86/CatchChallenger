@@ -3,8 +3,9 @@
 
 #include <QGraphicsItem>
 
-class CustomButton : public QGraphicsItem
+class CustomButton : public QObject, public QGraphicsItem
 {
+    Q_OBJECT
 public:
     CustomButton(QString pix, QGraphicsItem *parent = nullptr);
     ~CustomButton();
@@ -22,6 +23,8 @@ public:
     void setSize(uint16_t w,uint16_t h);
     int width();
     int height();
+signals:
+    void clicked();
 protected:
     void updateTextPath();
 private:
