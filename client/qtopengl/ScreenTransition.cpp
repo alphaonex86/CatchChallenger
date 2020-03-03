@@ -101,8 +101,9 @@ void ScreenTransition::resizeEvent(QResizeEvent *event)
 
 void ScreenTransition::mousePressEvent(QMouseEvent *event)
 {
-    const uint8_t x=event->x();
-    const uint8_t y=event->y();
+    const QPointF &p=mapToScene(event->pos());
+    const uint8_t x=p.x();
+    const uint8_t y=p.y();
     std::cerr << "void ScreenTransition::mousePressEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
@@ -126,8 +127,9 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
 
 void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
 {
-    const uint8_t x=event->x();
-    const uint8_t y=event->y();
+    const QPointF &p=mapToScene(event->pos());
+    const uint8_t x=p.x();
+    const uint8_t y=p.y();
     std::cerr << "void ScreenTransition::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
               << std::to_string(x) << "," << std::to_string(y) << std::endl;
     /*if(button->boundingRect().contains(x,y))
