@@ -30,7 +30,7 @@ void CustomButton::setSize(uint16_t w,uint16_t h)
 {
     if(m_boundingRect.width()==w && m_boundingRect.height()==h)
         return;
-    m_boundingRect=QRectF(0.0,0.0,w,h);
+    m_boundingRect=QRectF(m_boundingRect.x(),m_boundingRect.y(),w,h);
     if(cache!=nullptr)
         delete cache;
     cache=nullptr;
@@ -39,7 +39,10 @@ void CustomButton::setSize(uint16_t w,uint16_t h)
 
 void CustomButton::setPos(qreal ax, qreal ay)
 {
-    QGraphicsItem::setPos(ax,ay);
+    /*QGraphicsItem::setPos(ax,ay);*/
+    if(m_boundingRect.x()==ax && m_boundingRect.y()==ay)
+        return;
+    m_boundingRect=QRectF(ax,ay,m_boundingRect.width(),m_boundingRect.height());
 }
 
 int CustomButton::width()
@@ -215,4 +218,22 @@ void CustomButton::setPressed(const bool &pressed)
 QRectF CustomButton::boundingRect() const
 {
     return m_boundingRect;
+}
+
+void CustomButton::mousePressEventXY(const QPointF &p)
+{
+    if(!isVisible())
+        return;
+    if(boundingRect().contains(p))
+        setPressed(true);
+}
+
+void CustomButton::mouseReleaseEventXY(const QPointF &p)
+{
+    if(isVisible())
+    {
+        if(boundingRect().contains(p))
+            emit clicked();
+    }
+    setPressed(false);
 }
