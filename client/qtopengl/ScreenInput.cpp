@@ -1,9 +1,9 @@
 #include "ScreenInput.h"
 
-void ScreenInput::mousePressEventXY(QMouseEvent *event)
+void ScreenInput::mousePressEventXY(const QPointF &p)
 {
 }
 
-void ScreenInput::mouseReleaseEventXY(QMouseEvent *event)
+void ScreenInput::mouseReleaseEventXY(const QPointF &p)
 {
 }

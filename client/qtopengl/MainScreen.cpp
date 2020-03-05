@@ -13,9 +13,9 @@ MainScreen::MainScreen()
     /*updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     updateButton->setText(tr("Update!"));
     updateButton->setOutlineColor(QColor(44,117,0));
-    updateButton->setPointSize(20);
+    updateButton->setPointSize(20);*/
     title=new CCTitle(this);
-    title->setText("Update!");*/
+    title->setText("Update!");
 
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     solo->setText("Solo");
@@ -312,23 +312,20 @@ QRectF MainScreen::boundingRect() const
     return QRectF();
 }
 
-void MainScreen::mousePressEventXY(QMouseEvent *event)
+void MainScreen::mousePressEventXY(const QPointF &p)
 {
-    const uint8_t x=event->x();
-    const uint8_t y=event->y();
-    std::cerr << "void MainScreen::mousePressEvent(QGraphicsSceneMouseEvent *event) "
-              << std::to_string(x) << "," << std::to_string(y) << std::endl;
-    if(solo->boundingRect().contains(x,y))
-        solo->setPressed(true);
+    solo->mousePressEventXY(p);
+    multi->mousePressEventXY(p);
+    options->mousePressEventXY(p);
+    facebook->mousePressEventXY(p);
+    website->mousePressEventXY(p);
 }
 
-void MainScreen::mouseReleaseEventXY(QMouseEvent *event)
+void MainScreen::mouseReleaseEventXY(const QPointF &p)
 {
-    const uint8_t x=event->x();
-    const uint8_t y=event->y();
-    std::cerr << "void MainScreen::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
-              << std::to_string(x) << "," << std::to_string(y) << std::endl;
-    if(solo->boundingRect().contains(x,y))
-        solo->clicked();
-    solo->setPressed(false);
+    solo->mouseReleaseEventXY(p);
+    multi->mouseReleaseEventXY(p);
+    options->mouseReleaseEventXY(p);
+    facebook->mouseReleaseEventXY(p);
+    website->mouseReleaseEventXY(p);
 }

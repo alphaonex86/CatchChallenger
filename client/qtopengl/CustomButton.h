@@ -2,6 +2,7 @@
 #define CustomButton_H
 
 #include <QGraphicsItem>
+#include <QPointF>
 
 class CustomButton : public QObject, public QGraphicsItem
 {
@@ -23,6 +24,10 @@ public:
     void setSize(uint16_t w,uint16_t h);
     int width();
     int height();
+
+    //event
+    void mousePressEventXY(const QPointF &p);
+    void mouseReleaseEventXY(const QPointF &p);
 signals:
     void clicked();
 protected:
