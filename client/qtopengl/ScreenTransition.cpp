@@ -101,49 +101,51 @@ void ScreenTransition::resizeEvent(QResizeEvent *event)
 
 void ScreenTransition::mousePressEvent(QMouseEvent *event)
 {
-    const QPointF &p=mapToScene(event->pos());
-    const uint8_t x=p.x();
-    const uint8_t y=p.y();
-    std::cerr << "void ScreenTransition::mousePressEvent(QGraphicsSceneMouseEvent *event) "
-              << std::to_string(x) << "," << std::to_string(y) << std::endl;
+    /*const QPointF p=mapToScene(event->pos());
+    const qreal x=p.x();
+    const qreal y=p.y();*/
+/*    std::cerr << "void ScreenTransition::mousePressEvent(QGraphicsSceneMouseEvent *event) "
+              << std::to_string(x) << "," << std::to_string(y) << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
+    const QPointF &p=mapToScene(event->pos());
     if(mousePress!=nullptr)
     {
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(event);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p);
         mousePress=nullptr;
     }
     if(m_aboveStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(event);
+        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p);
         mousePress=m_aboveStack;
     }
     else if(m_foregroundStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(event);
+        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p);
         mousePress=m_foregroundStack;
     }
 }
 
 void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
 {
-    const QPointF &p=mapToScene(event->pos());
-    const uint8_t x=p.x();
-    const uint8_t y=p.y();
-    std::cerr << "void ScreenTransition::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
-              << std::to_string(x) << "," << std::to_string(y) << std::endl;
+    /*const QPointF &p=mapToScene(event->pos());
+    const qreal x=p.x();
+    const qreal y=p.y();*/
+    /*std::cerr << "void ScreenTransition::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
+              << std::to_string(x) << "," << std::to_string(y) << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
+    const QPointF &p=mapToScene(event->pos());
     mousePress=nullptr;
     if(m_aboveStack!=nullptr)
     {
-        m_aboveStack->mouseReleaseEventXY(event);
+        m_aboveStack->mouseReleaseEventXY(p);
         mousePress=m_aboveStack;
     }
     else if(m_foregroundStack!=nullptr)
     {
-        m_foregroundStack->mouseReleaseEventXY(event);
+        m_foregroundStack->mouseReleaseEventXY(p);
         mousePress=m_foregroundStack;
     }
 }
@@ -161,8 +163,7 @@ void ScreenTransition::setForeground(ScreenInput *widget)
 {
     if(mousePress!=nullptr)
     {
-        QMouseEvent event(QEvent::MouseButtonRelease,QPointF(0.0,0.0),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(&event);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0));
         mousePress=nullptr;
     }
     if(m_foregroundStack!=nullptr)
@@ -176,8 +177,7 @@ void ScreenTransition::setAbove(ScreenInput *widget)
 {
     if(mousePress!=nullptr)
     {
-        QMouseEvent event(QEvent::MouseButtonRelease,QPointF(0.0,0.0),Qt::NoButton,Qt::NoButton,Qt::NoModifier);
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(&event);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0));
         mousePress=nullptr;
     }
     if(m_aboveStack!=nullptr)
@@ -359,8 +359,16 @@ void ScreenTransition::updateFPS()
     QImage pix(50,40,QImage::Format_ARGB32_Premultiplied);
     pix.fill(Qt::transparent);
     QPainter p(&pix);
-    p.setPen(QPen(Qt::green));
     p.setFont(QFont("Times", 12, QFont::Bold));
+
+    const int offset=1;
+    p.setPen(QPen(Qt::black));
+    p.drawText(pix.rect().x()+offset,pix.rect().y()+offset,pix.rect().width(),pix.rect().height(),Qt::AlignCenter,QString::number(FPS));
+    p.drawText(pix.rect().x()-offset,pix.rect().y()+offset,pix.rect().width(),pix.rect().height(),Qt::AlignCenter,QString::number(FPS));
+    p.drawText(pix.rect().x()-offset,pix.rect().y()-offset,pix.rect().width(),pix.rect().height(),Qt::AlignCenter,QString::number(FPS));
+    p.drawText(pix.rect().x()+offset,pix.rect().y()-offset,pix.rect().width(),pix.rect().height(),Qt::AlignCenter,QString::number(FPS));
+
+    p.setPen(QPen(Qt::white));
     p.drawText(pix.rect(), Qt::AlignCenter,QString::number(FPS));
     imageText->setPixmap(QPixmap::fromImage(pix));
 

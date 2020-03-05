@@ -2,13 +2,13 @@
 #define SCREENINPUT_H
 
 #include <QGraphicsItem>
-#include <QMouseEvent>
+#include <QPointF>
 
 class ScreenInput : public QGraphicsItem
 {
 public:
-    virtual void mousePressEventXY(QMouseEvent *event);
-    virtual void mouseReleaseEventXY(QMouseEvent *event);
+    virtual void mousePressEventXY(const QPointF &p);
+    virtual void mouseReleaseEventXY(const QPointF &p);
 };
 
 #endif // SCREENINPUT_H

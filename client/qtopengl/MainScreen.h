@@ -42,8 +42,8 @@ private:
     bool haveUpdate;
 protected:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
-    void mousePressEventXY(QMouseEvent *event) override;
-    void mouseReleaseEventXY(QMouseEvent *event) override;
+    void mousePressEventXY(const QPointF &p) override;
+    void mouseReleaseEventXY(const QPointF &p) override;
     void updateNews();
 
     #ifndef __EMSCRIPTEN__
