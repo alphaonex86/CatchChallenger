@@ -93,7 +93,8 @@ SOURCES += \
     $$PWD/../qt/GameLoaderThread.cpp \
     $$PWD/../qt/ExtraSocket.cpp \
     $$PWD/../qt/Settings.cpp \
-    $$PWD/ScreenInput.cpp
+    $$PWD/ScreenInput.cpp \
+    $$PWD/AudioGL.cpp
 
 HEADERS  += \
     $$PWD/../../general/base/tinyXML2/tinyxml2.h \
@@ -129,7 +130,8 @@ HEADERS  += \
     $$PWD/../qt/GameLoaderThread.h \
     $$PWD/../qt/ExtraSocket.h \
     $$PWD/../qt/Settings.h \
-    $$PWD/ScreenInput.h
+    $$PWD/ScreenInput.h \
+    $$PWD/AudioGL.h
 
 RESOURCES += $$PWD/../resources/client-resources-multi.qrc
 DEFINES += CATCHCHALLENGER_MULTI

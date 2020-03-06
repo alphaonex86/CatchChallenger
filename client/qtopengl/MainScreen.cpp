@@ -6,7 +6,10 @@
 #include <QDesktopServices>
 #include "../qt/Settings.h"
 #include <QWidget>
-#include <QGraphicsSceneMouseEvent>
+
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "AudioGL.h"
+#endif
 
 MainScreen::MainScreen()
 {
@@ -32,6 +35,7 @@ MainScreen::MainScreen()
     website->setPointSize(28);
     website->updateTextPercent(75);
 
+    haveFreshFeed=false;
     news=new CCWidget(this);
     newsText=new QGraphicsTextItem(news);
     if(Settings::settings.contains("news"))
@@ -92,10 +96,11 @@ MainScreen::MainScreen()
     #ifdef NOSINGLEPLAYER
     solo->hide();
     #endif
-/*    if(!connect(facebook,&CustomButton::clicked,this,&MainScreen::openFacebook))
+    if(!connect(facebook,&CustomButton::clicked,this,&MainScreen::openFacebook))
         abort();
     if(!connect(website,&CustomButton::clicked,this,&MainScreen::openWebsite))
         abort();
+/*
     if(!connect(updateButton,&CustomButton::clicked,this,&MainScreen::openUpdate))
         abort();
     if(!connect(newsUpdate,&CustomButton::clicked,this,&MainScreen::openUpdate))
@@ -110,6 +115,10 @@ MainScreen::MainScreen()
 
     haveUpdate=false;
     currentNewsType=0;
+
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    AudioGL::audioGL.startAmbiance(":/CC/music/loading.opus");
+    #endif
 }
 
 MainScreen::~MainScreen()
@@ -179,7 +188,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
             if(w>300)
                 w=300;
             news->setSize(w,40);
-            newsWait->setVisible(widget->width()>450);
+            newsWait->setVisible(widget->width()>450 && !haveFreshFeed);
 
             if(currentNewsType!=1)
             {
@@ -189,7 +198,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         }
         else {
             news->setSize(600-9*2,120);
-            newsWait->setVisible(true);
+            newsWait->setVisible(!haveFreshFeed);
 
             if(currentNewsType!=2)
             {
@@ -237,6 +246,8 @@ void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
         }
         Settings::settings.setValue("news",data);
     }
+    newsWait->setVisible(false);
+    haveFreshFeed=true;
 }
 
 void MainScreen::updateNews()

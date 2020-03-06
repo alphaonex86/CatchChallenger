@@ -10,11 +10,12 @@
 #include <QStyleFactory>
 #include "../qt/Options.h"
 #include "../qt/QtDatapackChecksum.h"
+#include <QStandardPaths>
 
 int main(int argc, char *argv[])
 {
-    QApplication a(argc, argv);
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QApplication a(argc, argv);
     a.setApplicationName("client");
     a.setOrganizationName("CatchChallenger");
     a.setStyle(QStyleFactory::create("Fusion"));
@@ -25,6 +26,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
+    qDebug() << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
 
     //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
     QFont font("Comic Sans MS");
