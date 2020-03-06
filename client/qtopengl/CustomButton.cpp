@@ -81,12 +81,16 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
+    if(m_boundingRect.isEmpty())
+        return;
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
     QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
+    if(image.isNull())
+        abort();
     paint.begin(&image);
     QPixmap scaledBackground;
     QPixmap temp(GameLoader::gameLoader->getImage(background));
@@ -100,7 +104,7 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     paint.drawPixmap(0,0,m_boundingRect.width(),m_boundingRect.height(),scaledBackground);
     updateTextPath();
 
-    if(textPath!=nullptr)
+    if(textPath!=nullptr && paint.isActive())
     {
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;
@@ -222,6 +226,8 @@ QRectF CustomButton::boundingRect() const
 
 void CustomButton::mousePressEventXY(const QPointF &p)
 {
+    if(this->pressed)
+        return;
     if(!isVisible())
         return;
     if(boundingRect().contains(p))
@@ -230,6 +236,8 @@ void CustomButton::mousePressEventXY(const QPointF &p)
 
 void CustomButton::mouseReleaseEventXY(const QPointF &p)
 {
+    if(!this->pressed)
+        return;
     if(isVisible())
     {
         if(boundingRect().contains(p))
