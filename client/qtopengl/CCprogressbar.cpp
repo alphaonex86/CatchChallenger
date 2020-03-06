@@ -51,12 +51,16 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
+    if(m_boundingRect.isEmpty())
+        return;
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
     QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
+    if(image.isNull())
+        abort();
     paint.begin(&image);
 
     if(backgroundLeft.isNull() || backgroundLeft.height()!=m_boundingRect.height())
@@ -144,13 +148,16 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
                 oldText=text;
             }
 
-            paint.setRenderHint(QPainter::Antialiasing);
-            int penWidth=1;
-            if(fontheight>16)
-                penWidth=2;
-            paint.setPen(QPen(QColor(14,102,0)/*penColor*/, penWidth/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-            paint.setBrush(Qt::white);
-            paint.drawPath(*textPath);
+            if(paint.isActive())
+            {
+                paint.setRenderHint(QPainter::Antialiasing);
+                int penWidth=1;
+                if(fontheight>16)
+                    penWidth=2;
+                paint.setPen(QPen(QColor(14,102,0)/*penColor*/, penWidth/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+                paint.setBrush(Qt::white);
+                paint.drawPath(*textPath);
+            }
         }
     }
 

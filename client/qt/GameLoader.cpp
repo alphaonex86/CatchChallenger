@@ -27,7 +27,7 @@ GameLoader::GameLoader()
     sizeProcessed=0;
     #ifndef NOAUDIO
     {
-        QDirIterator it(":/music/", QDirIterator::Subdirectories);
+        QDirIterator it(":/CC/music/", QDirIterator::Subdirectories);
         while (it.hasNext()) {
             QString file=it.next();
             if(file.endsWith(QStringLiteral(".opus")))
@@ -125,7 +125,7 @@ void GameLoader::threadFinished()
 
 QPixmap GameLoader::getImage(const QString &path) const
 {
-    if(this!=nullptr && images.contains(path))
+    if(images.contains(path))
         return images.value(path);
     else
         return QPixmap(path);

@@ -24,6 +24,9 @@ Audio::Audio()
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
         return;
     }
+
+    ambiance_player=nullptr;
+    ambiance_buffer=nullptr;
 }
 
 QAudioFormat Audio::format() const
@@ -48,17 +51,17 @@ void Audio::addPlayer(QAudioOutput * const player)
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
     playerList.push_back(player);
-    player->setVolume((qreal)volume/100);
-}
-
-void Audio::setPlayerVolume(QAudioOutput * const player)
-{
-    player->setVolume((qreal)volume/100);
+    //player->setVolume((qreal)volume/100);-> no volume option for now
 }
 
 void Audio::removePlayer(QAudioOutput * const player)
 {
     vectorremoveOne(playerList,player);
+}
+
+void Audio::setPlayerVolume(QAudioOutput * const player)
+{
+    player->setVolume((qreal)volume/100);
 }
 
 QStringList Audio::output_list()
@@ -75,6 +78,7 @@ QStringList Audio::output_list()
 
 Audio::~Audio()
 {
+    stopCurrentAmbiance();
 }
 
 bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
@@ -126,5 +130,47 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
 
     buffer.seek(0);
     return ret==EXIT_SUCCESS;
+}
+
+//if already playing ambiance then call stopCurrentAmbiance
+bool Audio::startAmbiance(const std::string &soundPath)
+{
+    stopCurrentAmbiance();
+    ambiance_player = new QAudioOutput(Audio::audio.format());
+    ambiance_player->setVolume((qreal)volume/100);
+    // Create a new Media
+    if(ambiance_player!=nullptr)
+    {
+        //decode file
+        if(Audio::decodeOpus(soundPath,ambiance_data))
+        {
+            ambiance_buffer=new QInfiniteBuffer(&ambiance_data);
+            ambiance_buffer->open(QBuffer::ReadOnly);
+            ambiance_buffer->seek(0);
+            ambiance_player->start(ambiance_buffer);
+
+            addPlayer(ambiance_player);
+            return true;
+        }
+        else
+        {
+            delete ambiance_player;
+            ambiance_player=nullptr;
+            ambiance_data.clear();
+        }
+    }
+    return false;
+}
+
+void Audio::stopCurrentAmbiance()
+{
+    if(ambiance_player!=nullptr)
+    {
+        removePlayer(ambiance_player);
+        ambiance_player->stop();
+        delete ambiance_player;
+        ambiance_player=nullptr;
+        ambiance_data.clear();
+    }
 }
 #endif

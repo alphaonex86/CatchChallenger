@@ -48,6 +48,8 @@ void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
+    if(m_boundingRect.isEmpty())
+        return;
     if(cache!=nullptr)
         delete cache;
     cache=new QPixmap();
@@ -55,6 +57,8 @@ void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
+    if(image.isNull())
+        abort();
     paint.begin(&image);
     if(lastwidth!=m_boundingRect.width() || lastheight!=m_boundingRect.height())
     {
@@ -63,7 +67,7 @@ void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
         lastheight=m_boundingRect.height();
     }
 
-    if(textPath!=nullptr)
+    if(textPath!=nullptr && paint.isActive())
     {
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;

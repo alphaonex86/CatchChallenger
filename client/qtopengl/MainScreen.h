@@ -7,6 +7,11 @@
 #include "ScreenInput.h"
 #include "../qt/FeedNews.h"
 
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "../qt/QInfiniteBuffer.h"
+#include <QAudioOutput>
+#endif
+
 namespace Ui {
 class MainScreen;
 }
@@ -38,6 +43,7 @@ private:
     QString warningString;
     std::vector<FeedNews::FeedEntry> entryList;
     uint8_t currentNewsType;
+    bool haveFreshFeed;
 
     bool haveUpdate;
 protected:
