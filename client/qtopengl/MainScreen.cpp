@@ -181,6 +181,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         news->setPos(widget->width()/2-news->width()/2,widget->height()-news->height()-5);
         newsText->setPos(news->currentBorderSize()+2,news->currentBorderSize()+2);
         newsWait->setPos(news->width()-newsWait->pixmap().width()-news->currentBorderSize()-2,news->height()/2-newsWait->pixmap().height()/2);
+        news->setVisible(true);
 
         if(widget->width()<600 || widget->height()<480)
         {

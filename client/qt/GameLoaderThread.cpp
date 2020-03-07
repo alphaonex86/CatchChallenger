@@ -33,7 +33,7 @@ void GameLoaderThread::run()
             int           ret;
             OggOpusFile  *of=op_open_memory(reinterpret_cast<const unsigned char *>(data.constData()),data.size(),&ret);
             if(of==NULL) {
-                fprintf(stderr,"Failed to open file '%s': %i\n","file.opus",ret);
+                fprintf(stderr,"Failed to open file '%s': %i\n",file.toStdString().c_str(),ret);
                 return;
             }
             ogg_int64_t pcm_offset;

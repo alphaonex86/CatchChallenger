@@ -89,7 +89,7 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
     int           ret;
     OggOpusFile  *of=op_open_file(filePath.c_str(),&ret);
     if(of==NULL) {
-        fprintf(stderr,"Failed to open file '%s': %i\n","file.opus",ret);
+        fprintf(stderr,"Audio Failed to open file '%s': %i\n",filePath.c_str(),ret);
         return false;
     }
     ogg_int64_t pcm_offset;
