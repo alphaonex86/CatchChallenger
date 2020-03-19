@@ -13,12 +13,26 @@ AudioGL::~AudioGL()
 }
 
 //if already playing ambiance then call stopCurrentAmbiance
-bool AudioGL::startAmbiance(const std::string &soundPath)
+std::string AudioGL::startAmbiance(const std::string &soundPath)
 {
+    if(QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty())
+            return "No audio device found!";
+
     const QString QtsoundPath=QString::fromStdString(soundPath);
     if(!QtsoundPath.startsWith(":/"))
         return Audio::startAmbiance(soundPath);
     stopCurrentAmbiance();
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(m_format))
+        return std::to_string((int)m_format.byteOrder())+","+
+                std::to_string((int)m_format.channelCount())+","+
+                m_format.codec().toStdString()+","+
+                std::to_string((int)m_format.isValid())+","+
+                std::to_string((int)m_format.sampleRate())+","+
+                std::to_string((int)m_format.sampleType())+","+
+                " "+QAudioDeviceInfo::defaultOutputDevice().deviceName().toStdString();
+
     ambiance_player = new QAudioOutput(Audio::audio.format());
     // Create a new Media
     if(ambiance_player!=nullptr && GameLoader::gameLoader->musics.contains(QtsoundPath))
@@ -29,8 +43,11 @@ bool AudioGL::startAmbiance(const std::string &soundPath)
         ambiance_buffer->seek(0);
         ambiance_player->start(ambiance_buffer);
         addPlayer(ambiance_player);
-        return true;
+        return std::string();
     }
-    return false;
+    if(ambiance_player!=nullptr)
+        return "QAudioOutput nullptr";
+    else
+        return "!GameLoader::gameLoader->musics.contains(QtsoundPath)";
 }
 #endif

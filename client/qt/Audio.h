@@ -23,15 +23,15 @@ public:
     static bool decodeOpus(const std::string &filePath,QByteArray &data);
 
     //if already playing ambiance then call stopCurrentAmbiance
-    bool startAmbiance(const std::string &soundPath);
+    std::string startAmbiance(const std::string &soundPath);
     void stopCurrentAmbiance();
 protected:
     void addPlayer(QAudioOutput * const player);
     void removePlayer(QAudioOutput * const player);
 private:
     std::vector<QAudioOutput *> playerList;
-    QAudioFormat m_format;
 protected:
+    QAudioFormat m_format;
     int volume;
 protected:
     QAudioOutput *ambiance_player;

@@ -11,7 +11,7 @@ public:
     ~AudioGL();
     static AudioGL audioGL;
 
-    bool startAmbiance(const std::string &soundPath);
+    std::string startAmbiance(const std::string &soundPath);
 };
 #endif
 
