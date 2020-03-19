@@ -29,7 +29,6 @@ private:
     QGraphicsTextItem *updateStar;
     QGraphicsTextItem *updateText;
     CCTitle *title;
-    CustomButton *updateButton;
     CustomButton *solo;
     CustomButton *multi;
     CustomButton *options;

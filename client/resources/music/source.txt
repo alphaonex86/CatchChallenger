@@ -1,3 +1,6 @@
 click.opus, crafting.opus: from http://opengameart.org/
 shop.opus, text.opus: http://opengameart.org/content/inventory-sound-effects CC-BY 3.0, CC-BY-SA 3.0, GPL3.0, GPL2.0
 loading.opus: https://www.playonloop.com/2018-music-loops/pet-park/#free-download
+encoded with:
+ffmpeg -i input -f opus -map_metadata -1 -ac 1 -sample_fmt s16 -ar 48000 -ab 24k -avoid_negative_ts make_zero opus.opus
+ 

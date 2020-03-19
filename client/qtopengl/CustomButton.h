@@ -27,7 +27,7 @@ public:
 
     //event
     void mousePressEventXY(const QPointF &p);
-    void mouseReleaseEventXY(const QPointF &p);
+    bool mouseReleaseEventXY(const QPointF &p,bool const previousPressValidated=false);
 signals:
     void clicked();
 protected:
