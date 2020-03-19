@@ -2,6 +2,7 @@ include(catchchallenger-server-normal.pri)
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 QT       += gui network
+LIBS += -lzstd
 
 TARGET = catchchallenger-server-gui
 
