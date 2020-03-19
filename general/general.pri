@@ -21,11 +21,6 @@ wasm: {
     QMAKE_LFLAGS += -s ASSERTIONS=1 -g
     CONFIG+=debug
 }
-else
-{
-    LIBS += -lzstd
-    LIBS += -lcrypto
-}
 android: {
 INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/include
 }
