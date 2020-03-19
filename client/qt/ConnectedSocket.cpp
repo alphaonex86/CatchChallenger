@@ -5,8 +5,8 @@
 #include <iostream>
 #include <fcntl.h>
 
-#include <netinet/tcp.h>
-#include <netdb.h>
+/*#include <netinet/tcp.h>
+#include <netdb.h>*/
 
 using namespace CatchChallenger;
 #ifndef NOTCPSOCKET

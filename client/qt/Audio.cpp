@@ -51,7 +51,7 @@ void Audio::addPlayer(QAudioOutput * const player)
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
     playerList.push_back(player);
-    //player->setVolume((qreal)volume/100);-> no volume option for now
+    //player->setVolume((qreal)volume/100);//-> no volume option for now
 }
 
 void Audio::removePlayer(QAudioOutput * const player)
@@ -133,11 +133,15 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
 }
 
 //if already playing ambiance then call stopCurrentAmbiance
-bool Audio::startAmbiance(const std::string &soundPath)
+std::string Audio::startAmbiance(const std::string &soundPath)
 {
     stopCurrentAmbiance();
+
+    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    if (!info.isFormatSupported(m_format))
+        return "raw audio format not supported by backend, cannot play audio.";
+
     ambiance_player = new QAudioOutput(Audio::audio.format());
-    ambiance_player->setVolume((qreal)volume/100);
     // Create a new Media
     if(ambiance_player!=nullptr)
     {
@@ -150,16 +154,17 @@ bool Audio::startAmbiance(const std::string &soundPath)
             ambiance_player->start(ambiance_buffer);
 
             addPlayer(ambiance_player);
-            return true;
+            return std::string();
         }
         else
         {
             delete ambiance_player;
             ambiance_player=nullptr;
             ambiance_data.clear();
+            return "Audio::decodeOpus failed";
         }
     }
-    return false;
+    return "ambiance_player==nullptr";
 }
 
 void Audio::stopCurrentAmbiance()

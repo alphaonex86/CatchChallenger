@@ -13,10 +13,6 @@
 
 MainScreen::MainScreen()
 {
-    /*updateButton=new CustomButton(":/CC/images/interface/greenbutton.png",this);
-    updateButton->setText(tr("Update!"));
-    updateButton->setOutlineColor(QColor(44,117,0));
-    updateButton->setPointSize(20);*/
     title=new CCTitle(this);
     title->setText("Update!");
 
@@ -67,10 +63,10 @@ MainScreen::MainScreen()
 
     warning=new QGraphicsTextItem(this);
     warning->setVisible(true);
-    warningString=QString("<div style=\"background-color: rgb(255, 255, 163);border: 1px solid rgb(255, 221, 50);border-radius:5px;color: rgb(0, 0, 0);\">%1</div>");
-    /*newsUpdate=new CustomButton(":/CC/images/interface/greenbutton.png",news);
+    warningString=QString("<div style=\"background-color: rgb(255, 180, 180);border: 1px solid rgb(255, 221, 50);border-radius:5px;color: rgb(0, 0, 0);\">&nbsp;%1&nbsp;</div>");
+    newsUpdate=new CustomButton(":/CC/images/interface/greenbutton.png",news);
     newsUpdate->setText(tr("Update!"));
-    newsUpdate->setOutlineColor(QColor(44,117,0));*/
+    newsUpdate->setOutlineColor(QColor(44,117,0));
 
     #ifndef __EMSCRIPTEN__
     InternetUpdater::internetUpdater=new InternetUpdater();
@@ -100,13 +96,10 @@ MainScreen::MainScreen()
         abort();
     if(!connect(website,&CustomButton::clicked,this,&MainScreen::openWebsite))
         abort();
-/*
-    if(!connect(updateButton,&CustomButton::clicked,this,&MainScreen::openUpdate))
-        abort();
     if(!connect(newsUpdate,&CustomButton::clicked,this,&MainScreen::openUpdate))
         abort();
 
-    if(!connect(solo,&CustomButton::clicked,this,&MainScreen::goToSolo))
+/*    if(!connect(solo,&CustomButton::clicked,this,&MainScreen::goToSolo))
         abort();
     if(!connect(multi,&CustomButton::clicked,this,&MainScreen::goToMulti))
         abort();
@@ -117,7 +110,13 @@ MainScreen::MainScreen()
     currentNewsType=0;
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    AudioGL::audioGL.startAmbiance(":/CC/music/loading.opus");
+    const std::string &terr=AudioGL::audioGL.startAmbiance(":/CC/music/loading.opus");
+    if(!terr.empty())
+        setError(terr);
+    /*else
+        setError("Sound ok: "+QAudioDeviceInfo::defaultOutputDevice().deviceName().toStdString());
+    #else
+        setError("Sound disabled");*/
     #endif
 }
 
@@ -166,11 +165,11 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
     options->setPos(widget->width()/2-facebook->width()/2-horizontalMargin-options->width(),widget->height()/2+multi->height()/2+buttonMargin);
     facebook->setPos(widget->width()/2-facebook->width()/2,widget->height()/2+multi->height()/2+buttonMargin);
     website->setPos(widget->width()/2+facebook->width()/2+horizontalMargin,widget->height()/2+multi->height()/2+buttonMargin);
-
-    warning->setPos(widget->width()/2-news->width()/2,widget->height()/2-multi->height()/2-solo->height()-buttonMargin);
+    warning->setPos(widget->width()/2-warning->boundingRect().width()/2,5);
 
     if(widget->height()<280)
     {
+        newsUpdate->setVisible(false);
         if(currentNewsType!=0)
         {
             currentNewsType=0;
@@ -190,6 +189,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
                 w=300;
             news->setSize(w,40);
             newsWait->setVisible(widget->width()>450 && !haveFreshFeed);
+            newsUpdate->setVisible(false);
 
             if(currentNewsType!=1)
             {
@@ -200,6 +200,10 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         else {
             news->setSize(600-9*2,120);
             newsWait->setVisible(!haveFreshFeed);
+            newsUpdate->setSize(136,57);
+            newsUpdate->setPointSize(18);
+            newsUpdate->setPos(news->width()-136-news->currentBorderSize()-2,news->height()/2-57/2);
+            newsUpdate->setVisible(haveUpdate);
 
             if(currentNewsType!=2)
             {
@@ -331,13 +335,15 @@ void MainScreen::mousePressEventXY(const QPointF &p)
     options->mousePressEventXY(p);
     facebook->mousePressEventXY(p);
     website->mousePressEventXY(p);
+    newsUpdate->mousePressEventXY(p);
 }
 
 void MainScreen::mouseReleaseEventXY(const QPointF &p)
 {
-    solo->mouseReleaseEventXY(p);
-    multi->mouseReleaseEventXY(p);
-    options->mouseReleaseEventXY(p);
-    facebook->mouseReleaseEventXY(p);
-    website->mouseReleaseEventXY(p);
+    bool pressValidated=solo->mouseReleaseEventXY(p);
+    pressValidated|=multi->mouseReleaseEventXY(p,pressValidated);
+    pressValidated|=options->mouseReleaseEventXY(p,pressValidated);
+    pressValidated|=facebook->mouseReleaseEventXY(p,pressValidated);
+    pressValidated|=website->mouseReleaseEventXY(p,pressValidated);
+    pressValidated|=newsUpdate->mouseReleaseEventXY(p,pressValidated);
 }
