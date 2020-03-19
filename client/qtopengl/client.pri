@@ -293,7 +293,7 @@ HEADERS  += \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.h
 
 INCLUDEPATH += $$PWD/../libopus/include/
-INCLUDEPATH += $$PWD/../libzstd/contrib/linux-kernel/include/
+INCLUDEPATH += $$PWD/../libzstd/lib/
 #Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
 DEFINES += USE_ALLOCA OPUS_BUILD ZSTD_STATIC_LINKING_ONLY
 }
