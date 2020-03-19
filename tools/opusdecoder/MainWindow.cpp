@@ -18,13 +18,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QString lastok;
     QAudioFormat format;
-    format.setSampleRate(ui->SampleRate->value());//48000
+    /*format.setSampleRate(ui->SampleRate->value());//48000
     format.setChannelCount(ui->ChannelCount->value());//2
     format.setSampleSize(ui->SampleSize->value());//16
     format.setCodec("audio/pcm");//audio/pcm
     format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());//LittleEndian
-    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());//SignedInt
+    format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());//SignedInt*/
 
+    for (const char * codec : { "audio/pcm","audio/x-raw" })
     for (int SampleRate : { 22050,32000,44100,48000 })
         for (int ChannelCount : { 1,2 })
             for (int SampleSize : { 24,8,16 })
@@ -33,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent) :
                     {
                         QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
 
+                        format.setCodec(codec);
                         format.setSampleRate(SampleRate);//48000
                         format.setChannelCount(ChannelCount);//2
                         format.setSampleSize(SampleSize);//16
@@ -67,7 +69,7 @@ void MainWindow::on_convert_clicked()
     format.setByteOrder((QAudioFormat::Endian)ui->ByteOrder->currentIndex());//LittleEndian
     format.setSampleType((QAudioFormat::SampleType)ui->SampleType->currentIndex());//SignedInt
 
-    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    const QAudioDeviceInfo &info=QAudioDeviceInfo::defaultOutputDevice();
     if (!info.isFormatSupported(format)) {
         ui->statusBar->showMessage("audio format not supported by backend, cannot play audio");
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
@@ -75,7 +77,7 @@ void MainWindow::on_convert_clicked()
                                +","+QString::number(ui->ChannelCount->value())
                                +","+QString::number(ui->SampleSize->value())
                                +","+QString::number(ui->ByteOrder->currentIndex())
-                               +","+QString::number(ui->SampleType->currentIndex())
+                               +","+QString::number(ui->SampleType->currentIndex())+" on "+info.deviceName()
                                );
         return;
     }
