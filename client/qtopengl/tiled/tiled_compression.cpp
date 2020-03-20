@@ -39,7 +39,8 @@
         #endif
     #endif
 #endif
-#include <zstd.h>      // presumes zstd library is installed
+//#include <zstd.h>      // presumes zstd library is installed
+#include "../../libzstd/lib/zstd.h"
 
 #include <QByteArray>
 #include <QDebug>
