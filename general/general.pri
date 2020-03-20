@@ -11,7 +11,6 @@ QMAKE_CFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
 QT       -= core
 
 wasm: {
-    LIBS += /mnt/data/perso/progs/qt/qt-everywhere-5.13.0-wasm/qtbase/lib/libzstd.a
     LIBS += -Lcrypto
     QMAKE_LFLAGS += -s TOTAL_MEMORY=200015872
     #QMAKE_LFLAGS += -s ASYNCIFY=1 -> buggy and obsolete

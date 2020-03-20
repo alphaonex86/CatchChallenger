@@ -9,7 +9,6 @@ wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 #android: DEFINES += CATCHCHALLENGER_NOAUDIO
 # see the file ClientVariableAudio.h
 #DEFINES += CATCHCHALLENGER_NOAUDIO
-LIBS -= -lzstd
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 QT += multimedia
 SOURCES += \
@@ -160,35 +159,6 @@ SOURCES += \
     $$PWD/../libopus/src/opus_multistream_encoder.c \
     $$PWD/../libopus/src/opus.c
 
-SOURCES += \
-    $$PWD/../libzstd/lib/common/pool.c \
-    $$PWD/../libzstd/lib/common/zstd_common.c \
-    $$PWD/../libzstd/lib/common/entropy_common.c \
-    $$PWD/../libzstd/lib/common/fse_decompress.c \
-    $$PWD/../libzstd/lib/common/threading.c \
-    $$PWD/../libzstd/lib/common/error_private.c \
-    $$PWD/../libzstd/lib/common/xxbhash.c \
-    $$PWD/../libzstd/lib/compress/zstd_compress_sequences.c \
-    $$PWD/../libzstd/lib/compress/huf_compress.c \
-    $$PWD/../libzstd/lib/compress/zstd_compress.c \
-    $$PWD/../libzstd/lib/compress/zstd_lazy.c \
-    $$PWD/../libzstd/lib/compress/hist.c \
-    $$PWD/../libzstd/lib/compress/zstd_fast.c \
-    $$PWD/../libzstd/lib/compress/zstd_opt.c \
-    $$PWD/../libzstd/lib/compress/zstd_ldm.c \
-    $$PWD/../libzstd/lib/compress/zstdmt_compress.c \
-    $$PWD/../libzstd/lib/compress/fse_compress.c \
-    $$PWD/../libzstd/lib/compress/zstd_compress_literals.c \
-    $$PWD/../libzstd/lib/compress/zstd_double_fast.c \
-    $$PWD/../libzstd/lib/decompress/zstd_ddict.c \
-    $$PWD/../libzstd/lib/decompress/huf_decompress.c \
-    $$PWD/../libzstd/lib/decompress/zstd_decompress.c \
-    $$PWD/../libzstd/lib/decompress/zstd_decompress_block.c \
-    $$PWD/../libzstd/lib/dictBuilder/cover.c \
-    $$PWD/../libzstd/lib/dictBuilder/divsufsort.c \
-    $$PWD/../libzstd/lib/dictBuilder/fastcover.c \
-    $$PWD/../libzstd/lib/dictBuilder/zdict.c
-
 HEADERS  += \
     $$PWD/../libogg/ogg.h \
     $$PWD/../libogg/os_types.h \
@@ -260,6 +230,41 @@ HEADERS  += \
     $$PWD/../libopus/src/mapping_matrix.h \
     $$PWD/../libopus/win32/config.h
 
+    INCLUDEPATH += $$PWD/../libopus/include/
+    INCLUDEPATH += $$PWD/../libzstd/lib/
+    #Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
+    DEFINES += USE_ALLOCA OPUS_BUILD
+}
+
+DEFINES += ZSTD_STATIC_LINKING_ONLY
+SOURCES += \
+    $$PWD/../libzstd/lib/common/pool.c \
+    $$PWD/../libzstd/lib/common/zstd_common.c \
+    $$PWD/../libzstd/lib/common/entropy_common.c \
+    $$PWD/../libzstd/lib/common/fse_decompress.c \
+    $$PWD/../libzstd/lib/common/threading.c \
+    $$PWD/../libzstd/lib/common/error_private.c \
+    $$PWD/../libzstd/lib/common/xxbhash.c \
+    $$PWD/../libzstd/lib/compress/zstd_compress_sequences.c \
+    $$PWD/../libzstd/lib/compress/huf_compress.c \
+    $$PWD/../libzstd/lib/compress/zstd_compress.c \
+    $$PWD/../libzstd/lib/compress/zstd_lazy.c \
+    $$PWD/../libzstd/lib/compress/hist.c \
+    $$PWD/../libzstd/lib/compress/zstd_fast.c \
+    $$PWD/../libzstd/lib/compress/zstd_opt.c \
+    $$PWD/../libzstd/lib/compress/zstd_ldm.c \
+    $$PWD/../libzstd/lib/compress/zstdmt_compress.c \
+    $$PWD/../libzstd/lib/compress/fse_compress.c \
+    $$PWD/../libzstd/lib/compress/zstd_compress_literals.c \
+    $$PWD/../libzstd/lib/compress/zstd_double_fast.c \
+    $$PWD/../libzstd/lib/decompress/zstd_ddict.c \
+    $$PWD/../libzstd/lib/decompress/huf_decompress.c \
+    $$PWD/../libzstd/lib/decompress/zstd_decompress.c \
+    $$PWD/../libzstd/lib/decompress/zstd_decompress_block.c \
+    $$PWD/../libzstd/lib/dictBuilder/cover.c \
+    $$PWD/../libzstd/lib/dictBuilder/divsufsort.c \
+    $$PWD/../libzstd/lib/dictBuilder/fastcover.c \
+    $$PWD/../libzstd/lib/dictBuilder/zdict.c
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -292,11 +297,7 @@ HEADERS  += \
     $$PWD/../libzstd/lib/dictBuilder/zdict.h \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.h
 
-INCLUDEPATH += $$PWD/../libopus/include/
-INCLUDEPATH += $$PWD/../libzstd/lib/
-#Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode.
-DEFINES += USE_ALLOCA OPUS_BUILD ZSTD_STATIC_LINKING_ONLY
-}
+
 wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
 }
