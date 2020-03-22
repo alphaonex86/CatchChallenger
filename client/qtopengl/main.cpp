@@ -11,6 +11,7 @@
 #include "../qt/Options.h"
 #include "../qt/QtDatapackChecksum.h"
 #include <QStandardPaths>
+#include <QScreen>
 
 int main(int argc, char *argv[])
 {
@@ -52,12 +53,18 @@ int main(int argc, char *argv[])
 
     ScreenTransition s;
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
-    s.setMinimumSize(QSize(320,240));
-    s.showMaximized();
+    QScreen *screen = QApplication::screens().at(0);
+    s.setMinimumSize(QSize(screen->availableSize().width(),
+                           screen->availableSize().height()));
+    s.move(0,0);
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
-    s.show();
+#ifdef  Q_OS_ANDROID
+    s.showFullScreen();
+#else
+    s.showMaximized();
+#endif
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     const auto returnCode=a.exec();
     delete QtDatapackClientLoader::datapackLoader;
