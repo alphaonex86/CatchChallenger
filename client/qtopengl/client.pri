@@ -306,14 +306,15 @@ else
 #    DEFINES += NOWEBSOCKET
 }
 android: {
-    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm64/usr/include/
-    INCLUDEPATH += /opt/android-sdk/ndk-r19c/platforms/android-21/arch-arm/usr/include/
-    LIBS += -L/opt/qt/5.12.4/android_arm64_v8a/lib/
-    LIBS += -L/opt/qt/5.12.4/android_armv7/lib/
+    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm64/usr/include/
+    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm/usr/include/
+    LIBS += -L/opt/Qt5.12.4/5.12.4/android_arm64_v8a/lib/
+    LIBS += -L/opt/Qt5.12.4/5.12.4/android_armv7/lib/
     QT += androidextras
     QMAKE_CFLAGS += -g
     QMAKE_CXXFLAGS += -g
     DISTFILES += $$PWD/../android-sources/AndroidManifest.xml
+    ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android-sources
 }
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets
