@@ -15,7 +15,7 @@ class Audio
 public:
     Audio();
     ~Audio();
-    static Audio audio;
+    static Audio *audio;
     void setVolume(const int &volume);
     QStringList output_list();
     void setPlayerVolume(QAudioOutput * const player);
@@ -23,8 +23,8 @@ public:
     static bool decodeOpus(const std::string &filePath,QByteArray &data);
 
     //if already playing ambiance then call stopCurrentAmbiance
-    std::string startAmbiance(const std::string &soundPath);
-    void stopCurrentAmbiance();
+    virtual std::string startAmbiance(const std::string &soundPath);
+    virtual void stopCurrentAmbiance();
 protected:
     void addPlayer(QAudioOutput * const player);
     void removePlayer(QAudioOutput * const player);

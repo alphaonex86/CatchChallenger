@@ -12,7 +12,7 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
 
     font=new QFont();
     font->setFamily("Comic Sans MS");
-    font->setPointSize(35);
+    font->setPixelSize(35);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
@@ -20,7 +20,7 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
     pressed=false;
     background=pix;
     outlineColor=QColor(217,145,0);
-    percent=85;
+    percent=75;
     cache=nullptr;
 
     m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
@@ -108,12 +108,6 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     {
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;
-        if(font->pointSize()<=12)
-            penWidth=0.7;
-        else if(font->pointSize()<=18)
-            penWidth=1;
-        else if(font->pointSize()<=24)
-            penWidth=1.5;
         paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint.setBrush(Qt::white);
         paint.drawPath(*textPath);
@@ -141,14 +135,14 @@ void CustomButton::setText(const QString &text)
 
 bool CustomButton::setPointSize(uint8_t size)
 {
-    if(font->pointSize()==size)
+    if(font->pixelSize()==size)
         return true;
     if(cache!=nullptr)
     {
         delete cache;
         cache=nullptr;
     }
-    font->setPointSize(size);
+    font->setPixelSize(size*1.5);
     return true;
 }
 
@@ -167,7 +161,7 @@ void CustomButton::updateTextPath()
         newHeight=(h*(percent+20)/100);
     else
         newHeight=(h*percent/100);
-    const int p=font->pointSize();
+    const int p=font->pixelSize();
     const int tempHeight=newHeight/2+p/2;
     textPath->addText(m_boundingRect.width()/2-rect.width()/2, tempHeight, *font, text);
 }
