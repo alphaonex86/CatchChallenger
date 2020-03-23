@@ -7,7 +7,7 @@
 #include <QCoreApplication>
 #include <iostream>
 
-Audio Audio::audio;
+Audio *Audio::audio=nullptr;
 
 Audio::Audio()
 {
@@ -25,6 +25,7 @@ Audio::Audio()
         return;
     }
 
+    volume=100;
     ambiance_player=nullptr;
     ambiance_buffer=nullptr;
 }
@@ -51,7 +52,8 @@ void Audio::addPlayer(QAudioOutput * const player)
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
     playerList.push_back(player);
-    //player->setVolume((qreal)volume/100);//-> no volume option for now
+    player->setVolume(0);
+//    player->setVolume((qreal)volume/100);//-> no volume option for now
 }
 
 void Audio::removePlayer(QAudioOutput * const player)
@@ -141,7 +143,7 @@ std::string Audio::startAmbiance(const std::string &soundPath)
     if (!info.isFormatSupported(m_format))
         return "raw audio format not supported by backend, cannot play audio.";
 
-    ambiance_player = new QAudioOutput(Audio::audio.format());
+    ambiance_player = new QAudioOutput(Audio::audio->format());
     // Create a new Media
     if(ambiance_player!=nullptr)
     {

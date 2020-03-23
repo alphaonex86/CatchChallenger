@@ -1,6 +1,7 @@
 #include "ScreenTransition.h"
 #include "../qt/GameLoader.h"
 #include "../../general/base/Version.h"
+#include "AudioGL.h"
 #include <iostream>
 #include <QGLWidget>
 #ifdef Q_OS_ANDROID
@@ -189,6 +190,8 @@ void ScreenTransition::setAbove(ScreenInput *widget)
 
 void ScreenTransition::toMainScreen()
 {
+    if(Audio::audio==nullptr)
+        Audio::audio=new AudioGL();
     if(m==nullptr)
     {
         m=new MainScreen();

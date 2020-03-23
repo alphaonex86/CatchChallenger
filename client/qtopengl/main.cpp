@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
     QFont font("Comic Sans MS");
     font.setStyleHint(QFont::Monospace);
     //font.setBold(true);
+    font.setPixelSize(15);
     QApplication::setFont(font);
 
     LocalListener localListener;
@@ -53,17 +54,18 @@ int main(int argc, char *argv[])
 
     ScreenTransition s;
     s.setWindowTitle(QObject::tr("CatchChallenger loading..."));
-    QScreen *screen = QApplication::screens().at(0);
+    /*QScreen *screen = QApplication::screens().at(0);
     s.setMinimumSize(QSize(screen->availableSize().width(),
-                           screen->availableSize().height()));
+                           screen->availableSize().height()));*/
     s.move(0,0);
+    s.show();
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
 #ifdef  Q_OS_ANDROID
     s.showFullScreen();
 #else
-    s.showMaximized();
+    //s.showMaximized();
 #endif
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     const auto returnCode=a.exec();

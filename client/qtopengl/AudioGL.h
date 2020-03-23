@@ -9,9 +9,8 @@ class AudioGL : public Audio
 public:
     AudioGL();
     ~AudioGL();
-    static AudioGL audioGL;
 
-    std::string startAmbiance(const std::string &soundPath);
+    std::string startAmbiance(const std::string &soundPath) override;
 };
 #endif
 
