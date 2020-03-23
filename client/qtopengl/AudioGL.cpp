@@ -2,8 +2,6 @@
 #include "AudioGL.h"
 #include "../qt/GameLoader.h"
 
-AudioGL AudioGL::audioGL;
-
 AudioGL::AudioGL()
 {
 }
@@ -33,7 +31,7 @@ std::string AudioGL::startAmbiance(const std::string &soundPath)
                 std::to_string((int)m_format.sampleType())+","+
                 " "+QAudioDeviceInfo::defaultOutputDevice().deviceName().toStdString();
 
-    ambiance_player = new QAudioOutput(Audio::audio.format());
+    ambiance_player = new QAudioOutput(Audio::audio->format());
     // Create a new Media
     if(ambiance_player!=nullptr && GameLoader::gameLoader->musics.contains(QtsoundPath))
     {

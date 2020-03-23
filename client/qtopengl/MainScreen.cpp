@@ -110,7 +110,7 @@ MainScreen::MainScreen()
     currentNewsType=0;
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    const std::string &terr=AudioGL::audioGL.startAmbiance(":/CC/music/loading.opus");
+    const std::string &terr=AudioGL::audio->startAmbiance(":/CC/music/loading.opus");
     if(!terr.empty())
         setError(terr);
     /*else
