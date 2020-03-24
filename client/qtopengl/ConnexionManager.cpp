@@ -1,6 +1,6 @@
-#include "ConnexionManager.h"
-#include "../qt/Api_client_real.h"
-#include "LoadingScreen.h"
+#include "ConnexionManager.hpp"
+#include "../qt/Api_client_real.hpp"
+#include "LoadingScreen.hpp"
 #include <iostream>
 #include <QStandardPaths>
 

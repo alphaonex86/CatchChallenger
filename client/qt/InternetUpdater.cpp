@@ -1,11 +1,11 @@
 #ifndef __EMSCRIPTEN__
-#include "InternetUpdater.h"
-#include "PlatformMacro.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/Version.h"
-#include "../../general/base/cpp11addition.h"
-#include "ClientVariable.h"
-#include "Ultimate.h"
+#include "InternetUpdater.hpp"
+#include "PlatformMacro.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/Version.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "ClientVariable.hpp"
+#include "Ultimate.hpp"
 
 #include <QNetworkRequest>
 #include <QUrl>

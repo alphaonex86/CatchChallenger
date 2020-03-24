@@ -1,9 +1,9 @@
-#include "PlayerUpdater.h"
-#include "GlobalServerData.h"
-#include "Client.h"
+#include "PlayerUpdater.hpp"
+#include "GlobalServerData.hpp"
+#include "Client.hpp"
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
-#include "BroadCastWithoutSender.h"
+#include "BroadCastWithoutSender.hpp"
 #endif
 
 using namespace CatchChallenger;

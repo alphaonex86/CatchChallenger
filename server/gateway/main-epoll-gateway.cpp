@@ -9,12 +9,12 @@
 #include <vector>
 #include <signal.h>
 
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../epoll/EpollSocket.h"
-#include "../epoll/Epoll.h"
-#include "EpollServerLoginSlave.h"
-#include "EpollClientLoginSlave.h"
-#include "TimerDdos.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../epoll/EpollSocket.hpp"
+#include "../epoll/Epoll.hpp"
+#include "EpollServerLoginSlave.hpp"
+#include "EpollClientLoginSlave.hpp"
+#include "TimerDdos.hpp"
 
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16

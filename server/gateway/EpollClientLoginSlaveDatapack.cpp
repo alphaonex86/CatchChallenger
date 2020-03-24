@@ -1,7 +1,7 @@
-#include "EpollClientLoginSlave.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "DatapackDownloaderBase.h"
-#include "DatapackDownloaderMainSub.h"
+#include "EpollClientLoginSlave.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "DatapackDownloaderBase.hpp"
+#include "DatapackDownloaderMainSub.hpp"
 
 #include <iostream>
 #include <vector>

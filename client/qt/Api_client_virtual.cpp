@@ -1,4 +1,4 @@
-#include "Api_client_virtual.h"
+#include "Api_client_virtual.hpp"
 #include <QCoreApplication>
 
 using namespace CatchChallenger;

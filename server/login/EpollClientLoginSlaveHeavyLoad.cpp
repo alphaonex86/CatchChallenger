@@ -1,13 +1,13 @@
-#include "EpollClientLoginSlave.h"
-#include "EpollServerLoginSlave.h"
-#include "CharactersGroupForLogin.h"
-#include "../base/PreparedDBQuery.h"
-#include "../base/GlobalServerData.h"
+#include "EpollClientLoginSlave.hpp"
+#include "EpollServerLoginSlave.hpp"
+#include "CharactersGroupForLogin.hpp"
+#include "../base/PreparedDBQuery.hpp"
+#include "../base/GlobalServerData.hpp"
 #include <iostream>
 #include <chrono>
 #include <openssl/sha.h>
-#include "../../general/base/CommonSettingsCommon.h"
-#include "VariableLoginServer.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "VariableLoginServer.hpp"
 
 using namespace CatchChallenger;
 

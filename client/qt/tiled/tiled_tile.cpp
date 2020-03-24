@@ -26,8 +26,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_tile.h"
-#include "tiled_tileset.h"
+#include "tiled_tile.hpp"
+#include "tiled_tileset.hpp"
 
 using namespace Tiled;
 

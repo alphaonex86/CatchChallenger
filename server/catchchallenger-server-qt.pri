@@ -17,11 +17,11 @@ SOURCES += $$PWD/base/QtServer.cpp \
     $$PWD/../client/qt/ConnectedSocket.cpp \
     $$PWD/../client/qt/QFakeSocket.cpp \
     $$PWD/../client/qt/QFakeServer.cpp
-HEADERS += $$PWD/base/QtServer.h \
-    $$PWD/base/QtTimerEvents.h \
-    $$PWD/base/QtDatabase.h \
-    $$PWD/../client/qt/ConnectedSocket.h \
-    $$PWD/../client/qt/QFakeServer.h \
-    $$PWD/../client/qt/QFakeSocket.h
+HEADERS += $$PWD/base/QtServer.hpp \
+    $$PWD/base/QtTimerEvents.hpp \
+    $$PWD/base/QtDatabase.hpp \
+    $$PWD/../client/qt/ConnectedSocket.hpp \
+    $$PWD/../client/qt/QFakeServer.hpp \
+    $$PWD/../client/qt/QFakeSocket.hpp
 
 

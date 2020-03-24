@@ -1,5 +1,5 @@
-#include "DatapackGeneralLoader.h"
-#include "../../general/base/CommonDatapack.h"
+#include "DatapackGeneralLoader.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

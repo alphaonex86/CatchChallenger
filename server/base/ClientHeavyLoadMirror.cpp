@@ -1,8 +1,8 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "StaticText.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonSettingsCommon.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "StaticText.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #include <sys/stat.h>
 
 /// \todo solve disconnecting/destroy during the SQL loading

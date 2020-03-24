@@ -1,10 +1,10 @@
-#include "BaseServerMasterSendDatapack.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../VariableServer.h"
-#include "../../general/base/cpp11addition.h"
+#include "BaseServerMasterSendDatapack.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../VariableServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <regex>
 #include <iostream>

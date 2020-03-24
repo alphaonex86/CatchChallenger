@@ -1,11 +1,11 @@
 #ifndef SERVERSSL
 
-#include "EpollServer.h"
-#include "EpollSocket.h"
-#include "Epoll.h"
+#include "EpollServer.hpp"
+#include "EpollSocket.hpp"
+#include "Epoll.hpp"
 
-#include "../base/ServerStructures.h"
-#include "../base/GlobalServerData.h"
+#include "../base/ServerStructures.hpp"
+#include "../base/GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 

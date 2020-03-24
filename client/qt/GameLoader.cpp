@@ -1,4 +1,4 @@
-#include "GameLoader.h"
+#include "GameLoader.hpp"
 
 #include <QDirIterator>
 #include <QCoreApplication>

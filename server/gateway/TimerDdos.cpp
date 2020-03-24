@@ -1,6 +1,6 @@
-#include "TimerDdos.h"
-#include "../epoll/Epoll.h"
-#include "EpollClientLoginSlave.h"
+#include "TimerDdos.hpp"
+#include "../epoll/Epoll.hpp"
+#include "EpollClientLoginSlave.hpp"
 
 TimerDdos::TimerDdos()
 {

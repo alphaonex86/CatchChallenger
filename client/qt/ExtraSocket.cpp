@@ -5,7 +5,7 @@
 \date 2010
 \licence GPL3, see the file COPYING */
 
-#include "ExtraSocket.h"
+#include "ExtraSocket.hpp"
 #include <QByteArray>
 #include <stdio.h>
 

@@ -1,6 +1,6 @@
-#include "EpollServerLoginSlave.h"
-#include "../epoll/Epoll.h"
-#include "../base/PreparedDBQuery.h"
+#include "EpollServerLoginSlave.hpp"
+#include "../epoll/Epoll.hpp"
+#include "../base/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 
@@ -12,13 +12,13 @@ using namespace CatchChallenger;
 #include <time.h>       /* time */
 #include <iostream>
 
-#include "EpollClientLoginSlave.h"
-#include "DatapackDownloaderBase.h"
-#include "DatapackDownloaderMainSub.h"
-#include "../base/DictionaryLogin.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../base/TinyXMLSettings.h"
+#include "EpollClientLoginSlave.hpp"
+#include "DatapackDownloaderBase.hpp"
+#include "DatapackDownloaderMainSub.hpp"
+#include "../base/DictionaryLogin.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../base/TinyXMLSettings.hpp"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 

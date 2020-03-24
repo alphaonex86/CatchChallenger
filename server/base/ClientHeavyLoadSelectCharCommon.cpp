@@ -1,9 +1,9 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "DictionaryLogin.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "DictionaryLogin.hpp"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "../game-server-alone/LinkToMaster.h"
+#include "../game-server-alone/LinkToMaster.hpp"
 #endif
 
 #include <chrono>

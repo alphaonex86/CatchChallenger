@@ -1,6 +1,6 @@
-#include "ClientNetworkReadWithoutSender.h"
-#include "GlobalServerData.h"
-#include "Client.h"
+#include "ClientNetworkReadWithoutSender.hpp"
+#include "GlobalServerData.hpp"
+#include "Client.hpp"
 
 using namespace CatchChallenger;
 

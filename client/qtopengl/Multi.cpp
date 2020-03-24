@@ -1,10 +1,10 @@
-#include "Multi.h"
-#include "interface/ListEntryEnvolued.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/tinyXML2/tinyxml2.h"
-#include "../../general/base/cpp11addition.h"
-#include "../qt/ClientVariable.h"
-#include "LanguagesSelect.h"
+#include "Multi.hpp"
+#include "interface/ListEntryEnvolued.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../qt/ClientVariable.hpp"
+#include "LanguagesSelect.hpp"
 //#include "AddServer.h"
 #include <iostream>
 #include <QRegularExpression>
@@ -14,12 +14,12 @@
 #include <utime.h>
 #include <QFileInfo>
 //#include "Ultimate.h"
-#include "../../general/base/Version.h"
+#include "../../general/base/Version.hpp"
 //#include "PlatformMacro.h"
 #include <QNetworkRequest>
 #include <QDir>
 //#include "Login.h"
-#include "../qt/Settings.h"
+#include "../qt/Settings.hpp"
 #include <QDebug>
 
 Multi::Multi(QGraphicsItem *parent) :

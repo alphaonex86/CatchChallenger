@@ -1,5 +1,5 @@
-#include "LinkToMaster.h"
-#include "../../general/base/ProtocolVersion.h"
+#include "LinkToMaster.hpp"
+#include "../../general/base/ProtocolVersion.hpp"
 
 using namespace CatchChallenger;
 

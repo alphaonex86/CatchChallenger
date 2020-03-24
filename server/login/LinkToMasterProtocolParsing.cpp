@@ -1,11 +1,11 @@
-#include "LinkToMaster.h"
-#include "EpollClientLoginSlave.h"
-#include "EpollServerLoginSlave.h"
-#include "EpollClientLoginSlave.h"
-#include "CharactersGroupForLogin.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../epoll/EpollSocket.h"
-#include "VariableLoginServer.h"
+#include "LinkToMaster.hpp"
+#include "EpollClientLoginSlave.hpp"
+#include "EpollServerLoginSlave.hpp"
+#include "EpollClientLoginSlave.hpp"
+#include "CharactersGroupForLogin.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../epoll/EpollSocket.hpp"
+#include "VariableLoginServer.hpp"
 
 #include <iostream>
 #include <openssl/sha.h>

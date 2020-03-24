@@ -1,9 +1,9 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "DictionaryServer.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "DictionaryServer.hpp"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "../game-server-alone/LinkToMaster.h"
+#include "../game-server-alone/LinkToMaster.hpp"
 #endif
 
 using namespace CatchChallenger;

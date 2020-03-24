@@ -1,9 +1,9 @@
-#include "CommonFightEngine.h"
-#include "../base/CommonDatapack.h"
-#include "../base/CommonDatapackServerSpec.h"
-#include "../base/CommonSettingsServer.h"
-#include "../base/CommonSettingsCommon.h"
-#include "../base/GeneralVariable.h"
+#include "CommonFightEngine.hpp"
+#include "../base/CommonDatapack.hpp"
+#include "../base/CommonDatapackServerSpec.hpp"
+#include "../base/CommonSettingsServer.hpp"
+#include "../base/CommonSettingsCommon.hpp"
+#include "../base/GeneralVariable.hpp"
 
 #include <iostream>
 

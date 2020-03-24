@@ -1,10 +1,10 @@
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerMasterLoadDictionary.h"
-#include "BaseServerMasterSendDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../VariableServer.h"
+#include "BaseServerMasterLoadDictionary.hpp"
+#include "BaseServerMasterSendDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../VariableServer.hpp"
 
 #include <regex>
 #include <iostream>
