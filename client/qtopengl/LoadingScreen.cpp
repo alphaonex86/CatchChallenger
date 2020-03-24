@@ -10,7 +10,7 @@ LoadingScreen::LoadingScreen()
     if(GameLoader::gameLoader==nullptr)
         teacher->setPixmap(QPixmap(":/CC/images/interface/teacher.png"));
     else
-        teacher->setPixmap(GameLoader::gameLoader->getImage(":/CC/images/interface/teacher.png"));
+        teacher->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/teacher.png"));
     info = new QGraphicsTextItem(widget);
     info->setHtml(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
     info->setDefaultTextColor(QColor(64,28,02));

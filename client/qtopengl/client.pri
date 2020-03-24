@@ -400,19 +400,14 @@ HEADERS  += \
     $$PWD/ScreenInput.h \
     $$PWD/AudioGL.h
 
-RESOURCES += $$PWD/../resources/client-resources-multi.qrc
 DEFINES += CATCHCHALLENGER_MULTI
 DEFINES += CATCHCHALLENGER_CLASS_CLIENT
 
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/../resources/resources-windows.rc
 ICON = $$PWD/../resources/client.icns
-macx:INCLUDEPATH += /Users/user/Desktop/VLC.app/Contents/MacOS/include/
-macx:LIBS += -L/Users/user/Desktop/VLC.app/Contents/MacOS/lib/
 
-RESOURCES += $$PWD/../resources/client-resources.qrc \
-    $$PWD/../qt/crafting/resources/client-resources-plant.qrc \
-    $$PWD/../qt/fight/resources/client-resources-fight.qrc
+RESOURCES += $$PWD/../resources/client-resources.qrc
 
 TRANSLATIONS    = $$PWD/../resources/languages/en/translation.ts \
     $$PWD/../languages/fr/translation.ts

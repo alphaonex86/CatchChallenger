@@ -4,7 +4,7 @@
 #include <QWidget>
 #include "CCBackground.h"
 #include "LoadingScreen.h"
-//#include "OptionsDialog.h"
+#include "OptionsDialog.h"
 #include "MainScreen.h"
 //#include "Solo.h"
 #include "Multi.h"
@@ -54,7 +54,7 @@ private:
     ScreenInput *m_backgroundStack;
     ScreenInput *m_foregroundStack;
     ScreenInput *m_aboveStack;
-    //OptionsDialog *o;
+    OptionsDialog *o;
     MainScreen *m;
     //Solo *solo;
     Multi *multi;

@@ -35,7 +35,7 @@ std::string AudioGL::startAmbiance(const std::string &soundPath)
     // Create a new Media
     if(ambiance_player!=nullptr && GameLoader::gameLoader->musics.contains(QtsoundPath))
     {
-        ambiance_data=GameLoader::gameLoader->musics.value(QtsoundPath);
+        ambiance_data=*GameLoader::gameLoader->musics.value(QtsoundPath);
         ambiance_buffer=new QInfiniteBuffer(&ambiance_data);
         ambiance_buffer->open(QBuffer::ReadOnly);
         ambiance_buffer->seek(0);
