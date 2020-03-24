@@ -1,13 +1,13 @@
-#include "../base/Client.h"
-#include "../base/PreparedDBQuery.h"
-#include "../base/GlobalServerData.h"
+#include "../base/Client.hpp"
+#include "../base/PreparedDBQuery.hpp"
+#include "../base/GlobalServerData.hpp"
 
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/fight/CommonFightEngine.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/cpp11addition.h"
-#include "../base/DatabaseFunction.h"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../base/DatabaseFunction.hpp"
 
 using namespace CatchChallenger;
 

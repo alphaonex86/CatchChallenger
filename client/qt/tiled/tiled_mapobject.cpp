@@ -27,7 +27,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_mapobject.h"
+#include "tiled_mapobject.hpp"
 
 using namespace Tiled;
 

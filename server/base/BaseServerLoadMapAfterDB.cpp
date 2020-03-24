@@ -1,6 +1,6 @@
-#include "BaseServer.h"
-#include "DictionaryServer.h"
-#include "GlobalServerData.h"
+#include "BaseServer.hpp"
+#include "DictionaryServer.hpp"
+#include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 

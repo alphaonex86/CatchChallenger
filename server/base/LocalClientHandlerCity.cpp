@@ -1,5 +1,5 @@
-#include "Client.h"
-#include "PreparedDBQuery.h"
+#include "Client.hpp"
+#include "PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 

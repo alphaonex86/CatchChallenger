@@ -1,4 +1,4 @@
-#include "StaticText.h"
+#include "StaticText.hpp"
 
 const std::string StaticText::text_chat="chat";
 const std::string StaticText::text_space=" ";

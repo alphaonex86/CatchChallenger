@@ -1,15 +1,15 @@
 #include <QApplication>
-#include "../qt/LanguagesSelect.h"
-#include "ScreenTransition.h"
-#include "../qt/LocalListener.h"
-#include "../qt/QtDatapackClientLoader.h"
-#include "../general/base/FacilityLibGeneral.h"
+#include "../qt/LanguagesSelect.hpp"
+#include "ScreenTransition.hpp"
+#include "../qt/LocalListener.hpp"
+#include "../qt/QtDatapackClientLoader.hpp"
+#include "../general/base/FacilityLibGeneral.hpp"
 //#include "mainwindow.h"
 #include <iostream>
 #include <QFontDatabase>
 #include <QStyleFactory>
-#include "../qt/Options.h"
-#include "../qt/QtDatapackChecksum.h"
+#include "../qt/Options.hpp"
+#include "../qt/QtDatapackChecksum.hpp"
 #include <QStandardPaths>
 #include <QScreen>
 

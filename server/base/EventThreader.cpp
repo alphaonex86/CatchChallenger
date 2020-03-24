@@ -1,4 +1,4 @@
-#include "EventThreader.h"
+#include "EventThreader.hpp"
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 using namespace CatchChallenger;

@@ -1,6 +1,6 @@
-#include "PlayerUpdaterToMaster.h"
-#include "PlayerUpdater.h"
-#include "../game-server-alone/LinkToMaster.h"
+#include "PlayerUpdaterToMaster.hpp"
+#include "PlayerUpdater.hpp"
+#include "../game-server-alone/LinkToMaster.hpp"
 
 using namespace CatchChallenger;
 PlayerUpdaterToMaster::PlayerUpdaterToMaster() :

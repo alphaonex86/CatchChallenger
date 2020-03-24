@@ -26,10 +26,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_maprenderer.h"
-#include "tiled_imagelayer.h"
-#include "tiled_tile.h"
-#include "tiled_tilelayer.h"
+#include "tiled_maprenderer.hpp"
+#include "tiled_imagelayer.hpp"
+#include "tiled_tile.hpp"
+#include "tiled_tilelayer.hpp"
 
 #include <QPaintEngine>
 #include <QPainter>

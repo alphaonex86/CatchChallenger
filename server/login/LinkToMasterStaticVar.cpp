@@ -1,4 +1,4 @@
-#include "LinkToMaster.h"
+#include "LinkToMaster.hpp"
 
 using namespace CatchChallenger;
 

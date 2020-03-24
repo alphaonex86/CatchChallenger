@@ -1,9 +1,9 @@
-#include "NormalServerGlobal.h"
-#include "VariableServer.h"
-#include "base/Client.h"
-#include "../general/base/FacilityLibGeneral.h"
-#include "../general/base/Version.h"
-#include "../general/base/ProtocolVersion.h"
+#include "NormalServerGlobal.hpp"
+#include "VariableServer.hpp"
+#include "base/Client.hpp"
+#include "../general/base/FacilityLibGeneral.hpp"
+#include "../general/base/Version.hpp"
+#include "../general/base/ProtocolVersion.hpp"
 
 #include <regex>
 

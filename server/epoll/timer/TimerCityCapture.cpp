@@ -1,7 +1,7 @@
-#include "TimerCityCapture.h"
-#include "../Epoll.h"
+#include "TimerCityCapture.hpp"
+#include "../Epoll.hpp"
 
-#include "../../base/Client.h"
+#include "../../base/Client.hpp"
 
 #include <iostream>
 

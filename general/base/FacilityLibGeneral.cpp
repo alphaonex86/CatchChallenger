@@ -1,6 +1,6 @@
-#include "FacilityLibGeneral.h"
-#include "PortableEndian.h"
-#include "GeneralVariable.h"
+#include "FacilityLibGeneral.hpp"
+#include "PortableEndian.hpp"
+#include "GeneralVariable.hpp"
 
 #include <cstring>
 #include <string>

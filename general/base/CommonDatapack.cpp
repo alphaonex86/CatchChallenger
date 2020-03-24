@@ -1,9 +1,9 @@
-#include "CommonDatapack.h"
-#include "CommonSettingsServer.h"
-#include "GeneralVariable.h"
-#include "FacilityLib.h"
-#include "../fight/FightLoader.h"
-#include "DatapackGeneralLoader.h"
+#include "CommonDatapack.hpp"
+#include "CommonSettingsServer.hpp"
+#include "GeneralVariable.hpp"
+#include "FacilityLib.hpp"
+#include "../fight/FightLoader.hpp"
+#include "DatapackGeneralLoader.hpp"
 
 #include <iostream>
 #include <vector>

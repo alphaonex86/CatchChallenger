@@ -1,5 +1,5 @@
-#include "OptionsDialog.h"
-#include "../qt/GameLoader.h"
+#include "OptionsDialog.hpp"
+#include "../qt/GameLoader.hpp"
 
 OptionsDialog::OptionsDialog() :
     wdialog(new CCWidget(this)),
@@ -30,6 +30,7 @@ QRectF OptionsDialog::boundingRect() const
 
 void OptionsDialog::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
+    bool forcedCenter=true;
     int idealW=450;
     int idealH=200;
     if(idealW>widget->width())
@@ -44,7 +45,7 @@ void OptionsDialog::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     if((idealH+top+bottom)>widget->height())
         idealH=widget->height()-(top+bottom);
 
-    if(x<0 || y<0)
+    if(x<0 || y<0 || forcedCenter)
     {
         x=widget->width()/2-idealW/2;
         y=widget->height()/2-idealH/2;

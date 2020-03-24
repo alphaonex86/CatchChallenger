@@ -1,9 +1,9 @@
-#include "LinkToMaster.h"
-#include "../base/Client.h"
-#include "../base/GlobalServerData.h"
-#include "../base/DictionaryLogin.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/FacilityLibGeneral.h"
+#include "LinkToMaster.hpp"
+#include "../base/Client.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../base/DictionaryLogin.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

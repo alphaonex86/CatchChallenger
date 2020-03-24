@@ -1,9 +1,9 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "Audio.h"
-#include "PlatformMacro.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/cpp11addition.h"
-#include "Settings.h"
+#include "Audio.hpp"
+#include "PlatformMacro.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "Settings.hpp"
 #include <QCoreApplication>
 #include <iostream>
 

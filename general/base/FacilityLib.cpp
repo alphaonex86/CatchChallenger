@@ -1,7 +1,7 @@
-#include "FacilityLib.h"
-#include "CommonDatapack.h"
-#include "CommonSettingsServer.h"
-#include "PortableEndian.h"
+#include "FacilityLib.hpp"
+#include "CommonDatapack.hpp"
+#include "CommonSettingsServer.hpp"
+#include "PortableEndian.hpp"
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 #include <iostream>

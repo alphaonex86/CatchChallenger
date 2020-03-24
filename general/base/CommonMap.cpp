@@ -1,6 +1,6 @@
-#include "CommonMap.h"
-#include "FacilityLib.h"
-#include "Map_loader.h"
+#include "CommonMap.hpp"
+#include "FacilityLib.hpp"
+#include "Map_loader.hpp"
 
 using namespace CatchChallenger;
 

@@ -1,7 +1,7 @@
-#include "DatabaseFunction.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../VariableServer.h"
+#include "DatabaseFunction.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../VariableServer.hpp"
 
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 #include <iostream>

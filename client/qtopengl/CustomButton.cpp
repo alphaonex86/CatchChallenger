@@ -1,5 +1,5 @@
-#include "CustomButton.h"
-#include "../qt/GameLoader.h"
+#include "CustomButton.hpp"
+#include "../qt/GameLoader.hpp"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>

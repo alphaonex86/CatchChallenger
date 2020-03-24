@@ -1,7 +1,7 @@
-#include "LinkToMaster.h"
-#include "EpollClientLoginSlave.h"
-#include "../epoll/Epoll.h"
-#include "../epoll/EpollSocket.h"
+#include "LinkToMaster.hpp"
+#include "EpollClientLoginSlave.hpp"
+#include "../epoll/Epoll.hpp"
+#include "../epoll/EpollSocket.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -12,8 +12,8 @@
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
 #include <string.h>
-#include "CharactersGroupForLogin.h"
-#include "EpollServerLoginSlave.h"
+#include "CharactersGroupForLogin.hpp"
+#include "EpollServerLoginSlave.hpp"
 
 using namespace CatchChallenger;
 

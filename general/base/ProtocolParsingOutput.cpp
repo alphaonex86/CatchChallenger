@@ -1,8 +1,8 @@
 #if ! defined (ONLYMAPRENDER)
-#include "ProtocolParsing.h"
-#include "GeneralVariable.h"
-#include "ProtocolParsingCheck.h"
-#include "cpp11addition.h"
+#include "ProtocolParsing.hpp"
+#include "GeneralVariable.hpp"
+#include "ProtocolParsingCheck.hpp"
+#include "cpp11addition.hpp"
 #include <iostream>
 #include <cstring>
 

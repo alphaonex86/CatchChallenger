@@ -1,4 +1,4 @@
-#include "CCWidget.h"
+#include "CCWidget.hpp"
 #include <QPainter>
 
 CCWidget::CCWidget(QGraphicsItem *parent) :

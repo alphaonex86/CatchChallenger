@@ -1,4 +1,4 @@
-#include "ChatParsing.h"
+#include "ChatParsing.hpp"
 
 using namespace CatchChallenger;
 

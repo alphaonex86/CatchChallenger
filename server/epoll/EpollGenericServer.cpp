@@ -1,6 +1,6 @@
-#include "EpollGenericServer.h"
-#include "EpollSocket.h"
-#include "Epoll.h"
+#include "EpollGenericServer.hpp"
+#include "EpollSocket.hpp"
+#include "Epoll.hpp"
 
 #include <iostream>
 #include <netdb.h>

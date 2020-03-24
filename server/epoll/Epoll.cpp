@@ -1,5 +1,5 @@
-#include "Epoll.h"
-#include "../../general/base/GeneralVariable.h"
+#include "Epoll.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 #include <iostream>
 

@@ -1,4 +1,4 @@
-#include "DictionaryLogin.h"
+#include "DictionaryLogin.hpp"
 
 using namespace CatchChallenger;
 

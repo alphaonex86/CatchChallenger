@@ -1,15 +1,15 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "DictionaryLogin.h"
-#include "StaticText.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "DictionaryLogin.hpp"
+#include "StaticText.hpp"
 #include <openssl/sha.h>
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.h"
+#include "BaseServerLogin.hpp"
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #include "SqlFunction.h"
 #endif
-#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

@@ -27,8 +27,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_imagelayer.h"
-#include "tiled_map.h"
+#include "tiled_imagelayer.hpp"
+#include "tiled_map.hpp"
 
 #include <QBitmap>
 

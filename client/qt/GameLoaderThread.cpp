@@ -1,4 +1,4 @@
-#include "GameLoaderThread.h"
+#include "GameLoaderThread.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../opusfile/opusfile.h"

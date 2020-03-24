@@ -1,9 +1,9 @@
-#include "MapBasicMove.h"
-#include "../MapServer.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/MoveOnTheMap.h"
+#include "MapBasicMove.hpp"
+#include "../MapServer.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/MoveOnTheMap.hpp"
 #ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../Client.h"
+#include "../Client.hpp"
 #endif
 
 using namespace CatchChallenger;

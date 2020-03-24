@@ -28,17 +28,17 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_mapwriter.h"
-#include "tiled_compression.h"
-#include "tiled_gidmapper.h"
-#include "tiled_map.h"
-#include "tiled_mapobject.h"
-#include "tiled_imagelayer.h"
-#include "tiled_objectgroup.h"
-#include "tiled_tile.h"
-#include "tiled_tilelayer.h"
-#include "tiled_tileset.h"
-#include "tiled_terrain.h"
+#include "tiled_mapwriter.hpp"
+#include "tiled_compression.hpp"
+#include "tiled_gidmapper.hpp"
+#include "tiled_map.hpp"
+#include "tiled_mapobject.hpp"
+#include "tiled_imagelayer.hpp"
+#include "tiled_objectgroup.hpp"
+#include "tiled_tile.hpp"
+#include "tiled_tilelayer.hpp"
+#include "tiled_tileset.hpp"
+#include "tiled_terrain.hpp"
 
 #include <QCoreApplication>
 #include <QBuffer>

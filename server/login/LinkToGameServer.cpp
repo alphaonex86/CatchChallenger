@@ -1,8 +1,8 @@
-#include "LinkToGameServer.h"
-#include "EpollClientLoginSlave.h"
-#include "../epoll/Epoll.h"
-#include "../epoll/EpollSocket.h"
-#include "EpollServerLoginSlave.h"
+#include "LinkToGameServer.hpp"
+#include "EpollClientLoginSlave.hpp"
+#include "../epoll/Epoll.hpp"
+#include "../epoll/EpollSocket.hpp"
+#include "EpollServerLoginSlave.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>

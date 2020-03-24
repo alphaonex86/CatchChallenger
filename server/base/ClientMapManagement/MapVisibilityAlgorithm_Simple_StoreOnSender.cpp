@@ -1,7 +1,7 @@
-#include "MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "MapVisibilityAlgorithm_WithoutSender.h"
-#include "../GlobalServerData.h"
-#include "../../VariableServer.h"
+#include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm_WithoutSender.hpp"
+#include "../GlobalServerData.hpp"
+#include "../../VariableServer.hpp"
 
 using namespace CatchChallenger;
 

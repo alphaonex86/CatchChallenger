@@ -1,4 +1,4 @@
-#include "Ultimate.h"
+#include "Ultimate.hpp"
 
 #include <QCryptographicHash>
 #include <QString>

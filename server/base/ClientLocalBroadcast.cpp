@@ -1,11 +1,11 @@
-#include "Client.h"
-#include "BroadCastWithoutSender.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/cpp11addition.h"
-#include "GlobalServerData.h"
-#include "MapServer.h"
+#include "Client.hpp"
+#include "BroadCastWithoutSender.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "GlobalServerData.hpp"
+#include "MapServer.hpp"
 
 using namespace CatchChallenger;
 

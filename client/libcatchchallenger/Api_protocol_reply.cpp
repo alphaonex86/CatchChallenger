@@ -1,4 +1,4 @@
-#include "Api_protocol.h"
+#include "Api_protocol.hpp"
 
 using namespace CatchChallenger;
 
@@ -10,14 +10,14 @@ using namespace CatchChallenger;
 #include <iostream>
 #include <string>
 
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/GeneralType.h"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/GeneralType.hpp"
 
 #ifdef BENCHMARKMUTIPLECLIENT
 #include <iostream>

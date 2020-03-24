@@ -1,9 +1,9 @@
-#include "BaseServerLogin.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../VariableServer.h"
-#include "../VariableServer.h"
+#include "BaseServerLogin.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../VariableServer.hpp"
+#include "../VariableServer.hpp"
 
 #include <iostream>
 

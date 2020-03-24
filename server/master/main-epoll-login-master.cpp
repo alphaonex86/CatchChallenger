@@ -11,13 +11,13 @@
 #include <vector>
 #include <signal.h>
 
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/Version.h"
-#include "../epoll/EpollSocket.h"
-#include "../epoll/Epoll.h"
-#include "EpollServerLoginMaster.h"
-#include "EpollClientLoginMaster.h"
-#include "PlayerUpdaterToLogin.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/Version.hpp"
+#include "../epoll/EpollSocket.hpp"
+#include "../epoll/Epoll.hpp"
+#include "EpollServerLoginMaster.hpp"
+#include "EpollClientLoginMaster.hpp"
+#include "PlayerUpdaterToLogin.hpp"
 
 #define MAXEVENTS 512
 #define MAXCLIENTSINSUSPEND 16

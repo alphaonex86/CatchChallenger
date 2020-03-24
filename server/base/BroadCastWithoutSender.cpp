@@ -1,7 +1,7 @@
-#include "BroadCastWithoutSender.h"
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "../../general/base/ProtocolParsing.h"
+#include "BroadCastWithoutSender.hpp"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
 
 using namespace CatchChallenger;
 

@@ -26,7 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_compression.h"
+#include "tiled_compression.hpp"
 
 #ifdef TILED_ZLIB
     #if defined(Q_OS_WIN) && defined(Q_CC_MSVC)

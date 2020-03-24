@@ -1,4 +1,4 @@
-#include "DatapackChecksum.h"
+#include "DatapackChecksum.hpp"
 
 #include <regex>
 #include <string>
@@ -12,10 +12,10 @@
 #include <openssl/sha.h>
 #endif
 
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
 

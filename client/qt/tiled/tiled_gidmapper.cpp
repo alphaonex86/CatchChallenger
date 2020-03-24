@@ -26,10 +26,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_gidmapper.h"
-#include "tiled_tile.h"
-#include "tiled_tileset.h"
-#include "tiled_map.h"
+#include "tiled_gidmapper.hpp"
+#include "tiled_tile.hpp"
+#include "tiled_tileset.hpp"
+#include "tiled_map.hpp"
 
 using namespace Tiled;
 

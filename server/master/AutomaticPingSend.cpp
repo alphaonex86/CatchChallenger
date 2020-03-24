@@ -1,6 +1,6 @@
-#include "AutomaticPingSend.h"
-#include "EpollClientLoginMaster.h"
-#include "../../general/base/cpp11addition.h"
+#include "AutomaticPingSend.hpp"
+#include "EpollClientLoginMaster.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

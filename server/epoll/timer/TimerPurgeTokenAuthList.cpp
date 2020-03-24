@@ -1,7 +1,7 @@
-#include "TimerPurgeTokenAuthList.h"
-#include "../Epoll.h"
+#include "TimerPurgeTokenAuthList.hpp"
+#include "../Epoll.hpp"
 
-#include "../../base/Client.h"
+#include "../../base/Client.hpp"
 
 #include <iostream>
 

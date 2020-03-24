@@ -1,4 +1,4 @@
-#include "MapVisibilityAlgorithm_None.h"
+#include "MapVisibilityAlgorithm_None.hpp"
 
 using namespace CatchChallenger;
 

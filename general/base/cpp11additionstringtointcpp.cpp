@@ -1,4 +1,4 @@
-#include "cpp11addition.h"
+#include "cpp11addition.hpp"
 #include <cstdio>
 #include <stdexcept>
 

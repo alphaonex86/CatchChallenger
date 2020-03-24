@@ -1,5 +1,5 @@
-#include "cpp11addition.h"
-#include "GeneralVariable.h"
+#include "cpp11addition.hpp"
+#include "GeneralVariable.hpp"
 #include <sstream>
 #include <cassert>
 #include <stdlib.h>

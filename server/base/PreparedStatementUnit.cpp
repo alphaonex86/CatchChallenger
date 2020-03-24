@@ -1,9 +1,9 @@
-#include "PreparedStatementUnit.h"
+#include "PreparedStatementUnit.hpp"
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
 #include <postgresql/libpq-fe.h>
-#include "../../general/base/cpp11addition.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../epoll/db/EpollPostgresql.h"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../epoll/db/EpollPostgresql.hpp"
 #include <cstring>
 #include <iostream>
 #endif

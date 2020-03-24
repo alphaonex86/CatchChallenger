@@ -1,10 +1,10 @@
-#include "../base/Client.h"
-#include "../base/BroadCastWithoutSender.h"
-#include "../base/MapServer.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../base/GlobalServerData.h"
-#include "../base/PreparedDBQuery.h"
+#include "../base/Client.hpp"
+#include "../base/BroadCastWithoutSender.hpp"
+#include "../base/MapServer.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../base/PreparedDBQuery.hpp"
 
 #include <chrono>
 

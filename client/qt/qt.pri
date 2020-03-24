@@ -3,5 +3,5 @@ SOURCES += \
     $$PWD/Options.cpp
 
 HEADERS  += \
-    $$PWD/LocalListener.h \
-    $$PWD/Options.h
+    $$PWD/LocalListener.hpp \
+    $$PWD/Options.hpp
