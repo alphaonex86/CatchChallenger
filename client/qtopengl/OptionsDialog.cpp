@@ -76,14 +76,17 @@ void OptionsDialog::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     quit->setPos(x+(idealW-quit->width())/2,y+idealH-quit->height()/2);
 }
 
-void OptionsDialog::mousePressEventXY(const QPointF &p)
+void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated)
 {
-    quit->mousePressEventXY(p);
+    quit->mousePressEventXY(p,pressValidated);
 }
 
-void OptionsDialog::mouseReleaseEventXY(const QPointF &p)
+void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
-    bool pressValidated=quit->mouseReleaseEventXY(p);
-    Q_UNUSED(pressValidated);
-//    pressValidated|=multi->mouseReleaseEventXY(p,pressValidated);
+    quit->mouseReleaseEventXY(p,pressValidated);
+}
+
+void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+{
+    //quit->mouseMoveEventXY(p,pressValidated);
 }

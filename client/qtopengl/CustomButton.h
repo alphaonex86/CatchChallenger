@@ -26,8 +26,8 @@ public:
     int height();
 
     //event
-    void mousePressEventXY(const QPointF &p);
-    bool mouseReleaseEventXY(const QPointF &p,bool const previousPressValidated=false);
+    void mousePressEventXY(const QPointF &p, bool &pressValidated);
+    void mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated);
 signals:
     void clicked();
 protected:

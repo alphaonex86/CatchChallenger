@@ -112,17 +112,19 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
     const QPointF &p=mapToScene(event->pos());
     if(mousePress!=nullptr)
     {
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p);
+        bool temp=true;//don¡t do action if true
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p,temp);
         mousePress=nullptr;
     }
+    bool temp=false;
     if(m_aboveStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p);
+        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p,temp);
         mousePress=m_aboveStack;
     }
     else if(m_foregroundStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p);
+        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp);
         mousePress=m_foregroundStack;
     }
 }
@@ -139,14 +141,40 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
     button->setPressed(false);*/
     const QPointF &p=mapToScene(event->pos());
     mousePress=nullptr;
+    bool pressValidated=false;
     if(m_aboveStack!=nullptr)
     {
-        m_aboveStack->mouseReleaseEventXY(p);
+        m_aboveStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_aboveStack;
     }
-    else if(m_foregroundStack!=nullptr)
+    if(m_foregroundStack!=nullptr)
     {
-        m_foregroundStack->mouseReleaseEventXY(p);
+        m_foregroundStack->mouseReleaseEventXY(p,pressValidated);
+        mousePress=m_foregroundStack;
+    }
+}
+
+void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
+{
+    /*const QPointF &p=mapToScene(event->pos());
+    const qreal x=p.x();
+    const qreal y=p.y();*/
+    /*std::cerr << "void ScreenTransition::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) "
+              << std::to_string(x) << "," << std::to_string(y) << std::endl;*/
+    /*if(button->boundingRect().contains(x,y))
+        button->emitclicked();
+    button->setPressed(false);*/
+    const QPointF &p=mapToScene(event->pos());
+    mousePress=nullptr;
+    bool pressValidated=false;
+    if(m_aboveStack!=nullptr)
+    {
+        m_aboveStack->mouseMoveEventXY(p,pressValidated);
+        mousePress=m_aboveStack;
+    }
+    if(m_foregroundStack!=nullptr)
+    {
+        m_foregroundStack->mouseMoveEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
     }
 }
@@ -164,7 +192,8 @@ void ScreenTransition::setForeground(ScreenInput *widget)
 {
     if(mousePress!=nullptr)
     {
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0));
+        bool temp=true;//don¡t do action if true
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp);
         mousePress=nullptr;
     }
     if(m_foregroundStack!=nullptr)
@@ -178,7 +207,8 @@ void ScreenTransition::setAbove(ScreenInput *widget)
 {
     if(mousePress!=nullptr)
     {
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0));
+        bool temp=true;//don¡t do action if true
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp);
         mousePress=nullptr;
     }
     if(m_aboveStack!=nullptr)
