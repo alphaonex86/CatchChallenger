@@ -18,12 +18,13 @@ public:
 
     #ifndef NOAUDIO
     //only load here internal small musics, NOT LOAD here datapack musics
-    QHash<QString,QByteArray> musics;
+    QHash<QString,const QByteArray *> musics;
     #endif
-    QPixmap getImage(const QString &path) const;
+    const QPixmap *getImage(const QString &path);
 protected:
     //only load here internal images, NOT LOAD here datapack images
-    QHash<QString,QPixmap> images;
+    QHash<QString,QPixmap *> pixmaps;
+    QHash<QString,QImage *> images;
 private:
     void threadFinished();
 
