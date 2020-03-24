@@ -219,7 +219,7 @@ QRectF CustomButton::boundingRect() const
     return m_boundingRect;
 }
 
-void CustomButton::mousePressEventXY(const QPointF &p)
+void CustomButton::mousePressEventXY(const QPointF &p,bool &pressValidated)
 {
     if(this->pressed)
         return;
@@ -227,26 +227,26 @@ void CustomButton::mousePressEventXY(const QPointF &p)
         return;
     const QRectF &b=boundingRect();
     const QRectF &t=mapRectToScene(b);
-    const QRectF y(1102,918,138,57);
     if(t.contains(p))
+    {
+        pressValidated=true;
         setPressed(true);
+    }
 }
 
-bool CustomButton::mouseReleaseEventXY(const QPointF &p,bool const previousPressValidated)
+void CustomButton::mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated)
 {
-    bool pressValidated=false;
     const QRectF &b=boundingRect();
     const QRectF &t=mapRectToScene(b);
     if(!this->pressed)
-        return false;
+        return;
     if(!previousPressValidated && isVisible())
     {
         if(t.contains(p))
         {
             emit clicked();
-            pressValidated=true;
+            previousPressValidated=true;
         }
     }
     setPressed(false);
-    return pressValidated;
 }

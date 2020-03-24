@@ -327,22 +327,26 @@ QRectF MainScreen::boundingRect() const
     return QRectF();
 }
 
-void MainScreen::mousePressEventXY(const QPointF &p)
+void MainScreen::mousePressEventXY(const QPointF &p,bool &pressValidated)
 {
-    solo->mousePressEventXY(p);
-    multi->mousePressEventXY(p);
-    options->mousePressEventXY(p);
-    facebook->mousePressEventXY(p);
-    website->mousePressEventXY(p);
-    newsUpdate->mousePressEventXY(p);
+    solo->mousePressEventXY(p,pressValidated);
+    multi->mousePressEventXY(p,pressValidated);
+    options->mousePressEventXY(p,pressValidated);
+    facebook->mousePressEventXY(p,pressValidated);
+    website->mousePressEventXY(p,pressValidated);
+    newsUpdate->mousePressEventXY(p,pressValidated);
 }
 
-void MainScreen::mouseReleaseEventXY(const QPointF &p)
+void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
-    bool pressValidated=solo->mouseReleaseEventXY(p);
-    pressValidated|=multi->mouseReleaseEventXY(p,pressValidated);
-    pressValidated|=options->mouseReleaseEventXY(p,pressValidated);
-    pressValidated|=facebook->mouseReleaseEventXY(p,pressValidated);
-    pressValidated|=website->mouseReleaseEventXY(p,pressValidated);
-    pressValidated|=newsUpdate->mouseReleaseEventXY(p,pressValidated);
+    solo->mouseReleaseEventXY(p,pressValidated);
+    multi->mouseReleaseEventXY(p,pressValidated);
+    options->mouseReleaseEventXY(p,pressValidated);
+    facebook->mouseReleaseEventXY(p,pressValidated);
+    website->mouseReleaseEventXY(p,pressValidated);
+    newsUpdate->mouseReleaseEventXY(p,pressValidated);
+}
+
+void MainScreen::mouseMoveEventXY(const QPointF &,bool &)
+{
 }
