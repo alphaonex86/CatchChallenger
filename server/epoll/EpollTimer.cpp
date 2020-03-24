@@ -1,5 +1,5 @@
-#include "EpollTimer.h"
-#include "Epoll.h"
+#include "EpollTimer.hpp"
+#include "Epoll.hpp"
 
 #include <iostream>
 #include <sys/timerfd.h>

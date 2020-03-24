@@ -164,8 +164,8 @@ HEADERS  += \
     $$PWD/../libogg/os_types.h \
     $$PWD/../opusfile/internal.h \
     $$PWD/../opusfile/opusfile.h \
-    $$PWD/../qt/Audio.h \
-    $$PWD/../qt/QInfiniteBuffer.h
+    $$PWD/../qt/Audio.hpp \
+    $$PWD/../qt/QInfiniteBuffer.hpp
 
 HEADERS  += \
     $$PWD/../libopus/include/opus.h \
@@ -264,7 +264,8 @@ SOURCES += \
     $$PWD/../libzstd/lib/dictBuilder/cover.c \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.c \
     $$PWD/../libzstd/lib/dictBuilder/fastcover.c \
-    $$PWD/../libzstd/lib/dictBuilder/zdict.c
+    $$PWD/../libzstd/lib/dictBuilder/zdict.c \
+    $$PWD/CCDialogTitle.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -295,7 +296,8 @@ HEADERS  += \
     $$PWD/../libzstd/lib/decompress/zstd_decompress_internal.h \
     $$PWD/../libzstd/lib/dictBuilder/cover.h \
     $$PWD/../libzstd/lib/dictBuilder/zdict.h \
-    $$PWD/../libzstd/lib/dictBuilder/divsufsort.h
+    $$PWD/../libzstd/lib/dictBuilder/divsufsort.h \
+    $$PWD/CCDialogTitle.hpp
 
 
 wasm: {
@@ -364,41 +366,41 @@ SOURCES += \
     $$PWD/AudioGL.cpp
 
 HEADERS  += \
-    $$PWD/../../general/base/tinyXML2/tinyxml2.h \
-    $$PWD/LanguagesSelect.h \
-    $$PWD/CCprogressbar.h \
-    $$PWD/ClientStructures.h \
-    $$PWD/CCTitle.h \
-    $$PWD/ConnexionManager.h \
-    $$PWD/CCWidget.h \
-    $$PWD/CustomButton.h \
-    $$PWD/LoadingScreen.h \
-    $$PWD/DisplayStructures.h \
-    $$PWD/MainScreen.h \
-    $$PWD/Map_client.h \
-    $$PWD/OptionsDialog.h \
-    $$PWD/ScreenTransition.h \
-    $$PWD/Multi.h \
-    $$PWD/CCBackground.h \
-    $$PWD/../qt/Api_client_real.h \
-    $$PWD/../qt/Api_client_virtual.h \
-    $$PWD/../qt/Api_protocol_Qt.h \
-    $$PWD/../qt/QtDatapackChecksum.h \
-    $$PWD/../qt/QtDatapackClientLoader.h \
-    $$PWD/../qt/QZstdDecodeThread.h \
-    $$PWD/../qt/InternetUpdater.h \
-    $$PWD/../qt/FeedNews.h \
-    $$PWD/../qt/ConnectedSocket.h \
-    $$PWD/../qt/GameLoader.h \
-    $$PWD/../tarcompressed/TarDecode.h \
-    $$PWD/../tarcompressed/ZstdDecode.h \
-    $$PWD/../qt/fight/interface/ClientFightEngine.h \
-    $$PWD/../qt/Ultimate.h \
-    $$PWD/../qt/GameLoaderThread.h \
-    $$PWD/../qt/ExtraSocket.h \
-    $$PWD/../qt/Settings.h \
-    $$PWD/ScreenInput.h \
-    $$PWD/AudioGL.h
+    $$PWD/../../general/base/tinyXML2/tinyxml2.hpp \
+    $$PWD/LanguagesSelect.hpp \
+    $$PWD/CCprogressbar.hpp \
+    $$PWD/ClientStructures.hpp \
+    $$PWD/CCTitle.hpp \
+    $$PWD/ConnexionManager.hpp \
+    $$PWD/CCWidget.hpp \
+    $$PWD/CustomButton.hpp \
+    $$PWD/LoadingScreen.hpp \
+    $$PWD/DisplayStructures.hpp \
+    $$PWD/MainScreen.hpp \
+    $$PWD/Map_client.hpp \
+    $$PWD/OptionsDialog.hpp \
+    $$PWD/ScreenTransition.hpp \
+    $$PWD/Multi.hpp \
+    $$PWD/CCBackground.hpp \
+    $$PWD/../qt/Api_client_real.hpp \
+    $$PWD/../qt/Api_client_virtual.hpp \
+    $$PWD/../qt/Api_protocol_Qt.hpp \
+    $$PWD/../qt/QtDatapackChecksum.hpp \
+    $$PWD/../qt/QtDatapackClientLoader.hpp \
+    $$PWD/../qt/QZstdDecodeThread.hpp \
+    $$PWD/../qt/InternetUpdater.hpp \
+    $$PWD/../qt/FeedNews.hpp \
+    $$PWD/../qt/ConnectedSocket.hpp \
+    $$PWD/../qt/GameLoader.hpp \
+    $$PWD/../tarcompressed/TarDecode.hpp \
+    $$PWD/../tarcompressed/ZstdDecode.hpp \
+    $$PWD/../qt/fight/interface/ClientFightEngine.hpp \
+    $$PWD/../qt/Ultimate.hpp \
+    $$PWD/../qt/GameLoaderThread.hpp \
+    $$PWD/../qt/ExtraSocket.hpp \
+    $$PWD/../qt/Settings.hpp \
+    $$PWD/ScreenInput.hpp \
+    $$PWD/AudioGL.hpp
 
 DEFINES += CATCHCHALLENGER_MULTI
 DEFINES += CATCHCHALLENGER_CLASS_CLIENT
@@ -418,8 +420,8 @@ include(../../server/catchchallenger-server-qt.pri)
 QT       += sql
 SOURCES += $$PWD/../qt/solo/InternalServer.cpp \
     $$PWD/../qt/solo/SoloWindow.cpp
-HEADERS  += $$PWD/../qt/solo/InternalServer.h \
-    $$PWD/../qt/solo/SoloWindow.h
+HEADERS  += $$PWD/../qt/solo/InternalServer.hpp \
+    $$PWD/../qt/solo/SoloWindow.hpp
 }
 
 DISTFILES += \

@@ -1,10 +1,9 @@
-
-#include "Client.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../base/PreparedDBQuery.h"
-#include "GlobalServerData.h"
+#include "Client.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../base/PreparedDBQuery.hpp"
+#include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 

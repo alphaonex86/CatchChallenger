@@ -1,4 +1,4 @@
-#include "Api_client_real.h"
+#include "Api_client_real.hpp"
 
 using namespace CatchChallenger;
 
@@ -15,11 +15,11 @@ using namespace CatchChallenger;
 #include <QDataStream>
 #include <QDebug>
 
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../tarcompressed/TarDecode.h"
-#include "../../general/base/GeneralVariable.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../tarcompressed/TarDecode.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 //need host + port here to have datapack base
 

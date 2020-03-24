@@ -1,7 +1,7 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "MapServer.h"
-#include "DictionaryServer.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "MapServer.hpp"
+#include "DictionaryServer.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

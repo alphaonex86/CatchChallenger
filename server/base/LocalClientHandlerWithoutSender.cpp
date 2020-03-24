@@ -1,7 +1,7 @@
-#include "LocalClientHandlerWithoutSender.h"
-#include "MapServer.h"
-#include "Client.h"
-#include "GlobalServerData.h"
+#include "LocalClientHandlerWithoutSender.hpp"
+#include "MapServer.hpp"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 

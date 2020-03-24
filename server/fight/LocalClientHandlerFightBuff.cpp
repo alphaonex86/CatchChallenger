@@ -1,11 +1,11 @@
-#include "../VariableServer.h"
-#include "../base/GlobalServerData.h"
-#include "../base/MapServer.h"
-#include "../base/Client.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/FacilityLib.h"
-#include "../base/Client.h"
-#include "../base/PreparedDBQuery.h"
+#include "../VariableServer.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../base/MapServer.hpp"
+#include "../base/Client.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../base/Client.hpp"
+#include "../base/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 

@@ -28,12 +28,12 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_objectgroup.h"
-#include "tiled_layer.h"
-#include "tiled_map.h"
-#include "tiled_mapobject.h"
-#include "tiled_tile.h"
-#include "tiled_tileset.h"
+#include "tiled_objectgroup.hpp"
+#include "tiled_layer.hpp"
+#include "tiled_map.hpp"
+#include "tiled_mapobject.hpp"
+#include "tiled_tile.hpp"
+#include "tiled_tileset.hpp"
 
 using namespace Tiled;
 

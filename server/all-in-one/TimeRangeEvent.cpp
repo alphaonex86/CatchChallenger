@@ -1,6 +1,6 @@
 #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
-#include "TimeRangeEvent.h"
-#include "../base/Client.h"
+#include "TimeRangeEvent.hpp"
+#include "../base/Client.hpp"
 
 using namespace CatchChallenger;
 

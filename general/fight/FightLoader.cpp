@@ -1,6 +1,6 @@
-#include "FightLoader.h"
+#include "FightLoader.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapack.hpp"
 #endif
 #include <iostream>
 

@@ -1,7 +1,7 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "../../general/base/FacilityLib.h"
-#include "DictionaryServer.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "DictionaryServer.hpp"
 
 using namespace CatchChallenger;
 

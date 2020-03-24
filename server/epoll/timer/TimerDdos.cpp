@@ -1,12 +1,12 @@
-#include "TimerDdos.h"
-#include "../Epoll.h"
+#include "TimerDdos.hpp"
+#include "../Epoll.hpp"
 
-#include "../../base/LocalClientHandlerWithoutSender.h"
-#include "../../base/BroadCastWithoutSender.h"
-#include "../../base/ClientNetworkReadWithoutSender.h"
-#include "../../base/GlobalServerData.h"
-#include "../../VariableServer.h"
-#include "../../../general/base/GeneralVariable.h"
+#include "../../base/LocalClientHandlerWithoutSender.hpp"
+#include "../../base/BroadCastWithoutSender.hpp"
+#include "../../base/ClientNetworkReadWithoutSender.hpp"
+#include "../../base/GlobalServerData.hpp"
+#include "../../VariableServer.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
 
 #include <iostream>
 

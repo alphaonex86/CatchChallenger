@@ -1,7 +1,7 @@
-#include "BaseServer.h"
-#include "GlobalServerData.h"
+#include "BaseServer.hpp"
+#include "GlobalServerData.hpp"
 
-#include "../../general/base/CommonSettingsCommon.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
 
 using namespace CatchChallenger;
 

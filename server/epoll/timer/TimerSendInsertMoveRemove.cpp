@@ -1,7 +1,7 @@
-#include "TimerSendInsertMoveRemove.h"
-#include "../Epoll.h"
+#include "TimerSendInsertMoveRemove.hpp"
+#include "../Epoll.hpp"
 
-#include "../../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h"
+#include "../../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
 
 #include <iostream>
 

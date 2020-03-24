@@ -1,5 +1,5 @@
-#include "PreparedDBQuery.h"
-#include "../VariableServer.h"
+#include "PreparedDBQuery.hpp"
+#include "../VariableServer.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

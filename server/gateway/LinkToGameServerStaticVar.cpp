@@ -1,4 +1,4 @@
-#include "LinkToGameServer.h"
+#include "LinkToGameServer.hpp"
 
 using namespace CatchChallenger;
 

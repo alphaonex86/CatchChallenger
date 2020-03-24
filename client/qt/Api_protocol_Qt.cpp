@@ -1,5 +1,5 @@
-#include "Api_protocol_Qt.h"
-#include "LanguagesSelect.h"
+#include "Api_protocol_Qt.hpp"
+#include "LanguagesSelect.hpp"
 #ifndef NOTCPSOCKET
 //#include "SslCert.h"
 #include <QSslKey>

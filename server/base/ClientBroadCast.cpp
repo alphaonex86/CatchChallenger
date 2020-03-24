@@ -1,15 +1,15 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "../../general/base/ProtocolParsing.h"
-#include "../../general/base/FacilityLib.h"
-#include "PreparedDBQuery.h"
-#include "StaticText.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "PreparedDBQuery.hpp"
+#include "StaticText.hpp"
 #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "LinkToMaster.h"
+#include "LinkToMaster.hpp"
 #endif
 #endif
-#include "GameServerVariables.h"
+#include "GameServerVariables.hpp"
 
 using namespace CatchChallenger;
 

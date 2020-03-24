@@ -1,5 +1,5 @@
 #if ! defined (ONLYMAPRENDER)
-#include "ProtocolParsingCheck.h"
+#include "ProtocolParsingCheck.hpp"
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 
 #include <iostream>

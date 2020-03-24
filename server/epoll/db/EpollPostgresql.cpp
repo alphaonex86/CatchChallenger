@@ -1,5 +1,5 @@
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#include "EpollPostgresql.h"
+#include "EpollPostgresql.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -9,11 +9,11 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "../Epoll.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/cpp11addition.h"
+#include "../Epoll.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/cpp11addition.hpp"
 #ifdef DEBUG_MESSAGE_CLIENT_SQL
-#include "../../base/SqlFunction.h"
+#include "../../base/SqlFunction.hpp"
 #endif
 #include <chrono>
 #include <ctime>

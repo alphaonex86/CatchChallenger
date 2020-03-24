@@ -1,10 +1,10 @@
-#include "EpollServerLoginMaster.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/cpp11addition.h"
-#include "../VariableServer.h"
-#include "../../general/fight/CommonFightEngineBase.h"
+#include "EpollServerLoginMaster.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../VariableServer.hpp"
+#include "../../general/fight/CommonFightEngineBase.hpp"
 
 using namespace CatchChallenger;
 
@@ -24,7 +24,7 @@ using namespace CatchChallenger;
 
 /// \todo the back id get
 
-#include "EpollClientLoginMaster.h"
+#include "EpollClientLoginMaster.hpp"
 
 EpollServerLoginMaster *EpollServerLoginMaster::epollServerLoginMaster=NULL;
 char * EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver=NULL;

@@ -1,4 +1,4 @@
-#include "ClientWithSocket.h"
+#include "ClientWithSocket.hpp"
 
 using namespace CatchChallenger;
 

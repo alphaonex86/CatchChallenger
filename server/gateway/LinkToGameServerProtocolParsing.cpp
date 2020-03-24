@@ -1,13 +1,13 @@
-#include "LinkToGameServer.h"
-#include "EpollClientLoginSlave.h"
+#include "LinkToGameServer.hpp"
+#include "EpollClientLoginSlave.hpp"
 #include <iostream>
-#include "EpollServerLoginSlave.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "DatapackDownloaderBase.h"
-#include "DatapackDownloaderMainSub.h"
-#include "../epoll/Epoll.h"
+#include "EpollServerLoginSlave.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "DatapackDownloaderBase.hpp"
+#include "DatapackDownloaderMainSub.hpp"
+#include "../epoll/Epoll.hpp"
 #include <netinet/tcp.h>
 
 using namespace CatchChallenger;

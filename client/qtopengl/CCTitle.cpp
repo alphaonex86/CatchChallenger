@@ -1,4 +1,4 @@
-#include "CCTitle.h"
+#include "CCTitle.hpp"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>

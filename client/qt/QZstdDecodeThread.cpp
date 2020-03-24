@@ -1,4 +1,4 @@
-#include "QZstdDecodeThread.h"
+#include "QZstdDecodeThread.hpp"
 #include "../libzstd/lib/zstd.h"
 
 QZstdDecodeThread::QZstdDecodeThread()

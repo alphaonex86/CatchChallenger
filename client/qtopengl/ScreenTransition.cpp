@@ -1,7 +1,7 @@
-#include "ScreenTransition.h"
-#include "../qt/GameLoader.h"
-#include "../../general/base/Version.h"
-#include "AudioGL.h"
+#include "ScreenTransition.hpp"
+#include "../qt/GameLoader.hpp"
+#include "../../general/base/Version.hpp"
+#include "AudioGL.hpp"
 #include <iostream>
 #include <QGLWidget>
 #ifdef Q_OS_ANDROID

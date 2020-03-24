@@ -1,4 +1,4 @@
-#include "DatapackDownloaderMainSub.h"
+#include "DatapackDownloaderMainSub.hpp"
 
 using namespace CatchChallenger;
 
@@ -6,12 +6,12 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <regex>
 
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../client/tarcompressed/TarDecode.h"
-#include "../../general/base/GeneralVariable.h"
-#include "LinkToGameServer.h"
-#include "EpollClientLoginSlave.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../client/tarcompressed/TarDecode.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "LinkToGameServer.hpp"
+#include "EpollClientLoginSlave.hpp"
 
 //need host + port here to have datapack base
 

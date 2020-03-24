@@ -1,13 +1,13 @@
-#include "Client.h"
-#include "GlobalServerData.h"
-#include "MapServer.h"
-#include "StaticText.h"
-#include "../../general/base/ProtocolParsingCheck.h"
-#include "../../general/base/CommonSettingsCommon.h"
+#include "Client.hpp"
+#include "GlobalServerData.hpp"
+#include "MapServer.hpp"
+#include "StaticText.hpp"
+#include "../../general/base/ProtocolParsingCheck.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.h"
+#include "BaseServerLogin.hpp"
 #endif
-#include "GameServerVariables.h"
+#include "GameServerVariables.hpp"
 
 using namespace CatchChallenger;
 

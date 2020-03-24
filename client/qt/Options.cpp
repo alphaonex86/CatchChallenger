@@ -1,5 +1,5 @@
-#include "Options.h"
-#include "Settings.h"
+#include "Options.hpp"
+#include "Settings.hpp"
 
 #include <QCoreApplication>
 

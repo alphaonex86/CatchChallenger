@@ -1,14 +1,14 @@
-#include "MainScreen.h"
-#include "../qt/InternetUpdater.h"
-#include "../qt/FeedNews.h"
-#include "../qt/GameLoader.h"
+#include "MainScreen.hpp"
+#include "../qt/InternetUpdater.hpp"
+#include "../qt/FeedNews.hpp"
+#include "../qt/GameLoader.hpp"
 #include <iostream>
 #include <QDesktopServices>
-#include "../qt/Settings.h"
+#include "../qt/Settings.hpp"
 #include <QWidget>
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "AudioGL.h"
+#include "AudioGL.hpp"
 #endif
 
 MainScreen::MainScreen()

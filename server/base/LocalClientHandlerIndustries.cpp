@@ -1,8 +1,8 @@
-#include "Client.h"
-#include "MapServer.h"
-#include "GlobalServerData.h"
-#include "PreparedDBQuery.h"
-#include "../../general/base/FacilityLib.h"
+#include "Client.hpp"
+#include "MapServer.hpp"
+#include "GlobalServerData.hpp"
+#include "PreparedDBQuery.hpp"
+#include "../../general/base/FacilityLib.hpp"
 
 using namespace CatchChallenger;
 

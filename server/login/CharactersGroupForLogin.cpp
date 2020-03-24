@@ -1,4 +1,4 @@
-#include "CharactersGroupForLogin.h"
+#include "CharactersGroupForLogin.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

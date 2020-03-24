@@ -1,5 +1,5 @@
-#include "TimerDetectTimeout.h"
-#include "LinkToMaster.h"
+#include "TimerDetectTimeout.hpp"
+#include "LinkToMaster.hpp"
 
 TimerDetectTimeout::TimerDetectTimeout()
 {

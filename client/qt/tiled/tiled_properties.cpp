@@ -26,7 +26,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_properties.h"
+#include "tiled_properties.hpp"
 
 using namespace Tiled;
 

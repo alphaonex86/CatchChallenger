@@ -1,10 +1,10 @@
-#include "FeedNews.h"
-#include "PlatformMacro.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/Version.h"
-#include "ClientVariable.h"
-#include "InternetUpdater.h"
-#include "Ultimate.h"
+#include "FeedNews.hpp"
+#include "PlatformMacro.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/Version.hpp"
+#include "ClientVariable.hpp"
+#include "InternetUpdater.hpp"
+#include "Ultimate.hpp"
 
 #include <QNetworkRequest>
 #include <QUrl>

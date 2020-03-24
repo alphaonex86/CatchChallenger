@@ -1,6 +1,6 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "AudioGL.h"
-#include "../qt/GameLoader.h"
+#include "AudioGL.hpp"
+#include "../qt/GameLoader.hpp"
 
 AudioGL::AudioGL()
 {

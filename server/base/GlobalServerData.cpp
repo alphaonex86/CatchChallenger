@@ -1,4 +1,4 @@
-#include "GlobalServerData.h"
+#include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 

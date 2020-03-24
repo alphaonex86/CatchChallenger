@@ -1,7 +1,7 @@
-#include "DatapackGeneralLoader.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettingsServer.h"
+#include "DatapackGeneralLoader.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

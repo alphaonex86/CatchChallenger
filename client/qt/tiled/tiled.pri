@@ -3,29 +3,29 @@ DEFINES += TILED_ZLIB
 LIBS += -lz
 }
 
-HEADERS += $$PWD/tiled_compression.h \
-$$PWD/tiled_gidmapper.h \
-$$PWD/tiled_imagelayer.h \
-$$PWD/tiled_isometricrenderer.h \
-$$PWD/tiled_layer.h \
-$$PWD/tiled_logginginterface.h \
-$$PWD/tiled_map.h \
-$$PWD/tiled_mapobject.h \
-$$PWD/tiled_mapreader.h \
-$$PWD/tiled_mapreaderinterface.h \
-$$PWD/tiled_maprenderer.h \
-$$PWD/tiled_mapwriter.h \
-$$PWD/tiled_mapwriterinterface.h \
-$$PWD/tiled_object.h \
-$$PWD/tiled_objectgroup.h \
-$$PWD/tiled_orthogonalrenderer.h \
-$$PWD/tiled_properties.h \
-$$PWD/tiled_staggeredrenderer.h \
-$$PWD/tiled_terrain.h \
-$$PWD/tiled_tile.h \
-$$PWD/tiled_tiled.h \
-$$PWD/tiled_tilelayer.h \
-$$PWD/tiled_tileset.h
+HEADERS += $$PWD/tiled_compression.hpp \
+$$PWD/tiled_gidmapper.hpp \
+$$PWD/tiled_imagelayer.hpp \
+$$PWD/tiled_isometricrenderer.hpp \
+$$PWD/tiled_layer.hpp \
+$$PWD/tiled_logginginterface.hpp \
+$$PWD/tiled_map.hpp \
+$$PWD/tiled_mapobject.hpp \
+$$PWD/tiled_mapreader.hpp \
+$$PWD/tiled_mapreaderinterface.hpp \
+$$PWD/tiled_maprenderer.hpp \
+$$PWD/tiled_mapwriter.hpp \
+$$PWD/tiled_mapwriterinterface.hpp \
+$$PWD/tiled_object.hpp \
+$$PWD/tiled_objectgroup.hpp \
+$$PWD/tiled_orthogonalrenderer.hpp \
+$$PWD/tiled_properties.hpp \
+$$PWD/tiled_staggeredrenderer.hpp \
+$$PWD/tiled_terrain.hpp \
+$$PWD/tiled_tile.hpp \
+$$PWD/tiled_tiled.hpp \
+$$PWD/tiled_tilelayer.hpp \
+$$PWD/tiled_tileset.hpp
 
 SOURCES += $$PWD/tiled_compression.cpp \
 $$PWD/tiled_gidmapper.cpp \

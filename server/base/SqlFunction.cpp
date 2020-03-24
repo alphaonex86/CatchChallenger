@@ -1,5 +1,5 @@
-#include "SqlFunction.h"
-#include "../../general/base/cpp11addition.h"
+#include "SqlFunction.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 

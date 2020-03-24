@@ -3,21 +3,21 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include "base/ServerStructures.h"
-#include "base/TinyXMLSettings.h"
-#include "base/GlobalServerData.h"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
-#include "../general/base/tinyXML2/tinyxml2.h"
-#include "../general/base/CommonSettingsCommon.h"
-#include "epoll/EpollServer.h"
-#include "epoll/Epoll.h"
-#include "NormalServerGlobal.h"
+#include "base/ServerStructures.hpp"
+#include "base/TinyXMLSettings.hpp"
+#include "base/GlobalServerData.hpp"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
+#include "../general/base/tinyXML2/tinyxml2.hpp"
+#include "../general/base/CommonSettingsCommon.hpp"
+#include "epoll/EpollServer.hpp"
+#include "epoll/Epoll.hpp"
+#include "NormalServerGlobal.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "game-server-alone/LinkToMaster.h"
-#include "epoll/EpollSocket.h"
-#include "epoll/timer/TimerPurgeTokenAuthList.h"
+#include "game-server-alone/LinkToMaster.hpp"
+#include "epoll/EpollSocket.hpp"
+#include "epoll/timer/TimerPurgeTokenAuthList.hpp"
 #endif
 
 #define MAXEVENTS 512

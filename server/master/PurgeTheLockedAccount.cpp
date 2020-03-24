@@ -1,5 +1,5 @@
-#include "PurgeTheLockedAccount.h"
-#include "CharactersGroup.h"
+#include "PurgeTheLockedAccount.hpp"
+#include "CharactersGroup.hpp"
 
 using namespace CatchChallenger;
 

@@ -27,9 +27,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_tileset.h"
-#include "tiled_tile.h"
-#include "tiled_terrain.h"
+#include "tiled_tileset.hpp"
+#include "tiled_tile.hpp"
+#include "tiled_terrain.hpp"
 
 #include <QBitmap>
 

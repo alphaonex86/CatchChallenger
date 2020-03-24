@@ -1,12 +1,12 @@
-#include "CommonDatapackServerSpec.h"
-#include "CommonDatapack.h"
-#include "CommonSettingsServer.h"
-#include "GeneralVariable.h"
-#include "FacilityLib.h"
-#include "Map_loader.h"
-#include "../fight/FightLoader.h"
-#include "DatapackGeneralLoader.h"
-#include "../../general/base/FacilityLibGeneral.h"
+#include "CommonDatapackServerSpec.hpp"
+#include "CommonDatapack.hpp"
+#include "CommonSettingsServer.hpp"
+#include "GeneralVariable.hpp"
+#include "FacilityLib.hpp"
+#include "Map_loader.hpp"
+#include "../fight/FightLoader.hpp"
+#include "DatapackGeneralLoader.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
 
 #include <iostream>
 #include <vector>

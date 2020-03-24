@@ -1,7 +1,7 @@
-#include "BaseServer.h"
-#include "GlobalServerData.h"
-#include "DictionaryLogin.h"
-#include "PreparedDBQuery.h"
+#include "BaseServer.hpp"
+#include "GlobalServerData.hpp"
+#include "DictionaryLogin.hpp"
+#include "PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 
