@@ -1,12 +1,12 @@
-#include "../base/BaseServer.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/fight/FightLoader.h"
-#include "../../general/base/tinyXML2/tinyxml2.h"
-#include "../base/GlobalServerData.h"
-#include "../VariableServer.h"
-#include "../base/DatabaseFunction.h"
+#include "../base/BaseServer.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonMap.hpp"
+#include "../../general/fight/FightLoader.hpp"
+#include "../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../VariableServer.hpp"
+#include "../base/DatabaseFunction.hpp"
 
 #include <string>
 #include <vector>

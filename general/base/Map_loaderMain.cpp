@@ -1,7 +1,7 @@
-#include "Map_loader.h"
-#include "tinyXML2/customtinyxml2.h"
-#include "FacilityLibGeneral.h"
-#include "CommonDatapack.h"
+#include "Map_loader.hpp"
+#include "tinyXML2/customtinyxml2.hpp"
+#include "FacilityLibGeneral.hpp"
+#include "CommonDatapack.hpp"
 
 #include <iostream>
 #include <zstd.h>      // presumes zstd library is installed

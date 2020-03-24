@@ -1,8 +1,8 @@
-#include "Client.h"
-#include "PreparedDBQuery.h"
-#include "GlobalServerData.h"
-#include "SqlFunction.h"
-#include "StaticText.h"
+#include "Client.hpp"
+#include "PreparedDBQuery.hpp"
+#include "GlobalServerData.hpp"
+#include "SqlFunction.hpp"
+#include "StaticText.hpp"
 
 using namespace CatchChallenger;
 

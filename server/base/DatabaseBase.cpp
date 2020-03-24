@@ -1,4 +1,4 @@
-#include "DatabaseBase.h"
+#include "DatabaseBase.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

@@ -1,11 +1,11 @@
-#include "../../QtDatapackClientLoader.h"
-#include "../../LanguagesSelect.h"
-#include "../../../../general/base/GeneralVariable.h"
-#include "../../../../general/base/FacilityLib.h"
-#include "../../../../general/fight/FightLoader.h"
-#include "../../../../general/base/CommonDatapack.h"
-#include "../../../../general/base/CommonDatapackServerSpec.h"
-#include "../../fight/interface/ClientFightEngine.h"
+#include "../../QtDatapackClientLoader.hpp"
+#include "../../LanguagesSelect.hpp"
+#include "../../../../general/base/GeneralVariable.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../../general/fight/FightLoader.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../fight/interface/ClientFightEngine.hpp"
 
 #include <QFile>
 #include <QByteArray>

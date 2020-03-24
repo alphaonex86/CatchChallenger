@@ -1,8 +1,8 @@
-#include "EpollClientLoginSlave.h"
-#include "EpollServerLoginSlave.h"
-#include "../base/BaseServerLogin.h"
-#include "../epoll/EpollSocket.h"
-#include "../../general/base/CommonSettingsCommon.h"
+#include "EpollClientLoginSlave.hpp"
+#include "EpollServerLoginSlave.hpp"
+#include "../base/BaseServerLogin.hpp"
+#include "../epoll/EpollSocket.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 
 #include <iostream>
 

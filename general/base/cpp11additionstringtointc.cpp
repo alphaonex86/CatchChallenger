@@ -1,4 +1,4 @@
-#include "cpp11addition.h"
+#include "cpp11addition.hpp"
 /*
 uint8_t stringtouint8(const char * const string,bool *ok)
 {

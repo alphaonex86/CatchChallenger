@@ -10,7 +10,7 @@ SOURCES += \
     $$PWD/DatapackChecksum.cpp
 
 HEADERS  += \
-    $$PWD/Api_protocol.h \
-    $$PWD/ClientStructures.h \
-    $$PWD/DatapackClientLoader.h \
-    $$PWD/DatapackChecksum.h
+    $$PWD/Api_protocol.hpp \
+    $$PWD/ClientStructures.hpp \
+    $$PWD/DatapackClientLoader.hpp \
+    $$PWD/DatapackChecksum.hpp

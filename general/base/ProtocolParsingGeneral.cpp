@@ -1,7 +1,7 @@
-#include "ProtocolParsing.h"
-#include "GeneralVariable.h"
-#include "GeneralStructures.h"
-#include "ProtocolParsingCheck.h"
+#include "ProtocolParsing.hpp"
+#include "GeneralVariable.hpp"
+#include "GeneralStructures.hpp"
+#include "ProtocolParsingCheck.hpp"
 #include <iostream>
 #include <cstring>
 //#include <openssl/sha.h>

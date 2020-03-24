@@ -1,6 +1,6 @@
-#include "MoveOnTheMap.h"
-#include "CommonMap.h"
-#include "GeneralVariable.h"
+#include "MoveOnTheMap.hpp"
+#include "CommonMap.hpp"
+#include "GeneralVariable.hpp"
 
 using namespace CatchChallenger;
 

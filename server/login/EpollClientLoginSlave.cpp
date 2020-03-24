@@ -1,6 +1,6 @@
-#include "EpollClientLoginSlave.h"
-#include "CharactersGroupForLogin.h"
-#include "../base/BaseServerLogin.h"
+#include "EpollClientLoginSlave.hpp"
+#include "CharactersGroupForLogin.hpp"
+#include "../base/BaseServerLogin.hpp"
 
 #include <iostream>
 #include <string>

@@ -1,4 +1,4 @@
-#include "DictionaryServer.h"
+#include "DictionaryServer.hpp"
 
 using namespace CatchChallenger;
 

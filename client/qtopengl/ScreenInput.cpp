@@ -1,4 +1,4 @@
-#include "ScreenInput.h"
+#include "ScreenInput.hpp"
 
 void ScreenInput::mousePressEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/)
 {

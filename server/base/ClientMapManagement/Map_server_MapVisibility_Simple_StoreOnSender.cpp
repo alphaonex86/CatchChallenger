@@ -1,5 +1,5 @@
-#include "Map_server_MapVisibility_Simple_StoreOnSender.h"
-#include "../GlobalServerData.h"
+#include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../GlobalServerData.hpp"
 
 /// \todo optimise: preserialize, filter streaming to send + filter
 

@@ -1,4 +1,4 @@
-#include "QInfiniteBuffer.h"
+#include "QInfiniteBuffer.hpp"
 
 QInfiniteBuffer::QInfiniteBuffer(QByteArray *buf, QObject *parent) :
     QBuffer(buf,parent)

@@ -1,5 +1,5 @@
-#include "FacilityLibGateway.h"
-#include "../../general/base/cpp11addition.h"
+#include "FacilityLibGateway.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <sys/stat.h>
 #include <stdio.h>

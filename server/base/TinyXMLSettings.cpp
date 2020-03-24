@@ -1,5 +1,5 @@
-#include "TinyXMLSettings.h"
-#include "../../general/base/tinyXML2/customtinyxml2.h"
+#include "TinyXMLSettings.hpp"
+#include "../../general/base/tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 TinyXMLSettings::TinyXMLSettings() :

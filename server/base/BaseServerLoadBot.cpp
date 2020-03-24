@@ -1,6 +1,6 @@
-#include "BaseServer.h"
-#include "../../general/base/tinyXML2/tinyxml2.h"
-#include "../../general/base/tinyXML2/customtinyxml2.h"
+#include "BaseServer.hpp"
+#include "../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../general/base/tinyXML2/customtinyxml2.hpp"
 
 using namespace CatchChallenger;
 

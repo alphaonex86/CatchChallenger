@@ -1,4 +1,4 @@
-#include "DatapackDownloaderMainSub.h"
+#include "DatapackDownloaderMainSub.hpp"
 
 using namespace CatchChallenger;
 
@@ -9,16 +9,16 @@ using namespace CatchChallenger;
 #include <chrono>
 #include <zstd.h>
 
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../client/tarcompressed/TarDecode.h"
-#include "LinkToGameServer.h"
-#include "EpollServerLoginSlave.h"
-#include "FacilityLibGateway.h"
-#include "DatapackDownloaderBase.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../client/tarcompressed/TarDecode.hpp"
+#include "LinkToGameServer.hpp"
+#include "EpollServerLoginSlave.hpp"
+#include "FacilityLibGateway.hpp"
+#include "DatapackDownloaderBase.hpp"
 
 void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,const std::vector<char> &data)
 {

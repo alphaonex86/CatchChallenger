@@ -1,6 +1,6 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER)
 
-#include "ConnectedSocket.h"
+#include "ConnectedSocket.hpp"
 #include <unistd.h>
 #include <iostream>
 #include <fcntl.h>

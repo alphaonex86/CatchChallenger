@@ -5,7 +5,7 @@
 \date 2010
 \licence GPL3, see the file COPYING */
 
-#include "LocalListener.h"
+#include "LocalListener.hpp"
 
 #include <QLocalSocket>
 #include <QCoreApplication>

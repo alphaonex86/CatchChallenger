@@ -5,7 +5,7 @@
 \date 2010
 \licence GPL3, see the file COPYING */
 
-#include "TarDecode.h"
+#include "TarDecode.hpp"
 
 #include <inttypes.h>
 #include <regex>

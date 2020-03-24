@@ -1,6 +1,6 @@
 #ifndef SERVERSSL
 
-#include "EpollClient.h"
+#include "EpollClient.hpp"
 
 #include <iostream>
 #include <unistd.h>
@@ -12,9 +12,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include "Epoll.h"
-#include "EpollSocket.h"
-#include "../../general/base/GeneralVariable.h"
+#include "Epoll.hpp"
+#include "EpollSocket.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 using namespace CatchChallenger;
 

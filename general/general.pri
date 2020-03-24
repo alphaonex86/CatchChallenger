@@ -62,29 +62,29 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/Version.cpp
 
-HEADERS  += $$PWD/base/GeneralStructures.h \
-    $$PWD/base/ClientBase.h \
-    $$PWD/base/ChatParsing.h \
-    $$PWD/base/ProtocolParsing.h \
-    $$PWD/base/ProtocolParsingCheck.h \
-    $$PWD/base/MoveOnTheMap.h \
-    $$PWD/base/Map_loader.h \
-    $$PWD/base/CommonMap.h \
-    $$PWD/base/GeneralVariable.h \
-    $$PWD/base/FacilityLib.h \
-    $$PWD/base/FacilityLibGeneral.h \
-    $$PWD/base/DatapackGeneralLoader.h \
-    $$PWD/base/CommonDatapack.h \
-    $$PWD/base/CommonDatapackServerSpec.h \
-    $$PWD/base/CommonSettingsCommon.h \
-    $$PWD/base/CommonSettingsServer.h \
-    $$PWD/base/GeneralType.h \
-    $$PWD/base/cpp11addition.h \
-    $$PWD/base/GeneralStructuresXml.h \
-    $$PWD/base/PortableEndian.h \
-    $$PWD/fight/FightLoader.h \
-    $$PWD/fight/CommonFightEngine.h \
-    $$PWD/fight/CommonFightEngineBase.h
+HEADERS  += $$PWD/base/GeneralStructures.hpp \
+    $$PWD/base/ClientBase.hpp \
+    $$PWD/base/ChatParsing.hpp \
+    $$PWD/base/ProtocolParsing.hpp \
+    $$PWD/base/ProtocolParsingCheck.hpp \
+    $$PWD/base/MoveOnTheMap.hpp \
+    $$PWD/base/Map_loader.hpp \
+    $$PWD/base/CommonMap.hpp \
+    $$PWD/base/GeneralVariable.hpp \
+    $$PWD/base/FacilityLib.hpp \
+    $$PWD/base/FacilityLibGeneral.hpp \
+    $$PWD/base/DatapackGeneralLoader.hpp \
+    $$PWD/base/CommonDatapack.hpp \
+    $$PWD/base/CommonDatapackServerSpec.hpp \
+    $$PWD/base/CommonSettingsCommon.hpp \
+    $$PWD/base/CommonSettingsServer.hpp \
+    $$PWD/base/GeneralType.hpp \
+    $$PWD/base/cpp11addition.hpp \
+    $$PWD/base/GeneralStructuresXml.hpp \
+    $$PWD/base/PortableEndian.hpp \
+    $$PWD/fight/FightLoader.hpp \
+    $$PWD/fight/CommonFightEngine.hpp \
+    $$PWD/fight/CommonFightEngineBase.hpp
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

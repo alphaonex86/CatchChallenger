@@ -27,10 +27,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "tiled_layer.h"
-#include "tiled_imagelayer.h"
-#include "tiled_objectgroup.h"
-#include "tiled_tilelayer.h"
+#include "tiled_layer.hpp"
+#include "tiled_imagelayer.hpp"
+#include "tiled_objectgroup.hpp"
+#include "tiled_tilelayer.hpp"
 
 
 using namespace Tiled;

@@ -1,4 +1,4 @@
-#include "Map_server_MapVisibility_WithBorder_StoreOnSender.h"
+#include "Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
