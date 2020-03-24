@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/CC">
         <file>images/catchchallenger.png</file>
-        <file>images/background-dialog.png</file>
         <file>images/empty.png</file>
         <file>images/light-white.png</file>
         <file>images/player_default/back.png</file>
@@ -9,58 +8,25 @@
         <file>images/player_default/front.png</file>
         <file>images/player_default/trainer.png</file>
         <file>images/interface/quit.png</file>
-        <file>images/interface/background.png</file>
-        <file>images/interface/baroption.png</file>
-        <file>images/interface/option-chest.png</file>
-        <file>images/interface/option-map.png</file>
-        <file>images/interface/option-bioscan.png</file>
-        <file>images/interface/option-player.png</file>
-        <file>images/interface/option-options.png</file>
         <file>images/interface/player.png</file>
-        <file>images/interface/player/point.png</file>
-        <file>images/interface/player/player_background.png</file>
-        <file>images/interface/player/bande.png</file>
-        <file>images/inventory/type.png</file>
-        <file>images/inventory/bag1.png</file>
-        <file>images/inventory/bag2.png</file>
-        <file>images/inventory/bag3.png</file>
-        <file>images/inventory/bag4.png</file>
-        <file>images/inventory/interface.png</file>
-        <file>images/inventory/left.png</file>
-        <file>images/inventory/right.png</file>
-        <file>images/inventory/unknown-object.png</file>
-        <file>images/interface/button-generic.png</file>
-        <file>images/interface/big-button-attack.png</file>
         <file>images/link.png</file>
-        <file>images/inventory/shop.png</file>
-        <file>images/interface/learn.png</file>
-        <file>images/inventory/factory.png</file>
-        <file>images/interface/monsterdetails.png</file>
         <file>images/interface/female.png</file>
         <file>images/interface/male.png</file>
-        <file>images/inventory/market.png</file>
-        <file>images/savegame-select.png</file>
         <file>images/interface/languages.png</file>
         <file>qml/star.png</file>
-        <file>images/player-select.png</file>
         <file>images/flags.png</file>
-        <file>images/background.jpg</file>
-        <file>images/interface/player/background.jpg</file>
-        <file>images/inventory/background.jpg</file>
         <file>images/map/marker.png</file>
         <file>images/map/block.png</file>
         <file>images/fightCollisionBot.png</file>
         <file>images/interface/in-progress.png</file>
         <file>images/interface/repeatable.png</file>
         <file>images/chat/admin.png</file>
-        <file>images/chat/background-input.png</file>
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
         <file>images/colorflags/0.png</file>
         <file>images/colorflags/1.png</file>
         <file>images/colorflags/2.png</file>
         <file>images/colorflags/3.png</file>
-        <file>images/interface/option-admin.png</file>
         <file>images/animatedbackground/cloud.png</file>
         <file>images/animatedbackground/grass.png</file>
         <file>images/animatedbackground/sun.png</file>
@@ -81,5 +47,35 @@
         <file>images/interface/options.png</file>
         <file>images/interface/bluetoolbox.png</file>
         <file>images/interface/updatewidget.png</file>
+        <file>images/interface/label.png</file>
+        <file>images/smiles/face-wink.png</file>
+        <file>images/smiles/face-angel.png</file>
+        <file>images/smiles/face-embarrassed.png</file>
+        <file>images/smiles/face-kiss.png</file>
+        <file>images/smiles/face-laugh.png</file>
+        <file>images/smiles/face-plain.png</file>
+        <file>images/smiles/face-raspberry.png</file>
+        <file>images/smiles/face-sad.png</file>
+        <file>images/smiles/face-smile-big.png</file>
+        <file>images/smiles/face-smile.png</file>
+        <file>images/smiles/face-surprise.png</file>
+        <file>images/smiles/face-uncertain.png</file>
+        <file>images/interface/top.png</file>
+        <file>other/default_server_list.xml</file>
+        <file>images/interface/server_list/star1.png</file>
+        <file>images/interface/server_list/star2.png</file>
+        <file>images/interface/server_list/star3.png</file>
+        <file>images/interface/server_list/star4.png</file>
+        <file>images/interface/server_list/star5.png</file>
+        <file>images/interface/server_list/star6.png</file>
+        <file>images/interface/server_list/stat1.png</file>
+        <file>images/interface/server_list/stat2.png</file>
+        <file>images/interface/server_list/stat3.png</file>
+        <file>images/interface/server_list/stat4.png</file>
+        <file>images/interface/server_list/bug.png</file>
+        <file>images/multi/slow.png</file>
+        <file>images/multi/busy.png</file>
+        <file>images/multi/warning.png</file>
+        <file>images/multi/showpassword.png</file>
     </qresource>
 </RCC>

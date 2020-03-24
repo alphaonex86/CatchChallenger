@@ -50,8 +50,8 @@ ScreenTransition::ScreenTransition() :
     if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen))
         abort();
     m=nullptr;
-    /*o=nullptr;
-    solo=nullptr;*/
+    o=nullptr;
+    /*solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
 
@@ -208,13 +208,13 @@ void ScreenTransition::toMainScreen()
 
 void ScreenTransition::openOptions()
 {
-/*    if(o==nullptr)
+    if(o==nullptr)
     {
-        o=new OptionsDialog(this);
+        o=new OptionsDialog();
         if(!connect(o,&OptionsDialog::quitOption,this,&ScreenTransition::closeOptions))
             abort();
     }
-    setAbove(o);*/
+    setAbove(o);
 }
 
 void ScreenTransition::closeOptions()

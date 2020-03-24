@@ -6,6 +6,10 @@
 #endif
 #include <QDirIterator>
 #include <iostream>
+#include <QTime>
+
+uint32_t GameLoaderThread::audio=0;
+uint32_t GameLoaderThread::image=0;
 
 GameLoaderThread::GameLoaderThread()
 {
@@ -16,8 +20,11 @@ void GameLoaderThread::run()
     unsigned int index=0;
     while(index<toLoad.size())
     {
+        QTime myTimer;
+        myTimer.start();
         const QString &file=toLoad.at(index);
         if(file.endsWith(QStringLiteral(".opus"))) {
+            uint64_t pos=0;
             #ifndef CATCHCHALLENGER_NOAUDIO
             QBuffer buffer;
             buffer.open(QBuffer::ReadWrite);
@@ -69,21 +76,31 @@ void GameLoaderThread::run()
                 }
                 buffer.write(reinterpret_cast<char *>(out),sizeof(*out)*4*ret);
                 nsamples+=ret;
+                const opus_int64 &tpos=op_raw_tell(of);
+                if(pos<tpos)
+                {
+                    emit addSize(tpos-pos);
+                    pos=tpos;
+                }
             }
             if(ret==EXIT_SUCCESS)
             {
                 //fprintf(stderr,"\nDone: played ");
-                musics[file]=buffer.data();
+                musics[file]=new QByteArray(buffer.data().data(),buffer.data().size());
             }
             op_free(of);
-            emit addSize(QFileInfo(file).size());
+            uint64_t s=QFileInfo(file).size();
+            if(s>pos)
+                emit addSize(s-pos);
+            audio+=myTimer.elapsed();
             #endif
         }
         else if(file.endsWith(QStringLiteral(".png")) ||
                 file.endsWith(QStringLiteral(".jpg")) ||
                 file.endsWith(QStringLiteral(".webp"))) {
-            images[file]=QImage(file);
+            images[file]=new QImage(file);
             emit addSize(QFileInfo(file).size());
+            image+=myTimer.elapsed();
         }
         else {
             std::cerr << "File format not supoprted" << std::endl;

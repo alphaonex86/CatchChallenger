@@ -93,7 +93,7 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
         abort();
     paint.begin(&image);
     QPixmap scaledBackground;
-    QPixmap temp(GameLoader::gameLoader->getImage(background));
+    QPixmap temp(*GameLoader::gameLoader->getImage(background));
     if(temp.isNull())
         abort();
     if(pressed)
@@ -135,14 +135,15 @@ void CustomButton::setText(const QString &text)
 
 bool CustomButton::setPointSize(uint8_t size)
 {
-    if(font->pixelSize()==size)
+    int tempsize=size*1.5;
+    if(font->pixelSize()==tempsize)
         return true;
     if(cache!=nullptr)
     {
         delete cache;
         cache=nullptr;
     }
-    font->setPixelSize(size*1.5);
+    font->setPixelSize(tempsize);
     return true;
 }
 

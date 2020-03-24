@@ -20,9 +20,12 @@ public:
 
     std::vector<QString> toLoad;
     #ifndef NOAUDIO
-    QHash<QString,QByteArray> musics;
+    QHash<QString,QByteArray *> musics;
     #endif
-    QHash<QString,QImage> images;
+    QHash<QString,QImage *> images;
+
+    static uint32_t audio;
+    static uint32_t image;
 signals:
     void addSize(uint32_t size);
 };
