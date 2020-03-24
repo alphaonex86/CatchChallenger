@@ -59,7 +59,7 @@ MainScreen::MainScreen()
     newsText->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     updateNews();
     newsWait=new QGraphicsPixmapItem(news);
-    newsWait->setPixmap(GameLoader::gameLoader->getImage(":/CC/images/multi/busy.png"));
+    newsWait->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/multi/busy.png"));
 
     warning=new QGraphicsTextItem(this);
     warning->setVisible(true);
@@ -98,13 +98,12 @@ MainScreen::MainScreen()
         abort();
     if(!connect(newsUpdate,&CustomButton::clicked,this,&MainScreen::openUpdate))
         abort();
-
-/*    if(!connect(solo,&CustomButton::clicked,this,&MainScreen::goToSolo))
+    if(!connect(solo,&CustomButton::clicked,this,&MainScreen::goToSolo))
         abort();
     if(!connect(multi,&CustomButton::clicked,this,&MainScreen::goToMulti))
         abort();
     if(!connect(options,&CustomButton::clicked,this,&MainScreen::goToOptions))
-        abort();*/
+        abort();
 
     haveUpdate=false;
     currentNewsType=0;

@@ -3,6 +3,7 @@
 #include <QDirIterator>
 #include <QCoreApplication>
 #include <iostream>
+#include <QTime>
 
 GameLoader *GameLoader::gameLoader=NULL;
 
@@ -95,38 +96,63 @@ void GameLoader::threadFinished()
         return;
     }
     //QImage to QPixmap
+    QTime myTimer;
+    myTimer.start();
     {
-        QHashIterator<QString,QImage> i(thread->images);
+        QHashIterator<QString,QImage *> i(thread->images);
         while (i.hasNext()) {
             i.next();
-            const QImage &image=i.value();
-            images[i.key()]=QPixmap::fromImage(image);
+            QImage * image=i.value();
+            images[i.key()]=image;
             //QCoreApplication::processEvents();
         }
     }
+    int myTimerElapsed=myTimer.elapsed();
+    QTime myTimer2;
+    myTimer2.start();
     #ifndef NOAUDIO
     //merge the music
     {
-        QHashIterator<QString,QByteArray> i(thread->musics);
+        QHashIterator<QString,QByteArray *> i(thread->musics);
         while (i.hasNext()) {
             i.next();
             musics[i.key()]=i.value();
         }
     }
     #endif
+    int myTimer2Elapsed=myTimer2.elapsed();
     //clean the old work
     delete thread;
     if(threads.empty())
     {
         //emit progression(sizeToProcess,sizeToProcess);
         emit dataIsParsed();
+
+        std::cout << "time audio: " << GameLoaderThread::audio << "ms" << std::endl;
+        std::cout << "time image: " << GameLoaderThread::image << "ms" << std::endl;
+        std::cout << "QImage to QPixmap: " << myTimerElapsed << "ms" << std::endl;
+        std::cout << "merge the music: " << myTimer2Elapsed << "ms" << std::endl;
     }
 }
 
-QPixmap GameLoader::getImage(const QString &path) const
+const QPixmap *GameLoader::getImage(const QString &path)
 {
-    if(images.contains(path))
-        return images.value(path);
+    if(pixmaps.contains(path))
+        return pixmaps.value(path);
     else
-        return QPixmap(path);
+    {
+        if(images.contains(path))
+        {
+            QPixmap *p=new QPixmap(
+                        QPixmap::fromImage(
+                            *(images.value(path))
+                            )
+                        );
+            pixmaps[path]=p;
+            images.remove(path);
+            return pixmaps.value(path);
+        }
+    }
+    abort();
+    return nullptr;
 }
