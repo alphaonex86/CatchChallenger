@@ -1,6 +1,7 @@
 #include "LoadingScreen.hpp"
 #include "../qt/GameLoader.hpp"
 #include "../../general/base/Version.hpp"
+#include "Language.hpp"
 #include <QWidget>
 
 LoadingScreen::LoadingScreen()
@@ -30,6 +31,8 @@ LoadingScreen::LoadingScreen()
     if(!QObject::connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression))
         abort();
     if(!QObject::connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed))
+        abort();
+    if(!connect(&Language::language,&Language::newLanguage,this,&LoadingScreen::newLanguage,Qt::QueuedConnection))
         abort();
 
     timer.setSingleShot(true);
@@ -164,4 +167,8 @@ void LoadingScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
 QRectF LoadingScreen::boundingRect() const
 {
     return QRectF();
+}
+
+void LoadingScreen::newLanguage()
+{
 }

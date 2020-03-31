@@ -47,6 +47,8 @@ private:
     bool haveFreshFeed;
 
     bool haveUpdate;
+private slots:
+    void newLanguage();
 protected:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
