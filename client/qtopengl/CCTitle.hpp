@@ -16,8 +16,6 @@ public:
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *) override;
     QRectF boundingRect() const override;
-    void setPressed(const bool &pressed);
-    void setPos(qreal ax, qreal ay);
 protected:
     void updateTextPath();
 private:

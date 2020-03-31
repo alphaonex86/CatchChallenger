@@ -4,6 +4,7 @@
 #include "AudioGL.hpp"
 #include <iostream>
 #include <QGLWidget>
+#include <QComboBox>
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
 
@@ -127,6 +128,7 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
         static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp);
         mousePress=m_foregroundStack;
     }
+    QGraphicsView::mousePressEvent(event);
 }
 
 void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
@@ -147,11 +149,12 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
         m_aboveStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_aboveStack;
     }
-    if(m_foregroundStack!=nullptr)
+    else if(m_foregroundStack!=nullptr)
     {
         m_foregroundStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
     }
+    QGraphicsView::mouseReleaseEvent(event);
 }
 
 void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
@@ -172,11 +175,12 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
         m_aboveStack->mouseMoveEventXY(p,pressValidated);
         mousePress=m_aboveStack;
     }
-    if(m_foregroundStack!=nullptr)
+    else if(m_foregroundStack!=nullptr)
     {
         m_foregroundStack->mouseMoveEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
     }
+    QGraphicsView::mouseMoveEvent(event);
 }
 
 void ScreenTransition::setBackground(ScreenInput *widget)

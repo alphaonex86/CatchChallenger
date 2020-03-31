@@ -6,6 +6,7 @@
 #include "CCTitle.hpp"
 #include "ScreenInput.hpp"
 #include "../qt/FeedNews.hpp"
+#include "CCGraphicsTextItem.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../qt/QInfiniteBuffer.hpp"
@@ -28,14 +29,15 @@ private:
     QGraphicsTextItem *update;
     QGraphicsTextItem *updateStar;
     QGraphicsTextItem *updateText;
-    CCTitle *title;
+    //CCTitle *title;
     CustomButton *solo;
     CustomButton *multi;
     CustomButton *options;
     CustomButton *facebook;
     CustomButton *website;
     CCWidget *news;
-    QGraphicsTextItem *newsText;
+    //QGraphicsTextItem *newsText;
+    CCGraphicsTextItem *newsText;
     QGraphicsPixmapItem *newsWait;
     CustomButton *newsUpdate;
     QGraphicsTextItem *warning;
