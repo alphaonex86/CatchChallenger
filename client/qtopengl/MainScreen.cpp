@@ -7,6 +7,7 @@
 #include "../qt/Settings.hpp"
 #include "../qt/Ultimate.hpp"
 #include <QWidget>
+#include "Language.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "AudioGL.hpp"
@@ -21,9 +22,7 @@ MainScreen::MainScreen()
     title->setText("Update!");*/
 
     solo=new CustomButton(":/CC/images/interface/button.png",this);
-    solo->setText("Solo");
     multi=new CustomButton(":/CC/images/interface/button.png",this);
-    multi->setText("Multi");
     options=new CustomButton(":/CC/images/interface/options.png",this);
     facebook=new CustomButton(":/CC/images/interface/bluetoolbox.png",this);
     facebook->setText("f");
@@ -71,7 +70,6 @@ MainScreen::MainScreen()
     warning->setVisible(true);
     warningString=QString("<div style=\"background-color: rgb(255, 180, 180);border: 1px solid rgb(255, 221, 50);border-radius:5px;color: rgb(0, 0, 0);\">&nbsp;%1&nbsp;</div>");
     newsUpdate=new CustomButton(":/CC/images/interface/greenbutton.png",news);
-    newsUpdate->setText(tr("Update!"));
     newsUpdate->setOutlineColor(QColor(44,117,0));
 
     #ifndef __EMSCRIPTEN__
@@ -112,6 +110,8 @@ MainScreen::MainScreen()
         abort();
     if(!connect(options,&CustomButton::clicked,this,&MainScreen::goToOptions))
         abort();
+    if(!connect(&Language::language,&Language::newLanguage,this,&MainScreen::newLanguage,Qt::QueuedConnection))
+        abort();
 
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(!Settings::settings.contains("audioVolume"))
@@ -125,6 +125,7 @@ MainScreen::MainScreen()
     #else
         setError("Sound disabled");*/
     #endif
+    newLanguage();
 }
 
 MainScreen::~MainScreen()
@@ -366,4 +367,12 @@ void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 
 void MainScreen::mouseMoveEventXY(const QPointF &,bool &)
 {
+}
+
+void MainScreen::newLanguage()
+{
+    solo->setText(tr("Solo"));
+    multi->setText(tr("Multi"));
+    newsUpdate->setText(tr("Update!"));
+    updateNews();
 }
