@@ -66,9 +66,14 @@ OptionsDialog::OptionsDialog() :
             languagesList->setCurrentIndex(0);
     }
 
-    connect(volumeSlider,&CCSliderH::sliderReleased,this,&OptionsDialog::volumeSliderChange);
-    connect(productKeyInput->document(),&QTextDocument::contentsChanged,this,&OptionsDialog::productKeyChange,Qt::QueuedConnection);
-    connect(languagesList,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&OptionsDialog::languagesChange);
+    if(!connect(volumeSlider,&CCSliderH::sliderReleased,this,&OptionsDialog::volumeSliderChange))
+        abort();
+    if(!connect(productKeyInput->document(),&QTextDocument::contentsChanged,this,&OptionsDialog::productKeyChange,Qt::QueuedConnection))
+        abort();
+    if(!connect(languagesList,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&OptionsDialog::languagesChange))
+        abort();
+    if(!connect(&Language::language,&Language::newLanguage,this,&OptionsDialog::newLanguage,Qt::QueuedConnection))
+        abort();
 }
 
 OptionsDialog::~OptionsDialog()
@@ -250,5 +255,10 @@ void OptionsDialog::languagesChange(int)
     break;
     }
     Language::language.setLanguage(Settings::settings.value("language").toString());
+}
+
+void OptionsDialog::newLanguage()
+{
+
 }
 

@@ -27,6 +27,8 @@ private slots:
     void volumeSliderChange();
     void productKeyChange();
     void languagesChange(int);
+
+    void newLanguage();
 private:
     CCWidget *wdialog;
     CustomButton *quit;

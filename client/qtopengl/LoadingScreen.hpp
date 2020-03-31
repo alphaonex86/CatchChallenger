@@ -27,6 +27,8 @@ protected:
     void canBeChanged();
     void dataIsParsed();
     void updateProgression();
+
+    void newLanguage();
 private:
     Ui::LoadingScreen *ui;
     CCWidget *widget;
