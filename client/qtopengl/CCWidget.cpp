@@ -1,4 +1,5 @@
 #include "CCWidget.hpp"
+#include "../qt/GameLoader.hpp"
 #include <QPainter>
 
 CCWidget::CCWidget(QGraphicsItem *parent) :
@@ -48,7 +49,7 @@ void CCWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
 
     if(tl.isNull() || min!=tl.height())
     {
-        QPixmap background(":/CC/images/interface/message.png");
+        QPixmap background(*GameLoader::gameLoader->getImage(":/CC/images/interface/message.png"));
         if(background.isNull())
             abort();
         tl=background.copy(0,0,46,46);
