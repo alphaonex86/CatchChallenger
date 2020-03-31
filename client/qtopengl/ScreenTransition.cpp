@@ -128,7 +128,8 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
         static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp);
         mousePress=m_foregroundStack;
     }
-    QGraphicsView::mousePressEvent(event);
+    if(!temp)
+        QGraphicsView::mousePressEvent(event);
 }
 
 void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
@@ -154,7 +155,8 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
         m_foregroundStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
     }
-    QGraphicsView::mouseReleaseEvent(event);
+    if(!pressValidated)
+        QGraphicsView::mouseReleaseEvent(event);
 }
 
 void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
@@ -180,7 +182,8 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
         m_foregroundStack->mouseMoveEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
     }
-    QGraphicsView::mouseMoveEvent(event);
+    if(!pressValidated)
+        QGraphicsView::mouseMoveEvent(event);
 }
 
 void ScreenTransition::setBackground(ScreenInput *widget)
