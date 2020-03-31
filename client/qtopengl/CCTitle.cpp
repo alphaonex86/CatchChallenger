@@ -89,7 +89,7 @@ void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
 
 QRectF CCTitle::boundingRect() const
 {
-    return QRectF();
+    return m_boundingRect;
 }
 
 void CCTitle::setText(const QString &text)
@@ -118,6 +118,7 @@ void CCTitle::updateTextPath()
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
+    m_boundingRect=rect;
     int newHeight=m_boundingRect.height();
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;

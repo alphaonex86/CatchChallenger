@@ -2,7 +2,7 @@
 #define customtinyxml2h
 
 #include <string>
-#include "tinyxml2.h"
+#include "tinyxml2.hpp"
 
 static inline std::string tinyxml2errordoc(const tinyxml2::XMLDocument * const doc)
 {

@@ -265,7 +265,10 @@ SOURCES += \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.c \
     $$PWD/../libzstd/lib/dictBuilder/fastcover.c \
     $$PWD/../libzstd/lib/dictBuilder/zdict.c \
-    $$PWD/CCDialogTitle.cpp
+    $$PWD/CCDialogTitle.cpp \
+    $$PWD/CCGraphicsTextItem.cpp \
+    $$PWD/CCSliderH.cpp \
+    $$PWD/Language.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -297,7 +300,10 @@ HEADERS  += \
     $$PWD/../libzstd/lib/dictBuilder/cover.h \
     $$PWD/../libzstd/lib/dictBuilder/zdict.h \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.h \
-    $$PWD/CCDialogTitle.hpp
+    $$PWD/CCDialogTitle.hpp \
+    $$PWD/CCGraphicsTextItem.hpp \
+    $$PWD/CCSliderH.hpp \
+    $$PWD/Language.hpp
 
 
 wasm: {
@@ -367,6 +373,7 @@ SOURCES += \
 
 HEADERS  += \
     $$PWD/../../general/base/tinyXML2/tinyxml2.hpp \
+    $$PWD/../../general/base/tinyXML2/customtinyxml2.hpp \
     $$PWD/LanguagesSelect.hpp \
     $$PWD/CCprogressbar.hpp \
     $$PWD/ClientStructures.hpp \
