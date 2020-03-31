@@ -98,6 +98,8 @@ MainScreen::MainScreen()
     #ifdef NOSINGLEPLAYER
     solo->hide();
     #endif
+    solo->hide();//todo
+
     if(!connect(facebook,&CustomButton::clicked,this,&MainScreen::openFacebook))
         abort();
     if(!connect(website,&CustomButton::clicked,this,&MainScreen::openWebsite))
@@ -164,12 +166,21 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         website->setSize(62,70);
         website->setPointSize(28);
     }
-    solo->setPos(widget->width()/2-solo->width()/2,widget->height()/2-multi->height()/2-solo->height()-buttonMargin);
-    multi->setPos(widget->width()/2-multi->width()/2,widget->height()/2-multi->height()/2);
+    int verticalMargin=widget->height()/2+multi->height()/2+buttonMargin;
+    if(solo->isVisible())
+    {
+        solo->setPos(widget->width()/2-solo->width()/2,widget->height()/2-multi->height()/2-solo->height()-buttonMargin);
+        multi->setPos(widget->width()/2-multi->width()/2,widget->height()/2-multi->height()/2);
+    }
+    else
+    {
+        multi->setPos(widget->width()/2-multi->width()/2,widget->height()/2-multi->height());
+        verticalMargin=widget->height()/2+buttonMargin;
+    }
     const int horizontalMargin=(multi->width()-options->width()-facebook->width()-website->width())/2;
-    options->setPos(widget->width()/2-facebook->width()/2-horizontalMargin-options->width(),widget->height()/2+multi->height()/2+buttonMargin);
-    facebook->setPos(widget->width()/2-facebook->width()/2,widget->height()/2+multi->height()/2+buttonMargin);
-    website->setPos(widget->width()/2+facebook->width()/2+horizontalMargin,widget->height()/2+multi->height()/2+buttonMargin);
+    options->setPos(widget->width()/2-facebook->width()/2-horizontalMargin-options->width(),verticalMargin);
+    facebook->setPos(widget->width()/2-facebook->width()/2,verticalMargin);
+    website->setPos(widget->width()/2+facebook->width()/2+horizontalMargin,verticalMargin);
     warning->setPos(widget->width()/2-warning->boundingRect().width()/2,5);
 
     if(widget->height()<280)
