@@ -16,7 +16,6 @@ CCDialogTitle::CCDialogTitle(QGraphicsItem *parent) :
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
 
-    outlineColor=QColor(77,64,44);
     lastwidth=0;
     lastheight=0;
     cache=nullptr;
@@ -45,7 +44,7 @@ void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
 {
     if(cache!=nullptr && !cache->isNull() && cache->width()==m_boundingRect.width() && cache->height()==m_boundingRect.height())
     {
-        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+m_boundingRect.height()*0.1,m_boundingRect.width(),m_boundingRect.height(),*cache);
         return;
     }
     if(m_boundingRect.isEmpty())
@@ -77,19 +76,23 @@ void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
             penWidth=1;
         else if(font->pointSize()<=24)
             penWidth=1.5;
-        paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-        paint.setBrush(Qt::white);
+        //paint.setPen(QPen(QColor(255,0,0), penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        QLinearGradient gradient( 0, 0, 0, m_boundingRect.height() );
+        gradient.setColorAt( 0.25, "#e69900");
+        gradient.setColorAt( 0.75, "#ffffff");
+        paint.setPen(QPen(gradient, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        paint.setBrush(QColor(64,28,2));
         paint.drawPath(*textPath);
     }
 
     *cache=QPixmap::fromImage(image);
 
-    painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y(),m_boundingRect.width(),m_boundingRect.height(),*cache);
+    painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+m_boundingRect.height()*0.1,m_boundingRect.width(),m_boundingRect.height(),*cache);
 }
 
 QRectF CCDialogTitle::boundingRect() const
 {
-    return QRectF();
+    return m_boundingRect;
 }
 
 void CCDialogTitle::setText(const QString &text)
@@ -118,6 +121,7 @@ void CCDialogTitle::updateTextPath()
     tempPath.addText(0, 0, *font, text);
     QRectF rect=tempPath.boundingRect();
     textPath=new QPainterPath();
+    m_boundingRect=QRectF(0,0,rect.width()+20,rect.height()+20);
     int newHeight=m_boundingRect.height();
     const int p=font->pointSize();
     const int tempHeight=newHeight/2+p/2;
@@ -138,9 +142,4 @@ void CCDialogTitle::setFont(const QFont &font)
 QFont CCDialogTitle::getFont() const
 {
     return *font;
-}
-
-void CCDialogTitle::setOutlineColor(const QColor &color)
-{
-    this->outlineColor=color;
 }

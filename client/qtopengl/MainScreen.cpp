@@ -5,6 +5,7 @@
 #include <iostream>
 #include <QDesktopServices>
 #include "../qt/Settings.hpp"
+#include "../qt/Ultimate.hpp"
 #include <QWidget>
 
 #ifndef CATCHCHALLENGER_NOAUDIO
@@ -13,8 +14,11 @@
 
 MainScreen::MainScreen()
 {
-    title=new CCTitle(this);
-    title->setText("Update!");
+    haveUpdate=false;
+    currentNewsType=0;
+
+    /*title=new CCTitle(this);
+    title->setText("Update!");*/
 
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     solo->setText("Solo");
@@ -33,7 +37,7 @@ MainScreen::MainScreen()
 
     haveFreshFeed=false;
     news=new CCWidget(this);
-    newsText=new QGraphicsTextItem(news);
+    newsText=new CCGraphicsTextItem(news);
     if(Settings::settings.contains("news"))
     {
         const QByteArray &data=Settings::settings.value("news").toByteArray();
@@ -57,6 +61,8 @@ MainScreen::MainScreen()
     }
     newsText->setOpenExternalLinks(true);
     newsText->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    newsText->setTextInteractionFlags(Qt::TextBrowserInteraction);
+    //newsText->setFlag(QGraphicsItem::ItemUsesExtendedStyleOption,false); not work
     updateNews();
     newsWait=new QGraphicsPixmapItem(news);
     newsWait->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/multi/busy.png"));
@@ -105,10 +111,10 @@ MainScreen::MainScreen()
     if(!connect(options,&CustomButton::clicked,this,&MainScreen::goToOptions))
         abort();
 
-    haveUpdate=false;
-    currentNewsType=0;
-
     #ifndef CATCHCHALLENGER_NOAUDIO
+    if(!Settings::settings.contains("audioVolume"))
+        Settings::settings.setValue("audioVolume",80);
+    AudioGL::audio->setVolume(Settings::settings.value("audioVolume").toUInt());
     const std::string &terr=AudioGL::audio->startAmbiance(":/CC/music/loading.opus");
     if(!terr.empty())
         setError(terr);

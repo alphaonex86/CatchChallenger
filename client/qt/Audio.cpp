@@ -52,8 +52,7 @@ void Audio::addPlayer(QAudioOutput * const player)
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
     playerList.push_back(player);
-    player->setVolume(0);
-//    player->setVolume((qreal)volume/100);//-> no volume option for now
+    player->setVolume((qreal)volume/100);
 }
 
 void Audio::removePlayer(QAudioOutput * const player)

@@ -12,6 +12,8 @@
 #include "../qt/QtDatapackChecksum.hpp"
 #include <QStandardPaths>
 #include <QScreen>
+#include "Language.hpp"
+#include "../qt/Settings.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -29,7 +31,7 @@ int main(int argc, char *argv[])
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
     qDebug() << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
 
-    //QFontDatabase::addApplicationFont(":/fonts/komika_font.ttf");
+    QFontDatabase::addApplicationFont(":/other/comicbd.ttf");
     QFont font("Comic Sans MS");
     font.setStyleHint(QFont::Monospace);
     //font.setBold(true);
@@ -49,7 +51,8 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    LanguagesSelect::languagesSelect=new LanguagesSelect();
+    if(Settings::settings.contains("language"))
+        Language::language.setLanguage(Settings::settings.value("language").toString());
     Options::options.loadVar();
 
     ScreenTransition s;
