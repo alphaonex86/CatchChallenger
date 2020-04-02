@@ -22,6 +22,7 @@ public:
     void setPressed(const bool &pressed);
     void setPos(qreal ax, qreal ay);
     void setSize(uint16_t w,uint16_t h);
+    void setEnabled(bool enabled);
     int width();
     int height();
 
