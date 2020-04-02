@@ -8,6 +8,7 @@
 #include "AudioGL.hpp"
 #include "../qt/Ultimate.hpp"
 #include "Language.hpp"
+#include <QDesktopServices>
 
 OptionsDialog::OptionsDialog() :
     wdialog(new CCWidget(this)),
@@ -19,28 +20,25 @@ OptionsDialog::OptionsDialog() :
     label.setTransformationMode(Qt::SmoothTransformation);
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     quit=new CustomButton(":/CC/images/interface/quit.png",this);
-    quit->setOutlineColor(QColor(0,79,154));
-    quit->setPointSize(28);
-    quit->updateTextPercent(75);
+//    quit->updateTextPercent(75);
     connect(quit,&CustomButton::clicked,this,&OptionsDialog::quitOption);
     title=new CCDialogTitle(this);
     title->setText(tr("Options"));
 
     volumeText=new CCGraphicsTextItem(this);
-    volumeText->setHtml(tr("Volume: "));
     volumeSlider=new CCSliderH(this);
     volumeSlider->setValue(Settings::settings.value("audioVolume").toUInt());
     productKeyText=new QGraphicsTextItem(this);
-    productKeyText->setHtml(tr("Product key: "));
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
     p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     productKeyBackground=new QGraphicsPixmapItem(p,this);
     productKeyInput=new CCGraphicsTextItem(this);
     productKeyInput->setTextInteractionFlags(Qt::TextEditorInteraction);
     productKeyInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
+    buy=new CustomButton(":/CC/images/interface/buy.png",this);
+    buy->updateTextPercent(75);
 
     languagesText=new CCGraphicsTextItem(this);
-    languagesText->setHtml(tr("Language: "));
     languagesList=new QComboBox();
     languagesListProxy=new QGraphicsProxyWidget(this,Qt::Widget);
     languagesListProxy->setWidget(languagesList);
@@ -74,12 +72,16 @@ OptionsDialog::OptionsDialog() :
         abort();
     if(!connect(&Language::language,&Language::newLanguage,this,&OptionsDialog::newLanguage,Qt::QueuedConnection))
         abort();
+    if(!connect(buy,&CustomButton::clicked,this,&OptionsDialog::openBuy,Qt::QueuedConnection))
+        abort();
+    newLanguage();
 }
 
 OptionsDialog::~OptionsDialog()
 {
     delete wdialog;
     delete quit;
+    delete buy;
     delete title;
 }
 
@@ -134,6 +136,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     {
         label.setScale(0.5);
         quit->setSize(83/2,94/2);
+        buy->setSize(83/2,94/2);
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
         title->setPointSize(30/2);
         font.setPixelSize(30/2);
@@ -141,6 +144,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     else {
         label.setScale(1);
         quit->setSize(83,94);
+        buy->setSize(83,94);
         label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
         title->setPointSize(30);
         font.setPixelSize(30);
@@ -165,7 +169,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     const QRectF &volumeTextRect=volumeText->boundingRect();
     const QRectF &productKeyTextRect=productKeyText->boundingRect();
 
-    const unsigned int &productKeyBackgroundNewWidth=idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4;
+    const unsigned int &productKeyBackgroundNewWidth=idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4-10-buy->width();
     if((unsigned int)productKeyBackground->pixmap().width()!=productKeyBackgroundNewWidth ||
             (unsigned int)productKeyBackground->pixmap().height()!=productKeyBackgroundNewHeight)
     {
@@ -190,6 +194,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         productKeyBackground->setPos(productKeyBackgroundW,productKeyText->y()+(productKeyTextRect.height()-productKeyBackground->boundingRect().height())/2);
         productKeyInput->setPos(productKeyBackgroundW,productKeyText->y()+(productKeyTextRect.height()-productKeyInput->boundingRect().height())/2);
         productKeyInput->setTextWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
+        buy->setPos(productKeyBackgroundW+productKeyBackground->boundingRect().width()+10,productKeyText->y()+(productKeyTextRect.height()-buy->boundingRect().height())/2);
     }
     {
         languagesText->setPos(x+wdialog->currentBorderSize()*2,productKeyText->y()+volumeTextRect.height()+10);
@@ -203,12 +208,14 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
 void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated)
 {
     quit->mousePressEventXY(p,pressValidated);
+    buy->mousePressEventXY(p,pressValidated);
     volumeSlider->mousePressEventXY(p,pressValidated);
 }
 
 void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
+    buy->mouseReleaseEventXY(p,pressValidated);
     volumeSlider->mouseReleaseEventXY(p,pressValidated);
 }
 
@@ -259,6 +266,12 @@ void OptionsDialog::languagesChange(int)
 
 void OptionsDialog::newLanguage()
 {
-
+    languagesText->setHtml(tr("Language: "));
+    productKeyText->setHtml(tr("Product key: "));
+    volumeText->setHtml(tr("Volume: "));
 }
 
+void OptionsDialog::openBuy()
+{
+    QDesktopServices::openUrl(QUrl(tr("https://shop.first-world.info/en/")));
+}
