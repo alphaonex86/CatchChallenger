@@ -22,11 +22,11 @@ public:
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
     void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
-
 private slots:
     void volumeSliderChange();
     void productKeyChange();
     void languagesChange(int);
+    void openBuy();
 
     void newLanguage();
 private:
@@ -40,6 +40,7 @@ private:
     QGraphicsTextItem *productKeyText;
     QGraphicsPixmapItem *productKeyBackground;
     CCGraphicsTextItem *productKeyInput;
+    CustomButton *buy;
 
     QGraphicsTextItem *languagesText;
     QComboBox *languagesList;

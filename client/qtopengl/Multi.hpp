@@ -5,11 +5,13 @@
 #include <QString>
 #include <QHash>
 #include <QSet>
+#include <QLabel>
 #include <vector>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QVBoxLayout>
 #include "CCWidget.hpp"
+#include "ScreenInput.hpp"
+#include "CustomButton.hpp"
 
 class ListEntryEnvolued;
 class AddOrEditServer;
@@ -22,10 +24,9 @@ public:
     bool isCustom;
 };
 
-class Multi : public QObject, public QGraphicsItem
+class Multi : public QObject, public ScreenInput
 {
     Q_OBJECT
-
 public:
     class ConnexionInfo
     {
@@ -53,9 +54,9 @@ public:
         bool operator<(const ConnexionInfo &connexionInfo) const;
     };
 
-    explicit Multi(QGraphicsItem *parent = nullptr);
+    explicit Multi();
     ~Multi();
-/*    void displayServerList();
+    void displayServerList();
     void serverListEntryEnvoluedClicked();
     void server_add_clicked();
     void server_add_finished();
@@ -72,6 +73,10 @@ public:
     std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void httpFinished();
     void downloadFile();
+    void newLanguage();
+    void on_server_refresh_clicked();
+    QRectF boundingRect() const;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
 private:
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QHash<ListEntryEnvolued *,ConnexionInfo *> serverConnexion;
@@ -81,10 +86,22 @@ private:
 
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
+
+    CustomButton *server_add;
+    CustomButton *server_remove;
+    CustomButton *server_edit;
+    CustomButton *server_select;
+    CustomButton *server_refresh;
+    CustomButton *back;
+    QGraphicsProxyWidget *serverListProxy;
+    QGraphicsTextItem *warning;
+    QWidget *scrollAreaWidgetContentsServer;
+    QWidget *serverWidget;
+    QLabel *serverEmpty;
 signals:
     void backMain();
     void setAbove(QGraphicsItem *widget);//first plan popup
-    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);*/
+    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
 };
 
 #endif // MULTI_H

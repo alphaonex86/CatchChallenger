@@ -96,10 +96,12 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     QPixmap temp(*GameLoader::gameLoader->getImage(background));
     if(temp.isNull())
         abort();
-    if(pressed)
-        scaledBackground=temp.copy(0,temp.height()/2,temp.width(),temp.height()/2);
+    if(!isEnabled())
+        scaledBackground=temp.copy(0,temp.height()*2/3,temp.width(),temp.height()/3);
+    else if(pressed)
+        scaledBackground=temp.copy(0,temp.height()/3,temp.width(),temp.height()/3);
     else
-        scaledBackground=temp.copy(0,0,temp.width(),temp.height()/2);
+        scaledBackground=temp.copy(0,0,temp.width(),temp.height()/3);
     scaledBackground=scaledBackground.scaled(m_boundingRect.width(),m_boundingRect.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     paint.drawPixmap(0,0,m_boundingRect.width(),m_boundingRect.height(),scaledBackground);
     updateTextPath();
@@ -249,4 +251,16 @@ void CustomButton::mouseReleaseEventXY(const QPointF &p, bool &previousPressVali
         }
     }
     setPressed(false);
+}
+
+void CustomButton::setEnabled(bool enabled)
+{
+    if(enabled==isEnabled())
+        return;
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
+    QGraphicsItem::setEnabled(enabled);
 }
