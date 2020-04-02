@@ -13,19 +13,21 @@
 #include <QStandardPaths>
 #include <utime.h>
 #include <QFileInfo>
-//#include "Ultimate.h"
+#include "../qt/Ultimate.hpp"
 #include "../../general/base/Version.hpp"
-//#include "PlatformMacro.h"
+//#include "PlatformMacro.hpp"
 #include <QNetworkRequest>
 #include <QDir>
-//#include "Login.h"
+//#include "Login.hpp"
 #include "../qt/Settings.hpp"
-#include <QDebug>
+#include <QGraphicsProxyWidget>
+#include <QLayout>
+#include "../qt/PlatformMacro.hpp"
+#include "Language.hpp"
 
-Multi::Multi(QGraphicsItem *parent) :
-    QGraphicsItem(parent)/*,
-    addServer(nullptr),
-    login(nullptr),
+Multi::Multi() :
+    /*addServer(nullptr),
+    login(nullptr),*/
     reply(nullptr)
 {
     srand(time(0));
@@ -35,29 +37,47 @@ Multi::Multi(QGraphicsItem *parent) :
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
-    downloadFile();
     selectedServer.unique_code.clear();
     selectedServer.isCustom=false;
-    displayServerList();
-*//*    ui->warning->setVisible(false);
 
-    if(!connect(ui->server_add,&QPushButton::clicked,this,&Multi::server_add_clicked))
+    server_add=new CustomButton(":/CC/images/interface/greenbutton.png",this);
+    server_remove=new CustomButton(":/CC/images/interface/redbutton.png",this);
+    server_edit=new CustomButton(":/CC/images/interface/greenbutton.png",this);
+    server_refresh=new CustomButton(":/CC/images/interface/refresh.png",this);
+
+    server_select=new CustomButton(":/CC/images/interface/next.png",this);
+    back=new CustomButton(":/CC/images/interface/back.png",this);
+
+    serverListProxy=new QGraphicsProxyWidget(this);
+    warning=new QGraphicsTextItem(this);
+    scrollAreaWidgetContentsServer=new QWidget();
+    serverWidget=new QWidget(scrollAreaWidgetContentsServer);
+    serverEmpty=new QLabel(serverWidget);
+    serverListProxy->setWidget(scrollAreaWidgetContentsServer);
+
+    if(!connect(server_add,&CustomButton::clicked,this,&Multi::server_add_clicked))
         abort();
-    if(!connect(ui->server_remove,&QPushButton::clicked,this,&Multi::server_remove_clicked))
+    if(!connect(server_remove,&CustomButton::clicked,this,&Multi::server_remove_clicked))
         abort();
-    if(!connect(ui->server_edit,&QPushButton::clicked,this,&Multi::server_edit_clicked))
+    if(!connect(server_edit,&CustomButton::clicked,this,&Multi::server_edit_clicked))
         abort();
-    if(!connect(ui->server_select,&QPushButton::clicked,this,&Multi::server_select_clicked))
+    if(!connect(server_select,&CustomButton::clicked,this,&Multi::server_select_clicked))
         abort();
-    if(!connect(ui->back,&QPushButton::clicked,this,&Multi::backMain))
-        abort();*//*
-}*/
-{}
+    if(!connect(back,&CustomButton::clicked,this,&Multi::backMain))
+        abort();
+    if(!connect(server_refresh,&CustomButton::clicked,this,&Multi::on_server_refresh_clicked))
+        abort();
+    newLanguage();
+
+    //need be the last
+    downloadFile();
+    displayServerList();
+}
 
 Multi::~Multi()
 {
 }
-/*
+
 void Multi::displayServerList()
 {
     //clean the previous content
@@ -70,7 +90,7 @@ void Multi::displayServerList()
     unsigned int index=0;
     serverConnexion.clear();
     if(mergedConnexionInfoList.empty())
-        ui->serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
+        serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
     #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
     #error Web socket and tcp socket are both not supported
     return;
@@ -79,10 +99,10 @@ void Multi::displayServerList()
     std::cout << "display mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
     if(selectedServer.unique_code.isEmpty())
     {
-        ui->server_remove->setEnabled(false);
-        ui->server_edit->setEnabled(false);
+        server_remove->setEnabled(false);
+        server_edit->setEnabled(false);
     }
-    ui->server_select->setEnabled(!selectedServer.unique_code.isEmpty());
+    server_select->setEnabled(!selectedServer.unique_code.isEmpty());
     while(index<mergedConnexionInfoList.size())
     {
         ListEntryEnvolued *newEntry=new ListEntryEnvolued();
@@ -157,18 +177,18 @@ void Multi::displayServerList()
         if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
         {
             newEntry->setStyleSheet(QStringLiteral("QLabel{border:1px solid #6b6;background-color:rgb(100,180,100,120);border-radius:10px;}QLabel::hover{border:1px solid #494;background-color:rgb(70,150,70,120);border-radius:10px;}"));
-            ui->server_remove->setEnabled(connexionInfo.isCustom);
-            ui->server_edit->setEnabled(connexionInfo.isCustom);
+            server_remove->setEnabled(connexionInfo.isCustom);
+            server_edit->setEnabled(connexionInfo.isCustom);
         }
         else
             newEntry->setStyleSheet(QStringLiteral("QLabel::hover{border:1px solid #bbb;background-color:rgb(180,180,180,100);border-radius:10px;}"));
 
-        ui->scrollAreaWidgetContentsServer->layout()->addWidget(newEntry);
+        scrollAreaWidgetContentsServer->layout()->addWidget(newEntry);
 
         serverConnexion[newEntry]=&mergedConnexionInfoList[index];
         index++;
     }
-    ui->serverWidget->setVisible(index==0);
+    serverWidget->setVisible(index==0);
 }
 
 void Multi::serverListEntryEnvoluedClicked()
@@ -186,19 +206,19 @@ void Multi::serverListEntryEnvoluedClicked()
 
 void Multi::server_add_clicked()
 {
-    if(addServer!=nullptr)
-        delete addServer;
-    addServer=new AddOrEditServer(this);
+    /*if(addServer!=nullptr)
+        delete addServer;*/
+    /*addServer=new AddOrEditServer(this);
     if(!connect(addServer,&QDialog::accepted,this,&Multi::server_add_finished))
         abort();
     if(!connect(addServer,&QDialog::rejected,this,&Multi::server_add_finished))
         abort();
-    emit setAbove(addServer);
+    emit setAbove(addServer);*/
 }
 
 void Multi::server_add_finished()
 {
-    emit setAbove(nullptr);
+/*    emit setAbove(nullptr);
     if(addServer==nullptr)
         return;
     if(!addServer->isOk())
@@ -240,24 +260,24 @@ void Multi::server_add_finished()
     connexionInfo.proxyPort=addServer->proxyPort();
     mergedConnexionInfoList.push_back(connexionInfo);
     saveConnexionInfoList();
-    displayServerList();
+    displayServerList();*/
 }
 
 void Multi::server_edit_clicked()
 {
-    if(addServer!=nullptr)
+    /*if(addServer!=nullptr)
         delete addServer;
     addServer=new AddOrEditServer(this);
     if(!connect(addServer,&QDialog::accepted,this,&Multi::server_add_finished))
         abort();
     if(!connect(addServer,&QDialog::rejected,this,&Multi::server_add_finished))
         abort();
-    emit setAbove(addServer);
+    emit setAbove(addServer);*/
 }
 
 void Multi::server_edit_finished()
 {
-    emit setAbove(nullptr);
+/*    emit setAbove(nullptr);
     if(addServer==nullptr)
         return;
     if(!addServer->isOk())
@@ -294,7 +314,7 @@ void Multi::server_edit_finished()
     connexionInfo.proxyPort=addServer->proxyPort();
     mergedConnexionInfoList.push_back(connexionInfo);
     saveConnexionInfoList();
-    displayServerList();
+    displayServerList();*/
 }
 
 void Multi::server_remove_clicked()
@@ -326,13 +346,13 @@ void Multi::httpFinished()
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
     if (reply->error())
     {
-        ui->warning->setText(tr("Get server list failed: %1").arg(reply->errorString()));
+        warning->setHtml(tr("Get server list failed: %1").arg(reply->errorString()));
         std::cerr << "Get server list failed: " << reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
         reply=NULL;
         return;
     } else if (!redirectionTarget.isNull()) {
-        ui->warning->setText(tr("Get server list redirection denied to: %1").arg(reply->errorString()));
+        warning->setHtml(tr("Get server list redirection denied to: %1").arg(reply->errorString()));
         std::cerr << "Get server list redirection denied to: " << reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
         reply=NULL;
@@ -471,7 +491,7 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArr
     //load the content
     const tinyxml2::XMLElement *server = root->FirstChildElement("server");
     #ifndef CATCHCHALLENGER_BOT
-    const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    const std::string &language=Language::language.getLanguage().toStdString();
     #else
     const std::string language("en");
     #endif
@@ -672,6 +692,12 @@ std::vector<Multi::ConnexionInfo> Multi::loadConfigConnexionInfoList()
 
             bool ok=true;
             ConnexionInfo connexionInfo;
+            connexionInfo.isCustom=false;
+            connexionInfo.port=0;
+            connexionInfo.connexionCounter=0;
+            connexionInfo.lastConnexion=0;
+            connexionInfo.proxyPort=0;
+
             if(!ws.isEmpty())
                 connexionInfo.ws=ws;
             else
@@ -765,12 +791,12 @@ void Multi::downloadFile()
         abort();
     //if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
         //abort(); seam buggy
-    ui->warning->setVisible(true);
-    ui->warning->setText(tr("Loading the server list..."));
+    warning->setVisible(true);
+    warning->setHtml(tr("Loading the server list..."));
     //ui->server_refresh->setEnabled(false);
 }
 
-*//*void Multi::on_server_refresh_clicked()
+void Multi::on_server_refresh_clicked()
 {
     if(reply!=NULL)
     {
@@ -779,12 +805,12 @@ void Multi::downloadFile()
         reply=NULL;
     }
     downloadFile();
-}*//*
+}
 
 
 void Multi::server_select_clicked()
 {
-    if(login!=nullptr)
+    /*if(login!=nullptr)
         delete login;
     login=new Login(this);
     if(!connect(login,&QDialog::accepted,this,&Multi::server_select_finished))
@@ -805,12 +831,12 @@ void Multi::server_select_clicked()
         Settings::settings.endGroup();
     }
     Settings::settings.endGroup();
-    emit setAbove(login);
+    emit setAbove(login);*/
 }
 
 void Multi::server_select_finished()
 {
-    emit setAbove(nullptr);
+    /*emit setAbove(nullptr);
     if(login==nullptr)
         return;
     if(!login->isOk())
@@ -846,6 +872,72 @@ void Multi::server_select_finished()
             break;
         }
         index++;
-    }
+    }*/
 }
-*/
+
+void Multi::newLanguage()
+{
+    server_add->setText(tr("Add"));
+    server_remove->setText(tr("Remove"));
+    server_edit->setText(tr("Edit"));
+    server_select->setText(tr("Select"));
+    back->setText(tr("Back"));
+    warning->setHtml("<span style=\"background-color: rgb(255, 255, 163);\nborder: 1px solid rgb(255, 221, 50);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\">"+tr("Loading the servers list...")+"</span>");
+    serverEmpty->setText(tr("Empty"));
+}
+
+QRectF Multi::boundingRect() const
+{
+    return QRectF();
+}
+
+void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
+{
+    unsigned int space=10;
+    if(w->width()<600 || w->height()<600)
+    {
+        server_add->setSize(148,61);
+        server_add->setPointSize(23);
+        server_remove->setSize(148,61);
+        server_remove->setPointSize(23);
+        server_edit->setSize(41,46);
+        server_edit->setPointSize(23);
+        server_refresh->setSize(56,62);
+        server_select->setSize(56,62);
+        back->setSize(56,62);
+    }
+    else {
+        space=30;
+        server_add->setSize(223,92);
+        server_add->setPointSize(35);
+        server_remove->setSize(224,92);
+        server_remove->setPointSize(35);
+        server_edit->setSize(62,70);
+        server_edit->setPointSize(35);
+        server_refresh->setSize(84,93);
+        server_select->setSize(84,93);
+        back->setSize(84,93);
+    }
+
+
+    unsigned int bottomWidth=space+57+space+92+space;
+    if(warning->isVisible())
+    {
+        const unsigned int textHeight=20;
+        warning->setPos(w->height()-bottomWidth-textHeight,space);
+        bottomWidth+=space+textHeight;
+    }
+    serverListProxy->setPos(space,space);
+    serverEmpty->setMinimumSize(w->width()-space*2,w->height()-space-bottomWidth);
+    serverEmpty->setMaximumSize(w->width()-space*2,w->height()-space-bottomWidth);
+    scrollAreaWidgetContentsServer->setMinimumSize(w->width()-space*2,w->height()-space-bottomWidth);
+    scrollAreaWidgetContentsServer->setMaximumSize(w->width()-space*2,w->height()-space-bottomWidth);
+
+    server_add->setText(tr("Add"));
+    server_remove->setText(tr("Remove"));
+    server_edit->setText(tr("Edit"));
+    server_refresh->setText(tr("Refresh"));
+
+    server_select->setText(tr("Select"));
+    back->setText(tr("Back"));
+}

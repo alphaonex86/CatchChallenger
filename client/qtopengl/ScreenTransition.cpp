@@ -272,17 +272,15 @@ void ScreenTransition::openSolo()
 
 void ScreenTransition::openMulti()
 {
-/*    if(multi==nullptr)
+    if(multi==nullptr)
     {
-        multi=new Multi(this);
+        multi=new Multi();
         if(!connect(multi,&Multi::backMain,this,&ScreenTransition::backMain))
-            abort();
-        if(!connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove))
             abort();
         if(!connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer))
             abort();
     }
-    setForeground(multi);*/
+    setForeground(multi);
 }
 
 void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)

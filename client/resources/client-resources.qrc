@@ -8,6 +8,7 @@
         <file>images/player_default/front.png</file>
         <file>images/player_default/trainer.png</file>
         <file>images/interface/quit.png</file>
+        <file>images/interface/refresh.png</file>
         <file>images/interface/player.png</file>
         <file>images/link.png</file>
         <file>images/interface/female.png</file>
@@ -42,10 +43,12 @@
         <file>music/text.opus</file>
         <file>images/interface/Pbarbackground.png</file>
         <file>images/interface/Pbarforeground.png</file>
-        <file>images/interface/button.png</file>
         <file>images/interface/inputText.png</file>
+        <file>images/interface/button.png</file>
         <file>images/interface/greenbutton.png</file>
+        <file>images/interface/redbutton.png</file>
         <file>images/interface/options.png</file>
+        <file>images/interface/menu.png</file>
         <file>images/interface/bluetoolbox.png</file>
         <file>images/interface/updatewidget.png</file>
         <file>images/interface/label.png</file>
@@ -84,5 +87,13 @@
         <file>images/multi/warning.png</file>
         <file>images/multi/showpassword.png</file>
         <file>languages/en/translation.qm</file>
+        <file>images/interface/back.png</file>
+        <file>images/interface/next.png</file>
+        <file>images/interface/delete.png</file>
+        <file>images/interface/cancel.png</file>
+        <file>images/interface/buy.png</file>
+        <file>images/interface/cup.png</file>
+        <file>images/interface/save.png</file>
+        <file>images/interface/validate.png</file>
     </qresource>
 </RCC>
