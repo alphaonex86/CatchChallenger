@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
-    qDebug() << QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
+    Settings::init();
 
     QFontDatabase::addApplicationFont(":/other/comicbd.ttf");
     QFont font("Comic Sans MS");
@@ -51,8 +51,8 @@ int main(int argc, char *argv[])
             return 0;
     }
 
-    if(Settings::settings.contains("language"))
-        Language::language.setLanguage(Settings::settings.value("language").toString());
+    if(Settings::settings->contains("language"))
+        Language::language.setLanguage(Settings::settings->value("language").toString());
     Options::options.loadVar();
 
     ScreenTransition s;
@@ -60,6 +60,9 @@ int main(int argc, char *argv[])
     /*QScreen *screen = QApplication::screens().at(0);
     s.setMinimumSize(QSize(screen->availableSize().width(),
                            screen->availableSize().height()));*/
+    #ifndef  Q_OS_ANDROID
+    s.setMinimumSize(QSize(640,480));
+    #endif
     s.move(0,0);
     s.show();
     QIcon icon;

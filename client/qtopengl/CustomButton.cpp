@@ -110,7 +110,10 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     {
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;
-        paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        if(isEnabled())
+            paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        else
+            paint.setPen(QPen(QColor(125,125,125), penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint.setBrush(Qt::white);
         paint.drawPath(*textPath);
     }
@@ -135,7 +138,7 @@ void CustomButton::setText(const QString &text)
     updateTextPath();
 }
 
-bool CustomButton::setPointSize(uint8_t size)
+bool CustomButton::setPixelSize(uint8_t size)
 {
     int tempsize=size*1.5;
     if(font->pixelSize()==tempsize)
@@ -225,7 +228,11 @@ void CustomButton::mousePressEventXY(const QPointF &p,bool &pressValidated)
 {
     if(this->pressed)
         return;
+    if(pressValidated)
+        return;
     if(!isVisible())
+        return;
+    if(!isEnabled())
         return;
     const QRectF &b=boundingRect();
     const QRectF &t=mapRectToScene(b);
@@ -238,9 +245,16 @@ void CustomButton::mousePressEventXY(const QPointF &p,bool &pressValidated)
 
 void CustomButton::mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated)
 {
+    if(previousPressValidated)
+    {
+        setPressed(false);
+        return;
+    }
     const QRectF &b=boundingRect();
     const QRectF &t=mapRectToScene(b);
     if(!this->pressed)
+        return;
+    if(!isEnabled())
         return;
     if(!previousPressValidated && isVisible())
     {

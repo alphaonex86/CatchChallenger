@@ -11,7 +11,7 @@ public:
     void setText(const QString &text);
     void setFont(const QFont &font);
     QFont getFont() const;
-    bool setPointSize(uint8_t size);
+    bool setPixelSize(uint8_t size);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *) override;
     QRectF boundingRect() const override;

@@ -95,5 +95,7 @@
         <file>images/interface/cup.png</file>
         <file>images/interface/save.png</file>
         <file>images/interface/validate.png</file>
+        <file>images/interface/onoffbutton.png</file>
+        <file>images/interface/onoff.png</file>
     </qresource>
 </RCC>

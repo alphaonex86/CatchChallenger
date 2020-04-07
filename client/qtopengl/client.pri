@@ -269,7 +269,10 @@ SOURCES += \
     $$PWD/CCGraphicsTextItem.cpp \
     $$PWD/CCSliderH.cpp \
     $$PWD/Language.cpp \
-    $$PWD/interface/ListEntryEnvolued.cpp
+    $$PWD/MultiItem.cpp \
+    $$PWD/ConnexionInfo.cpp \
+    $$PWD/CCScrollZone.cpp \
+    $$PWD/interface/AddOrEditServer.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -305,7 +308,10 @@ HEADERS  += \
     $$PWD/CCGraphicsTextItem.hpp \
     $$PWD/CCSliderH.hpp \
     $$PWD/Language.hpp \
-    $$PWD/interface/ListEntryEnvolued.hpp
+    $$PWD/MultiItem.hpp \
+    $$PWD/ConnexionInfo.hpp \
+    $$PWD/CCScrollZone.hpp \
+    $$PWD/interface/AddOrEditServer.hpp
 
 
 wasm: {

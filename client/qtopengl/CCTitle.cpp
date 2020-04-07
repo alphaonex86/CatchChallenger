@@ -11,7 +11,7 @@ CCTitle::CCTitle(QGraphicsItem *parent) :
 
     font=new QFont();
     font->setFamily("Comic Sans MS");
-    font->setPointSize(25);
+    font->setPixelSize(25);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
@@ -71,11 +71,11 @@ void CCTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget
     {
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;
-        if(font->pointSize()<=12)
+        if(font->pixelSize()<=12)
             penWidth=0.7;
-        else if(font->pointSize()<=18)
+        else if(font->pixelSize()<=18)
             penWidth=1;
-        else if(font->pointSize()<=24)
+        else if(font->pixelSize()<=24)
             penWidth=1.5;
         paint.setPen(QPen(outlineColor/*penColor*/, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
         paint.setBrush(Qt::white);
@@ -100,11 +100,11 @@ void CCTitle::setText(const QString &text)
     updateTextPath();
 }
 
-bool CCTitle::setPointSize(uint8_t size)
+bool CCTitle::setPixelSize(uint8_t size)
 {
-    if(font->pointSize()==size)
+    if(font->pixelSize()==size)
         return true;
-    font->setPointSize(size);
+    font->setPixelSize(size);
     updateTextPath();
     return true;
 }
@@ -120,7 +120,7 @@ void CCTitle::updateTextPath()
     textPath=new QPainterPath();
     m_boundingRect=rect;
     int newHeight=m_boundingRect.height();
-    const int p=font->pointSize();
+    const int p=font->pixelSize();
     const int tempHeight=newHeight/2+p/2;
     const Qt::Alignment a=Qt::AlignCenter;//alignment();
     if(a.testFlag(Qt::AlignLeft))
