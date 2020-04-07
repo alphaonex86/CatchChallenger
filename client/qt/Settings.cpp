@@ -1,9 +1,9 @@
 #include "Settings.hpp"
 #include <QStandardPaths>
 #include <QDir>
+#include <iostream>
 
-QSettings Settings::settings(QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini",QSettings::IniFormat);
-//QSettings Settings::settings;
+QSettings *Settings::settings=nullptr;
 
 Settings::Settings()
 {
@@ -12,5 +12,16 @@ Settings::Settings()
     {
         QSettings::setPath(QSettings::NativeFormat, QSettings::UserScope, QDir::homePath() + "/.config");
     }*/
+    #endif
+}
+
+void Settings::init()
+{
+    #ifndef Q_OS_ANDROID
+    const QString settingsPath=QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
+    std::cout << settingsPath.toStdString() << std::endl;
+    Settings::settings=new QSettings(settingsPath,QSettings::NativeFormat);
+    #else
+    Settings::settings=new QSettings();
     #endif
 }

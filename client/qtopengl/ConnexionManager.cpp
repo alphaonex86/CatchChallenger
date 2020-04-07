@@ -18,7 +18,7 @@ ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow, Load
     this->l=l;
 }
 
-void ConnexionManager::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)
+void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login,QString pass)
 {
     if(socket!=NULL)
     {
@@ -168,7 +168,7 @@ void ConnexionManager::sslErrors(const QList<QSslError> &errors)
 }
 #endif
 
-void ConnexionManager::connectTheExternalSocket(Multi::ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client)
+void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client)
 {
     //continue the normal procedure
     if(!connexionInfo.proxyHost.isEmpty())
@@ -201,7 +201,7 @@ void ConnexionManager::connectTheExternalSocket(Multi::ConnexionInfo connexionIn
     //baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
 
-QString ConnexionManager::serverToDatapachPath(Multi::ConnexionInfo connexionInfo) const
+QString ConnexionManager::serverToDatapachPath(ConnexionInfo connexionInfo) const
 {
     QDir datapack;
     if(connexionInfo.isCustom)

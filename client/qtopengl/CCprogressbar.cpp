@@ -8,7 +8,7 @@ CCprogressbar::CCprogressbar(QGraphicsItem *parent) :
 
     font=new QFont();
     font->setFamily("Comic Sans MS");
-    font->setPointSize(16);
+    font->setPixelSize(16);
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
@@ -132,7 +132,7 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
 
             if(oldText!=text)
             {
-                font->setPointSize(fontheight);
+                font->setPixelSize(fontheight);
                 if(textPath!=nullptr)
                     delete textPath;
                 QPainterPath tempPath;

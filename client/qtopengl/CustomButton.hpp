@@ -15,7 +15,7 @@ public:
     void setFont(const QFont &font);
     QFont getFont() const;
     bool updateTextPercent(uint8_t percent);
-    bool setPointSize(uint8_t size);
+    bool setPixelSize(uint8_t size);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *) override;
     QRectF boundingRect() const override;

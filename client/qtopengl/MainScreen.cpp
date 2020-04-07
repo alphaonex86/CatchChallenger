@@ -27,19 +27,19 @@ MainScreen::MainScreen()
     facebook=new CustomButton(":/CC/images/interface/bluetoolbox.png",this);
     facebook->setText("f");
     facebook->setOutlineColor(QColor(0,79,154));
-    facebook->setPointSize(28);
+    facebook->setPixelSize(28);
     website=new CustomButton(":/CC/images/interface/bluetoolbox.png",this);
     website->setText("w");
     website->setOutlineColor(QColor(0,79,154));
-    website->setPointSize(28);
+    website->setPixelSize(28);
     website->updateTextPercent(75);
 
     haveFreshFeed=false;
     news=new CCWidget(this);
     newsText=new CCGraphicsTextItem(news);
-    if(Settings::settings.contains("news"))
+    if(Settings::settings->contains("news"))
     {
-        const QByteArray &data=Settings::settings.value("news").toByteArray();
+        const QByteArray &data=Settings::settings->value("news").toByteArray();
         QDataStream in(data);
         in.setVersion(QDataStream::Qt_4_0);
         quint8 size=0;
@@ -114,9 +114,9 @@ MainScreen::MainScreen()
         abort();
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(!Settings::settings.contains("audioVolume"))
-        Settings::settings.setValue("audioVolume",80);
-    AudioGL::audio->setVolume(Settings::settings.value("audioVolume").toUInt());
+    if(!Settings::settings->contains("audioVolume"))
+        Settings::settings->setValue("audioVolume",80);
+    AudioGL::audio->setVolume(Settings::settings->value("audioVolume").toUInt());
     const std::string &terr=AudioGL::audio->startAmbiance(":/CC/music/loading.opus");
     if(!terr.empty())
         setError(terr);
@@ -144,28 +144,28 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
     if(widget->width()<600 || widget->height()<600)
     {
         solo->setSize(148,61);
-        solo->setPointSize(23);
+        solo->setPixelSize(23);
         multi->setSize(148,61);
-        multi->setPointSize(23);
+        multi->setPixelSize(23);
         options->setSize(41,46);
-        options->setPointSize(23);
+        options->setPixelSize(23);
         facebook->setSize(41,46);
-        facebook->setPointSize(18);
+        facebook->setPixelSize(18);
         website->setSize(41,46);
-        website->setPointSize(18);
+        website->setPixelSize(18);
     }
     else {
         buttonMargin=30;
         solo->setSize(223,92);
-        solo->setPointSize(35);
+        solo->setPixelSize(35);
         multi->setSize(223,92);
-        multi->setPointSize(35);
+        multi->setPixelSize(35);
         options->setSize(62,70);
-        options->setPointSize(35);
+        options->setPixelSize(35);
         facebook->setSize(62,70);
-        facebook->setPointSize(28);
+        facebook->setPixelSize(28);
         website->setSize(62,70);
-        website->setPointSize(28);
+        website->setPixelSize(28);
     }
     int verticalMargin=widget->height()/2+multi->height()/2+buttonMargin;
     if(solo->isVisible())
@@ -218,7 +218,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
             news->setSize(600-9*2,120);
             newsWait->setVisible(!haveFreshFeed);
             newsUpdate->setSize(136,57);
-            newsUpdate->setPointSize(18);
+            newsUpdate->setPixelSize(18);
             newsUpdate->setPos(news->width()-136-news->currentBorderSize()-2,news->height()/2-57/2);
             newsUpdate->setVisible(haveUpdate);
 
@@ -266,7 +266,7 @@ void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
             out << n.pubDate;
             out << n.title;
         }
-        Settings::settings.setValue("news",data);
+        Settings::settings->setValue("news",data);
     }
     newsWait->setVisible(false);
     haveFreshFeed=true;
