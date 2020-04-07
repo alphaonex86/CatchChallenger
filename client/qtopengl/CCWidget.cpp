@@ -119,4 +119,3 @@ int CCWidget::height() const
 {
     return m_h;
 }
-

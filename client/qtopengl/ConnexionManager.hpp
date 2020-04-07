@@ -13,7 +13,7 @@ class ConnexionManager : public QObject
     Q_OBJECT
 public:
     explicit ConnexionManager(CatchChallenger::BaseWindow *baseWindow,LoadingScreen *l);
-    void connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass);
+    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
 signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
@@ -23,8 +23,8 @@ public slots:
     #ifndef __EMSCRIPTEN__
     void sslErrors(const QList<QSslError> &errors);
     #endif
-    void connectTheExternalSocket(Multi::ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client);
-    QString serverToDatapachPath(Multi::ConnexionInfo connexionInfo) const;
+    void connectTheExternalSocket(ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client);
+    QString serverToDatapachPath(ConnexionInfo connexionInfo) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
 private:

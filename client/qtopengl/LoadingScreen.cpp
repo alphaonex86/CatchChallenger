@@ -19,7 +19,7 @@ LoadingScreen::LoadingScreen()
     version->setHtml(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
     //version->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
     QFont font = version->font();
-    font.setPointSize(7);
+    font.setPixelSize(7);
     version->setFont(font);
     progressbar=new CCprogressbar(this);
     progressbar->setMaximum(100);
@@ -156,11 +156,11 @@ void LoadingScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     version->setPos(widget->width()-version->shape().boundingRect().width()-10,5);
     QFont font = version->font();
     if(widget->height()<500)
-        font.setPointSize(9);
+        font.setPixelSize(9);
     else if(widget->height()<800)
-        font.setPointSize(11);
+        font.setPixelSize(11);
     else
-        font.setPointSize(14);
+        font.setPixelSize(14);
     version->setFont(font);
 }
 

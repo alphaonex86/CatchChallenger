@@ -86,6 +86,7 @@ ScreenTransition::ScreenTransition() :
     imageText=new QGraphicsPixmapItem();
     mScene->addItem(imageText);
     imageText->setPos(0,0);
+    imageText->setZValue(999);
 
     render();
     setTargetFPS(100);
@@ -279,11 +280,13 @@ void ScreenTransition::openMulti()
             abort();
         if(!connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer))
             abort();
+        if(!connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove))
+            abort();
     }
     setForeground(multi);
 }
 
-void ScreenTransition::connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass)
+void ScreenTransition::connectToServer(ConnexionInfo connexionInfo,QString login,QString pass)
 {
     Q_UNUSED(connexionInfo);
     Q_UNUSED(login);

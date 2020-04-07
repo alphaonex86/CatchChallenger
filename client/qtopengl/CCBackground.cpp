@@ -14,11 +14,14 @@ CCBackground::CCBackground()
     grassMove=0;
     treebackMove=0;
     treefrontMove=0;
+    cloudMove=0;
     if(!QObject::connect(&grassTimer,&QTimer::timeout,this,&CCBackground::grassSlot))
         abort();
     if(!QObject::connect(&treebackTimer,&QTimer::timeout,this,&CCBackground::treebackSlot))
         abort();
     if(!QObject::connect(&treefrontTimer,&QTimer::timeout,this,&CCBackground::treefrontSlot))
+        abort();
+    if(!QObject::connect(&cloudTimer,&QTimer::timeout,this,&CCBackground::cloudSlot))
         abort();
     if(!QObject::connect(&updateTimer,&QTimer::timeout,this,&CCBackground::updateSlot))
         abort();
@@ -37,6 +40,7 @@ void CCBackground::startAnimation()
     grassTimer.start(baseTime);
     treefrontTimer.start(baseTime*3);
     treebackTimer.start(baseTime*9);
+    cloudTimer.start(baseTime*30);
     updateTimer.start(40);
 }
 
@@ -45,6 +49,7 @@ void CCBackground::stopAnimation()
     grassTimer.stop();
     treefrontTimer.stop();
     treebackTimer.stop();
+    cloudTimer.stop();
     updateTimer.stop();
 }
 
@@ -77,6 +82,13 @@ void CCBackground::treefrontSlot()
     if(treefront.isNull())
         return;
     treefrontMove++;
+}
+
+void CCBackground::cloudSlot()
+{
+    if(cloud.isNull())
+        return;
+    cloudMove++;
 }
 
 unsigned int CCBackground::getTargetZoom(QWidget *widget)
@@ -131,9 +143,11 @@ void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
         grassMove=rand()%grass.width()*targetZoom;
         treebackMove=rand()%treeback.width()*targetZoom;
         treefrontMove=rand()%treefront.width()*targetZoom;
+        cloudMove=rand()%cloud.width();
         zoom=targetZoom;
     }
     treefrontMove%=treefront.width()*targetZoom;
+    cloudMove%=cloud.width()*targetZoom;
     treebackMove%=treeback.width()*targetZoom;
     grassMove%=grass.width()*targetZoom;
     //paint.fillRect(rect(),QColor(116,225,255));
@@ -185,5 +199,12 @@ void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
     }
 
     painter->drawPixmap(widget->width()*2/3/*66%*/-sun.width()/2,sunOffset,sun.width(),    sun.height(),    sun);
-    painter->drawPixmap(widget->width()/3/*33%*/-cloud.width()/2,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
+    //painter->drawPixmap(widget->width()-cloudMove,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
+
+    int lastcloudX=-cloudMove;
+    while(widget->width()>lastcloudX)
+    {
+        painter->drawPixmap(lastcloudX,skyOffset+(endOfGrass-skyOffset)/4/*16%*/,cloud.width(),    cloud.height(),    cloud);
+        lastcloudX+=cloud.width();
+    }
 }
