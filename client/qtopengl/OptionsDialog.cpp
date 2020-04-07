@@ -27,7 +27,7 @@ OptionsDialog::OptionsDialog() :
 
     volumeText=new CCGraphicsTextItem(this);
     volumeSlider=new CCSliderH(this);
-    volumeSlider->setValue(Settings::settings.value("audioVolume").toUInt());
+    volumeSlider->setValue(Settings::settings->value("audioVolume").toUInt());
     productKeyText=new QGraphicsTextItem(this);
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
     p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
@@ -48,14 +48,14 @@ OptionsDialog::OptionsDialog() :
     languagesListProxy->setPos(100,200);
 
     {
-        volumeSlider->setValue(Settings::settings.value("keyaudioVolume").toUInt());
-        QString key=Settings::settings.value("key").toString();
+        volumeSlider->setValue(Settings::settings->value("keyaudioVolume").toUInt());
+        QString key=Settings::settings->value("key").toString();
         if(Ultimate::ultimate.isUltimate())
             productKeyInput->setPlainText(key);
         else
             productKeyInput->setHtml("<span style=\"color:red\">"+key+"</span>");
         previousKey=key;
-        QString language=Settings::settings.value("language").toString();
+        QString language=Settings::settings->value("language").toString();
         if(language=="fr")
             languagesList->setCurrentIndex(1);
         else if(language=="es")
@@ -87,7 +87,7 @@ OptionsDialog::~OptionsDialog()
 
 QRectF OptionsDialog::boundingRect() const
 {
-    return QRectF(0,0,999999,999999);
+    return QRectF();
 }
 
 void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
@@ -138,7 +138,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         quit->setSize(83/2,94/2);
         buy->setSize(83/2,94/2);
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
-        title->setPointSize(30/2);
+        title->setPixelSize(30/2);
         font.setPixelSize(30/2);
     }
     else {
@@ -146,7 +146,7 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         quit->setSize(83,94);
         buy->setSize(83,94);
         label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
-        title->setPointSize(30);
+        title->setPixelSize(30);
         font.setPixelSize(30);
     }
     volumeText->setFont(font);
@@ -230,7 +230,7 @@ void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
 void OptionsDialog::volumeSliderChange()
 {
     AudioGL::audio->setVolume(volumeSlider->value());
-    Settings::settings.setValue("audioVolume",volumeSlider->value());
+    Settings::settings->setValue("audioVolume",volumeSlider->value());
 }
 
 void OptionsDialog::productKeyChange()
@@ -239,7 +239,7 @@ void OptionsDialog::productKeyChange()
     if(key==previousKey)
         return;
     previousKey=key;
-    Settings::settings.setValue("key",key);
+    Settings::settings->setValue("key",key);
     if(Ultimate::ultimate.setKey(key.toStdString()))
         productKeyInput->setPlainText(key);
     else
@@ -252,16 +252,16 @@ void OptionsDialog::languagesChange(int)
     {
     default:
     case 0:
-    Settings::settings.setValue("language","en");
+    Settings::settings->setValue("language","en");
     break;
     case 1:
-    Settings::settings.setValue("language","fr");
+    Settings::settings->setValue("language","fr");
     break;
     case 2:
-    Settings::settings.setValue("language","es");
+    Settings::settings->setValue("language","es");
     break;
     }
-    Language::language.setLanguage(Settings::settings.value("language").toString());
+    Language::language.setLanguage(Settings::settings->value("language").toString());
 }
 
 void OptionsDialog::newLanguage()

@@ -35,7 +35,7 @@ protected:
     void openMulti();
     void backMain();
     void closeOptions();
-    void connectToServer(Multi::ConnexionInfo connexionInfo,QString login,QString pass);
+    void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     void disconnectedFromServer();

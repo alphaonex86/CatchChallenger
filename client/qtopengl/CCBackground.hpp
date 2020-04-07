@@ -21,13 +21,14 @@ private:
     void grassSlot();
     void treebackSlot();
     void treefrontSlot();
+    void cloudSlot();
     unsigned int getTargetZoom(QWidget *widget);
     void updateSlot();
     QRectF boundingRect() const override;
 
     unsigned int zoom;
-    int grassMove,treebackMove,treefrontMove;
-    QTimer grassTimer,treebackTimer,treefrontTimer;
+    int grassMove,treebackMove,treefrontMove,cloudMove;
+    QTimer grassTimer,treebackTimer,treefrontTimer,cloudTimer;
     QTimer updateTimer;
     std::vector<unsigned int> results;
 };

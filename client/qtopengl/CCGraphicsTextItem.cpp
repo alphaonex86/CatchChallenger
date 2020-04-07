@@ -12,6 +12,11 @@ CCGraphicsTextItem::CCGraphicsTextItem(const QString &text, QGraphicsItem *paren
 {
 }
 
+void CCGraphicsTextItem::setPlaceholderText(const QString &text)
+{
+    this->m_placeholder=text;
+}
+
 void CCGraphicsTextItem::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget)
 {
     QStyleOptionGraphicsItem opt(*option);
@@ -25,12 +30,21 @@ void CCGraphicsTextItem::paint(QPainter* painter, const QStyleOptionGraphicsItem
     painter->setBrush(Qt::green);*/
     //painter->drawRect(whateverRectangle());
 
+    // You can use these to decide when you draw
+    bool placeHolder=false;
+    bool textEditingMode = (textInteractionFlags() & Qt::TextEditorInteraction);
+    bool isSelected = (option->state & QStyle::State_Selected);
+    if(!textEditingMode && !isSelected && toPlainText().isEmpty() && !m_placeholder.isEmpty())
+    {
+        setHtml("<span style=\"color:grey;\">"+m_placeholder+"</span>");
+        placeHolder=true;
+    }
+
     // Call the parent to do the actual text drawing
     QGraphicsTextItem::paint(painter, &opt, widget);
 
-    // You can use these to decide when you draw
-    bool textEditingMode = (textInteractionFlags() & Qt::TextEditorInteraction);
-    bool isSelected = (option->state & QStyle::State_Selected);
+    if(placeHolder)
+        setHtml("");
 
     // Draw your rectangle - can be different in selected mode or editing mode if you wish
 
