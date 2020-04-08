@@ -52,7 +52,7 @@ void CCGraphicsTextItem::paint(QPainter* painter, const QStyleOptionGraphicsItem
     {
         // You can change pen thickness for the selection outline if you like
         painter->setPen(Qt::NoPen);
-        painter->setBrush(Qt::magenta);
-        painter->drawRect(0,0,widget->width(),widget->height());
+        painter->setBrush(Qt::transparent);
+        //painter->drawRect(0,0,widget->width(),widget->height());
     }
 }

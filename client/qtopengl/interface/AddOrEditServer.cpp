@@ -41,20 +41,31 @@ AddOrEditServer::AddOrEditServer() :
     m_type->addItem(QString("WS"));
     typeListProxy->setWidget(m_type);
     serverText=new QGraphicsTextItem(this);
+    serverText->setVisible(false);
     serverBackground=new QGraphicsPixmapItem(this);
     serverInput=new CCGraphicsTextItem(this);
+    serverInput->setTextInteractionFlags(Qt::TextEditorInteraction);
+    serverInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
     portBackground=new QGraphicsPixmapItem(p,this);
     portInput=new CCGraphicsTextItem(this);
+    portInput->setTextInteractionFlags(Qt::TextEditorInteraction);
+    portInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
 
     nameText=new QGraphicsTextItem(this);
     nameBackground=new QGraphicsPixmapItem(p,this);
     nameInput=new CCGraphicsTextItem(this);
+    nameInput->setTextInteractionFlags(Qt::TextEditorInteraction);
+    nameInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
 
     proxyText=new QGraphicsTextItem(this);
     proxyBackground=new QGraphicsPixmapItem(p,this);
     proxyInput=new CCGraphicsTextItem(this);
+    proxyInput->setTextInteractionFlags(Qt::TextEditorInteraction);
+    proxyInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
     proxyPortBackground=new QGraphicsPixmapItem(p,this);
     proxyPortInput=new CCGraphicsTextItem(this);
+    proxyPortInput->setTextInteractionFlags(Qt::TextEditorInteraction);
+    proxyPortInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
 
     warning=new QGraphicsTextItem(this);
     warning->setVisible(false);
@@ -67,6 +78,18 @@ AddOrEditServer::AddOrEditServer() :
         abort();
     if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddOrEditServer::on_type_currentIndexChanged,Qt::QueuedConnection))
         abort();
+
+    if(!connect(serverInput->document(),&QTextDocument::contentsChanged,this,&AddOrEditServer::serverChange,Qt::QueuedConnection))
+        abort();
+    if(!connect(portInput->document(),&QTextDocument::contentsChanged,this,&AddOrEditServer::portChange,Qt::QueuedConnection))
+        abort();
+    if(!connect(nameInput->document(),&QTextDocument::contentsChanged,this,&AddOrEditServer::nameChange,Qt::QueuedConnection))
+        abort();
+    if(!connect(proxyInput->document(),&QTextDocument::contentsChanged,this,&AddOrEditServer::proxyChange,Qt::QueuedConnection))
+        abort();
+    if(!connect(proxyPortInput->document(),&QTextDocument::contentsChanged,this,&AddOrEditServer::proxyPortChange,Qt::QueuedConnection))
+        abort();
+    on_type_currentIndexChanged(0);
 
     newLanguage();
 }
@@ -186,10 +209,17 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
             (unsigned int)nameBackground->pixmap().height()!=nameBackgroundNewHeight)
     {
         QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
-        QPixmap serverPix=p.scaled(serverBackgroundNewWidth*3/4,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        serverBackground->setPixmap(serverPix);
-        QPixmap portPix=p.scaled(serverBackgroundNewWidth*1/4,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        portBackground->setPixmap(portPix);
+        if(portInput->isVisible())
+        {
+            QPixmap serverPix=p.scaled(serverBackgroundNewWidth*3/4,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            serverBackground->setPixmap(serverPix);
+            QPixmap portPix=p.scaled(serverBackgroundNewWidth*1/4,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            portBackground->setPixmap(portPix);
+        }
+        else {
+            QPixmap serverPix=p.scaled(serverBackgroundNewWidth,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+            serverBackground->setPixmap(serverPix);
+        }
         QPixmap namePix=p.scaled(nameBackgroundNewWidth,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
         nameBackground->setPixmap(namePix);
         QPixmap proxyPix=p.scaled(proxyBackgroundNewWidth*3/4,nameBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
@@ -198,14 +228,35 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
         proxyPortBackground->setPixmap(proxyPortPix);
     }
     {
+        typeListProxy->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
         serverText->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
         const unsigned int serverBackgroundW=serverText->x()+serverTextRect.width();
         serverBackground->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverBackground->boundingRect().height())/2);
         serverInput->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
         serverInput->setTextWidth(serverBackground->boundingRect().width());
-        portBackground->setPos(serverBackgroundW+serverBackground->boundingRect().width(),serverText->y()+(serverTextRect.height()-serverBackground->boundingRect().height())/2);
-        portInput->setPos(serverBackgroundW+serverBackground->boundingRect().width(),serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
-        portInput->setTextWidth(portBackground->boundingRect().width());
+        if(portInput->isVisible())
+        {
+            portBackground->setPos(serverBackgroundW+serverBackground->boundingRect().width(),serverText->y()+(serverTextRect.height()-serverBackground->boundingRect().height())/2);
+            portInput->setPos(serverBackgroundW+serverBackground->boundingRect().width(),serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
+            portInput->setTextWidth(portBackground->boundingRect().width());
+        }
+    }
+    {
+        nameText->setPos(x+wdialog->currentBorderSize()*2,serverText->y()+serverTextRect.height()+space);
+        const unsigned int nameBackgroundW=nameText->x()+nameTextRect.width();
+        nameBackground->setPos(nameBackgroundW,nameText->y()+(nameTextRect.height()-nameBackground->boundingRect().height())/2);
+        nameInput->setPos(nameBackgroundW,nameText->y()+(nameTextRect.height()-nameInput->boundingRect().height())/2);
+        nameInput->setTextWidth(nameBackground->boundingRect().width());
+    }
+    {
+        proxyText->setPos(x+wdialog->currentBorderSize()*2,nameText->y()+nameTextRect.height()+space);
+        const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
+        proxyBackground->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyBackground->boundingRect().height())/2);
+        proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
+        proxyInput->setTextWidth(proxyBackground->boundingRect().width());
+        proxyPortBackground->setPos(proxyBackgroundW+proxyBackground->boundingRect().width(),proxyText->y()+(proxyTextRect.height()-proxyBackground->boundingRect().height())/2);
+        proxyPortInput->setPos(proxyBackgroundW+proxyBackground->boundingRect().width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
+        proxyPortInput->setTextWidth(proxyPortBackground->boundingRect().width());
     }
 }
 
@@ -291,6 +342,26 @@ void AddOrEditServer::on_ok_clicked()
             warning->setVisible(true);
             return;
         }
+        if(!portInput->toPlainText().contains(QRegularExpression("^[0-9]+$")))
+        {
+            warning->setHtml(tr("The port seam don't be a valid number"));
+            warning->setVisible(true);
+            return;
+        }
+        bool ok=false;
+        auto i=portInput->toPlainText().toUInt(&ok);
+        if(!ok)
+        {
+            warning->setHtml(tr("The port seam don't be a valid number"));
+            warning->setVisible(true);
+            return;
+        }
+        if(i>65535)
+        {
+            warning->setHtml(tr("The port seam to big number"));
+            warning->setVisible(true);
+            return;
+        }
     }
     else if(type()==1)
     {
@@ -328,7 +399,7 @@ uint16_t AddOrEditServer::proxyPort() const
 
 QString AddOrEditServer::name() const
 {
-    return nameText->toPlainText();
+    return nameInput->toPlainText();
 }
 
 void AddOrEditServer::setServer(const QString &server)
@@ -366,10 +437,12 @@ void AddOrEditServer::on_type_currentIndexChanged(int index)
     switch(index) {
     case 0:
         portInput->show();
+        portBackground->show();
         serverInput->setPlaceholderText("www.server.com");
         break;
     case 1:
         portInput->hide();
+        portBackground->hide();
         serverInput->setPlaceholderText("ws://www.server.com:9999/");
         break;
     default:
@@ -381,5 +454,55 @@ void AddOrEditServer::on_cancel_clicked()
 {
     ok=false;
     emit quitOption();
+}
+
+void AddOrEditServer::serverChange()
+{
+    QString key=serverInput->document()->toPlainText();
+    if(key==serverPrevious)
+        return;
+    key.remove(QRegularExpression("[<>\n\r\t]"));
+    serverPrevious=key;
+    serverInput->setPlainText(key);
+}
+
+void AddOrEditServer::portChange()
+{
+    QString key=portInput->document()->toPlainText();
+    if(key==portPrevious)
+        return;
+    key.remove(QRegularExpression("[^0-9]"));
+    portPrevious=key;
+    portInput->setPlainText(key);
+}
+
+void AddOrEditServer::nameChange()
+{
+    QString key=nameInput->document()->toPlainText();
+    if(key==namePrevious)
+        return;
+    key.remove(QRegularExpression("[<>\n\r\t]"));
+    namePrevious=key;
+    nameInput->setPlainText(key);
+}
+
+void AddOrEditServer::proxyChange()
+{
+    QString key=proxyInput->document()->toPlainText();
+    if(key==proxyPrevious)
+        return;
+    key.remove(QRegularExpression("[<>\n\r\t]"));
+    proxyPrevious=key;
+    proxyInput->setPlainText(key);
+}
+
+void AddOrEditServer::proxyPortChange()
+{
+    QString key=proxyPortInput->document()->toPlainText();
+    if(key==proxyPortPrevious)
+        return;
+    key.remove(QRegularExpression("[^0-9]"));
+    proxyPortPrevious=key;
+    proxyPortInput->setPlainText(key);
 }
 
