@@ -854,10 +854,10 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     unsigned int y=w->height()-space-server_select->height()-space-server_add->height();
     server_add->setPos(tXTButton+tWidthTButtonOffset,y);
     tWidthTButtonOffset+=server_add->width()+space;
-    server_remove->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=server_remove->width()+space;
     server_edit->setPos(tXTButton+tWidthTButtonOffset,y);
     tWidthTButtonOffset+=server_edit->width()+space;
+    server_remove->setPos(tXTButton+tWidthTButtonOffset,y);
+    tWidthTButtonOffset+=server_remove->width()+space;
     server_refresh->setPos(tXTButton+tWidthTButtonOffset,y);
 
     tWidthTButton=server_select->width()+space+
