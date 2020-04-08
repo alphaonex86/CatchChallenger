@@ -71,6 +71,18 @@ private:
 
     int x,y;
     bool ok;
+
+    QString serverPrevious;
+    QString portPrevious;
+    QString namePrevious;
+    QString proxyPrevious;
+    QString proxyPortPrevious;
+private slots:
+    void serverChange();
+    void portChange();
+    void nameChange();
+    void proxyChange();
+    void proxyPortChange();
 signals:
     void quitOption();
 };
