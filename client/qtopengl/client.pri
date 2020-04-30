@@ -272,7 +272,11 @@ SOURCES += \
     $$PWD/MultiItem.cpp \
     $$PWD/ConnexionInfo.cpp \
     $$PWD/CCScrollZone.cpp \
-    $$PWD/interface/AddOrEditServer.cpp
+    $$PWD/LineEdit.cpp \
+    $$PWD/ComboBox.cpp \
+    $$PWD/SpinBox.cpp \
+    $$PWD/above/AddOrEditServer.cpp \
+    $$PWD/above/OptionsDialog.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -311,7 +315,11 @@ HEADERS  += \
     $$PWD/MultiItem.hpp \
     $$PWD/ConnexionInfo.hpp \
     $$PWD/CCScrollZone.hpp \
-    $$PWD/interface/AddOrEditServer.hpp
+    $$PWD/LineEdit.hpp \
+    $$PWD/ComboBox.hpp \
+    $$PWD/SpinBox.hpp \
+    $$PWD/above/AddOrEditServer.hpp \
+    $$PWD/above/OptionsDialog.hpp
 
 
 wasm: {
@@ -347,11 +355,8 @@ SOURCES += \
     $$PWD/LoadingScreen.cpp \
     $$PWD/CCWidget.cpp \
     $$PWD/CustomButton.cpp \
-    $$PWD/MainScreen.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/ScreenTransition.cpp \
-    $$PWD/Multi.cpp \
-    $$PWD/OptionsDialog.cpp \
     $$PWD/CCBackground.cpp \
     $$PWD/CCprogressbar.cpp \
     $$PWD/../qt/Api_client_real.cpp \
@@ -391,11 +396,8 @@ HEADERS  += \
     $$PWD/CustomButton.hpp \
     $$PWD/LoadingScreen.hpp \
     $$PWD/DisplayStructures.hpp \
-    $$PWD/MainScreen.hpp \
     $$PWD/Map_client.hpp \
-    $$PWD/OptionsDialog.hpp \
     $$PWD/ScreenTransition.hpp \
-    $$PWD/Multi.hpp \
     $$PWD/CCBackground.hpp \
     $$PWD/../qt/Api_client_real.hpp \
     $$PWD/../qt/Api_client_virtual.hpp \

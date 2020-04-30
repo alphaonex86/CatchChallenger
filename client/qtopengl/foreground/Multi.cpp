@@ -1,9 +1,9 @@
 #include "Multi.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/tinyXML2/tinyxml2.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../qt/ClientVariable.hpp"
-#include "LanguagesSelect.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../../general/base/cpp11addition.hpp"
+#include "../../qt/ClientVariable.hpp"
+#include "../LanguagesSelect.hpp"
 //#include "AddServer.h"
 #include <iostream>
 #include <QRegularExpression>
@@ -12,19 +12,20 @@
 #include <QStandardPaths>
 #include <utime.h>
 #include <QFileInfo>
-#include "../qt/Ultimate.hpp"
-#include "../../general/base/Version.hpp"
+#include "../../qt/Ultimate.hpp"
+#include "../../../general/base/Version.hpp"
 //#include "PlatformMacro.hpp"
 #include <QNetworkRequest>
 #include <QDir>
 //#include "Login.hpp"
-#include "../qt/Settings.hpp"
+#include "../../qt/Settings.hpp"
 #include <QGraphicsProxyWidget>
 #include <QLayout>
-#include "../qt/PlatformMacro.hpp"
-#include "Language.hpp"
-#include "MultiItem.hpp"
-#include "interface/AddOrEditServer.hpp"
+#include "../../qt/PlatformMacro.hpp"
+#include "../Language.hpp"
+#include "../MultiItem.hpp"
+#include "../above/AddOrEditServer.hpp"
+//#include "Login.hpp"
 
 Multi::Multi() :
     /*addServer(nullptr),
@@ -182,7 +183,9 @@ void Multi::server_add_finished()
 
     connexionInfo.proxyHost=addServer->proxyServer();
     connexionInfo.proxyPort=addServer->proxyPort();
-    mergedConnexionInfoList.push_back(connexionInfo);
+    temp_customConnexionInfoList.push_back(connexionInfo);
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
 }
@@ -191,10 +194,54 @@ void Multi::server_edit_clicked()
 {
     if(addServer!=nullptr)
         delete addServer;
-    addServer=new AddOrEditServer();
-    if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_add_finished))
-        abort();
-    emit setAbove(addServer);
+
+    if(selectedServer.unique_code.isEmpty())
+        return;
+    unsigned int index=0;
+    while(index<mergedConnexionInfoList.size())
+    {
+        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
+        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
+        {
+            if(!connexionInfo.isCustom)
+                return;
+            addServer=new AddOrEditServer();
+            #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+            if(connexionInfo.ws.isEmpty())
+            {
+                addServer->setType(0);
+                addServer->setServer(connexionInfo.host);
+                addServer->setPort(connexionInfo.port);
+            }
+            else
+            {
+                addServer->setType(1);
+                addServer->setServer(connexionInfo.ws);
+            }
+            #else
+                #if defined(NOTCPSOCKET)
+                addServer->setType(1);
+                addServer->setServer(connexionInfo.ws);
+                #else
+                    #if defined(NOWEBSOCKET)
+                    addServer->setType(0);
+                    addServer->setServer(connexionInfo.host);
+                    addServer->setPort(connexionInfo.port);
+                    #endif
+                #endif
+            #endif
+            addServer->setName(connexionInfo.name);
+            addServer->setProxyServer(connexionInfo.proxyHost);
+            addServer->setProxyPort(connexionInfo.proxyPort);
+            addServer->setEdit(true);
+            if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_edit_finished))
+                abort();
+            emit setAbove(addServer);
+            return;
+        }
+        index++;
+    }
+    std::cerr << "remove server not found" << std::endl;
 }
 
 void Multi::server_edit_finished()
@@ -207,34 +254,43 @@ void Multi::server_edit_finished()
     #ifdef __EMSCRIPTEN__
     std::cerr << "AddOrEditServer returned" <<  std::endl;
     #endif
-    ConnexionInfo connexionInfo;
-    connexionInfo.connexionCounter=0;
-    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-
-    connexionInfo.name=addServer->name();
-    connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
-    connexionInfo.isCustom=true;
-
-    if(addServer->type()==0)
+    unsigned int index=0;
+    while(index<temp_customConnexionInfoList.size())
     {
-        connexionInfo.port=addServer->port();
-        #ifndef NOTCPSOCKET
-        connexionInfo.host=addServer->server();
-        #endif
-        connexionInfo.ws.clear();
-    }
-    else
-    {
-        connexionInfo.port=0;
-        connexionInfo.host.clear();
-        #ifndef NOWEBSOCKET
-        connexionInfo.ws=addServer->server();
-        #endif
-    }
+        ConnexionInfo &connexionInfo=temp_customConnexionInfoList[index];
+        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
+        {
+            if(!connexionInfo.isCustom)
+                return;
 
-    connexionInfo.proxyHost=addServer->proxyServer();
-    connexionInfo.proxyPort=addServer->proxyPort();
-    mergedConnexionInfoList.push_back(connexionInfo);
+            connexionInfo.name=addServer->name();
+            connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
+            connexionInfo.isCustom=true;
+
+            if(addServer->type()==0)
+            {
+                connexionInfo.port=addServer->port();
+                #ifndef NOTCPSOCKET
+                connexionInfo.host=addServer->server();
+                #endif
+                connexionInfo.ws.clear();
+            }
+            else
+            {
+                connexionInfo.port=0;
+                connexionInfo.host.clear();
+                #ifndef NOWEBSOCKET
+                connexionInfo.ws=addServer->server();
+                #endif
+            }
+
+            connexionInfo.proxyHost=addServer->proxyServer();
+            connexionInfo.proxyPort=addServer->proxyPort();
+        }
+        index++;
+    }
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+        mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
 }
@@ -244,23 +300,24 @@ void Multi::server_remove_clicked()
     if(selectedServer.unique_code.isEmpty())
         return;
     unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
+    while(index<temp_customConnexionInfoList.size())
     {
-        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
+        ConnexionInfo &connexionInfo=temp_customConnexionInfoList[index];
         if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
         {
             if(!connexionInfo.isCustom)
                 return;
-            mergedConnexionInfoList.erase(mergedConnexionInfoList.begin()+index);
-            saveConnexionInfoList();
+            temp_customConnexionInfoList.erase(temp_customConnexionInfoList.begin()+index);
             selectedServer.unique_code.clear();
             selectedServer.isCustom=false;
-            displayServerList();
-            return;
+            break;
         }
         index++;
     }
-    std::cerr << "remove server not found" << std::endl;
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    saveConnexionInfoList();
+    displayServerList();
 }
 
 void Multi::httpFinished()
@@ -327,15 +384,17 @@ void Multi::httpFinished()
 
 void Multi::saveConnexionInfoList()
 {
+    QSet<QString> valid;
     unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
+    while(index<temp_customConnexionInfoList.size())
     {
-        const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
+        const ConnexionInfo &connexionInfo=temp_customConnexionInfoList.at(index);
         if(connexionInfo.unique_code.isEmpty())
             abort();
 
         if(connexionInfo.isCustom)
         {
+            valid.insert(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
             Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(connexionInfo.unique_code));
             if(!connexionInfo.ws.isEmpty())
             {
@@ -363,6 +422,15 @@ void Multi::saveConnexionInfoList()
         Settings::settings->setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);
         Settings::settings->setValue(QStringLiteral("proxyPort"),connexionInfo.proxyPort);
         Settings::settings->endGroup();
+        index++;
+    }
+    QStringList groups=Settings::settings->childGroups();
+    index=0;
+    while(index<groups.size())
+    {
+        const QString &groupName=groups.at(index);
+        if(groupName.startsWith("Custom-") && !valid.contains(groupName))
+            Settings::settings->remove(groupName);
         index++;
     }
     Settings::settings->sync();
@@ -719,7 +787,7 @@ void Multi::on_server_refresh_clicked()
 
 void Multi::server_select_clicked()
 {
-    /*if(login!=nullptr)
+/*    if(login!=nullptr)
         delete login;
     login=new Login(this);
     if(!connect(login,&QDialog::accepted,this,&Multi::server_select_finished))
