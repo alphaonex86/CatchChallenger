@@ -9,6 +9,8 @@
 #include "../CCDialogTitle.hpp"
 #include "../CCGraphicsTextItem.hpp"
 #include "../CCSliderH.hpp"
+#include "../LineEdit.hpp"
+#include "../SpinBox.hpp"
 
 class AddOrEditServer : public QObject, public ScreenInput
 {
@@ -24,14 +26,14 @@ public:
     void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
 
     int type() const;
-    void setType(const int &type);
-    void setEdit(const bool &edit);
     void on_ok_clicked();
     QString server() const;
     uint16_t port() const;
     QString proxyServer() const;
     uint16_t proxyPort() const;
     QString name() const;
+    void setType(const int &type);
+    void setEdit(const bool &edit);
     void setServer(const QString &server);
     void setPort(const uint16_t &port);
     void setName(const QString &name);
@@ -43,6 +45,7 @@ public:
 private slots:
     void newLanguage();
 private:
+    bool edit;
     CCWidget *wdialog;
     CustomButton *quit;
     CCDialogTitle *title;
@@ -51,21 +54,17 @@ private:
 
     QComboBox *m_type;
     QGraphicsProxyWidget *typeListProxy;
+
     QGraphicsTextItem *serverText;
-    QGraphicsPixmapItem *serverBackground;
-    CCGraphicsTextItem *serverInput;
-    QGraphicsPixmapItem *portBackground;
-    CCGraphicsTextItem *portInput;
+    LineEdit *serverInput;
+    SpinBox *portInput;
 
     QGraphicsTextItem *nameText;
-    QGraphicsPixmapItem *nameBackground;
-    CCGraphicsTextItem *nameInput;
+    LineEdit *nameInput;
 
     QGraphicsTextItem *proxyText;
-    QGraphicsPixmapItem *proxyBackground;
-    CCGraphicsTextItem *proxyInput;
-    QGraphicsPixmapItem *proxyPortBackground;
-    CCGraphicsTextItem *proxyPortInput;
+    LineEdit *proxyInput;
+    SpinBox *proxyPortInput;
 
     QGraphicsTextItem *warning;
 
@@ -77,12 +76,6 @@ private:
     QString namePrevious;
     QString proxyPrevious;
     QString proxyPortPrevious;
-private slots:
-    void serverChange();
-    void portChange();
-    void nameChange();
-    void proxyChange();
-    void proxyPortChange();
 signals:
     void quitOption();
 };

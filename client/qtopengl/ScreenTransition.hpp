@@ -4,10 +4,10 @@
 #include <QWidget>
 #include "CCBackground.hpp"
 #include "LoadingScreen.hpp"
-#include "OptionsDialog.hpp"
-#include "MainScreen.hpp"
+#include "above/OptionsDialog.hpp"
+#include "foreground/MainScreen.hpp"
 //#include "Solo.h"
-#include "Multi.hpp"
+#include "foreground/Multi.hpp"
 //#include "Login.h"
 //#include "interface/BaseWindow.h"
 #include "ConnexionManager.hpp"

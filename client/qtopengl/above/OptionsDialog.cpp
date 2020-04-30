@@ -1,14 +1,15 @@
 #include "OptionsDialog.hpp"
-#include "../qt/GameLoader.hpp"
-#include "../qt/Settings.hpp"
+#include "../../qt/GameLoader.hpp"
+#include "../../qt/Settings.hpp"
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
-#include "AudioGL.hpp"
-#include "../qt/Ultimate.hpp"
-#include "Language.hpp"
+#include "../AudioGL.hpp"
+#include "../../qt/Ultimate.hpp"
+#include "../Language.hpp"
 #include <QDesktopServices>
+#include <QLineEdit>
 
 OptionsDialog::OptionsDialog() :
     wdialog(new CCWidget(this)),
@@ -31,29 +32,25 @@ OptionsDialog::OptionsDialog() :
     productKeyText=new QGraphicsTextItem(this);
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
     p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-    productKeyBackground=new QGraphicsPixmapItem(p,this);
-    productKeyInput=new CCGraphicsTextItem(this);
-    productKeyInput->setTextInteractionFlags(Qt::TextEditorInteraction);
-    productKeyInput->setFlags(ItemIsSelectable | ItemIsMovable | ItemIsFocusable);
+    productKeyInput=new LineEdit(this);
     buy=new CustomButton(":/CC/images/interface/buy.png",this);
     buy->updateTextPercent(75);
 
     languagesText=new CCGraphicsTextItem(this);
-    languagesList=new QComboBox();
-    languagesListProxy=new QGraphicsProxyWidget(this,Qt::Widget);
-    languagesListProxy->setWidget(languagesList);
+    languagesList=new ComboBox(this);
     languagesList->addItem("English");
     languagesList->addItem("French");
     languagesList->addItem("Spanish");
-    languagesListProxy->setPos(100,200);
+    languagesList->setPos(100,200);
 
     {
         volumeSlider->setValue(Settings::settings->value("keyaudioVolume").toUInt());
         QString key=Settings::settings->value("key").toString();
+        productKeyInput->setText(key);
         if(Ultimate::ultimate.isUltimate())
-            productKeyInput->setPlainText(key);
+            productKeyInput->setStyleSheet("");
         else
-            productKeyInput->setHtml("<span style=\"color:red\">"+key+"</span>");
+            productKeyInput->setStyleSheet("color:red");
         previousKey=key;
         QString language=Settings::settings->value("language").toString();
         if(language=="fr")
@@ -66,9 +63,9 @@ OptionsDialog::OptionsDialog() :
 
     if(!connect(volumeSlider,&CCSliderH::sliderReleased,this,&OptionsDialog::volumeSliderChange))
         abort();
-    if(!connect(productKeyInput->document(),&QTextDocument::contentsChanged,this,&OptionsDialog::productKeyChange,Qt::QueuedConnection))
+    if(!connect(productKeyInput,&LineEdit::textChanged,this,&OptionsDialog::productKeyChange,Qt::QueuedConnection))
         abort();
-    if(!connect(languagesList,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&OptionsDialog::languagesChange))
+    if(!connect(languagesList,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OptionsDialog::languagesChange))
         abort();
     if(!connect(&Language::language,&Language::newLanguage,this,&OptionsDialog::newLanguage,Qt::QueuedConnection))
         abort();
@@ -170,13 +167,8 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     const QRectF &productKeyTextRect=productKeyText->boundingRect();
 
     const unsigned int &productKeyBackgroundNewWidth=idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4-10-buy->width();
-    if((unsigned int)productKeyBackground->pixmap().width()!=productKeyBackgroundNewWidth ||
-            (unsigned int)productKeyBackground->pixmap().height()!=productKeyBackgroundNewHeight)
-    {
-        QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
-        p=p.scaled(productKeyBackgroundNewWidth,productKeyBackgroundNewHeight,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-        productKeyBackground->setPixmap(p);
-    }
+    productKeyInput->setMaximumSize(productKeyBackgroundNewWidth,productKeyBackgroundNewHeight);
+    productKeyInput->setMinimumSize(productKeyBackgroundNewWidth,productKeyBackgroundNewHeight);
 
     quit->setPos(x+(idealW-quit->width())/2,y+idealH-quit->height()/2);
     const QRectF trect=title->boundingRect();
@@ -191,17 +183,15 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     {
         productKeyText->setPos(x+wdialog->currentBorderSize()*2,volumeText->y()+volumeTextRect.height()+10);
         const unsigned int productKeyBackgroundW=productKeyText->x()+productKeyTextRect.width();
-        productKeyBackground->setPos(productKeyBackgroundW,productKeyText->y()+(productKeyTextRect.height()-productKeyBackground->boundingRect().height())/2);
         productKeyInput->setPos(productKeyBackgroundW,productKeyText->y()+(productKeyTextRect.height()-productKeyInput->boundingRect().height())/2);
-        productKeyInput->setTextWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
-        buy->setPos(productKeyBackgroundW+productKeyBackground->boundingRect().width()+10,productKeyText->y()+(productKeyTextRect.height()-buy->boundingRect().height())/2);
+        buy->setPos(productKeyBackgroundW+productKeyBackgroundNewWidth+10,productKeyText->y()+(productKeyTextRect.height()-buy->boundingRect().height())/2);
     }
     {
         languagesText->setPos(x+wdialog->currentBorderSize()*2,productKeyText->y()+volumeTextRect.height()+10);
         const unsigned int productKeyBackgroundW=languagesText->x()+productKeyTextRect.width();
-        languagesListProxy->setPos(productKeyBackgroundW,languagesText->y()+(productKeyTextRect.height()-languagesListProxy->boundingRect().height())/2);
-        languagesListProxy->setMinimumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
-        languagesListProxy->setMaximumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
+        languagesList->setPos(productKeyBackgroundW,languagesText->y()+(productKeyTextRect.height()-languagesList->boundingRect().height())/2);
+        languagesList->setMinimumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
+        languagesList->setMaximumWidth(idealW-productKeyTextRect.width()-wdialog->currentBorderSize()*4);
     }
 }
 
@@ -235,15 +225,15 @@ void OptionsDialog::volumeSliderChange()
 
 void OptionsDialog::productKeyChange()
 {
-    QString key=productKeyInput->document()->toPlainText();
+    QString key=productKeyInput->text();
     if(key==previousKey)
         return;
     previousKey=key;
     Settings::settings->setValue("key",key);
     if(Ultimate::ultimate.setKey(key.toStdString()))
-        productKeyInput->setPlainText(key);
+        productKeyInput->setStyleSheet("");
     else
-        productKeyInput->setHtml("<span style=\"color:red\">"+key+"</span>");
+        productKeyInput->setStyleSheet("color:red");
 }
 
 void OptionsDialog::languagesChange(int)

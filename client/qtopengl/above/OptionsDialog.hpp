@@ -3,12 +3,14 @@
 
 #include <QWidget>
 #include <QComboBox>
-#include "CCWidget.hpp"
-#include "ScreenInput.hpp"
-#include "CustomButton.hpp"
-#include "CCDialogTitle.hpp"
-#include "CCGraphicsTextItem.hpp"
-#include "CCSliderH.hpp"
+#include "../CCWidget.hpp"
+#include "../ScreenInput.hpp"
+#include "../CustomButton.hpp"
+#include "../CCDialogTitle.hpp"
+#include "../CCGraphicsTextItem.hpp"
+#include "../CCSliderH.hpp"
+#include "../LineEdit.hpp"
+#include "../ComboBox.hpp"
 
 class OptionsDialog : public QObject, public ScreenInput
 {
@@ -38,13 +40,11 @@ private:
     CCGraphicsTextItem *volumeText;
     CCSliderH *volumeSlider;
     QGraphicsTextItem *productKeyText;
-    QGraphicsPixmapItem *productKeyBackground;
-    CCGraphicsTextItem *productKeyInput;
+    LineEdit *productKeyInput;
     CustomButton *buy;
 
     QGraphicsTextItem *languagesText;
-    QComboBox *languagesList;
-    QGraphicsProxyWidget *languagesListProxy;
+    ComboBox *languagesList;
 
     int x,y;
     QString previousKey;

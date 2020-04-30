@@ -7,11 +7,11 @@
 #include <vector>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include "CCWidget.hpp"
-#include "ScreenInput.hpp"
-#include "CustomButton.hpp"
-#include "ConnexionInfo.hpp"
-#include "CCScrollZone.hpp"
+#include "../CCWidget.hpp"
+#include "../ScreenInput.hpp"
+#include "../CustomButton.hpp"
+#include "../ConnexionInfo.hpp"
+#include "../CCScrollZone.hpp"
 
 class ListEntryEnvolued;
 class AddOrEditServer;
