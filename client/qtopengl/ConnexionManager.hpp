@@ -2,7 +2,7 @@
 #define CONNEXIONMANAGER_H
 
 #include <QObject>
-#include "Multi.hpp"
+#include "foreground/Multi.hpp"
 #include "../qt/ConnectedSocket.hpp"
 #include "interface/BaseWindow.hpp"
 

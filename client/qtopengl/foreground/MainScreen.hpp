@@ -1,15 +1,15 @@
 #ifndef MAINSCREEN_H
 #define MAINSCREEN_H
 
-#include "CustomButton.hpp"
-#include "CCWidget.hpp"
-#include "CCTitle.hpp"
-#include "ScreenInput.hpp"
-#include "../qt/FeedNews.hpp"
-#include "CCGraphicsTextItem.hpp"
+#include "../CustomButton.hpp"
+#include "../CCWidget.hpp"
+#include "../CCTitle.hpp"
+#include "../ScreenInput.hpp"
+#include "../../qt/FeedNews.hpp"
+#include "../CCGraphicsTextItem.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../qt/QInfiniteBuffer.hpp"
+#include "../../qt/QInfiniteBuffer.hpp"
 #include <QAudioOutput>
 #endif
 
