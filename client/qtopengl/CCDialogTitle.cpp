@@ -42,9 +42,11 @@ CCDialogTitle::~CCDialogTitle()
 
 void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
-    if(cache!=nullptr && !cache->isNull() && cache->width()==m_boundingRect.width() && cache->height()==m_boundingRect.height())
+    const unsigned int h=m_boundingRect.height();
+    const unsigned int w=m_boundingRect.width();
+    if(cache!=nullptr && !cache->isNull() && cache->width()==w && cache->height()==h)
     {
-        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+m_boundingRect.height()*0.1,m_boundingRect.width(),m_boundingRect.height(),*cache);
+        painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+h*0.1,w,h,*cache);
         return;
     }
     if(m_boundingRect.isEmpty())
@@ -53,17 +55,17 @@ void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
         delete cache;
     cache=new QPixmap();
 
-    QImage image(m_boundingRect.width(),m_boundingRect.height(),QImage::Format_ARGB32);
+    QImage image(w,h,QImage::Format_ARGB32);
     image.fill(Qt::transparent);
     QPainter paint;
     if(image.isNull())
         abort();
     paint.begin(&image);
-    if(lastwidth!=m_boundingRect.width() || lastheight!=m_boundingRect.height())
+    if(lastwidth!=w || lastheight!=h)
     {
         updateTextPath();
-        lastwidth=m_boundingRect.width();
-        lastheight=m_boundingRect.height();
+        lastwidth=w;
+        lastheight=h;
     }
 
     if(textPath!=nullptr && paint.isActive())
@@ -77,7 +79,7 @@ void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
         else if(font->pixelSize()<=24)
             penWidth=1.5;
         //paint.setPen(QPen(QColor(255,0,0), penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-        QLinearGradient gradient( 0, 0, 0, m_boundingRect.height() );
+        QLinearGradient gradient( 0, 0, 0, h );
         gradient.setColorAt( 0.25, "#e69900");
         gradient.setColorAt( 0.75, "#ffffff");
         paint.setPen(QPen(gradient, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
@@ -87,7 +89,7 @@ void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
 
     *cache=QPixmap::fromImage(image);
 
-    painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+m_boundingRect.height()*0.1,m_boundingRect.width(),m_boundingRect.height(),*cache);
+    painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+h*0.1,w,h,*cache);
 }
 
 QRectF CCDialogTitle::boundingRect() const
