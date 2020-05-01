@@ -1,4 +1,4 @@
-#include "BlacklistPassword.h"
+#include "BlacklistPassword.hpp"
 
 std::array<std::string, 375> BlacklistPassword::list={
 "123456",

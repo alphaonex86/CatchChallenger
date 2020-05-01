@@ -25,6 +25,7 @@
 #include "../Language.hpp"
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
+#include "../above/Login.hpp"
 //#include "Login.hpp"
 
 Multi::Multi() :
@@ -33,6 +34,7 @@ Multi::Multi() :
     reply(nullptr)
 {
     srand(time(0));
+    login=nullptr;
 
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList();
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
@@ -186,6 +188,7 @@ void Multi::server_add_finished()
     temp_customConnexionInfoList.push_back(connexionInfo);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
 }
@@ -290,7 +293,8 @@ void Multi::server_edit_finished()
         index++;
     }
     mergedConnexionInfoList=temp_customConnexionInfoList;
-        mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
 }
@@ -316,6 +320,7 @@ void Multi::server_remove_clicked()
     }
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
 }
@@ -787,37 +792,47 @@ void Multi::on_server_refresh_clicked()
 
 void Multi::server_select_clicked()
 {
-/*    if(login!=nullptr)
+    if(login!=nullptr)
         delete login;
-    login=new Login(this);
-    if(!connect(login,&QDialog::accepted,this,&Multi::server_select_finished))
-        abort();
-    if(!connect(login,&QDialog::rejected,this,&Multi::server_select_finished))
+    login=new Login();
+    if(!connect(login,&Login::quitLogin,this,&Multi::server_select_finished))
         abort();
     if(selectedServer.isCustom)
         Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
     else
         Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
     if(Settings::settings->contains("last"))
+        login->setAuth(Settings::settings->value("last").toStringList());
+    int index=0;
+    while(index<mergedConnexionInfoList.size())
     {
-        const QString loginString=Settings::settings->value("last").toString();
-        login->setLogin(loginString);
-        Settings::settings->beginGroup("auth");
-        if(Settings::settings->contains(loginString))
-            login->setPass(Settings::settings->value(loginString).toString());
-        Settings::settings->endGroup();
+        auto e=mergedConnexionInfoList.at(index);
+        if(e.isCustom==selectedServer.isCustom && e.unique_code==selectedServer.unique_code)
+        {
+            login->setLinks(e.site_page,e.register_page);
+            break;
+        }
+        index++;
     }
     Settings::settings->endGroup();
-    emit setAbove(login);*/
+    emit setAbove(login);
 }
 
 void Multi::server_select_finished()
 {
-    /*emit setAbove(nullptr);
+    emit setAbove(nullptr);
     if(login==nullptr)
         return;
     if(!login->isOk())
         return;
+    if(selectedServer.isCustom)
+        Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
+    else
+        Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
+    QStringList v=login->getAuth();
+    if(!v.isEmpty())
+        Settings::settings->setValue("last",v);
+    Settings::settings->endGroup();
     #ifdef __EMSCRIPTEN__
     std::cerr << "server_select_finished returned" <<  std::endl;
     #endif
@@ -827,13 +842,6 @@ void Multi::server_select_finished()
     else
         Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
     const QString loginString=login->getLogin();
-    Settings::settings->setValue("last",loginString);
-    if(login->getRememberPassword())
-    {
-        Settings::settings->beginGroup("auth");
-        Settings::settings->setValue(loginString,login->getPass());
-        Settings::settings->endGroup();
-    }
     Settings::settings->endGroup();
     Settings::settings->sync();
     unsigned int index=0;
@@ -849,7 +857,7 @@ void Multi::server_select_finished()
             break;
         }
         index++;
-    }*/
+    }
 }
 
 void Multi::newLanguage()

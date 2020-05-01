@@ -19,6 +19,7 @@ public:
     void setFixedSize(const QSize &s);
     void setFixedSize(int w, int h);
     void setPlaceholderText(const QString &);
+    void setEchoMode(QLineEdit::EchoMode e);
     int width() const;
     int height() const;
     QString text() const;

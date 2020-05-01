@@ -1,11 +1,12 @@
 #include "ConnexionManager.hpp"
 #include "../qt/Api_client_real.hpp"
-#include "LoadingScreen.hpp"
+#include "foreground/LoadingScreen.hpp"
 #include <iostream>
 #include <QStandardPaths>
 
 ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow, LoadingScreen *l)
 {
+    client=nullptr;
     socket=nullptr;
     #ifndef NOTCPSOCKET
     realSslSocket=nullptr;
