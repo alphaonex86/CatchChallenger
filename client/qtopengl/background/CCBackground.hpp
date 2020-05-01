@@ -5,7 +5,7 @@
 #include <QPixmap>
 #include <QTimer>
 #include <chrono>
-#include "ScreenInput.hpp"
+#include "../ScreenInput.hpp"
 
 class CCBackground : public QObject, public ScreenInput
 {

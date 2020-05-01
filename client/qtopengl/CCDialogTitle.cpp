@@ -42,8 +42,10 @@ CCDialogTitle::~CCDialogTitle()
 
 void CCDialogTitle::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
+    //this var is not inline to fix performance due to type mismatch problem
     const unsigned int h=m_boundingRect.height();
     const unsigned int w=m_boundingRect.width();
+    
     if(cache!=nullptr && !cache->isNull() && cache->width()==w && cache->height()==h)
     {
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+h*0.1,w,h,*cache);

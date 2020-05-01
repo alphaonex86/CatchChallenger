@@ -3,9 +3,9 @@
 
 #include <QTimer>
 #include <QDateTime>
-#include "CCWidget.hpp"
-#include "CCprogressbar.hpp"
-#include "ScreenInput.hpp"
+#include "../CCWidget.hpp"
+#include "../CCprogressbar.hpp"
+#include "../ScreenInput.hpp"
 
 namespace Ui {
 class LoadingScreen;
