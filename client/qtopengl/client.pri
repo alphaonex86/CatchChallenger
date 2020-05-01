@@ -276,7 +276,12 @@ SOURCES += \
     $$PWD/ComboBox.cpp \
     $$PWD/SpinBox.cpp \
     $$PWD/above/AddOrEditServer.cpp \
-    $$PWD/above/OptionsDialog.cpp
+    $$PWD/above/OptionsDialog.cpp \
+    $$PWD/above/Login.cpp \
+    $$PWD/CheckBox.cpp \
+    $$PWD/foreground/MainScreen.cpp \
+    $$PWD/foreground/Multi.cpp \
+    $$PWD/../qt/BlacklistPassword.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -319,7 +324,12 @@ HEADERS  += \
     $$PWD/ComboBox.hpp \
     $$PWD/SpinBox.hpp \
     $$PWD/above/AddOrEditServer.hpp \
-    $$PWD/above/OptionsDialog.hpp
+    $$PWD/above/OptionsDialog.hpp \
+    $$PWD/above/Login.hpp \
+    $$PWD/CheckBox.hpp \
+    $$PWD/foreground/MainScreen.hpp \
+    $$PWD/foreground/Multi.hpp \
+    $$PWD/../qt/BlacklistPassword.hpp
 
 
 wasm: {
@@ -352,12 +362,12 @@ SOURCES += \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/CCTitle.cpp \
     $$PWD/ConnexionManager.cpp \
-    $$PWD/LoadingScreen.cpp \
+    $$PWD/foreground/LoadingScreen.cpp \
     $$PWD/CCWidget.cpp \
     $$PWD/CustomButton.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/ScreenTransition.cpp \
-    $$PWD/CCBackground.cpp \
+    $$PWD/background/CCBackground.cpp \
     $$PWD/CCprogressbar.cpp \
     $$PWD/../qt/Api_client_real.cpp \
     $$PWD/../qt/Api_client_real_base.cpp \
@@ -394,11 +404,11 @@ HEADERS  += \
     $$PWD/ConnexionManager.hpp \
     $$PWD/CCWidget.hpp \
     $$PWD/CustomButton.hpp \
-    $$PWD/LoadingScreen.hpp \
+    $$PWD/foreground/LoadingScreen.hpp \
     $$PWD/DisplayStructures.hpp \
     $$PWD/Map_client.hpp \
     $$PWD/ScreenTransition.hpp \
-    $$PWD/CCBackground.hpp \
+    $$PWD/background/CCBackground.hpp \
     $$PWD/../qt/Api_client_real.hpp \
     $$PWD/../qt/Api_client_virtual.hpp \
     $$PWD/../qt/Api_protocol_Qt.hpp \
