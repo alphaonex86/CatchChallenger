@@ -58,6 +58,11 @@ void LineEdit::setPlaceholderText(const QString &t)
     m_lineEdit->setPlaceholderText(t);
 }
 
+void LineEdit::setEchoMode(QLineEdit::EchoMode e)
+{
+    m_lineEdit->setEchoMode(e);
+}
+
 int LineEdit::width() const
 {
     return m_lineEdit->width();

@@ -2,8 +2,8 @@
 #define SCREENTRANSITION_H
 
 #include <QWidget>
-#include "CCBackground.hpp"
-#include "LoadingScreen.hpp"
+#include "background/CCBackground.hpp"
+#include "foreground/LoadingScreen.hpp"
 #include "above/OptionsDialog.hpp"
 #include "foreground/MainScreen.hpp"
 //#include "Solo.h"

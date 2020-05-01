@@ -1,7 +1,7 @@
 #include "LoadingScreen.hpp"
-#include "../qt/GameLoader.hpp"
-#include "../../general/base/Version.hpp"
-#include "Language.hpp"
+#include "../../qt/GameLoader.hpp"
+#include "../../../general/base/Version.hpp"
+#include "../Language.hpp"
 #include <QWidget>
 
 LoadingScreen::LoadingScreen()
