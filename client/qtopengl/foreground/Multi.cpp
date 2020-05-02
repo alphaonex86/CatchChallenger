@@ -831,7 +831,10 @@ void Multi::server_select_finished()
         Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
     QStringList v=login->getAuth();
     if(!v.isEmpty())
+    {
         Settings::settings->setValue("last",v);
+        Settings::settings->sync();
+    }
     Settings::settings->endGroup();
     #ifdef __EMSCRIPTEN__
     std::cerr << "server_select_finished returned" <<  std::endl;

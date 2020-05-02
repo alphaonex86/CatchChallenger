@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-present, Yann Collet, Facebook, Inc.
+ * Copyright (c) 2016-2020 Yann Collet, Facebook, Inc.
  * All rights reserved.
  *
  * This source code is licensed under both the BSD-style license (found in the
@@ -17,10 +17,6 @@ extern "C" {
 
 
 #include <stddef.h>   /* size_t */
-#ifndef ZSTD_STATIC_LINKING_ONLY
-#define ZSTD_STATIC_LINKING_ONLY   /* ZSTD_customMem */
-#endif
-#include "../zstd.h"
 
 typedef struct POOL_ctx_s POOL_ctx;
 
@@ -31,9 +27,6 @@ typedef struct POOL_ctx_s POOL_ctx;
  * @return : POOL_ctx pointer on success, else NULL.
 */
 POOL_ctx* POOL_create(size_t numThreads, size_t queueSize);
-
-POOL_ctx* POOL_create_advanced(size_t numThreads, size_t queueSize,
-                               ZSTD_customMem customMem);
 
 /*! POOL_free() :
  *  Free a thread pool returned by POOL_create().
@@ -77,6 +70,7 @@ void POOL_add(POOL_ctx* ctx, POOL_function function, void* opaque);
  * @return : 1 if successful, 0 if not.
  */
 int POOL_tryAdd(POOL_ctx* ctx, POOL_function function, void* opaque);
+
 
 
 #if defined (__cplusplus)

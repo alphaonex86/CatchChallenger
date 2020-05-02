@@ -11,6 +11,9 @@
 //with gateway
 #include <openssl/sha.h>
 #endif
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/FacilityLib.hpp"
@@ -114,22 +117,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
+                struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if(file!=NULL)
-                {
-                    const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                    std::vector<char> hashResult;
-                    hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
-                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
-                        hashResult.size());
-                    #else
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
-                    #endif
-                    fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
-                }
+                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
@@ -230,22 +221,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
+                struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if(file!=NULL)
-                {
-                    const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                    std::vector<char> hashResult;
-                    hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
-                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
-                        hashResult.size());
-                    #else
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
-                    #endif
-                    fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
-                }
+                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
@@ -343,22 +322,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
+                struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if(file!=NULL)
-                {
-                    const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                    std::vector<char> hashResult;
-                    hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-                    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                    memcpy(reinterpret_cast<unsigned char *>(hashResult.data()),
-                        QCryptographicHash::hash(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()),QCryptographicHash::Sha224).constData(),
-                        hashResult.size());
-                    #else
-                    SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(hashResult.data()));
-                    #endif
-                    fullDatapackChecksumReturn.partialHashList.push_back(*reinterpret_cast<const int *>(hashResult.data()));
-                }
+                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
