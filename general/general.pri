@@ -60,7 +60,8 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
     $$PWD/fight/CommonFightEngineSkill.cpp \
     $$PWD/fight/CommonFightEngineWild.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
-    $$PWD/base/Version.cpp
+    $$PWD/base/Version.cpp \
+    $$PWD/xxhash/xxhash.c
 
 HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/ClientBase.hpp \
@@ -84,7 +85,8 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/PortableEndian.hpp \
     $$PWD/fight/FightLoader.hpp \
     $$PWD/fight/CommonFightEngine.hpp \
-    $$PWD/fight/CommonFightEngineBase.hpp
+    $$PWD/fight/CommonFightEngineBase.hpp \
+    $$PWD/xxhash/xxhash.h
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
