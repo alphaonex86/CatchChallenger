@@ -3,6 +3,7 @@
 #include <openssl/sha.h>
 
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/xxhash/xxhash.h"
 
 using namespace CatchChallenger;
 
@@ -177,16 +178,8 @@ void BaseServer::preload_the_datapack()
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
-                            SHA256_CTX hashFile;
-                            if(SHA224_Init(&hashFile)!=1)
-                            {
-                                std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                                abort();
-                            }
-                            SHA224_Update(&hashFile,data.data(),data.size());
                             BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                            ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                            cacheFile.partialHash=XXH32(data.data(),data.size(),0);
                             BaseServerMasterSendDatapack::datapack_file_hash_cache_base[fileName]=cacheFile;
                         }
                         #endif
@@ -316,16 +309,8 @@ void BaseServer::preload_the_datapack()
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
-                            SHA256_CTX hashFile;
-                            if(SHA224_Init(&hashFile)!=1)
-                            {
-                                std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                                abort();
-                            }
-                            SHA224_Update(&hashFile,data.data(),data.size());
                             BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                            ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                            cacheFile.partialHash=XXH32(data.data(),data.size(),0);
                             Client::datapack_file_hash_cache_main[fileName]=cacheFile;
                         }
                         #endif
@@ -398,17 +383,8 @@ void BaseServer::preload_the_datapack()
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                     {
-                        //switch the data to correct hash or drop it
-                        SHA256_CTX hashFile;
-                        if(SHA224_Init(&hashFile)!=1)
-                        {
-                            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-                            abort();
-                        }
-                        SHA224_Update(&hashFile,data.data(),data.size());
                         BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashFile);
-                        ::memcpy(&cacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+                        cacheFile.partialHash=XXH32(data.data(),data.size(),0);
                         Client::datapack_file_hash_cache_sub[fileName]=cacheFile;
                     }
                     #endif

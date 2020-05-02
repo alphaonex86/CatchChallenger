@@ -20,6 +20,7 @@ using namespace CatchChallenger;
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../tarcompressed/TarDecode.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#include "../../general/xxhash/xxhash.h"
 
 void Api_client_real::writeNewFileMain(const std::string &fileName,const std::string &data)
 {
@@ -52,6 +53,9 @@ void Api_client_real::writeNewFileMain(const std::string &fileName,const std::st
         }
         file.flush();
         file.close();
+        const uint32_t h=XXH32(data.data(),data.size(),0);
+        utimbuf butime;butime.actime=h;butime.modtime=h;
+        utime(fullPath.c_str(),&butime);
     }
 
     //send size
@@ -382,6 +386,9 @@ void Api_client_real::decodedIsFinishMain()
                     {
                         file.write(dataList.at(index).data(),dataList.at(index).size());
                         file.close();
+                        const uint32_t h=XXH32(dataList.at(index).data(),dataList.at(index).size(),0);
+                        utimbuf butime;butime.actime=h;butime.modtime=h;
+                        utime((mDatapackMain+fileList.at(index)).c_str(),&butime);
                     }
                     else
                     {
