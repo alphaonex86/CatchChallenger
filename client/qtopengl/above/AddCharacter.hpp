@@ -1,5 +1,5 @@
-#ifndef AddOrEditServer_H
-#define AddOrEditServer_H
+#ifndef AddCharacter_H
+#define AddCharacter_H
 
 #include <QObject>
 #include <QComboBox>
@@ -12,12 +12,12 @@
 #include "../LineEdit.hpp"
 #include "../SpinBox.hpp"
 
-class AddOrEditServer : public QObject, public ScreenInput
+class AddCharacter : public QObject, public ScreenInput
 {
     Q_OBJECT
 public:
-    explicit AddOrEditServer();
-    ~AddOrEditServer();
+    explicit AddCharacter();
+    ~AddCharacter();
     void resizeEvent(QResizeEvent * e);
     QRectF boundingRect() const override;
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget = nullptr) override;
@@ -25,23 +25,9 @@ public:
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
     void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
 
-    int type() const;
-    void on_ok_clicked();
-    QString server() const;
-    uint16_t port() const;
-    QString proxyServer() const;
-    uint16_t proxyPort() const;
-    QString name() const;
-    void setType(const int &type);
-    void setEdit(const bool &edit);
-    void setServer(const QString &server);
-    void setPort(const uint16_t &port);
-    void setName(const QString &name);
-    void setProxyServer(const QString &proxyServer);
-    void setProxyPort(const uint16_t &proxyPort);
+    unsigned int getProfileIndex();
     bool isOk() const;
-    void on_type_currentIndexChanged(int index);
-    void on_cancel_clicked();
+    void setDatapack(std::string path);
 private slots:
     void newLanguage();
 private:

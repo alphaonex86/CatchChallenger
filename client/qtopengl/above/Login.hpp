@@ -56,7 +56,7 @@ private:
     QStringList m_auth;
     bool validated;
 signals:
-    void quitLogin();
+    void removeAbove();
 };
 
 #endif // Login_H

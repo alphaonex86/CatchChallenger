@@ -1,11 +1,11 @@
 #ifndef MULTI_H
 #define MULTI_H
 
+#include <QNetworkAccessManager>
 #include <QString>
 #include <QHash>
 #include <QSet>
 #include <vector>
-#include <QNetworkAccessManager>
 #include "../CCWidget.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"

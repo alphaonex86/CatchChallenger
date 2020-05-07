@@ -35,7 +35,7 @@ Login::Login() :
 
     if(!connect(server_select,&CustomButton::clicked,this,&Login::validate))
         abort();
-    if(!connect(back,&CustomButton::clicked,this,&Login::quitLogin))
+    if(!connect(back,&CustomButton::clicked,this,&Login::removeAbove))
         abort();
     if(!connect(&Language::language,&Language::newLanguage,this,&Login::newLanguage,Qt::QueuedConnection))
         abort();
@@ -296,7 +296,7 @@ void Login::validate()
     }
 
     validated=true;
-    quitLogin();
+    emit removeAbove();
 }
 
 void Login::newLanguage()

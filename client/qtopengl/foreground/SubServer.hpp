@@ -2,9 +2,12 @@
 #define SubServer_H
 
 #include <QString>
+#include <QTreeWidgetItem>
+#include <QGraphicsProxyWidget>
 #include "../CCWidget.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
+#include "../ConnexionManager.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../qt/Api_client_real.hpp"
 
@@ -26,14 +29,35 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
-    void logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList);
+    void logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,ConnexionManager *connexionManager);
+private:
+    void addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView);
 private:
     std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList;
     CustomButton *server_select;
     CustomButton *back;
     QGraphicsTextItem *warning;
 
+    QTreeWidget *serverList;
+    QGraphicsProxyWidget *serverListProxy;
+
     CCWidget *wdialog;
+    uint32_t averagePlayedTime,averageLastConnect;
+    std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
+
+    static QIcon icon_server_list_star1;
+    static QIcon icon_server_list_star2;
+    static QIcon icon_server_list_star3;
+    static QIcon icon_server_list_star4;
+    static QIcon icon_server_list_star5;
+    static QIcon icon_server_list_star6;
+    static QIcon icon_server_list_stat1;
+    static QIcon icon_server_list_stat2;
+    static QIcon icon_server_list_stat3;
+    static QIcon icon_server_list_stat4;
+    static QIcon icon_server_list_bug;
+    static std::vector<QIcon> icon_server_list_color;
+    ConnexionManager *connexionManager;
 signals:
     void backMulti();
     void setAbove(ScreenInput *widget);//first plan popup

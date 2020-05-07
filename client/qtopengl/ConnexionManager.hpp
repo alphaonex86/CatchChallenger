@@ -16,7 +16,7 @@ public:
     explicit ConnexionManager(LoadingScreen *l);
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
     void selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter);
-    std::vector<CatchChallenger::ServerFromPoolForDisplay> getServerOrdenedList();
+    CatchChallenger::Api_protocol_Qt *client;
 signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
@@ -45,7 +45,6 @@ private:
     #ifndef NOWEBSOCKET
     QWebSocket *realWebSocket;
     #endif
-    CatchChallenger::Api_protocol_Qt *client;
     QString lastServer;
     LoadingScreen *l;
     uint32_t datapckFileSize;

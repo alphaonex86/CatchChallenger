@@ -23,13 +23,15 @@ LoadingScreen::LoadingScreen()
     progressbar=new CCprogressbar(this);
 
     if(GameLoader::gameLoader==nullptr)
+    {
         GameLoader::gameLoader=new GameLoader();
-    if(!QObject::connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression))
-        abort();
-    if(!QObject::connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed))
-        abort();
-    if(!connect(&Language::language,&Language::newLanguage,this,&LoadingScreen::newLanguage,Qt::QueuedConnection))
-        abort();
+        if(!QObject::connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression))
+            abort();
+        if(!QObject::connect(GameLoader::gameLoader,&GameLoader::dataIsParsed,this,&LoadingScreen::dataIsParsed))
+            abort();
+        if(!connect(&Language::language,&Language::newLanguage,this,&LoadingScreen::newLanguage,Qt::QueuedConnection))
+            abort();
+    }
 
     timer.setSingleShot(true);
     if(!QObject::connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged))
