@@ -2,35 +2,23 @@
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/tinyXML2/tinyxml2.hpp"
 #include "../../../general/base/cpp11addition.hpp"
-#include "../../qt/ClientVariable.hpp"
-#include "../LanguagesSelect.hpp"
-//#include "AddServer.h"
-#include <iostream>
-#include <QRegularExpression>
-#include <QMessageBox>
-#include <QFile>
-#include <QStandardPaths>
-#include <utime.h>
-#include <QFileInfo>
-#include "../../qt/Ultimate.hpp"
 #include "../../../general/base/Version.hpp"
-//#include "PlatformMacro.hpp"
-#include <QNetworkRequest>
-#include <QDir>
-//#include "Login.hpp"
-#include "../../qt/Settings.hpp"
-#include <QGraphicsProxyWidget>
-#include <QLayout>
 #include "../../qt/PlatformMacro.hpp"
+#include "../../qt/Settings.hpp"
+#include "../../qt/Ultimate.hpp"
 #include "../Language.hpp"
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
 #include "../above/Login.hpp"
-//#include "Login.hpp"
+#include <iostream>
+#include <utime.h>
+#include <QFile>
+#include <QDir>
+#include <QStandardPaths>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 
 Multi::Multi() :
-    /*addServer(nullptr),
-    login(nullptr),*/
     reply(nullptr)
 {
     srand(time(0));
@@ -91,7 +79,6 @@ void Multi::displayServerList()
     #error Web socket and tcp socket are both not supported
     return;
     #endif
-    std::cout << "display mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
     if(selectedServer.unique_code.isEmpty())
     {
         server_remove->setEnabled(false);
@@ -431,7 +418,7 @@ void Multi::saveConnexionInfoList()
     }
     QStringList groups=Settings::settings->childGroups();
     index=0;
-    while(index<groups.size())
+    while(index<(unsigned int)groups.size())
     {
         const QString &groupName=groups.at(index);
         if(groupName.startsWith("Custom-") && !valid.contains(groupName))
@@ -804,7 +791,7 @@ void Multi::server_select_clicked()
     if(Settings::settings->contains("last"))
         login->setAuth(Settings::settings->value("last").toStringList());
     int index=0;
-    while(index<mergedConnexionInfoList.size())
+    while(index<(unsigned int)mergedConnexionInfoList.size())
     {
         auto e=mergedConnexionInfoList.at(index);
         if(e.isCustom==selectedServer.isCustom && e.unique_code==selectedServer.unique_code)
