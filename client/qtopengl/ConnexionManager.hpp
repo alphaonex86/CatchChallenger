@@ -4,6 +4,7 @@
 #include <QObject>
 #include "foreground/Multi.hpp"
 #include "../qt/ConnectedSocket.hpp"
+#include "../../general/base/GeneralStructures.hpp"
 #include "interface/BaseWindow.hpp"
 
 class LoadingScreen;
@@ -12,8 +13,10 @@ class ConnexionManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit ConnexionManager(CatchChallenger::BaseWindow *baseWindow,LoadingScreen *l);
+    explicit ConnexionManager(LoadingScreen *l);
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
+    void selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter);
+    std::vector<CatchChallenger::ServerFromPoolForDisplay> getServerOrdenedList();
 signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
@@ -27,6 +30,13 @@ public slots:
     QString serverToDatapachPath(ConnexionInfo connexionInfo) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
+
+    void protocol_is_good();
+    void connectedOnLoginServer();
+    void connectingOnGameServer();
+    void connectedOnGameServer();
+    void haveDatapackMainSubCode();
+    void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
 private:
     CatchChallenger::ConnectedSocket *socket;
     #ifndef NOTCPSOCKET
@@ -35,7 +45,6 @@ private:
     #ifndef NOWEBSOCKET
     QWebSocket *realWebSocket;
     #endif
-    CatchChallenger::BaseWindow *baseWindow;
     CatchChallenger::Api_protocol_Qt *client;
     QString lastServer;
     LoadingScreen *l;

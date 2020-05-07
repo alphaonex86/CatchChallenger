@@ -13,7 +13,6 @@ LoadingScreen::LoadingScreen()
     else
         teacher->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/teacher.png"));
     info = new QGraphicsTextItem(widget);
-    info->setHtml(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
     info->setDefaultTextColor(QColor(64,28,02));
     version = new QGraphicsTextItem(this);
     version->setHtml(QStringLiteral("<span style=\"color:#9090f0;\">%1</span>").arg(QString::fromStdString(CatchChallenger::Version::str)));
@@ -22,9 +21,6 @@ LoadingScreen::LoadingScreen()
     font.setPixelSize(7);
     version->setFont(font);
     progressbar=new CCprogressbar(this);
-    progressbar->setMaximum(100);
-    progressbar->setMinimum(0);
-    progressbar->setValue(0);
 
     if(GameLoader::gameLoader==nullptr)
         GameLoader::gameLoader=new GameLoader();
@@ -48,10 +44,22 @@ LoadingScreen::LoadingScreen()
         abort();
     lastProgression=0;
     timerProgression=0;
+    reset();
 }
 
 LoadingScreen::~LoadingScreen()
 {
+}
+
+void LoadingScreen::reset()
+{
+    info->setHtml(tr("%1 is loading...").arg("<b>CatchChallenger</b>"));
+    progressbar->setMaximum(100);
+    progressbar->setMinimum(0);
+    progressbar->setValue(0);
+    slowDownProgressionTimer.start(10);//20x
+    lastProgression=0;
+    timerProgression=0;
 }
 
 void LoadingScreen::canBeChanged()

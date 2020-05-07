@@ -4,7 +4,7 @@
 #include <iostream>
 #include <QStandardPaths>
 
-ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow, LoadingScreen *l)
+ConnexionManager::ConnexionManager(LoadingScreen *l)
 {
     client=nullptr;
     socket=nullptr;
@@ -14,9 +14,10 @@ ConnexionManager::ConnexionManager(CatchChallenger::BaseWindow *baseWindow, Load
     #ifndef NOWEBSOCKET
     realWebSocket=nullptr;
     #endif
-    this->baseWindow=baseWindow;
     this->datapckFileSize=0;
     this->l=l;
+    l->reset();
+    l->setText(tr("Connecting..."));
 }
 
 void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login,QString pass)
@@ -70,6 +71,8 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         client->tryLogin(login.toStdString(),pass.toStdString());
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&ConnexionManager::disconnected))
         abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtnotLogged,       this,&ConnexionManager::disconnected))
+        abort();
     //connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&ConnexionManager::message,Qt::QueuedConnection);
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::logged,Qt::QueuedConnection))
         abort();
@@ -84,6 +87,19 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     if(!connect(client,               &CatchChallenger::Api_client_real::progressingDatapackFileMain,       this,&ConnexionManager::progressingDatapackFileMain))
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::progressingDatapackFileSub,       this,&ConnexionManager::progressingDatapackFileSub))
+        abort();
+
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtprotocol_is_good,       this,&ConnexionManager::protocol_is_good))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtconnectedOnLoginServer,       this,&ConnexionManager::connectedOnLoginServer))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtconnectingOnGameServer,       this,&ConnexionManager::connectingOnGameServer))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtconnectedOnGameServer,       this,&ConnexionManager::connectedOnGameServer))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,       this,&ConnexionManager::haveDatapackMainSubCode))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QtgatewayCacheUpdate,       this,&ConnexionManager::gatewayCacheUpdate))
         abort();
 
     if(!connexionInfo.proxyHost.isEmpty())
@@ -142,6 +158,20 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
     this->client=static_cast<CatchChallenger::Api_protocol_Qt *>(client);
     connectTheExternalSocket(connexionInfo,client);
+}
+
+void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)
+{
+    if(!client->selectCharacter(indexSubServer,indexCharacter))
+        errorString("BaseWindow::on_serverListSelect_clicked(), wrong serverSelected internal data");
+}
+
+std::vector<CatchChallenger::ServerFromPoolForDisplay> ConnexionManager::getServerOrdenedList()
+{
+    if(client!=nullptr)
+        return client->getServerOrdenedList();
+    else
+        return std::vector<CatchChallenger::ServerFromPoolForDisplay>();
 }
 
 void ConnexionManager::disconnected(std::string reason)
@@ -410,6 +440,7 @@ void ConnexionManager::QtdatapackSizeBase(const uint32_t &datapckFileNumber,cons
 {
     (void)datapckFileNumber;
     this->datapckFileSize=datapckFileSize;
+    l->reset();
     l->progression(0,datapckFileSize);
 }
 
@@ -417,6 +448,7 @@ void ConnexionManager::QtdatapackSizeMain(const uint32_t &datapckFileNumber,cons
 {
     (void)datapckFileNumber;
     this->datapckFileSize=datapckFileSize;
+    l->reset();
     l->progression(0,datapckFileSize);
 }
 
@@ -424,6 +456,7 @@ void ConnexionManager::QtdatapackSizeSub(const uint32_t &datapckFileNumber,const
 {
     (void)datapckFileNumber;
     this->datapckFileSize=datapckFileSize;
+    l->reset();
     l->progression(0,datapckFileSize);
 }
 
@@ -440,4 +473,36 @@ void ConnexionManager::progressingDatapackFileMain(const uint32_t &size)
 void ConnexionManager::progressingDatapackFileSub(const uint32_t &size)
 {
     l->progression(size,datapckFileSize);
+}
+
+
+void ConnexionManager::protocol_is_good()
+{
+    l->setText(tr("Protocol is good"));
+}
+
+void ConnexionManager::connectedOnLoginServer()
+{
+    l->setText(tr("Connected on login server"));
+}
+
+void ConnexionManager::connectingOnGameServer()
+{
+    l->setText(tr("Connecting on game server"));
+}
+
+void ConnexionManager::connectedOnGameServer()
+{
+    l->setText(tr("Connected on game server"));
+}
+
+void ConnexionManager::haveDatapackMainSubCode()
+{
+    //l->setText(tr("Connecting..."));
+}
+
+void ConnexionManager::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
+{
+    l->setText(tr("Gateway cache update..."));
+    l->progression(progression,100+1);
 }
