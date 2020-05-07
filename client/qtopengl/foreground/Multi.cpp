@@ -1,3 +1,8 @@
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QFile>
+#include <QDir>
+#include <QStandardPaths>
 #include "Multi.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/tinyXML2/tinyxml2.hpp"
@@ -6,17 +11,13 @@
 #include "../../qt/PlatformMacro.hpp"
 #include "../../qt/Settings.hpp"
 #include "../../qt/Ultimate.hpp"
+#include "../../qt/ClientVariable.hpp"
 #include "../Language.hpp"
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
 #include "../above/Login.hpp"
 #include <iostream>
 #include <utime.h>
-#include <QFile>
-#include <QDir>
-#include <QStandardPaths>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 
 Multi::Multi() :
     reply(nullptr)
@@ -122,11 +123,12 @@ void Multi::displayServerList()
 
 void Multi::server_add_clicked()
 {
-    if(addServer!=nullptr)
-        delete addServer;
-    addServer=new AddOrEditServer();
-    if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_add_finished))
-        abort();
+    if(addServer==nullptr)
+    {
+        addServer=new AddOrEditServer();
+        if(!connect(addServer,&AddOrEditServer::removeAbove,this,&Multi::server_add_finished))
+            abort();
+    }
     emit setAbove(addServer);
 }
 
@@ -182,9 +184,6 @@ void Multi::server_add_finished()
 
 void Multi::server_edit_clicked()
 {
-    if(addServer!=nullptr)
-        delete addServer;
-
     if(selectedServer.unique_code.isEmpty())
         return;
     unsigned int index=0;
@@ -195,7 +194,12 @@ void Multi::server_edit_clicked()
         {
             if(!connexionInfo.isCustom)
                 return;
-            addServer=new AddOrEditServer();
+            if(addServer==nullptr)
+            {
+                addServer=new AddOrEditServer();
+                if(!connect(addServer,&AddOrEditServer::removeAbove,this,&Multi::server_edit_finished))
+                    abort();
+            }
             #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
             if(connexionInfo.ws.isEmpty())
             {
@@ -224,8 +228,6 @@ void Multi::server_edit_clicked()
             addServer->setProxyServer(connexionInfo.proxyHost);
             addServer->setProxyPort(connexionInfo.proxyPort);
             addServer->setEdit(true);
-            if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_edit_finished))
-                abort();
             emit setAbove(addServer);
             return;
         }
@@ -750,7 +752,8 @@ void Multi::downloadFile()
     catchChallengerVersion+=QStringLiteral(" ")+CATCHCHALLENGER_PLATFORM_CODE;
     #endif
 
-    QNetworkRequest networkRequest(QString(CATCHCHALLENGER_SERVER_LIST_URL));
+    QNetworkRequest networkRequest;
+    networkRequest.setUrl(QUrl(CATCHCHALLENGER_SERVER_LIST_URL));
     #ifndef __EMSCRIPTEN__
     networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
     #endif
@@ -779,11 +782,12 @@ void Multi::on_server_refresh_clicked()
 
 void Multi::server_select_clicked()
 {
-    if(login!=nullptr)
-        delete login;
-    login=new Login();
-    if(!connect(login,&Login::quitLogin,this,&Multi::server_select_finished))
-        abort();
+    if(login==nullptr)
+    {
+        login=new Login();
+        if(!connect(login,&Login::removeAbove,this,&Multi::server_select_finished))
+            abort();
+    }
     if(selectedServer.isCustom)
         Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
     else

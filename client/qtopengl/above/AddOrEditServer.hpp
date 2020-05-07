@@ -77,7 +77,7 @@ private:
     QString proxyPrevious;
     QString proxyPortPrevious;
 signals:
-    void quitOption();
+    void removeAbove();
 };
 
 #endif // OPTIONSDIALOG_H
