@@ -621,6 +621,50 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     return true;
 }
 
+bool Api_protocol::selectCharacter(const uint32_t &serverIndex, const uint32_t &characterId)
+{
+    const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=getServerOrdenedList();
+    if(serverIndex>=serverOrdenedList.size())
+    {
+        std::cerr << "server index out of bound, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    const uint8_t &charactersGroupIndex=serverOrdenedList.at(serverIndex).charactersGroupIndex;
+    const uint32_t &serverUniqueKey=serverOrdenedList.at(serverIndex).uniqueKey;
+    if(characterId==0)
+    {
+        std::cerr << "Api_protocol::selectCharacter() with server index can't have characterId==0" << std::endl;
+        abort();
+    }
+    if(!is_logged)
+    {
+        std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(character_selected)
+    {
+        std::cerr << "character already selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(character_select_send)
+    {
+        std::cerr << "character select already send, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+
+    character_select_send=true;
+    char buffer[1+4+4];
+    buffer[0]=(uint8_t)charactersGroupIndex;
+    const uint32_t &serverUniqueKeyLittleEndian=htole32(serverUniqueKey);
+    memcpy(buffer+1,&serverUniqueKeyLittleEndian,sizeof(serverUniqueKeyLittleEndian));
+    const uint32_t &characterIdLittleEndian=htole32(characterId);
+    memcpy(buffer+1+4,&characterIdLittleEndian,sizeof(characterIdLittleEndian));
+    is_logged=packOutcommingQuery(0xAC,queryNumber(),buffer,sizeof(buffer));
+    this->selectedServerIndex=serverIndex;
+    //std::cout << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
+    return true;
+}
+
 bool Api_protocol::character_select_is_send()
 {
     return character_select_send;

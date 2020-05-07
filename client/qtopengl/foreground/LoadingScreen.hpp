@@ -18,6 +18,7 @@ class LoadingScreen : public QObject, public ScreenInput
 public:
     explicit LoadingScreen();
     ~LoadingScreen();
+    void reset();
     void progression(uint32_t size, uint32_t total);
     void setText(QString text);
 

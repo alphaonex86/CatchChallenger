@@ -2,16 +2,20 @@
 #define SCREENTRANSITION_H
 
 #include <QWidget>
+#include <QGraphicsView>
 #include "background/CCBackground.hpp"
 #include "foreground/LoadingScreen.hpp"
-#include "above/OptionsDialog.hpp"
-#include "foreground/MainScreen.hpp"
-//#include "Solo.h"
-#include "foreground/Multi.hpp"
-//#include "Login.h"
-//#include "interface/BaseWindow.h"
-#include "ConnexionManager.hpp"
 #include "ScreenInput.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+
+class OptionsDialog;
+class MainScreen;
+class Multi;
+class Login;
+class ConnexionManager;
+class SubServer;
+class CharacterList;
+class ConnexionInfo;
 
 class ScreenTransition : public QGraphicsView
 {
@@ -34,10 +38,13 @@ protected:
     void openSolo();
     void openMulti();
     void backMain();
-    void closeOptions();
+    void backSubServer();
+    void removeAbove();
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
+    void connectToSubServer(const int indexSubServer);
+    void selectCharacter(const int indexSubServer,const int indexCharacter);
     void disconnectedFromServer();
     void toLoading(QString text);
     void goToServerList();
@@ -60,11 +67,13 @@ private:
     //Solo *solo;
     Multi *multi;
     Login *login;
-    CatchChallenger::BaseWindow *baseWindow;
     ConnexionManager *connexionManager;
     QGraphicsScene *mScene;
     QGraphicsPixmapItem *imageText;
     ScreenInput *mousePress;
+    SubServer *subserver;
+    CharacterList *characterList;
+    std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 
     uint8_t waitRenderTime;
     QTimer timerRender;

@@ -15,7 +15,7 @@ class GameLoaderThread : public QThread
 {
     Q_OBJECT
 public:
-    GameLoaderThread();
+    GameLoaderThread(uint32_t index);
     void run() override;
 
     std::vector<QString> toLoad;
@@ -26,6 +26,8 @@ public:
 
     static uint32_t audio;
     static uint32_t image;
+private:
+    uint32_t m_index;
 signals:
     void addSize(uint32_t size);
 };

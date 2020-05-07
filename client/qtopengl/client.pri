@@ -281,7 +281,9 @@ SOURCES += \
     $$PWD/CheckBox.cpp \
     $$PWD/foreground/MainScreen.cpp \
     $$PWD/foreground/Multi.cpp \
-    $$PWD/../qt/BlacklistPassword.cpp
+    $$PWD/../qt/BlacklistPassword.cpp \
+    $$PWD/foreground/CharacterList.cpp \
+    $$PWD/foreground/SubServer.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -329,7 +331,9 @@ HEADERS  += \
     $$PWD/CheckBox.hpp \
     $$PWD/foreground/MainScreen.hpp \
     $$PWD/foreground/Multi.hpp \
-    $$PWD/../qt/BlacklistPassword.hpp
+    $$PWD/../qt/BlacklistPassword.hpp \
+    $$PWD/foreground/CharacterList.hpp \
+    $$PWD/foreground/SubServer.hpp
 
 
 wasm: {

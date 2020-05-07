@@ -15,7 +15,7 @@ GameLoader::GameLoader()
     int index=0;
     while(index<tc || index==0)//always create 1 thread
     {
-        GameLoaderThread *t=new GameLoaderThread();
+        GameLoaderThread *t=new GameLoaderThread(index);
         connect(t,&QThread::finished,this,&GameLoader::threadFinished,Qt::QueuedConnection);
         connect(t,&GameLoaderThread::addSize,this,&GameLoader::addSize,Qt::QueuedConnection);
         this->threads.insert(t);

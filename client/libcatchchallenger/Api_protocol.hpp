@@ -356,6 +356,7 @@ public:
     bool removeCharacter(const uint8_t &charactersGroupIndex,const uint32_t &characterId);
     bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId);
     bool selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId,const uint32_t &serverIndex);
+    bool selectCharacter(const uint32_t &serverIndex, const uint32_t &characterId);
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish

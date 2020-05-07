@@ -49,7 +49,7 @@ private:
     int x,y;
     QString previousKey;
 signals:
-    void quitOption();
+    void removeAbove();
 };
 
 #endif // OPTIONSDIALOG_H
