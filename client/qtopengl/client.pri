@@ -283,7 +283,9 @@ SOURCES += \
     $$PWD/foreground/Multi.cpp \
     $$PWD/../qt/BlacklistPassword.cpp \
     $$PWD/foreground/CharacterList.cpp \
-    $$PWD/foreground/SubServer.cpp
+    $$PWD/foreground/SubServer.cpp \
+    $$PWD/above/AddCharacter.cpp \
+    $$PWD/above/NewGame.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -333,7 +335,9 @@ HEADERS  += \
     $$PWD/foreground/Multi.hpp \
     $$PWD/../qt/BlacklistPassword.hpp \
     $$PWD/foreground/CharacterList.hpp \
-    $$PWD/foreground/SubServer.hpp
+    $$PWD/foreground/SubServer.hpp \
+    $$PWD/above/AddCharacter.hpp \
+    $$PWD/above/NewGame.hpp
 
 
 wasm: {

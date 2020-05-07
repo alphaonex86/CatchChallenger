@@ -7,13 +7,18 @@
 #include <vector>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QListWidget>
+#include <QGraphicsProxyWidget>
 #include "../CCWidget.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ConnexionInfo.hpp"
 #include "../CCScrollZone.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
 
 class AddCharacter;
+class NewGame;
+class ConnexionManager;
 
 class CharacterList : public QObject, public ScreenInput
 {
@@ -22,27 +27,39 @@ public:
     explicit CharacterList();
     ~CharacterList();
     void displayServerList();
-    void server_add_clicked();
-    void server_add_finished();
-    void server_select_clicked();
-    void server_select_finished();
-    void server_remove_clicked();
+    void add_clicked();
+    void add_finished();
+    void newGame_finished();
+    void select_clicked();
+    void remove_clicked();
     void newLanguage();
+    void updateCharacterList();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
-    void connectToSubServer(const int indexSubServer);
+    void connectToSubServer(const int indexSubServer, ConnexionManager *connexionManager);
+    void newCharacterId(const uint8_t &returnCode, const uint32_t &characterId);
 private:
     AddCharacter *addCharacter;
+    NewGame *newGame;
 
-    CustomButton *server_add;
-    CustomButton *server_remove;
-    CustomButton *server_select;
+    CustomButton *add;
+    CustomButton *remove;
+    CustomButton *select;
     CustomButton *back;
     QGraphicsTextItem *warning;
 
+    QListWidget *characterEntryList;
+    QGraphicsProxyWidget *characterEntryListProxy;
+
     CCWidget *wdialog;
+    unsigned int serverSelected;
+    ConnexionManager *connexionManager;
+    std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
+    std::vector<std::vector<CatchChallenger::CharacterEntry> > characterListForSelection;
+    std::vector<CatchChallenger::CharacterEntry> characterEntryListInWaiting;
+    unsigned int profileIndex;
 signals:
     void backSubServer();
     void setAbove(ScreenInput *widget);//first plan popup

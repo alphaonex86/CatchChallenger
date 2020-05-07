@@ -1,4 +1,4 @@
-#include "AddOrEditServer.hpp"
+#include "AddCharacter.hpp"
 #include "../../qt/GameLoader.hpp"
 #include "../../qt/Settings.hpp"
 #include "../Language.hpp"
@@ -9,7 +9,7 @@
 #include "../../qt/Ultimate.hpp"
 #include <QDesktopServices>
 
-AddOrEditServer::AddOrEditServer() :
+AddCharacter::AddCharacter() :
     wdialog(new CCWidget(this)),
     label(this)
 {
@@ -30,7 +30,7 @@ AddOrEditServer::AddOrEditServer() :
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     quit=new CustomButton(":/CC/images/interface/cancel.png",this);
     validate=new CustomButton(":/CC/images/interface/validate.png",this);
-    connect(quit,&CustomButton::clicked,this,&AddOrEditServer::removeAbove);
+    connect(quit,&CustomButton::clicked,this,&AddCharacter::removeAbove);
     title=new CCDialogTitle(this);
 
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
@@ -60,20 +60,20 @@ AddOrEditServer::AddOrEditServer() :
     warning=new QGraphicsTextItem(this);
     warning->setVisible(false);
 
-    if(!connect(&Language::language,&Language::newLanguage,this,&AddOrEditServer::newLanguage,Qt::QueuedConnection))
+    if(!connect(&Language::language,&Language::newLanguage,this,&AddCharacter::newLanguage,Qt::QueuedConnection))
         abort();
-    if(!connect(quit,&CustomButton::clicked,this,&AddOrEditServer::on_cancel_clicked,Qt::QueuedConnection))
+    if(!connect(quit,&CustomButton::clicked,this,&AddCharacter::on_cancel_clicked,Qt::QueuedConnection))
         abort();
-    if(!connect(validate,&CustomButton::clicked,this,&AddOrEditServer::on_ok_clicked,Qt::QueuedConnection))
+    if(!connect(validate,&CustomButton::clicked,this,&AddCharacter::on_ok_clicked,Qt::QueuedConnection))
         abort();
-    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddOrEditServer::on_type_currentIndexChanged,Qt::QueuedConnection))
+    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddCharacter::on_type_currentIndexChanged,Qt::QueuedConnection))
         abort();
     on_type_currentIndexChanged(0);
 
     newLanguage();
 }
 
-AddOrEditServer::~AddOrEditServer()
+AddCharacter::~AddCharacter()
 {
     delete wdialog;
     delete quit;
@@ -81,12 +81,12 @@ AddOrEditServer::~AddOrEditServer()
     delete title;
 }
 
-QRectF AddOrEditServer::boundingRect() const
+QRectF AddCharacter::boundingRect() const
 {
     return QRectF();
 }
 
-void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
+void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
     p->fillRect(0,0,widget->width(),widget->height(),QColor(0,0,0,120));
     bool forcedCenter=true;
@@ -221,25 +221,37 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
     }
 }
 
-void AddOrEditServer::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated)
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
 }
 
-void AddOrEditServer::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void AddCharacter::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
 }
 
-void AddOrEditServer::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);
 }
 
-void AddOrEditServer::newLanguage()
+void AddCharacter::setDatapack(std::string path)
+{
+    if(newProfile->getProfileCount()==1)
+    {
+        newProfile->on_ok_clicked();
+        CharacterList::newProfileFinished();
+        emit quitAbove();
+    }
+    else
+        newProfile->show();
+}
+
+void AddCharacter::newLanguage()
 {
     proxyText->setHtml(tr("Proxy: "));
     nameText->setHtml(tr("Name: "));
@@ -250,7 +262,7 @@ void AddOrEditServer::newLanguage()
         title->setText(tr("Add"));
 }
 
-int AddOrEditServer::type() const
+int AddCharacter::type() const
 {
 #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
 return m_type->currentIndex();
@@ -268,7 +280,7 @@ return m_type->currentIndex();
 #endif
 }
 
-void AddOrEditServer::setType(const int &type)
+void AddCharacter::setType(const int &type)
 {
 #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
 m_type->setCurrentIndex(type);
@@ -284,13 +296,13 @@ m_type->setCurrentIndex(type);
         Q_UNUSED(type);
 }
 
-void AddOrEditServer::setEdit(const bool &edit)
+void AddCharacter::setEdit(const bool &edit)
 {
     this->edit=edit;
     title->setText(tr("Edit"));
 }
 
-void AddOrEditServer::on_ok_clicked()
+void AddCharacter::on_ok_clicked()
 {
     if(nameText->toPlainText()==QStringLiteral("Internal") || nameText->toPlainText()==QStringLiteral("internal"))
     {
@@ -317,66 +329,66 @@ void AddOrEditServer::on_ok_clicked()
         }
     }
     ok=true;
-    emit removeAbove();
+    emit quitOption();
     //close();
 }
 
-QString AddOrEditServer::server() const
+QString AddCharacter::server() const
 {
     return serverInput->text();
 }
 
-uint16_t AddOrEditServer::port() const
+uint16_t AddCharacter::port() const
 {
     return static_cast<uint16_t>(portInput->value());
 }
 
-QString AddOrEditServer::proxyServer() const
+QString AddCharacter::proxyServer() const
 {
     return proxyInput->text();
 }
 
-uint16_t AddOrEditServer::proxyPort() const
+uint16_t AddCharacter::proxyPort() const
 {
     return static_cast<uint16_t>(proxyPortInput->value());
 }
 
-QString AddOrEditServer::name() const
+QString AddCharacter::name() const
 {
     return nameInput->text();
 }
 
-void AddOrEditServer::setServer(const QString &server)
+void AddCharacter::setServer(const QString &server)
 {
     serverInput->setText(server);
 }
 
-void AddOrEditServer::setPort(const uint16_t &port)
+void AddCharacter::setPort(const uint16_t &port)
 {
     portInput->setValue(port);
 }
 
-void AddOrEditServer::setName(const QString &name)
+void AddCharacter::setName(const QString &name)
 {
     nameInput->setText(name);
 }
 
-void AddOrEditServer::setProxyServer(const QString &proxyServer)
+void AddCharacter::setProxyServer(const QString &proxyServer)
 {
     proxyInput->setText(proxyServer);
 }
 
-void AddOrEditServer::setProxyPort(const uint16_t &proxyPort)
+void AddCharacter::setProxyPort(const uint16_t &proxyPort)
 {
     proxyPortInput->setValue(proxyPort);
 }
 
-bool AddOrEditServer::isOk() const
+bool AddCharacter::isOk() const
 {
     return ok;
 }
 
-void AddOrEditServer::on_type_currentIndexChanged(int index)
+void AddCharacter::on_type_currentIndexChanged(int index)
 {
     switch(index) {
     case 0:
@@ -392,8 +404,8 @@ void AddOrEditServer::on_type_currentIndexChanged(int index)
     }
 }
 
-void AddOrEditServer::on_cancel_clicked()
+void AddCharacter::on_cancel_clicked()
 {
     ok=false;
-    emit removeAbove();
+    emit quitOption();
 }
