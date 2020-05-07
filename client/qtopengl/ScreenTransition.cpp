@@ -1,5 +1,12 @@
 #include "ScreenTransition.hpp"
 #include "../qt/GameLoader.hpp"
+#include "foreground/CharacterList.hpp"
+#include "foreground/LoadingScreen.hpp"
+#include "foreground/MainScreen.hpp"
+#include "foreground/Multi.hpp"
+#include "foreground/SubServer.hpp"
+#include "above/OptionsDialog.hpp"
+#include "ConnexionManager.hpp"
 #include "../../general/base/Version.hpp"
 #include "AudioGL.hpp"
 #include <iostream>
@@ -46,6 +53,8 @@ ScreenTransition::ScreenTransition() :
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
     m_aboveStack=nullptr;
+    subserver=nullptr;
+    characterList=nullptr;
     setBackground(&b);
     setForeground(&l);
     if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen))
@@ -249,13 +258,13 @@ void ScreenTransition::openOptions()
     if(o==nullptr)
     {
         o=new OptionsDialog();
-        if(!connect(o,&OptionsDialog::quitOption,this,&ScreenTransition::closeOptions))
+        if(!connect(o,&OptionsDialog::removeAbove,this,&ScreenTransition::removeAbove))
             abort();
     }
     setAbove(o);
 }
 
-void ScreenTransition::closeOptions()
+void ScreenTransition::removeAbove()
 {
     setAbove(nullptr);
 }
@@ -293,7 +302,9 @@ void ScreenTransition::connectToServer(ConnexionInfo connexionInfo,QString login
     Q_UNUSED(pass);
     setForeground(&l);
     //baseWindow=new CatchChallenger::BaseWindow();
-    connexionManager=new ConnexionManager(baseWindow,&l);
+    if(connexionManager!=nullptr)
+        delete connexionManager;
+    connexionManager=new ConnexionManager(&l);
     connexionManager->connectToServer(connexionInfo,login,pass);
     if(!connect(connexionManager,&ConnexionManager::logged,this,&ScreenTransition::logged))
         abort();
@@ -330,12 +341,48 @@ void ScreenTransition::backMain()
     setForeground(m);
 }
 
+void ScreenTransition::backSubServer()
+{
+    setForeground(subserver);
+}
+
 void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
-    Q_UNUSED(characterEntryList);
-    setBackground(nullptr);
-    //setForeground(baseWindow);
-    //baseWindow->updateConnectingStatus();
+    this->characterEntryList=characterEntryList;
+    if(subserver==nullptr)
+    {
+        subserver=new SubServer();
+        if(!connect(subserver,&SubServer::backMulti,this,&ScreenTransition::backMain))
+            abort();
+        if(!connect(subserver,&SubServer::connectToSubServer,this,&ScreenTransition::connectToSubServer))
+            abort();
+    }
+    subserver->logged(connexionManager->getServerOrdenedList());
+    setForeground(subserver);
+}
+
+void ScreenTransition::connectToSubServer(const int indexSubServer)
+{
+    if(characterList==nullptr)
+    {
+        characterList=new CharacterList();
+        if(!connect(characterList,&CharacterList::backSubServer,this,&ScreenTransition::backSubServer))
+            abort();
+        if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
+            abort();
+    }
+    characterList->connectToSubServer(indexSubServer);
+    setForeground(characterList);
+}
+
+void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
+{
+    l.reset();
+    l.progression(0,100);
+    l.setText("Selecting your character...");
+    setAbove(nullptr);
+    setForeground(&l);
+    connexionManager->selectCharacter(indexSubServer,indexCharacter);
 }
 
 void ScreenTransition::disconnectedFromServer()

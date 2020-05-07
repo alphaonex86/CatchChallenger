@@ -1,24 +1,9 @@
-#include "Multi.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/tinyXML2/tinyxml2.hpp"
-#include "../../../general/base/cpp11addition.hpp"
-#include "../../../general/base/Version.hpp"
-#include "../../qt/PlatformMacro.hpp"
-#include "../../qt/Settings.hpp"
-#include "../../qt/Ultimate.hpp"
+#include "SubServer.hpp"
 #include "../Language.hpp"
-#include "../MultiItem.hpp"
-#include "../above/AddOrEditServer.hpp"
-#include "../above/Login.hpp"
-#include <iostream>
-#include <utime.h>
-#include <QFile>
-#include <QDir>
-#include <QStandardPaths>
-#include <QNetworkRequest>
-#include <QNetworkReply>
 
-Multi::Multi() :
+SubServer::SubServer() :
+    /*addServer(nullptr),
+    login(nullptr),*/
     reply(nullptr)
 {
     srand(time(0));
@@ -29,8 +14,6 @@ Multi::Multi() :
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
-    selectedServer.unique_code.clear();
-    selectedServer.isCustom=false;
 
     server_add=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     server_add->setOutlineColor(QColor(44,117,0));
@@ -48,17 +31,15 @@ Multi::Multi() :
     serverEmpty=new QGraphicsTextItem(this);
     scrollZone=new CCScrollZone(this);
 
-    if(!connect(server_add,&CustomButton::clicked,this,&Multi::server_add_clicked))
+    if(!connect(server_add,&CustomButton::clicked,this,&SubServer::server_add_clicked))
         abort();
-    if(!connect(server_remove,&CustomButton::clicked,this,&Multi::server_remove_clicked))
+    if(!connect(server_remove,&CustomButton::clicked,this,&SubServer::server_remove_clicked))
         abort();
-    if(!connect(server_edit,&CustomButton::clicked,this,&Multi::server_edit_clicked))
+    if(!connect(server_edit,&CustomButton::clicked,this,&SubServer::server_edit_clicked))
         abort();
-    if(!connect(server_select,&CustomButton::clicked,this,&Multi::server_select_clicked))
+    if(!connect(server_select,&CustomButton::clicked,this,&SubServer::server_select_clicked))
         abort();
-    if(!connect(back,&CustomButton::clicked,this,&Multi::backMain))
-        abort();
-    if(!connect(server_refresh,&CustomButton::clicked,this,&Multi::on_server_refresh_clicked))
+    if(!connect(server_refresh,&CustomButton::clicked,this,&SubServer::on_server_refresh_clicked))
         abort();
     newLanguage();
 
@@ -68,69 +49,31 @@ Multi::Multi() :
     addServer=nullptr;
 }
 
-Multi::~Multi()
+SubServer::~SubServer()
 {
 }
 
-void Multi::displayServerList()
+void SubServer::displayServerList()
 {
     serverEmpty->setVisible(mergedConnexionInfoList.empty());
     #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
     #error Web socket and tcp socket are both not supported
     return;
     #endif
-    if(selectedServer.unique_code.isEmpty())
-    {
-        server_remove->setEnabled(false);
-        server_edit->setEnabled(false);
-    }
-    //clean the previous content
-    foreach (MultiItem *item, serverConnexion)
-        delete item;
-    serverConnexion.clear();
-    server_select->setEnabled(!selectedServer.unique_code.isEmpty());
-    //serverWidget->setVisible(index==0);
-    unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
-    {
-        const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(index);
-        if(connexionInfo.host.isEmpty() && connexionInfo.ws.isEmpty())
-        {
-            index++;
-            continue;
-        }
-        MultiItem *newEntry=new MultiItem(connexionInfo,scrollZone);
-        if(selectedServer.unique_code==connexionInfo.unique_code)
-        {
-            server_edit->setEnabled(connexionInfo.isCustom);
-            server_remove->setEnabled(connexionInfo.isCustom);
-            newEntry->setSelected(true);
-        }
-        else
-            newEntry->setSelected(false);
-        /*if(!connect(newEntry,&ListEntryEnvolued::clicked,this,&Multi::serverListEntryEnvoluedClicked,Qt::QueuedConnection))
-            abort();
-        if(!connect(newEntry,&ListEntryEnvolued::doubleClicked,this,&Multi::serverListEntryEnvoluedDoubleClicked,Qt::QueuedConnection))
-            abort();*/
-
-        //scrollAreaWidgetContentsServer->layout()->addWidget(newEntry);
-
-        serverConnexion.push_back(newEntry);
-        index++;
-    }
+    std::cout << "display mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
 }
 
-void Multi::server_add_clicked()
+void SubServer::server_add_clicked()
 {
     if(addServer!=nullptr)
         delete addServer;
     addServer=new AddOrEditServer();
-    if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_add_finished))
+    if(!connect(addServer,&AddOrEditServer::quitOption,this,&SubServer::server_add_finished))
         abort();
     emit setAbove(addServer);
 }
 
-void Multi::server_add_finished()
+void SubServer::server_add_finished()
 {
     emit setAbove(nullptr);
     if(addServer==nullptr)
@@ -180,139 +123,23 @@ void Multi::server_add_finished()
     displayServerList();
 }
 
-void Multi::server_edit_clicked()
+void SubServer::server_edit_clicked()
 {
     if(addServer!=nullptr)
         delete addServer;
 
-    if(selectedServer.unique_code.isEmpty())
-        return;
-    unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
-    {
-        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
-        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
-        {
-            if(!connexionInfo.isCustom)
-                return;
-            addServer=new AddOrEditServer();
-            #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-            if(connexionInfo.ws.isEmpty())
-            {
-                addServer->setType(0);
-                addServer->setServer(connexionInfo.host);
-                addServer->setPort(connexionInfo.port);
-            }
-            else
-            {
-                addServer->setType(1);
-                addServer->setServer(connexionInfo.ws);
-            }
-            #else
-                #if defined(NOTCPSOCKET)
-                addServer->setType(1);
-                addServer->setServer(connexionInfo.ws);
-                #else
-                    #if defined(NOWEBSOCKET)
-                    addServer->setType(0);
-                    addServer->setServer(connexionInfo.host);
-                    addServer->setPort(connexionInfo.port);
-                    #endif
-                #endif
-            #endif
-            addServer->setName(connexionInfo.name);
-            addServer->setProxyServer(connexionInfo.proxyHost);
-            addServer->setProxyPort(connexionInfo.proxyPort);
-            addServer->setEdit(true);
-            if(!connect(addServer,&AddOrEditServer::quitOption,this,&Multi::server_edit_finished))
-                abort();
-            emit setAbove(addServer);
-            return;
-        }
-        index++;
-    }
-    std::cerr << "remove server not found" << std::endl;
 }
 
-void Multi::server_edit_finished()
+void SubServer::server_edit_finished()
 {
     emit setAbove(nullptr);
-    if(addServer==nullptr)
-        return;
-    if(!addServer->isOk())
-        return;
-    #ifdef __EMSCRIPTEN__
-    std::cerr << "AddOrEditServer returned" <<  std::endl;
-    #endif
-    unsigned int index=0;
-    while(index<temp_customConnexionInfoList.size())
-    {
-        ConnexionInfo &connexionInfo=temp_customConnexionInfoList[index];
-        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
-        {
-            if(!connexionInfo.isCustom)
-                return;
-
-            connexionInfo.name=addServer->name();
-            connexionInfo.unique_code=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",16));
-            connexionInfo.isCustom=true;
-
-            if(addServer->type()==0)
-            {
-                connexionInfo.port=addServer->port();
-                #ifndef NOTCPSOCKET
-                connexionInfo.host=addServer->server();
-                #endif
-                connexionInfo.ws.clear();
-            }
-            else
-            {
-                connexionInfo.port=0;
-                connexionInfo.host.clear();
-                #ifndef NOWEBSOCKET
-                connexionInfo.ws=addServer->server();
-                #endif
-            }
-
-            connexionInfo.proxyHost=addServer->proxyServer();
-            connexionInfo.proxyPort=addServer->proxyPort();
-        }
-        index++;
-    }
-    mergedConnexionInfoList=temp_customConnexionInfoList;
-    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
-    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
-    saveConnexionInfoList();
-    displayServerList();
 }
 
-void Multi::server_remove_clicked()
+void SubServer::server_remove_clicked()
 {
-    if(selectedServer.unique_code.isEmpty())
-        return;
-    unsigned int index=0;
-    while(index<temp_customConnexionInfoList.size())
-    {
-        ConnexionInfo &connexionInfo=temp_customConnexionInfoList[index];
-        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
-        {
-            if(!connexionInfo.isCustom)
-                return;
-            temp_customConnexionInfoList.erase(temp_customConnexionInfoList.begin()+index);
-            selectedServer.unique_code.clear();
-            selectedServer.isCustom=false;
-            break;
-        }
-        index++;
-    }
-    mergedConnexionInfoList=temp_customConnexionInfoList;
-    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
-    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
-    saveConnexionInfoList();
-    displayServerList();
 }
 
-void Multi::httpFinished()
+void SubServer::httpFinished()
 {
     warning->setVisible(false);
     QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
@@ -374,7 +201,7 @@ void Multi::httpFinished()
     reply=NULL;
 }
 
-void Multi::saveConnexionInfoList()
+void SubServer::saveConnexionInfoList()
 {
     QSet<QString> valid;
     unsigned int index=0;
@@ -418,7 +245,7 @@ void Multi::saveConnexionInfoList()
     }
     QStringList groups=Settings::settings->childGroups();
     index=0;
-    while(index<(unsigned int)groups.size())
+    while(index<groups.size())
     {
         const QString &groupName=groups.at(index);
         if(groupName.startsWith("Custom-") && !valid.contains(groupName))
@@ -428,7 +255,7 @@ void Multi::saveConnexionInfoList()
     Settings::settings->sync();
 }
 
-std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList()
+std::vector<ConnexionInfo> SubServer::loadXmlConnexionInfoList()
 {
     QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     if(QFileInfo(wPath+"/server_list.xml").isFile())
@@ -436,21 +263,21 @@ std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList()
     return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
 }
 
-std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArray &xmlContent)
+std::vector<ConnexionInfo> SubServer::loadXmlConnexionInfoList(const QByteArray &xmlContent)
 {
     std::vector<ConnexionInfo> returnedVar;
     tinyxml2::XMLDocument domDocument;
     const auto loadOkay = domDocument.Parse(xmlContent.data(),xmlContent.size());
     if(loadOkay!=0)
     {
-        std::cerr << "Multi::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
+        std::cerr << "SubServer::loadXmlConnexionInfoList, " << domDocument.ErrorName() << std::endl;
         return returnedVar;
     }
 
     const tinyxml2::XMLElement *root = domDocument.RootElement();
     if(root==NULL)
     {
-        std::cerr << "Unable to open the file: Multi::loadXmlConnexionInfoList, no root balise found for the xml file" << std::endl;
+        std::cerr << "Unable to open the file: SubServer::loadXmlConnexionInfoList, no root balise found for the xml file" << std::endl;
         return returnedVar;
     }
     if(root->Name()==NULL)
@@ -605,7 +432,7 @@ std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArray &xml
     return returnedVar;
 }
 
-std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QString &file)
+std::vector<ConnexionInfo> SubServer::loadXmlConnexionInfoList(const QString &file)
 {
     std::vector<ConnexionInfo> returnedVar;
     //open and quick check the file
@@ -621,7 +448,7 @@ std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QString &file)
     return loadXmlConnexionInfoList(xmlContent);
 }
 
-std::vector<ConnexionInfo> Multi::loadConfigConnexionInfoList()
+std::vector<ConnexionInfo> SubServer::loadConfigConnexionInfoList()
 {
     std::vector<ConnexionInfo> returnedVar;
     QStringList groups=Settings::settings->childGroups();
@@ -735,7 +562,7 @@ std::vector<ConnexionInfo> Multi::loadConfigConnexionInfoList()
     return returnedVar;
 }
 
-void Multi::downloadFile()
+void SubServer::downloadFile()
 {
     #ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
@@ -756,7 +583,7 @@ void Multi::downloadFile()
     #endif
 
     reply = qnam.get(networkRequest);
-    if(!connect(reply, &QNetworkReply::finished, this, &Multi::httpFinished))
+    if(!connect(reply, &QNetworkReply::finished, this, &SubServer::httpFinished))
         abort();
     //if(!connect(reply, &QNetworkReply::metaDataChanged, this, &MainWindow::metaDataChanged))
         //abort(); seam buggy
@@ -765,7 +592,7 @@ void Multi::downloadFile()
     //ui->server_refresh->setEnabled(false);
 }
 
-void Multi::on_server_refresh_clicked()
+void SubServer::on_server_refresh_clicked()
 {
     if(reply!=NULL)
     {
@@ -777,80 +604,26 @@ void Multi::on_server_refresh_clicked()
 }
 
 
-void Multi::server_select_clicked()
+void SubServer::server_select_clicked()
 {
     if(login!=nullptr)
         delete login;
     login=new Login();
-    if(!connect(login,&Login::quitLogin,this,&Multi::server_select_finished))
+    if(!connect(login,&Login::quitLogin,this,&SubServer::server_select_finished))
         abort();
-    if(selectedServer.isCustom)
-        Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
-    else
-        Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
-    if(Settings::settings->contains("last"))
-        login->setAuth(Settings::settings->value("last").toStringList());
-    int index=0;
-    while(index<(unsigned int)mergedConnexionInfoList.size())
-    {
-        auto e=mergedConnexionInfoList.at(index);
-        if(e.isCustom==selectedServer.isCustom && e.unique_code==selectedServer.unique_code)
-        {
-            login->setLinks(e.site_page,e.register_page);
-            break;
-        }
-        index++;
-    }
-    Settings::settings->endGroup();
     emit setAbove(login);
 }
 
-void Multi::server_select_finished()
+void SubServer::server_select_finished()
 {
     emit setAbove(nullptr);
     if(login==nullptr)
         return;
     if(!login->isOk())
         return;
-    if(selectedServer.isCustom)
-        Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
-    else
-        Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
-    QStringList v=login->getAuth();
-    if(!v.isEmpty())
-    {
-        Settings::settings->setValue("last",v);
-        Settings::settings->sync();
-    }
-    Settings::settings->endGroup();
-    #ifdef __EMSCRIPTEN__
-    std::cerr << "server_select_finished returned" <<  std::endl;
-    #endif
-
-    if(selectedServer.isCustom)
-        Settings::settings->beginGroup(QStringLiteral("Custom-%1").arg(selectedServer.unique_code));
-    else
-        Settings::settings->beginGroup(QStringLiteral("Xml-%1").arg(selectedServer.unique_code));
-    const QString loginString=login->getLogin();
-    Settings::settings->endGroup();
-    Settings::settings->sync();
-    unsigned int index=0;
-    while(index<mergedConnexionInfoList.size())
-    {
-        ConnexionInfo &connexionInfo=mergedConnexionInfoList[index];
-        if(connexionInfo.isCustom==selectedServer.isCustom && connexionInfo.unique_code==selectedServer.unique_code)
-        {
-            connexionInfo.connexionCounter++;
-            saveConnexionInfoList();
-            displayServerList();//need be after connectTheExternalSocket() because it reset selectedServer
-            emit connectToServer(connexionInfo,loginString,login->getPass());
-            break;
-        }
-        index++;
-    }
 }
 
-void Multi::newLanguage()
+void SubServer::newLanguage()
 {
     server_add->setText(tr("Add"));
     server_remove->setText(tr("Remove"));
@@ -859,12 +632,12 @@ void Multi::newLanguage()
     serverEmpty->setHtml(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
 }
 
-QRectF Multi::boundingRect() const
+QRectF SubServer::boundingRect() const
 {
     return QRectF();
 }
 
-void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
+void SubServer::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 {
     unsigned int space=10;
     unsigned int fontSize=20;
@@ -946,54 +719,283 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         wdialog->setPos(w->width()/2-wdialog->width()/2,space);
     }
     warning->setPos(w->width()/2-warning->boundingRect().width(),space+wdialog->height()-wdialog->currentBorderSize()-warning->boundingRect().height());
-
-    unsigned int offsetMultiItem=0;
-    foreach(MultiItem *item, serverConnexion)
-    {
-        item->setPos(wdialog->x()+wdialog->currentBorderSize(),space+wdialog->currentBorderSize()+offsetMultiItem);
-        item->setSize(wdialog->width()-wdialog->currentBorderSize()*2,multiItemH);
-        offsetMultiItem+=multiItemH+space/3;
-    }
 }
 
-void Multi::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void SubServer::mousePressEventXY(const QPointF &p,bool &pressValidated)
 {
-    server_add->mousePressEventXY(p,pressValidated);
-    server_remove->mousePressEventXY(p,pressValidated);
-    server_edit->mousePressEventXY(p,pressValidated);
-    server_refresh->mousePressEventXY(p,pressValidated);
     back->mousePressEventXY(p,pressValidated);
     server_select->mousePressEventXY(p,pressValidated);
-    foreach(MultiItem *item, serverConnexion)
-        item->mousePressEventXY(p,pressValidated);
 }
 
-void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void SubServer::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
 {
-    server_add->mouseReleaseEventXY(p,pressValidated);
-    server_remove->mouseReleaseEventXY(p,pressValidated);
-    server_edit->mouseReleaseEventXY(p,pressValidated);
-    server_refresh->mouseReleaseEventXY(p,pressValidated);
     back->mouseReleaseEventXY(p,pressValidated);
     server_select->mouseReleaseEventXY(p,pressValidated);
-    MultiItem *newSelectedItem=nullptr;
-    foreach(MultiItem *item, serverConnexion)
+}
+
+void SubServer::logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList)
+{
+    //do the grouping for characterGroup count
     {
-        const bool wasSelected=item->isSelected();
-        item->mouseReleaseEventXY(p,pressValidated);
-        if(wasSelected==false && newSelectedItem==nullptr && item->isSelected())
+        serverByCharacterGroup.clear();
+        unsigned int index=0;
+        uint8_t serverByCharacterGroupTempIndexToDisplay=1;
+        while(index<serverOrdenedList.size())
         {
-            newSelectedItem=item;
-            const ConnexionInfo &info=item->connexionInfo();
-            selectedServer.unique_code=info.unique_code;
-            selectedServer.isCustom=info.isCustom;
-            server_edit->setEnabled(info.isCustom);
-            server_remove->setEnabled(info.isCustom);
+            const ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
+            if(server.charactersGroupIndex>serverOrdenedList.size())
+                abort();
+            if(serverByCharacterGroup.find(server.charactersGroupIndex)!=serverByCharacterGroup.cend())
+                serverByCharacterGroup[server.charactersGroupIndex].first++;
+            else
+            {
+                serverByCharacterGroup[server.charactersGroupIndex].first=1;
+                serverByCharacterGroup[server.charactersGroupIndex].second=serverByCharacterGroupTempIndexToDisplay;
+                serverByCharacterGroupTempIndexToDisplay++;
+            }
+            index++;
         }
     }
-    server_select->setEnabled(!selectedServer.unique_code.isEmpty());
-    if(newSelectedItem!=nullptr)
-        foreach(MultiItem *item, serverConnexion)
-            if(newSelectedItem!=item)
-                item->setSelected(false);
+
+    //clear and determine what kind of view
+    ui->serverList->clear();
+    LogicialGroup logicialGroup=client->getLogicialGroup();
+    bool fullView=true;
+    if(serverOrdenedList.size()>10)
+        fullView=false;
+    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
+
+    //reload, bug if before init
+    if(icon_server_list_star1.isNull())
+    {
+        SubServer::icon_server_list_star1=QIcon(":/CC/images/interface/server_list/star1.png");
+        if(SubServer::icon_server_list_star1.isNull())
+            abort();
+        SubServer::icon_server_list_star2=QIcon(":/CC/images/interface/server_list/star2.png");
+        SubServer::icon_server_list_star3=QIcon(":/CC/images/interface/server_list/star3.png");
+        SubServer::icon_server_list_star4=QIcon(":/CC/images/interface/server_list/star4.png");
+        SubServer::icon_server_list_star5=QIcon(":/CC/images/interface/server_list/star5.png");
+        SubServer::icon_server_list_star6=QIcon(":/CC/images/interface/server_list/star6.png");
+        SubServer::icon_server_list_stat1=QIcon(":/CC/images/interface/server_list/stat1.png");
+        SubServer::icon_server_list_stat2=QIcon(":/CC/images/interface/server_list/stat2.png");
+        SubServer::icon_server_list_stat3=QIcon(":/CC/images/interface/server_list/stat3.png");
+        SubServer::icon_server_list_stat4=QIcon(":/CC/images/interface/server_list/stat4.png");
+        SubServer::icon_server_list_bug=QIcon(":/CC/images/interface/server_list/bug.png");
+        if(SubServer::icon_server_list_bug.isNull())
+            abort();
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/0.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/1.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/2.png"));
+        icon_server_list_color.push_back(QIcon(":/CC/images/colorflags/3.png"));
+    }
+    //do the average value
+    {
+        averagePlayedTime=0;
+        averageLastConnect=0;
+        int entryCount=0;
+        unsigned int index=0;
+        while(index<serverOrdenedList.size())
+        {
+            const ServerFromPoolForDisplay &server=serverOrdenedList.at(index);
+            if(server.playedTime>0 && server.lastConnect<=current__date)
+            {
+                averagePlayedTime+=server.playedTime;
+                averageLastConnect+=server.lastConnect;
+                entryCount++;
+            }
+            index++;
+        }
+        if(entryCount>0)
+        {
+            averagePlayedTime/=entryCount;
+            averageLastConnect/=entryCount;
+        }
+    }
+    addToServerList(logicialGroup,ui->serverList->invisibleRootItem(),current__date,fullView);
+    ui->serverList->expandAll();
 }
+
+bool CatchChallenger::ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const
+{
+    if(serverFromPoolForDisplay.uniqueKey<this->uniqueKey)
+        return true;
+    else
+        return false;
+}
+
+void SubServer::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
+{
+    if(client->getServerOrdenedList().empty())
+        std::cerr << "SubServer::addToServerList(): client->serverOrdenedList.empty()" << std::endl;
+    item->setText(0,QString::fromStdString(logicialGroup.name));
+    {
+        //to order the group
+        std::vector<std::string> keys;
+        for(const auto &n : logicialGroup.logicialGroupList)
+            keys.push_back(n.first);
+        qSort(keys);
+        //list the group
+        unsigned int index=0;
+        while(index<keys.size())
+        {
+            QTreeWidgetItem * const itemGroup=new QTreeWidgetItem(item);
+            addToServerList(*logicialGroup.logicialGroupList[keys.at(index)],itemGroup,currentDate,fullView);
+            index++;
+        }
+    }
+    {
+        qSort(logicialGroup.servers);
+        //list the server
+        unsigned int index=0;
+        while(index<logicialGroup.servers.size())
+        {
+            const ServerFromPoolForDisplay &server=logicialGroup.servers.at(index);
+            QTreeWidgetItem *itemServer=new QTreeWidgetItem(item);
+            std::string text;
+            std::string groupText;
+            if(characterListForSelection.size()>1 && serverByCharacterGroup.size()>1)
+            {
+                const uint8_t groupInt=serverByCharacterGroup.at(server.charactersGroupIndex).second;
+                //comment the if to always show it
+                if(groupInt>=icon_server_list_color.size())
+                    groupText=QStringLiteral(" (%1)").arg(groupInt).toStdString();
+                itemServer->setToolTip(0,tr("Server group: %1, UID: %2").arg(groupInt).arg(server.uniqueKey));
+                if(!icon_server_list_color.empty())
+                    itemServer->setIcon(0,icon_server_list_color.at(groupInt%icon_server_list_color.size()));
+            }
+            std::string name=server.name;
+            if(name.empty())
+                name=tr("Default server").toStdString();
+            if(fullView)
+            {
+                text=name+groupText;
+                if(server.playedTime>0)
+                {
+                    if(!server.description.empty())
+                        text+=" "+tr("%1 played").arg(QString::fromStdString(FacilityLibClient::timeToString(server.playedTime))).toStdString();
+                    else
+                        text+="\n"+tr("%1 played").arg(QString::fromStdString(FacilityLibClient::timeToString(server.playedTime))).toStdString();
+                }
+                if(!server.description.empty())
+                    text+="\n"+server.description;
+            }
+            else
+            {
+                if(server.description.empty())
+                    text=name+groupText;
+                else
+                    text=name+groupText+" - "+server.description;
+            }
+            itemServer->setText(0,QString::fromStdString(text));
+
+            //do the icon here
+            if(server.playedTime>5*365*24*3600)
+            {
+                itemServer->setIcon(0,SubServer::icon_server_list_bug);
+                itemServer->setToolTip(0,tr("Played time greater than 5y, bug?"));
+            }
+            else if(server.lastConnect>0 && server.lastConnect<1420070400)
+            {
+                itemServer->setIcon(0,SubServer::icon_server_list_bug);
+                itemServer->setToolTip(0,tr("Played before 2015, bug?"));
+            }
+            else if(server.maxPlayer<=65533 && (server.maxPlayer<server.currentPlayer || server.maxPlayer==0))
+            {
+                itemServer->setIcon(0,SubServer::icon_server_list_bug);
+                if(server.maxPlayer<server.currentPlayer)
+                    itemServer->setToolTip(0,tr("maxPlayer<currentPlayer"));
+                else
+                    itemServer->setToolTip(0,tr("maxPlayer==0"));
+            }
+            else if(server.playedTime>0 || server.lastConnect>0)
+            {
+                uint64_t dateDiff=0;
+                if(currentDate>server.lastConnect)
+                    dateDiff=currentDate-server.lastConnect;
+                if(server.playedTime>24*3600*31)
+                {
+                    if(dateDiff<24*3600)
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star1);
+                        itemServer->setToolTip(0,tr("Played time greater than 24h, last connect in this last 24h"));
+                    }
+                    else
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star2);
+                        itemServer->setToolTip(0,tr("Played time greater than 24h, last connect not in this last 24h"));
+                    }
+                }
+                else if(server.lastConnect<averageLastConnect)
+                {
+                    if(server.playedTime<averagePlayedTime)
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star3);
+                        itemServer->setToolTip(0,tr("Into the more recent server used, out of the most used server"));
+                    }
+                    else
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star4);
+                        itemServer->setToolTip(0,tr("Into the more recent server used, into the most used server"));
+                    }
+                }
+                else
+                {
+                    if(server.playedTime<averagePlayedTime)
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star5);
+                        itemServer->setToolTip(0,tr("Out of the more recent server used, out of the most used server"));
+                    }
+                    else
+                    {
+                        itemServer->setIcon(0,SubServer::icon_server_list_star6);
+                        itemServer->setToolTip(0,tr("Out of the more recent server used, into the most used server"));
+                    }
+                }
+
+            }
+            if(server.maxPlayer<=65533)
+            {
+                //do server.currentPlayer/server.maxPlayer icon
+                if(server.maxPlayer<=0 || server.currentPlayer>server.maxPlayer)
+                    itemServer->setIcon(1,SubServer::icon_server_list_bug);
+                else
+                {
+                    //to be very sure
+                    if(server.maxPlayer>0)
+                    {
+                        int percent=(server.currentPlayer*100)/server.maxPlayer;
+                        if(server.currentPlayer==server.maxPlayer || (server.maxPlayer>50 && percent>98))
+                            itemServer->setIcon(1,SubServer::icon_server_list_stat4);
+                        else if(server.currentPlayer>30 && percent>50)
+                            itemServer->setIcon(1,SubServer::icon_server_list_stat3);
+                        else if(server.currentPlayer>5 && percent>20)
+                            itemServer->setIcon(1,SubServer::icon_server_list_stat2);
+                        else
+                            itemServer->setIcon(1,SubServer::icon_server_list_stat1);
+                    }
+                }
+                itemServer->setText(1,QStringLiteral("%1/%2").arg(server.currentPlayer).arg(server.maxPlayer));
+            }
+            const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+            if(server.serverOrdenedListIndex<serverOrdenedList.size())
+                itemServer->setData(99,99,server.serverOrdenedListIndex);
+            else
+            {
+                error("SubServer::addToServerList(): server.serverOrdenedListIndex>=serverOrdenedList.size(), "+
+                      std::to_string(server.serverOrdenedListIndex)+
+                      ">="+
+                      std::to_string(serverOrdenedList.size())+
+                      ", error");
+                return;
+            }
+            /*if(ui->serverList->iconSize()>100)
+            {
+                itemServer->setIcon(0,SubServer::icon_server_list_stat3);
+            }
+            else
+                itemServer->setIcon(0,QIcon());*/
+            index++;
+        }
+    }
+}
+

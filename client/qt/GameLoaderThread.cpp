@@ -7,16 +7,20 @@
 #include <QDirIterator>
 #include <iostream>
 #include <QTime>
+#include "../../general/base/ProtocolParsing.hpp"
 
 uint32_t GameLoaderThread::audio=0;
 uint32_t GameLoaderThread::image=0;
 
-GameLoaderThread::GameLoaderThread()
+GameLoaderThread::GameLoaderThread(uint32_t index)
 {
+    this->m_index=index;
 }
 
 void GameLoaderThread::run()
 {
+    if(m_index==0)
+        CatchChallenger::ProtocolParsing::initialiseTheVariable();
     unsigned int index=0;
     while(index<toLoad.size())
     {

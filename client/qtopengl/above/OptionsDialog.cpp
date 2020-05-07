@@ -22,7 +22,7 @@ OptionsDialog::OptionsDialog() :
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     quit=new CustomButton(":/CC/images/interface/quit.png",this);
 //    quit->updateTextPercent(75);
-    connect(quit,&CustomButton::clicked,this,&OptionsDialog::quitOption);
+    connect(quit,&CustomButton::clicked,this,&OptionsDialog::removeAbove);
     title=new CCDialogTitle(this);
     title->setText(tr("Options"));
 

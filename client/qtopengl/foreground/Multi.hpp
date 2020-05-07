@@ -6,7 +6,6 @@
 #include <QSet>
 #include <vector>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
 #include "../CCWidget.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
@@ -17,6 +16,7 @@ class ListEntryEnvolued;
 class AddOrEditServer;
 class Login;
 class MultiItem;
+class QNetworkReply;
 
 class SelectedServer
 {
