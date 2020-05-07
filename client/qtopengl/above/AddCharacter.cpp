@@ -1,0 +1,411 @@
+#include "AddCharacter.hpp"
+#include "../../qt/GameLoader.hpp"
+#include "../../qt/Settings.hpp"
+#include "../Language.hpp"
+#include <QPainter>
+#include <QGraphicsScene>
+#include <QGraphicsProxyWidget>
+#include <QTextDocument>
+#include "../../qt/Ultimate.hpp"
+#include <QDesktopServices>
+
+AddCharacter::AddCharacter() :
+    wdialog(new CCWidget(this)),
+    label(this)
+{
+    ok=false;
+    edit=false;
+    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
+        ui->type->hide();
+        #if defined(NOTCPSOCKET)
+            ui->port->hide();
+            ui->server->setPlaceholderText("ws://www.server.com:9999/");
+        #endif
+    #endif
+
+    x=-1;
+    y=-1;
+    label.setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/label.png"));
+    label.setTransformationMode(Qt::SmoothTransformation);
+    label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
+    quit=new CustomButton(":/CC/images/interface/cancel.png",this);
+    validate=new CustomButton(":/CC/images/interface/validate.png",this);
+    connect(quit,&CustomButton::clicked,this,&AddCharacter::removeAbove);
+    title=new CCDialogTitle(this);
+
+    QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
+    p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
+
+    typeListProxy=new QGraphicsProxyWidget(this);
+    m_type=new QComboBox();
+    m_type->addItem(QString("Tcp"));
+    m_type->addItem(QString("WS"));
+    typeListProxy->setWidget(m_type);
+    serverText=new QGraphicsTextItem(this);
+    serverText->setVisible(false);
+    serverInput=new LineEdit(this);
+    portInput=new SpinBox(this);
+    portInput->setMinimum(1);
+    portInput->setMaximum(65535);
+
+    nameText=new CCGraphicsTextItem(this);
+    nameInput=new LineEdit(this);
+
+    proxyText=new QGraphicsTextItem(this);
+    proxyInput=new LineEdit(this);
+    proxyPortInput=new SpinBox(this);
+    proxyPortInput->setMinimum(1);
+    proxyPortInput->setMaximum(65535);
+
+    warning=new QGraphicsTextItem(this);
+    warning->setVisible(false);
+
+    if(!connect(&Language::language,&Language::newLanguage,this,&AddCharacter::newLanguage,Qt::QueuedConnection))
+        abort();
+    if(!connect(quit,&CustomButton::clicked,this,&AddCharacter::on_cancel_clicked,Qt::QueuedConnection))
+        abort();
+    if(!connect(validate,&CustomButton::clicked,this,&AddCharacter::on_ok_clicked,Qt::QueuedConnection))
+        abort();
+    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddCharacter::on_type_currentIndexChanged,Qt::QueuedConnection))
+        abort();
+    on_type_currentIndexChanged(0);
+
+    newLanguage();
+}
+
+AddCharacter::~AddCharacter()
+{
+    delete wdialog;
+    delete quit;
+    delete validate;
+    delete title;
+}
+
+QRectF AddCharacter::boundingRect() const
+{
+    return QRectF();
+}
+
+void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget)
+{
+    p->fillRect(0,0,widget->width(),widget->height(),QColor(0,0,0,120));
+    bool forcedCenter=true;
+    int idealW=900;
+    int idealH=400;
+    if(widget->width()<600 || widget->height()<480)
+    {
+        idealW/=2;
+        idealH/=2;
+    }
+    if(idealW>widget->width())
+        idealW=widget->width();
+    int top=36;
+    int bottom=94/2;
+    if(widget->width()<600 || widget->height()<480)
+    {
+        top/=2;
+        bottom/=2;
+    }
+    if((idealH+top+bottom)>widget->height())
+        idealH=widget->height()-(top+bottom);
+
+    if(x<0 || y<0 || forcedCenter)
+    {
+        x=widget->width()/2-idealW/2;
+        y=widget->height()/2-idealH/2;
+    }
+    else
+    {
+        if((x+idealW)>widget->width())
+            x=widget->width()-idealW;
+        if((y+idealH+bottom)>widget->height())
+            y=widget->height()-(idealH+bottom);
+        if(y<top)
+            y=top;
+    }
+
+    wdialog->setPos(x,y);
+    wdialog->setSize(idealW,idealH);
+
+    auto font=serverText->font();
+    if(widget->width()<600 || widget->height()<480)
+    {
+        label.setScale(0.5);
+        quit->setSize(83/2,94/2);
+        validate->setSize(83/2,94/2);
+        label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
+        title->setPixelSize(30/2);
+        font.setPixelSize(30/2);
+    }
+    else {
+        label.setScale(1);
+        quit->setSize(83,94);
+        validate->setSize(83,94);
+        label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
+        title->setPixelSize(30);
+        font.setPixelSize(30);
+    }
+    serverText->setFont(font);
+    nameText->setFont(font);
+    proxyText->setFont(font);
+
+    unsigned int nameBackgroundNewHeight=50;
+    unsigned int space=30;
+    if(widget->width()<600 || widget->height()<480)
+    {
+        font.setPixelSize(30*0.75/2);
+        serverInput->setFont(font);
+        portInput->setFont(font);
+        nameInput->setFont(font);
+        proxyInput->setFont(font);
+        proxyPortInput->setFont(font);
+        space=10;
+        nameBackgroundNewHeight=50/2;
+    }
+    else
+    {
+        font.setPixelSize(30*0.75);
+        serverInput->setFont(font);
+        portInput->setFont(font);
+        nameInput->setFont(font);
+        proxyInput->setFont(font);
+        proxyPortInput->setFont(font);
+    }
+
+    quit->setPos(x+(idealW/2-quit->width()-space/2),y+idealH-quit->height()/2);
+    validate->setPos(x+(idealW/2+space/2),y+idealH-quit->height()/2);
+    const QRectF trect=title->boundingRect();
+    title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
+
+    const QRectF &serverTextRect=serverText->boundingRect();
+    const QRectF &nameTextRect=nameText->boundingRect();
+    const QRectF &proxyTextRect=proxyText->boundingRect();
+
+    const unsigned int &serverBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
+    const unsigned int &nameBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
+    const unsigned int &proxyBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
+    if((unsigned int)nameInput->width()!=nameBackgroundNewWidth ||
+            (unsigned int)nameInput->height()!=nameBackgroundNewHeight)
+    {
+        serverInput->setFixedHeight(nameBackgroundNewHeight);
+        portInput->setFixedHeight(nameBackgroundNewHeight);
+        if(portInput->isVisible())
+        {
+            serverInput->setFixedWidth(serverBackgroundNewWidth*3/4);
+            portInput->setFixedWidth(serverBackgroundNewWidth*1/4);
+        }
+        else
+            serverInput->setFixedWidth(serverBackgroundNewWidth);
+        nameInput->setFixedSize(nameBackgroundNewWidth,nameBackgroundNewHeight);
+        proxyInput->setFixedSize(proxyBackgroundNewWidth*3/4,nameBackgroundNewHeight);
+        proxyPortInput->setFixedSize(proxyBackgroundNewWidth*1/4,nameBackgroundNewHeight);
+    }
+    {
+        typeListProxy->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
+        serverText->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
+        const unsigned int serverBackgroundW=serverText->x()+serverTextRect.width();
+        serverInput->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
+        if(portInput->isVisible())
+            portInput->setPos(serverBackgroundW+serverInput->width(),serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
+    }
+    {
+        nameText->setPos(x+wdialog->currentBorderSize()*2,serverText->y()+serverTextRect.height()+space);
+        const unsigned int nameBackgroundW=nameText->x()+nameTextRect.width();
+        nameInput->setPos(nameBackgroundW,nameText->y()+(nameTextRect.height()-nameInput->boundingRect().height())/2);
+    }
+    {
+        proxyText->setPos(x+wdialog->currentBorderSize()*2,nameText->y()+nameTextRect.height()+space);
+        const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
+        proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
+        proxyPortInput->setPos(proxyBackgroundW+proxyInput->width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
+    }
+}
+
+void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated)
+{
+    quit->mousePressEventXY(p,pressValidated);
+    validate->mousePressEventXY(p,pressValidated);
+}
+
+void AddCharacter::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+{
+    quit->mouseReleaseEventXY(p,pressValidated);
+    validate->mouseReleaseEventXY(p,pressValidated);
+}
+
+void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+{
+    Q_UNUSED(p);
+    Q_UNUSED(pressValidated);
+}
+
+void AddCharacter::setDatapack(std::string path)
+{
+    if(newProfile->getProfileCount()==1)
+    {
+        newProfile->on_ok_clicked();
+        CharacterList::newProfileFinished();
+        emit quitAbove();
+    }
+    else
+        newProfile->show();
+}
+
+void AddCharacter::newLanguage()
+{
+    proxyText->setHtml(tr("Proxy: "));
+    nameText->setHtml(tr("Name: "));
+    serverText->setHtml(tr("Server: "));
+    if(edit)
+        title->setText(tr("Edit"));
+    else
+        title->setText(tr("Add"));
+}
+
+int AddCharacter::type() const
+{
+#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+return m_type->currentIndex();
+#else
+    #if defined(NOTCPSOCKET)
+    return 1;
+    #else
+        #if defined(NOWEBSOCKET)
+        return 0;
+        #else
+        #error add server but no tcp or web socket defined
+        return -1;
+        #endif
+    #endif
+#endif
+}
+
+void AddCharacter::setType(const int &type)
+{
+#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
+m_type->setCurrentIndex(type);
+#else
+    #if defined(NOTCPSOCKET)
+    ui->type->setCurrentIndex(1);
+    #else
+        #if defined(NOWEBSOCKET)
+        ui->type->setCurrentIndex(0);
+        #endif
+    #endif
+#endif
+        Q_UNUSED(type);
+}
+
+void AddCharacter::setEdit(const bool &edit)
+{
+    this->edit=edit;
+    title->setText(tr("Edit"));
+}
+
+void AddCharacter::on_ok_clicked()
+{
+    if(nameText->toPlainText()==QStringLiteral("Internal") || nameText->toPlainText()==QStringLiteral("internal"))
+    {
+        warning->setHtml(tr("The name can't be \"internal\""));
+        warning->setVisible(true);
+        return;
+    }
+    if(type()==0)
+    {
+        if(!server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
+        {
+            warning->setHtml(tr("The host seam don't be a valid hostname or ip"));
+            warning->setVisible(true);
+            return;
+        }
+    }
+    else if(type()==1)
+    {
+        if(!server().startsWith("ws://") && !server().startsWith("wss://"))
+        {
+            warning->setHtml(tr("The web socket url seam wrong, not start with ws:// or wss://"));
+            warning->setVisible(true);
+            return;
+        }
+    }
+    ok=true;
+    emit quitOption();
+    //close();
+}
+
+QString AddCharacter::server() const
+{
+    return serverInput->text();
+}
+
+uint16_t AddCharacter::port() const
+{
+    return static_cast<uint16_t>(portInput->value());
+}
+
+QString AddCharacter::proxyServer() const
+{
+    return proxyInput->text();
+}
+
+uint16_t AddCharacter::proxyPort() const
+{
+    return static_cast<uint16_t>(proxyPortInput->value());
+}
+
+QString AddCharacter::name() const
+{
+    return nameInput->text();
+}
+
+void AddCharacter::setServer(const QString &server)
+{
+    serverInput->setText(server);
+}
+
+void AddCharacter::setPort(const uint16_t &port)
+{
+    portInput->setValue(port);
+}
+
+void AddCharacter::setName(const QString &name)
+{
+    nameInput->setText(name);
+}
+
+void AddCharacter::setProxyServer(const QString &proxyServer)
+{
+    proxyInput->setText(proxyServer);
+}
+
+void AddCharacter::setProxyPort(const uint16_t &proxyPort)
+{
+    proxyPortInput->setValue(proxyPort);
+}
+
+bool AddCharacter::isOk() const
+{
+    return ok;
+}
+
+void AddCharacter::on_type_currentIndexChanged(int index)
+{
+    switch(index) {
+    case 0:
+        portInput->show();
+        serverInput->setPlaceholderText("www.server.com");
+        break;
+    case 1:
+        portInput->hide();
+        serverInput->setPlaceholderText("ws://www.server.com:9999/");
+        break;
+    default:
+        return;
+    }
+}
+
+void AddCharacter::on_cancel_clicked()
+{
+    ok=false;
+    emit quitOption();
+}

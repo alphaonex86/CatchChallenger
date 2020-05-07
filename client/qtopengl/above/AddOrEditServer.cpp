@@ -30,7 +30,7 @@ AddOrEditServer::AddOrEditServer() :
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     quit=new CustomButton(":/CC/images/interface/cancel.png",this);
     validate=new CustomButton(":/CC/images/interface/validate.png",this);
-    connect(quit,&CustomButton::clicked,this,&AddOrEditServer::quitOption);
+    connect(quit,&CustomButton::clicked,this,&AddOrEditServer::removeAbove);
     title=new CCDialogTitle(this);
 
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
@@ -317,7 +317,7 @@ void AddOrEditServer::on_ok_clicked()
         }
     }
     ok=true;
-    emit quitOption();
+    emit removeAbove();
     //close();
 }
 
@@ -395,5 +395,5 @@ void AddOrEditServer::on_type_currentIndexChanged(int index)
 void AddOrEditServer::on_cancel_clicked()
 {
     ok=false;
-    emit quitOption();
+    emit removeAbove();
 }
