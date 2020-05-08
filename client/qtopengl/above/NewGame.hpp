@@ -11,6 +11,7 @@
 #include "../CCSliderH.hpp"
 #include "../LineEdit.hpp"
 #include "../SpinBox.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
 
 class NewGame : public QObject, public ScreenInput
 {
@@ -24,45 +25,55 @@ public:
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
     void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
     void setDatapack(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin);
+    void updateSkin();
+    void on_cancel_clicked();
+    void on_ok_clicked();
     bool haveSkin() const;
     bool isOk() const;
+    void on_next_clicked();
+    void on_previous_clicked();
+    void on_pseudo_returnPressed();
     std::string pseudo();
     uint8_t skinId();
     uint8_t monsterGroupId();
+    bool haveTheInformation();
+    bool okCanBeEnabled();
+    std::string skin();
+    void on_pseudo_textChanged(const QString &);
 private slots:
     void newLanguage();
 private:
-    bool edit;
     CCWidget *wdialog;
     CustomButton *quit;
     CCDialogTitle *title;
     QGraphicsPixmapItem label;
     CustomButton *validate;
 
-    QComboBox *m_type;
-    QGraphicsProxyWidget *typeListProxy;
-
-    QGraphicsTextItem *serverText;
-    LineEdit *serverInput;
-    SpinBox *portInput;
-
-    QGraphicsTextItem *nameText;
-    LineEdit *nameInput;
-
-    QGraphicsTextItem *proxyText;
-    LineEdit *proxyInput;
-    SpinBox *proxyPortInput;
-
+    CustomButton *previous;
+    QList<QGraphicsPixmapItem *> centerImages;
+    CustomButton *next;
+    LineEdit *uipseudo;
     QGraphicsTextItem *warning;
 
     int x,y;
-    bool ok;
 
-    QString serverPrevious;
-    QString portPrevious;
-    QString namePrevious;
-    QString proxyPrevious;
-    QString proxyPortPrevious;
+    std::vector<uint8_t> forcedSkin;
+    std::string monsterPath;
+    std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup;
+    enum Step
+    {
+        Step1,
+        Step2,
+        StepOk,
+    };
+    Step step;
+    bool ok;
+    bool skinLoaded;
+    std::vector<std::string> skinList;
+    std::vector<uint8_t> skinListId;
+    uint8_t currentSkin;
+    uint8_t currentMonsterGroup;
+    std::string skinPath;
 signals:
     void removeAbove();
 };

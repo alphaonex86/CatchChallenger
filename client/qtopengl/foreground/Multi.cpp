@@ -795,7 +795,7 @@ void Multi::server_select_clicked()
     if(Settings::settings->contains("last"))
         login->setAuth(Settings::settings->value("last").toStringList());
     int index=0;
-    while(index<(unsigned int)mergedConnexionInfoList.size())
+    while((unsigned int)index<(unsigned int)mergedConnexionInfoList.size())
     {
         auto e=mergedConnexionInfoList.at(index);
         if(e.isCustom==selectedServer.isCustom && e.unique_code==selectedServer.unique_code)
@@ -871,10 +871,10 @@ QRectF Multi::boundingRect() const
 void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 {
     unsigned int space=10;
-    unsigned int fontSize=20;
+//    unsigned int fontSize=20;
     unsigned int multiItemH=100;
-    if(w->height()>300)
-        fontSize=w->height()/6;
+    /*if(w->height()>300)
+        fontSize=w->height()/6;*/
     if(w->width()<600 || w->height()<600)
     {
         server_add->setSize(148,61);

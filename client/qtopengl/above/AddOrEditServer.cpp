@@ -36,11 +36,9 @@ AddOrEditServer::AddOrEditServer() :
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
     p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
 
-    typeListProxy=new QGraphicsProxyWidget(this);
-    m_type=new QComboBox();
+    m_type=new ComboBox(this);
     m_type->addItem(QString("Tcp"));
     m_type->addItem(QString("WS"));
-    typeListProxy->setWidget(m_type);
     serverText=new QGraphicsTextItem(this);
     serverText->setVisible(false);
     serverInput=new LineEdit(this);
@@ -66,7 +64,7 @@ AddOrEditServer::AddOrEditServer() :
         abort();
     if(!connect(validate,&CustomButton::clicked,this,&AddOrEditServer::on_ok_clicked,Qt::QueuedConnection))
         abort();
-    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddOrEditServer::on_type_currentIndexChanged,Qt::QueuedConnection))
+    if(!connect(m_type,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&AddOrEditServer::on_type_currentIndexChanged,Qt::QueuedConnection))
         abort();
     on_type_currentIndexChanged(0);
 
@@ -201,7 +199,7 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
         proxyPortInput->setFixedSize(proxyBackgroundNewWidth*1/4,nameBackgroundNewHeight);
     }
     {
-        typeListProxy->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
+        m_type->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
         serverText->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
         const unsigned int serverBackgroundW=serverText->x()+serverTextRect.width();
         serverInput->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
