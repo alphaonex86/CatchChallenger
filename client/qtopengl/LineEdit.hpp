@@ -20,6 +20,7 @@ public:
     void setFixedSize(int w, int h);
     void setPlaceholderText(const QString &);
     void setEchoMode(QLineEdit::EchoMode e);
+    void setMaxLength(int a);
     int width() const;
     int height() const;
     QString text() const;
@@ -27,6 +28,7 @@ private:
     QLineEdit *m_lineEdit;
 signals:
     void textChanged(const QString &);
+    void returnPressed();
 };
 
 #endif // LINEEDIT_H

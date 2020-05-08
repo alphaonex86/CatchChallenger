@@ -166,14 +166,6 @@ void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint
         errorString("BaseWindow::on_serverListSelect_clicked(), wrong serverSelected internal data");
 }
 
-std::vector<CatchChallenger::ServerFromPoolForDisplay> ConnexionManager::getServerOrdenedList()
-{
-    if(client!=nullptr)
-        return client->getServerOrdenedList();
-    else
-        return std::vector<CatchChallenger::ServerFromPoolForDisplay>();
-}
-
 void ConnexionManager::disconnected(std::string reason)
 {
     //QMessageBox::information(this,tr("Disconnected"),tr("Disconnected by the reason: %1").arg(QString::fromStdString(reason)));

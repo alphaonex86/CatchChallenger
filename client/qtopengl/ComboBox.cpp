@@ -27,3 +27,13 @@ int ComboBox::currentIndex() const
 {
     return m_ComboBox->currentIndex();
 }
+
+void ComboBox::clear()
+{
+    m_ComboBox->clear();
+}
+
+int	ComboBox::count() const
+{
+    return m_ComboBox->count();
+}

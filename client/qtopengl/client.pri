@@ -285,7 +285,8 @@ SOURCES += \
     $$PWD/foreground/CharacterList.cpp \
     $$PWD/foreground/SubServer.cpp \
     $$PWD/above/AddCharacter.cpp \
-    $$PWD/above/NewGame.cpp
+    $$PWD/above/NewGame.cpp \
+    $$PWD/../qt/FacilityLibClient.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -337,7 +338,8 @@ HEADERS  += \
     $$PWD/foreground/CharacterList.hpp \
     $$PWD/foreground/SubServer.hpp \
     $$PWD/above/AddCharacter.hpp \
-    $$PWD/above/NewGame.hpp
+    $$PWD/above/NewGame.hpp \
+    $$PWD/../qt/FacilityLibClient.hpp
 
 
 wasm: {
