@@ -7,6 +7,8 @@ LineEdit::LineEdit(QGraphicsItem *parent) :
     setWidget(m_lineEdit);
     if(!connect(m_lineEdit,&QLineEdit::textChanged,this,&LineEdit::textChanged))
         abort();
+    if(!connect(m_lineEdit,&QLineEdit::returnPressed,this,&LineEdit::returnPressed))
+        abort();
 }
 
 LineEdit::~LineEdit()
@@ -76,4 +78,9 @@ int LineEdit::height() const
 QString LineEdit::text() const
 {
     return m_lineEdit->text();
+}
+
+void LineEdit::setMaxLength(int a)
+{
+    m_lineEdit->setMaxLength(a);
 }

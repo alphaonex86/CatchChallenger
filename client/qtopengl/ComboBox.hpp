@@ -13,6 +13,8 @@ public:
     void addItem(const QString &text, const QVariant &userData = QVariant());
     void setCurrentIndex(int index);
     int currentIndex() const;
+    void clear();
+    int	count() const;
 private:
     QComboBox *m_ComboBox;
 signals:

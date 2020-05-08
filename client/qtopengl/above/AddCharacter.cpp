@@ -7,21 +7,16 @@
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
 #include "../../qt/Ultimate.hpp"
+#include "../../../general/base/DatapackGeneralLoader.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include <QDesktopServices>
+#include <QDebug>
 
 AddCharacter::AddCharacter() :
     wdialog(new CCWidget(this)),
     label(this)
 {
     ok=false;
-    edit=false;
-    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
-        ui->type->hide();
-        #if defined(NOTCPSOCKET)
-            ui->port->hide();
-            ui->server->setPlaceholderText("ws://www.server.com:9999/");
-        #endif
-    #endif
 
     x=-1;
     y=-1;
@@ -33,32 +28,8 @@ AddCharacter::AddCharacter() :
     connect(quit,&CustomButton::clicked,this,&AddCharacter::removeAbove);
     title=new CCDialogTitle(this);
 
-    QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
-    p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-
-    typeListProxy=new QGraphicsProxyWidget(this);
-    m_type=new QComboBox();
-    m_type->addItem(QString("Tcp"));
-    m_type->addItem(QString("WS"));
-    typeListProxy->setWidget(m_type);
-    serverText=new QGraphicsTextItem(this);
-    serverText->setVisible(false);
-    serverInput=new LineEdit(this);
-    portInput=new SpinBox(this);
-    portInput->setMinimum(1);
-    portInput->setMaximum(65535);
-
-    nameText=new CCGraphicsTextItem(this);
-    nameInput=new LineEdit(this);
-
-    proxyText=new QGraphicsTextItem(this);
-    proxyInput=new LineEdit(this);
-    proxyPortInput=new SpinBox(this);
-    proxyPortInput->setMinimum(1);
-    proxyPortInput->setMaximum(65535);
-
-    warning=new QGraphicsTextItem(this);
-    warning->setVisible(false);
+    comboBox=new ComboBox(this);
+    description=new QGraphicsTextItem(this);
 
     if(!connect(&Language::language,&Language::newLanguage,this,&AddCharacter::newLanguage,Qt::QueuedConnection))
         abort();
@@ -66,9 +37,8 @@ AddCharacter::AddCharacter() :
         abort();
     if(!connect(validate,&CustomButton::clicked,this,&AddCharacter::on_ok_clicked,Qt::QueuedConnection))
         abort();
-    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&AddCharacter::on_type_currentIndexChanged,Qt::QueuedConnection))
+    if(!connect(comboBox,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&AddCharacter::on_comboBox_currentIndexChanged,Qt::QueuedConnection))
         abort();
-    on_type_currentIndexChanged(0);
 
     newLanguage();
 }
@@ -127,7 +97,7 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=serverText->font();
+    auto font=description->font();
     if(widget->width()<600 || widget->height()<480)
     {
         label.setScale(0.5);
@@ -145,31 +115,19 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
         title->setPixelSize(30);
         font.setPixelSize(30);
     }
-    serverText->setFont(font);
-    nameText->setFont(font);
-    proxyText->setFont(font);
+    description->setFont(font);
 
     unsigned int nameBackgroundNewHeight=50;
     unsigned int space=30;
     if(widget->width()<600 || widget->height()<480)
     {
         font.setPixelSize(30*0.75/2);
-        serverInput->setFont(font);
-        portInput->setFont(font);
-        nameInput->setFont(font);
-        proxyInput->setFont(font);
-        proxyPortInput->setFont(font);
         space=10;
         nameBackgroundNewHeight=50/2;
     }
     else
     {
         font.setPixelSize(30*0.75);
-        serverInput->setFont(font);
-        portInput->setFont(font);
-        nameInput->setFont(font);
-        proxyInput->setFont(font);
-        proxyPortInput->setFont(font);
     }
 
     quit->setPos(x+(idealW/2-quit->width()-space/2),y+idealH-quit->height()/2);
@@ -177,7 +135,7 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
 
-    const QRectF &serverTextRect=serverText->boundingRect();
+    /*const QRectF &serverTextRect=serverText->boundingRect();
     const QRectF &nameTextRect=nameText->boundingRect();
     const QRectF &proxyTextRect=proxyText->boundingRect();
 
@@ -218,7 +176,7 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
         const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
         proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
         proxyPortInput->setPos(proxyBackgroundW+proxyInput->width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-    }
+    }*/
 }
 
 void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated)
@@ -241,146 +199,44 @@ void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
 
 void AddCharacter::setDatapack(std::string path)
 {
-    if(newProfile->getProfileCount()==1)
+    this->datapackPath=path;
+    this->ok=false;
+
+    comboBox->clear();
+    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
     {
-        newProfile->on_ok_clicked();
-        CharacterList::newProfileFinished();
-        emit quitAbove();
+        description->setHtml(tr("No profile selected to start a new game"));
+        return;
     }
-    else
-        newProfile->show();
+    loadProfileText();
+    unsigned int index=0;
+    while(index<profileTextList.size())
+    {
+        comboBox->addItem(QString::fromStdString(profileTextList.at(index).name));
+        index++;
+    }
+    if(comboBox->count()>0)
+    {
+        comboBox->setCurrentIndex(rand()%comboBox->count());
+        description->setHtml(QString::fromStdString(profileTextList.at(comboBox->currentIndex()).description));
+
+    }
+    validate->setEnabled(comboBox->count()>0);
+    if(profileTextList.size()==1)
+        on_ok_clicked();
 }
 
 void AddCharacter::newLanguage()
 {
-    proxyText->setHtml(tr("Proxy: "));
-    nameText->setHtml(tr("Name: "));
-    serverText->setHtml(tr("Server: "));
-    if(edit)
-        title->setText(tr("Edit"));
-    else
-        title->setText(tr("Add"));
-}
-
-int AddCharacter::type() const
-{
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-return m_type->currentIndex();
-#else
-    #if defined(NOTCPSOCKET)
-    return 1;
-    #else
-        #if defined(NOWEBSOCKET)
-        return 0;
-        #else
-        #error add server but no tcp or web socket defined
-        return -1;
-        #endif
-    #endif
-#endif
-}
-
-void AddCharacter::setType(const int &type)
-{
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-m_type->setCurrentIndex(type);
-#else
-    #if defined(NOTCPSOCKET)
-    ui->type->setCurrentIndex(1);
-    #else
-        #if defined(NOWEBSOCKET)
-        ui->type->setCurrentIndex(0);
-        #endif
-    #endif
-#endif
-        Q_UNUSED(type);
-}
-
-void AddCharacter::setEdit(const bool &edit)
-{
-    this->edit=edit;
-    title->setText(tr("Edit"));
+    title->setText(tr("Select your profile"));
 }
 
 void AddCharacter::on_ok_clicked()
 {
-    if(nameText->toPlainText()==QStringLiteral("Internal") || nameText->toPlainText()==QStringLiteral("internal"))
-    {
-        warning->setHtml(tr("The name can't be \"internal\""));
-        warning->setVisible(true);
+    if(comboBox->count()<1)
         return;
-    }
-    if(type()==0)
-    {
-        if(!server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
-        {
-            warning->setHtml(tr("The host seam don't be a valid hostname or ip"));
-            warning->setVisible(true);
-            return;
-        }
-    }
-    else if(type()==1)
-    {
-        if(!server().startsWith("ws://") && !server().startsWith("wss://"))
-        {
-            warning->setHtml(tr("The web socket url seam wrong, not start with ws:// or wss://"));
-            warning->setVisible(true);
-            return;
-        }
-    }
     ok=true;
-    emit quitOption();
-    //close();
-}
-
-QString AddCharacter::server() const
-{
-    return serverInput->text();
-}
-
-uint16_t AddCharacter::port() const
-{
-    return static_cast<uint16_t>(portInput->value());
-}
-
-QString AddCharacter::proxyServer() const
-{
-    return proxyInput->text();
-}
-
-uint16_t AddCharacter::proxyPort() const
-{
-    return static_cast<uint16_t>(proxyPortInput->value());
-}
-
-QString AddCharacter::name() const
-{
-    return nameInput->text();
-}
-
-void AddCharacter::setServer(const QString &server)
-{
-    serverInput->setText(server);
-}
-
-void AddCharacter::setPort(const uint16_t &port)
-{
-    portInput->setValue(port);
-}
-
-void AddCharacter::setName(const QString &name)
-{
-    nameInput->setText(name);
-}
-
-void AddCharacter::setProxyServer(const QString &proxyServer)
-{
-    proxyInput->setText(proxyServer);
-}
-
-void AddCharacter::setProxyPort(const uint16_t &proxyPort)
-{
-    proxyPortInput->setValue(proxyPort);
+    emit removeAbove();
 }
 
 bool AddCharacter::isOk() const
@@ -388,24 +244,127 @@ bool AddCharacter::isOk() const
     return ok;
 }
 
-void AddCharacter::on_type_currentIndexChanged(int index)
-{
-    switch(index) {
-    case 0:
-        portInput->show();
-        serverInput->setPlaceholderText("www.server.com");
-        break;
-    case 1:
-        portInput->hide();
-        serverInput->setPlaceholderText("ws://www.server.com:9999/");
-        break;
-    default:
-        return;
-    }
-}
-
 void AddCharacter::on_cancel_clicked()
 {
     ok=false;
-    emit quitOption();
+    emit removeAbove();
+}
+
+void AddCharacter::loadProfileText()
+{
+    const std::string &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
+    std::vector<const tinyxml2::XMLElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
+                datapackPath,xmlFile,
+                CatchChallenger::CommonDatapack::commonDatapack.items.item,
+                CatchChallenger::CommonDatapack::commonDatapack.monsters,
+                CatchChallenger::CommonDatapack::commonDatapack.reputation
+                ).first;
+    profileTextList.clear();
+    unsigned int index=0;
+    while(index<xmlList.size())
+    {
+        ProfileText profile;
+        const tinyxml2::XMLElement * startItem=xmlList.at(index);
+        #ifndef CATCHCHALLENGER_BOT
+        const std::string &language=Language::language.getLanguage().toStdString();
+        #else
+        const std::string language("en");
+        #endif
+        bool found=false;
+        const tinyxml2::XMLElement * name = startItem->FirstChildElement("name");
+        if(!language.empty() && language!="en")
+            while(name!=NULL)
+            {
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
+                {
+                    profile.name=name->GetText();
+                    found=true;
+                    break;
+                }
+                name = name->NextSiblingElement("name");
+            }
+        if(!found)
+        {
+            name = startItem->FirstChildElement("name");
+            while(name!=NULL)
+            {
+                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                    if(name->GetText()!=NULL)
+                    {
+                        profile.name=name->GetText();
+                        break;
+                    }
+                name = name->NextSiblingElement("name");
+            }
+        }
+        if(profile.name.empty())
+        {
+            if(startItem->GetText()!=NULL)
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(): %2")
+                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
+            else
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, name empty or not found: child.tagName(")
+                         .arg(QString::fromStdString(xmlFile)));
+            startItem = startItem->NextSiblingElement("start");
+            continue;
+        }
+        found=false;
+        const tinyxml2::XMLElement * description = startItem->FirstChildElement("description");
+        if(!language.empty() && language!="en")
+            while(description!=NULL)
+            {
+                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
+                {
+                    profile.description=description->GetText();
+                    found=true;
+                    break;
+                }
+                description = description->NextSiblingElement("description");
+            }
+        if(!found)
+        {
+            description = startItem->FirstChildElement("description");
+            while(description!=NULL)
+            {
+                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
+                    if(description->GetText()!=NULL)
+                    {
+                        profile.description=description->GetText();
+                        break;
+                    }
+                description = description->NextSiblingElement("description");
+            }
+        }
+        if(profile.description.empty())
+        {
+            if(description->GetText()!=NULL)
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName(): %2")
+                         .arg(QString::fromStdString(xmlFile)).arg(startItem->GetText()));
+            else
+                qDebug() << (QStringLiteral("Unable to open the xml file: %1, description empty or not found: child.tagName()")
+                         .arg(QString::fromStdString(xmlFile)));
+            startItem = startItem->NextSiblingElement("start");
+            continue;
+        }
+        profileTextList.push_back(profile);
+        index++;
+    }
+}
+
+int AddCharacter::getProfileIndex()
+{
+    if(comboBox->count()>0)
+        return comboBox->currentIndex();
+    return 0;
+}
+
+int AddCharacter::getProfileCount()
+{
+    return comboBox->count();
+}
+
+void AddCharacter::on_comboBox_currentIndexChanged(int index)
+{
+    if(comboBox->count()>0)
+        description->setHtml(QString::fromStdString(profileTextList.at(index).description));
 }

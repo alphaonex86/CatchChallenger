@@ -11,6 +11,7 @@
 #include "../CCSliderH.hpp"
 #include "../LineEdit.hpp"
 #include "../SpinBox.hpp"
+#include "../ComboBox.hpp"
 
 class AddCharacter : public QObject, public ScreenInput
 {
@@ -25,43 +26,38 @@ public:
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
     void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
 
-    unsigned int getProfileIndex();
     bool isOk() const;
     void setDatapack(std::string path);
+    void on_cancel_clicked();
+    void on_ok_clicked();
+
+    void loadProfileText();
+    int getProfileIndex();
+    int getProfileCount();
+    void on_comboBox_currentIndexChanged(int index);
 private slots:
     void newLanguage();
 private:
-    bool edit;
     CCWidget *wdialog;
     CustomButton *quit;
     CCDialogTitle *title;
     QGraphicsPixmapItem label;
     CustomButton *validate;
 
-    QComboBox *m_type;
-    QGraphicsProxyWidget *typeListProxy;
+    ComboBox *comboBox;
 
-    QGraphicsTextItem *serverText;
-    LineEdit *serverInput;
-    SpinBox *portInput;
-
-    QGraphicsTextItem *nameText;
-    LineEdit *nameInput;
-
-    QGraphicsTextItem *proxyText;
-    LineEdit *proxyInput;
-    SpinBox *proxyPortInput;
-
-    QGraphicsTextItem *warning;
+    QGraphicsTextItem *description;
 
     int x,y;
     bool ok;
 
-    QString serverPrevious;
-    QString portPrevious;
-    QString namePrevious;
-    QString proxyPrevious;
-    QString proxyPortPrevious;
+    std::string datapackPath;
+    struct ProfileText
+    {
+        std::string name;
+        std::string description;
+    };
+    std::vector<ProfileText> profileTextList;
 signals:
     void removeAbove();
 };
