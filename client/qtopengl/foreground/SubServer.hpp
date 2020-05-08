@@ -22,7 +22,6 @@ class SubServer : public QObject, public ScreenInput
 public:
     explicit SubServer();
     ~SubServer();
-    void displayServerList();
     void server_select_clicked();
     void newLanguage();
     QRectF boundingRect() const;
@@ -45,18 +44,18 @@ private:
     uint32_t averagePlayedTime,averageLastConnect;
     std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
 
-    static QIcon icon_server_list_star1;
-    static QIcon icon_server_list_star2;
-    static QIcon icon_server_list_star3;
-    static QIcon icon_server_list_star4;
-    static QIcon icon_server_list_star5;
-    static QIcon icon_server_list_star6;
-    static QIcon icon_server_list_stat1;
-    static QIcon icon_server_list_stat2;
-    static QIcon icon_server_list_stat3;
-    static QIcon icon_server_list_stat4;
-    static QIcon icon_server_list_bug;
-    static std::vector<QIcon> icon_server_list_color;
+    QIcon icon_server_list_star1;
+    QIcon icon_server_list_star2;
+    QIcon icon_server_list_star3;
+    QIcon icon_server_list_star4;
+    QIcon icon_server_list_star5;
+    QIcon icon_server_list_star6;
+    QIcon icon_server_list_stat1;
+    QIcon icon_server_list_stat2;
+    QIcon icon_server_list_stat3;
+    QIcon icon_server_list_stat4;
+    QIcon icon_server_list_bug;
+    std::vector<QIcon> icon_server_list_color;
     ConnexionManager *connexionManager;
 signals:
     void backMulti();

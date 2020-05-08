@@ -24,9 +24,6 @@ SubServer::SubServer()
     if(!connect(server_select,&CustomButton::clicked,this,&SubServer::server_select_clicked))
         abort();
     newLanguage();
-
-    //need be the last
-    displayServerList();
 }
 
 SubServer::~SubServer()

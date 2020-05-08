@@ -42,7 +42,6 @@ CharacterList::CharacterList()
     newLanguage();
 
     //need be the last
-    displayServerList();
     addCharacter=nullptr;
 }
 

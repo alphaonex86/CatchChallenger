@@ -1,12 +1,13 @@
 #include "NewGame.hpp"
 #include "../../qt/GameLoader.hpp"
 #include "../../qt/Settings.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../Language.hpp"
 #include <QPainter>
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
-#include "../../qt/Ultimate.hpp"
 #include <QDesktopServices>
 
 NewGame::NewGame() :
@@ -14,14 +15,6 @@ NewGame::NewGame() :
     label(this)
 {
     ok=false;
-    edit=false;
-    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
-        ui->type->hide();
-        #if defined(NOTCPSOCKET)
-            ui->port->hide();
-            ui->server->setPlaceholderText("ws://www.server.com:9999/");
-        #endif
-    #endif
 
     x=-1;
     y=-1;
@@ -33,29 +26,9 @@ NewGame::NewGame() :
     connect(quit,&CustomButton::clicked,this,&NewGame::removeAbove);
     title=new CCDialogTitle(this);
 
-    QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
-    p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
-
-    typeListProxy=new QGraphicsProxyWidget(this);
-    m_type=new QComboBox();
-    m_type->addItem(QString("Tcp"));
-    m_type->addItem(QString("WS"));
-    typeListProxy->setWidget(m_type);
-    serverText=new QGraphicsTextItem(this);
-    serverText->setVisible(false);
-    serverInput=new LineEdit(this);
-    portInput=new SpinBox(this);
-    portInput->setMinimum(1);
-    portInput->setMaximum(65535);
-
-    nameText=new CCGraphicsTextItem(this);
-    nameInput=new LineEdit(this);
-
-    proxyText=new QGraphicsTextItem(this);
-    proxyInput=new LineEdit(this);
-    proxyPortInput=new SpinBox(this);
-    proxyPortInput->setMinimum(1);
-    proxyPortInput->setMaximum(65535);
+    previous=new CustomButton(":/CC/images/interface/back.png",this);
+    next=new CustomButton(":/CC/images/interface/next.png",this);
+    uipseudo=new LineEdit(this);
 
     warning=new QGraphicsTextItem(this);
     warning->setVisible(false);
@@ -66,9 +39,12 @@ NewGame::NewGame() :
         abort();
     if(!connect(validate,&CustomButton::clicked,this,&NewGame::on_ok_clicked,Qt::QueuedConnection))
         abort();
-    if(!connect(m_type,static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this,&NewGame::on_type_currentIndexChanged,Qt::QueuedConnection))
+    if(!connect(previous,&CustomButton::clicked,this,&NewGame::on_previous_clicked,Qt::QueuedConnection))
         abort();
-    on_type_currentIndexChanged(0);
+    if(!connect(next,&CustomButton::clicked,this,&NewGame::on_next_clicked,Qt::QueuedConnection))
+        abort();
+    if(!connect(uipseudo,&LineEdit::returnPressed,this,&NewGame::on_pseudo_returnPressed,Qt::QueuedConnection))
+        abort();
 
     newLanguage();
 }
@@ -127,7 +103,6 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    auto font=serverText->font();
     if(widget->width()<600 || widget->height()<480)
     {
         label.setScale(0.5);
@@ -135,7 +110,6 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
         validate->setSize(83/2,94/2);
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
         title->setPixelSize(30/2);
-        font.setPixelSize(30/2);
     }
     else {
         label.setScale(1);
@@ -143,33 +117,14 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
         validate->setSize(83,94);
         label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
         title->setPixelSize(30);
-        font.setPixelSize(30);
     }
-    serverText->setFont(font);
-    nameText->setFont(font);
-    proxyText->setFont(font);
 
-    unsigned int nameBackgroundNewHeight=50;
+    //unsigned int nameBackgroundNewHeight=50;
     unsigned int space=30;
     if(widget->width()<600 || widget->height()<480)
     {
-        font.setPixelSize(30*0.75/2);
-        serverInput->setFont(font);
-        portInput->setFont(font);
-        nameInput->setFont(font);
-        proxyInput->setFont(font);
-        proxyPortInput->setFont(font);
         space=10;
-        nameBackgroundNewHeight=50/2;
-    }
-    else
-    {
-        font.setPixelSize(30*0.75);
-        serverInput->setFont(font);
-        portInput->setFont(font);
-        nameInput->setFont(font);
-        proxyInput->setFont(font);
-        proxyPortInput->setFont(font);
+//        nameBackgroundNewHeight=50/2;
     }
 
     quit->setPos(x+(idealW/2-quit->width()-space/2),y+idealH-quit->height()/2);
@@ -177,7 +132,7 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
 
-    const QRectF &serverTextRect=serverText->boundingRect();
+/*    const QRectF &serverTextRect=serverText->boundingRect();
     const QRectF &nameTextRect=nameText->boundingRect();
     const QRectF &proxyTextRect=proxyText->boundingRect();
 
@@ -218,30 +173,29 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
         const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
         proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
         proxyPortInput->setPos(proxyBackgroundW+proxyInput->width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-    }
+    }*/
 }
 
 void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated)
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
+    next->mousePressEventXY(p,pressValidated);
+    previous->mousePressEventXY(p,pressValidated);
 }
 
 void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
+    next->mouseReleaseEventXY(p,pressValidated);
+    previous->mouseReleaseEventXY(p,pressValidated);
 }
 
 void NewGame::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);
-}
-
-void NewGame::setDatapack(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin)
-{
-
 }
 
 /*void NewGame::setDatapack(std::string path)
@@ -258,134 +212,7 @@ void NewGame::setDatapack(const std::string &skinPath, const std::string &monste
 
 void NewGame::newLanguage()
 {
-    proxyText->setHtml(tr("Proxy: "));
-    nameText->setHtml(tr("Name: "));
-    serverText->setHtml(tr("Server: "));
-    if(edit)
-        title->setText(tr("Edit"));
-    else
-        title->setText(tr("Add"));
-}
-
-int NewGame::type() const
-{
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-return m_type->currentIndex();
-#else
-    #if defined(NOTCPSOCKET)
-    return 1;
-    #else
-        #if defined(NOWEBSOCKET)
-        return 0;
-        #else
-        #error add server but no tcp or web socket defined
-        return -1;
-        #endif
-    #endif
-#endif
-}
-
-void NewGame::setType(const int &type)
-{
-#if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-m_type->setCurrentIndex(type);
-#else
-    #if defined(NOTCPSOCKET)
-    ui->type->setCurrentIndex(1);
-    #else
-        #if defined(NOWEBSOCKET)
-        ui->type->setCurrentIndex(0);
-        #endif
-    #endif
-#endif
-        Q_UNUSED(type);
-}
-
-void NewGame::setEdit(const bool &edit)
-{
-    this->edit=edit;
-    title->setText(tr("Edit"));
-}
-
-void NewGame::on_ok_clicked()
-{
-    if(nameText->toPlainText()==QStringLiteral("Internal") || nameText->toPlainText()==QStringLiteral("internal"))
-    {
-        warning->setHtml(tr("The name can't be \"internal\""));
-        warning->setVisible(true);
-        return;
-    }
-    if(type()==0)
-    {
-        if(!server().contains(QRegularExpression("^[a-zA-Z0-9\\.:\\-_]+$")))
-        {
-            warning->setHtml(tr("The host seam don't be a valid hostname or ip"));
-            warning->setVisible(true);
-            return;
-        }
-    }
-    else if(type()==1)
-    {
-        if(!server().startsWith("ws://") && !server().startsWith("wss://"))
-        {
-            warning->setHtml(tr("The web socket url seam wrong, not start with ws:// or wss://"));
-            warning->setVisible(true);
-            return;
-        }
-    }
-    ok=true;
-    emit quitOption();
-    //close();
-}
-
-QString NewGame::server() const
-{
-    return serverInput->text();
-}
-
-uint16_t NewGame::port() const
-{
-    return static_cast<uint16_t>(portInput->value());
-}
-
-QString NewGame::proxyServer() const
-{
-    return proxyInput->text();
-}
-
-uint16_t NewGame::proxyPort() const
-{
-    return static_cast<uint16_t>(proxyPortInput->value());
-}
-
-QString NewGame::name() const
-{
-    return nameInput->text();
-}
-
-void NewGame::setServer(const QString &server)
-{
-    serverInput->setText(server);
-}
-
-void NewGame::setPort(const uint16_t &port)
-{
-    portInput->setValue(port);
-}
-
-void NewGame::setName(const QString &name)
-{
-    nameInput->setText(name);
-}
-
-void NewGame::setProxyServer(const QString &proxyServer)
-{
-    proxyInput->setText(proxyServer);
-}
-
-void NewGame::setProxyPort(const uint16_t &proxyPort)
-{
-    proxyPortInput->setValue(proxyPort);
+     title->setText(tr("Select"));
 }
 
 bool NewGame::isOk() const
@@ -395,41 +222,28 @@ bool NewGame::isOk() const
 
 bool NewGame::haveSkin() const
 {
-
-}
-
-void NewGame::on_type_currentIndexChanged(int index)
-{
-    switch(index) {
-    case 0:
-        portInput->show();
-        serverInput->setPlaceholderText("www.server.com");
-        break;
-    case 1:
-        portInput->hide();
-        serverInput->setPlaceholderText("ws://www.server.com:9999/");
-        break;
-    default:
-        return;
-    }
+    return skinList.size()>0;
 }
 
 void NewGame::on_cancel_clicked()
 {
     ok=false;
-    emit quitOption();
+    emit removeAbove();
 }
 
-NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin, QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::NewGame)
+void NewGame::setDatapack(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin)
 {
-    srand(static_cast<uint32_t>(time(NULL)));
-    ui->setupUi(this);
+    this->forcedSkin.clear();
+    this->monstergroup.clear();
+    this->step=Step1;
+    this->skinLoaded=false;
+    this->skinList.clear();
+    this->skinListId.clear();
+
     this->forcedSkin=forcedSkin;
     this->monsterPath=monsterPath;
     this->monstergroup=monstergroup;
-    okAccepted=true;
+    ok=true;
     step=Step1;
     currentMonsterGroup=0;
     if(!monstergroup.empty())
@@ -450,29 +264,21 @@ NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, st
         index++;
     }
 
-    ui->pseudo->setMaxLength(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size);
-    ui->previousSkin->setVisible(skinList.size()>=2);
-    ui->nextSkin->setVisible(skinList.size()>=2);
+    uipseudo->setMaxLength(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size);
+    previous->setVisible(skinList.size()>=2);
+    next->setVisible(skinList.size()>=2);
 
     currentSkin=0;
     if(!skinList.empty())
         currentSkin=static_cast<uint8_t>(rand()%skinList.size());
     updateSkin();
-    ui->pseudo->setFocus();
+    uipseudo->setFocus();
     if(skinList.empty())
     {
-        QMessageBox::critical(this,tr("Error"),tr("No skin to select!"));
-        close();
+        warning->setHtml(tr("No skin to select!"));
+        warning->setVisible(true);
         return;
     }
-
-    if(!connect(&timer,&QTimer::timeout,      this,&NewGame::timerSlot,    Qt::QueuedConnection))
-        abort();
-}
-
-NewGame::~NewGame()
-{
-    delete ui;
 }
 
 void NewGame::updateSkin()
@@ -484,16 +290,16 @@ void NewGame::updateSkin()
     {
         if(currentSkin>=skinList.size())
             return;
-        ui->previousSkin->setEnabled(currentSkin>0);
-        ui->nextSkin->setEnabled(currentSkin<(skinList.size()-1));
+        previous->setEnabled(currentSkin>0);
+        next->setEnabled(currentSkin<(skinList.size()-1));
         paths.push_back(skinPath+skinList.at(currentSkin)+"/front.png");
     }
     else if(step==Step2)
     {
         if(currentMonsterGroup>=monstergroup.size())
             return;
-        ui->previousSkin->setEnabled(currentMonsterGroup>0);
-        ui->nextSkin->setEnabled(currentMonsterGroup<(monstergroup.size()-1));
+        previous->setEnabled(currentMonsterGroup>0);
+        next->setEnabled(currentMonsterGroup<(monstergroup.size()-1));
         const std::vector<CatchChallenger::Profile::Monster> &monsters=monstergroup.at(currentMonsterGroup);
         unsigned int index=0;
         while(index<monsters.size())
@@ -506,14 +312,8 @@ void NewGame::updateSkin()
     else
         return;
 
-    {
-        QLayoutItem *child;
-        while ((child = ui->horizontalLayout->takeAt(0)) != 0)
-        {
-            delete child->widget();
-            delete child;
-        }
-    }
+    foreach (QGraphicsPixmapItem * item, centerImages)
+        delete item;
     if(!paths.empty())
     {
         unsigned int index=0;
@@ -524,17 +324,15 @@ void NewGame::updateSkin()
             QImage skin=QImage(QString::fromStdString(path));
             if(skin.isNull())
             {
-                QMessageBox::critical(this,tr("Error"),QStringLiteral("But the skin can't be loaded: %1").arg(QString::fromStdString(path)));
+                warning->setHtml(tr("But the skin can't be loaded: %1").arg(QString::fromStdString(path)));
+                warning->setVisible(true);
                 return;
             }
             QImage scaledSkin=skin.scaled(160,160,Qt::IgnoreAspectRatio);
             QPixmap pixmap;
             pixmap.convertFromImage(scaledSkin);
-            QLabel *label=new QLabel();
-            label->setMinimumSize(160,160);
-            label->setMaximumSize(160,160);
-            ui->horizontalLayout->addWidget(label);
-            label->setPixmap(pixmap);
+            QGraphicsPixmapItem * item=new QGraphicsPixmapItem(pixmap,this);
+            centerImages.push_back(item);
             skinLoaded=true;
 
             index++;
@@ -553,12 +351,12 @@ bool NewGame::haveTheInformation()
 
 bool NewGame::okCanBeEnabled()
 {
-    return !ui->pseudo->text().isEmpty() && skinLoaded;
+    return !uipseudo->text().isEmpty() && skinLoaded;
 }
 
 std::string NewGame::pseudo()
 {
-    return ui->pseudo->text().toStdString();
+    return uipseudo->text().toStdString();
 }
 
 std::string NewGame::skin()
@@ -576,40 +374,36 @@ uint8_t NewGame::monsterGroupId()
     return currentMonsterGroup;
 }
 
-bool NewGame::haveSkin()
-{
-    return skinList.size()>0;
-}
-
 void NewGame::on_ok_clicked()
 {
-    if(!okAccepted)
+    if(!ok)
         return;
-    okAccepted=false;
-    timer.start(20);
+    ok=false;
     if(step==Step1)
     {
-        if(ui->pseudo->text().isEmpty())
+        if(uipseudo->text().isEmpty())
         {
-            QMessageBox::warning(this,tr("Error"),tr("Your pseudo can't be empty"));
+            warning->setHtml(tr("Your pseudo can't be empty"));
+            warning->setVisible(true);
             return;
         }
         step=Step2;
-        ui->pseudo->hide();
+        uipseudo->hide();
         updateSkin();
         if(monstergroup.size()<2)
             on_ok_clicked();
-        if(characterEntry.pseudo.find(" ")!=std::string::npos)
+        if(uipseudo->text().contains(" "))
         {
-            QMessageBox::warning(this,tr("Error"),tr("Your psuedo can't contains space"));
-            connexionManager->client->tryDisconnect();
+            warning->setHtml(tr("Your pseudo can't contains space"));
+            warning->setVisible(true);
             return;
         }
     }
     else if(step==Step2)
     {
         step=StepOk;
-        accept();
+        ok=true;
+        emit removeAbove();
     }
     else
         return;
@@ -617,7 +411,7 @@ void NewGame::on_ok_clicked()
 
 void NewGame::on_pseudo_textChanged(const QString &)
 {
-    ui->ok->setEnabled(okCanBeEnabled());
+    validate->setEnabled(okCanBeEnabled());
 }
 
 void NewGame::on_pseudo_returnPressed()
@@ -625,7 +419,7 @@ void NewGame::on_pseudo_returnPressed()
     on_ok_clicked();
 }
 
-void NewGame::on_nextSkin_clicked()
+void NewGame::on_next_clicked()
 {
     if(step==Step1)
     {
@@ -647,18 +441,18 @@ void NewGame::on_nextSkin_clicked()
         return;
 }
 
-void NewGame::on_previousSkin_clicked()
+void NewGame::on_previous_clicked()
 {
     if(step==Step1)
     {
-        if(currentSkin<=0)
+        if(currentSkin==0)
             return;
         currentSkin--;
         updateSkin();
     }
     else if(step==Step2)
     {
-        if(currentMonsterGroup<=0)
+        if(currentMonsterGroup==0)
             return;
         currentMonsterGroup--;
         updateSkin();
@@ -666,9 +460,3 @@ void NewGame::on_previousSkin_clicked()
     else
         return;
 }
-
-void NewGame::timerSlot()
-{
-    okAccepted=true;
-}
-

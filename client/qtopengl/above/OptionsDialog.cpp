@@ -30,8 +30,6 @@ OptionsDialog::OptionsDialog() :
     volumeSlider=new CCSliderH(this);
     volumeSlider->setValue(Settings::settings->value("audioVolume").toUInt());
     productKeyText=new QGraphicsTextItem(this);
-    QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
-    p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);
     productKeyInput=new LineEdit(this);
     buy=new CustomButton(":/CC/images/interface/buy.png",this);
     buy->updateTextPercent(75);

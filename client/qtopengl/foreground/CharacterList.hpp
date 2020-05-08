@@ -26,7 +26,6 @@ class CharacterList : public QObject, public ScreenInput
 public:
     explicit CharacterList();
     ~CharacterList();
-    void displayServerList();
     void add_clicked();
     void add_finished();
     void newGame_finished();

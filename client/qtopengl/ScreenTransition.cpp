@@ -357,7 +357,7 @@ void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::Cha
         if(!connect(subserver,&SubServer::connectToSubServer,this,&ScreenTransition::connectToSubServer))
             abort();
     }
-    subserver->logged(connexionManager->getServerOrdenedList());
+    subserver->logged(connexionManager->client->getServerOrdenedList(),connexionManager);
     setForeground(subserver);
 }
 
@@ -371,7 +371,7 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();
     }
-    characterList->connectToSubServer(indexSubServer);
+    characterList->connectToSubServer(indexSubServer,connexionManager);
     setForeground(characterList);
 }
 

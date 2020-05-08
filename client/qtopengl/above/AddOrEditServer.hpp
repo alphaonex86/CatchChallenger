@@ -6,6 +6,7 @@
 #include "../CCWidget.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
+#include "../ComboBox.hpp"
 #include "../CCDialogTitle.hpp"
 #include "../CCGraphicsTextItem.hpp"
 #include "../CCSliderH.hpp"
@@ -52,8 +53,7 @@ private:
     QGraphicsPixmapItem label;
     CustomButton *validate;
 
-    QComboBox *m_type;
-    QGraphicsProxyWidget *typeListProxy;
+    ComboBox *m_type;
 
     QGraphicsTextItem *serverText;
     LineEdit *serverInput;
