@@ -55,9 +55,10 @@ ScreenTransition::ScreenTransition() :
     m_aboveStack=nullptr;
     subserver=nullptr;
     characterList=nullptr;
+    connexionManager=nullptr;
     setBackground(&b);
     setForeground(&l);
-    if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::toMainScreen))
+    if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::loadingFinished))
         abort();
     m=nullptr;
     o=nullptr;
@@ -235,6 +236,48 @@ void ScreenTransition::setAbove(ScreenInput *widget)
         mScene->addItem(m_aboveStack);
 }
 
+void ScreenTransition::loadingFinished()
+{
+    if(connexionManager==nullptr)
+        toMainScreen();
+    else if(connexionManager->client==nullptr)
+        toMainScreen();
+    else if(!connexionManager->client->getIsLogged())
+        toMainScreen();
+    else if(!connexionManager->client->getCaracterSelected())
+        toSubServer();
+    else
+        toInGame();
+}
+
+void ScreenTransition::toSubServer()
+{
+    if(subserver==nullptr)
+    {
+        subserver=new SubServer();
+        if(!connect(subserver,&SubServer::connectToSubServer,this,&ScreenTransition::connectToSubServer))
+            abort();
+        if(!connect(subserver,&SubServer::backMulti,this,&ScreenTransition::toMainScreen))
+            abort();
+    }
+    setForeground(subserver);
+}
+
+void ScreenTransition::toInGame()
+{
+    if(characterList==nullptr)
+    {
+        characterList=new CharacterList();
+        if(!connect(characterList,&CharacterList::backSubServer,this,&ScreenTransition::toSubServer))
+            abort();
+        if(!connect(characterList,&CharacterList::setAbove,this,&ScreenTransition::setAbove))
+            abort();
+        if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
+            abort();
+    }
+    setForeground(characterList);
+}
+
 void ScreenTransition::toMainScreen()
 {
     if(Audio::audio==nullptr)
@@ -371,7 +414,7 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();
     }
-    characterList->connectToSubServer(indexSubServer,connexionManager);
+    characterList->connectToSubServer(indexSubServer,connexionManager,characterEntryList);
     setForeground(characterList);
 }
 

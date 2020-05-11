@@ -23,13 +23,18 @@ CharacterList::CharacterList()
 
     characterEntryListProxy=new QGraphicsProxyWidget(this);
     characterEntryList=new QListWidget();
+    characterEntryList->setIconSize(QSize(80, 80));
+    characterEntryList->setUniformItemSizes(true);
     characterEntryListProxy->setWidget(characterEntryList);
+    characterEntryListProxy->setZValue(1);
 
     select=new CustomButton(":/CC/images/interface/next.png",this);
     back=new CustomButton(":/CC/images/interface/back.png",this);
+    select->setEnabled(false);
 
     wdialog=new CCWidget(this);
     warning=new QGraphicsTextItem(this);
+    warning->setVisible(false);
 
     if(!connect(add,&CustomButton::clicked,this,&CharacterList::add_clicked))
         abort();
@@ -39,6 +44,8 @@ CharacterList::CharacterList()
         abort();
     if(!connect(back,&CustomButton::clicked,this,&CharacterList::backSubServer))
         abort();
+    if(!connect(characterEntryList,&QListWidget::itemSelectionChanged,this,&CharacterList::itemSelectionChanged))
+        abort();
     newLanguage();
 
     //need be the last
@@ -47,6 +54,12 @@ CharacterList::CharacterList()
 
 CharacterList::~CharacterList()
 {
+}
+
+void CharacterList::itemSelectionChanged()
+{
+    const QList<QListWidgetItem *> &selectedItems=characterEntryList->selectedItems();
+    select->setEnabled(selectedItems.size()==1);
 }
 
 void CharacterList::add_clicked()
@@ -164,6 +177,11 @@ void CharacterList::remove_clicked()
 
 void CharacterList::select_clicked()
 {
+    QList<QListWidgetItem *> selectedItems=characterEntryList->selectedItems();
+    if(selectedItems.size()!=1)
+        return;
+    emit selectCharacter(serverSelected,selectedItems.first()->data(99).toUInt());
+    //emit toLoading(tr("Selecting your character"));
 }
 
 void CharacterList::newLanguage()
@@ -245,6 +263,8 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
         wdialog->setPos(w->width()/2-wdialog->width()/2,space);
     }
     warning->setPos(w->width()/2-warning->boundingRect().width(),space+wdialog->height()-wdialog->currentBorderSize()-warning->boundingRect().height());
+    characterEntryListProxy->setPos(wdialog->x()+space,wdialog->y()+space);
+    characterEntryList->setFixedSize(wdialog->width()-space-space,wdialog->height()-space-space);
 }
 
 void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated)
@@ -263,10 +283,12 @@ void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
     select->mouseReleaseEventXY(p,pressValidated);
 }
 
-void CharacterList::connectToSubServer(const int indexSubServer,ConnexionManager *connexionManager)
+void CharacterList::connectToSubServer(const int indexSubServer,ConnexionManager *connexionManager,const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     //detect character group to display only characters in this group
     this->serverSelected=indexSubServer;
+    this->connexionManager=connexionManager;
+    this->characterListForSelection=characterEntryList;
     updateCharacterList();
 }
 
@@ -297,9 +319,10 @@ void CharacterList::updateCharacterList()
     }
     characterEntryList->clear();
     unsigned int index=0;
-    while(index<characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).size())
+    const uint8_t charactersGroupIndex=serverOrdenedList.at(serverSelected).charactersGroupIndex;
+    while(index<characterListForSelection.at(charactersGroupIndex).size())
     {
-        const CatchChallenger::CharacterEntry &characterEntry=characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).at(index);
+        const CatchChallenger::CharacterEntry &characterEntry=characterListForSelection.at(charactersGroupIndex).at(index);
         QListWidgetItem * item=new QListWidgetItem();
         item->setData(99,characterEntry.character_id);
         item->setData(98,characterEntry.delete_time_left);
@@ -340,7 +363,8 @@ void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &ch
     if(returnCode==0x00)
     {
         characterEntry.character_id=characterId;
-        characterListForSelection[serverOrdenedList.at(serverSelected).charactersGroupIndex].push_back(characterEntry);
+        const uint8_t charactersGroupIndex=serverOrdenedList.at(serverSelected).charactersGroupIndex;
+        characterListForSelection[charactersGroupIndex].push_back(characterEntry);
         updateCharacterList();
         characterEntryList->item(characterEntryList->count()-1)->setSelected(true);
         //if(characterEntryList.size().size()>=CommonSettings::commonSettings.min_character && characterEntryList.size().size()<=CommonSettings::commonSettings.max_character)

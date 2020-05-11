@@ -40,6 +40,9 @@ protected:
     void backMain();
     void backSubServer();
     void removeAbove();
+    void loadingFinished();
+    void toSubServer();
+    void toInGame();
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);

@@ -37,8 +37,9 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
-    void connectToSubServer(const int indexSubServer, ConnexionManager *connexionManager);
+    void connectToSubServer(const int indexSubServer, ConnexionManager *connexionManager, const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     void newCharacterId(const uint8_t &returnCode, const uint32_t &characterId);
+    void itemSelectionChanged();
 private:
     AddCharacter *addCharacter;
     NewGame *newGame;

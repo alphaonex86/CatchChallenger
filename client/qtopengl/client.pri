@@ -286,7 +286,15 @@ SOURCES += \
     $$PWD/foreground/SubServer.cpp \
     $$PWD/above/AddCharacter.cpp \
     $$PWD/above/NewGame.cpp \
-    $$PWD/../qt/FacilityLibClient.cpp
+    $$PWD/../qt/FacilityLibClient.cpp \
+    $$PWD/cc/Api_client_real.cpp \
+    $$PWD/cc/Api_client_real_base.cpp \
+    $$PWD/cc/Api_client_real_main.cpp \
+    $$PWD/cc/Api_client_real_sub.cpp \
+    $$PWD/cc/Api_client_virtual.cpp \
+    $$PWD/cc/Api_protocol_Qt.cpp \
+    $$PWD/cc/QtDatapackClientLoader.cpp \
+    $$PWD/../qt/LanguagesSelect.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -339,7 +347,12 @@ HEADERS  += \
     $$PWD/foreground/SubServer.hpp \
     $$PWD/above/AddCharacter.hpp \
     $$PWD/above/NewGame.hpp \
-    $$PWD/../qt/FacilityLibClient.hpp
+    $$PWD/../qt/FacilityLibClient.hpp \
+    $$PWD/cc/Api_client_real.hpp \
+    $$PWD/cc/Api_client_virtual.hpp \
+    $$PWD/cc/Api_protocol_Qt.hpp \
+    $$PWD/cc/QtDatapackClientLoader.hpp \
+    $$PWD/../qt/LanguagesSelect.hpp
 
 
 wasm: {
@@ -369,7 +382,6 @@ SOURCES += \
     $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
     $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp \
-    $$PWD/LanguagesSelect.cpp \
     $$PWD/CCTitle.cpp \
     $$PWD/ConnexionManager.cpp \
     $$PWD/foreground/LoadingScreen.cpp \
@@ -379,14 +391,7 @@ SOURCES += \
     $$PWD/ScreenTransition.cpp \
     $$PWD/background/CCBackground.cpp \
     $$PWD/CCprogressbar.cpp \
-    $$PWD/../qt/Api_client_real.cpp \
-    $$PWD/../qt/Api_client_real_base.cpp \
-    $$PWD/../qt/Api_client_real_main.cpp \
-    $$PWD/../qt/Api_client_real_sub.cpp \
-    $$PWD/../qt/Api_client_virtual.cpp \
-    $$PWD/../qt/Api_protocol_Qt.cpp \
     $$PWD/../qt/QtDatapackChecksum.cpp \
-    $$PWD/../qt/QtDatapackClientLoader.cpp \
     $$PWD/../qt/QZstdDecodeThread.cpp \
     $$PWD/../qt/InternetUpdater.cpp \
     $$PWD/../qt/FeedNews.cpp \
@@ -407,7 +412,6 @@ SOURCES += \
 HEADERS  += \
     $$PWD/../../general/base/tinyXML2/tinyxml2.hpp \
     $$PWD/../../general/base/tinyXML2/customtinyxml2.hpp \
-    $$PWD/LanguagesSelect.hpp \
     $$PWD/CCprogressbar.hpp \
     $$PWD/ClientStructures.hpp \
     $$PWD/CCTitle.hpp \
@@ -419,11 +423,7 @@ HEADERS  += \
     $$PWD/Map_client.hpp \
     $$PWD/ScreenTransition.hpp \
     $$PWD/background/CCBackground.hpp \
-    $$PWD/../qt/Api_client_real.hpp \
-    $$PWD/../qt/Api_client_virtual.hpp \
-    $$PWD/../qt/Api_protocol_Qt.hpp \
     $$PWD/../qt/QtDatapackChecksum.hpp \
-    $$PWD/../qt/QtDatapackClientLoader.hpp \
     $$PWD/../qt/QZstdDecodeThread.hpp \
     $$PWD/../qt/InternetUpdater.hpp \
     $$PWD/../qt/FeedNews.hpp \
@@ -463,3 +463,6 @@ HEADERS  += $$PWD/../qt/solo/InternalServer.hpp \
 
 DISTFILES += \
     $$PWD/client.pri
+
+FORMS += \
+    $$PWD/../qt/LanguagesSelect.ui
