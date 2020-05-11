@@ -44,8 +44,6 @@ LoadingScreen::LoadingScreen()
     slowDownProgressionTimer.start(10);//20x
     if(!QObject::connect(&slowDownProgressionTimer,&QTimer::timeout,this,&LoadingScreen::updateProgression))
         abort();
-    lastProgression=0;
-    timerProgression=0;
     reset();
 }
 
@@ -59,7 +57,7 @@ void LoadingScreen::reset()
     progressbar->setMaximum(100);
     progressbar->setMinimum(0);
     progressbar->setValue(0);
-    slowDownProgressionTimer.start(10);//20x
+    //slowDownProgressionTimer.start(10);//20x
     lastProgression=0;
     timerProgression=0;
 }

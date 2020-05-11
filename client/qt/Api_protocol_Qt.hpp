@@ -183,7 +183,7 @@ signals:
     //protocol/connection info
     void Qtdisconnected(const std::string &reason);
     void QtnotLogged(const std::string &reason);
-    void Qtlogged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
+    void Qtlogged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     void Qtprotocol_is_good();
     void QtconnectedOnLoginServer();
     void QtconnectingOnGameServer();
@@ -252,12 +252,12 @@ signals:
     void QtdatapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
 
     //shop
-    void QthaveShopList(const std::vector<ItemToSellOrBuy> &items);
+    void QthaveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items);
     void QthaveBuyObject(const BuyStat &stat,const uint32_t &newPrice);
     void QthaveSellObject(const SoldStat &stat,const uint32_t &newPrice);
 
     //factory
-    void QthaveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products);
+    void QthaveFactoryList(const uint32_t &remainingProductionTime,const std::vector<CatchChallenger::ItemToSellOrBuy> &resources,const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
     void QthaveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice);
     void QthaveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice);
 
@@ -273,7 +273,7 @@ signals:
 
     //battle
     void QtbattleRequested(const std::string &pseudo,const uint8_t &skinInt);
-    void QtbattleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void QtbattleAcceptedByOther(const std::string &pseudo,const uint8_t &skinId,const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const CatchChallenger::PublicPlayerMonster &publicPlayerMonster);
     void QtbattleCanceledByOther();
     void QtsendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn);
 
@@ -295,14 +295,17 @@ signals:
     void QtcaptureCityWin();
 
     //market
-    void QtmarketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList);
+    void QtmarketList(const uint64_t &price,const std::vector<CatchChallenger::MarketObject> &marketObjectList,
+                      const std::vector<CatchChallenger::MarketMonster> &marketMonsterList,
+                      const std::vector<CatchChallenger::MarketObject> &marketOwnObjectList,
+                      const std::vector<CatchChallenger::MarketMonster> &marketOwnMonsterList);
     void QtmarketBuy(const bool &success);
-    void QtmarketBuyMonster(const PlayerMonster &playerMonster);
+    void QtmarketBuyMonster(const CatchChallenger::PlayerMonster &playerMonster);
     void QtmarketPut(const bool &success);
     void QtmarketGetCash(const uint64_t &cash);
     void QtmarketWithdrawCanceled();
     void QtmarketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
-    void QtmarketWithdrawMonster(const PlayerMonster &playerMonster);
+    void QtmarketWithdrawMonster(const CatchChallenger::PlayerMonster &playerMonster);
 
 public:
     std::string getLanguage() const override;
