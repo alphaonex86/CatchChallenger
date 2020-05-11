@@ -1,5 +1,9 @@
 #include "ConnexionManager.hpp"
 #include "../qt/Api_client_real.hpp"
+#include "../qt/QtDatapackClientLoader.hpp"
+#include "../qt/Settings.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include <iostream>
 #include <QStandardPaths>
@@ -18,10 +22,18 @@ ConnexionManager::ConnexionManager(LoadingScreen *l)
     this->l=l;
     l->reset();
     l->setText(tr("Connecting..."));
+
+    haveDatapack=false;
+    haveDatapackMainSub=false;
+    datapackIsParsed=false;
 }
 
 void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login,QString pass)
 {
+    haveDatapack=false;
+    haveDatapackMainSub=false;
+    datapackIsParsed=false;
+
     if(socket!=NULL)
     {
         socket->disconnectFromHost();
@@ -69,12 +81,20 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         client->tryLogin("admin",pass.toStdString());
     else*/
         client->tryLogin(login.toStdString(),pass.toStdString());
+
+    if(!connect(client,               &CatchChallenger::Api_protocol_Qt::QtnewError,       this,&ConnexionManager::newError))
+        abort();
+    if(!connect(client,               &CatchChallenger::Api_protocol_Qt::Qtmessage,       this,&ConnexionManager::message))
+        abort();
+
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtdisconnected,       this,&ConnexionManager::disconnected))
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtnotLogged,       this,&ConnexionManager::disconnected))
         abort();
-    //connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&ConnexionManager::message,Qt::QueuedConnection);
-    if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::logged,Qt::QueuedConnection))
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapack,       this,&ConnexionManager::haveTheDatapack))
+        abort();
+
+    if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::Qtlogged,Qt::QueuedConnection))
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtdatapackSizeBase,       this,&ConnexionManager::QtdatapackSizeBase))
         abort();
@@ -158,6 +178,18 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
     this->client=static_cast<CatchChallenger::Api_protocol_Qt *>(client);
     connectTheExternalSocket(connexionInfo,client);
+
+    //connect the datapack loader
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  this,                                   &ConnexionManager::datapackParsed,Qt::QueuedConnection))
+        abort();
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,           this,                                   &ConnexionManager::datapackParsedMainSub,Qt::QueuedConnection))
+        abort();
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackChecksumError,           this,                                   &ConnexionManager::datapackChecksumError,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &ConnexionManager::parseDatapack,                             QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapack,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &ConnexionManager::parseDatapackMainSub,                      QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
+        abort();
 }
 
 void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)
@@ -173,6 +205,17 @@ void ConnexionManager::disconnected(std::string reason)
     /*if(serverConnexion.contains(selectedServer))
         lastServerIsKick[serverConnexion.value(selectedServer)->host]=true;*/
     //baseWindow->resetAll();
+}
+
+void ConnexionManager::newError(const std::string &error,const std::string &detailedError)
+{
+    emit errorString(error+"\n"+detailedError);
+}
+
+void ConnexionManager::message(const std::string &message)
+{
+    std::cerr << message << std::endl;
+    emit errorString(message);
 }
 
 #ifndef __EMSCRIPTEN__
@@ -488,13 +531,146 @@ void ConnexionManager::connectedOnGameServer()
     l->setText(tr("Connected on game server"));
 }
 
-void ConnexionManager::haveDatapackMainSubCode()
-{
-    //l->setText(tr("Connecting..."));
-}
-
 void ConnexionManager::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
 {
     l->setText(tr("Gateway cache update..."));
     l->progression(progression,100+1);
+}
+
+void ConnexionManager::sendDatapackContentMainSub()
+{
+    if(client==nullptr)
+    {
+        std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
+        abort();
+    }
+    if(Settings::settings->contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
+            Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
+        client->sendDatapackContentMainSub(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
+                Settings::settings->value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
+    else
+        client->sendDatapackContentMainSub();
+}
+
+void ConnexionManager::haveTheDatapack()
+{
+    if(client==NULL)
+        return;
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::haveTheDatapack()";
+    #endif
+    if(haveDatapack)
+        return;
+    haveDatapack=true;
+    Settings::settings->setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
+                      QByteArray(
+                          CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                          static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
+                                  )
+                      );
+
+    if(client!=NULL)
+        emit parseDatapack(client->datapackPathBase());
+}
+
+void ConnexionManager::haveTheDatapackMainSub()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::haveTheDatapackMainSub()";
+    #endif
+    if(haveDatapackMainSub)
+        return;
+    haveDatapackMainSub=true;
+    Settings::settings->setValue("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()),
+                      QByteArray(
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
+                          static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size())
+                                  )
+                      );
+    Settings::settings->setValue("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()),
+                      QByteArray(
+                          CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
+                          static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size())
+                                  )
+                      );
+
+    if(client!=NULL)
+        emit parseDatapackMainSub(client->mainDatapackCode(),client->subDatapackCode());
+}
+
+void ConnexionManager::datapackParsed()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::datapackParsed()";
+    #endif
+    datapackIsParsed=true;
+    //updateConnectingStatus();
+    //loadSettingsWithDatapack();
+    /*{
+        if(QFile(QString::fromStdString(client->datapackPathBase())+QStringLiteral("/images/interface/fight/labelBottom.png")).exists())
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url('")+QString::fromStdString(client->datapackPathBase())+QStringLiteral("/images/interface/fight/labelBottom.png');padding:6px 6px 6px 14px;}"));
+        else
+            ui->frameFightBottom->setStyleSheet(QStringLiteral("#frameFightBottom{background-image: url(:/CC/images/interface/fight/labelBottom.png);padding:6px 6px 6px 14px;}"));
+        if(QFile(QString::fromStdString(client->datapackPathBase())+QStringLiteral("/images/interface/fight/labelTop.png")).exists())
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url('")+QString::fromStdString(client->datapackPathBase())+QStringLiteral("/images/interface/fight/labelTop.png');padding:6px 14px 6px 6px;}"));
+        else
+            ui->frameFightTop->setStyleSheet(QStringLiteral("#frameFightTop{background-image: url(:/CC/images/interface/fight/labelTop.png);padding:6px 14px 6px 6px;}"));
+    }*/
+    //updatePlayerImage();
+    emit logged(characterEntryList);
+}
+
+void ConnexionManager::datapackParsedMainSub()
+{
+    if(client==NULL)
+        return;
+    /*if(mapController==NULL)
+        return;*/
+    /*mainSubDatapackIsParsed=true;
+
+    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
+    mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->mapToId.size()))
+        emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
+
+    have_main_and_sub_datapack_loaded();
+
+    emit datapackParsedMainSubMap();
+
+    updateConnectingStatus();*/
+}
+
+void ConnexionManager::datapackChecksumError()
+{
+    #ifdef DEBUG_BASEWINDOWS
+    qDebug() << "BaseWindow::datapackChecksumError()";
+    #endif
+    datapackIsParsed=false;
+    //reset all the cached hash
+    Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()));
+    Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()));
+    Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()));
+    emit newError(tr("Datapack on mirror is corrupted").toStdString(),
+                  "The checksum sended by the server is not the same than have on the mirror");
+}
+
+void ConnexionManager::Qtlogged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
+{
+    if(Settings::settings->contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
+        client->sendDatapackContentBase(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
+    else
+        client->sendDatapackContentBase();
+    this->characterEntryList=characterEntryList;
+    //emit logged(characterEntryList);
+}
+
+void ConnexionManager::haveDatapackMainSubCode()
+{
+    if(client==nullptr)
+    {
+        std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
+        return;
+    }
+    sendDatapackContentMainSub();
+    //updateConnectingStatus();
 }
