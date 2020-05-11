@@ -1,7 +1,7 @@
-#include "LanguagesSelect.h"
+#include "LanguagesSelect.hpp"
 #include "ui_LanguagesSelect.h"
-#include "Options.h"
-#include "../../general/base/tinyXML2/tinyxml2.h"
+#include "Options.hpp"
+#include "../../general/base/tinyXML2/tinyxml2.hpp"
 
 #include <QStringList>
 #include <QDir>

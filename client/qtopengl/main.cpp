@@ -23,6 +23,15 @@ int main(int argc, char *argv[])
     a.setOrganizationName("CatchChallenger");
     a.setStyle(QStyleFactory::create("Fusion"));
 
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<QList<QUrl> >("QList<QUrl>");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CharacterEntry> >");
+    qRegisterMetaType<std::vector<char> >("std::vector<char>");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+    qRegisterMetaType<std::string>("std::string");
+    qRegisterMetaType<uint64_t>("uint64_t");
+
     if(argc<1)
     {
         std::cerr << "argc<1: wrong arg count" << std::endl;

@@ -29,13 +29,13 @@ public:
     void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
     void logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,ConnexionManager *connexionManager);
+    void itemSelectionChanged();
 private:
     void addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView);
 private:
     std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList;
     CustomButton *server_select;
     CustomButton *back;
-    QGraphicsTextItem *warning;
 
     QTreeWidget *serverList;
     QGraphicsProxyWidget *serverListProxy;
@@ -59,7 +59,6 @@ private:
     ConnexionManager *connexionManager;
 signals:
     void backMulti();
-    void setAbove(ScreenInput *widget);//first plan popup
     void connectToSubServer(const int indexSubServer);
 };
 

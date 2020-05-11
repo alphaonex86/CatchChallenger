@@ -2,10 +2,10 @@
 #define API_PROTOCOL_QT_H
 
 #include <QObject>
-#include "ClientStructures.hpp"
-#include "../../general/base/GeneralStructures.hpp"
-#include "../libcatchchallenger/Api_protocol.hpp"
-#include "ConnectedSocket.hpp"
+#include "../../qt/ClientStructures.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../libcatchchallenger/Api_protocol.hpp"
+#include "../../qt/ConnectedSocket.hpp"
 namespace CatchChallenger {
 class Api_protocol_Qt : public QObject, public Api_protocol
 {

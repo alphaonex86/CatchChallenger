@@ -21,6 +21,9 @@ signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     void disconnectedFromServer();
+
+    void parseDatapack(const std::string &datapackPath);
+    void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
 public slots:
     void disconnected(std::string reason);
     #ifndef __EMSCRIPTEN__
@@ -30,6 +33,8 @@ public slots:
     QString serverToDatapachPath(ConnexionInfo connexionInfo) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
     void error(QAbstractSocket::SocketError socketError);
+    void newError(const std::string &error,const std::string &detailedError);
+    void message(const std::string &message);
 
     void protocol_is_good();
     void connectedOnLoginServer();
@@ -48,6 +53,11 @@ private:
     QString lastServer;
     LoadingScreen *l;
     uint32_t datapckFileSize;
+
+    bool haveDatapack;
+    bool haveDatapackMainSub;
+    bool datapackIsParsed;
+    std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 private:
     void QtdatapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
     void QtdatapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize);
@@ -55,6 +65,14 @@ private:
     void progressingDatapackFileBase(const uint32_t &size);
     void progressingDatapackFileMain(const uint32_t &size);
     void progressingDatapackFileSub(const uint32_t &size);
+
+    void sendDatapackContentMainSub();
+    void haveTheDatapack();
+    void haveTheDatapackMainSub();
+    void datapackParsed();
+    void datapackParsedMainSub();
+    void datapackChecksumError();
+    void Qtlogged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
 };
 
 #endif // CONNEXIONMANAGER_H

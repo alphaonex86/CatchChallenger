@@ -40,6 +40,9 @@ void ZstdDecode::run()
     } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
         mErrorString="original size unknown. Use streaming decompression instead.";
         return;
+    } else if (rSize==0) {
+        mErrorString="original size 0. Use streaming decompression instead.";
+        return;
     }
 
     dataToDecoded.resize(rSize);

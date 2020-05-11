@@ -1,5 +1,5 @@
 #include "../../QtDatapackClientLoader.hpp"
-#include "../../LanguagesSelect.hpp"
+#include "../../../qtopengl/Language.hpp"
 #include "../../../../general/base/GeneralVariable.hpp"
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../../general/fight/FightLoader.hpp"
@@ -57,7 +57,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
         }
 
         #ifndef CATCHCHALLENGER_BOT
-        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        const std::string &language=Language::language.getLanguage().toStdString();
         #else
         const std::string language("en");
         #endif
@@ -329,7 +329,7 @@ void QtDatapackClientLoader::parseBuffExtra()
         }
 
         #ifndef CATCHCHALLENGER_BOT
-        const std::string &language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+        const std::string &language=Language::language.getLanguage().toStdString();
         #else
         const std::string language("en");
         #endif

@@ -1,3 +1,4 @@
+#ifndef OPENGL
 #include "LanguagesSelect.hpp"
 #include "../qt/Options.hpp"
 #include "../../general/base/tinyXML2/tinyxml2.hpp"
@@ -190,4 +191,5 @@ void LanguagesSelect::setCurrentLanguage(const std::string &newLanguage)
     }
     currentLanguage=newLanguage;
 }
+#endif
 #endif

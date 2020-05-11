@@ -2,19 +2,26 @@
 #include "../Language.hpp"
 #include "../../qt/FacilityLibClient.hpp"
 #include <QTreeWidgetItem>
+#include <QHeaderView>
 #include <iostream>
 
 SubServer::SubServer()
 {
     serverListProxy=new QGraphicsProxyWidget(this);
     serverList=new QTreeWidget();
+    serverList->setAlternatingRowColors(true);
+    serverList->setIconSize(QSize(16, 16));
+    serverList->setRootIsDecorated(false);
+    serverList->header()->setSectionResizeMode(QHeaderView::Fixed);
+    serverList->header()->resizeSection(0,580);
     serverListProxy->setWidget(serverList);
+    serverListProxy->setZValue(1);
 
     server_select=new CustomButton(":/CC/images/interface/next.png",this);
     back=new CustomButton(":/CC/images/interface/back.png",this);
+    server_select->setEnabled(false);
 
     wdialog=new CCWidget(this);
-    warning=new QGraphicsTextItem(this);
     connexionManager=nullptr;
     averagePlayedTime=0;
     averageLastConnect=0;
@@ -22,6 +29,8 @@ SubServer::SubServer()
     if(!connect(back,&CustomButton::clicked,this,&SubServer::backMulti))
         abort();
     if(!connect(server_select,&CustomButton::clicked,this,&SubServer::server_select_clicked))
+        abort();
+    if(!connect(serverList,&QTreeWidget::itemSelectionChanged,this,&SubServer::itemSelectionChanged))
         abort();
     newLanguage();
 }
@@ -43,7 +52,9 @@ void SubServer::server_select_clicked()
 
 void SubServer::newLanguage()
 {
-    warning->setHtml("<span style=\"background-color: rgb(255, 255, 163);\nborder: 1px solid rgb(255, 221, 50);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\">"+tr("Loading the servers list...")+"</span>");
+    QTreeWidgetItem *___qtreewidgetitem = serverList->headerItem();
+    ___qtreewidgetitem->setText(0, tr("Server"));
+    ___qtreewidgetitem->setText(1, tr("Players"));
 }
 
 QRectF SubServer::boundingRect() const
@@ -96,7 +107,9 @@ void SubServer::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         wdialog->setWidth(800);
         wdialog->setPos(w->width()/2-wdialog->width()/2,space);
     }
-    warning->setPos(w->width()/2-warning->boundingRect().width(),space+wdialog->height()-wdialog->currentBorderSize()-warning->boundingRect().height());
+    serverListProxy->setPos(wdialog->x()+space,wdialog->y()+space);
+    serverList->setFixedSize(wdialog->width()-space-space,wdialog->height()-space-space);
+    serverList->header()->resizeSection(0,wdialog->width()-space-space-120);
 }
 
 void SubServer::mousePressEventXY(const QPointF &p,bool &pressValidated)
@@ -109,6 +122,12 @@ void SubServer::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
 {
     back->mouseReleaseEventXY(p,pressValidated);
     server_select->mouseReleaseEventXY(p,pressValidated);
+}
+
+void SubServer::itemSelectionChanged()
+{
+    const QList<QTreeWidgetItem *> &selectedItems=serverList->selectedItems();
+    server_select->setEnabled(selectedItems.size()==1);
 }
 
 void SubServer::logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,ConnexionManager *connexionManager)
