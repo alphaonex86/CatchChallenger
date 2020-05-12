@@ -13,7 +13,7 @@ class MapControllerMP : public MapVisualiserPlayerWithFight
 {
     Q_OBJECT
 public:
-    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
+    explicit MapControllerMP(const bool &centerOnPlayer=true, const bool &debugTags=false);
     ~MapControllerMP();
 
     virtual void resetAll();

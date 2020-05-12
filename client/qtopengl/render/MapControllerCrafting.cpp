@@ -1,7 +1,7 @@
-#include "../../render/MapController.h"
-#include "../../../../general/base/CommonDatapack.h"
-#include "../../QtDatapackClientLoader.h"
-
+#include "MapController.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../cc/QtDatapackClientLoader.hpp"
+#include <QObject>
 
 std::string MapController::mapIdToString(const uint32_t &mapId) const
 {
@@ -79,7 +79,7 @@ void MapController::insert_plant_full(const std::string &map,const uint8_t &x,co
     plant->plant_id=plant_id;
     plant->mature_at=current_time+seconds_to_mature;
     if(updatePlantGrowing(plant))
-        if(!connect(plant,&QTimer::timeout,this,&MapController::getPlantTimerEvent))
+        if(!QObject::connect(plant,&QTimer::timeout,this,&MapController::getPlantTimerEvent))
             abort();
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     plant->mapObject->setPosition(QPoint(x,y+1));

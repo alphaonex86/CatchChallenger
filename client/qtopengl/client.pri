@@ -294,7 +294,29 @@ SOURCES += \
     $$PWD/cc/Api_client_virtual.cpp \
     $$PWD/cc/Api_protocol_Qt.cpp \
     $$PWD/cc/QtDatapackClientLoader.cpp \
-    $$PWD/../qt/LanguagesSelect.cpp
+    $$PWD/../qt/LanguagesSelect.cpp \
+    $$PWD/render/MapController.cpp \
+    $$PWD/render/MapControllerCrafting.cpp \
+    $$PWD/render/MapControllerMP.cpp \
+    $$PWD/render/MapControllerMPAPI.cpp \
+    $$PWD/render/MapControllerMPMove.cpp \
+    $$PWD/render/MapDoor.cpp \
+    $$PWD/render/MapItem.cpp \
+    $$PWD/render/MapMark.cpp \
+    $$PWD/render/MapObjectItem.cpp \
+    $$PWD/render/MapVisualiser-map.cpp \
+    $$PWD/render/MapVisualiser.cpp \
+    $$PWD/render/MapVisualiserOrder.cpp \
+    $$PWD/render/MapVisualiserPlayer.cpp \
+    $$PWD/render/MapVisualiserPlayerWithFight.cpp \
+    $$PWD/render/MapVisualiserThread.cpp \
+    $$PWD/render/ObjectGroupItem.cpp \
+    $$PWD/render/PathFinding.cpp \
+    $$PWD/render/PreparedLayer.cpp \
+    $$PWD/render/TemporaryTile.cpp \
+    $$PWD/render/TileLayerItem.cpp \
+    $$PWD/render/TriggerAnimation.cpp \
+    $$PWD/background/CCMap.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -352,7 +374,25 @@ HEADERS  += \
     $$PWD/cc/Api_client_virtual.hpp \
     $$PWD/cc/Api_protocol_Qt.hpp \
     $$PWD/cc/QtDatapackClientLoader.hpp \
-    $$PWD/../qt/LanguagesSelect.hpp
+    $$PWD/../qt/LanguagesSelect.hpp \
+    $$PWD/render/MapController.hpp \
+    $$PWD/render/MapControllerMP.hpp \
+    $$PWD/render/MapDoor.hpp \
+    $$PWD/render/MapItem.hpp \
+    $$PWD/render/MapMark.hpp \
+    $$PWD/render/MapObjectItem.hpp \
+    $$PWD/render/MapVisualiser.hpp \
+    $$PWD/render/MapVisualiserOrder.hpp \
+    $$PWD/render/MapVisualiserPlayer.hpp \
+    $$PWD/render/MapVisualiserPlayerWithFight.hpp \
+    $$PWD/render/MapVisualiserThread.hpp \
+    $$PWD/render/ObjectGroupItem.hpp \
+    $$PWD/render/PathFinding.hpp \
+    $$PWD/render/PreparedLayer.hpp \
+    $$PWD/render/TemporaryTile.hpp \
+    $$PWD/render/TileLayerItem.hpp \
+    $$PWD/render/TriggerAnimation.hpp \
+    $$PWD/background/CCMap.hpp
 
 
 wasm: {

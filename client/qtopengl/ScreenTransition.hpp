@@ -16,6 +16,7 @@ class ConnexionManager;
 class SubServer;
 class CharacterList;
 class ConnexionInfo;
+class CCMap;
 
 class ScreenTransition : public QGraphicsView
 {
@@ -76,6 +77,7 @@ private:
     ScreenInput *mousePress;
     SubServer *subserver;
     CharacterList *characterList;
+    CCMap *ccmap;
     std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList;
 
     uint8_t waitRenderTime;

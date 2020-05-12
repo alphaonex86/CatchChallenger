@@ -1,4 +1,4 @@
-#include "TileLayerItem.h"
+#include "TileLayerItem.hpp"
 
 TileLayerItem::TileLayerItem(Tiled::TileLayer *tileLayer, Tiled::MapRenderer *renderer,
               QGraphicsItem *parent)
