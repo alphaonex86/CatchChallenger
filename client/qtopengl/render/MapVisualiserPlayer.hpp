@@ -14,8 +14,7 @@ class MapVisualiserPlayer : public MapVisualiser
     Q_OBJECT
     friend class MapVisualiserPlayerWithFight;
 public:
-    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,
-                                 const bool &useCache=true, const bool &openGL=false);
+    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true, const bool &debugTags=false);
     ~MapVisualiserPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);

@@ -1,5 +1,6 @@
 #include "ScreenTransition.hpp"
 #include "../qt/GameLoader.hpp"
+#include "background/CCMap.hpp"
 #include "foreground/CharacterList.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include "foreground/MainScreen.hpp"
@@ -56,15 +57,16 @@ ScreenTransition::ScreenTransition() :
     subserver=nullptr;
     characterList=nullptr;
     connexionManager=nullptr;
-    setBackground(&b);
-    setForeground(&l);
-    if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::loadingFinished))
-        abort();
+    ccmap=nullptr;
     m=nullptr;
     o=nullptr;
     /*solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
+    setBackground(&b);
+    setForeground(&l);
+    if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::loadingFinished))
+        abort();
 
     timerUpdateFPS.setSingleShot(true);
     timerUpdateFPS.setInterval(1000);
@@ -203,11 +205,16 @@ void ScreenTransition::setBackground(ScreenInput *widget)
         mScene->removeItem(m_backgroundStack);
     m_backgroundStack=widget;
     if(widget!=nullptr)
+    {
         mScene->addItem(m_backgroundStack);
+        m_backgroundStack->setZValue(-1);
+    }
 }
 
 void ScreenTransition::setForeground(ScreenInput *widget)
 {
+    if(widget!=m && m!=nullptr)
+        m->setError(std::string());
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
@@ -355,12 +362,8 @@ void ScreenTransition::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
     if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer))
         abort();
-    /*if(!connect(baseWindow,&CatchChallenger::BaseWindow::toLoading,this,&ScreenTransition::toLoading))
+    if(!connect(connexionManager,&ConnexionManager::goToMap,this,&ScreenTransition::goToMap))
         abort();
-    if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToServerList,this,&ScreenTransition::goToServerList))
-        abort();
-    if(!connect(baseWindow,&CatchChallenger::BaseWindow::goToMap,this,&ScreenTransition::goToMap))
-        abort();*/
     l.progression(0,100);
 }
 
@@ -416,6 +419,23 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     }
     characterList->connectToSubServer(indexSubServer,connexionManager,characterEntryList);
     setForeground(characterList);
+
+    //todo: optimise by prevent create each time
+    if(ccmap!=nullptr)
+    {
+        delete ccmap;
+        ccmap=nullptr;
+    }
+
+    if(ccmap==nullptr)
+    {
+        ccmap=new CCMap();
+        /*if(!connect(ccmap,&CharacterList::backSubServer,this,&ScreenTransition::backSubServer))
+            abort();
+        if(!connect(ccmap,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
+            abort();*/
+    }
+    ccmap->setVar(connexionManager);
 }
 
 void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
@@ -438,8 +458,9 @@ void ScreenTransition::disconnectedFromServer()
 
 void ScreenTransition::errorString(std::string error)
 {
+    std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
     setBackground(&b);
-    //setForeground(m);
+    setForeground(m);
     setAbove(nullptr);
     if(m!=nullptr)
         m->setError(error);
@@ -454,8 +475,8 @@ void ScreenTransition::goToServerList()
 
 void ScreenTransition::goToMap()
 {
-    setBackground(&b);
-    //setForeground(baseWindow);
+    setBackground(ccmap);
+    setForeground(nullptr);
     setAbove(nullptr);
 }
 

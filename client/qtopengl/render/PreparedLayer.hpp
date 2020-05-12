@@ -7,8 +7,8 @@
 #include <QPointF>
 #include <QTime>
 
-#include "MapVisualiserThread.h"
-#include "../ClientStructures.h"
+#include "MapVisualiserThread.hpp"
+#include "../../qt/ClientStructures.hpp"
 
 class PreparedLayer : public QObject, public QGraphicsPixmapItem
 {

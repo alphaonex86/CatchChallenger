@@ -1,4 +1,4 @@
-#include "MapVisualiser.h"
+#include "MapVisualiser.hpp"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -14,10 +14,9 @@
 #include <QLabel>
 #include <QPixmapCache>
 
-#include "../../../general/base/MoveOnTheMap.h"
+#include "../../../general/base/MoveOnTheMap.hpp"
 
-MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &openGL) :
-    mScene(new QGraphicsScene(this)),
+MapVisualiser::MapVisualiser(const bool &debugTags) :
     mark(NULL)
 {
     qRegisterMetaType<Map_full *>("Map_full *");
@@ -27,50 +26,18 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     if(!connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection))
         abort();
 
-    if(openGL)
-        setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-    setRenderHint(QPainter::Antialiasing,false);
-    setRenderHint(QPainter::TextAntialiasing,false);
-    setRenderHint(QPainter::HighQualityAntialiasing,false);
-    setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
-    setCacheMode(QGraphicsView::CacheBackground);
-    QPixmapCache::setCacheLimit(102400);
+/*    setCacheMode(QGraphicsView::CacheBackground);
+    QPixmapCache::setCacheLimit(102400);*/
 
     mapVisualiserThread.debugTags=debugTags;
     this->debugTags=debugTags;
 
-    timerUpdateFPS.setSingleShot(true);
-    timerUpdateFPS.setInterval(1000);
-    timeUpdateFPS.restart();
-    frameCounter=0;
-    timeRender.restart();
-    waitRenderTime=40;
-    timerRender.setSingleShot(true);
-    if(!connect(&timerRender,&QTimer::timeout,this,&MapVisualiser::render))
-        abort();
-    if(!connect(&timerUpdateFPS,&QTimer::timeout,this,&MapVisualiser::updateFPS))
-        abort();
-    timerUpdateFPS.start();
-
-    mapItem=new MapItem(NULL,useCache);
+    mapItem=new MapItem(this);
     if(!connect(mapItem,&MapItem::eventOnMap,this,&MapVisualiser::eventOnMap))
         abort();
 
     grass=NULL;
     grassOver=NULL;
-
-    setScene(mScene);
-/*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-    setDragMode(QGraphicsView::ScrollHandDrag);*/
-    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState | QGraphicsView::IndirectPainting);
-    setBackgroundBrush(Qt::black);
-    setFrameStyle(0);
-
-    viewport()->setAttribute(Qt::WA_StaticContents);
-    viewport()->setAttribute(Qt::WA_TranslucentBackground);
-    viewport()->setAttribute(Qt::WA_NoSystemBackground);
-    setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 
     tagTilesetIndex=0;
     markPathFinding=new Tiled::Tileset(QStringLiteral("mark path finding"),16,24);
@@ -81,10 +48,6 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
         else if(!markPathFinding->loadFromImage(image,QStringLiteral(":/CC/images/map/marker.png")))
             qDebug() << "Unable to load the image for marker";
     }
-
-    mScene->addItem(mapItem);
-    //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
-    render();
 }
 
 MapVisualiser::~MapVisualiser()
@@ -109,50 +72,6 @@ Map_full * MapVisualiser::getMap(const std::string &map) const
         return all_map.at(map);
     abort();
     return NULL;
-}
-
-void MapVisualiser::render()
-{
-    //mScene->update();
-    viewport()->update();
-}
-
-void MapVisualiser::paintEvent(QPaintEvent * event)
-{
-    timeRender.restart();
-
-    QGraphicsView::paintEvent(event);
-
-    uint32_t elapsed=timeRender.elapsed();
-    if(waitRenderTime<=elapsed)
-        timerRender.start(1);
-    else
-        timerRender.start(waitRenderTime-elapsed);
-
-    if(frameCounter<65535)
-        frameCounter++;
-}
-
-void MapVisualiser::updateFPS()
-{
-    const unsigned int FPS=(int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
-    emit newFPSvalue(FPS);
-
-    frameCounter=0;
-    timeUpdateFPS.restart();
-    timerUpdateFPS.start();
-}
-
-void MapVisualiser::setTargetFPS(int targetFPS)
-{
-    if(targetFPS==0)
-        waitRenderTime=0;
-    else
-    {
-        waitRenderTime=static_cast<uint8_t>(static_cast<float>(1000.0)/(float)targetFPS);
-        if(waitRenderTime<1)
-            waitRenderTime=1;
-    }
 }
 
 void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)

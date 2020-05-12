@@ -5,7 +5,8 @@
 #include "foreground/Multi.hpp"
 #include "../qt/ConnectedSocket.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "interface/BaseWindow.hpp"
+#include "cc/Api_protocol_Qt.hpp"
+#include "cc/Api_client_real.hpp"
 
 class LoadingScreen;
 
@@ -24,6 +25,7 @@ signals:
 
     void parseDatapack(const std::string &datapackPath);
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
+    void goToMap();
 public slots:
     void disconnected(std::string reason);
     #ifndef __EMSCRIPTEN__
@@ -73,6 +75,7 @@ private:
     void datapackParsedMainSub();
     void datapackChecksumError();
     void Qtlogged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
+    void QthaveCharacter();
 };
 
 #endif // CONNEXIONMANAGER_H

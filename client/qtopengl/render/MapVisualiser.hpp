@@ -31,15 +31,13 @@
 
 #include "MapVisualiserThread.hpp"
 
-class MapVisualiser : public QGraphicsItem
+class MapVisualiser : public QObject, public QGraphicsItem
 {
     Q_OBJECT
-
 public:
-    explicit MapVisualiser(const bool &debugTags=false, const bool &useCache=true);
+    explicit MapVisualiser(const bool &debugTags=false);
     ~MapVisualiser();
 
-    void setTargetFPS(int targetFPS);
     virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 
     Map_full * getMap(const std::string &map) const;
@@ -56,13 +54,6 @@ protected:
 
     bool debugTags;
     std::string mLastError;
-
-    uint8_t waitRenderTime;
-    QTimer timerRender;
-    QTime timeRender;
-    uint16_t frameCounter;
-    QTimer timerUpdateFPS;
-    QTime timeUpdateFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
@@ -84,18 +75,14 @@ public slots:
     virtual void hideNotloadedMap();
 private slots:
     void loadTeleporter(Map_full *map);
-    void paintEvent(QPaintEvent * event);
-    void updateFPS();
     void asyncDetectBorder(Map_full * tempMapObject);
     void applyTheAnimationTimer();
 protected slots:
-    void render();
     virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
     void passMapIntoOld();
 signals:
     void loadOtherMapAsync(const std::string &fileName);
     void mapDisplayed(const std::string &fileName);
-    void newFPSvalue(const unsigned int FPS);
 };
 
 #endif

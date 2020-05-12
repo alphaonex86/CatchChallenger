@@ -1,4 +1,4 @@
-#include "MapDoor.h"
+#include "MapDoor.hpp"
 
 #include <QApplication>
 

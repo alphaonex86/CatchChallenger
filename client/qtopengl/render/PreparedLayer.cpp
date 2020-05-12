@@ -1,4 +1,4 @@
-#include "PreparedLayer.h"
+#include "PreparedLayer.hpp"
 #include <QDebug>
 #include <qmath.h>
 

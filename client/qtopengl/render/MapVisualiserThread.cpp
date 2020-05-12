@@ -1,17 +1,17 @@
-#include "MapVisualiserThread.h"
-#include "MapItem.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/tinyXML2/tinyxml2.h"
-#include "../../../general/base/tinyXML2/customtinyxml2.h"
-#include "../tiled/tiled_mapobject.h"
+#include "MapVisualiserThread.hpp"
+#include "MapItem.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../../general/base/tinyXML2/customtinyxml2.hpp"
+#include "../tiled/tiled_mapobject.hpp"
 #include <QFileInfo>
 #include <QRegularExpression>
-#include "../ClientVariable.h"
-#include "../QtDatapackClientLoader.h"
-#include "../LanguagesSelect.h"
-#include "../FacilityLibClient.h"
+#include "../../qt/ClientVariable.hpp"
+#include "../../qt/QtDatapackClientLoader.hpp"
+#include "../Language.hpp"
+#include "../../qt/FacilityLibClient.hpp"
 #include <QDebug>
 #include <QTime>
 #include <iostream>
@@ -24,7 +24,7 @@ MapVisualiserThread::MapVisualiserThread()
     #endif
     hideTheDoors=false;
     #ifndef CATCHCHALLENGER_BOT
-    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    language=Language::language.getLanguage().toStdString();
     #else
     language="en";
     #endif

@@ -1,12 +1,12 @@
-#include "MapVisualiserPlayer.h"
+#include "MapVisualiserPlayer.hpp"
 
-#include "../../../general/base/MoveOnTheMap.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../QtDatapackClientLoader.h"
-#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../qt/QtDatapackClientLoader.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
 
 #include <qmath.h>
 #include <QFileInfo>
@@ -20,8 +20,8 @@ to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 
-MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool &debugTags, const bool &useCache, const bool &openGL) :
-    MapVisualiser(debugTags,useCache,openGL)
+MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool &debugTags) :
+    MapVisualiser(debugTags)
 {
     wasPathFindingUsed=false;
     blocked=false;
@@ -68,9 +68,9 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
     if(centerOnPlayer)
     {
-        setSceneRect(-2000,-2000,4000,4000);
+        /*setSceneRect(-2000,-2000,4000,4000);
         setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);*/
     }
     stepAlternance=false;
     animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
@@ -573,8 +573,8 @@ void MapVisualiserPlayer::moveStepSlot()
         break;
     }
 
-    if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    /*if(centerOnPlayer)
+        centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
     loadGrassTile();
 
     moveStep++;
@@ -989,8 +989,8 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-    if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    /*if(centerOnPlayer)
+        centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
     //stopGrassAnimation();
 
     if(haveStopTileAction())
@@ -1771,8 +1771,8 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-        if(centerOnPlayer)
-            centerOn(MapObjectItem::objectLink.at(playerMapObject));
+        /*if(centerOnPlayer)
+            centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
     }
 
     loadMonsterFromCurrentMap();

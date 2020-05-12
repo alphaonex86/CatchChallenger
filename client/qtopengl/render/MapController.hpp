@@ -15,7 +15,7 @@ class MapController : public MapControllerMP
 {
     Q_OBJECT
 public:
-    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true);
+    explicit MapController(const bool &centerOnPlayer=true, const bool &debugTags=false);
     ~MapController();
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     virtual void resetAll();

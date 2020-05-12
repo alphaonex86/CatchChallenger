@@ -335,6 +335,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     }
     if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())
     {
+        std::cout << "!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent(), don't forget call CommonDatapackServerSpec::parseDatapack()" << std::endl;
         if(delayedLogin.data.empty())
         {
             delayedLogin.data=std::string(data+pos,size-pos);
