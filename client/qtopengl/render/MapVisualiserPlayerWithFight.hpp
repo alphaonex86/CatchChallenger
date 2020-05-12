@@ -10,7 +10,7 @@ class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:
-    explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
+    explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false);
     ~MapVisualiserPlayerWithFight();
     void setBotsAlreadyBeaten(const char * const botAlreadyBeaten);
     void addBeatenBotFight(const uint16_t &botFightId);

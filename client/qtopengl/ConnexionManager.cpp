@@ -93,6 +93,8 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapack,       this,&ConnexionManager::haveTheDatapack))
         abort();
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,       this,&ConnexionManager::haveTheDatapackMainSub))
+        abort();
 
     if(!connect(client,               &CatchChallenger::Api_client_real::Qtlogged,             this,&ConnexionManager::Qtlogged,Qt::QueuedConnection))
         abort();
@@ -120,6 +122,9 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     if(!connect(client,               &CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,       this,&ConnexionManager::haveDatapackMainSubCode))
         abort();
     if(!connect(client,               &CatchChallenger::Api_client_real::QtgatewayCacheUpdate,       this,&ConnexionManager::gatewayCacheUpdate))
+        abort();
+
+    if(!connect(client,               &CatchChallenger::Api_client_real::QthaveCharacter,             this,&ConnexionManager::QthaveCharacter,Qt::QueuedConnection))
         abort();
 
     if(!connexionInfo.proxyHost.isEmpty())
@@ -215,7 +220,7 @@ void ConnexionManager::newError(const std::string &error,const std::string &deta
 void ConnexionManager::message(const std::string &message)
 {
     std::cerr << message << std::endl;
-    emit errorString(message);
+    //emit errorString(message);
 }
 
 #ifndef __EMSCRIPTEN__
@@ -529,6 +534,7 @@ void ConnexionManager::connectingOnGameServer()
 void ConnexionManager::connectedOnGameServer()
 {
     l->setText(tr("Connected on game server"));
+    emit goToMap();
 }
 
 void ConnexionManager::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
@@ -662,6 +668,16 @@ void ConnexionManager::Qtlogged(const std::vector<std::vector<CatchChallenger::C
         client->sendDatapackContentBase();
     this->characterEntryList=characterEntryList;
     //emit logged(characterEntryList);
+}
+
+void ConnexionManager::QthaveCharacter()
+{
+/*    if(client==nullptr)
+    {
+        std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
+        return;
+    }
+    sendDatapackContentMainSub();*/
 }
 
 void ConnexionManager::haveDatapackMainSubCode()

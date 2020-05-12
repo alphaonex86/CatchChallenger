@@ -1,10 +1,10 @@
-#include "MapController.h"
-#include "../../qt/QtDatapackClientLoader.h"
-#include "../../qt/Api_client_real.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../../../general/base/GeneralStructures.h"
+#include "MapController.hpp"
+#include "../../qt/QtDatapackClientLoader.hpp"
+#include "../../qt/Api_client_real.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
 
 #include <iostream>
 
@@ -28,8 +28,8 @@ std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
 #define IMAGEOVERSIZEHEIGHT 600*2*2*/
 
 
-MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
-    MapControllerMP(centerOnPlayer,debugTags,useCache)
+MapController::MapController(const bool &centerOnPlayer,const bool &debugTags) :
+    MapControllerMP(centerOnPlayer,debugTags)
 {
     if(!connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection))
         abort();
@@ -42,12 +42,12 @@ MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,co
     newColor=Qt::transparent;
     imageOver=new QGraphicsPixmapItem();
     imageOver->setZValue(1000);
-    if(centerOnPlayer)
+    /*if(centerOnPlayer)
         imageOver->setPos(-width(),-height());
     else
-        imageOver->setPos(0,0);
+        imageOver->setPos(0,0);*/
     updateColorTimer.setSingleShot(true);
-    updateColorTimer.setInterval(50);
+    updateColorTimer.setInterval(30);
     if(!connect(&updateColorTimer,&QTimer::timeout,this,&MapController::updateColor))
         abort();
     updateBotTimer.setInterval(1000);
@@ -190,13 +190,13 @@ void MapController::updateBot()
 void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 {
     MapControllerMP::connectAllSignals(client);
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant,Qt::UniqueConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant,Qt::UniqueConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,this,&MapController::seed_planted))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,this,&MapController::seed_planted,Qt::UniqueConnection))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected,Qt::UniqueConnection))
         abort();
 }
 
@@ -584,7 +584,7 @@ void MapController::setColor(const QColor &color, const uint32_t &timeInMS)
     if(imageOverAdded)
     {
         imageOverAdded=false;
-        mScene->removeItem(imageOver);
+        //mScene->removeItem(imageOver);
     }
     if(timeInMS<50)
     {
@@ -592,7 +592,7 @@ void MapController::setColor(const QColor &color, const uint32_t &timeInMS)
         actualColor=color;
         tempColor=color;
         newColor=color;
-        QPixmap pixmap(width()*4,height()*4);
+        /*QPixmap pixmap(width()*4,height()*4);
         pixmap.fill(color);
         imageOver->setPixmap(pixmap);
         if(newColor.alpha()!=0)
@@ -600,17 +600,17 @@ void MapController::setColor(const QColor &color, const uint32_t &timeInMS)
             {
                 imageOverAdded=true;
                 mScene->addItem(imageOver);
-            }
+            }*/
     }
     else
     {
         newColor=color;
-        updateColorIntervale=timeInMS/50;
+        updateColorIntervale=timeInMS/30;
         if(newColor.alpha()!=0 || tempColor.alpha()!=0)
             if(!imageOverAdded)
             {
                 imageOverAdded=true;
-                mScene->addItem(imageOver);
+                //mScene->addItem(imageOver);
             }
         if(tempColor.alpha()==0)
             tempColor=QColor(color.red(),color.green(),color.blue(),0);
@@ -746,7 +746,7 @@ void MapController::updateColor()
         }
     }
     tempColor=QColor(tempColor.red()+rdiff,tempColor.green()+gdiff,tempColor.blue()+bdiff,tempColor.alpha()+adiff);
-    QPixmap pixmap(width()*4,height()*4);
+    /*QPixmap pixmap(width()*4,height()*4);
     pixmap.fill(tempColor);
     imageOver->setPixmap(pixmap);
     if(tempColor==newColor)
@@ -760,5 +760,5 @@ void MapController::updateColor()
             }
     }
     else
-        updateColorTimer.start();
+        updateColorTimer.start();*/
 }

@@ -1,4 +1,6 @@
-#include "TemporaryTile.h"
+#include "TemporaryTile.hpp"
+#include "../tiled/tiled_tile.hpp"
+#include "../tiled/tiled_tilelayer.hpp"
 
 #include <QApplication>
 #include <QDebug>

@@ -1,7 +1,7 @@
-#include "MapController.h"
-#include "../QtDatapackClientLoader.h"
-#include "../../../general/base/FacilityLibGeneral.h"
-#include "../../../general/base/CommonDatapack.h"
+#include "MapController.hpp"
+#include "../cc/QtDatapackClientLoader.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
 QFont MapControllerMP::playerpseudofont;
@@ -9,8 +9,8 @@ QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
 QPixmap * MapControllerMP::imgForPseudoDev=NULL;
 QPixmap * MapControllerMP::imgForPseudoPremium=NULL;
 
-MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTags, const bool &useCache, const bool &openGL) :
-    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags,useCache,openGL)
+MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTags) :
+    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags)
 {
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
@@ -41,23 +41,23 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
 {
     this->client=client;
     //connect the map controler
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qthave_current_player_info,   this,&MapControllerMP::have_current_player_info,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qthave_current_player_info,   this,&MapControllerMP::have_current_player_info,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtinsert_player,              this,&MapControllerMP::insert_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtinsert_player,              this,&MapControllerMP::insert_player,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtremove_player,              this,&MapControllerMP::remove_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtremove_player,              this,&MapControllerMP::remove_player,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtmove_player,                this,&MapControllerMP::move_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtmove_player,                this,&MapControllerMP::move_player,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtreinsert_player,               this,&MapControllerMP::reinsert_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtreinsert_player,               this,&MapControllerMP::reinsert_player,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtfull_reinsert_player,               this,&MapControllerMP::full_reinsert_player,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::Qtfull_reinsert_player,               this,&MapControllerMP::full_reinsert_player,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,               this,&MapControllerMP::dropAllPlayerOnTheMap,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,               this,&MapControllerMP::dropAllPlayerOnTheMap,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_protocol_Qt::send_player_direction))
+    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_protocol_Qt::send_player_direction,Qt::UniqueConnection))
         abort();
-    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection))
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
 }
 
@@ -95,7 +95,7 @@ void MapControllerMP::setScale(const float &scaleSize)
     }
     //scaleSize 1: 32*16px = 512px
     //scaleSize 4: 8*16px = 128px
-    const int w=width();
+    /*const int w=width();
     const int h=height();
     double scaleSizeW=(double)w*scaleSize/512;
     double scaleSizeH=(double)h*scaleSize/512;
@@ -106,7 +106,7 @@ void MapControllerMP::setScale(const float &scaleSize)
     if(scaleSizeMax<1.0)
         scaleSizeMax=1.0;
     scale(scaleSizeMax/static_cast<double>(this->scaleSize),scaleSizeMax/static_cast<double>(this->scaleSize));
-    this->scaleSize=scaleSizeMax;
+    this->scaleSize=scaleSizeMax;*/
     //update to real zoom
 }
 
@@ -261,9 +261,9 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
         removeUnusedMap();
     }*/
     /// \todo temp fix, do a better fix
-    const Tiled::MapObject * playerMapObject=getPlayerMapObject();
+    /*const Tiled::MapObject * playerMapObject=getPlayerMapObject();
     if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
-        centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));
+        centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));*/
 
     if(ObjectGroupItem::objectGroupLink.find(otherPlayer.presumed_map->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
     {

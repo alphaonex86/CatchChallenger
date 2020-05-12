@@ -1,6 +1,6 @@
-#include "MapItem.h"
-#include "PreparedLayer.h"
-#include "../ClientVariable.h"
+#include "MapItem.hpp"
+#include "PreparedLayer.hpp"
+#include "../../qt/ClientVariable.hpp"
 
 #include <QGraphicsPixmapItem>
 #include <QPixmap>

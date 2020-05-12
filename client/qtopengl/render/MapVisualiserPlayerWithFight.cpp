@@ -1,13 +1,13 @@
-  #include "MapVisualiserPlayerWithFight.h"
+#include "MapVisualiserPlayerWithFight.hpp"
 
-#include "../../fight/interface/ClientFightEngine.h"
-#include "../../../../general/base/CommonDatapack.h"
-#include "../../../../general/base/CommonDatapackServerSpec.h"
+#include "../../qt/fight/interface/ClientFightEngine.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
 
 #include <iostream>
 
-MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &openGL) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,openGL)
+MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags) :
+    MapVisualiserPlayer(centerOnPlayer,debugTags)
 {
     this->events=events;
     repel_step=0;

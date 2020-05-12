@@ -119,12 +119,12 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #endif
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
                     fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
-                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << ", errno: " << errno << std::endl;
                 }
             }
         }
@@ -179,7 +179,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
                     }
                     else
                     {
-                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << ", errno: " << errno << std::endl;
                         return std::vector<char>();
                     }
                 }
@@ -223,12 +223,12 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #endif
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
                     fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
-                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << ", errno: " << errno << std::endl;
                 }
             }
         }
@@ -281,7 +281,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
                     }
                     else
                     {
-                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                        std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << ", errno: " << errno << std::endl;
                         return std::vector<char>();
                     }
                 }
@@ -324,12 +324,12 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 #endif
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
-                if (stat(fullPathFileToOpen.c_str(), &sb) == -1)
+                if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
                     fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
-                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << std::endl;
+                    std::cerr << "Unable to open the file to do the checksum: " << datapackPath << returnList.at(index) << ", errno: " << errno << std::endl;
                 }
             }
         }

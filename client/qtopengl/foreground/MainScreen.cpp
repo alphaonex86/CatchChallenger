@@ -134,8 +134,13 @@ MainScreen::~MainScreen()
 
 void MainScreen::setError(const std::string &error)
 {
-    warning->setVisible(true);
-    warning->setHtml(warningString.arg(QString::fromStdString(error)));
+    if(warning->toHtml().isEmpty() || error.empty())
+    {
+        warning->setVisible(true);
+        warning->setHtml(warningString.arg(QString::fromStdString(error)));
+    }
+    if(error.empty())
+        warning->setVisible(false);
 }
 
 void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget)
