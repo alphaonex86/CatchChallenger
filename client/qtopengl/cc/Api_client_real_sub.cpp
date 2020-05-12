@@ -191,7 +191,7 @@ void Api_client_real::datapackChecksumDoneSub(const std::vector<std::string> &da
     this->partialHashListSub=partialHashList;
     if(!datapackFilesListSub.empty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerSub)
     {
-        std::cerr << "Sub: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << binarytoHexa(hash) << std::endl;
+        std::cerr << "Sub: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote " << binarytoHexa(hash) << std::endl;
         wait_datapack_content_sub=false;
         if(!wait_datapack_content_main && !wait_datapack_content_sub)
             datapackDownloadFinishedSub();
