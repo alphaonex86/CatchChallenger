@@ -430,10 +430,12 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     if(ccmap==nullptr)
     {
         ccmap=new CCMap();
-        /*if(!connect(ccmap,&CharacterList::backSubServer,this,&ScreenTransition::backSubServer))
+        /*if(!connect(ccmap,&CCMap::backSubServer,this,&ScreenTransition::backSubServer))
             abort();
-        if(!connect(ccmap,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
+        if(!connect(ccmap,&CCMap::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();*/
+        if(!connect(ccmap,&CCMap::error,this,&ScreenTransition::errorString))
+            abort();
     }
     ccmap->setVar(connexionManager);
 }

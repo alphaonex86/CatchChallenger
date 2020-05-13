@@ -2250,6 +2250,11 @@ std::string Api_protocol::toUTF8WithHeader(const std::string &text)
 
 void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_informations
 {
+    if(!character_selected || number_of_map==0)
+    {
+        std::cerr << "This race case will produce infinity loop, have you well call setMapNumber() before have_main_and_sub_datapack_loaded()?" << std::endl;
+        return;
+    }
     if(!delayedLogin.data.empty())
     {
         bool returnCode=parseCharacterBlockCharacter(delayedLogin.packetCode,delayedLogin.queryNumber,
