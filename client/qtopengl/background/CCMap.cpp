@@ -1,5 +1,6 @@
 #include "CCMap.hpp"
 #include "../ConnexionManager.hpp"
+#include "../../qt/QtDatapackClientLoader.hpp"
 #include <QPainter>
 #include <QTime>
 #include <chrono>
@@ -15,6 +16,8 @@ void CCMap::setVar(ConnexionManager *connexionManager)
     connectAllSignals(connexionManager->client);
     datapackParsed();
     datapackParsedMainSub();
+    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
+    setDatapackPath(connexionManager->client->datapackPathBase(),connexionManager->client->mainDatapackCode());
 }
 
 QRectF CCMap::boundingRect() const
