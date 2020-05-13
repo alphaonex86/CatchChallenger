@@ -121,6 +121,14 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
             pos+=sizeof(uint8_t);
             event_value=data[pos];
             pos+=sizeof(uint8_t);
+
+            if(event>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            {
+                parseError("Procotol wrong or corrupted",std::string("event index > than max, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            this->events[event]=event_value;
+
             newEvent(event,event_value);
             postReplyData(queryNumber,NULL,0);
         }

@@ -9,9 +9,9 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../../general/base/CommonMap.hpp"
 #include "../../../../general/fight/CommonFightEngine.hpp"
-#include "../../Api_protocol_Qt.hpp"
 
 namespace CatchChallenger {
+class Api_protocol_Qt;
 //only the logique here, store nothing
 class ClientFightEngine : public QObject, public CommonFightEngine
 {

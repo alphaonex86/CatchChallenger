@@ -1,5 +1,6 @@
 #include "Api_protocol_Qt.hpp"
 #include "../Language.hpp"
+#include "../../qt/fight/interface/ClientFightEngine.hpp"
 #ifndef NOTCPSOCKET
 //#include "SslCert.h"
 #include <QSslKey>
@@ -67,6 +68,29 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         if(socket->bytesAvailable())
             parseIncommingData();
     }
+
+    fightEngine=new ClientFightEngine();
+    if(!connect(fightEngine,&ClientFightEngine::newError,  this,&Api_protocol_Qt::newError))
+        abort();
+    if(!connect(fightEngine,&ClientFightEngine::error,     this,&Api_protocol_Qt::errorFromFightEngine))
+        abort();
+    if(!connect(fightEngine,&ClientFightEngine::message,     this,&Api_protocol_Qt::message))
+        abort();
+    /*if(!connect(fightEngine,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::stderror))
+        abort();*/
+    if(!connect(this,&Api_protocol_Qt::Qtrandom_seeds,fightEngine,&ClientFightEngine::newRandomNumber))
+           abort();
+    fightEngine->setClient(this);
+}
+
+Api_protocol_Qt::~Api_protocol_Qt()
+{
+    delete fightEngine;
+}
+
+void Api_protocol_Qt::errorFromFightEngine(const std::string &error)
+{
+    emit QtnewError(error,error);
 }
 
 void Api_protocol_Qt::parseIncommingData()
