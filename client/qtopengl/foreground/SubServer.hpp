@@ -9,7 +9,7 @@
 #include "../CustomButton.hpp"
 #include "../ConnexionManager.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
-#include "../../qt/Api_client_real.hpp"
+#include "../cc/Api_client_real.hpp"
 
 class ListEntryEnvolued;
 class AddOrEditServer;

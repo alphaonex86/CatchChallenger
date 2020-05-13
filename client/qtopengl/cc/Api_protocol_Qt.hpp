@@ -6,13 +6,18 @@
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../libcatchchallenger/Api_protocol.hpp"
 #include "../../qt/ConnectedSocket.hpp"
+
 namespace CatchChallenger {
+class ClientFightEngine;
 class Api_protocol_Qt : public QObject, public Api_protocol
 {
     Q_OBJECT
 public:
     explicit Api_protocol_Qt(ConnectedSocket *socket);
+    ~Api_protocol_Qt();
     bool disconnectClient() override;
+
+    ClientFightEngine *fightEngine;
 
     void QtsocketDestroyed();
     void socketDestroyed() override;
@@ -24,6 +29,7 @@ public:
     void parseIncommingData() override;
     void sslHandcheckIsFinished();
     void closeSocket() override;
+    void errorFromFightEngine(const std::string &error);
 
     ssize_t read(char * data, const size_t &size) override;
     ssize_t write(const char * const data, const size_t &size) override;

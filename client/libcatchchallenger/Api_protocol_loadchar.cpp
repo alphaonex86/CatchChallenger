@@ -196,6 +196,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 return false;
             }
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=std::string(data+pos,textSize);
+            mDatapackMain=mDatapackBase+"map/main/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
             pos+=textSize;
 
             if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.empty())
@@ -237,6 +238,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
                 return false;
             }
             CommonSettingsServer::commonSettingsServer.subDatapackCode=std::string(data+pos,textSize);
+            mDatapackSub=mDatapackMain+"sub/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
             pos+=textSize;
 
             if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
@@ -375,10 +377,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         tempListSize=data[pos];
         pos+=sizeof(uint8_t);
         uint8_t event,value;
+
+        //load events
+        this->events.clear();
+        while((uint32_t)this->events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            this->events.push_back(0);
+
         int index=0;
         while(index<tempListSize)
         {
-
             if((size-pos)<(int)sizeof(uint8_t))
             {
                 parseError("Procotol wrong or corrupted",std::string("wrong size to get the event id, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -393,8 +400,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
             value=data[pos];
             pos+=sizeof(uint8_t);
+            if(event>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            {
+                parseError("Procotol wrong or corrupted",std::string("event index > than max, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
             index++;
             events.push_back(std::pair<uint8_t,uint8_t>(event,value));
+
+            this->events[event]=value;
         }
         setEvents(events);
     }

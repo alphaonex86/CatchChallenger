@@ -59,6 +59,8 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QthaveCharacter,                 this,&MapControllerMP::haveCharacter,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
+        abort();
 }
 
 void MapControllerMP::resetAll()
@@ -128,6 +130,10 @@ const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &MapControllerMP
 
 bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(!QFileInfo(QString::fromStdString(fileName)).exists())
+        qDebug() << (QStringLiteral("fileName: %1").arg(QString::fromStdString(fileName)));
+    #endif
     //position
     mapVisualiserThread.stopIt=false;
     if(current_map.empty())
@@ -375,6 +381,21 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
     }
 }
 
+void MapControllerMP::haveCharacter()
+{
+    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
+    setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+
+    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    if(playerInformations.bot_already_beaten==NULL)
+    {
+        std::cerr << "void BaseWindow::updateConnectingStatus(): waitedData.isEmpty(), playerInformations.bot_already_beaten==NULL" << std::endl;
+        abort();
+    }
+    setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
+    setInformations(&playerInformations.items,&playerInformations.quests,&client->events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
+}
+
 bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
@@ -453,6 +474,7 @@ void MapControllerMP::datapackParsed()
 
 void MapControllerMP::datapackParsedMainSub()
 {
+    setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     MapVisualiserPlayer::datapackParsedMainSub();
 
     skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
