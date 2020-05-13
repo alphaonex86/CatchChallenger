@@ -75,6 +75,7 @@ public:
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
+    std::vector<uint8_t> events;
 
     enum ProxyMode
     {

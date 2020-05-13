@@ -673,6 +673,11 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
+    if(itemOnMap==nullptr)
+    {
+        std::cerr << "error: itemOnMap is not loaded, do you have call setInformations()?" << std::endl;
+        abort();
+    }
     if(current_map.empty())
         return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
@@ -1576,10 +1581,16 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
                     abort();
             }
             else
+            {
                 qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
+                playerTileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png"));
+            }
         }
         else
+        {
             qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
+            playerTileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png"));
+        }
 
         //the direction
         this->direction=direction;
@@ -1637,6 +1648,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         updatePlayerMonsterTile(player.monsterId);
 
         current_map=QtDatapackClientLoader::datapackLoader->maps.at(mapId);
+        std::cout << "datapackMapPathSpec: " << datapackMapPathSpec << std::endl;
         loadPlayerMap(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
