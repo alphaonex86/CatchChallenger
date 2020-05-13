@@ -634,16 +634,12 @@ void ConnexionManager::datapackParsedMainSub()
         return;*/
     /*mainSubDatapackIsParsed=true;
 
-    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
-    mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
-    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->mapToId.size()))
-        emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
-
-    have_main_and_sub_datapack_loaded();
-
     emit datapackParsedMainSubMap();
 
     updateConnectingStatus();*/
+    if(!client->setMapNumber(QtDatapackClientLoader::datapackLoader->mapToId.size()))
+        emit newError(tr("Internal error").toStdString(),"No map loaded to call client->setMapNumber()");
+    client->have_main_and_sub_datapack_loaded();
 }
 
 void ConnexionManager::datapackChecksumError()
