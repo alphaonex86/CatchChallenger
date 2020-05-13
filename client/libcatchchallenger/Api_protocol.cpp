@@ -1743,6 +1743,7 @@ void Api_protocol::resetAll()
         std::cerr << "Api_protocol::resetAll() Suspect internal bug" << std::endl;
     //status for the query
     token.clear();
+    events.clear();
     stageConnexion=StageConnexion::Stage1;
 
     haveFirstHeader=false;
@@ -2250,7 +2251,7 @@ std::string Api_protocol::toUTF8WithHeader(const std::string &text)
 
 void Api_protocol::have_main_and_sub_datapack_loaded()//can now load player_informations
 {
-    if(!character_selected || number_of_map==0)
+    if(number_of_map==0)
     {
         std::cerr << "This race case will produce infinity loop, have you well call setMapNumber() before have_main_and_sub_datapack_loaded()?" << std::endl;
         return;

@@ -31,6 +31,9 @@ int main(int argc, char *argv[])
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<uint64_t>("uint64_t");
+    qRegisterMetaType<uint32_t>("uint32_t");
+    qRegisterMetaType<uint16_t>("uint16_t");
+    qRegisterMetaType<uint8_t>("uint8_t");
 
     if(argc<1)
     {

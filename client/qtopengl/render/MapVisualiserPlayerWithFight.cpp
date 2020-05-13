@@ -3,8 +3,10 @@
 #include "../../qt/fight/interface/ClientFightEngine.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/MoveOnTheMap.hpp"
 
 #include <iostream>
+#include <QDebug>
 
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags) :
     MapVisualiserPlayer(centerOnPlayer,debugTags)

@@ -12,12 +12,11 @@ CCMap::CCMap()
 
 void CCMap::setVar(ConnexionManager *connexionManager)
 {
+    fightEngine=connexionManager->client->fightEngine;
     resetAll();
     connectAllSignals(connexionManager->client);
     datapackParsed();
     datapackParsedMainSub();
-    //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
-    setDatapackPath(connexionManager->client->datapackPathBase(),connexionManager->client->mainDatapackCode());
 }
 
 QRectF CCMap::boundingRect() const
