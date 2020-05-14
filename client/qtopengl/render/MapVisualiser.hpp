@@ -27,11 +27,11 @@
 #include <QHash>
 #include <QTime>
 #include <QDateTime>
-//#include <QGLWidget>
+#include "../ScreenInput.hpp"
 
 #include "MapVisualiserThread.hpp"
 
-class MapVisualiser : public QObject, public QGraphicsItem
+class MapVisualiser : public QObject, public ScreenInput
 {
     Q_OBJECT
 public:
