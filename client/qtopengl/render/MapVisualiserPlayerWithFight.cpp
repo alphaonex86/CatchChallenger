@@ -8,8 +8,8 @@
 #include <iostream>
 #include <QDebug>
 
-MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags) :
-    MapVisualiserPlayer(centerOnPlayer,debugTags)
+MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &debugTags) :
+    MapVisualiserPlayer(debugTags)
 {
     this->events=events;
     repel_step=0;
