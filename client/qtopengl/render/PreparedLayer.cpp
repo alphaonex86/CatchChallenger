@@ -1,5 +1,7 @@
 #include "PreparedLayer.hpp"
+#include "../background/CCMap.hpp"
 #include <QDebug>
+#include <QWidget>
 #include <qmath.h>
 
 PreparedLayer::PreparedLayer(Map_full * tempMapObject,QGraphicsItem *parent) :
@@ -66,4 +68,12 @@ void PreparedLayer::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
     //qDebug() << "Mouse release event on map at " << tempMapObject->name << tempMapObject->logicalMap.map_file << x << y;
     if(clickDuration.elapsed()<500)
         eventOnMap(CatchChallenger::MapEvent_SimpleClick,tempMapObject,x,y);
+}
+
+void PreparedLayer::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    //qDebug() << "widget size " << widget->width() << widget->height();
+    const float &z=MapVisualiserPlayer::zoom();
+    setScale(z);
+    QGraphicsPixmapItem::paint(painter,option,widget);
 }

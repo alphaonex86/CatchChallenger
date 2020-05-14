@@ -23,9 +23,3 @@ QRectF CCMap::boundingRect() const
 {
     return QRectF();
 }
-
-void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget)
-{
-    mapItem->setPos(0,0);
-    mapItem->paint(painter,o,widget);
-}

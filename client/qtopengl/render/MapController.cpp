@@ -28,8 +28,8 @@ std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
 #define IMAGEOVERSIZEHEIGHT 600*2*2*/
 
 
-MapController::MapController(const bool &centerOnPlayer,const bool &debugTags) :
-    MapControllerMP(centerOnPlayer,debugTags)
+MapController::MapController(const bool &debugTags) :
+    MapControllerMP(debugTags)
 {
     if(!connect(this,&MapController::mapDisplayed,this,&MapController::tryLoadPlantOnMapDisplayed,Qt::QueuedConnection))
         abort();
