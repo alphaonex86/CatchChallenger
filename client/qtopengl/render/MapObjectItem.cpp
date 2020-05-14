@@ -1,4 +1,6 @@
 #include "MapObjectItem.hpp"
+#include "../background/CCMap.hpp"
+#include <iostream>
 
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
@@ -13,6 +15,7 @@ MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
 
 QRectF MapObjectItem::boundingRect() const
 {
+    return QRectF();
     Tiled::ObjectGroup * objectGroup=mMapObject->objectGroup();
     if(mRendererList.find(objectGroup)!=mRendererList.cend())
         return mRendererList.at(objectGroup)->boundingRect(mMapObject);
@@ -28,6 +31,8 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     if(mMapObject->objectGroup()==NULL)
         return;
 
+    const float &z=MapVisualiserPlayer::zoom();
+    setScale(z);
     const QColor &color = mMapObject->objectGroup()->color();
     mRendererList.at(mMapObject->objectGroup())->drawMapObject(p, mMapObject,
                              color.isValid() ? color : Qt::transparent);

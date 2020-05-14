@@ -35,7 +35,7 @@ class MapItem : public QGraphicsObject
 {
     Q_OBJECT
 public:
-    MapItem(QGraphicsItem *parent = 0,const bool &useCache=true);
+    MapItem(QGraphicsItem *parent = 0);
     void addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex);
     bool haveMap(Tiled::Map *map);
     void removeMap(Tiled::Map *map);
@@ -44,7 +44,6 @@ public:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *);
 private:
     std::unordered_map<Tiled::Map *,std::unordered_set<QGraphicsItem *> > displayed_layer;
-    bool cache;
 signals:
     void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 };

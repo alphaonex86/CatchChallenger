@@ -9,8 +9,8 @@ QPixmap * MapControllerMP::imgForPseudoAdmin=NULL;
 QPixmap * MapControllerMP::imgForPseudoDev=NULL;
 QPixmap * MapControllerMP::imgForPseudoPremium=NULL;
 
-MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTags) :
-    MapVisualiserPlayerWithFight(centerOnPlayer,debugTags)
+MapControllerMP::MapControllerMP(const bool &debugTags) :
+    MapVisualiserPlayerWithFight(debugTags)
 {
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
@@ -266,10 +266,6 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
         }
         removeUnusedMap();
     }*/
-    /// \todo temp fix, do a better fix
-    /*const Tiled::MapObject * playerMapObject=getPlayerMapObject();
-    if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
-        centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));*/
 
     if(ObjectGroupItem::objectGroupLink.find(otherPlayer.presumed_map->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
     {
@@ -294,6 +290,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
         qDebug() << QStringLiteral("loadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
 
     loadOtherMonsterFromCurrentMap(otherPlayer);
+    centerOnPlayer();
 }
 
 void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer)

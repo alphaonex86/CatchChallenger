@@ -1,6 +1,7 @@
 #include "MapItem.hpp"
 #include "PreparedLayer.hpp"
 #include "../../qt/ClientVariable.hpp"
+#include "../background/CCMap.hpp"
 
 #include <QGraphicsPixmapItem>
 #include <QPixmap>
@@ -10,13 +11,11 @@
 #include <QLabel>
 #include <iostream>
 
-MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
+MapItem::MapItem(QGraphicsItem *parent)
     : QGraphicsObject(parent)
 {
     setFlag(QGraphicsItem::ItemHasNoContents);
     //setCacheMode(QGraphicsItem::ItemCoordinateCache);just change direction without move do bug
-
-    cache=useCache;
 }
 
 void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
@@ -41,23 +40,18 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
         mapNameList << layers.at(index2)->name();
         if (Tiled::TileLayer *tileLayer = layers.at(index2)->asTileLayer()) {
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
-            if(cache && image.size().isNull())
+            if(image.size().isNull())
             {
                 image=QImage(QSize(graphicsItem->boundingRect().size().width(),graphicsItem->boundingRect().size().height()),QImage::Format_ARGB32_Premultiplied);
                 image.fill(Qt::transparent);
             }
 
-            if(!cache || image.size()!=graphicsItem->boundingRect().size())
-            {}
-            else
-            {
-                QPainter painter(&image);
-                renderer->drawTileLayer(&painter, tileLayer, graphicsItem->boundingRect());
-                delete graphicsItem;
-                graphicsItem=NULL;
-            }
+            QPainter painter(&image);
+            renderer->drawTileLayer(&painter, tileLayer, graphicsItem->boundingRect());
+            delete graphicsItem;
+            graphicsItem=NULL;
         } else if(Tiled::ObjectGroup *objectGroup = layers.at(index2)->asObjectGroup()) {
-            if(cache && !image.size().isNull())
+            if(!image.size().isNull())
             {
                 QPixmap tempPixmap;
                 if(tempPixmap.convertFromImage(image))
@@ -90,7 +84,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
         index++;
         index2++;
     }
-    if(cache && !image.size().isNull())
+    if(!image.size().isNull())
     {
         QPixmap tempPixmap;
         if(tempPixmap.convertFromImage(image))
@@ -136,10 +130,10 @@ void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/
 {
     if(displayed_layer.find(map)==displayed_layer.cend())
             return;
+    const float &z=MapVisualiserPlayer::zoom();
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
-    for( const auto& value : values ) {
-        value->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
-    }
+    for( const auto& value : values )
+        value->setPos(static_cast<qreal>(static_cast<double>(x))*z,static_cast<qreal>(static_cast<double>(y))*z);
 }
 
 QRectF MapItem::boundingRect() const

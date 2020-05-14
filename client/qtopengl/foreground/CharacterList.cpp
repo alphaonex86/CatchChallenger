@@ -18,8 +18,10 @@ CharacterList::CharacterList()
 
     add=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     add->setOutlineColor(QColor(44,117,0));
-    remove=new CustomButton(":/CC/images/interface/redbutton.png",this);
+    add->setEnabled(false);
+    remove=new CustomButton(":/CC/images/interface/delete.png",this);
     remove->setOutlineColor(QColor(125,0,0));
+    remove->setEnabled(false);
 
     characterEntryListProxy=new QGraphicsProxyWidget(this);
     characterEntryList=new QListWidget();
@@ -60,6 +62,7 @@ void CharacterList::itemSelectionChanged()
 {
     const QList<QListWidgetItem *> &selectedItems=characterEntryList->selectedItems();
     select->setEnabled(selectedItems.size()==1);
+    remove->setEnabled(selectedItems.size()==1);
 }
 
 void CharacterList::add_clicked()
@@ -187,7 +190,7 @@ void CharacterList::select_clicked()
 void CharacterList::newLanguage()
 {
     add->setText(tr("Add"));
-    remove->setText(tr("Remove"));
+    //remove->setText(tr("Remove"));
     warning->setHtml("<span style=\"background-color: rgb(255, 255, 163);\nborder: 1px solid rgb(255, 221, 50);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\">"+tr("Loading the servers list...")+"</span>");
 }
 
@@ -207,8 +210,7 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     {
         add->setSize(148,61);
         add->setPixelSize(23);
-        remove->setSize(148,61);
-        remove->setPixelSize(23);
+        remove->setSize(56,62);
         select->setSize(56,62);
         back->setSize(56,62);
         multiItemH=50;
@@ -217,8 +219,7 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     {
         add->setSize(148,61);
         add->setPixelSize(23);
-        remove->setSize(148,61);
-        remove->setPixelSize(23);
+        remove->setSize(84,93);
         select->setSize(84,93);
         back->setSize(84,93);
         multiItemH=75;
@@ -227,8 +228,7 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
         space=30;
         add->setSize(223,92);
         add->setPixelSize(35);
-        remove->setSize(224,92);
-        remove->setPixelSize(35);
+        remove->setSize(84,93);
         select->setSize(84,93);
         back->setSize(84,93);
     }
@@ -238,10 +238,10 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     unsigned int tXTButton=w->width()/2-tWidthTButton/2;
     unsigned int tWidthTButtonOffset=0;
     unsigned int y=w->height()-space-select->height()-space-add->height();
-    add->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=add->width()+space;
     remove->setPos(tXTButton+tWidthTButtonOffset,y);
     tWidthTButtonOffset+=remove->width()+space;
+    add->setPos(tXTButton+tWidthTButtonOffset,y);
+    tWidthTButtonOffset+=add->width()+space;
 
     tWidthTButton=select->width()+space+
             back->width();
@@ -353,6 +353,7 @@ void CharacterList::updateCharacterList()
         characterEntryList->addItem(item);
         index++;
     }
+    add->setEnabled(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.max_character);
 }
 
 void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)

@@ -14,7 +14,7 @@ class MapVisualiserPlayer : public MapVisualiser
     Q_OBJECT
     friend class MapVisualiserPlayerWithFight;
 public:
-    explicit MapVisualiserPlayer(const bool &centerOnPlayer=true, const bool &debugTags=false);
+    explicit MapVisualiserPlayer(const bool &debugTags=false);
     ~MapVisualiserPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
@@ -66,7 +66,10 @@ public:
                          std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
     virtual bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    void centerOnPlayer();
+    static const float &zoom();
 private:
+    static float m_zoom;
     //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
@@ -98,9 +101,6 @@ protected:
     std::unordered_map<std::string,Tiled::Tileset *> monsterTilesetCache;
     std::string lastTileset;
     std::string defaultTileset;
-
-    //display
-    bool centerOnPlayer;
 
     //timer
     QTimer timer;
@@ -178,6 +178,7 @@ protected slots:
     bool isInMove() const;
     CatchChallenger::Direction getDirection() const;
     void stopMove();
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget) override;
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
     void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);

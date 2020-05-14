@@ -11,7 +11,6 @@ class CCMap : public MapController
 public:
     CCMap();
     QRectF boundingRect() const override;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget) override;
     void setVar(ConnexionManager *connexionManager);
 };
 

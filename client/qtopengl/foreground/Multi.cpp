@@ -35,7 +35,7 @@ Multi::Multi() :
 
     server_add=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     server_add->setOutlineColor(QColor(44,117,0));
-    server_remove=new CustomButton(":/CC/images/interface/redbutton.png",this);
+    server_remove=new CustomButton(":/CC/images/interface/delete.png",this);
     server_remove->setOutlineColor(QColor(125,0,0));
     server_edit=new CustomButton(":/CC/images/interface/greenbutton.png",this);
     server_edit->setOutlineColor(QColor(44,117,0));
@@ -857,7 +857,7 @@ void Multi::server_select_finished()
 void Multi::newLanguage()
 {
     server_add->setText(tr("Add"));
-    server_remove->setText(tr("Remove"));
+    //server_remove->setText(tr("Remove"));
     server_edit->setText(tr("Edit"));
     warning->setHtml("<span style=\"background-color: rgb(255, 255, 163);\nborder: 1px solid rgb(255, 221, 50);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\">"+tr("Loading the servers list...")+"</span>");
     serverEmpty->setHtml(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
@@ -879,8 +879,7 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     {
         server_add->setSize(148,61);
         server_add->setPixelSize(23);
-        server_remove->setSize(148,61);
-        server_remove->setPixelSize(23);
+        server_remove->setSize(56,62);
         server_edit->setSize(148,61);
         server_edit->setPixelSize(23);
         server_refresh->setSize(56,62);
@@ -892,8 +891,7 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     {
         server_add->setSize(148,61);
         server_add->setPixelSize(23);
-        server_remove->setSize(148,61);
-        server_remove->setPixelSize(23);
+        server_remove->setSize(56,62);
         server_edit->setSize(148,61);
         server_edit->setPixelSize(23);
         server_refresh->setSize(56,62);
@@ -905,8 +903,7 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         space=30;
         server_add->setSize(223,92);
         server_add->setPixelSize(35);
-        server_remove->setSize(224,92);
-        server_remove->setPixelSize(35);
+        server_remove->setSize(84,93);
         server_edit->setSize(223,92);
         server_edit->setPixelSize(35);
         server_refresh->setSize(84,93);
@@ -922,12 +919,12 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     unsigned int tXTButton=w->width()/2-tWidthTButton/2;
     unsigned int tWidthTButtonOffset=0;
     unsigned int y=w->height()-space-server_select->height()-space-server_add->height();
+    server_remove->setPos(tXTButton+tWidthTButtonOffset,y);
+    tWidthTButtonOffset+=server_remove->width()+space;
     server_add->setPos(tXTButton+tWidthTButtonOffset,y);
     tWidthTButtonOffset+=server_add->width()+space;
     server_edit->setPos(tXTButton+tWidthTButtonOffset,y);
     tWidthTButtonOffset+=server_edit->width()+space;
-    server_remove->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=server_remove->width()+space;
     server_refresh->setPos(tXTButton+tWidthTButtonOffset,y);
 
     tWidthTButton=server_select->width()+space+
