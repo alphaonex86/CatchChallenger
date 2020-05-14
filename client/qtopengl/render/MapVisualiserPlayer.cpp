@@ -20,7 +20,9 @@ to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 
-MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool &debugTags) :
+float MapVisualiserPlayer::m_zoom=1.0;
+
+MapVisualiserPlayer::MapVisualiserPlayer(const bool &debugTags) :
     MapVisualiser(debugTags)
 {
     wasPathFindingUsed=false;
@@ -64,14 +66,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     if(!connect(&moveAnimationTimer,&QTimer::timeout,this,&MapVisualiserPlayer::doMoveAnimation))
         abort();
 
-    this->centerOnPlayer=centerOnPlayer;
-
-    if(centerOnPlayer)
-    {
-        /*setSceneRect(-2000,-2000,4000,4000);
-        setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-        setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);*/
-    }
     stepAlternance=false;
     animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
@@ -573,8 +567,7 @@ void MapVisualiserPlayer::moveStepSlot()
         break;
     }
 
-    /*if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
+    centerOnPlayer();
     loadGrassTile();
 
     moveStep++;
@@ -994,8 +987,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-    /*if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
+    centerOnPlayer();
     //stopGrassAnimation();
 
     if(haveStopTileAction())
@@ -1783,8 +1775,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-        /*if(centerOnPlayer)
-            centerOn(MapObjectItem::objectLink.at(playerMapObject));*/
+        centerOnPlayer();
     }
 
     loadMonsterFromCurrentMap();
@@ -2344,4 +2335,33 @@ void MapVisualiserPlayer::forcePlayerTileset(QString path)
     Tiled::Cell cell=playerMapObject->cell();
     cell.tile=playerTileset->tileAt(7);
     playerMapObject->setCell(cell);
+}
+
+void MapVisualiserPlayer::centerOnPlayer()
+{
+/*    const float &z=CCMap::zoom();
+    const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
+    for( const auto& value : values )
+        value->setPos(static_cast<qreal>(static_cast<double>(x))*z,static_cast<qreal>(static_cast<double>(y))*z);*/
+}
+
+const float &MapVisualiserPlayer::zoom()
+{
+    return MapVisualiserPlayer::m_zoom;
+}
+
+void MapVisualiserPlayer::paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget)
+{
+    if(widget->width()>0 && widget->height()>0)
+    {
+        const float &z=zoom();
+        const Tiled::MapObject * playerMapObject=getPlayerMapObject();
+        const float px=playerMapObject->x()*16.0*z;
+        const float py=(playerMapObject->y()-1.0)*16.0*z;
+        const float pw=playerMapObject->width()*z;
+        const float ph=playerMapObject->height()*z;
+        if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
+            setPos(widget->width()/2-px-pw/2,
+               widget->height()/2-py-ph/2);
+    }
 }
