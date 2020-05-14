@@ -1,12 +1,11 @@
 #ifndef CCMap_H
 #define CCMap_H
 
-#include "../ScreenInput.hpp"
 #include "../render/MapController.hpp"
 
 class ConnexionManager;
 
-class CCMap : public MapController, public ScreenInput
+class CCMap : public MapController
 {
     Q_OBJECT
 public:
