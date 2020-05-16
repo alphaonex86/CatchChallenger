@@ -97,5 +97,15 @@
         <file>images/interface/validate.png</file>
         <file>images/interface/onoffbutton.png</file>
         <file>images/interface/onoff.png</file>
+        <file>images/interface/bag.png</file>
+        <file>images/interface/facebook.png</file>
+        <file>images/interface/chat.png</file>
+        <file>images/interface/multicount.png</file>
+        <file>images/interface/mbb.png</file>
+        <file>images/interface/mbgreen.png</file>
+        <file>images/interface/mborange.png</file>
+        <file>images/interface/mbred.png</file>
+        <file>images/interface/mgb.png</file>
+        <file>images/interface/playerui.png</file>
     </qresource>
 </RCC>
