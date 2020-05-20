@@ -215,6 +215,9 @@ void ConnexionManager::disconnected(std::string reason)
 void ConnexionManager::newError(const std::string &error,const std::string &detailedError)
 {
     emit errorString(error+"\n"+detailedError);
+    socket->disconnectFromHost();
+    client->disconnectClient();
+    client->resetAll();
 }
 
 void ConnexionManager::message(const std::string &message)
