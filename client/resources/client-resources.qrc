@@ -107,5 +107,6 @@
         <file>images/interface/mbred.png</file>
         <file>images/interface/mgb.png</file>
         <file>images/interface/playerui.png</file>
+        <file>images/interface/chatBackground.png</file>
     </qresource>
 </RCC>

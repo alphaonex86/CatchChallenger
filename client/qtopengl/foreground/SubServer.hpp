@@ -4,7 +4,7 @@
 #include <QString>
 #include <QTreeWidgetItem>
 #include <QGraphicsProxyWidget>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ConnexionManager.hpp"
@@ -40,7 +40,7 @@ private:
     QTreeWidget *serverList;
     QGraphicsProxyWidget *serverListProxy;
 
-    CCWidget *wdialog;
+    ImagesStrechMiddle *wdialog;
     uint32_t averagePlayedTime,averageLastConnect;
     std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;
 

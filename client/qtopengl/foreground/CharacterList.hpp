@@ -9,7 +9,7 @@
 #include <QNetworkReply>
 #include <QListWidget>
 #include <QGraphicsProxyWidget>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ConnexionInfo.hpp"
@@ -53,7 +53,7 @@ private:
     QListWidget *characterEntryList;
     QGraphicsProxyWidget *characterEntryListProxy;
 
-    CCWidget *wdialog;
+    ImagesStrechMiddle *wdialog;
     unsigned int serverSelected;
     ConnexionManager *connexionManager;
     std::unordered_map<uint8_t/*character group index*/,std::pair<uint8_t/*server count*/,uint8_t/*temp Index to display*/> > serverByCharacterGroup;

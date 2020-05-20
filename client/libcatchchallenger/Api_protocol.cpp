@@ -446,7 +446,7 @@ void Api_protocol::sendChatText(const Chat_type &chatType, const std::string &te
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_aliance && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
+    if(chatType!=Chat_type_local && chatType!=Chat_type_all && chatType!=Chat_type_clan && chatType!=Chat_type_system && chatType!=Chat_type_system_important)
     {
         std::cerr << "chatType wrong: " << chatType << std::endl;
         return;
@@ -1736,15 +1736,23 @@ Api_protocol::StageConnexion Api_protocol::stage() const
     return stageConnexion;
 }
 
+std::pair<uint16_t,uint16_t> Api_protocol::getLast_number_of_player()
+{
+    return std::pair<uint16_t,uint16_t>(last_players_number,last_max_players);
+}
+
 //to reset all
 void Api_protocol::resetAll()
 {
     if(stageConnexion==StageConnexion::Stage2)
         std::cerr << "Api_protocol::resetAll() Suspect internal bug" << std::endl;
     //status for the query
+    chat_list.clear();
     token.clear();
     events.clear();
     stageConnexion=StageConnexion::Stage1;
+    last_players_number=1;
+    last_max_players=65535;
 
     haveFirstHeader=false;
     character_select_send=false;
@@ -2447,4 +2455,33 @@ bool Api_protocol::setMapNumber(const unsigned int number_of_map)
     //std::cout << "number of map: " << std::to_string(number_of_map) << std::endl;
     this->number_of_map=number_of_map;
     return true;
+}
+
+void Api_protocol::add_system_text(CatchChallenger::Chat_type chat_type,std::string text)
+{
+    ChatEntry newEntry;
+    newEntry.player_type=Player_type_normal;
+    //newEntry.player_pseudo=QString();
+    newEntry.chat_type=chat_type;
+    newEntry.text=text;
+    chat_list.push_back(newEntry);
+    while(chat_list.size()>64)
+        chat_list.erase(chat_list.cbegin());
+}
+
+void Api_protocol::add_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
+{
+    ChatEntry newEntry;
+    newEntry.player_type=player_type;
+    newEntry.player_pseudo=pseudo;
+    newEntry.chat_type=chat_type;
+    newEntry.text=text;
+    chat_list.push_back(newEntry);
+    while(chat_list.size()>64)
+        chat_list.erase(chat_list.cbegin());
+}
+
+const std::vector<Api_protocol::ChatEntry> &Api_protocol::getChatContent()
+{
+    return chat_list;
 }

@@ -12,7 +12,7 @@
 #include <QLineEdit>
 
 OptionsDialog::OptionsDialog() :
-    wdialog(new CCWidget(this)),
+    wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
     label(this)
 {
     x=-1;
@@ -23,7 +23,13 @@ OptionsDialog::OptionsDialog() :
     quit=new CustomButton(":/CC/images/interface/quit.png",this);
 //    quit->updateTextPercent(75);
     connect(quit,&CustomButton::clicked,this,&OptionsDialog::removeAbove);
-    title=new CCDialogTitle(this);
+    QLinearGradient gradient1( 0, 0, 0, 100 );
+    gradient1.setColorAt( 0.25, QColor(230,153,0));
+    gradient1.setColorAt( 0.75, QColor(255,255,255));
+    QLinearGradient gradient2( 0, 0, 0, 100 );
+    gradient2.setColorAt( 0, QColor(64,28,2));
+    gradient2.setColorAt( 1, QColor(64,28,2));
+    title=new CustomText(gradient1,gradient2,this);
     title->setText(tr("Options"));
 
     volumeText=new CCGraphicsTextItem(this);

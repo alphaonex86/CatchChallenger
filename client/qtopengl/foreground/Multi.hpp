@@ -6,7 +6,7 @@
 #include <QHash>
 #include <QSet>
 #include <vector>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ConnexionInfo.hpp"
@@ -70,7 +70,7 @@ private:
     CustomButton *back;
     QGraphicsTextItem *warning;
 
-    CCWidget *wdialog;
+    ImagesStrechMiddle *wdialog;
     QGraphicsTextItem *serverEmpty;
     CCScrollZone *scrollZone;
 signals:

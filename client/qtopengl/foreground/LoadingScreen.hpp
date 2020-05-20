@@ -3,7 +3,7 @@
 
 #include <QTimer>
 #include <QDateTime>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../CCprogressbar.hpp"
 #include "../ScreenInput.hpp"
 
@@ -32,7 +32,7 @@ protected:
     void newLanguage();
 private:
     Ui::LoadingScreen *ui;
-    CCWidget *widget;
+    ImagesStrechMiddle *widget;
     QGraphicsPixmapItem *teacher;
     QGraphicsTextItem *info;
     CCprogressbar *progressbar;

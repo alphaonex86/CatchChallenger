@@ -34,7 +34,7 @@ CharacterList::CharacterList()
     back=new CustomButton(":/CC/images/interface/back.png",this);
     select->setEnabled(false);
 
-    wdialog=new CCWidget(this);
+    wdialog=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     warning=new QGraphicsTextItem(this);
     warning->setVisible(false);
 

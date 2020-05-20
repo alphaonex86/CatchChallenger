@@ -10,7 +10,7 @@
 #include <QDesktopServices>
 
 AddOrEditServer::AddOrEditServer() :
-    wdialog(new CCWidget(this)),
+    wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
     label(this)
 {
     ok=false;
@@ -31,7 +31,13 @@ AddOrEditServer::AddOrEditServer() :
     quit=new CustomButton(":/CC/images/interface/cancel.png",this);
     validate=new CustomButton(":/CC/images/interface/validate.png",this);
     connect(quit,&CustomButton::clicked,this,&AddOrEditServer::removeAbove);
-    title=new CCDialogTitle(this);
+    QLinearGradient gradient1( 0, 0, 0, 100 );
+    gradient1.setColorAt( 0.25, QColor(230,153,0));
+    gradient1.setColorAt( 0.75, QColor(255,255,255));
+    QLinearGradient gradient2( 0, 0, 0, 100 );
+    gradient2.setColorAt( 0, QColor(64,28,2));
+    gradient2.setColorAt( 1, QColor(64,28,2));
+    title=new CustomText(gradient1,gradient2,this);
 
     QPixmap p=*GameLoader::gameLoader->getImage(":/CC/images/interface/inputText.png");
     p=p.scaled(p.width(),50,Qt::IgnoreAspectRatio,Qt::SmoothTransformation);

@@ -21,7 +21,7 @@ SubServer::SubServer()
     back=new CustomButton(":/CC/images/interface/back.png",this);
     server_select->setEnabled(false);
 
-    wdialog=new CCWidget(this);
+    wdialog=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     connexionManager=nullptr;
     averagePlayedTime=0;
     averageLastConnect=0;
