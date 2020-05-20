@@ -26,71 +26,6 @@
 
 QtDatapackClientLoader *QtDatapackClientLoader::datapackLoader=nullptr;
 
-/*const std::string QtDatapackClientLoader::text_list="list";
-const std::string QtDatapackClientLoader::text_reputation="reputation";
-const std::string QtDatapackClientLoader::text_type="type";
-const std::string QtDatapackClientLoader::text_name="name";
-const std::string QtDatapackClientLoader::text_en="en";
-const std::string QtDatapackClientLoader::text_lang="lang";
-const std::string QtDatapackClientLoader::text_level="level";
-const std::string QtDatapackClientLoader::text_point="point";
-const std::string QtDatapackClientLoader::text_text="text";
-const std::string QtDatapackClientLoader::text_id="id";
-const std::string QtDatapackClientLoader::text_image="image";
-const std::string QtDatapackClientLoader::text_description="description";
-const std::string QtDatapackClientLoader::text_item="item";
-const std::string QtDatapackClientLoader::text_slashdefinitiondotxml="/definition.xml";
-const std::string QtDatapackClientLoader::text_quest="quest";
-const std::string QtDatapackClientLoader::text_rewards="rewards";
-const std::string QtDatapackClientLoader::text_show="show";
-const std::string QtDatapackClientLoader::text_autostep="autostep";
-const std::string QtDatapackClientLoader::text_yes="yes";
-const std::string QtDatapackClientLoader::text_true="true";
-const std::string QtDatapackClientLoader::text_bot="bot";
-const std::string QtDatapackClientLoader::text_dotcomma=";";
-const std::string QtDatapackClientLoader::text_client_logic="client_logic";
-const std::string QtDatapackClientLoader::text_map="map";
-const std::string QtDatapackClientLoader::text_items="items";
-const std::string QtDatapackClientLoader::text_zone="zone";
-const std::string QtDatapackClientLoader::text_music="music";
-const std::string QtDatapackClientLoader::text_backgroundsound="backgroundsound";
-
-const std::string QtDatapackClientLoader::text_monster="monster";
-const std::string QtDatapackClientLoader::text_monsters="monsters";
-const std::string QtDatapackClientLoader::text_kind="kind";
-const std::string QtDatapackClientLoader::text_habitat="habitat";
-const std::string QtDatapackClientLoader::text_slash="/";
-const std::string QtDatapackClientLoader::text_types="types";
-const std::string QtDatapackClientLoader::text_buff="buff";
-const std::string QtDatapackClientLoader::text_skill="skill";
-const std::string QtDatapackClientLoader::text_buffs="buffs";
-const std::string QtDatapackClientLoader::text_skills="skills";
-const std::string QtDatapackClientLoader::text_fight="fight";
-const std::string QtDatapackClientLoader::text_fights="fights";
-const std::string QtDatapackClientLoader::text_start="start";
-const std::string QtDatapackClientLoader::text_win="win";
-const std::string QtDatapackClientLoader::text_dotxml=".xml";
-const std::string QtDatapackClientLoader::text_dottsx=".tsx";
-const std::string QtDatapackClientLoader::text_visual="visual";
-const std::string QtDatapackClientLoader::text_category="category";
-const std::string QtDatapackClientLoader::text_alpha="alpha";
-const std::string QtDatapackClientLoader::text_color="color";
-const std::string QtDatapackClientLoader::text_event="event";
-const std::string QtDatapackClientLoader::text_value="value";
-
-const std::string QtDatapackClientLoader::text_tileheight="tileheight";
-const std::string QtDatapackClientLoader::text_tilewidth="tilewidth";
-const std::string QtDatapackClientLoader::text_x="x";
-const std::string QtDatapackClientLoader::text_y="y";
-const std::string QtDatapackClientLoader::text_object="object";
-const std::string QtDatapackClientLoader::text_objectgroup="objectgroup";
-const std::string QtDatapackClientLoader::text_Object="Object";
-const std::string QtDatapackClientLoader::text_layer="layer";
-const std::string QtDatapackClientLoader::text_Dirt="Dirt";
-const std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPBASE=DATAPACK_BASE_PATH_MAPBASE;
-std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
-std::string QtDatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;*/
-
 QtDatapackClientLoader::QtDatapackClientLoader()
 {
     mDefaultInventoryImage=NULL;
@@ -260,3 +195,58 @@ std::string QtDatapackClientLoader::getLanguage()
     #endif
 }
 
+std::string QtDatapackClientLoader::getSkinPath(const std::string &skinName,const std::string &type) const
+{
+    {
+        QFileInfo pngFile(QString::fromStdString(getDatapackPath())+
+                          DATAPACK_BASE_PATH_SKIN+QString::fromStdString(skinName)+
+                          QStringLiteral("/%1.png").arg(QString::fromStdString(type)));
+        if(pngFile.exists())
+            return pngFile.absoluteFilePath().toStdString();
+    }
+    {
+        QFileInfo gifFile(QString::fromStdString(getDatapackPath())+
+                          DATAPACK_BASE_PATH_SKIN+QString::fromStdString(skinName)+
+                          QStringLiteral("/%1.gif").arg(QString::fromStdString(type)));
+        if(gifFile.exists())
+            return gifFile.absoluteFilePath().toStdString();
+    }
+    QDir folderList(QString::fromStdString(getDatapackPath())+DATAPACK_BASE_PATH_SKINBASE);
+    const QStringList &entryList=folderList.entryList(QDir::Dirs|QDir::NoDotAndDotDot);
+    int entryListIndex=0;
+    while(entryListIndex<entryList.size())
+    {
+        {
+            QFileInfo pngFile(QStringLiteral("%1/skin/%2/%3/%4.png")
+                              .arg(QString::fromStdString(getDatapackPath()))
+                              .arg(entryList.at(entryListIndex))
+                              .arg(QString::fromStdString(skinName))
+                              .arg(QString::fromStdString(type)));
+            if(pngFile.exists())
+                return pngFile.absoluteFilePath().toStdString();
+        }
+        {
+            QFileInfo gifFile(QStringLiteral("%1/skin/%2/%3/%4.gif")
+                              .arg(QString::fromStdString(getDatapackPath()))
+                              .arg(entryList.at(entryListIndex))
+                              .arg(QString::fromStdString(skinName))
+                              .arg(QString::fromStdString(type)));
+            if(gifFile.exists())
+                return gifFile.absoluteFilePath().toStdString();
+        }
+        entryListIndex++;
+    }
+    return std::string();
+}
+
+std::string QtDatapackClientLoader::getFrontSkinPath(const uint32_t &skinId) const
+{
+    /// \todo merge it cache string + id
+    const std::vector<std::string> &skinFolderList=QtDatapackClientLoader::datapackLoader->skins;
+    //front image
+    if(skinId<(uint32_t)skinFolderList.size())
+        return getSkinPath(skinFolderList.at(skinId),"front");
+    else
+        qDebug() << "The skin id: "+QString::number(skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) into BaseWindow::updatePlayerImage()";
+    return ":/CC/images/player_default/front.png";
+}

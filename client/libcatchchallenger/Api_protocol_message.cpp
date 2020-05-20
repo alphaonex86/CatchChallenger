@@ -510,6 +510,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 uint8_t current_player_connected_8Bits=data[pos];
                 pos+=sizeof(uint8_t);
+                this->last_players_number=current_player_connected_8Bits;
+                this->last_max_players=max_players;
                 number_of_player(current_player_connected_8Bits,max_players);
             }
             else
@@ -524,6 +526,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 uint16_t current_player_connected_16Bits=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                 pos+=sizeof(uint16_t);
+                this->last_players_number=current_player_connected_16Bits;
+                this->last_max_players=max_players;
                 number_of_player(current_player_connected_16Bits,max_players);
             }
         }
@@ -842,7 +846,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=textSize;
             }
             if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
+            {
+                add_system_text(chat_type,text);
                 new_system_text(chat_type,text);
+            }
             else
             {
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
@@ -892,6 +899,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                );
                     return false;
                 }
+                add_chat_text(chat_type,text,pseudo,player_type);
                 new_chat_text(chat_type,text,pseudo,player_type);
             }
         }

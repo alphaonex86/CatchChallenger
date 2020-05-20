@@ -23,6 +23,8 @@ public:
     void setPos(qreal ax, qreal ay);
     void setSize(uint16_t w,uint16_t h);
     void setEnabled(bool enabled);
+    void setCheckable(bool checkable);
+    bool isChecked() const;
     int width();
     int height();
 
@@ -42,6 +44,8 @@ private:
     QColor outlineColor;
     uint8_t percent;
     QString m_text;
+    bool m_checkable;
+    bool m_checked;
 
     QRectF m_boundingRect;
 };

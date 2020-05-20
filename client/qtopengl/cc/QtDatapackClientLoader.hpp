@@ -57,6 +57,9 @@ public:
     QPixmap defaultInventoryImage();
     void resetAll();
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
+
+    std::string getSkinPath(const std::string &skinName,const std::string &type) const;
+    std::string getFrontSkinPath(const uint32_t &skinId) const;
 protected:
     #ifndef NOTHREADS
     void run() override;

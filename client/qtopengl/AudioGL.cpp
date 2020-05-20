@@ -1,6 +1,7 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "AudioGL.hpp"
 #include "../qt/GameLoader.hpp"
+#include <QCoreApplication>
 
 AudioGL::AudioGL()
 {
@@ -47,5 +48,10 @@ std::string AudioGL::startAmbiance(const std::string &soundPath)
         return "QAudioOutput nullptr";
     else
         return "!GameLoader::gameLoader->musics.contains(QtsoundPath)";
+}
+
+void AudioGL::stopCurrentAmbiance()
+{
+    Audio::stopCurrentAmbiance();
 }
 #endif

@@ -1,4 +1,4 @@
-#include "CCWidget.hpp"
+#include "ImagesStrechMiddle.hpp"
 #include "../qt/GameLoader.hpp"
 #include <QPainter>
 
@@ -52,7 +52,11 @@ void ImagesStrechMiddle::paint(QPainter *painter, const QStyleOptionGraphicsItem
 
     if(tl.isNull() || min!=tl.height())
     {
-        QPixmap background(*GameLoader::gameLoader->getImage(m_path));
+        QPixmap background;
+        if(GameLoader::gameLoader!=nullptr)
+            background=*GameLoader::gameLoader->getImage(m_path);
+        else
+            background=QPixmap(m_path);
         if(background.isNull())
             abort();
         tl=background.copy(0,0,m_borderSize,m_borderSize);

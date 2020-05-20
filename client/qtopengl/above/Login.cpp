@@ -5,7 +5,7 @@
 #include <QPainter>
 
 Login::Login() :
-    wdialog(new CCWidget(this)),
+    wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
     label(this)
 {
     validated=false;
@@ -14,7 +14,13 @@ Login::Login() :
     label.setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/label.png"));
     label.setTransformationMode(Qt::SmoothTransformation);
     label.setCacheMode(QGraphicsItem::DeviceCoordinateCache);
-    title=new CCDialogTitle(this);
+    QLinearGradient gradient1( 0, 0, 0, 100 );
+    gradient1.setColorAt( 0.25, QColor(230,153,0));
+    gradient1.setColorAt( 0.75, QColor(255,255,255));
+    QLinearGradient gradient2( 0, 0, 0, 100 );
+    gradient2.setColorAt( 0, QColor(64,28,2));
+    gradient2.setColorAt( 1, QColor(64,28,2));
+    title=new CustomText(gradient1,gradient2,this);
 
     warning=new QGraphicsTextItem(this);
     loginText=new QGraphicsTextItem(this);
@@ -302,7 +308,7 @@ void Login::validate()
 void Login::newLanguage()
 {
     //warning->setHtml();
-    loginText->setHtml(tr("Login: "));
+    loginText->setHtml(tr("Email: "));
     passwordText->setHtml(tr("Password: "));
     rememberText->setHtml(tr("Remember the password"));
     title->setText(tr("Login"));

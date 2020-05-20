@@ -265,7 +265,6 @@ SOURCES += \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.c \
     $$PWD/../libzstd/lib/dictBuilder/fastcover.c \
     $$PWD/../libzstd/lib/dictBuilder/zdict.c \
-    $$PWD/CCDialogTitle.cpp \
     $$PWD/CCGraphicsTextItem.cpp \
     $$PWD/CCSliderH.cpp \
     $$PWD/Language.cpp \
@@ -316,7 +315,12 @@ SOURCES += \
     $$PWD/render/TemporaryTile.cpp \
     $$PWD/render/TileLayerItem.cpp \
     $$PWD/render/TriggerAnimation.cpp \
-    $$PWD/background/CCMap.cpp
+    $$PWD/background/CCMap.cpp \
+    $$PWD/foreground/OverMap.cpp \
+    $$PWD/CustomText.cpp \
+    $$PWD/foreground/widgets/MapMonsterPreview.cpp \
+    $$PWD/ChatParsing.cpp \
+    $$PWD/ImagesStrechMiddle.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -348,7 +352,6 @@ HEADERS  += \
     $$PWD/../libzstd/lib/dictBuilder/cover.h \
     $$PWD/../libzstd/lib/dictBuilder/zdict.h \
     $$PWD/../libzstd/lib/dictBuilder/divsufsort.h \
-    $$PWD/CCDialogTitle.hpp \
     $$PWD/CCGraphicsTextItem.hpp \
     $$PWD/CCSliderH.hpp \
     $$PWD/Language.hpp \
@@ -392,7 +395,12 @@ HEADERS  += \
     $$PWD/render/TemporaryTile.hpp \
     $$PWD/render/TileLayerItem.hpp \
     $$PWD/render/TriggerAnimation.hpp \
-    $$PWD/background/CCMap.hpp
+    $$PWD/background/CCMap.hpp \
+    $$PWD/foreground/OverMap.hpp \
+    $$PWD/CustomText.hpp \
+    $$PWD/foreground/widgets/MapMonsterPreview.hpp \
+    $$PWD/ChatParsing.hpp \
+    $$PWD/ImagesStrechMiddle.hpp
 
 
 wasm: {
@@ -425,7 +433,6 @@ SOURCES += \
     $$PWD/CCTitle.cpp \
     $$PWD/ConnexionManager.cpp \
     $$PWD/foreground/LoadingScreen.cpp \
-    $$PWD/CCWidget.cpp \
     $$PWD/CustomButton.cpp \
     $$PWD/Map_client.cpp \
     $$PWD/ScreenTransition.cpp \
@@ -456,7 +463,6 @@ HEADERS  += \
     $$PWD/ClientStructures.hpp \
     $$PWD/CCTitle.hpp \
     $$PWD/ConnexionManager.hpp \
-    $$PWD/CCWidget.hpp \
     $$PWD/CustomButton.hpp \
     $$PWD/foreground/LoadingScreen.hpp \
     $$PWD/DisplayStructures.hpp \

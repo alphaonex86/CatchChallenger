@@ -138,10 +138,10 @@ public:
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > itemOnMap;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > plantOnMap;
     std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
-    bool isParsingDatapack();
-    std::string getDatapackPath();
-    std::string getMainDatapackPath();
-    std::string getSubDatapackPath();
+    bool isParsingDatapack() const;
+    std::string getDatapackPath() const;
+    std::string getMainDatapackPath() const;
+    std::string getSubDatapackPath() const;
 public:
     void parseDatapack(const std::string &datapackPath);
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);

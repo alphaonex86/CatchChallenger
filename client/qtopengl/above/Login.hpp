@@ -7,14 +7,14 @@
 #include <vector>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ConnexionInfo.hpp"
 #include "../CCScrollZone.hpp"
 #include "../LineEdit.hpp"
 #include "../CheckBox.hpp"
-#include "../CCDialogTitle.hpp"
+#include "../CustomText.hpp"
 
 class Login : public QObject, public ScreenInput
 {
@@ -36,9 +36,9 @@ public:
     void newLanguage();
     void validate();
 private:
-    CCWidget *wdialog;
+    ImagesStrechMiddle *wdialog;
     QGraphicsPixmapItem label;
-    CCDialogTitle *title;
+    CustomText *title;
 
     QGraphicsTextItem *warning;
     QGraphicsTextItem *loginText;

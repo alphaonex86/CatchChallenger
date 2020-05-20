@@ -3,11 +3,11 @@
 
 #include <QObject>
 #include <QComboBox>
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
 #include "../ComboBox.hpp"
-#include "../CCDialogTitle.hpp"
+#include "../CustomText.hpp"
 #include "../CCGraphicsTextItem.hpp"
 #include "../CCSliderH.hpp"
 #include "../LineEdit.hpp"
@@ -47,9 +47,9 @@ private slots:
     void newLanguage();
 private:
     bool edit;
-    CCWidget *wdialog;
+    ImagesStrechMiddle *wdialog;
     CustomButton *quit;
-    CCDialogTitle *title;
+    CustomText *title;
     QGraphicsPixmapItem label;
     CustomButton *validate;
 

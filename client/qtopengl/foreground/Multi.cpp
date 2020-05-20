@@ -44,7 +44,7 @@ Multi::Multi() :
     server_select=new CustomButton(":/CC/images/interface/next.png",this);
     back=new CustomButton(":/CC/images/interface/back.png",this);
 
-    wdialog=new CCWidget(this);
+    wdialog=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     warning=new QGraphicsTextItem(this);
     serverEmpty=new QGraphicsTextItem(this);
     scrollZone=new CCScrollZone(this);

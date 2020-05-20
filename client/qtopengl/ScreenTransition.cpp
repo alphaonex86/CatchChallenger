@@ -6,6 +6,7 @@
 #include "foreground/MainScreen.hpp"
 #include "foreground/Multi.hpp"
 #include "foreground/SubServer.hpp"
+#include "foreground/OverMap.hpp"
 #include "above/OptionsDialog.hpp"
 #include "ConnexionManager.hpp"
 #include "../../general/base/Version.hpp"
@@ -58,6 +59,7 @@ ScreenTransition::ScreenTransition() :
     characterList=nullptr;
     connexionManager=nullptr;
     ccmap=nullptr;
+    overmap=nullptr;
     m=nullptr;
     o=nullptr;
     /*solo=nullptr;*/
@@ -288,7 +290,12 @@ void ScreenTransition::toInGame()
 void ScreenTransition::toMainScreen()
 {
     if(Audio::audio==nullptr)
-        Audio::audio=new AudioGL();
+    {
+        AudioGL* a=new AudioGL();
+        Audio::audio=a;
+        if(!connect(QCoreApplication::instance(),&QCoreApplication::aboutToQuit,a,&AudioGL::stopCurrentAmbiance,Qt::DirectConnection))
+            abort();
+    }
     if(m==nullptr)
     {
         m=new MainScreen();
@@ -426,7 +433,6 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         delete ccmap;
         ccmap=nullptr;
     }
-
     if(ccmap==nullptr)
     {
         ccmap=new CCMap();
@@ -437,7 +443,24 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         if(!connect(ccmap,&CCMap::error,this,&ScreenTransition::errorString))
             abort();
     }
-    ccmap->setVar(connexionManager);
+    ccmap->resetAll();
+
+    if(overmap!=nullptr)
+    {
+        delete overmap;
+        overmap=nullptr;
+    }
+    if(overmap==nullptr)
+    {
+        overmap=new OverMap();
+        /*if(!connect(overmap,&OverMap::backSubServer,this,&ScreenTransition::backSubServer))
+            abort();
+        if(!connect(overmap,&OverMap::selectCharacter,this,&ScreenTransition::selectCharacter))
+            abort();
+        if(!connect(overmap,&OverMap::error,this,&ScreenTransition::errorString))
+            abort();*/
+    }
+    overmap->resetAll();
 }
 
 void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
@@ -477,8 +500,10 @@ void ScreenTransition::goToServerList()
 
 void ScreenTransition::goToMap()
 {
+    ccmap->setVar(connexionManager);
+    overmap->setVar(connexionManager);
     setBackground(ccmap);
-    setForeground(nullptr);
+    setForeground(overmap);
     setAbove(nullptr);
 }
 

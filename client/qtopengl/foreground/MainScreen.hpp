@@ -2,7 +2,7 @@
 #define MAINSCREEN_H
 
 #include "../CustomButton.hpp"
-#include "../CCWidget.hpp"
+#include "../ImagesStrechMiddle.hpp"
 #include "../CCTitle.hpp"
 #include "../ScreenInput.hpp"
 #include "../../qt/FeedNews.hpp"
@@ -35,7 +35,7 @@ private:
     CustomButton *options;
     CustomButton *facebook;
     CustomButton *website;
-    CCWidget *news;
+    ImagesStrechMiddle *news;
     //QGraphicsTextItem *newsText;
     CCGraphicsTextItem *newsText;
     QGraphicsPixmapItem *newsWait;

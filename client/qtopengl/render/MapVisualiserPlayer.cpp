@@ -20,7 +20,7 @@ to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 
-float MapVisualiserPlayer::m_zoom=1.0;
+float MapVisualiserPlayer::m_zoom=5.0;
 
 MapVisualiserPlayer::MapVisualiserPlayer(const bool &debugTags) :
     MapVisualiser(debugTags)
