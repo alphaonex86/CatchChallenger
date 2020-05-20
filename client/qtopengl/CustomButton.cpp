@@ -22,6 +22,8 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
     outlineColor=QColor(217,145,0);
     percent=75;
     cache=nullptr;
+    m_checkable=false;
+    m_checked=false;
 
     m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
 }
@@ -98,7 +100,7 @@ void CustomButton::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
         abort();
     if(!isEnabled())
         scaledBackground=temp.copy(0,temp.height()*2/3,temp.width(),temp.height()/3);
-    else if(pressed)
+    else if(m_checked)
         scaledBackground=temp.copy(0,temp.height()/3,temp.width(),temp.height()/3);
     else
         scaledBackground=temp.copy(0,0,temp.width(),temp.height()/3);
@@ -163,7 +165,7 @@ void CustomButton::updateTextPath()
     textPath=new QPainterPath();
     const int h=m_boundingRect.height();
     int newHeight=0;
-    if(pressed)
+    if(m_checked)
         newHeight=(h*(percent+20)/100);
     else
         newHeight=(h*percent/100);
@@ -211,6 +213,15 @@ void CustomButton::setOutlineColor(const QColor &color)
 
 void CustomButton::setPressed(const bool &pressed)
 {
+    if(m_checkable)
+    {
+        if(this->pressed==false && pressed==true && m_checked==false)
+            m_checked=true;
+        else if(this->pressed==false && pressed==true && m_checked==true)
+            m_checked=false;
+    }
+    else
+        m_checked=pressed;
     this->pressed=pressed;
     if(cache!=nullptr)
     {
@@ -277,4 +288,14 @@ void CustomButton::setEnabled(bool enabled)
         cache=nullptr;
     }
     QGraphicsItem::setEnabled(enabled);
+}
+
+void CustomButton::setCheckable(bool checkable)
+{
+    m_checkable=checkable;
+}
+
+bool CustomButton::isChecked() const
+{
+    return m_checked;
 }

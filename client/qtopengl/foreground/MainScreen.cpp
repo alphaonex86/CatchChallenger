@@ -35,7 +35,7 @@ MainScreen::MainScreen()
     website->updateTextPercent(75);
 
     haveFreshFeed=false;
-    news=new CCWidget(this);
+    news=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     newsText=new CCGraphicsTextItem(news);
     if(Settings::settings->contains("news"))
     {

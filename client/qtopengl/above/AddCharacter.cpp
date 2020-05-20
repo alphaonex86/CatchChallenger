@@ -13,7 +13,7 @@
 #include <QDebug>
 
 AddCharacter::AddCharacter() :
-    wdialog(new CCWidget(this)),
+    wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
     label(this)
 {
     ok=false;
@@ -26,7 +26,13 @@ AddCharacter::AddCharacter() :
     quit=new CustomButton(":/CC/images/interface/cancel.png",this);
     validate=new CustomButton(":/CC/images/interface/validate.png",this);
     connect(quit,&CustomButton::clicked,this,&AddCharacter::removeAbove);
-    title=new CCDialogTitle(this);
+    QLinearGradient gradient1( 0, 0, 0, 100 );
+    gradient1.setColorAt( 0.25, QColor(230,153,0));
+    gradient1.setColorAt( 0.75, QColor(255,255,255));
+    QLinearGradient gradient2( 0, 0, 0, 100 );
+    gradient2.setColorAt( 0, QColor(64,28,2));
+    gradient2.setColorAt( 1, QColor(64,28,2));
+    title=new CustomText(gradient1,gradient2,this);
 
     comboBox=new ComboBox(this);
     description=new QGraphicsTextItem(this);

@@ -6,7 +6,7 @@
 
 LoadingScreen::LoadingScreen()
 {
-    widget = new CCWidget(this);
+    widget = new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     teacher = new QGraphicsPixmapItem(widget);
     if(GameLoader::gameLoader==nullptr)
         teacher->setPixmap(QPixmap(":/CC/images/interface/teacher.png"));

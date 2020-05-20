@@ -38,7 +38,6 @@ enum Chat_type : uint8_t
     Chat_type_local = 0x01,
     Chat_type_all = 0x02,
     Chat_type_clan = 0x03,
-    Chat_type_aliance = 0x04,
     Chat_type_pm = 0x06,
     Chat_type_system = 0x07,
     Chat_type_system_important = 0x08

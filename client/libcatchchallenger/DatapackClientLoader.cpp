@@ -38,7 +38,7 @@ DatapackClientLoader::~DatapackClientLoader()
 {
 }
 
-bool DatapackClientLoader::isParsingDatapack()
+bool DatapackClientLoader::isParsingDatapack() const
 {
     return inProgress;
 }
@@ -168,17 +168,17 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     emitdatapackParsedMainSub();
 }
 
-std::string DatapackClientLoader::getDatapackPath()
+std::string DatapackClientLoader::getDatapackPath() const
 {
     return datapackPath;
 }
 
-std::string DatapackClientLoader::getMainDatapackPath()
+std::string DatapackClientLoader::getMainDatapackPath() const
 {
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
 }
 
-std::string DatapackClientLoader::getSubDatapackPath()
+std::string DatapackClientLoader::getSubDatapackPath() const
 {
     return DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB;
 }

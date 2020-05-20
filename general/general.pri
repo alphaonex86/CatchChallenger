@@ -21,8 +21,7 @@ INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/inclu
 
 TEMPLATE = app
 
-SOURCES += $$PWD/base/ChatParsing.cpp \
-    $$PWD/base/ProtocolParsingGeneral.cpp \
+SOURCES += $$PWD/base/ProtocolParsingGeneral.cpp \
     $$PWD/base/ProtocolParsingInput.cpp \
     $$PWD/base/ProtocolParsingOutput.cpp \
     $$PWD/base/ProtocolParsingCheck.cpp \
@@ -65,7 +64,6 @@ SOURCES += $$PWD/base/ChatParsing.cpp \
 
 HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/ClientBase.hpp \
-    $$PWD/base/ChatParsing.hpp \
     $$PWD/base/ProtocolParsing.hpp \
     $$PWD/base/ProtocolParsingCheck.hpp \
     $$PWD/base/MoveOnTheMap.hpp \

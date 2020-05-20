@@ -84,3 +84,13 @@ void LineEdit::setMaxLength(int a)
 {
     m_lineEdit->setMaxLength(a);
 }
+
+void LineEdit::setVisible(bool visible)
+{
+    m_lineEdit->setVisible(visible);
+}
+
+void LineEdit::clear()
+{
+    m_lineEdit->clear();
+}

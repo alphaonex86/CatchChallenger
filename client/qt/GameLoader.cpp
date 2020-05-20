@@ -5,7 +5,7 @@
 #include <iostream>
 #include <QTime>
 
-GameLoader *GameLoader::gameLoader=NULL;
+GameLoader *GameLoader::gameLoader=nullptr;
 
 GameLoader::GameLoader()
 {
@@ -153,6 +153,10 @@ const QPixmap *GameLoader::getImage(const QString &path)
             return pixmaps.value(path);
         }
     }
-    abort();
-    return nullptr;
+    std::cerr << "GameLoader::getImage failed on: " << path.toStdString() << std::endl;
+    QPixmap *p=new QPixmap(path);
+    pixmaps[path]=p;
+    return p;
+/*    abort();
+    return nullptr;*/
 }

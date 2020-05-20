@@ -4,13 +4,15 @@
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../qt/Audio.hpp"
 
-class AudioGL : public Audio
+class AudioGL : public QObject, public Audio
 {
+    Q_OBJECT
 public:
     AudioGL();
     ~AudioGL();
-
+public slots:
     std::string startAmbiance(const std::string &soundPath) override;
+    void stopCurrentAmbiance() override;
 };
 #endif
 

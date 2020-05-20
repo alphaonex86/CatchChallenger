@@ -2,6 +2,7 @@
 #include "../qt/LanguagesSelect.hpp"
 #include "ScreenTransition.hpp"
 #include "../qt/LocalListener.hpp"
+#include "../qt/GameLoader.hpp"
 #include "../qt/QtDatapackClientLoader.hpp"
 #include "../general/base/FacilityLibGeneral.hpp"
 //#include "mainwindow.h"
@@ -14,9 +15,19 @@
 #include <QScreen>
 #include "Language.hpp"
 #include "../qt/Settings.hpp"
+#ifndef CATCHCHALLENGER_NOAUDIO
+#include "../qt/Audio.hpp"
+#endif
 
 int main(int argc, char *argv[])
 {
+    //work around for android
+    QtDatapackClientLoader::datapackLoader=nullptr;
+    GameLoader::gameLoader=nullptr;
+    #ifndef CATCHCHALLENGER_NOAUDIO
+    Audio::audio=nullptr;
+    #endif
+
     //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     a.setApplicationName("client");
