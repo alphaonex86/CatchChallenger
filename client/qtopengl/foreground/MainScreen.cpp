@@ -24,8 +24,7 @@ MainScreen::MainScreen()
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     multi=new CustomButton(":/CC/images/interface/button.png",this);
     options=new CustomButton(":/CC/images/interface/options.png",this);
-    facebook=new CustomButton(":/CC/images/interface/bluetoolbox.png",this);
-    facebook->setText("f");
+    facebook=new CustomButton(":/CC/images/interface/facebook.png",this);
     facebook->setOutlineColor(QColor(0,79,154));
     facebook->setPixelSize(28);
     website=new CustomButton(":/CC/images/interface/bluetoolbox.png",this);
@@ -33,6 +32,7 @@ MainScreen::MainScreen()
     website->setOutlineColor(QColor(0,79,154));
     website->setPixelSize(28);
     website->updateTextPercent(75);
+    warningCanBeReset=true;
 
     haveFreshFeed=false;
     news=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
@@ -67,7 +67,7 @@ MainScreen::MainScreen()
     newsWait->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/multi/busy.png"));
 
     warning=new QGraphicsTextItem(this);
-    warning->setVisible(true);
+    warning->setVisible(false);
     warningString=QString("<div style=\"background-color: rgb(255, 180, 180);border: 1px solid rgb(255, 221, 50);border-radius:5px;color: rgb(0, 0, 0);\">&nbsp;%1&nbsp;</div>");
     newsUpdate=new CustomButton(":/CC/images/interface/greenbutton.png",news);
     newsUpdate->setOutlineColor(QColor(44,117,0));
@@ -134,13 +134,18 @@ MainScreen::~MainScreen()
 
 void MainScreen::setError(const std::string &error)
 {
-    if(warning->toHtml().isEmpty() || error.empty())
+    if(warning->toHtml().isEmpty() || !warning->isVisible() || warningCanBeReset)
     {
+        warningCanBeReset=false;
+        std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
         warning->setVisible(true);
         warning->setHtml(warningString.arg(QString::fromStdString(error)));
     }
     if(error.empty())
+    {
+        warningCanBeReset=true;
         warning->setVisible(false);
+    }
 }
 
 void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget)

@@ -51,6 +51,7 @@ AddOrEditServer::AddOrEditServer() :
     portInput=new SpinBox(this);
     portInput->setMinimum(1);
     portInput->setMaximum(65535);
+    portInput->setValue(42489);
 
     nameText=new CCGraphicsTextItem(this);
     nameInput=new LineEdit(this);

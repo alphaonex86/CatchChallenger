@@ -121,10 +121,10 @@ void Api_protocol::parseIncommingData()
 
 void Api_protocol::errorParsingLayer(const std::string &error)
 {
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    abort();
-    #endif
     newError(("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)),error);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    //abort();-> same behaviour on all platform
+    #endif
 }
 
 void Api_protocol::messageParsingLayer(const std::string &message) const
