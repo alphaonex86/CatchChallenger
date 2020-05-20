@@ -215,8 +215,6 @@ void ScreenTransition::setBackground(ScreenInput *widget)
 
 void ScreenTransition::setForeground(ScreenInput *widget)
 {
-    if(widget!=m && m!=nullptr)
-        m->setError(std::string());
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
@@ -328,6 +326,8 @@ void ScreenTransition::removeAbove()
 
 void ScreenTransition::openSolo()
 {
+    if(m!=nullptr)
+        m->setError(std::string());
     /*if(solo==nullptr)
     {
         solo=new Solo(this);
@@ -339,6 +339,8 @@ void ScreenTransition::openSolo()
 
 void ScreenTransition::openMulti()
 {
+    if(m!=nullptr)
+        m->setError(std::string());
     if(multi==nullptr)
     {
         multi=new Multi();

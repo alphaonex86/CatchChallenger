@@ -29,6 +29,7 @@ Login::Login() :
     password=new LineEdit(this);
     password->setEchoMode(QLineEdit::Password);
     remember=new CheckBox(this);
+    remember->setChecked(true);
     rememberText=new QGraphicsTextItem(this);
     htmlText=new QGraphicsTextItem(this);
     htmlText->setOpenExternalLinks(true);
