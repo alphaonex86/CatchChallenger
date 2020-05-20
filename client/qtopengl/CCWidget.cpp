@@ -2,35 +2,38 @@
 #include "../qt/GameLoader.hpp"
 #include <QPainter>
 
-CCWidget::CCWidget(QGraphicsItem *parent) :
+ImagesStrechMiddle::ImagesStrechMiddle(unsigned int borderSize,QString path,QGraphicsItem *parent) :
     QGraphicsItem(parent)
 {
     oldratio=0;
     m_w=0;
     m_h=0;
+
+    m_borderSize=borderSize;
+    m_path=path;
 }
 
-unsigned int CCWidget::imageBorderSize() const
+unsigned int ImagesStrechMiddle::imageBorderSize() const
 {
     const int w=width();
-    int tw=46;
+    int tw=m_borderSize;
     if(w<50)
-        tw=46/4;
+        tw=m_borderSize/4;
     else if(w>250)
-        tw=46;
+        tw=m_borderSize;
     else
-        tw=(w-50)*46*3/4/200+46/4;
-    int th=46;
+        tw=(w-50)*m_borderSize*3/4/200+m_borderSize/4;
+    int th=m_borderSize;
     const int h=height();
     if(h<50)
-        th=46/4;
+        th=m_borderSize/4;
     else if(h>250)
-        th=46;
+        th=m_borderSize;
     else
         /* (h-50) -> 0 to 200
-         * (h-50)*46*3/4/200 -> 0 to 46*3/4
-         * (h-50)*46*3/4/200+46/4 -> 46/4 to 46 */
-        th=(h-50)*46*3/4/200+46/4;
+         * (h-50)*m_borderSize*3/4/200 -> 0 to m_borderSize*3/4
+         * (h-50)*m_borderSize*3/4/200+m_borderSize/4 -> m_borderSize/4 to m_borderSize */
+        th=(h-50)*m_borderSize*3/4/200+m_borderSize/4;
     int min=tw;
     if(min>th)
         min=th;
@@ -38,29 +41,29 @@ unsigned int CCWidget::imageBorderSize() const
     return min;
 }
 
-QRectF CCWidget::boundingRect() const
+QRectF ImagesStrechMiddle::boundingRect() const
 {
     return QRectF();
 }
 
-void CCWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void ImagesStrechMiddle::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     const int min=imageBorderSize();
 
     if(tl.isNull() || min!=tl.height())
     {
-        QPixmap background(*GameLoader::gameLoader->getImage(":/CC/images/interface/message.png"));
+        QPixmap background(*GameLoader::gameLoader->getImage(m_path));
         if(background.isNull())
             abort();
-        tl=background.copy(0,0,46,46);
-        tm=background.copy(46,0,401,46);
-        tr=background.copy(447,0,46,46);
-        ml=background.copy(0,46,46,179);
-        mm=background.copy(46,46,401,179);
-        mr=background.copy(447,46,46,179);
-        bl=background.copy(0,225,46,46);
-        bm=background.copy(46,225,401,46);
-        br=background.copy(447,225,46,46);
+        tl=background.copy(0,0,m_borderSize,m_borderSize);
+        tm=background.copy(m_borderSize,0,background.width()-m_borderSize-m_borderSize,m_borderSize);
+        tr=background.copy(background.width()-m_borderSize,0,m_borderSize,m_borderSize);
+        ml=background.copy(0,m_borderSize,m_borderSize,background.height()-m_borderSize-m_borderSize);
+        mm=background.copy(m_borderSize,m_borderSize,background.width()-m_borderSize-m_borderSize,background.height()-m_borderSize-m_borderSize);
+        mr=background.copy(background.width()-m_borderSize,m_borderSize,m_borderSize,background.height()-m_borderSize-m_borderSize);
+        bl=background.copy(0,background.height()-m_borderSize,m_borderSize,m_borderSize);
+        bm=background.copy(m_borderSize,background.height()-m_borderSize,background.width()-m_borderSize-m_borderSize,m_borderSize);
+        br=background.copy(background.width()-m_borderSize,background.height()-m_borderSize,m_borderSize,m_borderSize);
 
         if(min!=tl.height())
         {
@@ -89,33 +92,33 @@ void CCWidget::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     painter->drawPixmap(width()-min,   height()-min,min,           min,br);
 }
 
-unsigned int CCWidget::currentBorderSize() const
+unsigned int ImagesStrechMiddle::currentBorderSize() const
 {
     return imageBorderSize()/2;
 }
 
-void CCWidget::setWidth(const int &w)
+void ImagesStrechMiddle::setWidth(const int &w)
 {
     this->m_w=w;
 }
 
-void CCWidget::setHeight(const int &h)
+void ImagesStrechMiddle::setHeight(const int &h)
 {
     this->m_h=h;
 }
 
-void CCWidget::setSize(const int &w,const int &h)
+void ImagesStrechMiddle::setSize(const int &w,const int &h)
 {
     this->m_w=w;
     this->m_h=h;
 }
 
-int CCWidget::width() const
+int ImagesStrechMiddle::width() const
 {
     return m_w;
 }
 
-int CCWidget::height() const
+int ImagesStrechMiddle::height() const
 {
     return m_h;
 }

@@ -31,6 +31,8 @@ class QtDatapackClientLoader
 public:
     static QtDatapackClientLoader *datapackLoader;//pointer to control the init
     explicit QtDatapackClientLoader();
+    std::string getFrontSkinPath(const uint32_t &skinId) const;
+    std::string getSkinPath(const std::string &skinName,const std::string &type) const;
     ~QtDatapackClientLoader();
     struct QtItemExtra
     {

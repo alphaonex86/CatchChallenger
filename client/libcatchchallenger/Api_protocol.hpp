@@ -18,6 +18,16 @@ public:
     ~Api_protocol();
     void unloadSelection();
     const ServerFromPoolForDisplay &getCurrentServer(const unsigned int &index);
+    struct ChatEntry
+    {
+        std::string player_pseudo;
+        Player_type player_type;
+        Chat_type chat_type;
+        std::string text;
+    };
+    const std::vector<ChatEntry> &getChatContent();
+    void add_system_text(Chat_type chat_type,std::string text);
+    void add_chat_text(Chat_type chat_type, std::string text, std::string pseudo, CatchChallenger::Player_type player_type);
 
     //protocol command
     virtual void hashSha224(const char * const data,const int size,char *buffer) = 0;
@@ -86,7 +96,10 @@ public:
 
     bool setMapNumber(const unsigned int number_of_map);
     virtual bool disconnectClient();
+    std::pair<uint16_t,uint16_t> getLast_number_of_player();
 protected:
+    std::vector<ChatEntry> chat_list;
+
     //status for the query
     bool haveFirstHeader;
     bool is_logged;
@@ -97,6 +110,8 @@ protected:
     bool tolerantMode;
     bool haveTheServerList;
     bool haveTheLogicalGroupList;
+    uint16_t last_players_number;
+    uint16_t last_max_players;
 
     LogicialGroup logicialGroup;
 

@@ -21,6 +21,8 @@ public:
     void setPlaceholderText(const QString &);
     void setEchoMode(QLineEdit::EchoMode e);
     void setMaxLength(int a);
+    void setVisible(bool visible);
+    void clear();
     int width() const;
     int height() const;
     QString text() const;
