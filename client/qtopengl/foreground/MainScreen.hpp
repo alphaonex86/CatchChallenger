@@ -41,6 +41,7 @@ private:
     QGraphicsPixmapItem *newsWait;
     CustomButton *newsUpdate;
     QGraphicsTextItem *warning;
+    bool warningCanBeReset;
     QString warningString;
     std::vector<FeedNews::FeedEntry> entryList;
     uint8_t currentNewsType;
