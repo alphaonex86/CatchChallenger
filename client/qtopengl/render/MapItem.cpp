@@ -47,6 +47,8 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
             }
 
             QPainter painter(&image);
+            if(painter.paintEngine()==nullptr)
+                std::cerr << "painter.paintEngine()==nullptr before renderer->drawTileLayer" << std::endl;
             renderer->drawTileLayer(&painter, tileLayer, graphicsItem->boundingRect());
             delete graphicsItem;
             graphicsItem=NULL;
@@ -130,10 +132,9 @@ void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/
 {
     if(displayed_layer.find(map)==displayed_layer.cend())
             return;
-    const float &z=MapVisualiserPlayer::zoom();
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
     for( const auto& value : values )
-        value->setPos(static_cast<qreal>(static_cast<double>(x))*z,static_cast<qreal>(static_cast<double>(y))*z);
+        value->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
 }
 
 QRectF MapItem::boundingRect() const

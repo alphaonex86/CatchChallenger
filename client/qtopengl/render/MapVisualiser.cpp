@@ -66,6 +66,11 @@ MapVisualiser::~MapVisualiser()
     //delete playerMapObject;
 }
 
+QRectF MapVisualiser::boundingRect() const
+{
+    return QRectF();
+}
+
 Map_full * MapVisualiser::getMap(const std::string &map) const
 {
     if(all_map.find(map)!=all_map.cend())
