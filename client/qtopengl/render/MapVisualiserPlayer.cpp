@@ -20,8 +20,6 @@ to be sync if connexion is stop, but use more bandwith
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 
-float MapVisualiserPlayer::m_zoom=5.0;
-
 MapVisualiserPlayer::MapVisualiserPlayer(const bool &debugTags) :
     MapVisualiser(debugTags)
 {
@@ -2345,21 +2343,15 @@ void MapVisualiserPlayer::centerOnPlayer()
         value->setPos(static_cast<qreal>(static_cast<double>(x))*z,static_cast<qreal>(static_cast<double>(y))*z);*/
 }
 
-const float &MapVisualiserPlayer::zoom()
-{
-    return MapVisualiserPlayer::m_zoom;
-}
-
 void MapVisualiserPlayer::paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget)
 {
     if(widget->width()>0 && widget->height()>0)
     {
-        const float &z=zoom();
         const Tiled::MapObject * playerMapObject=getPlayerMapObject();
-        const float px=playerMapObject->x()*16.0*z;
-        const float py=(playerMapObject->y()-1.0)*16.0*z;
-        const float pw=playerMapObject->width()*z;
-        const float ph=playerMapObject->height()*z;
+        const float px=playerMapObject->x()*16.0;
+        const float py=(playerMapObject->y()-1.0)*16.0;
+        const float pw=playerMapObject->width();
+        const float ph=playerMapObject->height();
         if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
             setPos(widget->width()/2-px-pw/2,
                widget->height()/2-py-ph/2);

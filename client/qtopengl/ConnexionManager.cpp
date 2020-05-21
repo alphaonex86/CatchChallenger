@@ -537,7 +537,6 @@ void ConnexionManager::connectingOnGameServer()
 void ConnexionManager::connectedOnGameServer()
 {
     l->setText(tr("Connected on game server"));
-    emit goToMap();
 }
 
 void ConnexionManager::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
@@ -677,6 +676,8 @@ void ConnexionManager::QthaveCharacter()
         return;
     }
     sendDatapackContentMainSub();*/
+    emit goToMap();
+    std::cout << "have character" << std::endl;
 }
 
 void ConnexionManager::haveDatapackMainSubCode()

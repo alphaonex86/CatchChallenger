@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "../qt/LanguagesSelect.hpp"
 #include "ScreenTransition.hpp"
+#include "render/MapVisualiserOrder.hpp"
 #include "../qt/LocalListener.hpp"
 #include "../qt/GameLoader.hpp"
 #include "../qt/QtDatapackClientLoader.hpp"
@@ -117,6 +118,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
 
     if(argc<1)
     {

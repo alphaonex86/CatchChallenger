@@ -14,6 +14,7 @@ class MapVisualiserPlayer : public MapVisualiser
     Q_OBJECT
     friend class MapVisualiserPlayerWithFight;
 public:
+    const Tiled::MapObject * getPlayerMapObject() const;
     explicit MapVisualiserPlayer(const bool &debugTags=false);
     ~MapVisualiserPlayer();
     virtual bool haveMapInMemory(const std::string &mapPath);
@@ -67,9 +68,7 @@ public:
     void unblock();
     virtual bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     void centerOnPlayer();
-    static const float &zoom();
 private:
-    static float m_zoom;
     //player
     Tiled::MapObject * playerMapObject;
     Tiled::Tileset * playerTileset;
@@ -173,7 +172,6 @@ protected slots:
     virtual bool insert_player_internal(const CatchChallenger::Player_public_informations &player, const uint32_t &mapId,
                                      const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction,
                                      const std::vector<std::string> &skinFolderList);
-    const Tiled::MapObject * getPlayerMapObject() const;
     std::pair<uint8_t,uint8_t> getPos() const;
     bool isInMove() const;
     CatchChallenger::Direction getDirection() const;

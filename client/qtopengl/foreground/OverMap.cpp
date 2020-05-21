@@ -187,6 +187,8 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
     playersCount->setPos(w->width()-space-80,space+15);
 
+    int dpiX=w->logicalDpiX();
+
     chat->setSize(84,93);
     unsigned int chatX=space;
     unsigned int chatY=w->height()-space-chat->height();
@@ -194,7 +196,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     chatOver->setPixelSize(18);
     chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
     chatBack->setVisible(chat->isChecked());
-    chatText->setVisible(chat->isChecked());
+    chatText->setVisible(chat->isChecked() && dpiX<300);
     chatInput->setVisible(chat->isChecked());
     chatType->setVisible(chat->isChecked());
     if(chat->isChecked())
@@ -216,6 +218,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int buyX=x-buy->width();
         buy->setPos(buyX,w->height()-space-buy->height());
         x-=buy->width()+space;
+        buyOver->setVisible(dpiX<300);
         buyOver->setPixelSize(18);
         buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
     }
@@ -224,6 +227,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int bagX=x-bag->width();
         bag->setPos(bagX,w->height()-space-bag->height());
         x-=bag->width()+space;
+        bagOver->setVisible(dpiX<300);
         bagOver->setPixelSize(18);
         bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
     }
