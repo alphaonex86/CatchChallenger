@@ -551,7 +551,8 @@ void DatapackClientLoader::parseReputationExtra()
                 level = level->NextSiblingElement("level");
             }
             std::sort(point_list_positive.begin(),point_list_positive.end());
-            std::sort(point_list_negative.end(),point_list_negative.begin());
+            std::sort(point_list_negative.begin(),point_list_negative.end());
+            std::reverse(point_list_positive.begin(), point_list_positive.end());
             if(ok)
                 if(point_list_positive.size()<2)
                 {
@@ -1735,20 +1736,21 @@ void DatapackClientLoader::parseBotFightsExtra()
     const std::string &language=getLanguage();
     bool found;
 
-    std::string temp=datapackPath+
+    std::string tempbase=datapackPath+
             DATAPACK_BASE_PATH_FIGHT1+
             mainDatapackCode+
             DATAPACK_BASE_PATH_FIGHT2;
-    stringreplaceAll(temp,"\\\\","\\");
-    stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    stringreplaceAll(tempbase,"\\\\","\\");
+    stringreplaceAll(tempbase,"//","/");
+    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(tempbase);
     unsigned int file_index=0;
     while(file_index<returnList.size())
     {
-        const std::string &file=temp+returnList.at(file_index);
+        const std::string &file=tempbase+returnList.at(file_index);
         if(CatchChallenger::FacilityLibGeneral::isFile(file))
         {
-            const std::string &file=returnList.at(file_index);
+            //std::cout << "file: " << tempbase << "+" << returnList.at(file_index) << std::endl;
+            //const std::string &file=returnList.at(file_index);
             tinyxml2::XMLDocument *domDocument;
             //open and quick check the file
             if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
