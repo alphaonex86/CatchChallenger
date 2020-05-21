@@ -27,11 +27,10 @@
 #include <QHash>
 #include <QTime>
 #include <QDateTime>
-#include "../ScreenInput.hpp"
 
 #include "MapVisualiserThread.hpp"
 
-class MapVisualiser : public QObject, public ScreenInput
+class MapVisualiser : public QObject, public QGraphicsItem
 {
     Q_OBJECT
 public:
@@ -39,15 +38,16 @@ public:
     ~MapVisualiser();
 
     virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
+    QRectF boundingRect() const;
 
     Map_full * getMap(const std::string &map) const;
 
     std::string current_map;
     std::unordered_map<std::string,Map_full *> all_map,old_all_map;
     std::unordered_map<std::string,QDateTime> old_all_map_time;
+    MapItem* mapItem;
 protected:
     Tiled::MapReader reader;
-    MapItem* mapItem;
 
     Tiled::Tileset * markPathFinding;
     int tagTilesetIndex;

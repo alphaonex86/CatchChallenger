@@ -31,8 +31,6 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     if(mMapObject->objectGroup()==NULL)
         return;
 
-    const float &z=MapVisualiserPlayer::zoom();
-    setScale(z);
     const QColor &color = mMapObject->objectGroup()->color();
     mRendererList.at(mMapObject->objectGroup())->drawMapObject(p, mMapObject,
                              color.isValid() ? color : Qt::transparent);

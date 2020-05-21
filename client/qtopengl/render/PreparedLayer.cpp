@@ -73,7 +73,5 @@ void PreparedLayer::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 void PreparedLayer::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     //qDebug() << "widget size " << widget->width() << widget->height();
-    const float &z=MapVisualiserPlayer::zoom();
-    setScale(z);
     QGraphicsPixmapItem::paint(painter,option,widget);
 }

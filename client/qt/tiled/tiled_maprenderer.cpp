@@ -85,6 +85,8 @@ QPolygonF MapRenderer::lineToPolygon(const QPointF &start, const QPointF &end)
 
 static bool hasOpenGLEngine(const QPainter *painter)
 {
+    if(painter->paintEngine()==nullptr)
+        return true;
     const QPaintEngine::Type type = painter->paintEngine()->type();
     return (type == QPaintEngine::OpenGL ||
             type == QPaintEngine::OpenGL2);

@@ -445,7 +445,7 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         if(!connect(ccmap,&CCMap::error,this,&ScreenTransition::errorString))
             abort();
     }
-    ccmap->resetAll();
+    ccmap->setVar(connexionManager);
 
     if(overmap!=nullptr)
     {
@@ -463,6 +463,7 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
             abort();*/
     }
     overmap->resetAll();
+    overmap->setVar(connexionManager);
 }
 
 void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
@@ -502,8 +503,6 @@ void ScreenTransition::goToServerList()
 
 void ScreenTransition::goToMap()
 {
-    ccmap->setVar(connexionManager);
-    overmap->setVar(connexionManager);
     setBackground(ccmap);
     setForeground(overmap);
     setAbove(nullptr);
