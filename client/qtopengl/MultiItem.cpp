@@ -66,10 +66,10 @@ void MultiItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidg
     else
     {
         #ifdef NOTCPSOCKET
-        connexionInfoHost=connexionInfo.ws;
+        connexionInfoLabel=m_connexionInfo.ws;
         #else
             #ifdef NOWEBSOCKET
-            connexionInfoHost=connexionInfo.host;
+            connexionInfoLabel=m_connexionInfo.host;
             #else
             if(!m_connexionInfo.host.isEmpty())
                 connexionInfoLabel=m_connexionInfo.host;

@@ -34,6 +34,7 @@
 #include "tiled_tileset.hpp"
 
 #include <cmath>
+#include <QPainterPath>
 
 using namespace Tiled;
 

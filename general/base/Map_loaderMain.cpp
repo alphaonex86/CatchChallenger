@@ -4,7 +4,11 @@
 #include "CommonDatapack.hpp"
 
 #include <iostream>
-#include <zstd.h>      // presumes zstd library is installed
+#ifdef CATCHCHALLENGER_CLIENT
+#include "../../client/libzstd/lib/zstd.h"
+#else
+#include <zstd.h>
+#endif
 #include <map>
 
 using namespace CatchChallenger;
