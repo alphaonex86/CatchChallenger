@@ -2,7 +2,7 @@
 #define MapMonsterPreview_H
 
 #include <QGraphicsPixmapItem>
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
 
 class MapMonsterPreview : public QGraphicsPixmapItem
 {

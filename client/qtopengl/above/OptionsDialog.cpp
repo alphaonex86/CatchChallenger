@@ -5,7 +5,9 @@
 #include <QGraphicsScene>
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "../AudioGL.hpp"
+#endif
 #include "../../qt/Ultimate.hpp"
 #include "../Language.hpp"
 #include <QDesktopServices>
@@ -223,7 +225,9 @@ void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
 
 void OptionsDialog::volumeSliderChange()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     AudioGL::audio->setVolume(volumeSlider->value());
+    #endif
     Settings::settings->setValue("audioVolume",volumeSlider->value());
 }
 
