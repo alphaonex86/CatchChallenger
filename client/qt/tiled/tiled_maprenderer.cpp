@@ -34,6 +34,7 @@
 #include <QPaintEngine>
 #include <QPainter>
 #include <QVector2D>
+#include <QPainterPath>
 
 using namespace Tiled;
 
