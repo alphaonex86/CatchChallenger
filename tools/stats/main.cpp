@@ -8,12 +8,12 @@
 #include <ctime>
 #include <signal.h>
 
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../server/base/TinyXMLSettings.h"
-#include "../../server/epoll/Epoll.h"
-#include "../../server/epoll/EpollSocket.h"
-#include "../../server/VariableServer.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../server/base/TinyXMLSettings.hpp"
+#include "../../server/epoll/Epoll.hpp"
+#include "../../server/epoll/EpollSocket.hpp"
+#include "../../server/VariableServer.hpp"
 #include "LinkToLogin.h"
 #include "EpollServerStats.h"
 
