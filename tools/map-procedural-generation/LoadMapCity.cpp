@@ -3,12 +3,12 @@
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 
-#include "../../client/qt/tiled/tiled_tileset.h"
-#include "../../client/qt/tiled/tiled_tile.h"
-#include "../../client/qt/tiled/tiled_objectgroup.h"
-#include "../../client/qt/tiled/tiled_mapobject.h"
-#include "../../client/qt/tiled/tiled_mapwriter.h"
-#include "../../general/base/cpp11addition.h"
+#include "../../client/qt/tiled/tiled_tileset.hpp"
+#include "../../client/qt/tiled/tiled_tile.hpp"
+#include "../../client/qt/tiled/tiled_objectgroup.hpp"
+#include "../../client/qt/tiled/tiled_mapobject.hpp"
+#include "../../client/qt/tiled/tiled_mapwriter.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 #include <unordered_map>

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cmath>
 #include <random>
+#include <QList>
+#include <QPointF>
 
 #include "PoissonGenerator.h"
 #include "znoise/headers/Simplex.hpp"
