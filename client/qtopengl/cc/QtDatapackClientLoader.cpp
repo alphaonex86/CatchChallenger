@@ -65,22 +65,30 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         qDebug() << QStringLiteral("already in progress");
         return;
     }
+    auto start_time = std::chrono::high_resolution_clock::now();
     DatapackClientLoader::parseDatapack(datapackPath);
     parseMonstersExtra();
     parseBuffExtra();
     parsePlantsExtra();
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto time = end_time - start_time;
+    std::cout << "parseDatapack took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
     inProgress=false;
     emit datapackParsed();
 }
 
 void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
     DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode);
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/CC/images/inventory/unknown-object.png"));
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(
                 datapackPath,mainDatapackCode,subDatapackCode);
-
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto time = end_time - start_time;
+    std::cout << "parseDatapackMainSub took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath <<
+                 "(" << mainDatapackCode << "," << subDatapackCode << ")" << std::endl;
     parseTileset();
 
     inProgress=false;
