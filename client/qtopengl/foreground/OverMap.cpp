@@ -16,6 +16,10 @@
 OverMap::OverMap()
 {
     connexionManager=nullptr;
+    logicalDpiX=0;
+    logicalDpiY=0;
+    physicalDpiX=0;
+    physicalDpiY=0;
 
     playerUI=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"),this);
     playerUI->setVisible(false);
@@ -187,7 +191,10 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
     playersCount->setPos(w->width()-space-80,space+15);
 
-    int dpiX=w->logicalDpiX();
+    logicalDpiX=w->logicalDpiX();
+    logicalDpiY=w->logicalDpiY();
+    physicalDpiX=w->physicalDpiX();
+    physicalDpiY=w->physicalDpiY();
 
     chat->setSize(84,93);
     unsigned int chatX=space;
@@ -196,7 +203,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     chatOver->setPixelSize(18);
     chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
     chatBack->setVisible(chat->isChecked());
-    chatText->setVisible(chat->isChecked() && dpiX<300);
+    chatText->setVisible(chat->isChecked());
     chatInput->setVisible(chat->isChecked());
     chatType->setVisible(chat->isChecked());
     if(chat->isChecked())
@@ -207,6 +214,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
         y-=3+chatBack->height();
         chatBack->setPos(space,y);
+        chatText->setVisible(physicalDpiX<250);
         chatText->setPos(space+space,y+space);
     }
 
@@ -218,7 +226,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int buyX=x-buy->width();
         buy->setPos(buyX,w->height()-space-buy->height());
         x-=buy->width()+space;
-        buyOver->setVisible(dpiX<300);
+        buyOver->setVisible(physicalDpiX<250);
         buyOver->setPixelSize(18);
         buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
     }
@@ -227,7 +235,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int bagX=x-bag->width();
         bag->setPos(bagX,w->height()-space-bag->height());
         x-=bag->width()+space;
-        bagOver->setVisible(dpiX<300);
+        bagOver->setVisible(physicalDpiX<250);
         bagOver->setPixelSize(18);
         bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
     }
@@ -286,7 +294,12 @@ void OverMap::lineEdit_chat_text_returnPressed()
     numberForFlood++;
     lastMessageSend=text.toStdString();
     chatInput->setText(QString());
-    if(!text.startsWith("/pm "))
+    if(text=="/dpi")
+    {
+        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Logical DPI: "+std::to_string(logicalDpiX)+","+std::to_string(logicalDpiY));
+        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Physical DPI: "+std::to_string(physicalDpiX)+","+std::to_string(physicalDpiY));
+    }
+    else if(!text.startsWith("/pm "))
     {
         CatchChallenger::Chat_type chat_type;
         switch(chatType->itemData(chatType->currentIndex(),99).toUInt())
