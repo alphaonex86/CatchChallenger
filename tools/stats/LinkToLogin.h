@@ -1,9 +1,9 @@
 #ifndef LOGINLINKTOLOGIN_H
 #define LOGINLINKTOLOGIN_H
 
-#include "../../general/base/ProtocolParsing.h"
-#include "../../server/base/TinyXMLSettings.h"
-#include "../../server/epoll/EpollClient.h"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../../server/base/TinyXMLSettings.hpp"
+#include "../../server/epoll/EpollClient.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>

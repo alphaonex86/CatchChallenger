@@ -1,6 +1,6 @@
 #include "LinkToLogin.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/cpp11addition.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
