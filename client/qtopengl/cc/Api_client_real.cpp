@@ -409,6 +409,12 @@ void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, co
         {
             mainNeedUpdate=false;
         }
+    if(mainNeedUpdate)
+        qDebug() << "mainNeedUpdate CommonSettingsCommon::commonSettingsCommon.datapackHashBase "
+             << QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
+                                                    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()))
+             << " hashBase "
+             << QString::fromStdString(binarytoHexa(hashMain.data(),hashMain.size()));
     bool subNeedUpdate=true;
     if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.empty() && hashSub.empty())
         subNeedUpdate=false;
@@ -418,6 +424,12 @@ void Api_client_real::sendDatapackContentMainSub(const std::string &hashMain, co
         {
             subNeedUpdate=false;
         }
+    if(subNeedUpdate)
+        qDebug() << "subNeedUpdate CommonSettingsCommon::commonSettingsCommon.datapackHashBase "
+             << QString::fromStdString(binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
+                                                    CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()))
+             << " hashBase "
+             << QString::fromStdString(binarytoHexa(hashSub.data(),hashSub.size()));
     if(!mainNeedUpdate && !subNeedUpdate)
     {
         datapackStatus=DatapackStatus::Finished;

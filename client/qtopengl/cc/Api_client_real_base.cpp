@@ -683,6 +683,11 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
             datapackDownloadFinishedBase();
             return;
         }
+    qDebug() << "Hash not same CommonSettingsCommon::commonSettingsCommon.datapackHashBase "
+             << QString::fromStdString(binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                                                    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()))
+             << " hashBase "
+             << QString::fromStdString(binarytoHexa(hashBase.data(),hashBase.size()));
 
     //compute the mirror
     {

@@ -1,10 +1,12 @@
 #include "CCMap.hpp"
 #include "../ConnexionManager.hpp"
 #include "../../qt/QtDatapackClientLoader.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include <QPainter>
 #include <QTime>
 #include <chrono>
 #include <iostream>
+#include <math.h>
 
 CCMap::CCMap()
 {
@@ -81,18 +83,16 @@ void CCMap::paintChildItems(QList<QGraphicsItem *> childItems,qreal parentX,qrea
 
 void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
-    float scale=5.0;
-    painter->scale(scale,scale);//work
-    /* unordened paint, failed
-     * for( const auto& n : mapController.mapItem->displayed_layer ) {
-        Tiled::Map * key=n.first;
-        std::unordered_set<QGraphicsItem *> values=n.second;
-        for( const auto& value : values ) {
-            value->paint(painter,option,widget);
-        }
-        return;
-    }*/
-    //mapController.mapItem.paint() not work
+    qreal zoomW=(qreal)widget->width()/(32.0*16.0);
+    qreal zoomH=(qreal)widget->height()/(32.0*16.0);
+    qreal zoomFinal=zoomW;
+    //keep the greatest value
+    if(zoomFinal>zoomH)
+        zoomFinal=zoomH;
+    zoomFinal*=CatchChallenger::CommonDatapack::commonDatapack.layersOptions.zoom;
+    qreal scale=ceil(zoomFinal);
+    painter->scale(scale,scale);
+
     const Tiled::MapObject * p=mapController.getPlayerMapObject();
     qreal x=(widget->width()/2/scale-(p->x()*16+p->width()/2));
     qreal y=(widget->height()/2/scale-((p->y()-1)*16+p->height()/2));
