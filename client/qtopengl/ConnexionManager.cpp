@@ -552,12 +552,13 @@ void ConnexionManager::sendDatapackContentMainSub()
         std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
         abort();
     }
-    if(Settings::settings->contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
-            Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
-        client->sendDatapackContentMainSub(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
-                Settings::settings->value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
-    else
-        client->sendDatapackContentMainSub();
+    QByteArray dataMain;
+    QByteArray dataSub;
+    if(Settings::settings->contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())))
+        dataMain=QByteArray::fromHex(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toUtf8());
+    if(Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
+        dataSub=QByteArray::fromHex(Settings::settings->value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toUtf8());
+    client->sendDatapackContentMainSub(std::string(dataMain.constData(),dataMain.size()),std::string(dataSub.constData(),dataSub.size()));
 }
 
 void ConnexionManager::haveTheDatapack()
@@ -571,10 +572,10 @@ void ConnexionManager::haveTheDatapack()
         return;
     haveDatapack=true;
     Settings::settings->setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
                           static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
-                                  )
+                                  ).toHex())
                       );
 
     if(client!=NULL)
@@ -590,16 +591,16 @@ void ConnexionManager::haveTheDatapackMainSub()
         return;
     haveDatapackMainSub=true;
     Settings::settings->setValue("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size())
-                                  )
+                                  ).toHex())
                       );
     Settings::settings->setValue("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size())
-                                  )
+                                  ).toHex())
                       );
 
     if(client!=NULL)
@@ -661,7 +662,10 @@ void ConnexionManager::datapackChecksumError()
 void ConnexionManager::Qtlogged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
     if(Settings::settings->contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
-        client->sendDatapackContentBase(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
+    {
+        const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toUtf8());
+        client->sendDatapackContentBase(std::string(data.constData(),data.size()));
+    }
     else
         client->sendDatapackContentBase();
     this->characterEntryList=characterEntryList;
@@ -682,6 +686,7 @@ void ConnexionManager::QthaveCharacter()
 
 void ConnexionManager::haveDatapackMainSubCode()
 {
+    /// \warn do above
     if(client==nullptr)
     {
         std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
