@@ -103,7 +103,8 @@
       #error "Endian determination failed"
     #endif
 #else
-    #include "PortableEndian.h"
+    #include <byteswap.h>
+    #include <endian.h>
 #endif
 
 //#define CATCHCHALLENGER_GITCOMMIT "GITCOMMITXXXXXXXXXX"

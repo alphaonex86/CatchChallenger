@@ -10,7 +10,9 @@
 #include "above/OptionsDialog.hpp"
 #include "ConnexionManager.hpp"
 #include "../../general/base/Version.hpp"
+#ifndef CATCHCHALLENGER_NOAUDIO
 #include "AudioGL.hpp"
+#endif
 #include <iostream>
 #include <QGLWidget>
 #include <QComboBox>
@@ -287,6 +289,7 @@ void ScreenTransition::toInGame()
 
 void ScreenTransition::toMainScreen()
 {
+    #ifndef CATCHCHALLENGER_NOAUDIO
     if(Audio::audio==nullptr)
     {
         AudioGL* a=new AudioGL();
@@ -294,6 +297,7 @@ void ScreenTransition::toMainScreen()
         if(!connect(QCoreApplication::instance(),&QCoreApplication::aboutToQuit,a,&AudioGL::stopCurrentAmbiance,Qt::DirectConnection))
             abort();
     }
+    #endif
     if(m==nullptr)
     {
         m=new MainScreen();

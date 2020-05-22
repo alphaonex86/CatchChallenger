@@ -2,7 +2,9 @@
 #include <QNetworkReply>
 #include <QFile>
 #include <QDir>
+#include <QDebug>
 #include <QStandardPaths>
+#include <QDateTime>
 #include "Multi.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/tinyXML2/tinyxml2.hpp"

@@ -15,13 +15,6 @@ AddOrEditServer::AddOrEditServer() :
 {
     ok=false;
     edit=false;
-    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
-        ui->type->hide();
-        #if defined(NOTCPSOCKET)
-            ui->port->hide();
-            ui->server->setPlaceholderText("ws://www.server.com:9999/");
-        #endif
-    #endif
 
     x=-1;
     y=-1;
@@ -48,6 +41,7 @@ AddOrEditServer::AddOrEditServer() :
     serverText=new QGraphicsTextItem(this);
     serverText->setVisible(false);
     serverInput=new LineEdit(this);
+    serverInput->setPlaceholderText("ws://www.server.com:9999/");
     portInput=new SpinBox(this);
     portInput->setMinimum(1);
     portInput->setMaximum(65535);
@@ -76,6 +70,14 @@ AddOrEditServer::AddOrEditServer() :
     on_type_currentIndexChanged(0);
 
     newLanguage();
+
+    #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
+        m_type->setVisible(false);
+        #if defined(NOTCPSOCKET)
+            proxyPortInput->setVisible(false);
+            serverInput->setPlaceholderText("ws://www.server.com:9999/");
+        #endif
+    #endif
 }
 
 AddOrEditServer::~AddOrEditServer()
@@ -279,10 +281,10 @@ void AddOrEditServer::setType(const int &type)
 m_type->setCurrentIndex(type);
 #else
     #if defined(NOTCPSOCKET)
-    ui->type->setCurrentIndex(1);
+    m_type->setCurrentIndex(1);
     #else
         #if defined(NOWEBSOCKET)
-        ui->type->setCurrentIndex(0);
+        m_type->setCurrentIndex(0);
         #endif
     #endif
 #endif
