@@ -4,12 +4,12 @@
 #include <QCoreApplication>
 #include <iostream>
 
-#include "../../client/qt/tiled/tiled_mapreader.h"
-#include "../../client/qt/tiled/tiled_tileset.h"
-#include "../../client/qt/tiled/tiled_objectgroup.h"
-#include "../../client/qt/tiled/tiled_mapobject.h"
+#include "../../client/qt/tiled/tiled_mapreader.hpp"
+#include "../../client/qt/tiled/tiled_tileset.hpp"
+#include "../../client/qt/tiled/tiled_objectgroup.hpp"
+#include "../../client/qt/tiled/tiled_mapobject.hpp"
 
-#include "../../general/base/cpp11addition.h"
+#include "../../general/base/cpp11addition.hpp"
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
 QStringList LoadMap::terrainFlatList;

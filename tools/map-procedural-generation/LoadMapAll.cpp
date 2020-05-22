@@ -1,8 +1,8 @@
 #include "LoadMapAll.h"
 
-#include "../../client/qt/tiled/tiled_mapobject.h"
-#include "../../client/qt/tiled/tiled_objectgroup.h"
-#include "../../general/base/cpp11addition.h"
+#include "../../client/qt/tiled/tiled_mapobject.hpp"
+#include "../../client/qt/tiled/tiled_objectgroup.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
