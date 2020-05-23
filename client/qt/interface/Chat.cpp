@@ -1,7 +1,7 @@
-#include "Chat.h"
+#include "Chat.hpp"
 #include "ui_Chat.h"
-#include "../Api_client_real.h"
-#include "../render/MapController.h"
+#include "../Api_client_real.hpp"
+#include "../render/MapController.hpp"
 
 #include <QRegularExpression>
 #include <QScrollBar>

@@ -636,6 +636,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                         message("stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage2 set at "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         stageConnexion=StageConnexion::Stage2;
                         closeSocket();
+                        //wait socket disconnected before call socketDisconnectedForReconnect();//need by call after closeSocket() because it call the reconnection
                         connectingOnGameServer();
                         return true;
                     }

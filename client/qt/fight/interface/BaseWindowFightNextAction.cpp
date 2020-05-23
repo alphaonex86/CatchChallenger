@@ -1,6 +1,6 @@
-#include "../../interface/BaseWindow.h"
+#include "../../interface/BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "ClientFightEngine.h"
+#include "ClientFightEngine.hpp"
 
 /* show only the plant into the inventory */
 

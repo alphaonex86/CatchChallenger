@@ -3,7 +3,7 @@
 
 #include <sys/socket.h>
 
-#include "BaseClassSwitch.h"
+#include "BaseClassSwitch.hpp"
 
 namespace CatchChallenger {
 class EpollUnixSocketServer : public BaseClassSwitch

@@ -1,10 +1,10 @@
 //to have winsock2 include before Windows.h, prevent mingw warn
-#include "../Api_client_real.h"
+#include "../Api_client_real.hpp"
 
-#include "../ClientVariableAudio.h"
+#include "../ClientVariableAudio.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
-#include "../QInfiniteBuffer.h"
+#include "../QInfiniteBuffer.hpp"
 #endif
 
 #include <QWidget>
@@ -27,17 +27,17 @@
 #include <map>
 #include <QBuffer>
 
-#include "../crafting/interface/QmlInterface/CraftingAnimation.h"
-#include "../../../general/base/ChatParsing.h"
-#include "../../../general/base/GeneralStructures.h"
-#include "../fight/interface/ClientFightEngine.h"
-#include "../Api_protocol_Qt.h"
-#include "../render/MapController.h"
-#include "Chat.h"
-#include "NewProfile.h"
-#include "../QmlInterface/AnimationControl.h"
-#include "../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h"
-#include "../fight/interface/QmlInterface/EvolutionControl.h"
+#include "../crafting/interface/QmlInterface/CraftingAnimation.hpp"
+#include "../ChatParsing.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../fight/interface/ClientFightEngine.hpp"
+#include "../Api_protocol_Qt.hpp"
+#include "../render/MapController.hpp"
+#include "Chat.hpp"
+#include "NewProfile.hpp"
+#include "../QmlInterface/AnimationControl.hpp"
+#include "../fight/interface/QmlInterface/QmlMonsterGeneralInformations.hpp"
+#include "../fight/interface/QmlInterface/EvolutionControl.hpp"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
 #define CATCHCHALLENGER_BASEWINDOW_H

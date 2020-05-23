@@ -1,5 +1,5 @@
 #include "SimpleBotInterface.h"
-#include "../../general/base/Version.h"
+#include "../../general/base/Version.hpp"
 
 SimpleBotInterface::SimpleBotInterface() :
     move(false),

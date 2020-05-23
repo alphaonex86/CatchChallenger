@@ -1,7 +1,7 @@
 #include "ActionsAction.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/FacilityLib.hpp"
 
 bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {

@@ -3,15 +3,15 @@
 
 #include <QWidget>
 #include <QStackedWidget>
-#include "../qt/CCBackground.h"
-#include "../qt/LoadingScreen.h"
-#include "OptionsDialog.h"
-#include "MainScreen.h"
-#include "Solo.h"
-#include "Multi.h"
-#include "Login.h"
-#include "interface/BaseWindow.h"
-#include "ConnexionManager.h"
+#include "../qt/CCBackground.hpp"
+#include "../qt/LoadingScreen.hpp"
+#include "OptionsDialog.hpp"
+#include "MainScreen.hpp"
+#include "Solo.hpp"
+#include "Multi.hpp"
+#include "Login.hpp"
+#include "interface/BaseWindow.hpp"
+#include "ConnexionManager.hpp"
 
 class ScreenTransition : public QWidget
 {

@@ -1,4 +1,4 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
 
 #include <QInputDialog>

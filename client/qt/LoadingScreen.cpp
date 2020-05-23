@@ -1,6 +1,6 @@
-#include "LoadingScreen.h"
+#include "LoadingScreen.hpp"
 #include "ui_LoadingScreen.h"
-#include "../../general/base/Version.h"
+#include "../../general/base/Version.hpp"
 
 LoadingScreen::LoadingScreen(QWidget *parent) :
     QWidget(parent),

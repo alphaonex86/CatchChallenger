@@ -1,7 +1,7 @@
-#include "MapController.h"
-#include "../QtDatapackClientLoader.h"
-#include "../../../general/base/FacilityLibGeneral.h"
-#include "../../../general/base/CommonDatapack.h"
+#include "MapController.hpp"
+#include "../QtDatapackClientLoader.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
 QFont MapControllerMP::playerpseudofont;

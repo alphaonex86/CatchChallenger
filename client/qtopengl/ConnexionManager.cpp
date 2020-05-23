@@ -157,7 +157,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     {
         if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&ConnexionManager::sslErrors,Qt::QueuedConnection))
             abort();
-        if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
+        if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::QueuedConnection))
             abort();
         if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
             abort();
@@ -215,9 +215,13 @@ void ConnexionManager::disconnected(std::string reason)
 void ConnexionManager::newError(const std::string &error,const std::string &detailedError)
 {
     emit errorString(error+"\n"+detailedError);
-    socket->disconnectFromHost();
-    client->disconnectClient();
-    client->resetAll();
+    if(socket!=nullptr)
+        socket->disconnectFromHost();
+    if(client!=nullptr)
+    {
+        client->disconnectClient();
+        client->resetAll();
+    }
 }
 
 void ConnexionManager::message(const std::string &message)
@@ -331,37 +335,9 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
-        if(client!=NULL)
-        {
-            std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL" << std::endl;
-            if(client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_client_real::StageConnexion::Stage3)
-            {
-                std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
-                const std::string &lastServer=client->socketDisconnectedForReconnect();
-                if(!lastServer.empty())
-                    this->lastServer=QString::fromStdString(lastServer);
-                return;
-            }
-        }
-        std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
-        /*if(!isVisible()
-                #ifndef NOSINGLEPLAYER
-                && internalServer==NULL
-                #endif
-                )
-        {
-            QCoreApplication::quit();
+        std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") mostly quit " << client->stage() << std::endl;
+        if(client->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage2 || client->stage()==CatchChallenger::Api_protocol::StageConnexion::Stage3)
             return;
-        }*/
-        if(client!=NULL)
-            static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
-        /*if(client!=NULL && client->protocolWrong())
-            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
-        #ifndef NOSINGLEPLAYER
-        /*if(internalServer!=NULL)
-            internalServer->stop();*/
-        #endif
-        /* to fix bug: firstly try connect but connexion refused on localhost, secondly try local game */
         #ifndef NOTCPSOCKET
         if(realSslSocket!=NULL)
         {
@@ -381,18 +357,8 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
             socket->deleteLater();
             socket=NULL;
         }
-        /*socket will do that's if(realSocket!=NULL)
-        {
-            delete realSocket;
-            realSocket=NULL;
-        }*/
-        //resetAll();
-        /*if(serverMode==ServerMode_Remote)
-            QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));*/
         emit disconnectedFromServer();
     }
-    /*if(baseWindow!=NULL)
-        baseWindow->stateChanged(socketState);*/
 }
 
 void ConnexionManager::error(QAbstractSocket::SocketError socketError)

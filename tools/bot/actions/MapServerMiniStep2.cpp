@@ -1,8 +1,8 @@
 #include "MapServerMini.h"
 #include <iostream>
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "ActionsAction.h"
 
 bool MapServerMini::preload_step2()

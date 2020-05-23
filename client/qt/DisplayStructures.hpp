@@ -3,9 +3,9 @@
 
 #include <unordered_map>
 
-#include "../qt/tiled/tiled_mapobject.h"
-#include "../qt/tiled/tiled_tileset.h"
-#include "../qt/render/TemporaryTile.h"
+#include "../qt/tiled/tiled_mapobject.hpp"
+#include "../qt/tiled/tiled_tileset.hpp"
+#include "../qt/render/TemporaryTile.hpp"
 
 namespace CatchChallenger {
 

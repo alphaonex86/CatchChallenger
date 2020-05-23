@@ -1,16 +1,16 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../Options.h"
-#include "../FacilityLibClient.h"
-#include "../fight/interface/ClientFightEngine.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../Settings.h"
-#include "../Ultimate.h"
+#include "../Options.hpp"
+#include "../FacilityLibClient.hpp"
+#include "../fight/interface/ClientFightEngine.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../Settings.hpp"
+#include "../Ultimate.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../Audio.hpp"
 #endif
 
 #include <QBuffer>
@@ -222,8 +222,8 @@ void BaseWindow::notLogged(std::string reason)
 void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
     this->characterListForSelection=characterEntryList;
-    if(Settings::settings.contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
-        client->sendDatapackContentBase(Settings::settings.value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
+    if(Settings::settings->contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
+        client->sendDatapackContentBase(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
     else
         if(client==NULL)
         {
@@ -286,10 +286,10 @@ void BaseWindow::sendDatapackContentMainSub()
         std::cerr << "sendDatapackContentMainSub(): client==nullptr" << std::endl;
         abort();
     }
-    if(Settings::settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
-            Settings::settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
-        client->sendDatapackContentMainSub(Settings::settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
-                Settings::settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
+    if(Settings::settings->contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
+            Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
+        client->sendDatapackContentMainSub(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
+                Settings::settings->value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
     else
         client->sendDatapackContentMainSub();
 }
@@ -399,7 +399,7 @@ void BaseWindow::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
-    Settings::settings.setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
+    Settings::settings->setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
                       QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
                           static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
@@ -429,13 +429,13 @@ void BaseWindow::haveTheDatapackMainSub()
     if(haveDatapackMainSub)
         return;
     haveDatapackMainSub=true;
-    Settings::settings.setValue("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()),
+    Settings::settings->setValue("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size())
                                   )
                       );
-    Settings::settings.setValue("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()),
+    Settings::settings->setValue("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()),
                       QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size())
@@ -605,9 +605,9 @@ void BaseWindow::datapackChecksumError()
     #endif
     datapackIsParsed=false;
     //reset all the cached hash
-    Settings::settings.remove("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()));
-    Settings::settings.remove("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()));
-    Settings::settings.remove("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()));
+    Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()));
+    Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()));
+    Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()));
     emit newError(tr("Datapack on mirror is corrupted").toStdString(),
                   "The checksum sended by the server is not the same than have on the mirror");
 }

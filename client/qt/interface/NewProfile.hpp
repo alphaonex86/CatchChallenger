@@ -3,7 +3,7 @@
 
 #include <QDialog>
 
-#include "../../../general/base/GeneralStructures.h"
+#include "../../../general/base/GeneralStructures.hpp"
 
 namespace Ui {
 class NewProfile;

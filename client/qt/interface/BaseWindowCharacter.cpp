@@ -1,11 +1,11 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../../../general/base/FacilityLibGeneral.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../FacilityLibClient.h"
-#include "NewGame.h"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../FacilityLibClient.hpp"
+#include "NewGame.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

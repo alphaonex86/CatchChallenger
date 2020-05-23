@@ -1,4 +1,4 @@
-#include "NewProfile.h"
+#include "NewProfile.hpp"
 #include "ui_NewProfile.h"
 
 #include <QFile>
@@ -6,12 +6,12 @@
 #include <QMessageBox>
 #include <QDebug>
 
-#include "../../../general/base/tinyXML2/tinyxml2.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/DatapackGeneralLoader.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../QtDatapackClientLoader.h"
-#include "../LanguagesSelect.h"
+#include "../../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/DatapackGeneralLoader.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../QtDatapackClientLoader.hpp"
+#include "../LanguagesSelect.hpp"
 
 NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
     QDialog(parent),

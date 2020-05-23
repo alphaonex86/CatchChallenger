@@ -1,4 +1,4 @@
-#include "WithAnotherPlayer.h"
+#include "WithAnotherPlayer.hpp"
 #include "ui_WithAnotherPlayer.h"
 
 WithAnotherPlayer::WithAnotherPlayer(QWidget *parent,const WithAnotherPlayerType &type,const QPixmap &skin,const std::string &pseudo) :

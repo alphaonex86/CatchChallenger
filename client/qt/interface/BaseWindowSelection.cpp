@@ -1,9 +1,9 @@
-#include "BaseWindow.h"
-#include "GetPrice.h"
+#include "BaseWindow.hpp"
+#include "GetPrice.hpp"
 #include "ui_BaseWindow.h"
-#include "../fight/interface/ClientFightEngine.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../../../general/base/CommonSettingsCommon.h"
+#include "../fight/interface/ClientFightEngine.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
 
 #include <QQmlContext>
 #include <QInputDialog>

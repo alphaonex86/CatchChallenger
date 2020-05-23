@@ -37,7 +37,7 @@
 #include <QFileInfo>
 #include <QFileDialog>
 
-#include "../../general/base/MoveOnTheMap.h"
+#include "../../general/base/MoveOnTheMap.hpp"
 
 QString Map2Png::text_slash=QStringLiteral("/");
 QString Map2Png::text_dottmx=QStringLiteral(".tmx");

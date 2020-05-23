@@ -1,5 +1,5 @@
-#include "MapMark.h"
-#include "ObjectGroupItem.h"
+#include "MapMark.hpp"
+#include "ObjectGroupItem.hpp"
 #include <QDebug>
 
 MapMark::MapMark(Tiled::MapObject *mapObject) :

@@ -1,4 +1,4 @@
-#include "Solo.h"
+#include "Solo.hpp"
 #include "ui_Solo.h"
 
 Solo::Solo(QWidget *parent) :

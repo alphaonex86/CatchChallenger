@@ -1,10 +1,10 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../QtDatapackClientLoader.h"
-#include "../fight/interface/ClientFightEngine.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../../../general/base/CommonSettingsServer.h"
+#include "../QtDatapackClientLoader.hpp"
+#include "../fight/interface/ClientFightEngine.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
 
 #include <QInputDialog>
 

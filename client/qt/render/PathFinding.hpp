@@ -7,8 +7,8 @@
 #include <QObject>
 #endif
 #include <QMutex>
-#include "../../../general/base/GeneralStructures.h"
-#include "../render/MapVisualiserThread.h"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../render/MapVisualiserThread.hpp"
 
 class PathFinding
         #ifndef NOTHREADS

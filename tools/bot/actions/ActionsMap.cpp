@@ -1,9 +1,9 @@
 #include "ActionsAction.h"
 
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/Map_loader.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/Map_loader.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
 
 #include <regex>
 #include <string>

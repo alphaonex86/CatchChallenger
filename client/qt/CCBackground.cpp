@@ -1,4 +1,4 @@
-#include "CCBackground.h"
+#include "CCBackground.hpp"
 #include <QPainter>
 #include <QTime>
 

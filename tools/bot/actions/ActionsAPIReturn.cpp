@@ -1,8 +1,8 @@
 #include "ActionsAction.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../client/qt/Api_client_real.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../client/qt/Api_client_real.hpp"
 
 #include <QMessageBox>
 #include <QString>

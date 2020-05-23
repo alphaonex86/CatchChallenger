@@ -5,10 +5,10 @@
 #include <QWidget>
 #include <QLabel>
 #include <QHBoxLayout>
-#include "CustomButton.h"
-#include "CCWidget.h"
-#include "CCTitle.h"
-#include "FeedNews.h"
+#include "CustomButton.hpp"
+#include "CCWidget.hpp"
+#include "CCTitle.hpp"
+#include "FeedNews.hpp"
 
 namespace Ui {
 class MainScreen;

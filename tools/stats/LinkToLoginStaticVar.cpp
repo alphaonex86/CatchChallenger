@@ -1,5 +1,5 @@
 #include "LinkToLogin.h"
-#include "../../general/base/ProtocolVersion.h"
+#include "../../general/base/ProtocolVersion.hpp"
 
 using namespace CatchChallenger;
 
