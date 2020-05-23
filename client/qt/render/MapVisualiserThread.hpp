@@ -11,25 +11,25 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#include "../tiled/tiled_isometricrenderer.h"
-#include "../tiled/tiled_map.h"
-#include "../tiled/tiled_mapobject.h"
-#include "../tiled/tiled_mapreader.h"
-#include "../tiled/tiled_objectgroup.h"
-#include "../tiled/tiled_orthogonalrenderer.h"
-#include "../tiled/tiled_tilelayer.h"
-#include "../tiled/tiled_tileset.h"
-#include "../tiled/tiled_tile.h"
+#include "../tiled/tiled_isometricrenderer.hpp"
+#include "../tiled/tiled_map.hpp"
+#include "../tiled/tiled_mapobject.hpp"
+#include "../tiled/tiled_mapreader.hpp"
+#include "../tiled/tiled_objectgroup.hpp"
+#include "../tiled/tiled_orthogonalrenderer.hpp"
+#include "../tiled/tiled_tilelayer.hpp"
+#include "../tiled/tiled_tileset.hpp"
+#include "../tiled/tiled_tile.hpp"
 
-#include "../../../general/base/GeneralStructures.h"
-#include "../../../general/base/CommonMap.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../client/qt/Map_client.h"
-#include "../DisplayStructures.h"
-#include "../../../general/base/Map_loader.h"
-#include "MapDoor.h"
-#include "TriggerAnimation.h"
-#include "MapVisualiserOrder.h"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/base/CommonMap.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../client/qt/Map_client.hpp"
+#include "../DisplayStructures.hpp"
+#include "../../../general/base/Map_loader.hpp"
+#include "MapDoor.hpp"
+#include "TriggerAnimation.hpp"
+#include "MapVisualiserOrder.hpp"
 
 class MapVisualiserThread
         #ifndef NOTHREADS

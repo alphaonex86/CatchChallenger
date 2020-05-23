@@ -1,10 +1,10 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../client/qt/fight/interface/ClientFightEngine.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/FacilityLib.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLib.hpp"
 #include "MapBrowse.h"
 
 #include <chrono>

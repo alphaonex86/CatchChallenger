@@ -5,9 +5,9 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QTimer>
-#include "CCWidget.h"
-#include "CCprogressbar.h"
-#include "GameLoader.h"
+#include "CCWidget.hpp"
+#include "CCprogressbar.hpp"
+#include "GameLoader.hpp"
 
 namespace Ui {
 class LoadingScreen;

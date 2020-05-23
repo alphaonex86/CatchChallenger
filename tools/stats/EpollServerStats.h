@@ -1,7 +1,7 @@
 #ifndef EPOLLSERVERSTATS_H
 #define EPOLLSERVERSTATS_H
 
-#include "../../server/epoll/EpollUnixSocketServer.h"
+#include "../../server/epoll/EpollUnixSocketServer.hpp"
 
 namespace CatchChallenger {
 class EpollServerStats : public EpollUnixSocketServer

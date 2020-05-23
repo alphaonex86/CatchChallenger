@@ -1,4 +1,4 @@
-#include "MapController.h"
+#include "MapController.hpp"
 #include <QtMath>
 #include <iostream>
 

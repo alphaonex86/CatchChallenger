@@ -1,6 +1,6 @@
 #include "ActionsAction.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/tinyXML2/customtinyxml2.h"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)

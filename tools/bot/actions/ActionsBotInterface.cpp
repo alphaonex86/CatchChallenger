@@ -1,5 +1,5 @@
 #include "ActionsBotInterface.h"
-#include "../../general/base/Version.h"
+#include "../../general/base/Version.hpp"
 #include <iostream>
 
 std::map<CatchChallenger::Api_protocol_Qt  *,ActionsBotInterface::Player> ActionsBotInterface::clientList;
