@@ -1,6 +1,6 @@
 #include "GlobalControler.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/FacilityLibGeneral.h"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
 
 #include <iostream>
 #include <stdlib.h>

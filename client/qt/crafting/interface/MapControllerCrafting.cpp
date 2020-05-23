@@ -1,6 +1,6 @@
-#include "../../render/MapController.h"
-#include "../../../../general/base/CommonDatapack.h"
-#include "../../QtDatapackClientLoader.h"
+#include "../../render/MapController.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../QtDatapackClientLoader.hpp"
 
 
 std::string MapController::mapIdToString(const uint32_t &mapId) const

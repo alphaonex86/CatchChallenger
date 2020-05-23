@@ -32,6 +32,7 @@ class Api_client_real : public Api_protocol_Qt
 public:
     explicit Api_client_real(ConnectedSocket *socket);
     ~Api_client_real();
+    void stateChanged(QAbstractSocket::SocketState socketState) override;
     void resetAll();
     void closeDownload();
 

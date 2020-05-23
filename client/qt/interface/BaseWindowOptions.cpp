@@ -1,8 +1,8 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../Options.h"
+#include "../Options.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../Audio.hpp"
 #endif
 
 using namespace CatchChallenger;

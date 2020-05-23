@@ -1,4 +1,4 @@
-#include "CustomButton.h"
+#include "CustomButton.hpp"
 #include <QPainter>
 #include <QEvent>
 #include <QMouseEvent>

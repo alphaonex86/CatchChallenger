@@ -1,12 +1,12 @@
 #ifndef CATCHCHALLENGER_MAP_CLIENT_H
 #define CATCHCHALLENGER_MAP_CLIENT_H
 
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/GeneralStructuresXml.h"
-#include "../../general/base/GeneralVariable.h"
-#include "ClientStructures.h"
-#include "DisplayStructures.h"
+#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralStructuresXml.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "ClientStructures.hpp"
+#include "DisplayStructures.hpp"
 
 #include <QString>
 #include <QList>

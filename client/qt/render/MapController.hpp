@@ -1,8 +1,8 @@
 #ifndef CATCHCHALLENGER_MAPCONTROLLER_H
 #define CATCHCHALLENGER_MAPCONTROLLER_H
 
-#include "MapControllerMP.h"
-#include "../Api_client_real.h"
+#include "MapControllerMP.hpp"
+#include "../Api_client_real.hpp"
 
 #include <string>
 #include <vector>

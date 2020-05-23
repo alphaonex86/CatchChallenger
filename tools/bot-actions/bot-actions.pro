@@ -2,7 +2,7 @@ DEFINES += CATCHCHALLENGER_NOAUDIO
 
 include(../../general/general.pri)
 include(../../client/qt/client.pri)
-include(../../client/qt/multi.pri)
+#include(../../client/qt/multi.pri)
 include(../bot/actions/Actions.pri)
 
 QT       += core gui xml network sql
@@ -10,6 +10,7 @@ QT += widgets
 
 TARGET = bot-actions
 TEMPLATE = app
+LIBS += -lzstd
 
 DEFINES += BOTACTIONS CATCHCHALLENGER_BOT
 

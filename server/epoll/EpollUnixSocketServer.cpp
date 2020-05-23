@@ -1,6 +1,6 @@
-#include "EpollUnixSocketServer.h"
-#include "EpollSocket.h"
-#include "Epoll.h"
+#include "EpollUnixSocketServer.hpp"
+#include "EpollSocket.hpp"
+#include "Epoll.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>

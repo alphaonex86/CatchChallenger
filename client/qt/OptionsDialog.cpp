@@ -1,4 +1,4 @@
-#include "OptionsDialog.h"
+#include "OptionsDialog.hpp"
 #include "ui_OptionsDialog.h"
 
 OptionsDialog::OptionsDialog(QWidget *parent) :

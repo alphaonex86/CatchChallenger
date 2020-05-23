@@ -1,4 +1,4 @@
-#include "AddServer.h"
+#include "AddServer.hpp"
 #include "ui_AddServer.h"
 
 #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)

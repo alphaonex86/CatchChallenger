@@ -1,6 +1,6 @@
-#include "ScreenTransition.h"
-#include "GameLoader.h"
-#include "../../general/base/Version.h"
+#include "ScreenTransition.hpp"
+#include "GameLoader.hpp"
+#include "../../general/base/Version.hpp"
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
 #endif

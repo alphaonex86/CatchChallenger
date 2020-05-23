@@ -1,8 +1,8 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../LanguagesSelect.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../fight/interface/ClientFightEngine.h"
+#include "../LanguagesSelect.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../fight/interface/ClientFightEngine.hpp"
 
 #include <QDesktopServices>
 #include <QInputDialog>

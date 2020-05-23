@@ -1,16 +1,16 @@
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H
 
-#include "MapItem.h"
-#include "MapObjectItem.h"
-#include "ObjectGroupItem.h"
-#include "MapMark.h"
+#include "MapItem.hpp"
+#include "MapObjectItem.hpp"
+#include "ObjectGroupItem.hpp"
+#include "MapMark.hpp"
 
-#include "../../../general/base/GeneralStructures.h"
-#include "../../../general/base/CommonMap.h"
-#include "../Map_client.h"
-#include "../DisplayStructures.h"
-#include "../../../general/base/Map_loader.h"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/base/CommonMap.hpp"
+#include "../Map_client.hpp"
+#include "../DisplayStructures.hpp"
+#include "../../../general/base/Map_loader.hpp"
 
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
@@ -30,7 +30,7 @@
 #include <QDateTime>
 //#include <QGLWidget>
 
-#include "MapVisualiserThread.h"
+#include "MapVisualiserThread.hpp"
 
 class MapVisualiser : public QGraphicsView
 {

@@ -1,4 +1,4 @@
-#include "MapVisualiser.h"
+#include "MapVisualiser.hpp"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -10,14 +10,14 @@
 #include <QPointer>
 #include <iostream>
 
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../../../general/base/FacilityLibGeneral.h"
-#include "../../../general/base/MoveOnTheMap.h"
-#include "../tiled/tiled_tile.h"
-#include "../../../general/base/CommonMap.h"
-#include "../ClientVariable.h"
-#include "../FacilityLibClient.h"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../tiled/tiled_tile.hpp"
+#include "../../../general/base/CommonMap.hpp"
+#include "../ClientVariable.hpp"
+#include "../FacilityLibClient.hpp"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(Map_full *map)

@@ -1,10 +1,10 @@
-#include "MainScreen.h"
+#include "MainScreen.hpp"
 #include "ui_MainScreen.h"
-#include "InternetUpdater.h"
-#include "FeedNews.h"
+#include "InternetUpdater.hpp"
+#include "FeedNews.hpp"
 #include <iostream>
 #include <QDesktopServices>
-#include "Settings.h"
+#include "Settings.hpp"
 #include <QScreen>
 
 MainScreen::MainScreen(QWidget *parent) :
@@ -51,7 +51,7 @@ MainScreen::MainScreen(QWidget *parent) :
     verticalLayoutNews = new QHBoxLayout(news);
     verticalLayoutNews->setSpacing(6);
     newsText=new QLabel(news);
-    newsText->setText(Settings::settings.value("news").toString());
+    newsText->setText(Settings::settings->value("news").toString());
     newsText->setOpenExternalLinks(true);
     newsWait=new QLabel(news);
     newsWait->setPixmap(QPixmap(":/CC/images/multi/busy.png"));
@@ -245,7 +245,7 @@ void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
         }
         return;
     }
-    if(entryList.size()==1)
+    /*if(entryList.size()==1)
         newsText->setText(tr("Latest news:")+" "+QStringLiteral("<a href=\"%1\">%2</a>")
                           .arg(QString::fromStdString(entryList.at(0).link))
                           .arg(QString::fromStdString(entryList.at(0).title)));
@@ -261,8 +261,8 @@ void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
             index++;
         }
         newsText->setText(tr("Latest news:")+QStringLiteral("<br />")+entryHtmlList.join("<br />"));
-    }
-    Settings::settings.setValue("news",newsText->text());
+    }*/
+    Settings::settings->setValue("news",newsText->text());
     newsText->setStyleSheet("#news{background-color:rgb(220,220,240);border:1px solid rgb(100,150,240);border-radius:5px;color:rgb(0,0,0);}");
     newsText->setVisible(true);
 }

@@ -1,6 +1,6 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonSettingsServer.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../Audio.h"
 #endif

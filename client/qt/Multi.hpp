@@ -9,7 +9,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QVBoxLayout>
-#include "CCWidget.h"
+#include "CCWidget.hpp"
 
 class ListEntryEnvolued;
 class AddOrEditServer;

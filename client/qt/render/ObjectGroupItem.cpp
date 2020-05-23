@@ -1,5 +1,5 @@
-#include "ObjectGroupItem.h"
-#include "MapObjectItem.h"
+#include "ObjectGroupItem.hpp"
+#include "MapObjectItem.hpp"
 
 #include <QDebug>
 #include <QtCore/qmath.h>

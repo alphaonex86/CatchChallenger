@@ -1,16 +1,16 @@
-#include "MapObjectItem.h"
-#include "ObjectGroupItem.h"
-#include "TileLayerItem.h"
+#include "MapObjectItem.hpp"
+#include "ObjectGroupItem.hpp"
+#include "TileLayerItem.hpp"
 
-#include "../tiled/tiled_isometricrenderer.h"
-#include "../tiled/tiled_map.h"
-#include "../tiled/tiled_mapobject.h"
-#include "../tiled/tiled_mapreader.h"
-#include "../tiled/tiled_objectgroup.h"
-#include "../tiled/tiled_orthogonalrenderer.h"
-#include "../tiled/tiled_tilelayer.h"
-#include "../tiled/tiled_tileset.h"
-#include "MapVisualiserThread.h"
+#include "../tiled/tiled_isometricrenderer.hpp"
+#include "../tiled/tiled_map.hpp"
+#include "../tiled/tiled_mapobject.hpp"
+#include "../tiled/tiled_mapreader.hpp"
+#include "../tiled/tiled_objectgroup.hpp"
+#include "../tiled/tiled_orthogonalrenderer.hpp"
+#include "../tiled/tiled_tilelayer.hpp"
+#include "../tiled/tiled_tileset.hpp"
+#include "MapVisualiserThread.hpp"
 
 #ifndef MAPITEM_H
 #define MAPITEM_H

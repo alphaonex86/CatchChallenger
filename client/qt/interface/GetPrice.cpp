@@ -1,4 +1,4 @@
-#include "GetPrice.h"
+#include "GetPrice.hpp"
 #include "ui_GetPrice.h"
 
 GetPrice::GetPrice(QWidget *parent, uint32_t suggestedPrice) :

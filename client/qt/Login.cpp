@@ -1,6 +1,6 @@
-#include "Login.h"
+#include "Login.hpp"
 #include "ui_Login.h"
-#include "BlacklistPassword.h"
+#include "BlacklistPassword.hpp"
 
 Login::Login(QWidget *parent) :
     QDialog(parent),

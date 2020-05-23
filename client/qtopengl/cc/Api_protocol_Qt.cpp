@@ -68,6 +68,8 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         if(socket->bytesAvailable())
             parseIncommingData();
     }
+    if(!connect(socket,&ConnectedSocket::stateChanged,    this,&Api_protocol_Qt::stateChanged,Qt::QueuedConnection))//Qt::QueuedConnection mandatory, Qt::DirectConnection do wrong order call problem (disconnect before set stage 2 + new token to go on game server)
+        abort();
 
     fightEngine=new ClientFightEngine();
     if(!connect(fightEngine,&ClientFightEngine::newError,  this,&Api_protocol_Qt::newError))
@@ -86,6 +88,21 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
 Api_protocol_Qt::~Api_protocol_Qt()
 {
     delete fightEngine;
+}
+
+void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
+{
+    std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
+    if(socketState==QAbstractSocket::UnconnectedState)
+    {
+        std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL, client->stage(): " << stage() << std::endl;
+        if(stage()==StageConnexion::Stage2 || stage()==StageConnexion::Stage3)
+        {
+            std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
+            socketDisconnectedForReconnect();//need by call after closeSocket() because it call the reconnection
+            return;
+        }
+    }
 }
 
 void Api_protocol_Qt::errorFromFightEngine(const std::string &error)

@@ -1,5 +1,5 @@
 #include "ActionsAction.h"
-#include "../../general/base/CommonDatapack.h"
+#include "../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
 void ActionsAction::showTip(const QString &text)

@@ -18,10 +18,20 @@ Settings::Settings()
 void Settings::init()
 {
     #ifndef Q_OS_ANDROID
-    const QString settingsPath=QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
-    std::cout << settingsPath.toStdString() << std::endl;
-    Settings::settings=new QSettings(settingsPath,QSettings::NativeFormat);
+        #ifdef Q_OS_WIN32
+            Settings::settings=new QSettings();
+        #else
+            #ifdef Q_OS_LINUX
+            /*const QString settingsPath=QStandardPaths::standardLocations(QStandardPaths::DataLocation).first()+"/config.ini";
+            std::cout << settingsPath.toStdString() << std::endl;
+            Settings::settings=new QSettings(settingsPath,QSettings::NativeFormat);*/
+            //use default for now:
+            Settings::settings=new QSettings();
+            #else
+            Settings::settings=new QSettings();
+            #endif
+        #endif
     #else
-    Settings::settings=new QSettings();
+        Settings::settings=new QSettings();
     #endif
 }

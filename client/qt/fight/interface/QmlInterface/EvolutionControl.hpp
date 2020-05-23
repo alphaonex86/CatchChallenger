@@ -3,8 +3,8 @@
 
 #include <QObject>
 #include <QString>
-#include "../../../../../general/base/CommonDatapack.h"
-#include "../../../QtDatapackClientLoader.h"
+#include "../../../../../general/base/CommonDatapack.hpp"
+#include "../../../QtDatapackClientLoader.hpp"
 
 class EvolutionControl : public QObject
 {

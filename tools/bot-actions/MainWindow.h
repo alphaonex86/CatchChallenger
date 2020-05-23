@@ -14,7 +14,7 @@
 #include <QTreeWidgetItem>
 
 #include "MultipleBotConnectionAction.h"
-#include "../../client/qt/ClientStructures.h"
+#include "../../client/qt/ClientStructures.hpp"
 #include "BotTargetList.h"
 #include "SocialChat.h"
 

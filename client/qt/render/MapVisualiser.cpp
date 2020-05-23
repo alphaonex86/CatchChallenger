@@ -1,4 +1,4 @@
-#include "MapVisualiser.h"
+#include "MapVisualiser.hpp"
 
 #include <QCoreApplication>
 #include <QGraphicsItem>
@@ -14,7 +14,7 @@
 #include <QLabel>
 #include <QPixmapCache>
 
-#include "../../../general/base/MoveOnTheMap.h"
+#include "../../../general/base/MoveOnTheMap.hpp"
 
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &openGL) :
     mScene(new QGraphicsScene(this)),

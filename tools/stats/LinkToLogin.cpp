@@ -1,8 +1,8 @@
 #include "LinkToLogin.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/cpp11addition.h"
-#include "../../server/epoll/Epoll.h"
-#include "../../server/epoll/EpollSocket.h"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../server/epoll/Epoll.hpp"
+#include "../../server/epoll/EpollSocket.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>

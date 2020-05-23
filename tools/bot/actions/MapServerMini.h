@@ -11,8 +11,8 @@
 #include <QList>
 #include <QtGui/QColor>
 
-#include "../../general/base/CommonMap.h"
-#include "../../client/qt/Api_protocol_Qt.h"
+#include "../../general/base/CommonMap.hpp"
+#include "../../client/qt/Api_protocol_Qt.hpp"
 
 class MapServerMini : public CatchChallenger::CommonMap
 {

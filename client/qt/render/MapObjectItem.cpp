@@ -1,4 +1,4 @@
-#include "MapObjectItem.h"
+#include "MapObjectItem.hpp"
 
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;

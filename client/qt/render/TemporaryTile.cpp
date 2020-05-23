@@ -1,4 +1,4 @@
-#include "TemporaryTile.h"
+#include "TemporaryTile.hpp"
 
 #include <QApplication>
 #include <QDebug>

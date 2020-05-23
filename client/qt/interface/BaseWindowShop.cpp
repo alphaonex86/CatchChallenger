@@ -1,7 +1,7 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../QtDatapackClientLoader.h"
-#include "../../../general/base/CommonDatapack.h"
+#include "../QtDatapackClientLoader.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 
 #include <QInputDialog>
 

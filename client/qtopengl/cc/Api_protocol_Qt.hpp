@@ -15,6 +15,7 @@ class Api_protocol_Qt : public QObject, public Api_protocol
 public:
     explicit Api_protocol_Qt(ConnectedSocket *socket);
     ~Api_protocol_Qt();
+    virtual void stateChanged(QAbstractSocket::SocketState socketState);
     bool disconnectClient() override;
 
     ClientFightEngine *fightEngine;

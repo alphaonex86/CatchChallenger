@@ -1,8 +1,8 @@
 #include "SocialChat.h"
 #include "ui_SocialChat.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../client/qt/Api_client_real.h"
-#include "../../general/base/ChatParsing.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/qt/Api_client_real.hpp"
+#include "../../client/qt/ChatParsing.hpp"
 #include "DatabaseBot.h"
 
 #include <QListWidget>

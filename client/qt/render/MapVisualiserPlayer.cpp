@@ -1,12 +1,12 @@
-#include "MapVisualiserPlayer.h"
+#include "MapVisualiserPlayer.hpp"
 
-#include "../../../general/base/MoveOnTheMap.h"
-#include "../../../general/base/CommonDatapack.h"
-#include "../../../general/base/CommonDatapackServerSpec.h"
-#include "../../../general/base/CommonSettingsCommon.h"
-#include "../../../general/base/CommonSettingsServer.h"
-#include "../QtDatapackClientLoader.h"
-#include "../../../general/base/GeneralVariable.h"
+#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../QtDatapackClientLoader.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
 
 #include <qmath.h>
 #include <QFileInfo>

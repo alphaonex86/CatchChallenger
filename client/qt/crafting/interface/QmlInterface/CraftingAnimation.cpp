@@ -1,4 +1,4 @@
-#include "CraftingAnimation.h"
+#include "CraftingAnimation.hpp"
 
 CraftingAnimation::CraftingAnimation(const QStringList &mIngredients,
                                      const QString &mRecipe,

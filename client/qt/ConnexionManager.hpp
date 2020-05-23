@@ -2,9 +2,9 @@
 #define CONNEXIONMANAGER_H
 
 #include <QObject>
-#include "Multi.h"
-#include "ConnectedSocket.h"
-#include "interface/BaseWindow.h"
+#include "Multi.hpp"
+#include "ConnectedSocket.hpp"
+#include "interface/BaseWindow.hpp"
 
 class LoadingScreen;
 

@@ -1,11 +1,11 @@
 #include "ActionsAction.h"
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonDatapack.h"
-#include "../../general/base/CommonDatapackServerSpec.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../client/qt/fight/interface/ClientFightEngine.h"
-#include "../../client/qt/Api_client_real.h"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../client/qt/Api_client_real.hpp"
 #include "../bot-actions/BotTargetList.h"
 #include <iostream>
 

@@ -1,4 +1,4 @@
-#include "PathFinding.h"
+#include "PathFinding.hpp"
 #include <QMutexLocker>
 #include <QTime>
 #include <iostream>

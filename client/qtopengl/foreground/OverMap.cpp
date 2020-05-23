@@ -214,7 +214,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
         y-=3+chatBack->height();
         chatBack->setPos(space,y);
-        chatText->setVisible(physicalDpiX<250);
+        chatText->setVisible(physicalDpiX<200);
         chatText->setPos(space+space,y+space);
     }
 
@@ -226,7 +226,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int buyX=x-buy->width();
         buy->setPos(buyX,w->height()-space-buy->height());
         x-=buy->width()+space;
-        buyOver->setVisible(physicalDpiX<250);
+        buyOver->setVisible(physicalDpiX<200);
         buyOver->setPixelSize(18);
         buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
     }
@@ -235,7 +235,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         unsigned int bagX=x-bag->width();
         bag->setPos(bagX,w->height()-space-bag->height());
         x-=bag->width()+space;
-        bagOver->setVisible(physicalDpiX<250);
+        bagOver->setVisible(physicalDpiX<200);
         bagOver->setPixelSize(18);
         bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
     }

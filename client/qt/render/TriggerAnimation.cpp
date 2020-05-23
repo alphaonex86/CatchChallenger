@@ -1,4 +1,4 @@
-#include "TriggerAnimation.h"
+#include "TriggerAnimation.hpp"
 
 #include <QApplication>
 
