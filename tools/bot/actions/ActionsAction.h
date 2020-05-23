@@ -7,8 +7,8 @@
 #define ACTIONS_ACTION_BOT_INTERFACE_H
 
 #include "ActionsBotInterface.h"
-#include "../../general/base/CommonMap.h"
-#include "../../general/base/Map_loader.h"
+#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/Map_loader.hpp"
 #include "../bot/actions/MapServerMini.h"
 
 #include <QTimer>

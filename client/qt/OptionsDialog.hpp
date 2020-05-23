@@ -2,7 +2,7 @@
 #define OPTIONSDIALOG_H
 
 #include <QWidget>
-#include "CCWidget.h"
+#include "CCWidget.hpp"
 
 namespace Ui {
 class OptionsDialog;

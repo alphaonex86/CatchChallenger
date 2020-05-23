@@ -1,9 +1,9 @@
 #ifndef CATCHCHALLENGER_MAPCONTROLLERMP_H
 #define CATCHCHALLENGER_MAPCONTROLLERMP_H
 
-#include "../fight/interface/MapVisualiserPlayerWithFight.h"
-#include "../Api_client_real.h"
-#include "PathFinding.h"
+#include "../fight/interface/MapVisualiserPlayerWithFight.hpp"
+#include "../Api_client_real.hpp"
+#include "PathFinding.hpp"
 
 #include <string>
 #include <vector>

@@ -1,12 +1,12 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../client/qt/FacilityLibClient.h"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../client/qt/FacilityLibClient.hpp"
 #include "../bot/actions/ActionsAction.h"
-#include "../../client/qt/QtDatapackClientLoader.h"
-#include "../../client/qt/LanguagesSelect.h"
+#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/qt/LanguagesSelect.hpp"
 
 #include <QNetworkProxy>
 #include <QMessageBox>

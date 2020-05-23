@@ -83,28 +83,74 @@
 #define DATAPACK_BASE_PATH_SHOP1 "map/main/"
 #define DATAPACK_BASE_PATH_SHOP2 "/shop/"
 
-#if defined(__linux__) || defined(__CYGWIN__)
-    #include <byteswap.h>
-    #include <endian.h>
-    #ifdef __BYTE_ORDER
-      #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
-        #define be16toh(a) a
-        #define be32toh(a) a
-        #define be64toh(a) a
-        #define htobe16(a) a
-        #define htobe32(a) a
-        #define htobe64(a) a
-      #elif __BYTE_ORDER == __LITTLE_ENDIAN
-      #elif __BYTE_ORDER == __PDP_ENDIAN
-      #else
-        #error "Endian determination failed"
-      #endif
+#if defined(__WIN32__)
+    #include <winsock2.h>
+    #include <sys/param.h>
+
+    #	if BYTE_ORDER == LITTLE_ENDIAN
+
+    #define htobe16(x) htons(x)
+    #define htole16(x) (x)
+    #define be16toh(x) ntohs(x)
+    #define le16toh(x) (x)
+
+    #define htobe32(x) htonl(x)
+    #define htole32(x) (x)
+    #define be32toh(x) ntohl(x)
+    #define le32toh(x) (x)
+
+    #define htobe64(x) htonll(x)
+    #define htole64(x) (x)
+    #define be64toh(x) ntohll(x)
+    #define le64toh(x) (x)
+
+    #elif BYTE_ORDER == BIG_ENDIAN
+
+    /* that would be xbox 360 */
+    #define htobe16(x) (x)
+    #define htole16(x) __builtin_bswap16(x)
+    #define be16toh(x) (x)
+    #define le16toh(x) __builtin_bswap16(x)
+
+    #define htobe32(x) (x)
+    #define htole32(x) __builtin_bswap32(x)
+    #define be32toh(x) (x)
+    #define le32toh(x) __builtin_bswap32(x)
+
+    #define htobe64(x) (x)
+    #define htole64(x) __builtin_bswap64(x)
+    #define be64toh(x) (x)
+    #define le64toh(x) __builtin_bswap64(x)
+
     #else
-      #error "Endian determination failed"
+
+    #error byte order not supported
+
     #endif
 #else
-    #include <byteswap.h>
-    #include <endian.h>
+    #if defined(__linux__) || defined(__CYGWIN__)
+        #include <byteswap.h>
+        #include <endian.h>
+        #ifdef __BYTE_ORDER
+        #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
+            #define be16toh(a) a
+            #define be32toh(a) a
+            #define be64toh(a) a
+            #define htobe16(a) a
+            #define htobe32(a) a
+            #define htobe64(a) a
+        #elif __BYTE_ORDER == __LITTLE_ENDIAN
+        #elif __BYTE_ORDER == __PDP_ENDIAN
+        #else
+            #error "Endian determination failed"
+        #endif
+        #else
+        #error "Endian determination failed"
+        #endif
+    #else
+        #include <byteswap.h>
+        #include <endian.h>
+    #endif
 #endif
 
 //#define CATCHCHALLENGER_GITCOMMIT "GITCOMMITXXXXXXXXXX"

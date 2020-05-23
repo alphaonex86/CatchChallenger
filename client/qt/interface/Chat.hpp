@@ -1,9 +1,9 @@
 #ifndef CHAT_H
 #define CHAT_H
 
-#include "../../../general/base/ChatParsing.h"
-#include "../../../general/base/GeneralStructures.h"
-#include "../Api_protocol_Qt.h"
+#include "../ChatParsing.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../Api_protocol_Qt.hpp"
 
 #include <QWidget>
 #include <QTimer>

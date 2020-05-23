@@ -1,8 +1,8 @@
-#include "BaseWindow.h"
+#include "BaseWindow.hpp"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../QtDatapackClientLoader.h"
-#include "../FacilityLibClient.h"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../QtDatapackClientLoader.hpp"
+#include "../FacilityLibClient.hpp"
 
 #include <QInputDialog>
 

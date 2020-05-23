@@ -1,5 +1,5 @@
 #include "SimpleAction.h"
-#include "../../general/base/CommonSettingsServer.h"
+#include "../../general/base/CommonSettingsServer.hpp"
 
 SimpleAction::SimpleAction()
 {

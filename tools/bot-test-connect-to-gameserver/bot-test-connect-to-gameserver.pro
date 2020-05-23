@@ -1,5 +1,6 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
+LIBS += -lzstd
 include(../../general/general.pri)
 include(../bot/simple/Simple.pri)
 
@@ -44,30 +45,30 @@ HEADERS  += \
     ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h \
     GlobalControler.h \
-    ../../client/qt/Api_client_real.h \
-    ../../client/qt/Api_client_virtual.h \
-    ../../client/libcatchchallenger/Api_protocol.h \
-    ../../client/qt/ClientVariable.h \
-    ../../client/qt/QZstdDecodeThread.h \
-    ../../client/tarcompressed/TarDecode.h \
-    ../../client/tarcompressed/ZstdDecode.h \
-    ../../client/qt/QtDatapackChecksum.h \
-    ../../client/qt/FacilityLibClient.h \
-    ../../client/qt/Api_protocol_Qt.h \
-    ../../client/qt/ConnectedSocket.h \
-    ../../client/libcatchchallenger/DatapackChecksum.h \
-    ../../client/libcatchchallenger/DatapackClientLoader.h \
-    ../../client/qt/ClientVariableAudio.h \
-    ../../client/libcatchchallenger/ClientStructures.h \
-    ../../client/qt/QFakeServer.h \
-    ../../client/qt/QFakeSocket.h
+    ../../client/qt/Api_client_real.hpp \
+    ../../client/qt/Api_client_virtual.hpp \
+    ../../client/libcatchchallenger/Api_protocol.hpp \
+    ../../client/qt/ClientVariable.hpp \
+    ../../client/qt/QZstdDecodeThread.hpp \
+    ../../client/tarcompressed/TarDecode.hpp \
+    ../../client/tarcompressed/ZstdDecode.hpp \
+    ../../client/qt/QtDatapackChecksum.hpp \
+    ../../client/qt/FacilityLibClient.hpp \
+    ../../client/qt/Api_protocol_Qt.hpp \
+    ../../client/qt/ConnectedSocket.hpp \
+    ../../client/libcatchchallenger/DatapackChecksum.hpp \
+    ../../client/libcatchchallenger/DatapackClientLoader.hpp \
+    ../../client/qt/ClientVariableAudio.hpp \
+    ../../client/libcatchchallenger/ClientStructures.hpp \
+    ../../client/qt/QFakeServer.hpp \
+    ../../client/qt/QFakeSocket.hpp
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
+HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp

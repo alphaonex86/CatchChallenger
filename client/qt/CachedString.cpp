@@ -1,5 +1,5 @@
 #if defined(CATCHCHALLENGER_CLIENT)
-#include "CachedString.h"
+#include "CachedString.hpp"
 
 CachedString *CachedString::cachedString=new CachedString();
 
