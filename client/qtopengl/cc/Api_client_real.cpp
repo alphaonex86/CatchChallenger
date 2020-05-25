@@ -340,6 +340,9 @@ void Api_client_real::defineMaxPlayers(const uint16_t &maxPlayers)
 
 void Api_client_real::resetAll()
 {
+    cacheRemovedBase=false;
+    cacheRemovedMain=false;
+    cacheRemovedSub=false;
     httpModeBase=false;
     httpModeMain=false;
     httpModeSub=false;
@@ -352,6 +355,9 @@ void Api_client_real::resetAll()
     urlInWaitingListBase.clear();
     urlInWaitingListMain.clear();
     urlInWaitingListSub.clear();
+    mDatapackBaseCache.clear();
+    mDatapackMainCache.clear();
+    mDatapackSubCache.clear();
     wait_datapack_content_base=false;
     wait_datapack_content_main=false;
     wait_datapack_content_sub=false;

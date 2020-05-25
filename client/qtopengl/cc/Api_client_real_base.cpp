@@ -14,6 +14,12 @@ using namespace CatchChallenger;
 #include <QNetworkReply>
 #include <QDataStream>
 #include <QDebug>
+#include <QStandardPaths>
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include <filesystem>
+#include <QDir>
+#include <QDirIterator>
+#endif
 
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
@@ -59,6 +65,18 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
         utimbuf butime;butime.actime=h;butime.modtime=h;
         utime(fullPath.c_str(),&butime);
     }
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(!mDatapackBaseCache.empty() && !cacheRemovedBase)
+    {
+        cacheRemovedBase=true;
+        const QString &path=QString::fromStdString(mDatapackBaseCache);
+        QDir dir(path);
+        QDirIterator it(dir, QDirIterator::Subdirectories);
+        while (it.hasNext())
+            QFile(it.next()).remove();
+        dir.rmpath(path);
+    }
+    #endif
 
     //send size
     {
@@ -705,6 +723,20 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
         }
         QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)=values.join(Api_client_real::text_dotcoma);
     }
+#ifdef CATCHCHALLENGER_CACHE_HPS
+    {
+        cacheRemovedBase=false;
+        QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+        if(!l.empty())
+        {
+            std::string b=datapackPathBase();
+            if(stringEndsWith(b,"/"))
+                b=b.substr(0,b.size()-1);
+            b+="-cache/";
+            mDatapackBaseCache=b;
+        }
+    }
+#endif
 
     datapackTarBase=false;
     wait_datapack_content_base=true;

@@ -16,6 +16,8 @@
 
 void QtDatapackClientLoader::parseMonstersExtra()
 {
+    uint64_t imagens=0;
+    auto start_time = std::chrono::high_resolution_clock::now();
     QDir dir(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MONSTERS);
     QFileInfoList fileList=dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
     int file_index=0;
@@ -212,6 +214,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.name=tr("Unknown").toStdString();
                         if(monsterExtraEntry.description.empty())
                             monsterExtraEntry.description=tr("Unknown").toStdString();
+                        auto start_time2 = std::chrono::high_resolution_clock::now();
                         monsterExtraEntry.frontPath=basepath+"/front.png";
                         QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
                         if(QtmonsterExtraEntry.front.isNull())
@@ -246,6 +249,9 @@ void QtDatapackClientLoader::parseMonstersExtra()
                         QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
                         QtDatapackClientLoader::datapackLoader->monsterExtra[id]=monsterExtraEntry;
                         QtDatapackClientLoader::datapackLoader->QtmonsterExtra[id]=QtmonsterExtraEntry;
+                        auto end_time2 = std::chrono::high_resolution_clock::now();
+                        auto time2 = end_time2 - start_time2;
+                        imagens+=time2/std::chrono::nanoseconds(1);
                     }
                 }
             }
@@ -258,6 +264,7 @@ void QtDatapackClientLoader::parseMonstersExtra()
         file_index++;
     }
 
+    auto start_time2 = std::chrono::high_resolution_clock::now();
     auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
     while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
     {
@@ -278,8 +285,14 @@ void QtDatapackClientLoader::parseMonstersExtra()
         }
         ++i;
     }
+    auto end_time2 = std::chrono::high_resolution_clock::now();
+    auto time2 = end_time2 - start_time2;
+    imagens+=time2/std::chrono::nanoseconds(1);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto time = end_time - start_time;
 
-    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterExtra.size());
+    qDebug() << QStringLiteral("%1 monster(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->monsterExtra.size()) << "into" << time/std::chrono::milliseconds(1)-imagens/1000000
+             << "ms/" << imagens/1000000 << "ms";
 }
 
 

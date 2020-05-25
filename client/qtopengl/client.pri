@@ -320,7 +320,9 @@ SOURCES += \
     $$PWD/CustomText.cpp \
     $$PWD/foreground/widgets/MapMonsterPreview.cpp \
     $$PWD/ChatParsing.cpp \
-    $$PWD/ImagesStrechMiddle.cpp
+    $$PWD/ImagesStrechMiddle.cpp \
+    $$PWD/MyApplication.cpp \
+    $$PWD/above/DebugDialog.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -400,7 +402,9 @@ HEADERS  += \
     $$PWD/CustomText.hpp \
     $$PWD/foreground/widgets/MapMonsterPreview.hpp \
     $$PWD/ChatParsing.hpp \
-    $$PWD/ImagesStrechMiddle.hpp
+    $$PWD/ImagesStrechMiddle.hpp \
+    $$PWD/MyApplication.h \
+    $$PWD/above/DebugDialog.hpp
 
 
 wasm: {
@@ -447,8 +451,6 @@ SOURCES += \
     $$PWD/../tarcompressed/TarDecode.cpp \
     $$PWD/../tarcompressed/ZstdDecode.cpp \
     $$PWD/../qt/fight/interface/ClientFightEngine.cpp \
-    $$PWD/../qt/fight/interface/DatapackClientLoaderFight.cpp \
-    $$PWD/../qt/crafting/interface/DatapackClientLoaderCrafting.cpp \
     $$PWD/../qt/Ultimate.cpp \
     $$PWD/../qt/GameLoaderThread.cpp \
     $$PWD/../qt/ExtraSocket.cpp \
