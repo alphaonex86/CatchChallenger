@@ -35,6 +35,7 @@ private:
     CustomButton *options;
     CustomButton *facebook;
     CustomButton *website;
+    CustomButton *debug;
     ImagesStrechMiddle *news;
     //QGraphicsTextItem *newsText;
     CCGraphicsTextItem *newsText;
@@ -66,6 +67,7 @@ protected:
     void openUpdate();
 signals:
     void goToOptions();
+    void goToDebug();
     void goToSolo();
     void goToMulti();
 };

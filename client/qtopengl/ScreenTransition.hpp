@@ -9,6 +9,7 @@
 #include "../../general/base/GeneralStructures.hpp"
 
 class OptionsDialog;
+class DebugDialog;
 class MainScreen;
 class Multi;
 class Login;
@@ -37,6 +38,7 @@ protected:
 //    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void toMainScreen();
     void openOptions();
+    void openDebug();
     void openSolo();
     void openMulti();
     void backMain();
@@ -68,6 +70,7 @@ private:
     ScreenInput *m_foregroundStack;
     ScreenInput *m_aboveStack;
     OptionsDialog *o;
+    DebugDialog *d;
     MainScreen *m;
     //Solo *solo;
     Multi *multi;

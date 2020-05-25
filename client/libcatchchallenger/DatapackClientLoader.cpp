@@ -10,8 +10,13 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/DatapackGeneralLoader.hpp"
 #include "../../general/base/Map_loader.hpp"
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include "../../general/hps/hps.h"
+#include <fstream>
+#endif
 #include <sys/stat.h>
 #include <iostream>
+#include <chrono>
 
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN;
 std::string DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1 "na" DATAPACK_BASE_PATH_MAPSUB2;
@@ -43,18 +48,21 @@ bool DatapackClientLoader::isParsingDatapack() const
     return inProgress;
 }
 
-void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
+void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const std::string &cacheHash,const std::string &language)
 {
     if(inProgress)
     {
         std::cerr << "already in progress" << std::endl;
         return;
     }
-    inProgress=true;
 
     if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
     {
-        const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
+        std::vector<char> hash;
+        if(!cacheHash.empty())
+            hash=std::vector<char>(cacheHash.begin(),cacheHash.end());
+        else
+            hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
         if(hash.empty())
         {
             std::cerr << "DatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
@@ -78,8 +86,15 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
     #ifndef BOTTESTCONNECT
+    auto start_time = std::chrono::high_resolution_clock::now();
     CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath);
-    language="en";
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto time = end_time - start_time;
+    std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
+
+    auto start_time2 = std::chrono::high_resolution_clock::now();
+    this->language=language;
     parseVisualCategory();
     parseTypesExtra();
     parseItemsExtra();
@@ -87,13 +102,16 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath)
     parseSkillsExtra();
     parseAudioAmbiance();
     parseReputationExtra();
+    auto end_time2 = std::chrono::high_resolution_clock::now();
+    auto time2 = end_time2 - start_time2;
+    std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took " << time2/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
     #endif
     /*do into child class
      * inProgress=false;
     emitdatapackParsed();*/
 }
 
-void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
+void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain, const std::string &cacheHashBase)
 {
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+"/";
     DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=DATAPACK_BASE_PATH_MAPSUB1+mainDatapackCode+DATAPACK_BASE_PATH_MAPSUB2+subDatapackCode+"/";
@@ -110,7 +128,11 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     if(!CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
     {
         {
-            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN));
+            std::vector<char> hash;
+            if(!cacheHashMain.empty())
+                hash=std::vector<char>(cacheHashMain.begin(),cacheHashMain.end());
+            else
+                hash=CatchChallenger::DatapackChecksum::doChecksumMain((datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN));
             if(hash.empty())
             {
                 std::cerr << "DatapackClientLoader::parseDatapackMainSub(): hash is empty" << std::endl;
@@ -131,8 +153,12 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
         }
         if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
         {
-            const std::vector<char> &hash=CatchChallenger::DatapackChecksum::doChecksumSub(
-                        (datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB));
+            std::vector<char> hash;
+            if(!cacheHashBase.empty())
+                hash=std::vector<char>(cacheHashBase.begin(),cacheHashBase.end());
+            else
+                hash=CatchChallenger::DatapackChecksum::doChecksumSub(
+                            (datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB));
             if(hash.empty())
             {
                 std::cerr << "DatapackClientLoader::parseDatapackSub(): hash is empty" << std::endl;

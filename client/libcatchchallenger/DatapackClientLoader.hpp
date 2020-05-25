@@ -16,16 +16,38 @@ public:
     void resetAll();
 
     //static items
-    struct ItemExtra
+    class ItemExtra
     {
+    public:
         std::string imagePath;
         std::string name;
         std::string description;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << imagePath << name << description;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> imagePath >> name >> description;
+        }
+        #endif
     };
-    struct ReputationExtra
+    class ReputationExtra
     {
+    public:
         std::string name;
         std::vector<std::string> reputation_positive,reputation_negative;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << name << reputation_positive << reputation_negative;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> name >> reputation_positive >> reputation_negative;
+        }
+        #endif
     };
 
     enum QuestCondition
@@ -66,48 +88,125 @@ public:
         std::string start;
         std::string win;
     };
-    struct MonsterExtra
+    class MonsterExtra
     {
+    public:
         std::string name;
         std::string description;
         std::string kind;
         std::string habitat;
-        struct Buff
-        {
-            std::string name;
-            std::string description;
-        };
-        struct Skill
-        {
-            std::string name;
-            std::string description;
-        };
         std::string frontPath,backPath;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << name << description << kind << habitat << frontPath << backPath;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> name >> description >> kind >> habitat >> frontPath >> backPath;
+        }
+        #endif
+        class Buff
+        {
+        public:
+            std::string name;
+            std::string description;
+            #ifdef CATCHCHALLENGER_CACHE_HPS
+            template <class B>
+            void serialize(B& buf) const {
+                buf << name << description;
+            }
+            template <class B>
+            void parse(B& buf) {
+                buf >> name >> description;
+            }
+            #endif
+        };
+        class Skill
+        {
+        public:
+            std::string name;
+            std::string description;
+            #ifdef CATCHCHALLENGER_CACHE_HPS
+            template <class B>
+            void serialize(B& buf) const {
+                buf << name << description;
+            }
+            template <class B>
+            void parse(B& buf) {
+                buf >> name >> description;
+            }
+            #endif
+        };
     };
     struct ProfileText
     {
         std::string name;
         std::string description;
     };
-    struct CCColor
+    class CCColor
     {
+    public:
         int r,g,b,a;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << r << g << b << a;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> r >> g >> b >> a;
+        }
+        #endif
     };
-    struct VisualCategory
+    class VisualCategory
     {
+    public:
         CCColor defaultColor;
-        struct VisualCategoryCondition
+        class VisualCategoryCondition
         {
+        public:
             uint8_t event;
             uint8_t eventValue;
             CCColor color;
+            #ifdef CATCHCHALLENGER_CACHE_HPS
+            template <class B>
+            void serialize(B& buf) const {
+                buf << event << eventValue << color;
+            }
+            template <class B>
+            void parse(B& buf) {
+                buf >> event >> eventValue >> color;
+            }
+            #endif
         };
         std::vector<VisualCategoryCondition> conditions;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << defaultColor << conditions;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> defaultColor >> conditions;
+        }
+        #endif
     };
-    struct TypeExtra
+    class TypeExtra
     {
+    public:
         std::string name;
         CCColor color;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << name << color;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> name >> color;
+        }
+        #endif
     };
     struct PlantIndexContent
     {
@@ -143,14 +242,16 @@ public:
     std::string getMainDatapackPath() const;
     std::string getSubDatapackPath() const;
 public:
-    void parseDatapack(const std::string &datapackPath);
-    void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode);
+    void parseDatapack(const std::string &datapackPath, const std::string &cacheHash=std::string(), const std::string &language="en");
+    void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
 protected:
     bool inProgress;
     std::string datapackPath;
     std::string mainDatapackCode;
     std::string subDatapackCode;
+    static std::string text_DATAPACK_BASE_PATH_MAPMAIN;
+    static std::string text_DATAPACK_BASE_PATH_MAPSUB;
 
     //virtual void parsePlantsExtra();
     virtual void parseItemsExtra();
@@ -175,8 +276,6 @@ private:
     void parseAudioAmbiance();
     void parseZoneExtra();
     void parseReputationExtra();
-    static std::string text_DATAPACK_BASE_PATH_MAPMAIN;
-    static std::string text_DATAPACK_BASE_PATH_MAPSUB;
 };
 
 #endif // DATAPACKCLIENTLOADER_H

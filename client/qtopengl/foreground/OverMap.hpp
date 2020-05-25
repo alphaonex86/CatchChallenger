@@ -61,9 +61,6 @@ private:
     CustomText *bagOver;
     CustomButton *buy;
     CustomText *buyOver;
-
-    int logicalDpiX,logicalDpiY;
-    int physicalDpiX,physicalDpiY;
 private:
     void updateChat();
 };

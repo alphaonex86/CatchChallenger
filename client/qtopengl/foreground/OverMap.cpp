@@ -16,10 +16,6 @@
 OverMap::OverMap()
 {
     connexionManager=nullptr;
-    logicalDpiX=0;
-    logicalDpiY=0;
-    physicalDpiX=0;
-    physicalDpiY=0;
 
     playerUI=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"),this);
     playerUI->setVisible(false);
@@ -191,10 +187,10 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
     playersCount->setPos(w->width()-space-80,space+15);
 
-    logicalDpiX=w->logicalDpiX();
-    logicalDpiY=w->logicalDpiY();
-    physicalDpiX=w->physicalDpiX();
-    physicalDpiY=w->physicalDpiY();
+    int logicalDpiX=w->logicalDpiX();
+    int logicalDpiY=w->logicalDpiY();
+    int physicalDpiX=w->physicalDpiX();
+    int physicalDpiY=w->physicalDpiY();
 
     chat->setSize(84,93);
     unsigned int chatX=space;
@@ -294,12 +290,7 @@ void OverMap::lineEdit_chat_text_returnPressed()
     numberForFlood++;
     lastMessageSend=text.toStdString();
     chatInput->setText(QString());
-    if(text=="/dpi")
-    {
-        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Logical DPI: "+std::to_string(logicalDpiX)+","+std::to_string(logicalDpiY));
-        connexionManager->client->add_system_text(CatchChallenger::Chat_type_system,"Physical DPI: "+std::to_string(physicalDpiX)+","+std::to_string(physicalDpiY));
-    }
-    else if(!text.startsWith("/pm "))
+    if(!text.startsWith("/pm "))
     {
         CatchChallenger::Chat_type chat_type;
         switch(chatType->itemData(chatType->currentIndex(),99).toUInt())

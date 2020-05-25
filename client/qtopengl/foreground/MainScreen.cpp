@@ -24,6 +24,7 @@ MainScreen::MainScreen()
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     multi=new CustomButton(":/CC/images/interface/button.png",this);
     options=new CustomButton(":/CC/images/interface/options.png",this);
+    debug=new CustomButton(":/CC/images/interface/options.png",this);
     facebook=new CustomButton(":/CC/images/interface/facebook.png",this);
     facebook->setOutlineColor(QColor(0,79,154));
     facebook->setPixelSize(28);
@@ -110,6 +111,8 @@ MainScreen::MainScreen()
         abort();
     if(!connect(options,&CustomButton::clicked,this,&MainScreen::goToOptions))
         abort();
+    if(!connect(debug,&CustomButton::clicked,this,&MainScreen::goToDebug))
+        abort();
     if(!connect(&Language::language,&Language::newLanguage,this,&MainScreen::newLanguage,Qt::QueuedConnection))
         abort();
 
@@ -159,6 +162,8 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         multi->setPixelSize(23);
         options->setSize(41,46);
         options->setPixelSize(23);
+        debug->setSize(41,46);
+        debug->setPixelSize(23);
         facebook->setSize(41,46);
         facebook->setPixelSize(18);
         website->setSize(41,46);
@@ -172,6 +177,8 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         multi->setPixelSize(35);
         options->setSize(62,70);
         options->setPixelSize(35);
+        debug->setSize(62,70);
+        debug->setPixelSize(35);
         facebook->setSize(62,70);
         facebook->setPixelSize(28);
         website->setSize(62,70);
@@ -188,6 +195,7 @@ void MainScreen::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *wi
         multi->setPos(widget->width()/2-multi->width()/2,widget->height()/2-multi->height());
         verticalMargin=widget->height()/2+buttonMargin;
     }
+    debug->setPos(10,10);
     const int horizontalMargin=(multi->width()-options->width()-facebook->width()-website->width())/2;
     options->setPos(widget->width()/2-facebook->width()/2-horizontalMargin-options->width(),verticalMargin);
     facebook->setPos(widget->width()/2-facebook->width()/2,verticalMargin);
@@ -359,6 +367,7 @@ void MainScreen::mousePressEventXY(const QPointF &p,bool &pressValidated)
 {
     solo->mousePressEventXY(p,pressValidated);
     multi->mousePressEventXY(p,pressValidated);
+    debug->mousePressEventXY(p,pressValidated);
     options->mousePressEventXY(p,pressValidated);
     facebook->mousePressEventXY(p,pressValidated);
     website->mousePressEventXY(p,pressValidated);
@@ -369,6 +378,7 @@ void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
 {
     solo->mouseReleaseEventXY(p,pressValidated);
     multi->mouseReleaseEventXY(p,pressValidated);
+    debug->mouseReleaseEventXY(p,pressValidated);
     options->mouseReleaseEventXY(p,pressValidated);
     facebook->mouseReleaseEventXY(p,pressValidated);
     website->mouseReleaseEventXY(p,pressValidated);
