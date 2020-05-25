@@ -421,9 +421,10 @@ enum MonstersCollisionType : uint8_t
     MonstersCollisionType_ActionOn=0x01
 };
 
-/** --------------- used to parse, but useless when datapack is loaded ------------ **/
-struct MonstersCollisionTemp
+/** --------------- used to parse, but useless in server when datapack is loaded, used into client for progressive load ------------ **/
+class MonstersCollisionTemp
 {
+public:
     //needed at runtime
     MonstersCollisionType type;
     CATCHCHALLENGER_TYPE_ITEM item;
@@ -434,11 +435,38 @@ struct MonstersCollisionTemp
     std::vector<std::string> monsterTypeList;
     std::vector<std::string> defautMonsterTypeList;
     std::string background;
-    struct MonstersCollisionEvent
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    #ifdef CATCHCHALLENGER_CLIENT
+    template <class B>
+    void serialize(B& buf) const {
+        buf << (uint8_t)type << item << tile << layer << monsterTypeList << defautMonsterTypeList << background << events;
+    }
+    template <class B>
+    void parse(B& buf) {
+        uint8_t typetemp;
+        buf >> typetemp >> item >> tile >> layer >> monsterTypeList >> defautMonsterTypeList >> background >> events;
+        type=(MonstersCollisionType)typetemp;
+    }
+    #endif
+    #endif
+    class MonstersCollisionEvent
     {
+    public:
         uint8_t event;
         uint8_t event_value;
         std::vector<std::string > monsterTypeList;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        #ifdef CATCHCHALLENGER_CLIENT
+        template <class B>
+        void serialize(B& buf) const {
+            buf << event << event_value << monsterTypeList;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> event >> event_value >> monsterTypeList;
+        }
+        #endif
+        #endif
     };
     std::vector<MonstersCollisionEvent> events;
 };

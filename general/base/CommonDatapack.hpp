@@ -61,6 +61,8 @@ public:
         buf << industriesLink;
         #ifdef CATCHCHALLENGER_CLIENT
         buf << monstersCollision;
+        buf << monstersCollisionTemp;
+        buf << isParsed;
         #endif
         //<< types
         buf << layersOptions;
@@ -87,6 +89,8 @@ public:
         buf >> industriesLink;
         #ifdef CATCHCHALLENGER_CLIENT
         buf >> monstersCollision;
+        buf >> monstersCollisionTemp;
+        buf >> isParsed;
         #endif
         //<< types
         buf >> layersOptions;

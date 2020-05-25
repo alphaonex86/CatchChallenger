@@ -122,7 +122,10 @@ void GameLoader::threadFinished()
     #endif
     int myTimer2Elapsed=myTimer2.elapsed();
     //clean the old work
-    delete thread;
+    /*not need, no event loop: thread->exit();
+    thread->quit();
+    thread->terminate();*/
+    thread->deleteLater();
     if(threads.empty())
     {
         //emit progression(sizeToProcess,sizeToProcess);

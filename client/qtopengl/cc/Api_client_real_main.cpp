@@ -14,6 +14,12 @@ using namespace CatchChallenger;
 #include <QNetworkReply>
 #include <QDataStream>
 #include <QDebug>
+#include <QStandardPaths>
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include <filesystem>
+#include <QDir>
+#include <QDirIterator>
+#endif
 
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
@@ -57,6 +63,18 @@ void Api_client_real::writeNewFileMain(const std::string &fileName,const std::st
         utimbuf butime;butime.actime=h;butime.modtime=h;
         utime(fullPath.c_str(),&butime);
     }
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(!mDatapackMainCache.empty() && !cacheRemovedMain)
+    {
+        cacheRemovedMain=true;
+        const QString &path=QString::fromStdString(mDatapackMainCache);
+        QDir dir(path);
+        QDirIterator it(dir, QDirIterator::Subdirectories);
+        while (it.hasNext())
+            QFile(it.next()).remove();
+        dir.rmpath(path);
+    }
+    #endif
 
     //send size
     {
@@ -732,6 +750,20 @@ void Api_client_real::sendDatapackContentMain()
         return;
     }
 
+#ifdef CATCHCHALLENGER_CACHE_HPS
+    {
+        cacheRemovedMain=false;
+        QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+        if(!l.empty())
+        {
+            std::string b=datapackPathBase();
+            if(stringEndsWith(b,"/"))
+                b=b.substr(0,b.size()-1);
+            b+="-cache/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/";
+            mDatapackBaseCache=b;
+        }
+    }
+#endif
     //compute the mirror
     {
         QStringList values=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);

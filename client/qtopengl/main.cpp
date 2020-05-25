@@ -15,6 +15,7 @@
 #include <QStandardPaths>
 #include <QScreen>
 #include "Language.hpp"
+#include "MyApplication.h"
 #include "../qt/Settings.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../qt/Audio.hpp"
@@ -101,7 +102,7 @@ int main(int argc, char *argv[])
     #endif
 
     //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QApplication a(argc, argv);
+    MyApplication a(argc, argv);
     a.setApplicationName("client");
     a.setOrganizationName("CatchChallenger");
     a.setStyle(QStyleFactory::create("Fusion"));
