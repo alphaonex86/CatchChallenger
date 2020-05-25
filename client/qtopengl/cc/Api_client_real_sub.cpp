@@ -14,6 +14,12 @@ using namespace CatchChallenger;
 #include <QNetworkReply>
 #include <QDataStream>
 #include <QDebug>
+#include <QStandardPaths>
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include <filesystem>
+#include <QDir>
+#include <QDirIterator>
+#endif
 
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
@@ -57,6 +63,18 @@ void Api_client_real::writeNewFileSub(const std::string &fileName,const std::str
         utimbuf butime;butime.actime=h;butime.modtime=h;
         utime(fullPath.c_str(),&butime);
     }
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    if(!mDatapackSubCache.empty() && !cacheRemovedSub)
+    {
+        cacheRemovedSub=true;
+        const QString &path=QString::fromStdString(mDatapackSubCache);
+        QDir dir(path);
+        QDirIterator it(dir, QDirIterator::Subdirectories);
+        while (it.hasNext())
+            QFile(it.next()).remove();
+        dir.rmpath(path);
+    }
+    #endif
 
     //send size
     {
@@ -688,6 +706,20 @@ void Api_client_real::sendDatapackContentSub()
         qDebug() << (QStringLiteral("already in wait of datapack content sub"));
         return;
     }
+#ifdef CATCHCHALLENGER_CACHE_HPS
+    {
+        cacheRemovedSub=false;
+        QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+        if(!l.empty())
+        {
+            std::string b=datapackPathBase();
+            if(stringEndsWith(b,"/"))
+                b=b.substr(0,b.size()-1);
+            b+="-cache/"+CommonSettingsServer::commonSettingsServer.mainDatapackCode+"/"+CommonSettingsServer::commonSettingsServer.subDatapackCode+"/";
+            mDatapackBaseCache=b;
+        }
+    }
+#endif
 
     datapackTarSub=false;
     wait_datapack_content_sub=true;

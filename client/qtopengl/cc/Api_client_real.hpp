@@ -76,6 +76,9 @@ protected:
     //general data
     void defineMaxPlayers(const uint16_t &maxPlayers);
 private:
+    bool cacheRemovedBase;
+    bool cacheRemovedMain;
+    bool cacheRemovedSub;
     static QRegularExpression regex_DATAPACK_FILE_REGEX;
     /// \todo group into one thread by change for queue
     QZstdDecodeThread zstdDecodeThreadBase;
@@ -129,6 +132,9 @@ private:
         std::string fileName;
     };
     std::unordered_map<QNetworkReply *,UrlInWaiting> urlInWaitingListBase,urlInWaitingListMain,urlInWaitingListSub;
+    std::string mDatapackBaseCache;
+    std::string mDatapackMainCache;
+    std::string mDatapackSubCache;
 private slots:
     void writeNewFileBase(const std::string &fileName, const std::string &data);
     void writeNewFileMain(const std::string &fileName, const std::string &data);

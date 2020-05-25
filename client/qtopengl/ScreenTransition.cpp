@@ -8,6 +8,7 @@
 #include "foreground/SubServer.hpp"
 #include "foreground/OverMap.hpp"
 #include "above/OptionsDialog.hpp"
+#include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
 #include "../../general/base/Version.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
@@ -64,6 +65,7 @@ ScreenTransition::ScreenTransition() :
     overmap=nullptr;
     m=nullptr;
     o=nullptr;
+    d=nullptr;
     /*solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
@@ -303,6 +305,8 @@ void ScreenTransition::toMainScreen()
         m=new MainScreen();
         if(!connect(m,&MainScreen::goToOptions,this,&ScreenTransition::openOptions))
             abort();
+        if(!connect(m,&MainScreen::goToDebug,this,&ScreenTransition::openDebug))
+            abort();
         if(!connect(m,&MainScreen::goToSolo,this,&ScreenTransition::openSolo))
             abort();
         if(!connect(m,&MainScreen::goToMulti,this,&ScreenTransition::openMulti))
@@ -321,6 +325,17 @@ void ScreenTransition::openOptions()
             abort();
     }
     setAbove(o);
+}
+
+void ScreenTransition::openDebug()
+{
+    if(d==nullptr)
+    {
+        d=new DebugDialog();
+        if(!connect(d,&DebugDialog::removeAbove,this,&ScreenTransition::removeAbove))
+            abort();
+    }
+    setAbove(d);
 }
 
 void ScreenTransition::removeAbove()
