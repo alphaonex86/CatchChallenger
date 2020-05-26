@@ -16,7 +16,6 @@ using namespace CatchChallenger;
 #include <QDebug>
 #include <QStandardPaths>
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include <filesystem>
 #include <QDir>
 #include <QDirIterator>
 #endif
