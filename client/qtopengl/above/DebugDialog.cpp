@@ -91,6 +91,7 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
                            "physicalDpiY: "+QString::number(widget->physicalDpiY())+"<br />"+
                            "width: "+QString::number(widget->width())+", "+
                            "height: "+QString::number(widget->height())+"<br />"
+                           "thread: "+QString::number(QThread::idealThreadCount())+"<br />"
                            );
         lastUpdate.restart();
     }

@@ -2,6 +2,7 @@
 #include "AudioGL.hpp"
 #include "../qt/GameLoader.hpp"
 #include <QCoreApplication>
+#include <QAudioDeviceInfo>
 
 AudioGL::AudioGL()
 {
@@ -14,8 +15,8 @@ AudioGL::~AudioGL()
 //if already playing ambiance then call stopCurrentAmbiance
 std::string AudioGL::startAmbiance(const std::string &soundPath)
 {
-    if(QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty())
-            return "No audio device found!";
+    /*this is blocking and take 5s: if(QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty())
+            return "No audio device found!";*/
 
     const QString QtsoundPath=QString::fromStdString(soundPath);
     if(!QtsoundPath.startsWith(":/"))

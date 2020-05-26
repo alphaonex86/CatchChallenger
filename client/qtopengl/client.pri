@@ -322,7 +322,8 @@ SOURCES += \
     $$PWD/ChatParsing.cpp \
     $$PWD/ImagesStrechMiddle.cpp \
     $$PWD/MyApplication.cpp \
-    $$PWD/above/DebugDialog.cpp
+    $$PWD/above/DebugDialog.cpp \
+    $$PWD/cc/QtDatapackClientLoaderThread.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -404,7 +405,8 @@ HEADERS  += \
     $$PWD/ChatParsing.hpp \
     $$PWD/ImagesStrechMiddle.hpp \
     $$PWD/MyApplication.h \
-    $$PWD/above/DebugDialog.hpp
+    $$PWD/above/DebugDialog.hpp \
+    $$PWD/cc/QtDatapackClientLoaderThread.hpp
 
 
 wasm: {

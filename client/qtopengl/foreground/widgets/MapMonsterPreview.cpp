@@ -17,7 +17,7 @@ MapMonsterPreview::MapMonsterPreview(const CatchChallenger::PlayerMonster &monst
     unsigned int by=cache.height()/2-background.height()/2;
     painter.drawPixmap(bx,by,background.width(),background.height(),background);
 
-    const QtDatapackClientLoader::QtMonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster);
+    const QtDatapackClientLoader::QtMonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster);
     QPixmap front=monsterExtra.front;
     painter.drawPixmap(0,0,front.width(),front.height(),front);
 
