@@ -10,7 +10,7 @@ GameLoader *GameLoader::gameLoader=nullptr;
 GameLoader::GameLoader()
 {
     const int tc=QThread::idealThreadCount();
-    std::cout << "idealThreadCount: " << tc << std::endl;
+    threads.clear();
     std::vector<GameLoaderThread *> threads;
     int index=0;
     while(index<tc || index==0)//always create 1 thread
