@@ -33,6 +33,7 @@ DebugDialog::DebugDialog() :
     title->setText(tr("Debug"));
 
     debugText=new CCGraphicsTextItem(this);
+    debugIsShow=false;
     lastUpdate.restart();
 }
 
@@ -83,8 +84,9 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
 
     debugText->setPos(x+wdialog->currentBorderSize()*2,y+wdialog->currentBorderSize()*2);
 
-    if(lastUpdate.elapsed()>1000)
+    if(lastUpdate.elapsed()>1000 || !debugIsShow)
     {
+        debugIsShow=true;
         debugText->setHtml(QString("logicalDpiX: ")+QString::number(widget->logicalDpiX())+", "
                            "logicalDpiY: "+QString::number(widget->logicalDpiY())+"<br />"+
                            "physicalDpiX: "+QString::number(widget->physicalDpiX())+", "+

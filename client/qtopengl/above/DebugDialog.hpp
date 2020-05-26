@@ -28,6 +28,7 @@ private:
     QGraphicsPixmapItem label;
 
     CCGraphicsTextItem *debugText;
+    bool debugIsShow;
     QTime lastUpdate;
 signals:
     void removeAbove();
