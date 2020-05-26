@@ -3,6 +3,7 @@
 
 #ifndef NOTHREADS
 #include <QThread>
+#include <QMutex>
 #else
 #include <QObject>
 #endif
@@ -19,6 +20,8 @@
 #include "../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../qt/tiled/tiled_tileset.hpp"
 
+class QtDatapackClientLoaderThread;
+
 class QtDatapackClientLoader
         #ifndef NOTHREADS
         : public QThread
@@ -32,6 +35,22 @@ public:
     static QtDatapackClientLoader *datapackLoader;//pointer to control the init
     explicit QtDatapackClientLoader();
     ~QtDatapackClientLoader();
+    struct ImageItemExtra
+    {
+        QImage image;
+    };
+    struct ImageMonsterExtra
+    {
+        QImage front;
+        QImage back;
+        QImage thumb;
+    };
+    std::unordered_map<uint16_t,ImageItemExtra> ImageitemsExtra;
+    std::unordered_map<uint16_t,ImageMonsterExtra> ImagemonsterExtra;
+    std::vector<uint16_t> ImageitemsToLoad;
+    std::vector<uint16_t> ImagemonsterToLoad;
+    QMutex mutex;
+
     struct QtItemExtra
     {
         QPixmap image;
@@ -41,19 +60,22 @@ public:
         QPixmap front;
         QPixmap back;
         QPixmap thumb;
-        struct QtBuff
-        {
-            QIcon icon;
-        };
     };
+
+    //not heavy, not optimised for now
     struct QtPlantExtra
     {
         Tiled::Tileset * tileset;
     };
-    std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
-    std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
-    std::unordered_map<uint8_t,QtMonsterExtra::QtBuff> QtmonsterBuffsExtra;
     std::unordered_map<uint8_t,QtPlantExtra> QtplantExtra;
+    struct QtBuff
+    {
+        QPixmap icon;
+    };
+    std::unordered_map<uint8_t,QtBuff> QtmonsterBuffsExtra;
+    const QtMonsterExtra &getMonsterExtra(const uint16_t &id);
+    const QtItemExtra &getImageExtra(const uint16_t &id);
+
     QPixmap defaultInventoryImage();
     void resetAll();
     QImage imagesInterfaceFightLabelBottom,imagesInterfaceFightLabelTop;
@@ -78,12 +100,19 @@ signals:
 private:
     QPixmap *mDefaultInventoryImage;
     std::string getLanguage() override;
+
+    std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
+    std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
+    std::unordered_set<QtDatapackClientLoaderThread *> threads;
 private slots:
     void parsePlantsExtra();
     void parseItemsExtra() override;
     void parseMonstersExtra();
     void parseBuffExtra();
     void parseTileset();
+
+    void startThread();
+    void threadFinished();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

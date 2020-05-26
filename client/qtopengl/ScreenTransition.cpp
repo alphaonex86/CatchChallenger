@@ -1,5 +1,6 @@
 #include "ScreenTransition.hpp"
 #include "../qt/GameLoader.hpp"
+#include "cc/QtDatapackClientLoader.hpp"
 #include "background/CCMap.hpp"
 #include "foreground/CharacterList.hpp"
 #include "foreground/LoadingScreen.hpp"
@@ -291,6 +292,7 @@ void ScreenTransition::toInGame()
 
 void ScreenTransition::toMainScreen()
 {
+    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(Audio::audio==nullptr)
     {

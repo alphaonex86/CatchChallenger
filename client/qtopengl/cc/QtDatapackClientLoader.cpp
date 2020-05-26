@@ -20,6 +20,7 @@
 #include <fstream>
 #include <QStandardPaths>
 #endif
+#include "QtDatapackClientLoaderThread.hpp"
 #include <QDebug>
 #include <QFile>
 #include <QByteArray>
@@ -106,17 +107,17 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
             if(in_file.good() && in_file.is_open())
             {
                 auto start_time = std::chrono::high_resolution_clock::now();
-                hps::StreamInputBuffer *serialBuffer=new hps::StreamInputBuffer(in_file);
-                *serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
-                *serialBuffer >> visualCategories;
-                *serialBuffer >> typeExtra;
-                *serialBuffer >> itemsExtra;
-                *serialBuffer >> skins;
-                *serialBuffer >> monsterSkillsExtra;
-                *serialBuffer >> audioAmbiance;
-                *serialBuffer >> reputationExtra;
-                *serialBuffer >> monsterExtra;
-                *serialBuffer >> monsterBuffsExtra;
+                hps::StreamInputBuffer serialBuffer(in_file);
+                serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
+                serialBuffer >> visualCategories;
+                serialBuffer >> typeExtra;
+                serialBuffer >> itemsExtra;
+                serialBuffer >> skins;
+                serialBuffer >> monsterSkillsExtra;
+                serialBuffer >> audioAmbiance;
+                serialBuffer >> reputationExtra;
+                serialBuffer >> monsterExtra;
+                serialBuffer >> monsterBuffsExtra;
                 auto end_time = std::chrono::high_resolution_clock::now();
                 auto time = end_time - start_time;
                 std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
@@ -128,6 +129,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         #endif
 
         DatapackClientLoader::parseDatapack(datapackPath,hash,Language::language.getLanguage().toStdString());
+        parseMonstersExtra();
+        parseBuffExtra();
 
         #ifdef CATCHCHALLENGER_CACHE_HPS
             if(!cachepath.empty())
@@ -155,22 +158,82 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 
     #endif
 
-    for( const auto& n : itemsExtra ) {
-        QString path=QString::fromStdString(n.second.imagePath);
-        QPixmap pix(path);
-        if(pix.isNull())
-            qDebug() << "bug: " << path;
-        else
-            QtitemsExtra[n.first].image=pix;
-    }
-    parseMonstersExtra();
-    parseBuffExtra();
     parsePlantsExtra();
+
+    for( const auto& n : QtDatapackClientLoader::datapackLoader->monsterBuffsExtra )
+    {
+        const uint8_t &id=n.first;
+        QtBuff QtmonsterBuffExtraEntry;
+        const std::string basePath=datapackPath+DATAPACK_BASE_PATH_BUFFICON+std::to_string(id);
+        const std::string pngFile=basePath+".png";
+        const std::string gifFile=basePath+".gif";
+        if(QFile(QString::fromStdString(pngFile)).exists())
+            QtmonsterBuffExtraEntry.icon=QPixmap(QString::fromStdString(pngFile));
+        else if(QFile(QString::fromStdString(gifFile)).exists())
+            QtmonsterBuffExtraEntry.icon=QPixmap(QString::fromStdString(gifFile));
+        if(QtmonsterBuffExtraEntry.icon.isNull())
+            QtmonsterBuffExtraEntry.icon=QPixmap(QStringLiteral(":/CC/images/interface/buff.png"));
+        QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
+    }
+
+    for( const auto& n : itemsExtra )
+        ImageitemsToLoad.push_back(n.first);
+    for( const auto& n : monsterExtra )
+        ImagemonsterToLoad.push_back(n.first);
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
-    std::cout << "parseDatapack took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
-    inProgress=false;
-    emit datapackParsed();
+    std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
+    startThread();
+}
+
+void QtDatapackClientLoader::startThread()
+{
+    const int tc=QThread::idealThreadCount();
+    threads.clear();
+    std::vector<QtDatapackClientLoaderThread *> threads;
+    int index=0;
+    while(index<tc || index==0)//always create 1 thread
+    {
+        QtDatapackClientLoaderThread *t=new QtDatapackClientLoaderThread();
+        connect(t,&QThread::finished,this,&QtDatapackClientLoader::threadFinished,Qt::QueuedConnection);
+        this->threads.insert(t);
+        threads.push_back(t);
+        index++;
+    }
+    index=0;
+    {
+        unsigned int index=0;
+        while(index<threads.size())
+        {
+            threads.at(index)->start(QThread::LowestPriority);
+            index++;
+        }
+    }
+}
+
+void QtDatapackClientLoader::threadFinished()
+{
+    QtDatapackClientLoaderThread *thread = qobject_cast<QtDatapackClientLoaderThread *>(sender());
+    if(thread==nullptr)
+        abort();
+    if(threads.find(thread)!=threads.cend())
+        threads.erase(thread);
+    else
+    {
+        std::cerr << "GameLoader::threadFinished() thread not found" << std::endl;
+        abort();
+        return;
+    }
+    /*not need, no event loop: thread->exit();
+    thread->quit();
+    thread->terminate();*/
+    thread->deleteLater();
+    if(threads.empty())
+    {
+        QMutexLocker a(&mutex);
+        inProgress=false;
+        emit datapackParsed();
+    }
 }
 
 void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
@@ -251,6 +314,10 @@ void QtDatapackClientLoader::resetAll()
          }
          Tiled::Tileset::preloadedTileset.clear();
     }
+    ImageitemsExtra.clear();
+    ImagemonsterExtra.clear();
+    ImageitemsToLoad.clear();
+    ImagemonsterToLoad.clear();
     QtitemsExtra.clear();
     QtmonsterExtra.clear();
     QtmonsterBuffsExtra.clear();
@@ -441,7 +508,6 @@ void QtDatapackClientLoader::parseMonstersExtra()
                     else
                     {
                         QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
-                        QtDatapackClientLoader::QtMonsterExtra QtmonsterExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
@@ -573,39 +639,8 @@ void QtDatapackClientLoader::parseMonstersExtra()
                             monsterExtraEntry.description=tr("Unknown").toStdString();
                         auto start_time2 = std::chrono::high_resolution_clock::now();
                         monsterExtraEntry.frontPath=basepath+"/front.png";
-                        QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
-                        if(QtmonsterExtraEntry.front.isNull())
-                        {
-                            monsterExtraEntry.frontPath=basepath+"/front.gif";
-                            QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
-                            if(QtmonsterExtraEntry.front.isNull())
-                            {
-                                monsterExtraEntry.frontPath=":/CC/images/monsters/default/front.png";
-                                QtmonsterExtraEntry.front=QPixmap(QString::fromStdString(monsterExtraEntry.frontPath));
-                            }
-                        }
-                        monsterExtraEntry.backPath=basepath+"/back.png";
-                        QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
-                        if(QtmonsterExtraEntry.back.isNull())
-                        {
-                            monsterExtraEntry.backPath=basepath+"/back.gif";
-                            QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
-                            if(QtmonsterExtraEntry.back.isNull())
-                            {
-                                monsterExtraEntry.backPath=":/CC/images/monsters/default/back.png";
-                                QtmonsterExtraEntry.back=QPixmap(QString::fromStdString(monsterExtraEntry.backPath));
-                            }
-                        }
-                        QtmonsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.png");
-                        if(QtmonsterExtraEntry.thumb.isNull())
-                        {
-                            QtmonsterExtraEntry.thumb=QString::fromStdString(basepath+"/small.gif");
-                            if(QtmonsterExtraEntry.thumb.isNull())
-                                QtmonsterExtraEntry.thumb=QPixmap(":/CC/images/monsters/default/small.png");
-                        }
-                        QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
+
                         QtDatapackClientLoader::datapackLoader->monsterExtra[id]=monsterExtraEntry;
-                        QtDatapackClientLoader::datapackLoader->QtmonsterExtra[id]=QtmonsterExtraEntry;
                         auto end_time2 = std::chrono::high_resolution_clock::now();
                         auto time2 = end_time2 - start_time2;
                         imagens+=time2/std::chrono::nanoseconds(1);
@@ -630,15 +665,9 @@ void QtDatapackClientLoader::parseMonstersExtra()
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster extra for id: %1").arg(i->first));
             QtDatapackClientLoader::MonsterExtra monsterExtraEntry;
-            QtDatapackClientLoader::QtMonsterExtra QtmonsterExtraEntry;
             monsterExtraEntry.name=tr("Unknown").toStdString();
             monsterExtraEntry.description=tr("Unknown").toStdString();
-            QtmonsterExtraEntry.front=QPixmap(":/CC/images/monsters/default/front.png");
-            QtmonsterExtraEntry.back=QPixmap(":/CC/images/monsters/default/back.png");
-            QtmonsterExtraEntry.thumb=QPixmap(":/CC/images/monsters/default/small.png");
-            QtmonsterExtraEntry.thumb=QtmonsterExtraEntry.thumb.scaled(64,64);
             QtDatapackClientLoader::datapackLoader->monsterExtra[i->first]=monsterExtraEntry;
-            QtDatapackClientLoader::datapackLoader->QtmonsterExtra[i->first]=QtmonsterExtraEntry;
         }
         ++i;
     }
@@ -724,7 +753,6 @@ void QtDatapackClientLoader::parseBuffExtra()
                     else
                     {
                         QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
-                        QtDatapackClientLoader::QtMonsterExtra::QtBuff QtmonsterBuffExtraEntry;
                         #ifdef DEBUG_MESSAGE_MONSTER_LOAD
                         qDebug() << (QStringLiteral("monster extra loading: %1").arg(id));
                         #endif
@@ -786,18 +814,7 @@ void QtDatapackClientLoader::parseBuffExtra()
                             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
                         if(monsterBuffExtraEntry.description.empty())
                             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
-                        const std::string basePath=datapackPath+DATAPACK_BASE_PATH_BUFFICON+std::to_string(id);
-                        const std::string pngFile=basePath+dotpng;
-                        const std::string gifFile=basePath+dotgif;
-                        if(QFile(QString::fromStdString(pngFile)).exists())
-                            QtmonsterBuffExtraEntry.icon=QIcon(QString::fromStdString(pngFile));
-                        else if(QFile(QString::fromStdString(gifFile)).exists())
-                            QtmonsterBuffExtraEntry.icon=QIcon(QString::fromStdString(gifFile));
-                        const QList<QSize> &availableSizes=QtmonsterBuffExtraEntry.icon.availableSizes();
-                        if(QtmonsterBuffExtraEntry.icon.isNull() || availableSizes.isEmpty())
-                            QtmonsterBuffExtraEntry.icon=QIcon(QStringLiteral(":/CC/images/interface/buff.png"));
                         QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[id]=monsterBuffExtraEntry;
-                        QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[id]=QtmonsterBuffExtraEntry;
                     }
                 }
             }
@@ -818,10 +835,10 @@ void QtDatapackClientLoader::parseBuffExtra()
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
             QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
-            QtDatapackClientLoader::QtMonsterExtra::QtBuff QtmonsterBuffExtraEntry;
+            QtDatapackClientLoader::QtBuff QtmonsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
-            QtmonsterBuffExtraEntry.icon=QIcon(":/CC/images/interface/buff.png");
+            QtmonsterBuffExtraEntry.icon=QPixmap(":/CC/images/interface/buff.png");
             QtDatapackClientLoader::datapackLoader->monsterBuffsExtra[i->first]=monsterBuffExtraEntry;
             QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra[i->first]=QtmonsterBuffExtraEntry;
         }
@@ -856,4 +873,46 @@ void QtDatapackClientLoader::parsePlantsExtra()
     }
 
     qDebug() << QStringLiteral("%1 plant(s) extra loaded").arg(QtDatapackClientLoader::datapackLoader->QtplantExtra.size());
+}
+
+const QtDatapackClientLoader::QtMonsterExtra &QtDatapackClientLoader::getMonsterExtra(const uint16_t &id)
+{
+    if(QtmonsterExtra.find(id)!=QtmonsterExtra.cend())
+        return QtmonsterExtra.at(id);
+    else
+    {
+        if(ImagemonsterExtra.find(id)!=ImagemonsterExtra.cend())
+        {
+            const ImageMonsterExtra &i=ImagemonsterExtra.at(id);
+            QtMonsterExtra n;
+            n.front=QPixmap::fromImage(i.front);
+            n.back=QPixmap::fromImage(i.back);
+            n.thumb=QPixmap::fromImage(i.thumb);
+            QtmonsterExtra[id]=n;
+            ImagemonsterExtra.erase(id);
+            return QtmonsterExtra.at(id);
+        }
+    }
+    std::cerr << "QtDatapackClientLoader::getImage failed on: " << std::to_string(id) << std::endl;
+    abort();
+}
+
+const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getImageExtra(const uint16_t &id)
+{
+    if(QtitemsExtra.find(id)!=QtitemsExtra.cend())
+        return QtitemsExtra.at(id);
+    else
+    {
+        if(ImageitemsExtra.find(id)!=ImageitemsExtra.cend())
+        {
+            const ImageItemExtra &i=ImageitemsExtra.at(id);
+            QtItemExtra n;
+            n.image=QPixmap::fromImage(i.image);
+            QtitemsExtra[id]=n;
+            ImageitemsExtra.erase(id);
+            return QtitemsExtra.at(id);
+        }
+    }
+    std::cerr << "QtDatapackClientLoader::getImage failed on: " << std::to_string(id) << std::endl;
+    abort();
 }
