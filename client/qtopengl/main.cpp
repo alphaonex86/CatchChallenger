@@ -171,9 +171,10 @@ int main(int argc, char *argv[])
 #else
     //s.showMaximized();
 #endif
-    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
+    QtDatapackClientLoader::datapackLoader=nullptr;
     const auto returnCode=a.exec();
-    delete QtDatapackClientLoader::datapackLoader;
+    if(QtDatapackClientLoader::datapackLoader!=nullptr)
+        delete QtDatapackClientLoader::datapackLoader;
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
     CatchChallenger::QtDatapackChecksum::thread.quit();
     CatchChallenger::QtDatapackChecksum::thread.wait();
