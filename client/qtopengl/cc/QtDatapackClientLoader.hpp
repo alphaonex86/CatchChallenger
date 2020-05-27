@@ -97,6 +97,9 @@ signals:
     void datapackParsed();
     void datapackParsedMainSub();
     void datapackChecksumError();
+
+    void newItemImage(uint16_t id);
+    void newMonsterImage(uint16_t id);
 private:
     QPixmap *mDefaultInventoryImage;
     std::string getLanguage() override;
@@ -104,6 +107,8 @@ private:
     std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
     std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
     std::unordered_set<QtDatapackClientLoaderThread *> threads;
+    QtItemExtra emptyItem;
+    QtMonsterExtra emptyMonster;
 private slots:
     void parsePlantsExtra();
     void parseItemsExtra() override;
@@ -113,6 +118,8 @@ private slots:
 
     void startThread();
     void threadFinished();
+    void loadItemImage(uint16_t id,void *v);
+    void loadMonsterImage(uint16_t id,void *v);
 };
 
 #endif // DATAPACKCLIENTLOADER_H

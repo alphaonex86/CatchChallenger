@@ -14,6 +14,10 @@
         <file>images/interface/female.png</file>
         <file>images/interface/male.png</file>
         <file>images/interface/languages.png</file>
+        <file>images/interface/defaultmonster/back.png</file>
+        <file>images/interface/defaultmonster/front.png</file>
+        <file>images/interface/defaultmonster/small.png</file>
+        <file>images/interface/defaultitem.png</file>
         <file>qml/star.png</file>
         <file>images/flags.png</file>
         <file>images/map/marker.png</file>
