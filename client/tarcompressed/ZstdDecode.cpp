@@ -33,13 +33,14 @@ void ZstdDecode::run()
 {
     std::vector<char> dataToDecoded;
 
-    unsigned long long const rSize = ZSTD_getDecompressedSize(mDataToDecode.data(), mDataToDecode.size());
+    bool streamed=false;
+    unsigned long long rSize = ZSTD_getFrameContentSize(mDataToDecode.data(), mDataToDecode.size());
     if (rSize==ZSTD_CONTENTSIZE_ERROR) {
         mErrorString="it was not compressed by zstd";
         return;
     } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
-        mErrorString="original size unknown. Use streaming decompression instead.";
-        return;
+        rSize=64*1024*1024;
+        streamed=true;
     } else if (rSize==0) {
         mErrorString="original size 0. Use streaming decompression instead.";
         return;
@@ -49,7 +50,7 @@ void ZstdDecode::run()
 
     size_t const dSize = ZSTD_decompress(dataToDecoded.data(), rSize, mDataToDecode.data(), mDataToDecode.size());
 
-    if (dSize != rSize) {
+    if (!streamed && dSize != rSize) {
         mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
         return;
     }
