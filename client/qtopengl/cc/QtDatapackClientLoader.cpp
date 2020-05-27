@@ -184,6 +184,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
     auto time = end_time - start_time;
     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack end took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
     startThread();
+    inProgress=false;
+    emit datapackParsed();
 }
 
 void QtDatapackClientLoader::startThread()
@@ -196,6 +198,8 @@ void QtDatapackClientLoader::startThread()
     {
         QtDatapackClientLoaderThread *t=new QtDatapackClientLoaderThread();
         connect(t,&QThread::finished,this,&QtDatapackClientLoader::threadFinished,Qt::QueuedConnection);
+        connect(t,&QtDatapackClientLoaderThread::loadItemImage,this,&QtDatapackClientLoader::loadItemImage,Qt::QueuedConnection);
+        connect(t,&QtDatapackClientLoaderThread::loadMonsterImage,this,&QtDatapackClientLoader::loadMonsterImage,Qt::QueuedConnection);
         this->threads.insert(t);
         threads.push_back(t);
         index++;
@@ -230,10 +234,24 @@ void QtDatapackClientLoader::threadFinished()
     thread->deleteLater();
     if(threads.empty())
     {
-        QMutexLocker a(&mutex);
-        inProgress=false;
-        emit datapackParsed();
+        //loading image finished
     }
+}
+
+void QtDatapackClientLoader::loadItemImage(uint16_t id,void *v)
+{
+    ImageItemExtra *value=static_cast<ImageItemExtra *>(v);
+    QtDatapackClientLoader::datapackLoader->ImageitemsExtra[id]=*value;
+    delete value;
+    emit newItemImage(id);
+}
+
+void QtDatapackClientLoader::loadMonsterImage(uint16_t id,void *v)
+{
+    ImageMonsterExtra *value=static_cast<ImageMonsterExtra *>(v);
+    QtDatapackClientLoader::datapackLoader->ImagemonsterExtra[id]=*value;
+    delete value;
+    emit newMonsterImage(id);
 }
 
 void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode)
@@ -893,8 +911,36 @@ const QtDatapackClientLoader::QtMonsterExtra &QtDatapackClientLoader::getMonster
             return QtmonsterExtra.at(id);
         }
     }
-    std::cerr << "QtDatapackClientLoader::getImage failed on: " << std::to_string(id) << std::endl;
-    abort();
+    //not loaded, force load as blocking call
+    QtMonsterExtra n;
+
+    const std::string basepath=QtDatapackClientLoader::datapackLoader->getDatapackPath()+"/monsters/";
+    n.front=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/front.png"));
+    if(n.front.isNull())
+    {
+        n.front=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/front.gif"));
+        if(n.front.isNull())
+            n.front=QPixmap(":/CC/images/monsters/default/front.png");
+    }
+    n.back=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/back.png"));
+    if(n.back.isNull())
+    {
+        n.back=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/back.gif"));
+        if(n.back.isNull())
+            n.back=QPixmap(":/CC/images/monsters/default/back.png");
+    }
+    n.thumb=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/small.png"));
+    if(n.thumb.isNull())
+    {
+        n.thumb=QPixmap(QString::fromStdString(basepath+std::to_string(id)+"/small.gif"));
+        if(n.thumb.isNull())
+            n.thumb=QPixmap(":/CC/images/monsters/default/small.png");
+    }
+    n.thumb=n.thumb.scaled(64,64);
+
+    QtmonsterExtra[id]=n;
+    ImagemonsterExtra.erase(id);
+    return QtmonsterExtra.at(id);
 }
 
 const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getImageExtra(const uint16_t &id)
@@ -913,6 +959,13 @@ const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getImageExtra
             return QtitemsExtra.at(id);
         }
     }
-    std::cerr << "QtDatapackClientLoader::getImage failed on: " << std::to_string(id) << std::endl;
-    abort();
+    //not loaded, force load as blocking call
+    QtItemExtra n;
+
+    const DatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(id);
+
+    n.image=QPixmap(QString::fromStdString(extra.imagePath));
+    QtitemsExtra[id]=n;
+    ImageitemsExtra.erase(id);
+    return QtitemsExtra.at(id);
 }

@@ -153,6 +153,8 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
+            if(QtDatapackClientLoader::datapackLoader==nullptr)
+                return nullptr;
             if(QtDatapackClientLoader::datapackLoader->itemOnMap.find(resolvedFileName)!=
                     QtDatapackClientLoader::datapackLoader->itemOnMap.cend())
             {

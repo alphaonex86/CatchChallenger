@@ -8,6 +8,16 @@
 MapMonsterPreview::MapMonsterPreview(const CatchChallenger::PlayerMonster &monster, QGraphicsItem *parent) :
     QGraphicsPixmapItem(parent)
 {
+    this->monster=monster;
+    regenCache();
+}
+
+MapMonsterPreview::~MapMonsterPreview()
+{
+}
+
+void MapMonsterPreview::regenCache()
+{
     QImage cache(QSize(80,80),QImage::Format_ARGB32_Premultiplied);
     cache.fill(Qt::transparent);
     QPainter painter(&cache);
@@ -37,8 +47,4 @@ MapMonsterPreview::MapMonsterPreview(const CatchChallenger::PlayerMonster &monst
     painter.drawPixmap(bx+3,by+46,bar.width()*stat.hp/monster.hp,bar.height(),bar);
 
     setPixmap(QPixmap::fromImage(cache));
-}
-
-MapMonsterPreview::~MapMonsterPreview()
-{
 }
