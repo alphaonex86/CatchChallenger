@@ -174,7 +174,10 @@ int main(int argc, char *argv[])
     QtDatapackClientLoader::datapackLoader=nullptr;
     const auto returnCode=a.exec();
     if(QtDatapackClientLoader::datapackLoader!=nullptr)
+    {
         delete QtDatapackClientLoader::datapackLoader;
+        QtDatapackClientLoader::datapackLoader=nullptr;
+    }
     #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
     CatchChallenger::QtDatapackChecksum::thread.quit();
     CatchChallenger::QtDatapackChecksum::thread.wait();
