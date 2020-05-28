@@ -15,8 +15,16 @@ public:
     void setVar(ConnexionManager *connexionManager);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
     void paintChildItems(QList<QGraphicsItem *> childItems, qreal parentX, qreal parentY, QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
+    void mousePressEventXY(const QPointF &p, bool &pressValidated);
+    void mouseReleaseEventXY(const QPointF &p,bool &pressValidated);
 private:
     MapController mapController;
+    QPointF lastClickedPos;
+    bool clicked;
+
+    qreal scale;
+    qreal x;
+    qreal y;
 signals:
     void searchPath(std::vector<Map_full> mapList);
     void pathFindingNotFound();

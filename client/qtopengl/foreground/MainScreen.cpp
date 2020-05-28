@@ -24,7 +24,7 @@ MainScreen::MainScreen()
     solo=new CustomButton(":/CC/images/interface/button.png",this);
     multi=new CustomButton(":/CC/images/interface/button.png",this);
     options=new CustomButton(":/CC/images/interface/options.png",this);
-    debug=new CustomButton(":/CC/images/interface/options.png",this);
+    debug=new CustomButton(":/CC/images/interface/debug.png",this);
     facebook=new CustomButton(":/CC/images/interface/facebook.png",this);
     facebook->setOutlineColor(QColor(0,79,154));
     facebook->setPixelSize(28);

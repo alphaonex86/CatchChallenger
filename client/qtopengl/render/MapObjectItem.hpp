@@ -26,6 +26,7 @@ public:
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *);
 private:
     Tiled::MapObject *mMapObject;
+    QPixmap cache;
 public:
     //interresting if have lot of object by group layer
     static std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> mRendererList;
