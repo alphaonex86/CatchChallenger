@@ -267,7 +267,7 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     characterEntryList->setFixedSize(wdialog->width()-space-space,wdialog->height()-space-space);
 }
 
-void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     add->mousePressEventXY(p,pressValidated);
     remove->mousePressEventXY(p,pressValidated);
@@ -275,7 +275,7 @@ void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated)
     select->mousePressEventXY(p,pressValidated);
 }
 
-void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     add->mouseReleaseEventXY(p,pressValidated);
     remove->mouseReleaseEventXY(p,pressValidated);

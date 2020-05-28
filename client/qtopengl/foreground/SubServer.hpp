@@ -26,8 +26,8 @@ public:
     void newLanguage();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
-    void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
-    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
+    void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,ConnexionManager *connexionManager);
     void itemSelectionChanged();
 private:

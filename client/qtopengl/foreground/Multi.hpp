@@ -50,8 +50,8 @@ public:
     void on_server_refresh_clicked();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
-    void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
-    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
+    void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
 private:
     std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QList<MultiItem *> serverConnexion;

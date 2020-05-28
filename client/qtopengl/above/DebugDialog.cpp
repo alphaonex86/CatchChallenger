@@ -99,12 +99,12 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
     }
 }
 
-void DebugDialog::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void DebugDialog::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     quit->mousePressEventXY(p,pressValidated);
 }
 
-void DebugDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void DebugDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
 }

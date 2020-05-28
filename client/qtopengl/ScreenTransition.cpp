@@ -130,30 +130,31 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
               << std::to_string(x) << "," << std::to_string(y) << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
+    bool callParentClass=false;
     const QPointF &p=mapToScene(event->pos());
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p,temp);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(p,temp,callParentClass);
         mousePress=nullptr;
     }
     bool temp=false;
     if(m_aboveStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p,temp);
+        static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p,temp,callParentClass);
         mousePress=m_aboveStack;
     }
     if(!temp && m_foregroundStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp);
+        static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp,callParentClass);
         mousePress=m_foregroundStack;
     }
     if(!temp && m_backgroundStack!=nullptr)
     {
-        static_cast<ScreenInput *>(m_backgroundStack)->mousePressEventXY(p,temp);
+        static_cast<ScreenInput *>(m_backgroundStack)->mousePressEventXY(p,temp,callParentClass);
         mousePress=m_backgroundStack;
     }
-    if(!temp)
+    if(!temp || callParentClass)
         QGraphicsView::mousePressEvent(event);
 }
 
@@ -167,25 +168,26 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
+    bool callParentClass=false;
     const QPointF &p=mapToScene(event->pos());
     mousePress=nullptr;
     bool pressValidated=false;
     if(m_aboveStack!=nullptr)
     {
-        m_aboveStack->mouseReleaseEventXY(p,pressValidated);
+        m_aboveStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
         mousePress=m_aboveStack;
     }
     if(!pressValidated && m_foregroundStack!=nullptr)
     {
-        m_foregroundStack->mouseReleaseEventXY(p,pressValidated);
+        m_foregroundStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
         mousePress=m_foregroundStack;
     }
     if(!pressValidated && m_backgroundStack!=nullptr)
     {
-        m_backgroundStack->mouseReleaseEventXY(p,pressValidated);
+        m_backgroundStack->mouseReleaseEventXY(p,pressValidated,callParentClass);
         mousePress=m_backgroundStack;
     }
-    if(!pressValidated)
+    if(!pressValidated || callParentClass)
         QGraphicsView::mouseReleaseEvent(event);
 }
 
@@ -199,17 +201,18 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
+    bool callParentClass=false;
     const QPointF &p=mapToScene(event->pos());
     mousePress=nullptr;
     bool pressValidated=false;
     if(m_aboveStack!=nullptr)
     {
-        m_aboveStack->mouseMoveEventXY(p,pressValidated);
+        m_aboveStack->mouseMoveEventXY(p,pressValidated,callParentClass);
         mousePress=m_aboveStack;
     }
     else if(m_foregroundStack!=nullptr)
     {
-        m_foregroundStack->mouseMoveEventXY(p,pressValidated);
+        m_foregroundStack->mouseMoveEventXY(p,pressValidated,callParentClass);
         mousePress=m_foregroundStack;
     }
     if(!pressValidated)
@@ -233,9 +236,11 @@ void ScreenTransition::setForeground(ScreenInput *widget)
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp,temp);
         mousePress=nullptr;
     }
+    if(ccmap!=nullptr)
+        ccmap->keyPressReset();
     if(m_foregroundStack!=nullptr)
         mScene->removeItem(m_foregroundStack);
     m_foregroundStack=widget;
@@ -248,9 +253,11 @@ void ScreenTransition::setAbove(ScreenInput *widget)
     if(mousePress!=nullptr)
     {
         bool temp=true;//don¡t do action if true
-        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp);
+        static_cast<ScreenInput *>(mousePress)->mouseReleaseEventXY(QPointF(0.0,0.0),temp,temp);
         mousePress=nullptr;
     }
+    if(ccmap!=nullptr)
+        ccmap->keyPressReset();
     if(m_aboveStack!=nullptr)
         mScene->removeItem(m_aboveStack);
     m_aboveStack=widget;
@@ -598,5 +605,115 @@ void ScreenTransition::setTargetFPS(int targetFPS)
         if(waitRenderTime<1)
             waitRenderTime=1;
     }
+}
+
+void ScreenTransition::keyPressEvent(QKeyEvent * event)
+{
+    QGraphicsView::keyPressEvent(event);
+    if(event->isAccepted())
+    {
+        if(ccmap!=nullptr)
+            ccmap->keyPressReset();
+        return;
+    }
+/*    if(m_aboveStack!=nullptr)
+    {
+        QGraphicsItem *item=m_aboveStack->focusItem();
+        if(item!=nullptr)
+        {
+            item->keyPressEvent(event);
+            if(event->isAccepted())
+            {
+                if(ccmap!=nullptr)
+                    ccmap->keyPressReset();
+                return;
+            }
+        }
+        m_aboveStack->keyPressEvent(event);
+        if(event->isAccepted())
+        {
+            if(ccmap!=nullptr)
+                ccmap->keyPressReset();
+            return;
+        }
+    }
+    if(m_foregroundStack!=nullptr)
+    {
+        QGraphicsItem *item=m_foregroundStack->focusItem();
+        if(item!=nullptr)
+        {
+            item->keyPressEvent(event);
+            if(event->isAccepted())
+            {
+                if(ccmap!=nullptr)
+                    ccmap->keyPressReset();
+                return;
+            }
+        }
+        m_foregroundStack->keyPressEvent(event);
+        if(event->isAccepted())
+        {
+            if(ccmap!=nullptr)
+                ccmap->keyPressReset();
+            return;
+        }
+    }*/
+    if(ccmap!=nullptr)
+        ccmap->keyPressEvent(event);
+}
+
+void ScreenTransition::keyReleaseEvent(QKeyEvent *event)
+{
+    QGraphicsView::keyPressEvent(event);
+    if(event->isAccepted())
+    {
+        if(ccmap!=nullptr)
+            ccmap->keyPressReset();
+        return;
+    }
+/*    if(m_aboveStack!=nullptr)
+    {
+        QGraphicsItem *item=m_aboveStack->focusItem();
+        if(item!=nullptr)
+        {
+            item->keyReleaseEvent(event);
+            if(event->isAccepted())
+            {
+                if(ccmap!=nullptr)
+                    ccmap->keyPressReset();
+                return;
+            }
+        }
+        m_aboveStack->keyReleaseEvent(event);
+        if(event->isAccepted())
+        {
+            if(ccmap!=nullptr)
+                ccmap->keyPressReset();
+            return;
+        }
+    }
+    if(m_foregroundStack!=nullptr)
+    {
+        QGraphicsItem *item=m_foregroundStack->focusItem();
+        if(item!=nullptr)
+        {
+            item->keyReleaseEvent(event);
+            if(event->isAccepted())
+            {
+                if(ccmap!=nullptr)
+                    ccmap->keyPressReset();
+                return;
+            }
+        }
+        m_foregroundStack->keyReleaseEvent(event);
+        if(event->isAccepted())
+        {
+            if(ccmap!=nullptr)
+                ccmap->keyPressReset();
+            return;
+        }
+    }*/
+    if(ccmap!=nullptr)
+        ccmap->keyReleaseEvent(event);
 }
 

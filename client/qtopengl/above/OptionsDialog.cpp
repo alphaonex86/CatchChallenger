@@ -201,21 +201,21 @@ void OptionsDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
     }
 }
 
-void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     quit->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     volumeSlider->mousePressEventXY(p,pressValidated);
 }
 
-void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     volumeSlider->mouseReleaseEventXY(p,pressValidated);
 }
 
-void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);
