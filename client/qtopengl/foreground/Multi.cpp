@@ -962,7 +962,7 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
 }
 
-void Multi::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void Multi::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &callParentClass)
 {
     server_add->mousePressEventXY(p,pressValidated);
     server_remove->mousePressEventXY(p,pressValidated);
@@ -974,7 +974,7 @@ void Multi::mousePressEventXY(const QPointF &p,bool &pressValidated)
         item->mousePressEventXY(p,pressValidated);
 }
 
-void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     server_add->mouseReleaseEventXY(p,pressValidated);
     server_remove->mouseReleaseEventXY(p,pressValidated);

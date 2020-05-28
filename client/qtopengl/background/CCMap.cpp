@@ -107,7 +107,7 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
     paintChildItems(mapController.mapItem->childItems(),x,y,painter,option,widget);
 }
 
-void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     if(clicked)
         return;
@@ -116,12 +116,13 @@ void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated)
     pressValidated=true;
 }
 
-void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     if(!clicked)
         return;
     clicked=false;
     pressValidated=true;
+    mapController.keyPressReset();
 
     //convert pixel scaled -> pixel -> tile
     qreal diffX=(p.x()/scale-x)/16;
@@ -161,3 +162,19 @@ void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
     }
     std::cerr << "CCMap not found: " << p.x() << "," << p.y() << std::endl;
 }
+
+void CCMap::keyPressReset()
+{
+    mapController.keyPressReset();
+}
+
+void CCMap::keyPressEvent(QKeyEvent * event)
+{
+    mapController.keyPressEvent(event);
+}
+
+void CCMap::keyReleaseEvent(QKeyEvent *event)
+{
+    mapController.keyReleaseEvent(event);
+}
+
