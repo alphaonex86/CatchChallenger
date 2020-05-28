@@ -16,8 +16,9 @@ public:
     explicit MapControllerMP(const bool &debugTags=false);
     ~MapControllerMP();
 
-    virtual void resetAll();
+    virtual void resetAll() override;
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
+    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y) override;
     void setScale(const float &scaleSize);
     void updateScale();
     void resizeEvent(QResizeEvent *event);
@@ -76,15 +77,15 @@ public slots:
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
     void haveCharacter();
-    bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
+    bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction) override;
+    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject) override;
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
 
     //the datapack
-    virtual void datapackParsed();
-    virtual void datapackParsedMainSub();
+    virtual void datapackParsed() override;
+    virtual void datapackParsedMainSub() override;
     virtual void reinject_signals();
     virtual void reinject_signals_on_valid_map();
 private:
@@ -168,8 +169,7 @@ private slots:
     void finalOtherPlayerStep(OtherPlayer &otherPlayer);
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
-    virtual void destroyMap(Map_full *map);
-    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y);
+    virtual void destroyMap(Map_full *map) override;
     CatchChallenger::Direction moveFromPath();
     //virtual std::unordered_set<std::string> loadMap(Map_full *map,const bool &display);
     void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster);
@@ -177,15 +177,15 @@ private slots:
     void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
     void unloadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
 protected slots:
-    bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
-    virtual void finalPlayerStep(bool parseKey=true);
+    bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y) override;
+    virtual void finalPlayerStep(bool parseKey=true) override;
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer);
     void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
-    bool nextPathStep();//true if have step
-    virtual void keyPressParse();
+    bool nextPathStep() override;//true if have step
+    virtual void keyPressParse() override;
 signals:
     void searchPath(std::vector<Map_full> mapList);
     void pathFindingNotFound();

@@ -44,6 +44,10 @@ CCMap::CCMap()
         abort();
     if(!connect(&mapController,&MapController::mapDisplayed,this,&CCMap::mapDisplayed))
         abort();
+    clicked=false;
+    scale=1.0;
+    x=0.0;
+    y=0.0;
 }
 
 void CCMap::setVar(ConnexionManager *connexionManager)
@@ -53,6 +57,10 @@ void CCMap::setVar(ConnexionManager *connexionManager)
     mapController.connectAllSignals(connexionManager->client);
     mapController.datapackParsed();
     mapController.datapackParsedMainSub();
+    clicked=false;
+    scale=1.0;
+    x=0.0;
+    y=0.0;
 }
 
 QRectF CCMap::boundingRect() const
@@ -90,11 +98,66 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
     if(zoomFinal>zoomH)
         zoomFinal=zoomH;
     zoomFinal*=CatchChallenger::CommonDatapack::commonDatapack.layersOptions.zoom;
-    qreal scale=ceil(zoomFinal);
+    scale=ceil(zoomFinal);
     painter->scale(scale,scale);
 
     const Tiled::MapObject * p=mapController.getPlayerMapObject();
-    qreal x=(widget->width()/2/scale-(p->x()*16+p->width()/2));
-    qreal y=(widget->height()/2/scale-((p->y()-1)*16+p->height()/2));
+    x=(widget->width()/2/scale-(p->x()*16+p->width()/2));
+    y=(widget->height()/2/scale-((p->y()-1)*16+p->height()/2));
     paintChildItems(mapController.mapItem->childItems(),x,y,painter,option,widget);
+}
+
+void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated)
+{
+    if(clicked)
+        return;
+    clicked=true;
+    lastClickedPos=p;
+    pressValidated=true;
+}
+
+void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+{
+    if(!clicked)
+        return;
+    clicked=false;
+    pressValidated=true;
+
+    //convert pixel scaled -> pixel -> tile
+    qreal diffX=(p.x()/scale-x)/16;
+    qreal diffY=(p.y()/scale-y)/16;
+    //std::cout << "CCMap clicked: " << p.x() << "," << p.y() << " - " << diffX << "," << diffY << " - " << x << "," << y << " * " << scale << std::endl;
+
+    std::unordered_set<std::string> mapToScan;
+    Map_full * current_map=mapController.currentMapFull();
+    mapToScan.insert(current_map->logicalMap.map_file);
+    if(current_map->logicalMap.border.left.map!=nullptr)
+        mapToScan.insert(current_map->logicalMap.border.left.map->map_file);
+    if(current_map->logicalMap.border.right.map!=nullptr)
+        mapToScan.insert(current_map->logicalMap.border.right.map->map_file);
+    if(current_map->logicalMap.border.top.map!=nullptr)
+        mapToScan.insert(current_map->logicalMap.border.top.map->map_file);
+    if(current_map->logicalMap.border.bottom.map!=nullptr)
+        mapToScan.insert(current_map->logicalMap.border.bottom.map->map_file);
+
+    std::unordered_map<std::string,Map_full *> all_map=mapController.all_map;
+    //locate the right map
+    for( const auto& n : all_map ) {
+        Map_full *map=n.second;
+        if(mapToScan.find(map->logicalMap.map_file)!=mapToScan.cend())
+        {
+            /*std::cout << map->logicalMap.map_file << ": "
+                      << std::to_string(map->relative_x) << "," << std::to_string(map->relative_y) << ","
+                      << std::to_string(map->logicalMap.width) << "," << std::to_string(map->logicalMap.height)
+                      << std::endl;*/
+            if(diffX>=map->relative_x && diffX<=(map->relative_x+map->logicalMap.width))
+                if(diffY>=map->relative_y && diffY<=(map->relative_y+map->logicalMap.height))
+                {
+                    std::cout << "click on " << map->logicalMap.map_file << " " << diffX << "," << diffY << std::endl;
+                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,map,diffX,diffY);
+                    return;
+                }
+        }
+    }
+    std::cerr << "CCMap not found: " << p.x() << "," << p.y() << std::endl;
 }
