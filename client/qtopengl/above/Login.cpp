@@ -254,13 +254,13 @@ void Login::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget
     warning->setPos(widget->width()/2-warning->boundingRect().width()/2,space);
 }
 
-void Login::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void Login::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     back->mousePressEventXY(p,pressValidated);
     server_select->mousePressEventXY(p,pressValidated);
 }
 
-void Login::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void Login::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     back->mouseReleaseEventXY(p,pressValidated);
     server_select->mouseReleaseEventXY(p,pressValidated);

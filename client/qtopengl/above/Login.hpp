@@ -24,8 +24,8 @@ public:
     ~Login();
     QRectF boundingRect() const;
     void paint(QPainter *p, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
-    void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
-    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
+    void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void setAuth(const QStringList &list);
     void setLinks(const QString &site_page,const QString &register_page);
     QStringList getAuth();

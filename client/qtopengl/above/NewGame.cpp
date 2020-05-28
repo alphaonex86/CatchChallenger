@@ -182,7 +182,7 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     }*/
 }
 
-void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
@@ -190,7 +190,7 @@ void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated)
     previous->mousePressEventXY(p,pressValidated);
 }
 
-void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
@@ -198,7 +198,7 @@ void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
     previous->mouseReleaseEventXY(p,pressValidated);
 }
 
-void NewGame::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+void NewGame::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);

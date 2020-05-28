@@ -53,9 +53,9 @@ private slots:
     void newLanguage();
 protected:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
-    void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
-    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
-    void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
+    void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void mouseMoveEventXY(const QPointF &p, bool &pressValidated, bool &callParentClass) override;
     void updateNews();
 
     #ifndef __EMSCRIPTEN__

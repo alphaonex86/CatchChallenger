@@ -185,19 +185,19 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     }*/
 }
 
-void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
 }
 
-void AddCharacter::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void AddCharacter::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
 }
 
-void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);

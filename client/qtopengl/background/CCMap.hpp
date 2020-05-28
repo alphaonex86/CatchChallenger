@@ -15,8 +15,11 @@ public:
     void setVar(ConnexionManager *connexionManager);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
     void paintChildItems(QList<QGraphicsItem *> childItems, qreal parentX, qreal parentY, QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr);
-    void mousePressEventXY(const QPointF &p, bool &pressValidated);
-    void mouseReleaseEventXY(const QPointF &p,bool &pressValidated);
+    void mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void keyPressReset();
+    void keyPressEvent(QKeyEvent * event);
+    void keyReleaseEvent(QKeyEvent *event);
 private:
     MapController mapController;
     QPointF lastClickedPos;

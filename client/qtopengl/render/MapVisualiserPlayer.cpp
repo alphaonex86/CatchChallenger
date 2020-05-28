@@ -146,6 +146,12 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
     keyPressParse();
 }
 
+void MapVisualiserPlayer::keyPressReset()
+{
+    keyPressed.clear();
+    keyAccepted.clear();
+}
+
 void MapVisualiserPlayer::keyPressParse()
 {
     //ignore is already in move
@@ -1434,8 +1440,9 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
     if(event->isAutoRepeat())
         return;
 
-    //remove from the key list pressed
-    keyPressed.erase(event->key());
+    //remove from the key list pressed if exists (can be dropped by onther event as click on map)
+    if(keyPressed.find(event->key())!=keyPressed.cend())
+        keyPressed.erase(event->key());
 
     if(keyPressed.size()>0)//another key pressed, repeat
         keyPressParse();

@@ -228,19 +228,19 @@ void AddOrEditServer::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidg
     }
 }
 
-void AddOrEditServer::mousePressEventXY(const QPointF &p, bool &pressValidated)
+void AddOrEditServer::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
 }
 
-void AddOrEditServer::mouseReleaseEventXY(const QPointF &p,bool &pressValidated)
+void AddOrEditServer::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
 }
 
-void AddOrEditServer::mouseMoveEventXY(const QPointF &p,bool &pressValidated)
+void AddOrEditServer::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     Q_UNUSED(p);
     Q_UNUSED(pressValidated);

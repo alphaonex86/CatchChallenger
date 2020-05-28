@@ -21,9 +21,9 @@ public:
     ~NewGame();
     QRectF boundingRect() const override;
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget = nullptr) override;
-    void mousePressEventXY(const QPointF &p,bool &pressValidated) override;
-    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated) override;
-    void mouseMoveEventXY(const QPointF &p, bool &pressValidated) override;
+    void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
+    void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void mouseMoveEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void setDatapack(const std::string &skinPath, const std::string &monsterPath, std::vector<std::vector<CatchChallenger::Profile::Monster> > monstergroup, const std::vector<uint8_t> &forcedSkin);
     void updateSkin();
     void on_cancel_clicked();

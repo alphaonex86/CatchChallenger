@@ -112,13 +112,13 @@ void SubServer::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     serverList->header()->resizeSection(0,wdialog->width()-space-space-120);
 }
 
-void SubServer::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void SubServer::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     back->mousePressEventXY(p,pressValidated);
     server_select->mousePressEventXY(p,pressValidated);
 }
 
-void SubServer::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void SubServer::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     back->mouseReleaseEventXY(p,pressValidated);
     server_select->mouseReleaseEventXY(p,pressValidated);
