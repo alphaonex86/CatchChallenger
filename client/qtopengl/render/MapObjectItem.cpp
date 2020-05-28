@@ -10,7 +10,8 @@ MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
     : QGraphicsItem(parent)
     , mMapObject(mapObject)
 {
-    //setCacheMode(QGraphicsItem::ItemCoordinateCache);just change direction without move do bug
+    //setCacheMode(QGraphicsItem::ItemCoordinateCache);//just change direction without move do bug
+    setCacheMode(QGraphicsItem::DeviceCoordinateCache);
 }
 
 QRectF MapObjectItem::boundingRect() const
@@ -25,13 +26,35 @@ QRectF MapObjectItem::boundingRect() const
 
 void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
 {
+    /// \warning performance problem here
     if(!mMapObject->isVisible())
         return;
     //if anymore into a group
     if(mMapObject->objectGroup()==NULL)
         return;
 
-    const QColor &color = mMapObject->objectGroup()->color();
-    mRendererList.at(mMapObject->objectGroup())->drawMapObject(p, mMapObject,
-                             color.isValid() ? color : Qt::transparent);
+    Tiled::MapRenderer *r=mRendererList.at(mMapObject->objectGroup());
+    r->drawMapObject(p, mMapObject, Qt::transparent);
+
+
+    /*if(!this->cache.isNull())
+    {
+        p->drawPixmap(0,0,this->cache.width(),this->cache.height(),this->cache);
+        return;
+    }
+    QImage cache(QSize(64*16,64*16),QImage::Format_ARGB32_Premultiplied);
+    cache.fill(Qt::transparent);
+    QPainter painter(&cache);
+
+    if(!mMapObject->isVisible())
+        return;
+    //if anymore into a group
+    if(mMapObject->objectGroup()==NULL)
+        return;
+
+    Tiled::MapRenderer *r=mRendererList.at(mMapObject->objectGroup());
+    r->drawMapObject(&painter, mMapObject, Qt::transparent);
+
+    this->cache=QPixmap::fromImage(cache);
+    p->drawPixmap(0,0,this->cache.width(),this->cache.height(),this->cache);*/
 }

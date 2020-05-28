@@ -146,7 +146,7 @@ void CellRenderer::render(const Cell &cell, const QPointF &pos, Origin origin)
 
     if (mIsOpenGL || (fragment.scaleX > 0 && fragment.scaleY > 0)) {
         mTile = cell.tile;
-        mFragments.append(fragment);
+        mFragments.push_back(fragment);
         return;
     }
 
@@ -178,7 +178,7 @@ void CellRenderer::flush()
     if (!mTile)
         return;
 
-    mPainter->drawPixmapFragments(mFragments.constData(),
+    mPainter->drawPixmapFragments(mFragments.data(),
                                   mFragments.size(),
                                   mTile->image());
 

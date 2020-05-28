@@ -57,8 +57,8 @@ LinkToLogin::LinkToLogin(
 
 LinkToLogin::~LinkToLogin()
 {
-    LinkToLogin::linkToLoginSocketFd=-1;
     closeSocket();
+    LinkToLogin::linkToLoginSocketFd=-1;
     //critical bug, need be reopened, never closed
     abort();
 }
@@ -89,6 +89,8 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     }
     strcpy(LinkToLogin::host,host);
     LinkToLogin::port=port;
+    if(LinkToLogin::linkToLoginSocketFd!=-1)
+        ::close(LinkToLogin::linkToLoginSocketFd);
     LinkToLogin::linkToLoginSocketFd=-1;
 
     const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
