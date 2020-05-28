@@ -20,6 +20,7 @@ public:
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
+    virtual void keyPressReset();
     std::string lastLocation() const;
     std::string currentMap() const;
     Map_full * currentMapFull() const;

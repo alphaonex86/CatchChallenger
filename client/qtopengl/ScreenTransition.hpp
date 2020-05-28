@@ -61,6 +61,8 @@ protected:
 
     void updateFPS();
     void setTargetFPS(int targetFPS);
+    void keyPressEvent(QKeyEvent * event);
+    void keyReleaseEvent(QKeyEvent *event);
 signals:
     void newFPSvalue(const unsigned int FPS);
 private:

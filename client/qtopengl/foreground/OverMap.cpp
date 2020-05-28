@@ -33,6 +33,7 @@ OverMap::OverMap()
     chatInput->setFixedWidth(200);
     chatType=new ComboBox(this);
     chatType->setFixedWidth(100);
+    chatType->setZValue(5);
     chat=new CustomButton(":/CC/images/interface/chat.png",this);
     {
         QLinearGradient gradient1( 0, 0, 0, 100 );
@@ -187,15 +188,14 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
     playersCount->setPos(w->width()-space-80,space+15);
 
-    int logicalDpiX=w->logicalDpiX();
-    int logicalDpiY=w->logicalDpiY();
     int physicalDpiX=w->physicalDpiX();
-    int physicalDpiY=w->physicalDpiY();
 
+    unsigned int xLeft=space;
     chat->setSize(84,93);
-    unsigned int chatX=space;
+    unsigned int chatX=xLeft;
     unsigned int chatY=w->height()-space-chat->height();
     chat->setPos(chatX,chatY);
+    xLeft+=chat->width()+space;
     chatOver->setPixelSize(18);
     chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
     chatBack->setVisible(chat->isChecked());
@@ -215,41 +215,61 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
 
     //compose from right to left
-    unsigned int x=w->width()-space;
+    unsigned int xRight=w->width()-space;
     if(buy->isVisible())
     {
         buy->setSize(84,93);
-        unsigned int buyX=x-buy->width();
+        unsigned int buyX=xRight-buy->width();
         buy->setPos(buyX,w->height()-space-buy->height());
-        x-=buy->width()+space;
+        xRight-=buy->width()+space;
         buyOver->setVisible(physicalDpiX<200);
         buyOver->setPixelSize(18);
         buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
     }
     {
         bag->setSize(84,93);
-        unsigned int bagX=x-bag->width();
+        unsigned int bagX=xRight-bag->width();
         bag->setPos(bagX,w->height()-space-bag->height());
-        x-=bag->width()+space;
+        xRight-=bag->width()+space;
         bagOver->setVisible(physicalDpiX<200);
         bagOver->setPixelSize(18);
         bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
     }
-    Q_UNUSED(x);
+    Q_UNUSED(xRight);
 }
 
-void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated)
+void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    if(chat->isChecked())
+    {
+        const QRectF &b=QRectF(chatBack->x(),chatBack->y(),chatBack->width(),chatBack->height()+5+chatInput->height());
+        const QRectF &t=mapRectToScene(b);
+        if(t.contains(p))
+        {
+            pressValidated=true;
+            callParentClass=true;
+        }
+    }
 }
 
-void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated)
+void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    if(chat->isChecked())
+    {
+        const QRectF &b=QRectF(chatBack->x(),chatBack->y(),chatBack->width(),chatBack->height()+5+chatInput->height()+5+chat->height());
+        const QRectF &t=mapRectToScene(b);
+        if(t.contains(p))
+        {
+            pressValidated=true;
+            callParentClass=true;
+        }
+    }
 }
 
 void OverMap::lineEdit_chat_text_returnPressed()
