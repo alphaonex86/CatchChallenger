@@ -143,10 +143,15 @@ void ScreenTransition::mousePressEvent(QMouseEvent *event)
         static_cast<ScreenInput *>(m_aboveStack)->mousePressEventXY(p,temp);
         mousePress=m_aboveStack;
     }
-    else if(m_foregroundStack!=nullptr)
+    if(!temp && m_foregroundStack!=nullptr)
     {
         static_cast<ScreenInput *>(m_foregroundStack)->mousePressEventXY(p,temp);
         mousePress=m_foregroundStack;
+    }
+    if(!temp && m_backgroundStack!=nullptr)
+    {
+        static_cast<ScreenInput *>(m_backgroundStack)->mousePressEventXY(p,temp);
+        mousePress=m_backgroundStack;
     }
     if(!temp)
         QGraphicsView::mousePressEvent(event);
@@ -170,10 +175,15 @@ void ScreenTransition::mouseReleaseEvent(QMouseEvent *event)
         m_aboveStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_aboveStack;
     }
-    else if(m_foregroundStack!=nullptr)
+    if(!pressValidated && m_foregroundStack!=nullptr)
     {
         m_foregroundStack->mouseReleaseEventXY(p,pressValidated);
         mousePress=m_foregroundStack;
+    }
+    if(!pressValidated && m_backgroundStack!=nullptr)
+    {
+        m_backgroundStack->mouseReleaseEventXY(p,pressValidated);
+        mousePress=m_backgroundStack;
     }
     if(!pressValidated)
         QGraphicsView::mouseReleaseEvent(event);
