@@ -22,6 +22,10 @@ public:
     void setEchoMode(QLineEdit::EchoMode e);
     void setMaxLength(int a);
     void setVisible(bool visible);
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
+    bool hasFocus() const;
+    void clearFocus();
     void clear();
     int width() const;
     int height() const;

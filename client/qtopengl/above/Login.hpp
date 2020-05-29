@@ -26,6 +26,8 @@ public:
     void paint(QPainter *p, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void keyPressEvent(QKeyEvent * event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
     void setAuth(const QStringList &list);
     void setLinks(const QString &site_page,const QString &register_page);
     QStringList getAuth();

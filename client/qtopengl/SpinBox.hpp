@@ -19,6 +19,8 @@ public:
     void setMinimum(int min);
     int maximum() const;
     void setMaximum(int max);
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 private:
     QSpinBox *m_spinBox;
 };

@@ -60,3 +60,13 @@ void SpinBox::setMaximum(int max)
 {
     m_spinBox->setMaximum(max);
 }
+
+void SpinBox::keyPressEvent(QKeyEvent * event)
+{
+    QGraphicsProxyWidget::keyPressEvent(event);
+}
+
+void SpinBox::keyReleaseEvent(QKeyEvent *event)
+{
+    QGraphicsProxyWidget::keyReleaseEvent(event);
+}
