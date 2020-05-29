@@ -23,7 +23,8 @@ public:
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
-    void mouseMoveEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void keyPressEvent(QKeyEvent * event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 private slots:
     void volumeSliderChange();
     void productKeyChange();

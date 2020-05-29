@@ -94,3 +94,24 @@ void LineEdit::clear()
 {
     m_lineEdit->clear();
 }
+
+void LineEdit::keyPressEvent(QKeyEvent * event)
+{
+    QGraphicsProxyWidget::keyPressEvent(event);
+}
+
+void LineEdit::keyReleaseEvent(QKeyEvent *event)
+{
+    QGraphicsProxyWidget::keyReleaseEvent(event);
+}
+
+bool LineEdit::hasFocus() const
+{
+    return m_lineEdit->hasFocus();
+}
+
+void LineEdit::clearFocus()
+{
+    m_lineEdit->clearFocus();
+}
+

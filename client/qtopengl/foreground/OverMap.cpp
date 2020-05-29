@@ -252,6 +252,10 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
             pressValidated=true;
             callParentClass=true;
         }
+        const QRectF &b2=QRectF(chatInput->x(),chatInput->y(),chatInput->width(),chatInput->height());
+        const QRectF &t2=mapRectToScene(b2);
+        if(!t2.contains(p))
+            chatInput->clearFocus();
     }
 }
 
@@ -269,6 +273,10 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
             pressValidated=true;
             callParentClass=true;
         }
+        const QRectF &b2=QRectF(chatInput->x(),chatInput->y(),chatInput->width(),chatInput->height());
+        const QRectF &t2=mapRectToScene(b2);
+        if(!t2.contains(p))
+            chatInput->clearFocus();
     }
 }
 
@@ -383,4 +391,16 @@ void OverMap::removeNumberForFlood()
     if(numberForFlood<=0)
         return;
     numberForFlood--;
+}
+
+void OverMap::keyPressEvent(QKeyEvent * event)
+{
+    if(chat->isChecked() && chatInput->hasFocus())
+        chatInput->keyPressEvent(event);
+}
+
+void OverMap::keyReleaseEvent(QKeyEvent *event)
+{
+    if(chat->isChecked() && chatInput->hasFocus())
+        chatInput->keyReleaseEvent(event);
 }

@@ -609,111 +609,26 @@ void ScreenTransition::setTargetFPS(int targetFPS)
 
 void ScreenTransition::keyPressEvent(QKeyEvent * event)
 {
-    QGraphicsView::keyPressEvent(event);
-    if(event->isAccepted())
-    {
-        if(ccmap!=nullptr)
-            ccmap->keyPressReset();
-        return;
-    }
-/*    if(m_aboveStack!=nullptr)
-    {
-        QGraphicsItem *item=m_aboveStack->focusItem();
-        if(item!=nullptr)
-        {
-            item->keyPressEvent(event);
-            if(event->isAccepted())
-            {
-                if(ccmap!=nullptr)
-                    ccmap->keyPressReset();
-                return;
-            }
-        }
-        m_aboveStack->keyPressEvent(event);
-        if(event->isAccepted())
-        {
-            if(ccmap!=nullptr)
-                ccmap->keyPressReset();
-            return;
-        }
-    }
-    if(m_foregroundStack!=nullptr)
-    {
-        QGraphicsItem *item=m_foregroundStack->focusItem();
-        if(item!=nullptr)
-        {
-            item->keyPressEvent(event);
-            if(event->isAccepted())
-            {
-                if(ccmap!=nullptr)
-                    ccmap->keyPressReset();
-                return;
-            }
-        }
-        m_foregroundStack->keyPressEvent(event);
-        if(event->isAccepted())
-        {
-            if(ccmap!=nullptr)
-                ccmap->keyPressReset();
-            return;
-        }
-    }*/
-    if(ccmap!=nullptr)
-        ccmap->keyPressEvent(event);
+    event->setAccepted(false);
+    if(m_aboveStack!=nullptr)
+        static_cast<ScreenInput *>(m_aboveStack)->keyPressEvent(event);
+    if(!event->isAccepted() && m_foregroundStack!=nullptr)
+        static_cast<ScreenInput *>(m_foregroundStack)->keyPressEvent(event);
+    if(!event->isAccepted() && m_backgroundStack!=nullptr)
+        static_cast<ScreenInput *>(m_backgroundStack)->keyPressEvent(event);
+    if(!event->isAccepted())
+        QGraphicsView::keyPressEvent(event);
 }
 
 void ScreenTransition::keyReleaseEvent(QKeyEvent *event)
 {
-    QGraphicsView::keyPressEvent(event);
-    if(event->isAccepted())
-    {
-        if(ccmap!=nullptr)
-            ccmap->keyPressReset();
-        return;
-    }
-/*    if(m_aboveStack!=nullptr)
-    {
-        QGraphicsItem *item=m_aboveStack->focusItem();
-        if(item!=nullptr)
-        {
-            item->keyReleaseEvent(event);
-            if(event->isAccepted())
-            {
-                if(ccmap!=nullptr)
-                    ccmap->keyPressReset();
-                return;
-            }
-        }
-        m_aboveStack->keyReleaseEvent(event);
-        if(event->isAccepted())
-        {
-            if(ccmap!=nullptr)
-                ccmap->keyPressReset();
-            return;
-        }
-    }
-    if(m_foregroundStack!=nullptr)
-    {
-        QGraphicsItem *item=m_foregroundStack->focusItem();
-        if(item!=nullptr)
-        {
-            item->keyReleaseEvent(event);
-            if(event->isAccepted())
-            {
-                if(ccmap!=nullptr)
-                    ccmap->keyPressReset();
-                return;
-            }
-        }
-        m_foregroundStack->keyReleaseEvent(event);
-        if(event->isAccepted())
-        {
-            if(ccmap!=nullptr)
-                ccmap->keyPressReset();
-            return;
-        }
-    }*/
-    if(ccmap!=nullptr)
-        ccmap->keyReleaseEvent(event);
+    event->setAccepted(false);
+    if(m_aboveStack!=nullptr)
+        static_cast<ScreenInput *>(m_aboveStack)->keyReleaseEvent(event);
+    if(!event->isAccepted() && m_foregroundStack!=nullptr)
+        static_cast<ScreenInput *>(m_foregroundStack)->keyReleaseEvent(event);
+    if(!event->isAccepted() && m_backgroundStack!=nullptr)
+        static_cast<ScreenInput *>(m_backgroundStack)->keyReleaseEvent(event);
+    if(!event->isAccepted())
+        QGraphicsView::keyReleaseEvent(event);
 }
-

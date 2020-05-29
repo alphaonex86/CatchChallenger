@@ -206,6 +206,8 @@ void OptionsDialog::mousePressEventXY(const QPointF &p, bool &pressValidated,boo
     quit->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     volumeSlider->mousePressEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
@@ -213,14 +215,8 @@ void OptionsDialog::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bo
     quit->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     volumeSlider->mouseReleaseEventXY(p,pressValidated);
-}
-
-void OptionsDialog::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
-{
-    Q_UNUSED(p);
-    Q_UNUSED(pressValidated);
-    //quit->mouseMoveEventXY(p,pressValidated);
-    volumeSlider->mouseMoveEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void OptionsDialog::volumeSliderChange()
@@ -272,4 +268,14 @@ void OptionsDialog::newLanguage()
 void OptionsDialog::openBuy()
 {
     QDesktopServices::openUrl(QUrl(tr("https://shop.first-world.info/en/")));
+}
+
+void OptionsDialog::keyPressEvent(QKeyEvent * event)
+{
+    productKeyInput->keyPressEvent(event);
+}
+
+void OptionsDialog::keyReleaseEvent(QKeyEvent *event)
+{
+    productKeyInput->keyReleaseEvent(event);
 }
