@@ -258,12 +258,16 @@ void Login::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callPa
 {
     back->mousePressEventXY(p,pressValidated);
     server_select->mousePressEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void Login::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
     back->mouseReleaseEventXY(p,pressValidated);
     server_select->mouseReleaseEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void Login::validate()
@@ -314,4 +318,16 @@ void Login::newLanguage()
     rememberText->setHtml(tr("Remember the password"));
     title->setText(tr("Login"));
     //htmlText->setHtml(tr(""));
+}
+
+void Login::keyPressEvent(QKeyEvent * event)
+{
+    login->keyPressEvent(event);
+    password->keyPressEvent(event);
+}
+
+void Login::keyReleaseEvent(QKeyEvent *event)
+{
+    login->keyReleaseEvent(event);
+    password->keyReleaseEvent(event);
 }

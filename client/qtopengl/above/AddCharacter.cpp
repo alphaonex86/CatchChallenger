@@ -189,18 +189,16 @@ void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated,bool
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void AddCharacter::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
-}
-
-void AddCharacter::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
-{
-    Q_UNUSED(p);
-    Q_UNUSED(pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void AddCharacter::setDatapack(std::string path)
@@ -374,3 +372,4 @@ void AddCharacter::on_comboBox_currentIndexChanged(int index)
     if(comboBox->count()>0)
         description->setHtml(QString::fromStdString(profileTextList.at(index).description));
 }
+

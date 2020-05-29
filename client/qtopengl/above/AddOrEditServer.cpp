@@ -232,18 +232,16 @@ void AddOrEditServer::mousePressEventXY(const QPointF &p, bool &pressValidated,b
 {
     quit->mousePressEventXY(p,pressValidated);
     validate->mousePressEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void AddOrEditServer::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
 {
     quit->mouseReleaseEventXY(p,pressValidated);
     validate->mouseReleaseEventXY(p,pressValidated);
-}
-
-void AddOrEditServer::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
-{
-    Q_UNUSED(p);
-    Q_UNUSED(pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void AddOrEditServer::newLanguage()
@@ -403,4 +401,22 @@ void AddOrEditServer::on_cancel_clicked()
 {
     ok=false;
     emit removeAbove();
+}
+
+void AddOrEditServer::keyPressEvent(QKeyEvent * event)
+{
+    serverInput->keyPressEvent(event);
+    portInput->keyPressEvent(event);
+    nameInput->keyPressEvent(event);
+    proxyInput->keyPressEvent(event);
+    proxyPortInput->keyPressEvent(event);
+}
+
+void AddOrEditServer::keyReleaseEvent(QKeyEvent *event)
+{
+    serverInput->keyReleaseEvent(event);
+    portInput->keyReleaseEvent(event);
+    nameInput->keyReleaseEvent(event);
+    proxyInput->keyReleaseEvent(event);
+    proxyPortInput->keyReleaseEvent(event);
 }

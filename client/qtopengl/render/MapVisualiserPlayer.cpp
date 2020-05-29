@@ -137,9 +137,13 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 
     //ignore the repeated event
     if(event->isAutoRepeat())
+    {
+        event->accept();
         return;
+    }
 
     //add to pressed key list
+    event->accept();
     keyPressed.insert(event->key());
 
     //apply the key
@@ -149,7 +153,6 @@ void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 void MapVisualiserPlayer::keyPressReset()
 {
     keyPressed.clear();
-    keyAccepted.clear();
 }
 
 void MapVisualiserPlayer::keyPressParse()
@@ -1438,7 +1441,10 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 
     //ignore the repeated event
     if(event->isAutoRepeat())
+    {
+        event->accept();
         return;
+    }
 
     //remove from the key list pressed if exists (can be dropped by onther event as click on map)
     if(keyPressed.find(event->key())!=keyPressed.cend())

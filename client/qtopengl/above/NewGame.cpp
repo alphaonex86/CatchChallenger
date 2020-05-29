@@ -188,6 +188,8 @@ void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &cal
     validate->mousePressEventXY(p,pressValidated);
     next->mousePressEventXY(p,pressValidated);
     previous->mousePressEventXY(p,pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
@@ -196,12 +198,8 @@ void NewGame::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &ca
     validate->mouseReleaseEventXY(p,pressValidated);
     next->mouseReleaseEventXY(p,pressValidated);
     previous->mouseReleaseEventXY(p,pressValidated);
-}
-
-void NewGame::mouseMoveEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
-{
-    Q_UNUSED(p);
-    Q_UNUSED(pressValidated);
+    pressValidated=true;
+    callParentClass=true;
 }
 
 /*void NewGame::setDatapack(std::string path)
@@ -465,4 +463,14 @@ void NewGame::on_previous_clicked()
     }
     else
         return;
+}
+
+void NewGame::keyPressEvent(QKeyEvent * event)
+{
+    uipseudo->keyPressEvent(event);
+}
+
+void NewGame::keyReleaseEvent(QKeyEvent *event)
+{
+    uipseudo->keyReleaseEvent(event);
 }
