@@ -12,6 +12,7 @@
 #include "../Language.hpp"
 #include <QDesktopServices>
 #include <QLineEdit>
+#include <QPaintEngine>
 
 DebugDialog::DebugDialog() :
     wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),
@@ -86,6 +87,64 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
 
     if(lastUpdate.elapsed()>1000 || !debugIsShow)
     {
+        const QPaintEngine::Type type = p->paintEngine()->type();
+        QString OpenGL="2D acceleration: CPU ("+QString::number(type)+")";
+        switch(type)
+        {
+        case QPaintEngine::X11:
+        OpenGL="2D acceleration: X11";
+        break;
+        case QPaintEngine::Windows:
+        OpenGL="2D acceleration: Windows";
+        break;
+        case QPaintEngine::QuickDraw:
+        OpenGL="2D acceleration: QuickDraw";
+        break;
+        case QPaintEngine::CoreGraphics:
+        OpenGL="2D acceleration: CoreGraphics";
+        break;
+        case QPaintEngine::MacPrinter:
+        OpenGL="2D acceleration: MacPrinter";
+        break;
+        case QPaintEngine::QWindowSystem:
+        OpenGL="2D acceleration: QWindowSystem";
+        break;
+        case QPaintEngine::OpenGL:
+        OpenGL="2D acceleration: OpenGL";
+        break;
+        case QPaintEngine::Picture:
+        OpenGL="2D acceleration: Picture";
+        break;
+        case QPaintEngine::SVG:
+        OpenGL="2D acceleration: SVG";
+        break;
+        case QPaintEngine::Raster:
+        OpenGL="2D acceleration: Raster";
+        break;
+        case QPaintEngine::Direct3D:
+        OpenGL="2D acceleration: Direct3D";
+        break;
+        case QPaintEngine::Pdf:
+        OpenGL="2D acceleration: Pdf";
+        break;
+        case QPaintEngine::OpenVG:
+        OpenGL="2D acceleration: OpenVG";
+        break;
+        case QPaintEngine::OpenGL2:
+        OpenGL="2D acceleration: OpenGL2";
+        break;
+        case QPaintEngine::PaintBuffer:
+        OpenGL="2D acceleration: PaintBuffer";
+        break;
+        case QPaintEngine::Blitter:
+        OpenGL="2D acceleration: Blitter";
+        break;
+        case QPaintEngine::Direct2D:
+        OpenGL="2D acceleration: Direct2D";
+        break;
+            default:
+            break;
+        }
         debugIsShow=true;
         debugText->setHtml(QString("logicalDpiX: ")+QString::number(widget->logicalDpiX())+", "
                            "logicalDpiY: "+QString::number(widget->logicalDpiY())+"<br />"+
@@ -93,7 +152,8 @@ void DebugDialog::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
                            "physicalDpiY: "+QString::number(widget->physicalDpiY())+"<br />"+
                            "width: "+QString::number(widget->width())+", "+
                            "height: "+QString::number(widget->height())+"<br />"
-                           "thread: "+QString::number(QThread::idealThreadCount())+"<br />"
+                           "thread: "+QString::number(QThread::idealThreadCount())+"<br />"+
+                           OpenGL
                            );
         lastUpdate.restart();
     }
