@@ -438,7 +438,7 @@ std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList()
     QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
     if(QFileInfo(wPath+"/server_list.xml").isFile())
         return loadXmlConnexionInfoList(wPath+"/server_list.xml");
-    return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
+    return loadXmlConnexionInfoList(QStringLiteral(":/CC/other/default_server_list.xml"));
 }
 
 std::vector<Multi::ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArray &xmlContent)

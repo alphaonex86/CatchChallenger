@@ -129,7 +129,6 @@
     #endif
 #else
     #if defined(__linux__) || defined(__CYGWIN__)
-        #include <byteswap.h>
         #include <endian.h>
         #ifdef __BYTE_ORDER
         #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
@@ -148,7 +147,6 @@
         #error "Endian determination failed"
         #endif
     #else
-        #include <byteswap.h>
         #include <endian.h>
     #endif
 #endif

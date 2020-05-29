@@ -48,12 +48,20 @@ void keep_screen_on(bool on) {
 ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
-    setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
-    setRenderHint(QPainter::Antialiasing,true);
-    setRenderHint(QPainter::TextAntialiasing,true);
-    setRenderHint(QPainter::HighQualityAntialiasing,true);
-    setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+    {
+        QGLWidget *context=new QGLWidget(QGLFormat(QGL::SampleBuffers));
+        //if OpenGL is present, use it
+        if(context->isValid())
+        {
+            setViewport(context);
+            setRenderHint(QPainter::Antialiasing,true);
+            setRenderHint(QPainter::TextAntialiasing,true);
+            setRenderHint(QPainter::HighQualityAntialiasing,true);
+            setRenderHint(QPainter::SmoothPixmapTransform,false);
+            setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+        }
+        //else use the CPU only
+    }
 
     mousePress=nullptr;
     m_backgroundStack=nullptr;
