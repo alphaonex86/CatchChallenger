@@ -557,6 +557,16 @@ void Client::withdrawMarketObject(const uint8_t &query_id,const uint16_t &object
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
+Player_private_and_public_informations &Client::get_public_and_private_informations()
+{
+    return public_and_private_informations;
+}
+
+const Player_private_and_public_informations &Client::get_public_and_private_informations_ro() const
+{
+    return public_and_private_informations;
+}
+
 void Client::withdrawMarketMonster(const uint8_t &query_id,const uint32_t &monsterId)
 {
     if(getInTrade() || isInFight())

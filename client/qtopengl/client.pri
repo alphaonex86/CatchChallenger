@@ -324,7 +324,11 @@ SOURCES += \
     $$PWD/MyApplication.cpp \
     $$PWD/above/DebugDialog.cpp \
     $$PWD/cc/QtDatapackClientLoaderThread.cpp \
-    $$PWD/foreground/OverMapLogic.cpp
+    $$PWD/foreground/OverMapLogic.cpp \
+    $$PWD/foreground/OverMapLogicTrade.cpp \
+    $$PWD/foreground/OverMapLogicShop.cpp \
+    $$PWD/foreground/OverMapLogicBot.cpp \
+    $$PWD/foreground/OverMapLogicFactory.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \

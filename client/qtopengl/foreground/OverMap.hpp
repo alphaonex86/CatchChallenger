@@ -13,6 +13,7 @@ class LineEdit;
 class ComboBox;
 class CustomText;
 class ConnexionManager;
+class CCMap;
 
 class OverMap : public QObject, public ScreenInput
 {
@@ -21,7 +22,7 @@ public:
     explicit OverMap();
     ~OverMap();
     virtual void resetAll();
-    void setVar(ConnexionManager *connexionManager);
+    virtual void setVar(CCMap *ccmap, ConnexionManager *connexionManager);
     void newLanguage();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
