@@ -44,7 +44,7 @@ namespace CatchChallenger {
 void recordDisconnectByServer(void * client);
 #endif
 
-class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement
+class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
 public:
     friend class BaseServer;
@@ -502,6 +502,8 @@ private:
     void withdrawMarketObject(const uint8_t &query_id,const uint16_t &objectId,const uint32_t &quantity);
     void withdrawMarketMonster(const uint8_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
 
+    Player_private_and_public_informations &get_public_and_private_informations() override;
+    const Player_private_and_public_informations &get_public_and_private_informations_ro() const override;
     static std::string directionToStringToSave(const Direction &direction);
     static std::string orientationToStringToSave(const Orientation &orientation);
     //quest

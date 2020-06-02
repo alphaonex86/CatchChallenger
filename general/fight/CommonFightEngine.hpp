@@ -84,6 +84,8 @@ public:
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
     virtual bool haveBeatBot(const uint16_t &botFightId) const;
 protected:
+    virtual Player_private_and_public_informations &get_public_and_private_informations() = 0;
+    virtual const Player_private_and_public_informations &get_public_and_private_informations_ro() const = 0;
     static ApplyOn invertApplyOn(const ApplyOn &applyOn);
     virtual PlayerMonster getRandomMonster(const std::vector<MapMonster> &monsterList,bool *ok);
     static bool monsterIsKO(const PlayerMonster &playerMonter);

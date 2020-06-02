@@ -9,11 +9,12 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../../general/base/CommonMap.hpp"
 #include "../../../../general/fight/CommonFightEngine.hpp"
+#include "../../../../general/base/ClientBase.hpp"
 
 namespace CatchChallenger {
 class Api_protocol_Qt;
 //only the logique here, store nothing
-class ClientFightEngine : public QObject, public CommonFightEngine
+class ClientFightEngine : public QObject, public CommonFightEngine, public ClientBase
 {
     Q_OBJECT
 public:
