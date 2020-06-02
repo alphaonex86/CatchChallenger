@@ -82,6 +82,7 @@ public:
     bool getIsLogged() const;
     bool getCaracterSelected() const;
     std::map<uint8_t,uint64_t> getQuerySendTimeList() const;
+    std::vector<uint8_t> getEvents();
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
@@ -95,7 +96,7 @@ public:
     ProxyMode proxyMode;
 
     bool setMapNumber(const unsigned int number_of_map);
-    virtual bool disconnectClient();
+    virtual bool disconnectClient() override;
     std::pair<uint16_t,uint16_t> getLast_number_of_player();
 protected:
     std::vector<ChatEntry> chat_list;
@@ -141,7 +142,7 @@ protected:
     std::vector<DelayedMessage> delayedMessages;
 protected:
     virtual void socketDestroyed();
-    void parseIncommingData();
+    void parseIncommingData() override;
     virtual void readForFirstHeader() = 0;
     void sslHandcheckIsFinished();
     void connectTheExternalSocketInternal();
@@ -149,8 +150,8 @@ protected:
     void saveCert(const std::string &file);
     #endif
 
-    void errorParsingLayer(const std::string &error);
-    void messageParsingLayer(const std::string &message) const;
+    void errorParsingLayer(const std::string &error) override;
+    void messageParsingLayer(const std::string &message) const override;
 
     bool parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size);
     bool parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size);
@@ -167,11 +168,11 @@ protected:
     void Qtlogged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
 protected:
     //have message without reply
-    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
+    virtual bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) override;
     //have query with reply
-    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
     //send reply
-    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    virtual bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
 
     //servers list
     LogicialGroup * addLogicalGroup(const std::string &path, const std::string &xml, const std::string &language);

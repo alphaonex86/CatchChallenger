@@ -78,18 +78,22 @@ void CustomText::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
         paint.setRenderHint(QPainter::Antialiasing);
         qreal penWidth=2.0;
         if(font->pixelSize()<=12)
-            penWidth=0.7;
+            penWidth=2;
         else if(font->pixelSize()<=18)
-            penWidth=1;
+            penWidth=3;
         else if(font->pixelSize()<=24)
-            penWidth=1.5;
+            penWidth=4;
+        else
+            penWidth=5;
 
         m_pen_gradient.setStart(0,0);
         m_pen_gradient.setFinalStop(0,h);
         QPen pen(m_pen_gradient, penWidth, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin);
         QBrush brush(m_brush_gradient);
         paint.setPen(pen);
+        paint.drawPath(*textPath);
         paint.setBrush(brush);
+        paint.setPen(QPen(Qt::transparent, 0, Qt::NoPen, Qt::RoundCap, Qt::RoundJoin));
         paint.drawPath(*textPath);
     }
 

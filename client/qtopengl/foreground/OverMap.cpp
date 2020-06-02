@@ -27,12 +27,9 @@ OverMap::OverMap()
     playersCount=new QGraphicsTextItem(this);
 
     chatBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
-    chatBack->setSize(300,400);
     chatText=new QGraphicsTextItem(this);
     chatInput=new LineEdit(this);
-    chatInput->setFixedWidth(200);
     chatType=new ComboBox(this);
-    chatType->setFixedWidth(100);
     chatType->setZValue(5);
     chat=new CustomButton(":/CC/images/interface/chat.png",this);
     {
@@ -67,6 +64,43 @@ OverMap::OverMap()
         buyOver=new CustomText(gradient1,gradient2,this);
     }
 
+    gainBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
+    gain=new QGraphicsTextItem(gainBack);
+
+    IG_dialog_textBack=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
+    IG_dialog_name=new QGraphicsTextItem(IG_dialog_textBack);
+    IG_dialog_text=new QGraphicsTextItem(IG_dialog_textBack);
+    IG_dialog_quit=new CustomButton(":/CC/images/interface/closedialog.png",IG_dialog_textBack);
+
+    tipBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
+    tip=new QGraphicsTextItem(tipBack);
+
+    persistant_tipBack=new ImagesStrechMiddle(8,":/CC/images/interface/chatBackground.png",this);
+    persistant_tip=new QGraphicsTextItem(persistant_tipBack);
+
+    labelSlow=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/multi/slow.png"),this);
+
+    if(false)
+    {
+        {
+            gainString="gain";
+            gain->setHtml(gainString);
+        }
+        {
+            IG_dialog_nameString="Name";
+            IG_dialog_name->setHtml(IG_dialog_nameString);
+            IG_dialog_textString="Text";
+            IG_dialog_text->setHtml(IG_dialog_textString);
+        }
+        {
+            tipString="tip";
+            tip->setHtml(tipString);
+        }
+        {
+            persistant_tipString="persistant_tip";
+            persistant_tip->setHtml(persistant_tipString);
+        }
+    }
 
 /*    if(!connect(back,&CustomButton::clicked,this,&OverMap::backMulti))
         abort();
@@ -81,6 +115,8 @@ OverMap::OverMap()
     if(!connect(chatType,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OverMap::comboBox_chat_type_currentIndexChanged))
         abort();
     if(!connect(chatInput,&LineEdit::returnPressed,this,&OverMap::lineEdit_chat_text_returnPressed))
+        abort();
+    if(!connect(IG_dialog_quit,&CustomButton::clicked,this,&OverMap::IG_dialog_close))
         abort();
 
     stopFlood.setSingleShot(false);
@@ -192,10 +228,23 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
     unsigned int xLeft=space;
     chat->setSize(84,93);
+    if(w->width()<800 || w->height()<600)
+    {
+        chatBack->setSize(200,200);
+        chatInput->setFixedWidth(140);
+        chatType->setFixedWidth(60);
+    }
+    else
+    {
+        chatBack->setSize(300,400);
+        chatInput->setFixedWidth(200);
+        chatType->setFixedWidth(100);
+    }
     unsigned int chatX=xLeft;
     unsigned int chatY=w->height()-space-chat->height();
     chat->setPos(chatX,chatY);
     xLeft+=chat->width()+space;
+    chatOver->setVisible(physicalDpiX<200);
     chatOver->setPixelSize(18);
     chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
     chatBack->setVisible(chat->isChecked());
@@ -210,8 +259,12 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
         y-=3+chatBack->height();
         chatBack->setPos(space,y);
-        chatText->setVisible(physicalDpiX<200);
         chatText->setPos(space+space,y+space);
+    }
+    if(labelSlow->isVisible())
+    {
+        labelSlow->setPos(xLeft,chatY);
+        xLeft+=labelSlow->pixmap().width()+space;
     }
 
     //compose from right to left
@@ -236,6 +289,83 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
     }
     Q_UNUSED(xRight);
+
+    gain->setVisible(!gainString.isEmpty());
+    gainBack->setVisible(gain->isVisible());
+    if(gain->isVisible())
+    {
+        const QRectF &f=gain->boundingRect();
+        gainBack->setSize(f.width()+space*2,f.height()+space*2);
+        gainBack->setPos(w->width()/2-gainBack->width()/2,space);
+        gain->setPos(space,space);
+    }
+
+    IG_dialog_textBack->setVisible(!IG_dialog_textString.isEmpty());
+    IG_dialog_name->setVisible(IG_dialog_textBack->isVisible());
+    IG_dialog_text->setVisible(IG_dialog_textBack->isVisible());
+    IG_dialog_quit->setVisible(IG_dialog_textBack->isVisible());
+    if(IG_dialog_textBack->isVisible())
+    {
+        const QRectF &b1=IG_dialog_name->boundingRect();
+        const QRectF &b2=IG_dialog_text->boundingRect();
+        int width=b2.width();
+        int height=b1.height()+10+b2.height();
+        if(w->width()<800 || w->height()<600)
+        {
+            if(width<350)
+                width=350;
+            if(height<200)
+                height=200;
+            IG_dialog_quit->setSize(84/3,93/3);
+        }
+        else
+        {
+            if(width<600)
+                width=600;
+            if(height<400)
+                height=400;
+            IG_dialog_quit->setSize(84/2,93/2);
+        }
+        IG_dialog_textBack->setSize(width,height);
+
+        int x=w->width()/2-IG_dialog_textBack->width()/2;
+        int y=w->height()/2-IG_dialog_textBack->height()/2;
+        IG_dialog_textBack->setPos(x,y);
+        if(IG_dialog_nameString.isEmpty())
+            IG_dialog_text->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize());
+        else
+        {
+            IG_dialog_name->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize());
+            IG_dialog_text->setPos(IG_dialog_textBack->currentBorderSize(),IG_dialog_textBack->currentBorderSize()+space+IG_dialog_name->boundingRect().height());
+        }
+        IG_dialog_quit->setPos(IG_dialog_textBack->width()-IG_dialog_quit->width(),0);
+    }
+
+    int yMiddle=w->height()-space;
+
+    persistant_tip->setVisible(!persistant_tipString.isEmpty());
+    persistant_tipBack->setVisible(persistant_tip->isVisible());
+    if(persistant_tip->isVisible())
+    {
+        const QRectF &f=persistant_tip->boundingRect();
+        persistant_tipBack->setSize(f.width()+space*2,f.height()+space*2);
+
+        persistant_tip->setPos(space,space);
+        persistant_tipBack->setPos(w->width()/2-persistant_tipBack->width()/2,yMiddle-persistant_tipBack->height());
+        yMiddle-=(f.height()+space*2+space);
+    }
+
+    tip->setVisible(!tipString.isEmpty());
+    tipBack->setVisible(tip->isVisible());
+    if(tipBack->isVisible())
+    {
+        const QRectF &f=tip->boundingRect();
+        tipBack->setSize(f.width()+space*2,f.height()+space*2);
+
+        tip->setPos(space,space);
+        tipBack->setPos(w->width()/2-tipBack->width()/2,yMiddle-tipBack->height());
+        yMiddle-=(f.height()+space*2+space);
+    }
 }
 
 void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
@@ -243,6 +373,12 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
+    if(IG_dialog_textBack->isVisible() && f.contains(p))
+    {
+        IG_dialog_quit->mousePressEventXY(p,pressValidated);
+        pressValidated=true;
+    }
     if(chat->isChecked())
     {
         const QRectF &b=QRectF(chatBack->x(),chatBack->y(),chatBack->width(),chatBack->height()+5+chatInput->height());
@@ -264,6 +400,12 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
+    if(IG_dialog_textBack->isVisible() && f.contains(p))
+    {
+        IG_dialog_quit->mouseReleaseEventXY(p,pressValidated);
+        pressValidated=true;
+    }
     if(chat->isChecked())
     {
         const QRectF &b=QRectF(chatBack->x(),chatBack->y(),chatBack->width(),chatBack->height()+5+chatInput->height()+5+chat->height());
@@ -278,6 +420,11 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
         if(!t2.contains(p))
             chatInput->clearFocus();
     }
+}
+
+void OverMap::IG_dialog_close()
+{
+    IG_dialog_textString.clear();
 }
 
 void OverMap::lineEdit_chat_text_returnPressed()

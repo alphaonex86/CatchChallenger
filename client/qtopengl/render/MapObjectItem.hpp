@@ -23,7 +23,13 @@ class MapObjectItem : public QGraphicsItem
 public:
     MapObjectItem(Tiled::MapObject *mapObject,QGraphicsItem *parent = 0);
     QRectF boundingRect() const;
-    void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *);
+    void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widget);
+    const Tiled::MapObject * getMapObject() const;
+
+    static const void * playerObject;
+    static qreal scale;
+    static qreal x;
+    static qreal y;
 private:
     Tiled::MapObject *mMapObject;
     QPixmap cache;

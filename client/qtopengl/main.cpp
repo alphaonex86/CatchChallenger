@@ -121,6 +121,39 @@ int main(int argc, char *argv[])
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
     qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
 
+    qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
+    qRegisterMetaType<std::vector<ServerFromPoolForDisplay *> >("std::vector<ServerFromPoolForDisplay *>");
+    qRegisterMetaType<CatchChallenger::MapVisualiserPlayer::BlockedOn>("MapVisualiserPlayer::BlockedOn");
+
+    qRegisterMetaType<CatchChallenger::Chat_type>("Chat_type");
+    qRegisterMetaType<CatchChallenger::Player_type>("Player_type");
+    qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("Player_private_and_public_informations");
+
+    qRegisterMetaType<std::unordered_map<uint32_t,uint32_t> >("std::unordered_map<uint32_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint32_t,uint32_t> >("CatchChallenger::Plant_collect");
+    qRegisterMetaType<std::vector<CatchChallenger::ItemToSellOrBuy> >("std::vector<ItemToSell>");
+    qRegisterMetaType<std::vector<std::pair<uint8_t,uint8_t> > >("std::vector<std::pair<uint8_t,uint8_t> >");
+    qRegisterMetaType<CatchChallenger::Skill::AttackReturn>("Skill::AttackReturn");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+    qRegisterMetaType<std::vector<CatchChallenger::MarketMonster> >("std::vector<MarketMonster>");
+
+    qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint16_t> >("std::unordered_map<uint8_t,uint16_t>");
+    qRegisterMetaType<std::unordered_map<uint8_t,uint32_t> >("std::unordered_map<uint8_t,uint32_t>");
+
+    qRegisterMetaType<std::map<uint16_t,uint16_t> >("std::map<uint16_t,uint16_t>");
+    qRegisterMetaType<std::map<uint16_t,uint32_t> >("std::map<uint16_t,uint32_t>");
+    qRegisterMetaType<std::map<uint8_t,uint32_t> >("std::map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::map<uint8_t,uint16_t> >("std::map<uint8_t,uint16_t>");
+    qRegisterMetaType<std::map<uint8_t,uint32_t> >("std::map<uint8_t,uint32_t>");
+    qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
+    qRegisterMetaType<std::vector<char> >("std::vector<char>");
+    qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
+
     if(argc<1)
     {
         std::cerr << "argc<1: wrong arg count" << std::endl;
