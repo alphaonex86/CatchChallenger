@@ -134,7 +134,7 @@ void OverMap::resetAll()
     monsters.clear();
 }
 
-void OverMap::setVar(ConnexionManager *connexionManager)
+void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
 {
     lastMessageSend.clear();
     this->connexionManager=connexionManager;

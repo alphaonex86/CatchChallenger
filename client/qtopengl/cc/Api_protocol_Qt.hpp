@@ -18,8 +18,8 @@ public:
     ~Api_protocol_Qt();
     virtual void stateChanged(QAbstractSocket::SocketState socketState);
     bool disconnectClient() override;
-
-    ClientFightEngine *fightEngine;
+    Player_private_and_public_informations &get_public_and_private_informations() override;
+    const Player_private_and_public_informations &get_public_and_private_informations_ro() const override;
 
     void QtsocketDestroyed();
     void socketDestroyed() override;

@@ -1,6 +1,5 @@
 #include "Api_protocol_Qt.hpp"
 #include "../Language.hpp"
-#include "../../qt/fight/interface/ClientFightEngine.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #ifndef NOTCPSOCKET
 //#include "SslCert.h"
@@ -72,7 +71,6 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     if(!connect(socket,&ConnectedSocket::stateChanged,    this,&Api_protocol_Qt::stateChanged,Qt::QueuedConnection))//Qt::QueuedConnection mandatory, Qt::DirectConnection do wrong order call problem (disconnect before set stage 2 + new token to go on game server)
         abort();
 
-    fightEngine=new ClientFightEngine();
 /*    if(!connect(fightEngine,&Api_protocol_Qt::newError,  this,&Api_protocol_Qt::newError))
         abort();
     if(!connect(fightEngine,&Api_protocol_Qt::error,     this,&Api_protocol_Qt::errorFromFightEngine))
@@ -83,12 +81,10 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         abort();*/
     if(!connect(this,&Api_protocol_Qt::Qtrandom_seeds,this,&Api_protocol_Qt::newRandomNumber))
            abort();
-    fightEngine->setClient(this);
 }
 
 Api_protocol_Qt::~Api_protocol_Qt()
 {
-    delete fightEngine;
 }
 
 void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
@@ -121,6 +117,16 @@ bool Api_protocol_Qt::disconnectClient()
     if(socket!=NULL)
         socket->disconnect();
     return Api_protocol::disconnectClient();
+}
+
+Player_private_and_public_informations &Api_protocol_Qt::get_public_and_private_informations()
+{
+    return get_player_informations();
+}
+
+const Player_private_and_public_informations &Api_protocol_Qt::get_public_and_private_informations_ro() const
+{
+    return get_player_informations_ro();
 }
 
 void Api_protocol_Qt::tryDisconnect()

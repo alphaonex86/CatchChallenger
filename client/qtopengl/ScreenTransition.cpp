@@ -501,12 +501,12 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     if(overmap==nullptr)
     {
         overmap=new OverMapLogic();
-        if(!connect(overmap,&OverMap::error,this,&ScreenTransition::errorString))
+        if(!connect(overmap,&OverMapLogic::error,this,&ScreenTransition::errorString))
             abort();
     }
     overmap->resetAll();
     overmap->connectAllSignals();
-    overmap->setVar(connexionManager);
+    overmap->setVar(ccmap,connexionManager);
 }
 
 void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
