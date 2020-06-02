@@ -3,6 +3,7 @@
 
 #include "OverMap.hpp"
 #include "../Map_client.hpp"
+#include "../DisplayStructures.hpp"
 #include "../render/MapVisualiserPlayer.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
@@ -18,8 +19,9 @@ class OverMapLogic : public OverMap
 {
     Q_OBJECT
 public:
-    OverMapLogic(CCMap *ccmap,ConnexionManager *connexionManager);
+    OverMapLogic();
     void resetAll();
+    void setVar(CCMap *ccmap, ConnexionManager *connexionManager) override;
     enum QueryType
     {
         QueryType_Seed,
@@ -65,6 +67,14 @@ public:
         ObjectType_ItemLearnOnMonster,
         ObjectType_UseInFight
     };
+    enum ActionClan
+    {
+        ActionClan_Create,
+        ActionClan_Leave,
+        ActionClan_Dissolve,
+        ActionClan_Invite,
+        ActionClan_Eject
+    };
 public slots:
     void connectAllSignals();
     void selectObject(const ObjectType &objectType);
@@ -83,6 +93,8 @@ public slots:
     void errorWithTheCurrentMap();
     void currentMapLoaded();
     void setIG_dialog(QString text,QString name=QString());
+    void addCash(const uint32_t &cash);
+    void removeCash(const uint32_t &cash);
 
     void tipTimeout();
     void gainTimeout();
@@ -110,6 +122,7 @@ public slots:
     void cityCapture(const uint32_t &remainingTime,const uint8_t &type);
     void cityCaptureUpdateTime();
     void updatePageZoneCatch();
+    void on_zonecaptureCancel_clicked();
     void captureCityYourAreNotLeader();
     void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone);
     void captureCityPreviousNotFinished();
@@ -118,7 +131,7 @@ public slots:
     void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityWin();
     //inventory
-    void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
+    //void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
     void add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain=true);
     void add_to_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const bool &showGain=true);
@@ -126,15 +139,16 @@ public slots:
     void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory(const uint16_t &itemId, const uint32_t &quantity=1);
-    void load_inventory();
-    void on_inventory_itemActivated(QListWidgetItem *item);
+    //void load_inventory();
+    //void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const CatchChallenger::ObjectUsage &objectUsage);
     uint32_t itemQuantity(const uint16_t &itemId) const;
     //shop
     void haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items);
     void haveBuyObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice);
     void haveSellObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice);
-    void displaySellList();
+    //factory
+    void updateFactoryStatProduction(const CatchChallenger::IndustryStatus &industryStatus,const CatchChallenger::Industry &industry);
     void haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice);
     void haveSellFactoryObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice);
     void haveFactoryList(const uint32_t &remainingProductionTime, const std::vector<CatchChallenger::ItemToSellOrBuy> &resources, const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
@@ -144,13 +158,29 @@ public slots:
     void cancelAllPlantQuery(const std::string map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
-    //crafting
-    void recipeUsed(const CatchChallenger::RecipeUsage &recipeUsage);
+    //crafting -> go to inventory
+    //void recipeUsed(const CatchChallenger::RecipeUsage &recipeUsage);
     //bot
     void goToBotStep(const uint8_t &step);
     std::string parseHtmlToDisplay(const std::string &htmlContent);
+    std::string reputationRequirementsToText(const CatchChallenger::ReputationRequirements &reputationRequirements);
+    void IG_dialog_text_linkActivated(const std::string &rawlink);
+    void on_IG_dialog_text_linkActivated(const QString &rawlink);
+    //quest
+    bool haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const;
+    void appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList);
+    void showQuestText(const uint32_t &textId);
+    bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
+    bool nextStepQuest(const CatchChallenger::Quest &quest);
+    bool startQuest(const CatchChallenger::Quest &quest);
+    bool botHaveQuest(const uint16_t &botId) const;
+    std::vector<std::pair<uint16_t, std::string> > getQuestList(const uint16_t &botId) const;
+    void updateDisplayedQuests();
+    void appendReputationPoint(const std::string &type,const int32_t &point);
+    bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const;
+    bool haveStartQuestRequirement(const CatchChallenger::Quest &quest) const;
     //trade
-    void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
+    /*void tradeRequested(const std::string &pseudo, const uint8_t &skinInt);
     void tradeAcceptedByOther(const std::string &pseudo,const uint8_t &skinInt);
     void tradeCanceledByOther();
     void tradeFinishedByOther();
@@ -159,15 +189,15 @@ public slots:
     void tradeAddTradeObject(const uint16_t &item, const uint32_t &quantity);
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
     void tradeUpdateCurrentObject();
-    std::vector<CatchChallenger::PlayerMonster> warehouseMonsterOnPlayer() const;
+    std::vector<CatchChallenger::PlayerMonster> warehouseMonsterOnPlayer() const;*/
     //battle
-    void battleRequested(const std::string &pseudo, const uint8_t &skinInt);
+    /*void battleRequested(const std::string &pseudo, const uint8_t &skinInt);
     void battleAcceptedByOther(const std::string &pseudo, const uint8_t &skinId, const std::vector<uint8_t> &stat, const uint8_t &monsterPlace, const CatchChallenger::PublicPlayerMonster &publicPlayerMonster);
     void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
     void battleCanceledByOther();
-    void sendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn);
+    void sendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn);*/
     //market
-    void marketList(const uint64_t &price,const std::vector<CatchChallenger::MarketObject> &marketObjectList,const std::vector<CatchChallenger::MarketMonster> &marketMonsterList,const std::vector<CatchChallenger::MarketObject> &marketOwnObjectList,const std::vector<CatchChallenger::MarketMonster> &marketOwnMonsterList);
+    /*void marketList(const uint64_t &price,const std::vector<CatchChallenger::MarketObject> &marketObjectList,const std::vector<CatchChallenger::MarketMonster> &marketMonsterList,const std::vector<CatchChallenger::MarketObject> &marketOwnObjectList,const std::vector<CatchChallenger::MarketMonster> &marketOwnMonsterList);
     void addOwnMonster(const CatchChallenger::MarketMonster &marketMonster);
     void marketBuy(const bool &success);
     void marketBuyMonster(const CatchChallenger::PlayerMonster &playerMonster);
@@ -176,7 +206,9 @@ public slots:
     void marketWithdrawCanceled();
     void marketWithdrawObject(const uint16_t &objectId, const uint32_t &quantity);
     void marketWithdrawMonster(const CatchChallenger::PlayerMonster &playerMonster);
-    void IG_dialog_text_linkActivated(const std::string &rawlink);
+    */
+    //fight
+    void botFight(const uint16_t &fightId);
 signals:
     void error(const std::string &error);
     void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
@@ -196,6 +228,7 @@ private:
     int lastReplyTimeValue;
     QTime lastReplyTimeSince;
     uint32_t worseQueryTime;
+    uint8_t lastStepUsed;
 
     std::vector<SeedInWaiting> seed_in_waiting;
     std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
@@ -204,10 +237,37 @@ private:
     std::vector<QTime> add_to_inventoryGainTime;
     std::vector<std::string> add_to_inventoryGainExtraList;
     std::vector<QTime> add_to_inventoryGainExtraTime;
-
+private:
     std::string lastPlaceDisplayed;
     std::string currentAmbianceFile;
     std::string visualCategory;
+    std::vector<ActionClan> actionClan;
+
+    std::string clanName;
+    bool haveClanInformations;
+
+    //industry
+    uint16_t factoryId;
+    CatchChallenger::IndustryStatus industryStatus;
+    bool factoryInProduction;
+    //bot
+    CatchChallenger::Bot actualBot;
+    //quest
+    bool isInQuest;
+    uint16_t questId;
+    //city
+    QTimer nextCityCatchTimer;
+    CatchChallenger::City city;
+    QTimer updater_page_zonecatch;
+    QDateTime nextCatch,nextCatchOnScreen;
+    std::string zonecatchName;
+    bool zonecatch;
+    //shop
+    uint32_t tempQuantityForSell;
+    bool waitToSell;
+    std::vector<CatchChallenger::ItemToSellOrBuy> itemsToSell,itemsToBuy;
+    std::vector<uint16_t> objectInUsing;
+    std::vector<uint32_t> monster_to_deposit,monster_to_withdraw;
 };
 
 #endif // OVERMAPLOGIC_HPP

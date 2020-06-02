@@ -3,13 +3,28 @@
 #include "../AudioGL.hpp"
 #include "../background/CCMap.hpp"
 #include "../cc/QtDatapackClientLoader.hpp"
+#include "../../qt/FacilityLibClient.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include <iostream>
 
-OverMapLogic::OverMapLogic(CCMap *ccmap, ConnexionManager *connexionManager)
+OverMapLogic::OverMapLogic()
 {
     multiplayer=true;
     lastReplyTimeValue=0;
     worseQueryTime=0;
-    this->connexionManager=connexionManager;
+
+    checkQueryTime.start(200);
+    if(!connect(&checkQueryTime,&QTimer::timeout,   this,&OverMapLogic::detectSlowDown))
+        abort();
+    tip_timeout.setInterval(8000);
+    gain_timeout.setInterval(500);
+    tip_timeout.setSingleShot(true);
+    gain_timeout.setSingleShot(true);
+}
+
+void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
+{
     this->ccmap=ccmap;
 
     if(connect(ccmap,&CCMap::pathFindingNotFound,this,&OverMapLogic::pathFindingNotFound))
@@ -34,18 +49,12 @@ OverMapLogic::OverMapLogic(CCMap *ccmap, ConnexionManager *connexionManager)
         abort();
     if(connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
         abort();
-
-    checkQueryTime.start(200);
-    if(!connect(&checkQueryTime,&QTimer::timeout,   this,&OverMapLogic::detectSlowDown))
-        abort();
-    tip_timeout.setInterval(8000);
-    gain_timeout.setInterval(500);
-    tip_timeout.setSingleShot(true);
-    gain_timeout.setSingleShot(true);
+    OverMap::setVar(ccmap,connexionManager);
 }
 
 void OverMapLogic::resetAll()
 {
+    lastStepUsed=0;
     lastReplyTimeValue=0;
     worseQueryTime=0;
     add_to_inventoryGainList.clear();
@@ -58,6 +67,29 @@ void OverMapLogic::resetAll()
     #ifndef CATCHCHALLENGER_NOAUDIO
     AudioGL::audio->stopCurrentAmbiance();
     #endif
+    actualBot.botId=0;
+    actualBot.name.clear();
+    actualBot.properties.clear();
+    actualBot.skin.clear();
+    actualBot.step.clear();
+    actionClan.clear();
+    isInQuest=false;
+    questId=0;
+    clanName.clear();
+    haveClanInformations=false;
+    city.capture.day=CatchChallenger::City::Capture::Day::Monday;
+    city.capture.frenquency=CatchChallenger::City::Capture::Frequency::Frequency_week;
+    city.capture.hour=0;
+    city.capture.minute=0;
+    zonecatchName.clear();
+    zonecatch=false;
+    tempQuantityForSell=0;
+    waitToSell=false;
+    itemsToSell.clear();
+    itemsToBuy.clear();
+    objectInUsing.clear();
+    monster_to_deposit.clear();
+    monster_to_withdraw.clear();
 }
 
 void OverMapLogic::lastReplyTime(const uint32_t &time)
@@ -195,8 +227,8 @@ void OverMapLogic::connectAllSignals()
         abort();
 
     //inventory
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qthave_inventory,     this,&OverMapLogic::have_inventory))
-        abort();
+    /*if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qthave_inventory,     this,&OverMapLogic::have_inventory))
+        abort();*/
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtadd_to_inventory,   this,&OverMapLogic::add_to_inventory_slot))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtremove_to_inventory,this,&OverMapLogic::remove_to_inventory_slot))
@@ -216,9 +248,9 @@ void OverMapLogic::connectAllSignals()
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&OverMapLogic::plant_collected))
         abort();
     //crafting
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&OverMapLogic::recipeUsed))
-        abort();
-    //trade
+    /*if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&OverMapLogic::recipeUsed))
+        abort();*/
+    /*//trade
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeRequested,             this,&OverMapLogic::tradeRequested))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAcceptedByOther,       this,&OverMapLogic::tradeAcceptedByOther))
@@ -234,7 +266,7 @@ void OverMapLogic::connectAllSignals()
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeObject,        this,&OverMapLogic::tradeAddTradeObject))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeMonster,       this,&OverMapLogic::tradeAddTradeMonster))
-        abort();
+      */  abort();
     //inventory
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtobjectUsed,                 this,&OverMapLogic::objectUsed))
         abort();
@@ -252,7 +284,7 @@ void OverMapLogic::connectAllSignals()
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QthaveBuyFactoryObject,       this,&OverMapLogic::haveBuyFactoryObject))
         abort();
-    //battle
+    /*//battle
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtbattleRequested,            this,&OverMapLogic::battleRequested))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtbattleAcceptedByOther,      this,&OverMapLogic::battleAcceptedByOther))
@@ -277,10 +309,14 @@ void OverMapLogic::connectAllSignals()
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtmarketWithdrawObject,       this,&OverMapLogic::marketWithdrawObject))
        abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtmarketWithdrawMonster,      this,&OverMapLogic::marketWithdrawMonster))
-       abort();
+       abort();*/
     //fight
 /*    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtteleportTo,this,&OverMapLogic::teleportTo,Qt::UniqueConnection))
        abort();*/
+}
+
+void OverMapLogic::selectObject(const ObjectType &objectType)
+{
 }
 
 void OverMapLogic::actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
@@ -750,101 +786,9 @@ bool OverMapLogic::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x,
     return true;
 }
 
-void OverMapLogic::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
-{
-    Q_UNUSED(mapId);
-    Q_UNUSED(x);
-    Q_UNUSED(y);
-    Q_UNUSED(direction);
-    if(fightEngine.currentMonsterIsKO() && !fightEngine.haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
-    {
-        qDebug() << "tp on loose: " << fightTimerFinish;
-        if(fightTimerFinish)
-            loose();
-        else
-            fightTimerFinish=true;
-    }
-    else
-        qDebug() << "normal tp";
-}
-
-void OverMapLogic::loose()
-{
-    qDebug() << "loose()";
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    PublicPlayerMonster *currentMonster=fightEngine.getCurrentMonster();
-    if(currentMonster!=NULL)
-        if((int)currentMonster->hp!=ui->progressBarFightBottomHP->value())
-        {
-            emit error(QStringLiteral("Current monster damage don't match with the internal value (loose && currentMonster): %1!=%2")
-                       .arg(currentMonster->hp)
-                       .arg(ui->progressBarFightBottomHP->value())
-                       .toStdString()
-                       );
-            return;
-        }
-    PublicPlayerMonster *otherMonster=fightEngine.getOtherMonster();
-    if(otherMonster!=NULL)
-        if((int)otherMonster->hp!=ui->progressBarFightTopHP->value())
-        {
-            emit error(QStringLiteral("Current monster damage don't match with the internal value (loose && otherMonster): %1!=%2")
-                       .arg(otherMonster->hp)
-                       .arg(ui->progressBarFightTopHP->value())
-                       .toStdString()
-                       );
-            return;
-        }
-    #endif
-    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
-        return;
-    fightEngine.healAllMonsters();
-    fightEngine.fightFinished();
-    ccmap->mapController.unblock();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-    fightTimerFinish=false;
-    escape=false;
-    doNextActionStep=DoNextActionStep_Start;
-    load_monsters();
-    switch(battleType)
-    {
-        case BattleType_Bot:
-            if(botFightList.empty())
-            {
-                emit error("battle info not found at collision");
-                return;
-            }
-            botFightList.erase(botFightList.cbegin());
-            fightId=0;
-        break;
-        case BattleType_OtherPlayer:
-            if(battleInformationsList.empty())
-            {
-                emit error("battle info not found at collision");
-                return;
-            }
-            battleInformationsList.erase(battleInformationsList.cbegin());
-        break;
-        default:
-        break;
-    }
-    if(!battleInformationsList.empty())
-    {
-        const BattleInformations &battleInformations=battleInformationsList.front();
-        battleInformationsList.erase(battleInformationsList.cbegin());
-        battleAcceptedByOtherFull(battleInformations);
-    }
-    else if(!botFightList.empty())
-    {
-        uint16_t fightId=botFightList.front();
-        botFightList.erase(botFightList.cbegin());
-        botFight(fightId);
-    }
-    checkEvolution();
-}
-
 void OverMapLogic::clanActionSuccess(const uint32_t &clanId)
 {
-    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     switch(actionClan.front())
     {
         case ActionClan_Create:
@@ -869,7 +813,7 @@ void OverMapLogic::clanActionSuccess(const uint32_t &clanId)
             showTip(tr("You have correctly ejected the player from clan").toStdString());
         break;
         default:
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"ActionClan unknown");
+        emit error(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+", ActionClan unknown");
         return;
     }
     actionClan.erase(actionClan.cbegin());
@@ -892,7 +836,7 @@ void OverMapLogic::clanActionFailed()
             showTip(tr("You have failed to eject the player from clan").toStdString());
         break;
         default:
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"ActionClan unknown");
+        emit error(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+" ActionClan unknown");
         return;
     }
     actionClan.erase(actionClan.cbegin());
@@ -900,7 +844,7 @@ void OverMapLogic::clanActionFailed()
 
 void OverMapLogic::clanDissolved()
 {
-    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     haveClanInformations=false;
     clanName.clear();
     playerInformations.clan=0;
@@ -909,9 +853,9 @@ void OverMapLogic::clanDissolved()
 
 void OverMapLogic::updateClanDisplay()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();//do a crash due to reference
-    //const CatchChallenger::Player_private_and_public_informations playerInformations=client->get_player_informations_ro();
-    ui->tabWidgetTrainerCard->setTabEnabled(4,playerInformations.clan!=0);
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();//do a crash due to reference
+    //const CatchChallenger::Player_private_and_public_informations playerInformations=connexionManager->client->get_player_informations_ro();
+    /*ui->tabWidgetTrainerCard->setTabEnabled(4,playerInformations.clan!=0);
     ui->clanGrouBoxNormal->setVisible(!playerInformations.clan_leader);
     ui->clanGrouBoxLeader->setVisible(playerInformations.clan_leader);
     ui->clanGrouBoxInformations->setVisible(haveClanInformations);
@@ -922,10 +866,10 @@ void OverMapLogic::updateClanDisplay()
         else
             ui->clanName->setText(QString::fromStdString(clanName));
     }
-    chat->setClan(playerInformations.clan!=0);
+    chat->setClan(playerInformations.clan!=0);*/
 }
 
-void OverMapLogic::on_clanActionLeave_clicked()
+/*void OverMapLogic::on_clanActionLeave_clicked()
 {
     actionClan.push_back(ActionClan_Leave);
     client->leaveClan();
@@ -957,7 +901,7 @@ void OverMapLogic::on_clanActionEject_clicked()
         actionClan.push_back(ActionClan_Eject);
         client->ejectClan(text);
     }
-}
+}*/
 
 void OverMapLogic::clanInformations(const std::string &name)
 {
@@ -968,38 +912,40 @@ void OverMapLogic::clanInformations(const std::string &name)
 
 void OverMapLogic::clanInvite(const uint32_t &clanId,const std::string &name)
 {
+    /* \todo above dialog
     QMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?")
                                                              .arg(QStringLiteral("<b>%1</b>").arg(QString::fromStdString(name))));
     client->inviteAccept(button==QMessageBox::Yes);
     if(button==QMessageBox::Yes)
     {
-        Player_private_and_public_informations &playerInformations=client->get_player_informations();
+        Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
         playerInformations.clan=clanId;
         playerInformations.clan_leader=false;
         haveClanInformations=false;
         updateClanDisplay();
-    }
+    }*/
 }
 
 void OverMapLogic::cityCaptureUpdateTime()
 {
-    if(city.capture.frenquency==City::Capture::Frequency_week)
+    if(city.capture.frenquency==CatchChallenger::City::Capture::Frequency_week)
         nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
-        nextCatch=QDateTime::fromMSecsSinceEpoch(FacilityLib::nextCaptureTime(city));
+        nextCatch=QDateTime::fromMSecsSinceEpoch(CatchChallenger::FacilityLib::nextCaptureTime(city));
     nextCityCatchTimer.start(static_cast<uint32_t>(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()));
 }
 
 void OverMapLogic::updatePageZoneCatch()
 {
-    if(QDateTime::currentMSecsSinceEpoch()<nextCatchOnScreen.toMSecsSinceEpoch())
+    /// \todo do into above dialog
+/*    if(QDateTime::currentMSecsSinceEpoch()<nextCatchOnScreen.toMSecsSinceEpoch())
     {
         int sec=static_cast<uint32_t>(nextCatchOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
         std::string timeText;
         if(sec>3600*24*365*50)
             timeText="Time player: bug";
         else
-            timeText=FacilityLibClient::timeToString(sec);
+            timeText=CatchChallenger::FacilityLibClient::timeToString(sec);
         ui->zonecaptureWaitTime->setText(tr("Remaining time: %1")
                                          .arg(QStringLiteral("<b>%1</b>")
                                          .arg(QString::fromStdString(timeText)))
@@ -1011,21 +957,23 @@ void OverMapLogic::updatePageZoneCatch()
         ui->zonecaptureCancel->setVisible(false);
         ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting of players list")+"</i>");
         updater_page_zonecatch.stop();
-    }
+    }*/
 }
 
 void OverMapLogic::on_zonecaptureCancel_clicked()
 {
+    //return of updatePageZoneCatch()
     updater_page_zonecatch.stop();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
-    client->waitingForCityCapture(true);
+/*    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    client->waitingForCityCapture(true);*/
     zonecatch=false;
 }
 
 void OverMapLogic::captureCityYourAreNotLeader()
 {
     updater_page_zonecatch.stop();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    /// \todo close dialog into updatePageZoneCatch()
+    //ui->stackedWidget->setCurrentWidget(ui->page_map);
     showTip(tr("You are not a clan leader to start a city capture").toStdString());
     zonecatch=false;
 }
@@ -1033,7 +981,8 @@ void OverMapLogic::captureCityYourAreNotLeader()
 void OverMapLogic::captureCityYourLeaderHaveStartInOtherCity(const std::string &zone)
 {
     updater_page_zonecatch.stop();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    //ui->stackedWidget->setCurrentWidget(ui->page_map);
+    /// \todo close dialog into updatePageZoneCatch()
     if(QtDatapackClientLoader::datapackLoader->zonesExtra.find(zone)!=QtDatapackClientLoader::datapackLoader->zonesExtra.cend())
         showTip(tr("Your clan leader have start a capture for another city").toStdString()+": <b>"+
                 QtDatapackClientLoader::datapackLoader->zonesExtra.at(zone).name+
@@ -1046,37 +995,42 @@ void OverMapLogic::captureCityYourLeaderHaveStartInOtherCity(const std::string &
 void OverMapLogic::captureCityPreviousNotFinished()
 {
     updater_page_zonecatch.stop();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    /// \todo close dialog into updatePageZoneCatch()
+    //ui->stackedWidget->setCurrentWidget(ui->page_map);
     showTip(tr("Previous capture of this city is not finished").toStdString());
     zonecatch=false;
 }
 
 void OverMapLogic::captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count)
 {
-    ui->zonecaptureCancel->setVisible(false);
-    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    /// \todo set text into captureCityStartBattle() and disable cancel button
+    /*ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");*/
     updater_page_zonecatch.stop();
 }
 
 void OverMapLogic::captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint16_t &fightId)
 {
-    ui->zonecaptureCancel->setVisible(false);
-    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    /// \todo set text into captureCityStartBattle() and disable cancel button
+    /*ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");*/
     updater_page_zonecatch.stop();
     botFight(fightId);
 }
 
 void OverMapLogic::captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count)
 {
-    ui->zonecaptureCancel->setVisible(false);
-    ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");
+    /// \todo set text into captureCityStartBattle() and disable cancel button
+    /*ui->zonecaptureCancel->setVisible(false);
+    ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and %2 in wainting to capture the city").arg("<b>"+tr("%n player(s)","",player_count)+"</b>").arg("<b>"+tr("%n clan(s)","",clan_count)+"</b>")+"</i>");*/
     updater_page_zonecatch.stop();
 }
 
 void OverMapLogic::captureCityWin()
 {
     updater_page_zonecatch.stop();
-    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    /// \todo close captureCityStartBattle()
+    //ui->stackedWidget->setCurrentWidget(ui->page_map);
     if(!zonecatchName.empty())
         showTip(tr("Your clan win the city").toStdString()+": <b>"+
                 zonecatchName+"</b>");
@@ -1085,9 +1039,9 @@ void OverMapLogic::captureCityWin()
     zonecatch=false;
 }
 
-void OverMapLogic::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+/*void OverMapLogic::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
-    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     playerInformations.items=items;
     playerInformations.warehouse_items=warehouse_items;
     #ifdef DEBUG_BASEWINDOWS
@@ -1099,7 +1053,7 @@ void OverMapLogic::have_inventory(const std::unordered_map<uint16_t,uint32_t> &i
 
 void OverMapLogic::load_inventory()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "OverMapLogic::load_inventory()";
     #endif
@@ -1161,8 +1115,7 @@ void OverMapLogic::load_inventory()
         }
         ++i;
     }
-}
-
+}*/
 
 void OverMapLogic::add_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
 {
@@ -1190,7 +1143,7 @@ void OverMapLogic::add_to_inventory(const std::vector<std::pair<uint16_t,uint32_
 
 void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const bool &showGain)
 {
-    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     if(items.empty())
         return;
     if(showGain)
@@ -1214,7 +1167,7 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
             std::string name;
             if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                image=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(item).image;
+                image=QtDatapackClientLoader::datapackLoader->getImageExtra(item).image;
                 name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name;
             }
             else
@@ -1260,9 +1213,9 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
         }
     }
 
-    load_inventory();
+    /*load_inventory();
     load_plant_inventory();
-    on_listCraftingList_itemSelectionChanged();
+    on_listCraftingList_itemSelectionChanged();*/
 }
 
 void OverMapLogic::remove_to_inventory(const uint16_t &itemId,const uint32_t &quantity)
@@ -1279,7 +1232,7 @@ void OverMapLogic::remove_to_inventory_slot(const std::unordered_map<uint16_t,ui
 
 void OverMapLogic::remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
 {
-    Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     for( const auto& n : items ) {
         const uint16_t &item=n.first;
         const uint32_t &quantity=n.second;
@@ -1292,13 +1245,13 @@ void OverMapLogic::remove_to_inventory(const std::unordered_map<uint16_t,uint32_
                 playerInformations.items[item]-=quantity;
         }
     }
-    load_inventory();
-    load_plant_inventory();
+    /*load_inventory();
+    load_plant_inventory();*/
 }
 
-void OverMapLogic::load_plant_inventory()
+/*void OverMapLogic::load_plant_inventory()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "OverMapLogic::load_plant_inventory()";
     #endif
@@ -1350,7 +1303,7 @@ void OverMapLogic::load_crafting_inventory()
     ui->listCraftingList->clear();
     crafting_recipes_items_to_graphical.clear();
     crafting_recipes_items_graphical.clear();
-    Player_private_and_public_informations informations=client->get_player_informations();
+    Player_private_and_public_informations informations=connexionManager->client->get_player_informations();
     if(informations.recipes==NULL)
     {
         qDebug() << "OverMapLogic::load_crafting_inventory(), crafting null";
@@ -1390,9 +1343,9 @@ void OverMapLogic::load_crafting_inventory()
         ++index;
     }
     on_listCraftingList_itemSelectionChanged();
-}
+}*/
 
-std::string OverMapLogic::reputationRequirementsToText(const ReputationRequirements &reputationRequirements)
+std::string OverMapLogic::reputationRequirementsToText(const CatchChallenger::ReputationRequirements &reputationRequirements)
 {
     if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
     {
@@ -1401,7 +1354,7 @@ std::string OverMapLogic::reputationRequirementsToText(const ReputationRequireme
                   << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
         return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
-    const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
+    const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
     if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)==
             QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
     {
@@ -1435,4 +1388,1036 @@ std::string OverMapLogic::reputationRequirementsToText(const ReputationRequireme
         else
             return reputationExtra.reputation_negative.at(reputationRequirements.level);
     }
+}
+
+void OverMapLogic::botFight(const uint16_t &fightId)
+{
+    //todo
+}
+
+void OverMapLogic::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
+{
+    if(remainingTime==0)
+    {
+        nextCityCatchTimer.stop();
+        std::cout << "City capture disabled" << std::endl;
+        return;//disabled
+    }
+    nextCityCatchTimer.start(remainingTime*1000);
+    nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
+    city.capture.frenquency=(CatchChallenger::City::Capture::Frequency)type;
+    city.capture.day=(CatchChallenger::City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();
+    city.capture.hour=static_cast<uint8_t>(QDateTime::currentDateTime().addSecs(remainingTime).time().hour());
+    city.capture.minute=static_cast<uint8_t>(QDateTime::currentDateTime().addSecs(remainingTime).time().minute());
+}
+
+void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
+{
+    Q_UNUSED(plant_id);
+    Q_UNUSED(seconds_to_mature);
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    {
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        return;
+    }
+    cancelAllPlantQuery(ccmap->mapController.mapIdToString(mapId),x,y);
+}
+
+void OverMapLogic::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
+{
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    {
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        return;
+    }
+    cancelAllPlantQuery(ccmap->mapController.mapIdToString(mapId),x,y);
+}
+
+void OverMapLogic::cancelAllPlantQuery(const std::string map,const uint8_t x,const uint8_t y)
+{
+    unsigned int index;
+    index=0;
+    while(index<seed_in_waiting.size())
+    {
+        const SeedInWaiting &seedInWaiting=seed_in_waiting.at(index);
+        if(seedInWaiting.map==map && seedInWaiting.x==x && seedInWaiting.y==y)
+        {
+            seed_in_waiting[index].map=std::string();
+            seed_in_waiting[index].x=0;
+            seed_in_waiting[index].y=0;
+        }
+        index++;
+    }
+    index=0;
+    while(index<plant_collect_in_waiting.size())
+    {
+        const ClientPlantInCollecting &clientPlantInCollecting=plant_collect_in_waiting.at(index);
+        if(clientPlantInCollecting.map==map && clientPlantInCollecting.x==x && clientPlantInCollecting.y==y)
+        {
+            plant_collect_in_waiting[index].map=std::string();
+            plant_collect_in_waiting[index].x=0;
+            plant_collect_in_waiting[index].y=0;
+        }
+        index++;
+    }
+}
+
+void OverMapLogic::seed_planted(const bool &ok)
+{
+    removeQuery(QueryType_Seed);
+    if(ok)
+    {
+        /// \todo add to the map here, and don't send on the server
+        showTip(tr("Seed correctly planted").toStdString());
+        //do the rewards
+        {
+            const uint16_t &itemId=seed_in_waiting.front().seedItemId;
+            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==
+                    QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
+            {
+                qDebug() << "Item is not a plant";
+                emit error(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return;
+            }
+            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
+            appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).rewards.reputation);
+        }
+    }
+    else
+    {
+        if(!seed_in_waiting.front().map.empty())
+        {
+            ccmap->mapController.remove_plant_full(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
+            cancelAllPlantQuery(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
+        }
+        add_to_inventory(seed_in_waiting.front().seedItemId,1,false);
+        showTip(tr("Seed cannot be planted").toStdString());
+    }
+    seed_in_waiting.erase(seed_in_waiting.cbegin());
+}
+
+void OverMapLogic::plant_collected(const CatchChallenger::Plant_collect &stat)
+{
+    removeQuery(QueryType_CollectPlant);
+    switch(stat)
+    {
+        case CatchChallenger::Plant_collect_correctly_collected:
+            //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
+            showTip(tr("Plant collected").toStdString());//the item is send by another message with the protocol
+        break;
+        /*case CatchChallenger::Plant_collect_empty_dirt:
+            showTip(tr("Try collect an empty dirt").toStdString());
+        break;
+        case CatchChallenger::Plant_collect_owned_by_another_player:
+            showTip(tr("This plant had been planted recently by another player").toStdString());
+            ccmap->mapController.insert_plant_full(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y,
+                                             plant_collect_in_waiting.front().plant_id,plant_collect_in_waiting.front().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y);
+        break;
+        case CatchChallenger::Plant_collect_impossible:
+            showTip(tr("This plant can't be collected").toStdString());
+            ccmap->mapController.insert_plant_full(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y,
+                                             plant_collect_in_waiting.front().plant_id,plant_collect_in_waiting.front().seconds_to_mature);
+            cancelAllPlantQuery(plant_collect_in_waiting.front().map,plant_collect_in_waiting.front().x,plant_collect_in_waiting.front().y);
+        break;*/
+        default:
+            qDebug() << "OverMapLogic::plant_collected(): unknown return";
+        break;
+    }
+}
+
+/*void OverMapLogic::on_toolButton_quit_plants_clicked()
+{
+    ui->listPlantList->reset();
+    if(inSelection)
+    {
+        ui->stackedWidget->setCurrentWidget(ui->page_map);
+        objectSelection(false,0);
+    }
+    else
+        ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+    on_listPlantList_itemSelectionChanged();
+}
+
+void OverMapLogic::on_plantUse_clicked()
+{
+    QList<QListWidgetItem *> items=ui->listPlantList->selectedItems();
+    if(items.size()!=1)
+        return;
+    on_listPlantList_itemActivated(items.first());
+}
+
+void OverMapLogic::on_listPlantList_itemActivated(QListWidgetItem *item)
+{
+    if(plants_items_graphical.find(item)==plants_items_graphical.cend())
+    {
+        qDebug() << "OverMapLogic::on_inventory_itemActivated(): activated item not found";
+        return;
+    }
+    if(!inSelection)
+    {
+        qDebug() << "OverMapLogic::on_inventory_itemActivated(): not in selection, use is not done actually";
+        return;
+    }
+    objectSelection(true,CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]].itemUsed);
+}
+
+void OverMapLogic::on_pushButton_interface_crafting_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->page_crafting);
+}
+
+void OverMapLogic::on_toolButton_quit_crafting_clicked()
+{
+    ui->listCraftingList->reset();
+    ui->stackedWidget->setCurrentWidget(ui->page_map);
+    on_listCraftingList_itemSelectionChanged();
+}
+
+void OverMapLogic::on_listCraftingList_itemSelectionChanged()
+{
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    ui->listCraftingMaterials->clear();
+    QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
+    if(displayedItems.size()!=1)
+    {
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        ui->labelCraftingDetails->setText(tr("Select a recipe"));
+        ui->craftingUse->setVisible(false);
+        return;
+    }
+    QListWidgetItem *itemMaterials=displayedItems.first();
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[crafting_recipes_items_graphical[itemMaterials]];
+
+    qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
+    //load the name
+    QString name;
+    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.doItemId)!=
+            QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+    {
+        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].name);
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.doItemId].image);
+    }
+    else
+    {
+        name=tr("Unknow item (%1)").arg(content.doItemId);
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+    }
+    ui->labelCraftingDetails->setText(tr("Name: <b>%1</b><br /><br />Success: <b>%2%</b><br /><br />Result: <b>%3</b>").arg(name).arg(content.success).arg(content.quantity));
+
+    //load the materials
+    bool haveMaterials=true;
+    unsigned int index=0;
+    QString nameMaterials;
+    QListWidgetItem *item;
+    uint32_t quantity;
+    while(index<content.materials.size())
+    {
+        //load the material item
+        item=new QListWidgetItem();
+        if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.materials.at(index).item)!=
+                QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+        {
+            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].name);
+            item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.materials.at(index).item].image);
+        }
+        else
+        {
+            nameMaterials=tr("Unknow item (%1)").arg(content.materials.at(index).item);
+            item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        }
+
+        //load the quantity into the inventory
+        quantity=0;
+        if(playerInformations.items.find(content.materials.at(index).item)!=playerInformations.items.cend())
+            quantity=playerInformations.items.at(content.materials.at(index).item);
+
+        //load the display
+        item->setText(tr("Needed: %1 %2\nIn the inventory: %3 %4").arg(content.materials.at(index).quantity).arg(nameMaterials).arg(quantity).arg(nameMaterials));
+        if(quantity<content.materials.at(index).quantity)
+        {
+            item->setFont(disableIntoListFont);
+            item->setForeground(disableIntoListBrush);
+        }
+
+        if(quantity<content.materials.at(index).quantity)
+            haveMaterials=false;
+
+        ui->listCraftingMaterials->addItem(item);
+        ui->craftingUse->setVisible(haveMaterials);
+        index++;
+    }
+}
+
+void OverMapLogic::on_craftingUse_clicked()
+{
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+    //recipeInUsing
+    QList<QListWidgetItem *> displayedItems=ui->listCraftingList->selectedItems();
+    if(displayedItems.size()!=1)
+        return;
+    QListWidgetItem *selectedItem=displayedItems.first();
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[crafting_recipes_items_graphical[selectedItem]];
+
+    QStringList mIngredients;
+    QString mRecipe;
+    QString mProduct;
+    //load the materials
+    unsigned int index=0;
+    while(index<content.materials.size())
+    {
+        if(playerInformations.items.find(content.materials.at(index).item)==playerInformations.items.cend())
+            return;
+        if(playerInformations.items.at(content.materials.at(index).item)<content.materials.at(index).quantity)
+            return;
+        uint32_t sub_index=0;
+        while(sub_index<content.materials.at(index).quantity)
+        {
+            mIngredients.push_back(QUrl::fromLocalFile(
+                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].imagePath)
+                                   ).toEncoded());
+            sub_index++;
+        }
+        index++;
+    }
+    index=0;
+    std::vector<std::pair<uint16_t,uint32_t> > recipeUsage;
+    while(index<content.materials.size())
+    {
+        std::pair<uint16_t,uint32_t> pair;
+        pair.first=content.materials.at(index).item;
+        pair.second=content.materials.at(index).quantity;
+        remove_to_inventory(pair.first,pair.second);
+        recipeUsage.push_back(pair);
+        index++;
+    }
+    materialOfRecipeInUsing.push_back(recipeUsage);
+    //the product do
+    std::pair<uint16_t,uint32_t> pair;
+    pair.first=content.doItemId;
+    pair.second=content.quantity;
+    productOfRecipeInUsing.push_back(pair);
+    mProduct=QUrl::fromLocalFile(
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].imagePath)).toEncoded();
+    mRecipe=QUrl::fromLocalFile(
+                QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.itemToLearn].imagePath)).toEncoded();
+    //update the UI
+    load_inventory();
+    load_plant_inventory();
+    on_listCraftingList_itemSelectionChanged();
+    //send to the network
+    client->useRecipe(crafting_recipes_items_graphical.at(selectedItem));
+    appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(
+                                crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
+    //create animation widget
+    if(animationWidget!=NULL)
+        delete animationWidget;
+    if(qQuickViewContainer!=NULL)
+        delete qQuickViewContainer;
+    animationWidget=new QQuickView();
+    qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+    qQuickViewContainer->setMinimumSize(QSize(800,600));
+    qQuickViewContainer->setMaximumSize(QSize(800,600));
+    qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+    ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+    //show the animation
+    previousAnimationWidget=ui->stackedWidget->currentWidget();
+    ui->stackedWidget->setCurrentWidget(ui->page_animation);
+    if(craftingAnimationObject!=NULL)
+        delete craftingAnimationObject;
+    craftingAnimationObject=new CraftingAnimation(mIngredients,
+                                                  mRecipe,mProduct,
+                                                  QUrl::fromLocalFile(QString::fromStdString(
+              playerBackImagePath)).toEncoded());
+    animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+    animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
+    const QString datapackQmlFile=QString::fromStdString(client->datapackPathBase())+"qml/crafting-animation.qml";
+    if(QFile(datapackQmlFile).exists())
+        animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
+    else
+        animationWidget->setSource(QStringLiteral("qrc:/qml/crafting-animation.qml"));
+}
+
+void OverMapLogic::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)
+{
+    Q_UNUSED(item);
+    ui->craftingUse->clicked();
+}*/
+
+/*void OverMapLogic::recipeUsed(const CatchChallenger::RecipeUsage &recipeUsage)
+{
+    switch(recipeUsage)
+    {
+        case CatchChallenger::RecipeUsage_ok:
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            add_to_inventory(productOfRecipeInUsing.front().first,productOfRecipeInUsing.front().second);
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
+            //update the UI
+            load_inventory();
+            load_plant_inventory();
+            on_listCraftingList_itemSelectionChanged();
+        break;
+        case CatchChallenger::RecipeUsage_impossible:
+        {
+            unsigned int index=0;
+            while(index<materialOfRecipeInUsing.front().size())
+            {
+                add_to_inventory(materialOfRecipeInUsing.front().at(index).first,
+                                 materialOfRecipeInUsing.front().at(index).first,false);
+                index++;
+            }
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
+            //update the UI
+            load_inventory();
+            load_plant_inventory();
+            on_listCraftingList_itemSelectionChanged();
+        }
+        break;
+        case RecipeUsage_failed:
+            materialOfRecipeInUsing.erase(materialOfRecipeInUsing.cbegin());
+            productOfRecipeInUsing.erase(productOfRecipeInUsing.cbegin());
+        break;
+        default:
+        qDebug() << "recipeUsed() unknow code";
+        return;
+    }
+}*/
+
+/*void OverMapLogic::on_listCraftingList_itemActivated(QListWidgetItem *)
+{
+    if(ui->craftingUse->isVisible())
+        on_craftingUse_clicked();
+}*/
+
+void OverMapLogic::appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList)
+{
+    unsigned int index=0;
+    while(index<reputationList.size())
+    {
+        const CatchChallenger::ReputationRewards &reputationRewards=reputationList.at(index);
+        appendReputationPoint(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,reputationRewards.point);
+        index++;
+    }
+}
+
+bool OverMapLogic::haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const
+{
+    unsigned int index=0;
+    while(index<reputationList.size())
+    {
+        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
+        if(connexionManager->client->player_informations.reputation.find(reputation.reputationId)!=connexionManager->client->player_informations.reputation.cend())
+        {
+            const CatchChallenger::PlayerReputation &playerReputation=connexionManager->client->player_informations.reputation.at(reputation.reputationId);
+            if(!reputation.positif)
+            {
+                if(-reputation.level<playerReputation.level)
+                {
+                    /*emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)")
+                                 .arg(reputation.level).arg(playerReputation.level).toStdString());*/
+                    return false;
+                }
+            }
+            else
+            {
+                if(reputation.level>playerReputation.level || playerReputation.point<0)
+                {
+                    /*emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0")
+                                 .arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point).toStdString());*/
+                    return false;
+                }
+            }
+        }
+        else
+            if(!reputation.positif)//default level is 0, but required level is negative
+            {
+                /*emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(
+                                 QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name)
+                                 ).toStdString());*/
+                return false;
+            }
+        index++;
+    }
+    return true;
+}
+
+//reputation
+void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &point)
+{
+    if(point==0)
+        return;
+    if(QtDatapackClientLoader::datapackLoader->reputationNameToId.find(type)==QtDatapackClientLoader::datapackLoader->reputationNameToId.cend())
+    {
+        emit error("Unknow reputation: "+type);
+        return;
+    }
+    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->reputationNameToId.at(type);
+    CatchChallenger::PlayerReputation playerReputation;
+    if(connexionManager->client->player_informations.reputation.find(reputationId)!=connexionManager->client->player_informations.reputation.cend())
+        playerReputation=connexionManager->client->player_informations.reputation.at(reputationId);
+    else
+    {
+        playerReputation.point=0;
+        playerReputation.level=0;
+    }
+    CatchChallenger::PlayerReputation oldPlayerReputation=playerReputation;
+    int32_t old_level=playerReputation.level;
+    CatchChallenger::FacilityLib::appendReputationPoint(&playerReputation,point,CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationId));
+    if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
+        return;
+    if(connexionManager->client->player_informations.reputation.find(reputationId)!=connexionManager->client->player_informations.reputation.cend())
+        connexionManager->client->player_informations.reputation[reputationId]=playerReputation;
+    else
+        connexionManager->client->player_informations.reputation[reputationId]=playerReputation;
+    const std::string &reputationCodeName=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationId).name;
+    if(old_level<playerReputation.level)
+    {
+        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+            showTip(tr("You have better reputation into %1")
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
+        else
+            showTip(tr("You have better reputation into %1")
+                    .arg("???").toStdString());
+    }
+    else if(old_level>playerReputation.level)
+    {
+        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+            showTip(tr("You have worse reputation into %1")
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
+        else
+            showTip(tr("You have worse reputation into %1")
+                    .arg("???").toStdString());
+    }
+}
+
+uint32_t OverMapLogic::itemQuantity(const uint16_t &itemId) const
+{
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
+        return playerInformations.items.at(itemId);
+    return 0;
+}
+
+void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const uint32_t &quantity)
+{
+    abort();
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
+    ObjectType waitedObjectType=ObjectType_All;
+    ObjectType tempWaitedObjectType=waitedObjectType;
+    waitedObjectType=ObjectType_All;
+    switch(tempWaitedObjectType)
+    {
+        case ObjectType_ItemEvolutionOnMonster:
+        case ObjectType_ItemLearnOnMonster:
+        case ObjectType_ItemOnMonster:
+        case ObjectType_ItemOnMonsterOutOfFight:
+        {
+            /*const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            const uint16_t item=objectInUsing.back();
+            objectInUsing.erase(objectInUsing.cbegin());
+            if(!ok)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+                ui->inventoryUse->setText(tr("Select"));
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                        add_to_inventory(item,1,false);
+                break;
+            }
+            const CatchChallenger::PlayerMonster * const monster=connexionManager->client->monsterByPosition(monsterPosition);
+            if(monster==NULL)
+            {
+                if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                        add_to_inventory(item,1,false);
+                break;
+            }
+            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+            const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster);
+            if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
+            {
+                uint8_t monsterEvolutionPostion=0;
+                const CatchChallenger::Monster &monsterInformationsEvolution=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster));
+                const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=
+                        QtDatapackClientLoader::datapackLoader->monsterExtra.at(
+                            CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(item).at(monster->monster)
+                            );
+                abort();
+                //create animation widget
+                if(animationWidget!=NULL)
+                    delete animationWidget;
+                if(qQuickViewContainer!=NULL)
+                    delete qQuickViewContainer;
+                animationWidget=new QQuickView();
+                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
+                qQuickViewContainer->setMinimumSize(QSize(800,600));
+                qQuickViewContainer->setMaximumSize(QSize(800,600));
+                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
+                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
+                //show the animation
+                ui->stackedWidget->setCurrentWidget(ui->page_animation);
+                previousAnimationWidget=ui->page_map;
+                if(baseMonsterEvolution!=NULL)
+                    delete baseMonsterEvolution;
+                if(targetMonsterEvolution!=NULL)
+                    delete targetMonsterEvolution;
+                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
+                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                if(evolutionControl!=NULL)
+                    delete evolutionControl;
+                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
+                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
+                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
+                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(false));
+                animationWidget->rootContext()->setContextProperty("itemEvolution",
+                                                                   QUrl::fromLocalFile(
+                                                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra
+                                                                                              .at(item).imagePath)));
+                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
+                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
+                const std::string datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
+                if(QFile(QString::fromStdString(datapackQmlFile)).exists())
+                    animationWidget->setSource(QUrl::fromLocalFile(QString::fromStdString(datapackQmlFile)));
+                else
+                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
+                client->useObjectOnMonsterByPosition(item,monsterPosition);
+                if(!fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
+                {
+                    std::cerr << "fightEngine.useObjectOnMonsterByPosition() Bug at " << __FILE__ << ":" << __LINE__ << std::endl;
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    abort();
+                    #endif
+                }
+                load_monsters();
+                return;
+            }
+            else
+            {
+                abort();
+                ui->stackedWidget->setCurrentWidget(ui->page_inventory);
+                ui->inventoryUse->setText(tr("Select"));
+                if(fightEngine.useObjectOnMonsterByPosition(item,monsterPosition))
+                {
+                    showTip(tr("Using <b>%1</b> on <b>%2</b>")
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name))
+                            .arg(QString::fromStdString(monsterInformationsExtra.name))
+                            .toStdString());
+                    client->useObjectOnMonsterByPosition(item,monsterPosition);
+                    load_monsters();
+                    checkEvolution();
+                }
+                else
+                {
+                    showTip(tr("Failed to use <b>%1</b> on <b>%2</b>")
+                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name))
+                            .arg(QString::fromStdString(monsterInformationsExtra.name))
+                            .toStdString());
+                    if(CatchChallenger::CommonDatapack::commonDatapack.items.item.find(item)!=
+                            CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
+                        if(CatchChallenger::CommonDatapack::commonDatapack.items.item[item].consumeAtUse)
+                            add_to_inventory(item,1,false);
+                }
+            }*/
+        abort();
+        }
+        break;
+        case ObjectType_Sell:
+        {
+            /*ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
+            if(!ok)
+                break;
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(playerInformations.items.at(itemId)<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            remove_to_inventory(itemId,quantity);
+            ItemToSellOrBuy tempItem;
+            tempItem.object=itemId;
+            tempItem.quantity=quantity;
+            tempItem.price=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemId).price/2;
+            itemsToSell.push_back(tempItem);
+            client->sellObject(shopId,tempItem.object,tempItem.quantity,tempItem.price);
+            load_inventory();
+            load_plant_inventory();*/
+            abort();
+        }
+        break;
+        case ObjectType_SellToMarket:
+        {
+/*            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_market);
+            if(!ok)
+                break;
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(playerInformations.items.at(itemId)<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            uint32_t suggestedPrice=50;
+            if(CommonDatapack::commonDatapack.items.item.find(itemId)!=CommonDatapack::commonDatapack.items.item.cend())
+                suggestedPrice=CommonDatapack::commonDatapack.items.item.at(itemId).price;
+            GetPrice getPrice(this,suggestedPrice);
+            getPrice.exec();
+            if(!getPrice.isOK())
+                break;
+            client->putMarketObject(itemId,quantity,getPrice.price());
+            marketPutCashInSuspend=getPrice.price();
+            remove_to_inventory(itemId,quantity);
+            std::pair<uint16_t,uint32_t> pair;
+            pair.first=itemId;
+            pair.second=quantity;
+            marketPutObjectInSuspendList.push_back(pair);
+            load_inventory();
+            load_plant_inventory();*/
+        abort();
+        }
+        break;
+        case ObjectType_Trade:
+/*            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_trade);
+            if(!ok)
+                break;
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(playerInformations.items.at(itemId)<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            client->addObject(itemId,quantity);
+            playerInformations.items[itemId]-=quantity;
+            if(playerInformations.items.at(itemId)==0)
+                playerInformations.items.erase(itemId);
+            if(tradeCurrentObjects.find(itemId)!=tradeCurrentObjects.cend())
+                tradeCurrentObjects[itemId]+=quantity;
+            else
+                tradeCurrentObjects[itemId]=quantity;
+            load_inventory();
+            load_plant_inventory();
+            tradeUpdateCurrentObject();*/
+        abort();
+        break;
+        case ObjectType_MonsterToLearn:
+        {
+            /*ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
+            load_monsters();
+            if(!ok)
+                return;
+            ui->stackedWidget->setCurrentWidget(ui->page_learn);
+            monsterPositionToLearn=static_cast<uint8_t>(itemId);
+            if(!showLearnSkillByPosition(monsterPositionToLearn))
+            {
+                newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Unable to load the right monster");
+                return;
+            }*/
+        abort();
+        }
+        break;
+        case ObjectType_MonsterToFight:
+        case ObjectType_MonsterToFightKO:
+        {
+/*            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            load_monsters();
+            if(!ok)
+                return;
+            resetPosition(true,false,true);
+            //do copie here because the call of changeOfMonsterInFight apply the skill/buff effect
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            const PlayerMonster *tempMonster=fightEngine.monsterByPosition(monsterPosition);
+            if(tempMonster==NULL)
+            {
+                qDebug() << "Monster not found";
+                return;
+            }
+            PlayerMonster copiedMonster=*tempMonster;
+            if(!fightEngine.changeOfMonsterInFight(monsterPosition))
+                return;
+            client->changeOfMonsterInFightByPosition(monsterPosition);
+            PlayerMonster * playerMonster=fightEngine.getCurrentMonster();
+            init_current_monster_display(&copiedMonster);
+            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+            if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(playerMonster->monster)!=
+                    QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
+            {
+                ui->labelFightEnter->setText(tr("Go %1")
+                                             .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(playerMonster->monster).name)));
+                ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(playerMonster->monster).back.scaled(160,160));
+            }
+            else
+            {
+                ui->labelFightEnter->setText(tr("You change of monster"));
+                ui->labelFightMonsterBottom->setPixmap(QPixmap(":/CC/images/monsters/default/back.png"));
+            }
+            ui->pushButtonFightEnterNext->setVisible(false);
+            moveType=MoveType_Enter;
+            battleStep=BattleStep_Presentation;
+            monsterBeforeMoveForChangeInWaiting=true;
+            moveFightMonsterBottom();*/
+        }
+        break;
+        case ObjectType_MonsterToTradeToMarket:
+        {
+/*            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_market);
+            load_monsters();
+            if(!ok)
+                break;
+            std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
+            if(playerMonster.size()<=1)
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
+                break;
+            }
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(monsterPosition))
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
+                break;
+            }
+            //get the right monster
+            GetPrice getPrice(this,15000);
+            getPrice.exec();
+            if(!getPrice.isOK())
+                break;
+            marketPutMonsterList.push_back(playerMonster.at(monsterPosition));
+            marketPutMonsterPlaceList.push_back(monsterPosition);
+            fightEngine.removeMonsterByPosition(monsterPosition);
+            client->putMarketMonsterByPosition(monsterPosition,getPrice.price());
+            marketPutCashInSuspend=getPrice.price();*/
+        }
+        break;
+        case ObjectType_MonsterToTrade:
+        {
+/*            ui->inventoryUse->setText(tr("Select"));
+            load_monsters();
+            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
+            if(waitedObjectType==ObjectType_MonsterToLearn)
+            {
+                ui->stackedWidget->setCurrentWidget(ui->page_learn);
+                monsterPositionToLearn=monsterPosition;
+                return;
+            }
+            ui->stackedWidget->setCurrentWidget(ui->page_trade);
+            if(!ok)
+                break;
+            std::vector<PlayerMonster> playerMonster=fightEngine.getPlayerMonster();
+            if(playerMonster.size()<=1)
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
+                break;
+            }
+            if(!fightEngine.remainMonstersToFightWithoutThisMonster(monsterPosition))
+            {
+                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
+                break;
+            }
+            //get the right monster
+            tradeCurrentMonstersPosition.push_back(monsterPosition);
+            tradeCurrentMonsters.push_back(playerMonster.at(monsterPosition));
+            fightEngine.removeMonsterByPosition(monsterPosition);
+            client->addMonsterByPosition(monsterPosition);
+            QListWidgetItem *item=new QListWidgetItem();
+            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(tradeCurrentMonsters.back().monster).name));
+            item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));
+            item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(tradeCurrentMonsters.back().monster).front);
+            ui->tradePlayerMonsters->addItem(item);*/
+        }
+        break;
+        case ObjectType_Seed:
+        {
+/*            ui->stackedWidget->setCurrentWidget(ui->page_map);
+            ui->inventoryUse->setText(tr("Select"));
+            ui->plantUse->setVisible(false);
+            if(!ok)
+            {
+                seed_in_waiting.pop_back();
+                break;
+            }
+            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==
+                    QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
+            {
+                qDebug() << "Item is not a plant";
+                QMessageBox::critical(this,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
+                seed_in_waiting.pop_back();
+                return;
+            }
+            const uint8_t &plantId=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
+            if(!haveReputationRequirements(CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId).requirements.reputation))
+            {
+                qDebug() << "You don't have the requirements to plant the seed";
+                QMessageBox::critical(this,tr("Error"),tr("You don't have the requirements to plant the seed"));
+                seed_in_waiting.pop_back();
+                return;
+            }
+            if(havePlant(&mapController->getMap(mapController->current_map)->logicalMap,mapController->getX(),mapController->getY())>=0)
+            {
+                qDebug() << "Too slow to select a seed, have plant now";
+                showTip(tr("Sorry, but now the dirt is not free to plant").toStdString());
+                seed_in_waiting.pop_back();
+                return;
+            }
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                qDebug() << "item id is not into the inventory";
+                seed_in_waiting.pop_back();
+                break;
+            }
+            remove_to_inventory(itemId);
+
+            const SeedInWaiting seedInWaiting=seed_in_waiting.back();
+            seed_in_waiting.back().seedItemId=itemId;
+            insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
+                         seedInWaiting.x,seedInWaiting.y,plantId,
+                         static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
+                         );
+            addQuery(QueryType_Seed);
+            load_plant_inventory();
+            load_inventory();
+            qDebug() << QStringLiteral("send seed for: %1").arg(plantId);
+            emit useSeed(plantId);
+            client->seed_planted(true);
+            client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
+                                 seedInWaiting.x,seedInWaiting.y,plantId,
+                                 static_cast<uint16_t>(CommonDatapack::commonDatapack.plants.at(plantId).fruits_seconds)
+                                 );*/
+        }
+        break;
+        case ObjectType_UseInFight:
+        {
+/*            ui->inventoryUse->setText(tr("Select"));
+            ui->stackedWidget->setCurrentWidget(ui->page_battle);
+            load_inventory();
+            if(!ok)
+                break;
+            const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
+            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            {
+                QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
+                break;
+            }
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
+            {
+                qDebug() << "item id is not into the inventory";
+                break;
+            }
+            if(playerInformations.items.at(itemId)<quantity)
+            {
+                qDebug() << "item id have not the quantity";
+                break;
+            }
+            //it's trap
+            if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend() && fightEngine.isInFightWithWild())
+            {
+                remove_to_inventory(itemId);
+                useTrap(itemId);
+            }
+            else//else it's to use on current monster
+            {
+                const uint8_t &monsterPosition=fightEngine.getCurrentSelectedMonsterNumber();
+                if(fightEngine.useObjectOnMonsterByPosition(itemId,monsterPosition))
+                {
+                    remove_to_inventory(itemId);
+                    if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(itemId)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
+                    {
+                        client->useObjectOnMonsterByPosition(itemId,monsterPosition);
+                        updateAttackList();
+                        displayAttackProgression=0;
+                        attack_quantity_changed=0;
+                        if(battleType!=BattleType_OtherPlayer)
+                            doNextAction();
+                        else
+                        {
+                            ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
+                            ui->labelFightEnter->setText(tr("In waiting of the other player action"));
+                            ui->pushButtonFightEnterNext->hide();
+                        }
+                    }
+                    else
+                        error(tr("You have selected a buggy object").toStdString());
+                }
+                else
+                    QMessageBox::warning(this,tr("Warning"),tr("Can't be used now!"));
+            }
+*/
+        }
+        break;
+        default:
+        qDebug() << "waitedObjectType is unknow";
+        return;
+    }
+    waitedObjectType=ObjectType_All;
+}
+
+void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage)
+{
+    if(objectInUsing.empty())
+    {
+        emit error("No object usage to validate");
+        return;
+    }
+    switch(objectUsage)
+    {
+        case CatchChallenger::ObjectUsage_correctlyUsed:
+        {
+            const uint16_t item=objectInUsing.front();
+            //is crafting recipe
+            if(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.find(item)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
+            {
+                connexionManager->client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(item));
+                //load_crafting_inventory();
+                abort();
+            }
+            else if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
+            {
+            }
+            else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(item)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend())
+            {
+            }
+            else
+                qDebug() << "OverMapLogic::objectUsed(): unknow object type";
+        }
+        break;
+        case CatchChallenger::ObjectUsage_failedWithConsumption:
+        break;
+        case CatchChallenger::ObjectUsage_failedWithoutConsumption:
+            add_to_inventory(objectInUsing.front());
+        break;
+        default:
+        break;
+    }
+    objectInUsing.erase(objectInUsing.cbegin());
+}
+
+void OverMapLogic::addCash(const uint32_t &cash)
+{
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
+    playerInformations.cash+=cash;
+}
+
+void OverMapLogic::removeCash(const uint32_t &cash)
+{
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
+    playerInformations.cash-=cash;
 }

@@ -2,6 +2,7 @@
 #include "../qt/LanguagesSelect.hpp"
 #include "ScreenTransition.hpp"
 #include "render/MapVisualiserOrder.hpp"
+#include "render/MapVisualiserPlayer.hpp"
 #include "../qt/LocalListener.hpp"
 #include "../qt/GameLoader.hpp"
 #include "../qt/QtDatapackClientLoader.hpp"
@@ -124,8 +125,8 @@ int main(int argc, char *argv[])
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
-    qRegisterMetaType<std::vector<ServerFromPoolForDisplay *> >("std::vector<ServerFromPoolForDisplay *>");
-    qRegisterMetaType<CatchChallenger::MapVisualiserPlayer::BlockedOn>("MapVisualiserPlayer::BlockedOn");
+    qRegisterMetaType<std::vector<CatchChallenger::ServerFromPoolForDisplay *> >("std::vector<ServerFromPoolForDisplay *>");
+    qRegisterMetaType<MapVisualiserPlayer::BlockedOn>("MapVisualiserPlayer::BlockedOn");
 
     qRegisterMetaType<CatchChallenger::Chat_type>("Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("Player_type");

@@ -44,7 +44,6 @@ CCMap::CCMap()
 
 void CCMap::setVar(ConnexionManager *connexionManager)
 {
-    mapController.fightEngine=connexionManager->client->fightEngine;
     mapController.resetAll();
     mapController.connectAllSignals(connexionManager->client);
     mapController.datapackParsed();
