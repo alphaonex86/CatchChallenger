@@ -4,12 +4,13 @@
 #include <QObject>
 #include "../../qt/ClientStructures.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/fight/CommonFightEngine.hpp"
 #include "../../libcatchchallenger/Api_protocol.hpp"
 #include "../../qt/ConnectedSocket.hpp"
 
 namespace CatchChallenger {
 class ClientFightEngine;
-class Api_protocol_Qt : public QObject, public Api_protocol
+class Api_protocol_Qt : public QObject, public Api_protocol, public CommonFightEngine
 {
     Q_OBJECT
 public:
@@ -182,6 +183,7 @@ public:
     void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) override;
     void marketWithdrawMonster(const PlayerMonster &playerMonster) override;
 
+    void error(const std::string &error);
 signals:
     void QtnewError(const std::string &error,const std::string &detailedError);
     void Qtmessage(const std::string &message);
@@ -318,6 +320,78 @@ public:
     std::string getLanguage() const override;
 protected:
     ConnectedSocket *socket;
+
+//fight engine
+public:
+    struct MonsterSkillEffect
+    {
+        uint32_t skill;
+    };
+    virtual bool isInFight() const override;
+    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition) override;
+    void errorFightEngine(const std::string &error) override;
+    void messageFightEngine(const std::string &message) const override;
+    std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster) override;
+    std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster) override;
+    //current fight
+    std::vector<PublicPlayerMonster> battleCurrentMonster;
+    std::vector<uint8_t> battleStat,botMonstersStat;
+    std::vector<uint8_t> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
+    std::vector<uint32_t> otherMonsterAttack;
+    std::vector<PlayerMonster> playerMonster_catchInProgress;
+    virtual void fightFinished() override;
+    void setBattleMonster(const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    void setBotMonster(const std::vector<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
+    bool addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
+    bool haveWin();
+    void addAndApplyAttackReturnList(const std::vector<Skill::AttackReturn> &fightEffectList);
+    std::vector<Skill::AttackReturn> getAttackReturnList() const;
+    Skill::AttackReturn getFirstAttackReturn() const;
+    void removeTheFirstLifeEffectAttackReturn();
+    void removeTheFirstBuffEffectAttackReturn();
+    void removeTheFirstAddBuffEffectAttackReturn();
+    void removeTheFirstRemoveBuffEffectAttackReturn();
+    void removeTheFirstAttackReturn();
+    bool firstAttackReturnHaveMoreEffect();
+    bool firstLifeEffectQuantityChange(int32_t quantity);
+    virtual PublicPlayerMonster *getOtherMonster() override;
+    uint8_t getOtherSelectedMonsterNumber() const;
+    void setVariableContent(Player_private_and_public_informations player_informations_local);
+    Skill::AttackReturn generateOtherAttack() override;
+    bool isInBattle() const override;
+    bool haveBattleOtherMonster() const;
+    virtual bool useSkill(const uint16_t &skill) override;
+    bool finishTheTurn(const bool &isBot);
+    bool dropKOOtherMonster() override;
+    bool tryCatchClient(const uint16_t &item);
+    bool catchInProgress() const;
+    virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) override;
+    void catchIsDone();
+    bool doTheOtherMonsterTurn() override;
+    PlayerMonster * evolutionByLevelUp();
+    uint8_t getPlayerMonsterPosition(const PlayerMonster * const playerMonster);
+    void confirmEvolutionByPosition(const uint8_t &monterPosition);
+    void addToEncyclopedia(const uint16_t &monster);
+    bool giveXPSP(int xp,int sp) override;
+    uint32_t lastGivenXP();
+    void newRandomNumber(const std::string &data);
+    void setClient(Api_protocol_Qt * client);
+private:
+    uint32_t randomSeedsSize() const override;
+private:
+    uint32_t mLastGivenXP;
+    std::vector<uint8_t> mEvolutionByLevelUp;
+    std::vector<Skill::AttackReturn> fightEffectList;
+    Player_private_and_public_informations player_informations_local;
+    std::string randomSeeds;
+    Api_protocol_Qt * client;
+    uint16_t fightId;
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel) override;
+    bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
+    bool internalTryEscape() override;
+    void levelUp(const uint8_t &level,const uint8_t &monsterIndex) override;
+    void addXPSP();
+    uint8_t getOneSeed(const uint8_t &max) override;
 };
 }
 

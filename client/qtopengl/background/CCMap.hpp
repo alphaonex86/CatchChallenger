@@ -20,8 +20,9 @@ public:
     void keyPressReset();
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
-private:
+public:
     MapController mapController;
+private:
     QPointF lastClickedPos;
     bool clicked;
 
@@ -29,7 +30,6 @@ private:
     qreal x;
     qreal y;
 signals:
-    void searchPath(std::vector<Map_full> mapList);
     void pathFindingNotFound();
     void repelEffectIsOver() const;
     void teleportConditionNotRespected(const std::string &text) const;
@@ -42,10 +42,7 @@ signals:
     void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void error(const std::string &error);
     void errorWithTheCurrentMap();
-    void inWaitingOfMap();
     void currentMapLoaded();
-    void loadOtherMapAsync(const std::string &fileName);
-    void mapDisplayed(const std::string &fileName);
 };
 
 #endif // PROGRESSBARDARK_H

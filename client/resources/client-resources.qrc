@@ -19,6 +19,7 @@
         <file>images/interface/defaultmonster/front.png</file>
         <file>images/interface/defaultmonster/small.png</file>
         <file>images/interface/defaultitem.png</file>
+        <file>images/interface/closedialog.png</file>
         <file>qml/star.png</file>
         <file>images/flags.png</file>
         <file>images/map/marker.png</file>

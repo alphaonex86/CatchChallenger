@@ -7,7 +7,7 @@
 #include "foreground/MainScreen.hpp"
 #include "foreground/Multi.hpp"
 #include "foreground/SubServer.hpp"
-#include "foreground/OverMap.hpp"
+#include "foreground/OverMapLogic.hpp"
 #include "above/OptionsDialog.hpp"
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
@@ -500,15 +500,12 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     }
     if(overmap==nullptr)
     {
-        overmap=new OverMap();
-        /*if(!connect(overmap,&OverMap::backSubServer,this,&ScreenTransition::backSubServer))
-            abort();
-        if(!connect(overmap,&OverMap::selectCharacter,this,&ScreenTransition::selectCharacter))
-            abort();
+        overmap=new OverMapLogic();
         if(!connect(overmap,&OverMap::error,this,&ScreenTransition::errorString))
-            abort();*/
+            abort();
     }
     overmap->resetAll();
+    overmap->connectAllSignals();
     overmap->setVar(connexionManager);
 }
 

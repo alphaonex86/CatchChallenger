@@ -361,6 +361,13 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
+QAbstractSocket::SocketState ConnexionManager::state()
+{
+    if(socket==nullptr)
+        return QAbstractSocket::UnconnectedState;
+    return socket->state();
+}
+
 void ConnexionManager::error(QAbstractSocket::SocketError socketError)
 {
     if(client!=NULL)

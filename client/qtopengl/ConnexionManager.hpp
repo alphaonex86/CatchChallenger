@@ -34,6 +34,7 @@ public slots:
     void connectTheExternalSocket(ConnexionInfo connexionInfo,CatchChallenger::Api_client_real * client);
     QString serverToDatapachPath(ConnexionInfo connexionInfo) const;
     void stateChanged(QAbstractSocket::SocketState socketState);
+    QAbstractSocket::SocketState state();
     void error(QAbstractSocket::SocketError socketError);
     void newError(const std::string &error,const std::string &detailedError);
     void message(const std::string &message);

@@ -323,7 +323,8 @@ SOURCES += \
     $$PWD/ImagesStrechMiddle.cpp \
     $$PWD/MyApplication.cpp \
     $$PWD/above/DebugDialog.cpp \
-    $$PWD/cc/QtDatapackClientLoaderThread.cpp
+    $$PWD/cc/QtDatapackClientLoaderThread.cpp \
+    $$PWD/foreground/OverMapLogic.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -406,7 +407,8 @@ HEADERS  += \
     $$PWD/ImagesStrechMiddle.hpp \
     $$PWD/MyApplication.h \
     $$PWD/above/DebugDialog.hpp \
-    $$PWD/cc/QtDatapackClientLoaderThread.hpp
+    $$PWD/cc/QtDatapackClientLoaderThread.hpp \
+    $$PWD/foreground/OverMapLogic.hpp
 
 
 wasm: {

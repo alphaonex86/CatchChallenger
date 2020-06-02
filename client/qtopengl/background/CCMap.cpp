@@ -12,8 +12,6 @@ CCMap::CCMap()
 {
     if(!connect(&mapController,&MapController::pathFindingNotFound,this,&CCMap::pathFindingNotFound))
         abort();
-    if(!connect(&mapController,&MapController::searchPath,this,&CCMap::searchPath))
-        abort();
     if(!connect(&mapController,&MapController::repelEffectIsOver,this,&CCMap::repelEffectIsOver))
         abort();
     if(!connect(&mapController,&MapController::teleportConditionNotRespected,this,&CCMap::teleportConditionNotRespected))
@@ -36,13 +34,7 @@ CCMap::CCMap()
         abort();
     if(!connect(&mapController,&MapController::errorWithTheCurrentMap,this,&CCMap::errorWithTheCurrentMap))
         abort();
-    if(!connect(&mapController,&MapController::inWaitingOfMap,this,&CCMap::inWaitingOfMap))
-        abort();
     if(!connect(&mapController,&MapController::currentMapLoaded,this,&CCMap::currentMapLoaded))
-        abort();
-    if(!connect(&mapController,&MapController::loadOtherMapAsync,this,&CCMap::loadOtherMapAsync))
-        abort();
-    if(!connect(&mapController,&MapController::mapDisplayed,this,&CCMap::mapDisplayed))
         abort();
     clicked=false;
     scale=1.0;
@@ -78,11 +70,11 @@ void CCMap::paintChildItems(QList<QGraphicsItem *> childItems,qreal parentX,qrea
         QGraphicsItem * child=childItems.at(index);
         qreal x=child->x()+parentX;
         qreal y=child->y()+parentY;
+        MapObjectItem::x=x;
+        MapObjectItem::y=y;
         painter->translate(x,y);
-        //painter->translate(child->x(),child->y());
         child->paint(painter,option,widget);
         painter->translate(-x,-y);
-        //painter->translate(-child->x(),-child->y());
         //return;
         paintChildItems(child->childItems(),x,y,painter,option,widget);
         index++;
@@ -99,6 +91,8 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
         zoomFinal=zoomH;
     zoomFinal*=CatchChallenger::CommonDatapack::commonDatapack.layersOptions.zoom;
     scale=ceil(zoomFinal);
+    MapObjectItem::scale=scale;
+    MapObjectItem::playerObject=mapController.getPlayerMapObject();
     painter->scale(scale,scale);
 
     const Tiled::MapObject * p=mapController.getPlayerMapObject();
