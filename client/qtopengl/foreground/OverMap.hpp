@@ -20,7 +20,7 @@ class OverMap : public QObject, public ScreenInput
 public:
     explicit OverMap();
     ~OverMap();
-    void resetAll();
+    virtual void resetAll();
     void setVar(ConnexionManager *connexionManager);
     void newLanguage();
     QRectF boundingRect() const;
@@ -30,6 +30,7 @@ public:
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void lineEdit_chat_text_returnPressed();
+    void IG_dialog_close();
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);
     void new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type);
@@ -37,7 +38,7 @@ public:
 
     void updatePlayerNumber(const uint16_t &number,const uint16_t &max_players);
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-private:
+protected:
     QTimer stopFlood;
     int numberForFlood;
     std::string lastMessageSend;
@@ -63,6 +64,26 @@ private:
     CustomText *bagOver;
     CustomButton *buy;
     CustomText *buyOver;
+
+    ImagesStrechMiddle *gainBack;
+    QGraphicsTextItem *gain;
+    QString gainString;
+
+    ImagesStrechMiddle *IG_dialog_textBack;
+    QGraphicsTextItem *IG_dialog_name;
+    QGraphicsTextItem *IG_dialog_text;
+    CustomButton *IG_dialog_quit;
+    QString IG_dialog_nameString;
+    QString IG_dialog_textString;
+    QGraphicsPixmapItem *labelSlow;
+
+    ImagesStrechMiddle *tipBack;
+    QGraphicsTextItem *tip;
+    QString tipString;
+
+    ImagesStrechMiddle *persistant_tipBack;
+    QGraphicsTextItem *persistant_tip;
+    QString persistant_tipString;
 private:
     void updateChat();
 };

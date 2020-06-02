@@ -12,7 +12,7 @@
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngine : public ClientBase, public CommonFightEngineBase
+class CommonFightEngine : public CommonFightEngineBase
 {
 public:
     CommonFightEngine();
