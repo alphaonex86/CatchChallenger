@@ -415,7 +415,7 @@ void Multi::saveConnexionInfoList()
         else
             Settings::settings->remove(QStringLiteral("connexionCounter"));
         if(connexionInfo.lastConnexion>0 && connexionInfo.connexionCounter>0)
-            Settings::settings->setValue(QStringLiteral("lastConnexion"),connexionInfo.lastConnexion);
+            Settings::settings->setValue(QStringLiteral("lastConnexion"),(quint64)connexionInfo.lastConnexion);
         else
             Settings::settings->remove(QStringLiteral("lastConnexion"));
         Settings::settings->setValue(QStringLiteral("proxyHost"),connexionInfo.proxyHost);

@@ -4,8 +4,8 @@
 using namespace CatchChallenger;
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "MapServer.h"
-#include "GlobalServerData.h"
+#include "MapServer.hpp"
+#include "GlobalServerData.hpp"
 
 bool Client::captureCityInProgress()
 {

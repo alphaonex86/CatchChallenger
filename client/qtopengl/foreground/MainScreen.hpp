@@ -13,10 +13,6 @@
 #include <QAudioOutput>
 #endif
 
-namespace Ui {
-class MainScreen;
-}
-
 class MainScreen : public QObject, public ScreenInput
 {
     Q_OBJECT
@@ -55,7 +51,6 @@ protected:
     void paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *widget) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
-    void mouseMoveEventXY(const QPointF &p, bool &pressValidated, bool &callParentClass) override;
     void updateNews();
 
     #ifndef __EMSCRIPTEN__

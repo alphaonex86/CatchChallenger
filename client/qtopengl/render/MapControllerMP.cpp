@@ -457,7 +457,6 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
         //qDebug() << "player information already set";
         return;
     }
-    this->player_informations=informations;
     player_informations_is_set=true;
 
     if(mHaveTheDatapack)
@@ -580,7 +579,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
             switch(delayedActions.at(index).type)
             {
                 case DelayedType_Insert:
-                if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
+                if(delayedActions.at(index).insert.player.simplifiedId!=client->get_player_informations_ro().public_informations.simplifiedId)
                 {
                     const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(
                                                              delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();

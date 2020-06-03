@@ -1,13 +1,17 @@
-#include "NormalServer.h"
-#include "base/GlobalServerData.h"
-#include "../general/base/FacilityLib.h"
+#include "NormalServer.hpp"
+#include "base/GlobalServerData.hpp"
+#include "../general/base/FacilityLib.hpp"
 #include <QSslSocket>
 #include <QTcpSocket>
 #include <QNetworkProxy>
 #include <QProcess>
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
+
+#ifdef CATCHCHALLENGER_SOLO
+#include "../client/qt/QFakeServer.hpp"
+#endif
 
 #ifdef __linux__
 #include <sys/types.h>
@@ -353,19 +357,24 @@ void NormalServer::newConnection()
         if(socket!=NULL)
         {
             std::cout << "new client connected on internal socket" << std::endl;
+            ClientWithSocket *client=nullptr;
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 case MapVisibilityAlgorithmSelection_Simple:
-                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
                 case MapVisibilityAlgorithmSelection_WithBorder:
-                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
                 default:
                 case MapVisibilityAlgorithmSelection_None:
-                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_None();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
             }
+            connect_the_last_client(client,socket);
         }
         else
             std::cout << "NULL client with fake socket" << std::endl;

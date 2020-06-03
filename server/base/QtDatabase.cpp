@@ -1,4 +1,4 @@
-#include "QtDatabase.h"
+#include "QtDatabase.hpp"
 
 #include <iostream>
 #include <stdio.h>

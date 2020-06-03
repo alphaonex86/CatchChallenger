@@ -18,6 +18,9 @@ ConnexionManager::ConnexionManager(LoadingScreen *l)
     #ifndef NOWEBSOCKET
     realWebSocket=nullptr;
     #endif
+    #ifdef CATCHCHALLENGER_SOLO
+    fakeSocket=nullptr;
+    #endif
     this->datapckFileSize=0;
     this->l=l;
     l->reset();
@@ -57,8 +60,13 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
             socket=new CatchChallenger::ConnectedSocket(realSslSocket);
         }
         else {
+            #ifdef CATCHCHALLENGER_SOLO
+            fakeSocket=new CatchChallenger::QFakeSocket();
+            socket=new CatchChallenger::ConnectedSocket(fakeSocket);
+            #else
             std::cerr << "host is empty" << std::endl;
             abort();
+            #endif
         }
         #endif
         #ifndef NOWEBSOCKET
@@ -76,7 +84,12 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         }
         #endif
     #endif
+    //work around for the resetAll() of protocol
+    const std::string mainDatapackCode=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+    const std::string subDatapackCode=CommonSettingsServer::commonSettingsServer.subDatapackCode;
     CatchChallenger::Api_client_real *client=new CatchChallenger::Api_client_real(socket);
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode=mainDatapackCode;
+    CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapackCode;
 /*    if(serverMode==ServerMode_Internal)
         client->tryLogin("admin",pass.toStdString());
     else*/
@@ -152,6 +165,23 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     }
     /*baseWindow->setMultiPlayer(true,static_cast<CatchChallenger::Api_client_real *>(client));
     baseWindow->stateChanged(QAbstractSocket::ConnectingState);*/
+    connexionInfo.connexionCounter++;
+    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
+    this->client=static_cast<CatchChallenger::Api_protocol_Qt *>(client);
+    connectTheExternalSocket(connexionInfo,client);
+
+    //connect the datapack loader
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  this,                                   &ConnexionManager::datapackParsed,Qt::QueuedConnection))
+        abort();
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,           this,                                   &ConnexionManager::datapackParsedMainSub,Qt::QueuedConnection))
+        abort();
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackChecksumError,           this,                                   &ConnexionManager::datapackChecksumError,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &ConnexionManager::parseDatapack,                             QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapack,Qt::QueuedConnection))
+        abort();
+    if(!connect(this,                                   &ConnexionManager::parseDatapackMainSub,                      QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
+        abort();
+
     #ifndef NOTCPSOCKET
     if(realSslSocket!=nullptr)
     {
@@ -179,22 +209,17 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         realWebSocket->open(request);
     }
     #endif
-    connexionInfo.connexionCounter++;
-    connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
-    this->client=static_cast<CatchChallenger::Api_protocol_Qt *>(client);
-    connectTheExternalSocket(connexionInfo,client);
+    #ifdef CATCHCHALLENGER_SOLO
+    if(fakeSocket!=nullptr)
+    {
+        if(!connect(fakeSocket,&CatchChallenger::QFakeSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
+            abort();
+        if(!connect(fakeSocket,static_cast<void(CatchChallenger::QFakeSocket::*)(QAbstractSocket::SocketError)>(&CatchChallenger::QFakeSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
+            abort();
 
-    //connect the datapack loader
-    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,                  this,                                   &ConnexionManager::datapackParsed,Qt::QueuedConnection))
-        abort();
-    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,           this,                                   &ConnexionManager::datapackParsedMainSub,Qt::QueuedConnection))
-        abort();
-    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackChecksumError,           this,                                   &ConnexionManager::datapackChecksumError,Qt::QueuedConnection))
-        abort();
-    if(!connect(this,                                   &ConnexionManager::parseDatapack,                             QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapack,Qt::QueuedConnection))
-        abort();
-    if(!connect(this,                                   &ConnexionManager::parseDatapackMainSub,                      QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
-        abort();
+        fakeSocket->connectToHost();
+    }
+    #endif
 }
 
 void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)
@@ -275,7 +300,12 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
             disconnected(tr("Not able to create the folder %1").arg(datapack.absolutePath()).toStdString());
             return;
         }
+    //work around for the resetAll() of protocol
+    const std::string mainDatapackCode=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+    const std::string subDatapackCode=CommonSettingsServer::commonSettingsServer.subDatapackCode;
     client->setDatapackPath(datapack.absolutePath().toStdString());
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode=mainDatapackCode;
+    CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapackCode;
     //baseWindow->stateChanged(QAbstractSocket::ConnectedState);
 }
 
@@ -316,22 +346,22 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
     if(socketState==QAbstractSocket::ConnectedState)
     {
         //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
-        #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
-        if(realSslSocket==NULL && realWebSocket==NULL)
-            client->sendProtocol();
+        if((1
+            #if !defined(NOTCPSOCKET)
+                && realSslSocket==NULL
+            #endif
+        #if !defined(NOWEBSOCKET)
+             && realWebSocket==NULL
+        #endif
+            )
+        #ifdef CATCHCHALLENGER_SOLO
+             && fakeSocket!=NULL
+        #endif
+                )
+            if(client!=nullptr)
+                client->sendProtocol();
         /*else
             qDebug() << "Tcp/Web socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
-        #elif !defined(NOTCPSOCKET)
-        if(realSslSocket==NULL)
-            client->sendProtocol();
-        /*else
-            qDebug() << "Tcp socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
-        #elif !defined(NOWEBSOCKET)
-        if(realWebSocket==NULL)
-            client->sendProtocol();
-        /*else
-            qDebug() << "Web socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
-        #endif
     }
     if(socketState==QAbstractSocket::UnconnectedState)
     {
@@ -350,6 +380,13 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
         {
             realWebSocket->deleteLater();
             realWebSocket=NULL;
+        }
+        #endif
+        #ifdef CATCHCHALLENGER_SOLO
+        if(fakeSocket!=NULL)
+        {
+            fakeSocket->deleteLater();
+            fakeSocket=NULL;
         }
         #endif
         if(socket!=NULL)

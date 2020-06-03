@@ -40,8 +40,8 @@
 
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QTimer>
-#include "QtTimerEvents.h"
-#include "QtDatabase.h"
+#include "QtTimerEvents.hpp"
+#include "QtDatabase.hpp"
 #endif
 
 namespace CatchChallenger {

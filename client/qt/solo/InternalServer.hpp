@@ -1,14 +1,14 @@
 #include <QString>
 #include <QTimer>
 
-#include "../../../server/base/ServerStructures.h"
-#include "../../../server/base/Client.h"
-#include "../../../general/base/Map_loader.h"
-#include "../../../general/base/ProtocolParsing.h"
-#include "../QFakeServer.h"
-#include "../QFakeSocket.h"
-#include "../../../server/base/MapServer.h"
-#include "../../../server/base/QtServer.h"
+#include "../../../server/base/ServerStructures.hpp"
+#include "../../../server/base/Client.hpp"
+#include "../../../general/base/Map_loader.hpp"
+#include "../../../general/base/ProtocolParsing.hpp"
+#include "../QFakeServer.hpp"
+#include "../QFakeSocket.hpp"
+#include "../../../server/base/MapServer.hpp"
+#include "../../../server/base/QtServer.hpp"
 
 #ifndef CATCHCHALLENGER_INTERNALSERVER_H
 #define CATCHCHALLENGER_INTERNALSERVER_H

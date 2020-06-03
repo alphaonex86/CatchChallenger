@@ -9,7 +9,7 @@
 #include <unordered_map>
 #endif
 #if defined(CATCHCHALLENGER_CLASS_QT) || !defined(EPOLLCATCHCHALLENGERSERVER)
-#include "QtDatabase.h"
+#include "QtDatabase.hpp"
 #endif
 
 namespace CatchChallenger {

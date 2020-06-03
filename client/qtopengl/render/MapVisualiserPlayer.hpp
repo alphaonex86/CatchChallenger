@@ -9,6 +9,10 @@
 #include <QTimer>
 #include <QTime>
 
+namespace CatchChallenger {
+class Api_protocol_Qt;
+}
+
 class MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT
@@ -131,8 +135,8 @@ protected:
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     //current player
-    CatchChallenger::Player_private_and_public_informations player_informations;
     bool player_informations_is_set;
+    CatchChallenger::Api_protocol_Qt * client;
 protected slots:
     virtual void keyPressParse();
 
