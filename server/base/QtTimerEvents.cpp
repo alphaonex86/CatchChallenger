@@ -1,5 +1,5 @@
-#include "QtTimerEvents.h"
-#include "Client.h"
+#include "QtTimerEvents.hpp"
+#include "Client.hpp"
 
 QtTimerEvents::QtTimerEvents(const int &ms, const int &offset, const unsigned char &event, const unsigned char &value) :
     event(event),

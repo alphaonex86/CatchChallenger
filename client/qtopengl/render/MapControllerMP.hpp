@@ -161,8 +161,6 @@ private:
     static QPixmap *imgForPseudoDev;
     static QPixmap *imgForPseudoPremium;
     std::vector<PathResolved> pathList;
-
-    CatchChallenger::Api_protocol_Qt * client;
 private slots:
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);

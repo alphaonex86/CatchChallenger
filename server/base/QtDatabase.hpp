@@ -9,7 +9,7 @@
 
 #define CATCHCHALLENGER_MAXBDQUERIES 255
 
-#include "DatabaseBase.h"
+#include "DatabaseBase.hpp"
 
 namespace CatchChallenger {
 
