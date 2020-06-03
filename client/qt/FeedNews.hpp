@@ -23,6 +23,7 @@ public:
     };
     explicit FeedNews();
     ~FeedNews();
+    void checkCache();
     static FeedNews *feedNews;
     static std::string getText(const std::string &version);
 signals:

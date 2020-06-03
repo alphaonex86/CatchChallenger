@@ -9,10 +9,10 @@
 #include <QString>
 #include <QDateTime>
 
-#include "InternalServer.h"
-#include "../../../server/base/GlobalServerData.h"
-#include "../../../general/base/FacilityLib.h"
-#include "../Settings.h"
+#include "InternalServer.hpp"
+#include "../../../server/base/GlobalServerData.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../Settings.hpp"
 
 using namespace CatchChallenger;
 
@@ -23,11 +23,11 @@ InternalServer::InternalServer() :
     if(!connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection))
         abort();
     const QString &currentDate=QDateTime::currentDateTime().toString("ddMMyyyy");
-    if(Settings::settings.contains("gift"))
+    if(Settings::settings->contains("gift"))
     {
-        if(Settings::settings.value("gift")!=currentDate)
+        if(Settings::settings->value("gift")!=currentDate)
         {
-            Settings::settings.setValue("gift",currentDate);
+            Settings::settings->setValue("gift",currentDate);
             timerGift.setInterval(1000);
             timerGift.setSingleShot(true);
             if(!connect(this,&QtServer::is_started,this,&InternalServer::serverIsReady,Qt::QueuedConnection))
@@ -37,7 +37,7 @@ InternalServer::InternalServer() :
         }
     }
     else
-        Settings::settings.setValue("gift",currentDate);
+        Settings::settings->setValue("gift",currentDate);
 }
 
 void InternalServer::serverIsReady()

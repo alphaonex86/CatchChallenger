@@ -416,10 +416,11 @@ HEADERS  += \
 
 
 wasm: {
-    DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
+    DEFINES += NOTCPSOCKET
 }
 else
 {
+    DEFINES += CATCHCHALLENGER_SOLO
 #    DEFINES += NOWEBSOCKET
 }
 android: {
@@ -511,10 +512,8 @@ TRANSLATIONS    = $$PWD/../resources/languages/en/translation.ts \
 contains(DEFINES, CATCHCHALLENGER_SOLO) {
 include(../../server/catchchallenger-server-qt.pri)
 QT       += sql
-SOURCES += $$PWD/../qt/solo/InternalServer.cpp \
-    $$PWD/../qt/solo/SoloWindow.cpp
-HEADERS  += $$PWD/../qt/solo/InternalServer.hpp \
-    $$PWD/../qt/solo/SoloWindow.hpp
+# \todo drop this
+LIBS += -lcrypto
 }
 
 DISTFILES += \

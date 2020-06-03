@@ -1,7 +1,7 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
-#include "QFakeSocket.h"
-#include "QFakeServer.h"
-#include "ClientVariable.h"
+#include "QFakeSocket.hpp"
+#include "QFakeServer.hpp"
+#include "ClientVariable.hpp"
 
 #include <QMutexLocker>
 using namespace CatchChallenger;

@@ -9,7 +9,9 @@
 #include <QNetworkRequest>
 #include <QUrl>
 #include <QRegularExpression>
+#include <QStandardPaths>
 #include <QDebug>
+#include <fstream>
 
 FeedNews *FeedNews::feedNews=NULL;
 
@@ -25,6 +27,26 @@ FeedNews::FeedNews()
     newUpdateTimer.start(60*60*1000);
     firstUpdateTimer.setSingleShot(true);
     firstUpdateTimer.start(5);
+}
+
+void FeedNews::checkCache()
+{
+    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    if(!l.empty())
+    {
+        const QString &p=l.first();
+        std::ifstream file(p.toStdString()+"/news.xml",std::ios::in|std::ios::binary|std::ios::ate);
+        if(file.is_open())
+        {
+            QByteArray data;
+            size_t size = file.tellg();
+            data.resize(size);
+            file.seekg(0,std::ios::beg);
+            file.read(data.data(), size);
+            file.close();
+            loadFeeds(data);
+        }
+    }
 }
 
 FeedNews::~FeedNews()
@@ -78,7 +100,21 @@ void FeedNews::httpFinished()
         reply->deleteLater();
         return;
     }
-    loadFeeds(reply->readAll());
+    const QByteArray &data=reply->readAll();
+
+    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    if(!l.empty())
+    {
+        const QString &p=l.first();
+        std::ofstream file(p.toStdString()+"/news.xml",std::ios::out|std::ios::binary|std::ios::trunc);
+        if(file.is_open())
+        {
+            file.write(data.data(), data.size());
+            file.close();
+        }
+    }
+
+    loadFeeds(data);
 }
 
 void FeedNews::loadFeeds(const QByteArray &data)

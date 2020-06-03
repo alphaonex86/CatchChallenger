@@ -8,6 +8,10 @@
 #include "ScreenInput.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 
+namespace CatchChallenger {
+class InternalServer;
+}
+
 class OptionsDialog;
 class DebugDialog;
 class MainScreen;
@@ -19,6 +23,7 @@ class CharacterList;
 class ConnexionInfo;
 class CCMap;
 class OverMapLogic;
+class InternalServer;
 
 class ScreenTransition : public QGraphicsView
 {
@@ -74,6 +79,9 @@ private:
     OptionsDialog *o;
     DebugDialog *d;
     MainScreen *m;
+    #ifdef CATCHCHALLENGER_SOLO
+    CatchChallenger::InternalServer *internalServer;
+    #endif
     //Solo *solo;
     Multi *multi;
     Login *login;

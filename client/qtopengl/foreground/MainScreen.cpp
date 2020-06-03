@@ -38,27 +38,6 @@ MainScreen::MainScreen()
     haveFreshFeed=false;
     news=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
     newsText=new CCGraphicsTextItem(news);
-    if(Settings::settings->contains("news"))
-    {
-        const QByteArray &data=Settings::settings->value("news").toByteArray();
-        QDataStream in(data);
-        in.setVersion(QDataStream::Qt_4_0);
-        quint8 size=0;
-        in >> size;
-        quint8 index=0;
-        while(index<size)
-        {
-            FeedNews::FeedEntry n;
-            in >> n.description;
-            in >> n.link;
-            in >> n.pubDate;
-            in >> n.title;
-            if(n.title.isEmpty())
-                break;
-            entryList.push_back(n);
-            index++;
-        }
-    }
     newsText->setOpenExternalLinks(true);
     newsText->setCacheMode(QGraphicsItem::DeviceCoordinateCache);
     newsText->setTextInteractionFlags(Qt::TextBrowserInteraction);
@@ -81,23 +60,10 @@ MainScreen::MainScreen()
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainScreen::feedEntryList))
         std::cerr << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed" << std::endl;
-    #ifndef NOSINGLEPLAYER
-    /*solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
-                              "/datapack/internal/",
-                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
-                              "/savegames/",false);
-    if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
-        abort();
-    if(!connect(solowindow,&SoloWindow::play,this,&MainWindow::gameSolo_play))
-        abort();
-    ui->stackedWidget->addWidget(solowindow);
-    if(ui->stackedWidget->indexOf(solowindow)<0)
-        solo->hide();*/
-    #endif
-    #ifdef NOSINGLEPLAYER
+    FeedNews::feedNews->checkCache();
+    #ifndef CATCHCHALLENGER_SOLO
     solo->hide();
     #endif
-    solo->hide();//todo
 
     if(!connect(facebook,&CustomButton::clicked,this,&MainScreen::openFacebook))
         abort();
@@ -272,20 +238,6 @@ void MainScreen::feedEntryList(const std::vector<FeedNews::FeedEntry> &entryList
     if(currentNewsType!=0)
         updateNews();
 
-    if(entryList.size()<255)
-    {
-        QByteArray data;
-        QDataStream out(&data,QIODevice::WriteOnly);
-        out.setVersion(QDataStream::Qt_4_0);
-        out << (quint8)entryList.size();
-        for(const FeedNews::FeedEntry &n : entryList) {
-            out << n.description;
-            out << n.link;
-            out << n.pubDate;
-            out << n.title;
-        }
-        Settings::settings->setValue("news",data);
-    }
     newsWait->setVisible(false);
     haveFreshFeed=true;
 }
@@ -383,10 +335,6 @@ void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool 
     facebook->mouseReleaseEventXY(p,pressValidated);
     website->mouseReleaseEventXY(p,pressValidated);
     newsUpdate->mouseReleaseEventXY(p,pressValidated);
-}
-
-void MainScreen::mouseMoveEventXY(const QPointF &,bool &,bool &callParentClass)
-{
 }
 
 void MainScreen::newLanguage()
