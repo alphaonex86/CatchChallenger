@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_QTSERVER_H
 
 #include <QObject>
-#include "BaseServer.h"
+#include "BaseServer.hpp"
 
 namespace CatchChallenger {
 class QtServer : public QObject, public BaseServer

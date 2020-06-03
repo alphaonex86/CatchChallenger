@@ -1,5 +1,6 @@
 #include "MapVisualiserPlayerWithFight.hpp"
 
+#include "../cc/Api_protocol_Qt.hpp"
 #include "../../qt/fight/interface/ClientFightEngine.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
@@ -85,7 +86,7 @@ void MapVisualiserPlayerWithFight::resetAll()
 
 void MapVisualiserPlayerWithFight::keyPressParse()
 {
-    if(fightEngine->isInFight())
+    if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight at keyPressParse()";
         return;
@@ -96,7 +97,7 @@ void MapVisualiserPlayerWithFight::keyPressParse()
 
 bool MapVisualiserPlayerWithFight::haveStopTileAction()
 {
-    if(fightEngine->isInFight())
+    if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
@@ -112,10 +113,10 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         return true;
     }
     CatchChallenger::PlayerMonster *fightMonster;
-    if(!fightEngine->getAbleToFight())
+    if(!client->getAbleToFight())
         fightMonster=NULL;
     else
-        fightMonster=fightEngine->getCurrentMonster();
+        fightMonster=client->getCurrentMonster();
     if(fightMonster!=NULL)
     {
         std::pair<uint8_t,uint8_t> pos(getPos());
@@ -170,7 +171,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(fightEngine->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,*items,*events))
+                if(client->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,*items,*events))
                 {
                     inMove=false;
                     emit send_player_direction(direction);
@@ -198,7 +199,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
 {
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
-    if(fightEngine->isInFight())
+    if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight";
         return false;
@@ -278,7 +279,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             {
                 if(!haveBeatBot(botFightList.at(index)))
                 {
-                    if(!fightEngine->getAbleToFight())
+                    if(!client->getAbleToFight())
                     {
                         emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
                         return false;
@@ -299,12 +300,12 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
-                    if(!fightEngine->getAbleToFight())
+                    if(!client->getAbleToFight())
                     {
                         emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
-                    if(!fightEngine->canDoRandomFight(*new_map,x,y))
+                    if(!client->canDoRandomFight(*new_map,x,y))
                     {
                         emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;

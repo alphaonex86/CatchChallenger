@@ -27,27 +27,27 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
 {
     this->ccmap=ccmap;
 
-    if(connect(ccmap,&CCMap::pathFindingNotFound,this,&OverMapLogic::pathFindingNotFound))
+    if(!connect(ccmap,&CCMap::pathFindingNotFound,this,&OverMapLogic::pathFindingNotFound))
         abort();
-    if(connect(ccmap,&CCMap::repelEffectIsOver,this,&OverMapLogic::repelEffectIsOver))
+    if(!connect(ccmap,&CCMap::repelEffectIsOver,this,&OverMapLogic::repelEffectIsOver))
         abort();
-    if(connect(ccmap,&CCMap::teleportConditionNotRespected,this,&OverMapLogic::teleportConditionNotRespected))
+    if(!connect(ccmap,&CCMap::teleportConditionNotRespected,this,&OverMapLogic::teleportConditionNotRespected))
         abort();
-    if(connect(ccmap,&CCMap::send_player_direction,connexionManager->client,&CatchChallenger::Api_protocol_Qt::send_player_direction))
+    if(!connect(ccmap,&CCMap::send_player_direction,connexionManager->client,&CatchChallenger::Api_protocol_Qt::send_player_direction))
         abort();
-    if(connect(ccmap,&CCMap::stopped_in_front_of,this,&OverMapLogic::stopped_in_front_of))
+    if(!connect(ccmap,&CCMap::stopped_in_front_of,this,&OverMapLogic::stopped_in_front_of))
         abort();
-    if(connect(ccmap,&CCMap::actionOn,this,&OverMapLogic::actionOn))
+    if(!connect(ccmap,&CCMap::actionOn,this,&OverMapLogic::actionOn))
         abort();
-    if(connect(ccmap,&CCMap::actionOnNothing,this,&OverMapLogic::actionOnNothing))
+    if(!connect(ccmap,&CCMap::actionOnNothing,this,&OverMapLogic::actionOnNothing))
         abort();
-    if(connect(ccmap,&CCMap::blockedOn,this,&OverMapLogic::blockedOn))
+    if(!connect(ccmap,&CCMap::blockedOn,this,&OverMapLogic::blockedOn))
         abort();
-    if(connect(ccmap,&CCMap::error,this,&OverMapLogic::error))
+    if(!connect(ccmap,&CCMap::error,this,&OverMapLogic::error))
         abort();
-    if(connect(ccmap,&CCMap::errorWithTheCurrentMap,this,&OverMapLogic::errorWithTheCurrentMap))
+    if(!connect(ccmap,&CCMap::errorWithTheCurrentMap,this,&OverMapLogic::errorWithTheCurrentMap))
         abort();
-    if(connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
+    if(!connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
         abort();
     OverMap::setVar(ccmap,connexionManager);
 }
@@ -266,7 +266,7 @@ void OverMapLogic::connectAllSignals()
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeObject,        this,&OverMapLogic::tradeAddTradeObject))
         abort();
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QttradeAddTradeMonster,       this,&OverMapLogic::tradeAddTradeMonster))
-      */  abort();
+        abort();*/
     //inventory
     if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtobjectUsed,                 this,&OverMapLogic::objectUsed))
         abort();

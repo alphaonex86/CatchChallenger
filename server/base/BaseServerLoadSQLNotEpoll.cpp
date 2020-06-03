@@ -1,6 +1,6 @@
 #include "BaseServer.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "GlobalServerData.h"
+#include "GlobalServerData.hpp"
 #endif
 
 using namespace CatchChallenger;

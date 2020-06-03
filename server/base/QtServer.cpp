@@ -1,11 +1,14 @@
-#include "QtServer.h"
-#include "GlobalServerData.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_None.h"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.h"
-#include "LocalClientHandlerWithoutSender.h"
-#include "ClientNetworkReadWithoutSender.h"
+#include "QtServer.hpp"
+#include "GlobalServerData.hpp"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
+#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
+#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
+#include "LocalClientHandlerWithoutSender.hpp"
+#include "ClientNetworkReadWithoutSender.hpp"
+#ifdef CATCHCHALLENGER_SOLO
+#include "../../client/qt/QFakeServer.hpp"
+#endif
 
 using namespace CatchChallenger;
 
@@ -27,11 +30,11 @@ QtServer::QtServer()
         abort();
     }
     #ifdef CATCHCHALLENGER_SOLO
-    /*if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
+    if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
-    }*/
+    }
     #endif
     if(!connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server))
     {
@@ -105,8 +108,10 @@ QtServer::~QtServer()
 
 void QtServer::preload_the_city_capture()
 {
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection);
-    connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&Client::startTheCityCapture);
+    if(!connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection))
+        abort();
+    if(!connect(GlobalServerData::serverPrivateVariables.timer_city_capture,&QTimer::timeout,&Client::startTheCityCapture))
+        abort();
     BaseServer::preload_the_city_capture();
 }
 
@@ -179,36 +184,49 @@ void QtServer::removeOneClient()
 #ifndef EPOLLCATCHCHALLENGERSERVER
 void QtServer::newConnection()
 {
-/*    while(QFakeServer::server.hasPendingConnections())
+    while(QFakeServer::server.hasPendingConnections())
     {
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
             qDebug() << ("newConnection(): new ClientWithSocket connected by fake socket");
+            ClientWithSocket *client=nullptr;
             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
-                default:
                 case MapVisibilityAlgorithmSelection_Simple:
-                    connect_the_last_client(new MapVisibilityAlgorithm_Simple_StoreOnSender(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
                 case MapVisibilityAlgorithmSelection_WithBorder:
-                    connect_the_last_client(new MapVisibilityAlgorithm_WithBorder_StoreOnSender(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
+                default:
                 case MapVisibilityAlgorithmSelection_None:
-                    connect_the_last_client(new MapVisibilityAlgorithm_None(new ConnectedSocket(socket)),socket);
+                    client=new MapVisibilityAlgorithm_None();
+                    client->qtSocket=new ConnectedSocket(socket);
                 break;
             }
+            connect_the_last_client(client,socket);
+
+/*            QByteArray data;
+            data.resize(1);
+            data[0x00]=0x00;
+            socket->write(data.constData(),data.size());*/
+
         }
         else
             qDebug() << ("NULL ClientWithSocket at BaseServer::newConnection()");
-    }*/
+    }
 }
 #endif
 
 void QtServer::connect_the_last_client(ClientWithSocket * client,QIODevice *socket)
 {
-    connect(socket,&QIODevice::readyRead,client,&ClientWithSocket::parseIncommingData,Qt::QueuedConnection);
-    connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection);
+    if(!connect(socket,&QIODevice::readyRead,client,&ClientWithSocket::parseIncommingData,Qt::QueuedConnection))
+        abort();
+    if(!connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection))
+        abort();
     client->qtSocket=socket;
     client_list.insert(client);
 }

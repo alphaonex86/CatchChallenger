@@ -1,6 +1,6 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
-#include "QFakeServer.h"
-#include "QFakeSocket.h"
+#include "QFakeServer.hpp"
+#include "QFakeSocket.hpp"
 
 #include <QHostAddress>
 

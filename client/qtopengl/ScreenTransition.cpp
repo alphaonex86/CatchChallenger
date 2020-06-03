@@ -1,5 +1,9 @@
 #include "ScreenTransition.hpp"
 #include "../qt/GameLoader.hpp"
+#ifdef CATCHCHALLENGER_SOLO
+#include "../qt/solo/InternalServer.hpp"
+#include <QStandardPaths>
+#endif
 #include "cc/QtDatapackClientLoader.hpp"
 #include "background/CCMap.hpp"
 #include "foreground/CharacterList.hpp"
@@ -12,6 +16,7 @@
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
 #include "../../general/base/Version.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "AudioGL.hpp"
 #endif
@@ -78,6 +83,9 @@ ScreenTransition::ScreenTransition() :
     /*solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
+    #ifdef CATCHCHALLENGER_SOLO
+    internalServer=nullptr;
+    #endif
     setBackground(&b);
     setForeground(&l);
     if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::loadingFinished))
@@ -372,19 +380,132 @@ void ScreenTransition::removeAbove()
 
 void ScreenTransition::openSolo()
 {
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
+    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    if(l.empty())
+    {
+        errorString(tr("No writable path").toStdString());
+        return;
+    }
+    QString savegamesPath=l.first()+"/";
     if(m!=nullptr)
         m->setError(std::string());
-    /*if(solo==nullptr)
+    #ifdef CATCHCHALLENGER_SOLO
+    if(internalServer!=nullptr)
     {
-        solo=new Solo(this);
-        if(!connect(solo,&Solo::backMain,this,&ScreenTransition::backMain))
-            abort();
+        internalServer->deleteLater();
+        internalServer=nullptr;
     }
-    setForeground(solo);*/
+    if(internalServer==nullptr)
+        internalServer=new CatchChallenger::InternalServer();
+
+    {
+        //std::string datapackPathBase=client->datapackPathBase();
+        std::string datapackPathBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+        CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
+
+        CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;
+        CommonSettingsCommon::commonSettingsCommon.max_character=1;
+        CommonSettingsCommon::commonSettingsCommon.min_character=1;
+
+        formatedServerSettings.automatic_account_creation=true;
+        formatedServerSettings.max_players=1;
+        formatedServerSettings.sendPlayerNumber = false;
+        formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
+        formatedServerSettings.everyBodyIsRoot                                      = true;
+        formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = true;
+
+        formatedServerSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+        formatedServerSettings.database_login.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+        formatedServerSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+        formatedServerSettings.database_base.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+        formatedServerSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+        formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+        formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
+        formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
+        formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
+        formatedServerSettings.datapack_basePath=datapackPathBase;
+
+        {
+            CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["day"];
+            event.cycle=60;
+            event.offset=0;
+            event.value="day";
+        }
+        {
+            CatchChallenger::GameServerSettings::ProgrammedEvent &event=formatedServerSettings.programmedEventList["day"]["night"];
+            event.cycle=60;
+            event.offset=30;
+            event.value="night";
+        }
+        {
+            const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            if(list.isEmpty())
+            {
+                errorString(tr("No main code detected into the current datapack").toStdString());
+                return;
+            }
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+        }
+        QDir mainDir(QString::fromStdString(datapackPathBase)+"map/main/"+
+                     QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/");
+        if(!mainDir.exists())
+        {
+            const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+"/map/main/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            if(list.isEmpty())
+            {
+                errorString(tr("No main code detected into the current datapack").toStdString());
+                return;
+            }
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
+        }
+
+        {
+            const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+
+                                           "/map/main/"+QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                    .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+            if(!list.isEmpty())
+                CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+            else
+                CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+        }
+        if(!CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
+        {
+            QDir subDir(QString::fromStdString(datapackPathBase)+"/map/main/"+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/"+
+                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.subDatapackCode)+"/");
+            if(!subDir.exists())
+            {
+                const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+"/map/main/"+
+                                               QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+"/sub/")
+                        .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
+                if(!list.isEmpty())
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode=list.at(0).fileName().toStdString();
+                else
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode.clear();
+            }
+        }
+
+        internalServer->setSettings(formatedServerSettings);
+    }
+
+    internalServer->start();
+    ConnexionInfo connexionInfo;
+    connexionInfo.connexionCounter=0;
+    connexionInfo.isCustom=false;
+    connexionInfo.port=0;
+    connexionInfo.lastConnexion=0;
+    connexionInfo.proxyPort=0;
+    connectToServer(connexionInfo,QString(),QString());
+    #endif
 }
 
 void ScreenTransition::openMulti()
 {
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
+    CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
     if(m!=nullptr)
         m->setError(std::string());
     if(multi==nullptr)
@@ -409,8 +530,13 @@ void ScreenTransition::connectToServer(ConnexionInfo connexionInfo,QString login
     //baseWindow=new CatchChallenger::BaseWindow();
     if(connexionManager!=nullptr)
         delete connexionManager;
+    //work around for the resetAll() of protocol
+    const std::string mainDatapackCode=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
+    const std::string subDatapackCode=CommonSettingsServer::commonSettingsServer.subDatapackCode;
     connexionManager=new ConnexionManager(&l);
     connexionManager->connectToServer(connexionInfo,login,pass);
+    CommonSettingsServer::commonSettingsServer.mainDatapackCode=mainDatapackCode;
+    CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapackCode;
     if(!connect(connexionManager,&ConnexionManager::logged,this,&ScreenTransition::logged))
         abort();
     if(!connect(connexionManager,&ConnexionManager::errorString,this,&ScreenTransition::errorString))
@@ -505,8 +631,8 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
             abort();
     }
     overmap->resetAll();
-    overmap->connectAllSignals();
     overmap->setVar(ccmap,connexionManager);
+    overmap->connectAllSignals();
 }
 
 void ScreenTransition::selectCharacter(const int indexSubServer,const int indexCharacter)
@@ -529,10 +655,13 @@ void ScreenTransition::disconnectedFromServer()
 
 void ScreenTransition::errorString(std::string error)
 {
-    std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
-    setBackground(&b);
-    setForeground(m);
-    setAbove(nullptr);
+    if(!error.empty())
+    {
+        std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
+        setBackground(&b);
+        setForeground(m);
+        setAbove(nullptr);
+    }
     if(m!=nullptr)
         m->setError(error);
 }

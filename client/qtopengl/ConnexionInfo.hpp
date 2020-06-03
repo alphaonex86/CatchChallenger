@@ -17,7 +17,7 @@ public:
     QString ws;
 
     uint32_t connexionCounter;
-    uint32_t lastConnexion;
+    uint64_t lastConnexion;//presume timestamps, then uint64_t
 
     QString register_page;
     QString lost_passwd_page;

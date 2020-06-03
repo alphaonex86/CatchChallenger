@@ -68,7 +68,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
     qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
     //current player
-    if(player.simplifiedId==player_informations.public_informations.simplifiedId)
+    if(player.simplifiedId==client->get_player_informations_ro().public_informations.simplifiedId)
         MapVisualiserPlayer::insert_player_internal(player,mapId,x,y,direction,skinFolderList);
     //other player
     else
@@ -398,11 +398,15 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
             DelayedMultiplex multiplex;
             multiplex.move=tempItem;
             multiplex.type=DelayedType_Move;
+            multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
             delayedActions.push_back(multiplex);
         }
         return false;
     }
-    if(id==player_informations.public_informations.simplifiedId)
+    if(id==client->get_player_informations_ro().public_informations.simplifiedId)
     {
         qDebug() << "The current player can't be moved (only teleported)";
         return true;
@@ -451,6 +455,10 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                 DelayedMultiplex multiplex;
                 multiplex.move=tempItem;
                 multiplex.type=DelayedType_Move;
+                multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+                multiplex.insert.mapId=0;
+                multiplex.insert.x=0;
+                multiplex.insert.y=0;
                 delayedActions.push_back(multiplex);
             }
             return false;
@@ -627,7 +635,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
 
 bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
 {
-    if(id==player_informations.public_informations.simplifiedId)
+    if(id==client->get_player_informations_ro().public_informations.simplifiedId)
     {
         qDebug() << "The current player can't be removed";
         return true;
@@ -642,6 +650,10 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
             DelayedMultiplex multiplex;
             multiplex.remove=id;
             multiplex.type=DelayedType_Remove;
+            multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
             delayedActions.push_back(multiplex);
         }
         return false;
@@ -740,11 +752,15 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
             DelayedMultiplex multiplex;
             multiplex.reinsert_single=tempItem;
             multiplex.type=DelayedType_Reinsert_single;
+            multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
             delayedActions.push_back(multiplex);
         }
         return false;
     }
-    if(id==player_informations.public_informations.simplifiedId)
+    if(id==client->get_player_informations_ro().public_informations.simplifiedId)
     {
         qDebug() << "The current player can't be removed";
         return true;
@@ -1083,12 +1099,16 @@ bool MapControllerMP::full_reinsert_player_final(const uint16_t &id,const uint32
 
             DelayedMultiplex multiplex;
             multiplex.reinsert_full=tempItem;
+            multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
             multiplex.type=DelayedType_Reinsert_full;
             delayedActions.push_back(multiplex);
         }
         return false;
     }
-    if(id==player_informations.public_informations.simplifiedId)
+    if(id==client->get_player_informations_ro().public_informations.simplifiedId)
     {
         qDebug() << "The current player can't be removed";
         return true;
@@ -1119,6 +1139,10 @@ bool MapControllerMP::dropAllPlayerOnTheMap_final(bool inReplayMode)
         {
             DelayedMultiplex multiplex;
             multiplex.type=DelayedType_Drop_all;
+            multiplex.insert.direction=CatchChallenger::Direction::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
             delayedActions.push_back(multiplex);
         }
         return false;

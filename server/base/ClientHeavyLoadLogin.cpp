@@ -7,7 +7,7 @@
 #include "BaseServerLogin.hpp"
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
-#include "SqlFunction.h"
+#include "SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 

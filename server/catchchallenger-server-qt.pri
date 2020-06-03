@@ -14,14 +14,19 @@ QT       += gui network
 SOURCES += $$PWD/base/QtServer.cpp \
     $$PWD/base/QtTimerEvents.cpp \
     $$PWD/base/QtDatabase.cpp \
-    $$PWD/../client/qt/ConnectedSocket.cpp \
     $$PWD/../client/qt/QFakeSocket.cpp \
-    $$PWD/../client/qt/QFakeServer.cpp
+    $$PWD/../client/qt/QFakeServer.cpp \
+    $$PWD/../client/qt/solo/InternalServer.cpp \
+    $$PWD/NormalServer.cpp \
+    $$PWD/NormalServerGlobal.cpp \
+    $$PWD/QSslServer.cpp
 HEADERS += $$PWD/base/QtServer.hpp \
     $$PWD/base/QtTimerEvents.hpp \
     $$PWD/base/QtDatabase.hpp \
-    $$PWD/../client/qt/ConnectedSocket.hpp \
     $$PWD/../client/qt/QFakeServer.hpp \
-    $$PWD/../client/qt/QFakeSocket.hpp
-
+    $$PWD/../client/qt/QFakeSocket.hpp \
+    $$PWD/../client/qt/solo/InternalServer.hpp \
+    $$PWD/NormalServer.hpp \
+    $$PWD/NormalServerGlobal.hpp \
+    $$PWD/QSslServer.hpp
 

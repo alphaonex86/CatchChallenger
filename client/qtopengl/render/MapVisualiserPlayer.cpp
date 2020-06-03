@@ -7,6 +7,7 @@
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../qt/QtDatapackClientLoader.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
+#include "../cc/Api_protocol_Qt.hpp"
 
 #include <qmath.h>
 #include <QFileInfo>
@@ -1563,7 +1564,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
     qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
     //current player
-    if(player.simplifiedId==player_informations.public_informations.simplifiedId)
+    if(player.simplifiedId==client->get_player_informations_ro().public_informations.simplifiedId)
     {
         //ignore to improve the performance server because can reinsert all player of map using the overall client list
         if(!current_map.empty())
@@ -2041,7 +2042,7 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         resetMonster=true;
     }
     monsterTileset=NULL;
-    player_informations.public_informations.monsterId=monster;
+    client->get_player_informations().public_informations.monsterId=monster;
     const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(monster)+"/overworld.png";
     if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
         monsterTileset=monsterTilesetCache.at(imagePath);
