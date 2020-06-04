@@ -209,11 +209,10 @@ void QtServer::newConnection()
             }
             connect_the_last_client(client,socket);
 
-/*            QByteArray data;
+            QByteArray data;
             data.resize(1);
             data[0x00]=0x00;
-            socket->write(data.constData(),data.size());*/
-
+            socket->write(data.constData(),data.size());
         }
         else
             qDebug() << ("NULL ClientWithSocket at BaseServer::newConnection()");

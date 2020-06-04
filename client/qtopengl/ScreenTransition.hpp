@@ -63,6 +63,7 @@ protected:
     void goToMap();
     void render();
     void paintEvent(QPaintEvent * event) override;
+    void is_started(bool started);
 
     void updateFPS();
     void setTargetFPS(int targetFPS);
@@ -101,6 +102,8 @@ private:
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
     QTime timeUpdateFPS;
+
+    bool multiplaySelected;
 };
 
 #endif // SCREENTRANSITION_H

@@ -60,13 +60,23 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         #ifndef NOTCPSOCKET
         #ifdef CATCHCHALLENGER_SOLO
         if(socket->fakeSocket!=NULL)
-            haveFirstHeader=true;
+        {
+            //haveFirstHeader=true;
+            //sendProtocol();
+            if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::readForFirstHeader))
+                abort();
+            if(socket->bytesAvailable())
+                readForFirstHeader();
+        }
+        else
         #endif
         #endif
+        {
         if(!QObject::connect(socket,&ConnectedSocket::readyRead,this,&Api_protocol_Qt::parseIncommingData,Qt::QueuedConnection))//put queued to don't have circular loop Client -> Server -> Client
             abort();
         if(socket->bytesAvailable())
             parseIncommingData();
+        }
     }
     if(!connect(socket,&ConnectedSocket::stateChanged,    this,&Api_protocol_Qt::stateChanged,Qt::QueuedConnection))//Qt::QueuedConnection mandatory, Qt::DirectConnection do wrong order call problem (disconnect before set stage 2 + new token to go on game server)
         abort();
@@ -303,28 +313,21 @@ void Api_protocol_Qt::readForFirstHeader()
 {
     if(haveFirstHeader)
         return;
-    #if ! defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
-    if(socket->sslSocket==NULL && socket->webSocket==NULL)
+    if(1
+       #ifndef NOTCPSOCKET
+         && socket->sslSocket==NULL
+       #endif
+       #ifndef NOWEBSOCKET
+         && socket->webSocket==NULL
+       #endif
+       #ifdef CATCHCHALLENGER_SOLO
+         && socket->fakeSocket==NULL
+       #endif
+            )
     {
         newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
         return;
     }
-    #else
-        #ifndef NOTCPSOCKET
-        if(socket->sslSocket==NULL)
-        {
-            newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
-            return;
-        }
-        #endif
-        #ifndef NOWEBSOCKET
-        if(socket->webSocket==NULL)
-        {
-            newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() socket->sslSocket==NULL"));
-            return;
-        }
-        #endif
-    #endif
     if(stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2 && stageConnexion!=StageConnexion::Stage3)
     {
         newError(std::string("Internal problem"),std::string("Api_protocol_Qt::readForFirstHeader() stageConnexion!=StageConnexion::Stage1 && stageConnexion!=StageConnexion::Stage2"));

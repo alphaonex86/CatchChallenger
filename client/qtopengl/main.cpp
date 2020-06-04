@@ -196,14 +196,14 @@ int main(int argc, char *argv[])
     s.setMinimumSize(QSize(640,480));
     #endif
     s.move(0,0);
-    s.show();
     QIcon icon;
     icon.addFile(":/CC/images/catchchallenger.png", QSize(), QIcon::Normal, QIcon::Off);
     s.setWindowIcon(icon);
 #ifdef  Q_OS_ANDROID
     s.showFullScreen();
 #else
-    //s.showMaximized();
+    //s.show();
+    s.showMaximized();
 #endif
     QtDatapackClientLoader::datapackLoader=nullptr;
     const auto returnCode=a.exec();

@@ -211,6 +211,11 @@ void SubServer::logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> se
     }
     addToServerList(logicialGroup,serverList->invisibleRootItem(),current__date,fullView);
     serverList->expandAll();
+    if(serverOrdenedList.size()==1)
+    {
+        serverList->itemAt(0,0)->setSelected(true);
+        server_select_clicked();
+    }
 }
 
 bool CatchChallenger::ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const

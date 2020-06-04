@@ -296,11 +296,13 @@ bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
     {
         std::string loginAndSalt=login+/*salt*/"RtR3bm9Z1DFMfAC3";
         hashSha224(loginAndSalt.data(),loginAndSalt.size(),outputData);
+        loginHash=std::string(outputData,CATCHCHALLENGER_SHA224HASH_SIZE);
     }
     {
         char passHash[CATCHCHALLENGER_SHA224HASH_SIZE];
         std::string passAndSaltAndLogin=pass+/*salt*/"AwjDvPIzfJPTTgHs"+login;
         hashSha224(passAndSaltAndLogin.data(),passAndSaltAndLogin.size(),passHash);
+        this->passHash=std::string(passHash,CATCHCHALLENGER_SHA224HASH_SIZE);
 
         std::string hashAndTokenString=std::string(passHash,CATCHCHALLENGER_SHA224HASH_SIZE)+token;
         hashSha224(hashAndTokenString.data(),hashAndTokenString.size(),outputData+CATCHCHALLENGER_SHA224HASH_SIZE);

@@ -2,6 +2,7 @@
 #include "../qt/GameLoader.hpp"
 #ifdef CATCHCHALLENGER_SOLO
 #include "../qt/solo/InternalServer.hpp"
+#include "../qt/Settings.hpp"
 #include <QStandardPaths>
 #endif
 #include "cc/QtDatapackClientLoader.hpp"
@@ -67,7 +68,7 @@ ScreenTransition::ScreenTransition() :
         }
         //else use the CPU only
     }
-
+    multiplaySelected=false;
     mousePress=nullptr;
     m_backgroundStack=nullptr;
     m_foregroundStack=nullptr;
@@ -380,6 +381,7 @@ void ScreenTransition::removeAbove()
 
 void ScreenTransition::openSolo()
 {
+    multiplaySelected=false;
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
     QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
@@ -388,10 +390,73 @@ void ScreenTransition::openSolo()
         errorString(tr("No writable path").toStdString());
         return;
     }
-    QString savegamesPath=l.first()+"/";
+    QString savegamesPath=l.first()+"/solo/";
     if(m!=nullptr)
         m->setError(std::string());
     #ifdef CATCHCHALLENGER_SOLO
+    //locate the new folder and create it
+    if(!QDir().mkpath(savegamesPath))
+    {
+        errorString(tr("Unable to write savegame into: %1").arg(savegamesPath).toStdString());
+        return;
+    }
+
+    //initialize the db
+    if(!QFile(savegamesPath+"catchchallenger.db.sqlite").exists())
+    {
+        QByteArray dbData;
+        {
+            QFile dbSource(QStringLiteral(":/catchchallenger.db.sqlite"));
+            if(!dbSource.open(QIODevice::ReadOnly))
+            {
+                errorString(QStringLiteral("Unable to open the db model: %1").arg(savegamesPath).toStdString());
+                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
+                return;
+            }
+            dbData=dbSource.readAll();
+            if(dbData.isEmpty())
+            {
+                errorString(QStringLiteral("Unable to read the db model: %1").arg(savegamesPath).toStdString());
+                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
+                return;
+            }
+            dbSource.close();
+        }
+        {
+            QFile dbDestination(savegamesPath+"catchchallenger.db.sqlite");
+            if(!dbDestination.open(QIODevice::WriteOnly))
+            {
+                errorString(QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath).toStdString());
+                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
+                return;
+            }
+            if(dbDestination.write(dbData)<0)
+            {
+                dbDestination.close();
+                errorString(QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath).toStdString());
+                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
+                return;
+            }
+            dbDestination.close();
+        }
+    }
+
+    if(!Settings::settings->contains("pass"))
+    {
+        //initialise the pass
+        QString pass=QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",32));
+
+        //initialise the meta data
+        Settings::settings->setValue("pass",pass);
+        Settings::settings->sync();
+        if(Settings::settings->status()!=QSettings::NoError)
+        {
+            errorString(QStringLiteral("Unable to write savegame pass into: %1").arg(savegamesPath).toStdString());
+            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
+            return;
+        }
+    }
+
     if(internalServer!=nullptr)
     {
         internalServer->deleteLater();
@@ -399,6 +464,16 @@ void ScreenTransition::openSolo()
     }
     if(internalServer==nullptr)
         internalServer=new CatchChallenger::InternalServer();
+    if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&ScreenTransition::is_started,Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(internalServer,&CatchChallenger::InternalServer::error,this,&ScreenTransition::errorString,Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
 
     {
         //std::string datapackPathBase=client->datapackPathBase();
@@ -492,18 +567,30 @@ void ScreenTransition::openSolo()
     }
 
     internalServer->start();
-    ConnexionInfo connexionInfo;
-    connexionInfo.connexionCounter=0;
-    connexionInfo.isCustom=false;
-    connexionInfo.port=0;
-    connexionInfo.lastConnexion=0;
-    connexionInfo.proxyPort=0;
-    connectToServer(connexionInfo,QString(),QString());
+    //do after server is init connectToServer(connexionInfo,QString(),QString());
+    #endif
+}
+
+void ScreenTransition::is_started(bool started)
+{
+    #ifdef CATCHCHALLENGER_SOLO
+    if(started)
+    {
+        ConnexionInfo connexionInfo;
+        connexionInfo.connexionCounter=0;
+        connexionInfo.isCustom=false;
+        connexionInfo.port=0;
+        connexionInfo.lastConnexion=0;
+        connexionInfo.proxyPort=0;
+        connectToServer(connexionInfo,"Admin",Settings::settings->value("pass").toString());
+        return;
+    }
     #endif
 }
 
 void ScreenTransition::openMulti()
 {
+    multiplaySelected=true;
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
     if(m!=nullptr)
@@ -570,7 +657,15 @@ void ScreenTransition::backMain()
 
 void ScreenTransition::backSubServer()
 {
-    setForeground(subserver);
+    if(connexionManager->client->getServerOrdenedList().size()<2)
+    {
+        if(multiplaySelected && multi!=nullptr)
+            setForeground(multi);
+        else
+            setForeground(m);
+    }
+    else
+        setForeground(subserver);
 }
 
 void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
@@ -584,8 +679,9 @@ void ScreenTransition::logged(const std::vector<std::vector<CatchChallenger::Cha
         if(!connect(subserver,&SubServer::connectToSubServer,this,&ScreenTransition::connectToSubServer))
             abort();
     }
-    subserver->logged(connexionManager->client->getServerOrdenedList(),connexionManager);
     setForeground(subserver);
+    //after setForeground to be able to change Foreground
+    subserver->logged(connexionManager->client->getServerOrdenedList(),connexionManager);
 }
 
 void ScreenTransition::connectToSubServer(const int indexSubServer)
@@ -595,11 +691,14 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
         characterList=new CharacterList();
         if(!connect(characterList,&CharacterList::backSubServer,this,&ScreenTransition::backSubServer))
             abort();
+        if(!connect(characterList,&CharacterList::setAbove,this,&ScreenTransition::setAbove))
+            abort();
         if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();
     }
-    characterList->connectToSubServer(indexSubServer,connexionManager,characterEntryList);
     setForeground(characterList);
+    //after setForeground to be able to change Foreground
+    characterList->connectToSubServer(indexSubServer,connexionManager,characterEntryList);
 
     //todo: optimise by prevent create each time
     if(ccmap!=nullptr)
