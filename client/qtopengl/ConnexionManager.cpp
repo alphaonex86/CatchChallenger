@@ -345,8 +345,8 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
     std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::ConnectedState)
     {
-        //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
-        if((1
+        //If uncomment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
+        /*if((1
             #if !defined(NOTCPSOCKET)
                 && realSslSocket==NULL
             #endif
@@ -359,7 +359,7 @@ void ConnexionManager::stateChanged(QAbstractSocket::SocketState socketState)
         #endif
                 )
             if(client!=nullptr)
-                client->sendProtocol();
+                client->sendProtocol();*/
         /*else
             qDebug() << "Tcp/Web socket found, skip sendProtocol(), previouslusy send by void Api_protocol::connectTheExternalSocketInternal()";*/
     }
