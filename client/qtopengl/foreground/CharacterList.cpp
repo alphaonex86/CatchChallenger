@@ -62,7 +62,7 @@ void CharacterList::itemSelectionChanged()
 {
     const QList<QListWidgetItem *> &selectedItems=characterEntryList->selectedItems();
     select->setEnabled(selectedItems.size()==1);
-    remove->setEnabled(selectedItems.size()==1);
+    remove->setEnabled(selectedItems.size()==1 && characterEntryList->count()>CommonSettingsCommon::commonSettingsCommon.min_character);
 }
 
 void CharacterList::add_clicked()
@@ -91,6 +91,8 @@ void CharacterList::add_finished()
     if(!addCharacter->isOk())
     {
         emit setAbove(nullptr);
+        if(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.min_character)
+            emit backSubServer();
         return;
     }
     const std::string &datapackPath=connexionManager->client->datapackPathBase();
@@ -120,6 +122,8 @@ void CharacterList::newGame_finished()
     if(!newGame->isOk())
     {
         emit setAbove(nullptr);
+        if(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.min_character)
+            emit backSubServer();
         return;
     }
     const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList=connexionManager->client->getServerOrdenedList();
@@ -354,6 +358,8 @@ void CharacterList::updateCharacterList()
         index++;
     }
     add->setEnabled(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.max_character);
+    if(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.min_character && characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.max_character)
+        add_clicked();
 }
 
 void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
@@ -368,10 +374,9 @@ void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &ch
         characterListForSelection[charactersGroupIndex].push_back(characterEntry);
         updateCharacterList();
         characterEntryList->item(characterEntryList->count()-1)->setSelected(true);
-        //if(characterEntryList.size().size()>=CommonSettings::commonSettings.min_character && characterEntryList.size().size()<=CommonSettings::commonSettings.max_character)
-            //on_character_select_clicked();
-    /*    else
-            ui->stackedWidget->setCurrentWidget(ui->page_character);*/
+        if(characterEntryList->count()>=CommonSettingsCommon::commonSettingsCommon.min_character &&
+                characterEntryList->count()<=CommonSettingsCommon::commonSettingsCommon.max_character)
+            select_clicked();
     }
     else
     {
