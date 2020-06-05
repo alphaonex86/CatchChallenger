@@ -130,59 +130,22 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
         font.setPixelSize(30*0.75/2);
         space=10;
         nameBackgroundNewHeight=50/2;
+        comboBox->setFixedWidth(200);
     }
     else
     {
         font.setPixelSize(30*0.75);
+        comboBox->setFixedWidth(400);
     }
+    comboBox->setFont(font);
 
     quit->setPos(x+(idealW/2-quit->width()-space/2),y+idealH-quit->height()/2);
     validate->setPos(x+(idealW/2+space/2),y+idealH-quit->height()/2);
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
 
-    /*const QRectF &serverTextRect=serverText->boundingRect();
-    const QRectF &nameTextRect=nameText->boundingRect();
-    const QRectF &proxyTextRect=proxyText->boundingRect();
-
-    const unsigned int &serverBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    const unsigned int &nameBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    const unsigned int &proxyBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    if((unsigned int)nameInput->width()!=nameBackgroundNewWidth ||
-            (unsigned int)nameInput->height()!=nameBackgroundNewHeight)
-    {
-        serverInput->setFixedHeight(nameBackgroundNewHeight);
-        portInput->setFixedHeight(nameBackgroundNewHeight);
-        if(portInput->isVisible())
-        {
-            serverInput->setFixedWidth(serverBackgroundNewWidth*3/4);
-            portInput->setFixedWidth(serverBackgroundNewWidth*1/4);
-        }
-        else
-            serverInput->setFixedWidth(serverBackgroundNewWidth);
-        nameInput->setFixedSize(nameBackgroundNewWidth,nameBackgroundNewHeight);
-        proxyInput->setFixedSize(proxyBackgroundNewWidth*3/4,nameBackgroundNewHeight);
-        proxyPortInput->setFixedSize(proxyBackgroundNewWidth*1/4,nameBackgroundNewHeight);
-    }
-    {
-        typeListProxy->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
-        serverText->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
-        const unsigned int serverBackgroundW=serverText->x()+serverTextRect.width();
-        serverInput->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
-        if(portInput->isVisible())
-            portInput->setPos(serverBackgroundW+serverInput->width(),serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
-    }
-    {
-        nameText->setPos(x+wdialog->currentBorderSize()*2,serverText->y()+serverTextRect.height()+space);
-        const unsigned int nameBackgroundW=nameText->x()+nameTextRect.width();
-        nameInput->setPos(nameBackgroundW,nameText->y()+(nameTextRect.height()-nameInput->boundingRect().height())/2);
-    }
-    {
-        proxyText->setPos(x+wdialog->currentBorderSize()*2,nameText->y()+nameTextRect.height()+space);
-        const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
-        proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-        proxyPortInput->setPos(proxyBackgroundW+proxyInput->width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-    }*/
+    comboBox->setPos(widget->width()/2-comboBox->boundingRect().width()/2,y+label.pixmap().height()/2+space);
+    description->setPos(widget->width()/2-description->boundingRect().width()/2,widget->height()/2-description->boundingRect().height()/2+comboBox->boundingRect().height());
 }
 
 void AddCharacter::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
