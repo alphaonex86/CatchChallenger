@@ -289,6 +289,8 @@ void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,b
 
 void CharacterList::connectToSubServer(const int indexSubServer,ConnexionManager *connexionManager,const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
+    if(!connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QtnewCharacterId,this,&CharacterList::newCharacterId))
+        abort();
     //detect character group to display only characters in this group
     this->serverSelected=indexSubServer;
     this->connexionManager=connexionManager;
@@ -357,9 +359,15 @@ void CharacterList::updateCharacterList()
         characterEntryList->addItem(item);
         index++;
     }
-    add->setEnabled(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.max_character);
-    if(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.min_character && characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.max_character)
+    int charaterCount=characterListForSelection.at(charactersGroupIndex).size();
+    add->setEnabled(charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character);
+    if(charaterCount<CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
         add_clicked();
+    else if(charaterCount==CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount==CommonSettingsCommon::commonSettingsCommon.max_character)
+    {
+        characterEntryList->itemAt(0,0)->setSelected(true);
+        select_clicked();
+    }
 }
 
 void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &characterId)
