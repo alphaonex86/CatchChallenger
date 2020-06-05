@@ -109,13 +109,15 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     wdialog->setPos(x,y);
     wdialog->setSize(idealW,idealH);
 
-    if(widget->width()<600 || widget->height()<480)
+    if(widget->width()<800 || widget->height()<600)
     {
         label.setScale(0.5);
         quit->setSize(83/2,94/2);
         validate->setSize(83/2,94/2);
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
         title->setPixelSize(30/2);
+        previous->setSize(83,94);
+        next->setSize(83,94);
     }
     else {
         label.setScale(1);
@@ -123,6 +125,8 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
         validate->setSize(83,94);
         label.setPos(x+(idealW-label.pixmap().width())/2,y-36);
         title->setPixelSize(30);
+        previous->setSize(83,94);
+        next->setSize(83,94);
     }
 
     //unsigned int nameBackgroundNewHeight=50;
@@ -138,48 +142,36 @@ void NewGame::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widg
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
 
-/*    const QRectF &serverTextRect=serverText->boundingRect();
-    const QRectF &nameTextRect=nameText->boundingRect();
-    const QRectF &proxyTextRect=proxyText->boundingRect();
-
-    const unsigned int &serverBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    const unsigned int &nameBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    const unsigned int &proxyBackgroundNewWidth=idealW-nameTextRect.width()-wdialog->currentBorderSize()*4;
-    if((unsigned int)nameInput->width()!=nameBackgroundNewWidth ||
-            (unsigned int)nameInput->height()!=nameBackgroundNewHeight)
+    previous->setPos(x-previous->width()/2,widget->height()/2-previous->height()/2);
+    int wTot=0;
+    int index=0;
+    while(index<centerImages.size())
     {
-        serverInput->setFixedHeight(nameBackgroundNewHeight);
-        portInput->setFixedHeight(nameBackgroundNewHeight);
-        if(portInput->isVisible())
+        if(index>0)
+            wTot+=space;
+        QGraphicsPixmapItem * p=centerImages.at(index);
+        QPixmap pix=p->pixmap();
+        if(p!=nullptr && !pix.isNull())
+            wTot+=pix.width();
+        index++;
+    }
+    int xTot=widget->width()/2-wTot/2;
+    index=0;
+    while(index<centerImages.size())
+    {
+        QGraphicsPixmapItem * p=centerImages.at(index);
+        QPixmap pix=p->pixmap();
+        if(p!=nullptr && !pix.isNull())
         {
-            serverInput->setFixedWidth(serverBackgroundNewWidth*3/4);
-            portInput->setFixedWidth(serverBackgroundNewWidth*1/4);
+            p->setPos(xTot,widget->height()/2-pix.height()/2);
+            xTot+=pix.width();
         }
-        else
-            serverInput->setFixedWidth(serverBackgroundNewWidth);
-        nameInput->setFixedSize(nameBackgroundNewWidth,nameBackgroundNewHeight);
-        proxyInput->setFixedSize(proxyBackgroundNewWidth*3/4,nameBackgroundNewHeight);
-        proxyPortInput->setFixedSize(proxyBackgroundNewWidth*1/4,nameBackgroundNewHeight);
+        if(index>0)
+            xTot+=space;
+        index++;
     }
-    {
-        typeListProxy->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
-        serverText->setPos(x+wdialog->currentBorderSize()*2,y+top*1.5);
-        const unsigned int serverBackgroundW=serverText->x()+serverTextRect.width();
-        serverInput->setPos(serverBackgroundW,serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
-        if(portInput->isVisible())
-            portInput->setPos(serverBackgroundW+serverInput->width(),serverText->y()+(serverTextRect.height()-serverInput->boundingRect().height())/2);
-    }
-    {
-        nameText->setPos(x+wdialog->currentBorderSize()*2,serverText->y()+serverTextRect.height()+space);
-        const unsigned int nameBackgroundW=nameText->x()+nameTextRect.width();
-        nameInput->setPos(nameBackgroundW,nameText->y()+(nameTextRect.height()-nameInput->boundingRect().height())/2);
-    }
-    {
-        proxyText->setPos(x+wdialog->currentBorderSize()*2,nameText->y()+nameTextRect.height()+space);
-        const unsigned int proxyBackgroundW=proxyText->x()+proxyTextRect.width();
-        proxyInput->setPos(proxyBackgroundW,proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-        proxyPortInput->setPos(proxyBackgroundW+proxyInput->width(),proxyText->y()+(proxyTextRect.height()-proxyInput->boundingRect().height())/2);
-    }*/
+    next->setPos(x-next->width()/2+idealW,widget->height()/2-previous->height()/2);
+    uipseudo->setPos(widget->width()/2-uipseudo->width()/2,y+idealH-uipseudo->height()-space-validate->height()/2);
 }
 
 void NewGame::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
@@ -318,6 +310,7 @@ void NewGame::updateSkin()
 
     foreach (QGraphicsPixmapItem * item, centerImages)
         delete item;
+    centerImages.clear();
     if(!paths.empty())
     {
         unsigned int index=0;
@@ -380,14 +373,17 @@ uint8_t NewGame::monsterGroupId()
 
 void NewGame::on_ok_clicked()
 {
-    if(!ok)
-        return;
-    ok=false;
     if(step==Step1)
     {
         if(uipseudo->text().isEmpty())
         {
             warning->setHtml(tr("Your pseudo can't be empty"));
+            warning->setVisible(true);
+            return;
+        }
+        if(uipseudo->text().size()>CommonSettingsCommon::commonSettingsCommon.max_pseudo_size)
+        {
+            warning->setHtml(tr("Your pseudo can't be greater than %1").arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
             warning->setVisible(true);
             return;
         }
