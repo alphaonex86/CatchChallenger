@@ -9,6 +9,7 @@ class QtDatapackClientLoaderThread : public QThread
     Q_OBJECT
 public:
     QtDatapackClientLoaderThread();
+    void stop();
 #ifndef NOTHREADS
     void run() override;
 #else
@@ -17,6 +18,8 @@ public:
 signals:
     void loadItemImage(uint16_t id,void *ImageitemsExtra);
     void loadMonsterImage(uint16_t id,void *ImagemonsterExtra);
+private:
+    bool stopIt;
 };
 
 #endif // QTDATAPACKCLIENTLOADERTHREAD_H

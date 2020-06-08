@@ -311,6 +311,11 @@ void QtDatapackClientLoader::parseTopLib()
 
 void QtDatapackClientLoader::resetAll()
 {
+    for(auto t:this->threads)
+    {
+        t->stop();
+        t->wait();
+    }
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     if(mDefaultInventoryImage==NULL)
     {

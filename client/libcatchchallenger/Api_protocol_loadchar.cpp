@@ -464,6 +464,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     uint8_t tempAllowSize=data[pos];
     pos+=sizeof(uint8_t);
     {
+        player_informations.allow.clear();
         int index=0;
         while(index<tempAllowSize)
         {
@@ -521,6 +522,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     uint8_t monster_list_size=data[pos];
     pos+=sizeof(uint8_t);
     uint32_t index=0;
+    player_informations.playerMonster.clear();
     while(index<monster_list_size)
     {
         PlayerMonster monster;
@@ -540,6 +542,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     monster_list_size=data[pos];
     pos+=sizeof(uint8_t);
     index=0;
+    player_informations.warehouse_playerMonster.clear();
     while(index<monster_list_size)
     {
         PlayerMonster monster;
@@ -561,6 +564,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     index=0;
     uint8_t sub_size8=data[pos];
     pos+=sizeof(uint8_t);
+    player_informations.reputation.clear();
     while(index<sub_size8)
     {
         if((size-pos)<(int)sizeof(int8_t))
@@ -617,17 +621,17 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         //alloc
         if(player_informations.recipes!=NULL)
         {
-            delete player_informations.recipes;
+            delete[] player_informations.recipes;
             player_informations.recipes=NULL;
         }
         if(player_informations.encyclopedia_monster!=NULL)
         {
-            delete player_informations.encyclopedia_monster;
+            delete[] player_informations.encyclopedia_monster;
             player_informations.encyclopedia_monster=NULL;
         }
         if(player_informations.encyclopedia_item!=NULL)
         {
-            delete player_informations.encyclopedia_item;
+            delete[] player_informations.encyclopedia_item;
             player_informations.encyclopedia_item=NULL;
         }
         if(CommonDatapack::commonDatapack.craftingRecipesMaxId>1)
@@ -773,6 +777,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     uint16_t sub_size16;
     sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
     pos+=sizeof(uint16_t);
+    player_informations.quests.clear();
     while(index<sub_size16)
     {
         if((size-pos)<(int)sizeof(int16_t))
@@ -835,7 +840,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         //alloc
         if(player_informations.bot_already_beaten!=NULL)
         {
-            delete player_informations.bot_already_beaten;
+            delete[] player_informations.bot_already_beaten;
             player_informations.bot_already_beaten=NULL;
         }
         player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
@@ -887,6 +892,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         uint16_t itemOnMapSize=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
         pos+=sizeof(uint16_t);
         uint16_t index=0;
+        player_informations.itemOnMap.clear();
         while(index<itemOnMapSize)
         {
             if((size-pos)<(int)sizeof(uint16_t))
@@ -911,6 +917,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         uint16_t plantOnMapSize=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
         pos+=sizeof(uint16_t);
         uint16_t index=0;
+        player_informations.plantOnMap.clear();
         while(index<plantOnMapSize)
         {
             PlayerPlant playerPlant;

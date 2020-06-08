@@ -86,9 +86,10 @@ void CommonFightEngine::updateCanDoFight()
     }
     ableToFight=false;
     uint8_t index=0;
-    while(index<get_public_and_private_informations().playerMonster.size())
+    const std::vector<PlayerMonster> &playerMonster=get_public_and_private_informations().playerMonster;
+    while(index<playerMonster.size())
     {
-        const PlayerMonster &playerMonsterEntry=get_public_and_private_informations().playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=playerMonster.at(index);
         if(!monsterIsKO(playerMonsterEntry))
         {
             selectedMonster=index;

@@ -183,7 +183,9 @@ protected slots:
     void stopMove();
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *o, QWidget *widget) override;
 signals:
+    //auto connected to client in render/MapControllerMP
     void send_player_direction(const CatchChallenger::Direction &the_direction);
+    //need to be connected to the interface
     void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void actionOn(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void actionOnNothing();

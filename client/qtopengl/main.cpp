@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
     a.setApplicationName("client");
     a.setOrganizationName("CatchChallenger");
     a.setStyle(QStyleFactory::create("Fusion"));
+    a.setQuitOnLastWindowClosed(false);
 
     qRegisterMetaType<std::vector<std::string> >("std::vector<std::string>");
     qRegisterMetaType<QList<QUrl> >("QList<QUrl>");

@@ -1,6 +1,7 @@
 #include "MoveOnTheMap.hpp"
 #include "CommonMap.hpp"
 #include "GeneralVariable.hpp"
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -32,12 +33,12 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
     if(last_direction_is_set==false)
         abort();
     #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
-    qDebug() << std::stringLiteral("newDirection(%1)").arg(directionToString(the_new_direction));
+    std::cout << "newDirection(" << directionToString(the_new_direction) << "): " << __LINE__ << std::endl;
     #endif
     if(last_direction!=the_new_direction)
     {
         #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
-        qDebug() << std::stringLiteral("send_player_move_internal((%1,%2)").arg(last_step).arg(directionToString(the_new_direction));
+        std::cout << "newDirection(): send_player_move_internal(" << std::to_string(last_step) << "," << directionToString(the_new_direction) << ")" << std::endl;
         #endif
         send_player_move_internal(last_step,the_new_direction);
         last_step=0;
@@ -55,6 +56,8 @@ void MoveOnTheMap::newDirection(const Direction &the_new_direction)
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(last_step>0)
                 abort();
+            if(last_direction==the_new_direction)
+                std::cerr << "dual move dropped" << std::endl;
             #endif
             last_step=0;
             return;

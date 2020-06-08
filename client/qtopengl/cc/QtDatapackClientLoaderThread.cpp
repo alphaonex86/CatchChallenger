@@ -3,11 +3,17 @@
 
 QtDatapackClientLoaderThread::QtDatapackClientLoaderThread()
 {
+    stopIt=false;
 }
 
+void QtDatapackClientLoaderThread::stop()
+{
+    stopIt=true;
+}
 
 void QtDatapackClientLoaderThread::run()
 {
+    stopIt=false;
     const std::string basepath=QtDatapackClientLoader::datapackLoader->getDatapackPath()+"/monsters/";
     while(1)
     {
@@ -36,35 +42,60 @@ void QtDatapackClientLoaderThread::run()
             QtDatapackClientLoader::MonsterExtra monsterExtraEntry=QtDatapackClientLoader::datapackLoader->monsterExtra.at(id);
             QtDatapackClientLoader::ImageMonsterExtra *entry=new QtDatapackClientLoader::ImageMonsterExtra;
             entry->front=QImage(QString::fromStdString(basepath+std::to_string(id)+"/front.png"));
+            if(stopIt)
+                return;
             if(entry->front.isNull())
             {
                 monsterExtraEntry.frontPath=basepath+std::to_string(id)+"/front.gif";
                 entry->front=QImage(QString::fromStdString(monsterExtraEntry.frontPath));
+                if(stopIt)
+                    return;
                 if(entry->front.isNull())
                 {
                     monsterExtraEntry.frontPath=":/CC/images/monsters/default/front.png";
                     entry->front=QImage(QString::fromStdString(monsterExtraEntry.frontPath));
+                    if(stopIt)
+                        return;
                 }
             }
+            if(stopIt)
+                return;
             entry->back=QImage(QString::fromStdString(basepath+std::to_string(id)+"/back.png"));
+            if(stopIt)
+                return;
             if(entry->back.isNull())
             {
                 monsterExtraEntry.backPath=basepath+std::to_string(id)+"/back.gif";
                 entry->back=QImage(QString::fromStdString(monsterExtraEntry.backPath));
+                if(stopIt)
+                    return;
                 if(entry->back.isNull())
                 {
                     monsterExtraEntry.backPath=":/CC/images/monsters/default/back.png";
                     entry->back=QImage(QString::fromStdString(monsterExtraEntry.backPath));
+                    if(stopIt)
+                        return;
                 }
-            }
+            }if(stopIt)
+                return;
             entry->thumb=QImage(QString::fromStdString(basepath+std::to_string(id)+"/small.png"));
+            if(stopIt)
+                return;
             if(entry->thumb.isNull())
             {
                 entry->thumb=QImage(QString::fromStdString(basepath+std::to_string(id)+"/small.gif"));
+                if(stopIt)
+                    return;
                 if(entry->thumb.isNull())
                     entry->thumb=QImage(":/CC/images/monsters/default/small.png");
+                if(stopIt)
+                    return;
             }
+            if(stopIt)
+                return;
             entry->thumb=entry->thumb.scaled(64,64);
+            if(stopIt)
+                return;
             emit loadMonsterImage(id,entry);
             index++;
         }
@@ -74,9 +105,18 @@ void QtDatapackClientLoaderThread::run()
         {
             const uint16_t &id=ImageitemsToLoad.at(index);
             QtDatapackClientLoader::ImageItemExtra *entry=new QtDatapackClientLoader::ImageItemExtra;
-            const DatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(id);
-            entry->image=QImage(QString::fromStdString(extra.imagePath));
-            emit loadItemImage(id,entry);
+            if(stopIt)
+                return;
+            if(QtDatapackClientLoader::datapackLoader!=nullptr && QtDatapackClientLoader::datapackLoader->itemsExtra.find(id)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+            {
+                const DatapackClientLoader::ItemExtra &extra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(id);
+                entry->image=QImage(QString::fromStdString(extra.imagePath));
+                if(stopIt)
+                    return;
+                emit loadItemImage(id,entry);
+            }
+            if(stopIt)
+                return;
             index++;
         }
 
