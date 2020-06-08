@@ -599,6 +599,7 @@ void Api_protocol_Qt::new_system_text(const CatchChallenger::Chat_type &chat_typ
 void Api_protocol_Qt::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
     emit Qthave_current_player_info(informations);
+    updateCanDoFight();
 }
 void Api_protocol_Qt::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items)
 {
@@ -1394,12 +1395,6 @@ bool Api_protocol_Qt::firstLifeEffectQuantityChange(int32_t quantity)
     }
     fightEffectList.front().lifeEffectMonster.front().quantity+=quantity;
     return true;
-}
-
-void Api_protocol_Qt::setVariableContent(Player_private_and_public_informations player_informations_local)
-{
-    this->player_informations_local=player_informations_local;
-    updateCanDoFight();
 }
 
 bool Api_protocol_Qt::isInBattle() const

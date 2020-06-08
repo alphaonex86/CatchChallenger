@@ -420,6 +420,7 @@ void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const Cat
         std::cerr << "direction given wrong: " << directionInt << std::endl;
         abort();
     }
+    std::cout << std::to_string(moved_unit) << " into " << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;
     char buffer[2];
     buffer[0]=moved_unit;
     buffer[1]=directionInt;

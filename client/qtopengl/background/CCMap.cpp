@@ -2,6 +2,7 @@
 #include "../ConnexionManager.hpp"
 #include "../../qt/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/MoveOnTheMap.hpp"
 #include <QPainter>
 #include <QTime>
 #include <chrono>
@@ -15,8 +16,6 @@ CCMap::CCMap()
     if(!connect(&mapController,&MapController::repelEffectIsOver,this,&CCMap::repelEffectIsOver))
         abort();
     if(!connect(&mapController,&MapController::teleportConditionNotRespected,this,&CCMap::teleportConditionNotRespected))
-        abort();
-    if(!connect(&mapController,&MapController::send_player_direction,this,&CCMap::send_player_direction))
         abort();
     if(!connect(&mapController,&MapController::stopped_in_front_of,this,&CCMap::stopped_in_front_of))
         abort();

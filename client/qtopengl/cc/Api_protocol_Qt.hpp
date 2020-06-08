@@ -356,7 +356,6 @@ public:
     bool firstLifeEffectQuantityChange(int32_t quantity);
     virtual PublicPlayerMonster *getOtherMonster() override;
     uint8_t getOtherSelectedMonsterNumber() const;
-    void setVariableContent(Player_private_and_public_informations player_informations_local);
     Skill::AttackReturn generateOtherAttack() override;
     bool isInBattle() const override;
     bool haveBattleOtherMonster() const;

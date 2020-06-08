@@ -318,6 +318,7 @@ void QtServer::stop_internal_server()
     qDebug() << ("Try stop");
     stat=InDown;
 
+    //#ifndef CATCHCHALLENGER_SOLO
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
@@ -326,10 +327,11 @@ void QtServer::stop_internal_server()
         delete client;
         ++i;
     }
+    //#endif
     client_list.clear();
     #ifdef CATCHCHALLENGER_SOLO
-    /*QFakeServer::server.disconnectedSocket();
-    QFakeServer::server.close();*/
+    QFakeServer::server.disconnectedSocket();
+    QFakeServer::server.close();
     #endif
 
     check_if_now_stopped();

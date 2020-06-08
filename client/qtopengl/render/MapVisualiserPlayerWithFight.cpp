@@ -191,7 +191,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         }
     }
     else
-        qDebug() << "Strange, not monster, skip all the fight type";
+        qDebug() << "Strange, no monster, skip all the fight type";
     return false;
 }
 

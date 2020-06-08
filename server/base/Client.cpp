@@ -530,7 +530,10 @@ bool Client::characterConnected(const uint32_t &characterId)
 void Client::disconnectClientById(const uint32_t &characterId)
 {
     if(playerById.find(characterId)!=playerById.cend())
-        playerById.at(characterId)->disconnectClient();
+    {
+        Client * client=playerById.at(characterId);
+        client->disconnectClient();
+    }
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

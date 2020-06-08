@@ -55,11 +55,12 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtdropAllPlayerOnTheMap,               this,&MapControllerMP::dropAllPlayerOnTheMap,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
-    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_protocol_Qt::send_player_direction,Qt::UniqueConnection))
-        abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QthaveCharacter,                 this,&MapControllerMP::haveCharacter,(Qt::ConnectionType)(Qt::QueuedConnection|Qt::UniqueConnection)))
+        abort();
+
+    if(!QObject::connect(this,&MapControllerMP::send_player_direction,client,&CatchChallenger::Api_protocol_Qt::send_player_direction,Qt::UniqueConnection))
         abort();
 }
 
