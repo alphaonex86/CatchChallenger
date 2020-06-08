@@ -236,6 +236,22 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
         QGraphicsView::mouseMoveEvent(event);
 }
 
+void ScreenTransition::closeEvent(QCloseEvent *event)
+{
+    #ifdef CATCHCHALLENGER_SOLO
+    if(internalServer!=nullptr)
+    {
+        hide();
+        connexionManager->client->disconnectFromHost();
+        ///internalServer->stop();
+        event->accept();
+        return;
+    }
+    #endif
+    QWidget::closeEvent(event);
+    QCoreApplication::quit();
+}
+
 void ScreenTransition::setBackground(ScreenInput *widget)
 {
     if(m_backgroundStack!=nullptr)
@@ -585,6 +601,16 @@ void ScreenTransition::is_started(bool started)
         connectToServer(connexionInfo,"Admin",Settings::settings->value("pass").toString());
         return;
     }
+    else
+    {
+        if(internalServer!=nullptr)
+        {
+            delete internalServer;
+            internalServer=nullptr;
+        }
+        if(!isVisible())
+            QCoreApplication::quit();
+    }
     #endif
 }
 
@@ -628,7 +654,7 @@ void ScreenTransition::connectToServer(ConnexionInfo connexionInfo,QString login
         abort();
     if(!connect(connexionManager,&ConnexionManager::errorString,this,&ScreenTransition::errorString))
         abort();
-    if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer))
+    if(!connect(connexionManager,&ConnexionManager::disconnectedFromServer,this,&ScreenTransition::disconnectedFromServer,Qt::QueuedConnection))
         abort();
     if(!connect(connexionManager,&ConnexionManager::goToMap,this,&ScreenTransition::goToMap))
         abort();
@@ -746,9 +772,13 @@ void ScreenTransition::selectCharacter(const int indexSubServer,const int indexC
 
 void ScreenTransition::disconnectedFromServer()
 {
+    #ifdef CATCHCHALLENGER_SOLO
+    if(internalServer!=nullptr)
+        internalServer->stop();
+    #endif
     //baseWindow->resetAll();
     setBackground(&b);
-    //setForeground(m);
+    setForeground(m);
     setAbove(nullptr);
 }
 

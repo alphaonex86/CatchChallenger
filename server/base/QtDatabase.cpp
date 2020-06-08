@@ -353,7 +353,12 @@ QtDatabaseThread::~QtDatabaseThread()
 void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase &db)
 {
     QSqlQuery queryReturn(db);
-    if(!queryReturn.exec(query.c_str()))
+
+    //to debug crash into queryReturn.exec(query.c_str())
+    const char * const tempString=query.c_str();
+    std::cout << "Try this query: " << tempString << std::endl;
+
+    if(!queryReturn.exec(tempString))
     {
         //lastErrorMessage=(db.lastError().driverText()+std::string(": ")+db.lastError().databaseText()).toUtf8().data();
         qDebug() << db.lastError().driverText() << ": " << db.lastError().databaseText() << " -> " << queryReturn.lastQuery() << ": " << queryReturn.lastError().text();
