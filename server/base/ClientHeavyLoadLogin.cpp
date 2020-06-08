@@ -585,7 +585,7 @@ void Client::server_list_object()
         abort();
     #endif
     server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
-    delete askLoginParam->characterOutputData;
+    delete[] askLoginParam->characterOutputData;
     delete askLoginParam;
 }
 
