@@ -21,6 +21,16 @@ OverMapLogic::OverMapLogic()
     gain_timeout.setInterval(500);
     tip_timeout.setSingleShot(true);
     gain_timeout.setSingleShot(true);
+
+    if(!connect(&tip_timeout,&QTimer::timeout,              this,&OverMapLogic::tipTimeout))
+        abort();
+    if(!connect(&gain_timeout,&QTimer::timeout,             this,&OverMapLogic::gainTimeout))
+        abort();
+    if(!connect(&nextCityCatchTimer,&QTimer::timeout,     this,&OverMapLogic::cityCaptureUpdateTime))
+        abort();
+    if(!connect(&updater_page_zonecatch,&QTimer::timeout, this,&OverMapLogic::updatePageZoneCatch))
+        abort();
+
 }
 
 void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
@@ -665,6 +675,7 @@ void OverMapLogic::composeAndDisplayGain()
                 +"</li></ul>";
     else if(!add_to_inventoryGainList.empty())
         text+=tr("You have obtained: ").toStdString()+stringimplode(add_to_inventoryGainList,"");
+    std::cout << "Show gain: \"" << text << "\"" << std::endl;
     gainString=QString::fromStdString(text);
     gain->setHtml(gainString);
 }
