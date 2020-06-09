@@ -290,9 +290,9 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
     Q_UNUSED(xRight);
 
-    gain->setVisible(!gainString.isEmpty());
-    gainBack->setVisible(gain->isVisible());
-    if(gain->isVisible())
+    gainBack->setVisible(!gainString.isEmpty());
+    gain->setVisible(gainBack->isVisible());
+    if(gainBack->isVisible())
     {
         const QRectF &f=gain->boundingRect();
         gainBack->setSize(f.width()+space*2,f.height()+space*2);
@@ -343,8 +343,8 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
     int yMiddle=w->height()-space;
 
-    persistant_tip->setVisible(!persistant_tipString.isEmpty());
-    persistant_tipBack->setVisible(persistant_tip->isVisible());
+    persistant_tipBack->setVisible(!persistant_tipString.isEmpty());
+    persistant_tip->setVisible(persistant_tipBack->isVisible());
     if(persistant_tip->isVisible())
     {
         const QRectF &f=persistant_tip->boundingRect();
@@ -355,8 +355,8 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         yMiddle-=(f.height()+space*2+space);
     }
 
-    tip->setVisible(!tipString.isEmpty());
-    tipBack->setVisible(tip->isVisible());
+    tipBack->setVisible(!tipString.isEmpty());
+    tip->setVisible(tipBack->isVisible());
     if(tipBack->isVisible())
     {
         const QRectF &f=tip->boundingRect();
