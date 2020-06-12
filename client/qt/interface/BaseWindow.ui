@@ -53,7 +53,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>2</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="page_serverList">
         <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -887,7 +887,7 @@ color: rgb(0, 0, 0);
                  <string notr="true">background-color: rgb(230, 230, 230);</string>
                 </property>
                 <property name="pixmap">
-                 <pixmap resource="../../resources/client-resources-multi.qrc">:/CC/images/multi/slow.png</pixmap>
+                 <pixmap resource="../../resources/client-resources.qrc">:/CC/images/multi/slow.png</pixmap>
                 </property>
                </widget>
               </item>
@@ -1168,7 +1168,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
+                            <pixmap>:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1227,7 +1227,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
+                            <pixmap>:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1286,7 +1286,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                             </size>
                            </property>
                            <property name="pixmap">
-                            <pixmap resource="../../resources/client-resources.qrc">:/CC/images/interface/player/point.png</pixmap>
+                            <pixmap>:/CC/images/interface/player/point.png</pixmap>
                            </property>
                           </widget>
                          </item>
@@ -1844,7 +1844,7 @@ border-image: url(:/CC/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="alignment">
              <set>Qt::AlignCenter</set>
@@ -1884,7 +1884,7 @@ border-image: url(:/CC/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/bag1.png</pixmap>
+             <pixmap>:/CC/images/inventory/bag1.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="inventory_description">
@@ -2923,7 +2923,7 @@ border-image: url(:/CC/images/empty.png);
              </rect>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
            </widget>
            <widget class="QLabel" name="shopDescription">
@@ -5806,7 +5806,7 @@ border-image: url(:/CC/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -5891,7 +5891,7 @@ border-image: url(:/CC/images/empty.png);
              </size>
             </property>
             <property name="pixmap">
-             <pixmap resource="../../resources/client-resources.qrc">:/CC/images/inventory/unknown-object.png</pixmap>
+             <pixmap>:/CC/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="scaledContents">
              <bool>true</bool>
@@ -6669,7 +6669,7 @@ padding-bottom:3px;
            </widget>
            <widget class="QWidget" name="tabEncyclopediaItem">
             <attribute name="icon">
-             <iconset resource="../../resources/client-resources-multi.qrc">
+             <iconset resource="../../resources/client-resources.qrc">
               <normaloff>:/CC/images/interface/server_list/star1.png</normaloff>:/CC/images/interface/server_list/star1.png</iconset>
             </attribute>
             <attribute name="title">

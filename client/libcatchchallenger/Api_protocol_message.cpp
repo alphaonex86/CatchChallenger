@@ -1531,6 +1531,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     warehouse_items[id]=quantity;
                 index++;
             }
+            player_informations.items=items;
+            player_informations.warehouse_items=warehouse_items;
             have_inventory(items,warehouse_items);
         }
         break;

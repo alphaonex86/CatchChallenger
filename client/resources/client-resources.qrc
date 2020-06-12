@@ -42,6 +42,7 @@
         <file>images/interface/teacher.png</file>
         <file>images/interface/star.png</file>
         <file>images/interface/message.png</file>
+        <file>images/interface/b1.png</file>
         <file>music/click.opus</file>
         <file>music/crafting.opus</file>
         <file>music/loading.opus</file>
@@ -58,6 +59,7 @@
         <file>images/interface/bluetoolbox.png</file>
         <file>images/interface/updatewidget.png</file>
         <file>images/interface/label.png</file>
+        <file>images/interface/labelL.png</file>
         <file>images/smiles/face-wink.png</file>
         <file>images/smiles/face-angel.png</file>
         <file>images/smiles/face-embarrassed.png</file>

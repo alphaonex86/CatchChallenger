@@ -13,7 +13,7 @@
 #include "../SpinBox.hpp"
 #include "../ComboBox.hpp"
 
-class AddCharacter : public QObject, public ScreenInput
+class AddCharacter : public ScreenInput
 {
     Q_OBJECT
 public:

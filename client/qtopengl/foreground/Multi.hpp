@@ -25,7 +25,7 @@ public:
     bool isCustom;
 };
 
-class Multi : public QObject, public ScreenInput
+class Multi : public ScreenInput
 {
     Q_OBJECT
 public:
@@ -75,7 +75,6 @@ private:
     CCScrollZone *scrollZone;
 signals:
     void backMain();
-    void setAbove(ScreenInput *widget);//first plan popup
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
 };
 

@@ -13,7 +13,7 @@
 #include <QAudioOutput>
 #endif
 
-class MainScreen : public QObject, public ScreenInput
+class MainScreen : public ScreenInput
 {
     Q_OBJECT
 public:

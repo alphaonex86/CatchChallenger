@@ -16,7 +16,7 @@ class AddOrEditServer;
 class Login;
 class MultiItem;
 
-class SubServer : public QObject, public ScreenInput
+class SubServer : public ScreenInput
 {
     Q_OBJECT
 public:

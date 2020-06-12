@@ -11,7 +11,6 @@
 #include "../../qt/ClientVariable.hpp"
 #include "../../qt/QtDatapackClientLoader.hpp"
 #include "../Language.hpp"
-#include "../../qt/FacilityLibClient.hpp"
 #include <QDebug>
 #include <QTime>
 #include <iostream>

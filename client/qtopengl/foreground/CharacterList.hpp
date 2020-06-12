@@ -20,7 +20,7 @@ class AddCharacter;
 class NewGame;
 class ConnexionManager;
 
-class CharacterList : public QObject, public ScreenInput
+class CharacterList : public ScreenInput
 {
     Q_OBJECT
 public:
@@ -62,7 +62,6 @@ private:
     unsigned int profileIndex;
 signals:
     void backSubServer();
-    void setAbove(ScreenInput *widget);//first plan popup
     void selectCharacter(const int indexSubServer,const int indexCharacter);
 };
 

@@ -12,12 +12,8 @@
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &debugTags) :
     MapVisualiserPlayer(debugTags)
 {
-    this->events=events;
     repel_step=0;
-    items=NULL;
-    quests=NULL;
     fightCollisionBot=NULL;
-    botAlreadyBeaten=NULL;
 }
 
 MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
@@ -27,46 +23,6 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
         delete[] fightCollisionBot;
         fightCollisionBot=NULL;
     }
-    if(botAlreadyBeaten!=NULL)
-    {
-        delete[] botAlreadyBeaten;
-        botAlreadyBeaten=NULL;
-    }
-}
-
-void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAlreadyBeaten)
-{
-    if(this->botAlreadyBeaten!=NULL)
-    {
-        delete[] this->botAlreadyBeaten;
-        this->botAlreadyBeaten=NULL;
-    }
-    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId)
-    {
-        this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-    }
-    else
-    {
-        std::cerr << "MapVisualiserPlayerWithFight::setBotsAlreadyBeaten() < CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId" << std::endl;
-        this->botAlreadyBeaten=NULL;
-    }
-    if(botAlreadyBeaten!=NULL)
-        memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-}
-
-void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
-{
-    if(botAlreadyBeaten==NULL)
-        abort();
-    botAlreadyBeaten[botFightId/8]|=(1<<(7-botFightId%8));
-}
-
-bool MapVisualiserPlayerWithFight::haveBeatBot(const uint16_t &botFightId) const
-{
-    if(botAlreadyBeaten==NULL)
-        abort();
-    return botAlreadyBeaten[botFightId/8] & (1<<(7-botFightId%8));
 }
 
 void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
@@ -76,11 +32,6 @@ void MapVisualiserPlayerWithFight::addRepelStep(const uint32_t &repel_step)
 
 void MapVisualiserPlayerWithFight::resetAll()
 {
-    if(botAlreadyBeaten!=NULL)
-    {
-        delete botAlreadyBeaten;
-        botAlreadyBeaten=NULL;
-    }
     MapVisualiserPlayer::resetAll();
 }
 
@@ -102,14 +53,9 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    if(items==NULL)
+    if(client==nullptr)
     {
         qDebug() << "items is null, can't move";
-        return true;
-    }
-    if(events==NULL)
-    {
-        qDebug() << "events is null, can't move";
         return true;
     }
     CatchChallenger::PlayerMonster *fightMonster;
@@ -132,7 +78,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
             while(index<botFightList.size())
             {
                 const uint16_t &fightId=botFightList.at(index);
-                if(!haveBeatBot(fightId))
+                if(!client->haveBeatBot(fightId))
                 {
                     qDebug() <<  "is now in fight with: " << fightId;
                     if(isInMove())
@@ -171,7 +117,8 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(client->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,*items,*events))
+                CatchChallenger::Player_private_and_public_informations &player_informations=client->get_player_informations();
+                if(client->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,player_informations.items,client->events))
                 {
                     inMove=false;
                     emit send_player_direction(direction);
@@ -197,6 +144,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
 
 bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
 {
+    CatchChallenger::Player_private_and_public_informations &player_informations=client->get_player_informations();
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
     if(client->isInFight())
@@ -228,7 +176,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Clan://not do for now
                     break;
                     case CatchChallenger::MapConditionType_FightBot:
-                        if(!haveBeatBot(teleporter.condition.data.fightBot))
+                        if(!client->haveBeatBot(teleporter.condition.data.fightBot))
                         {
                             if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -236,9 +184,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                         }
                     break;
                     case CatchChallenger::MapConditionType_Item:
-                        if(items==NULL)
-                            break;
-                        if(items->find(teleporter.condition.data.item)==items->cend())
+                        if(player_informations.items.find(teleporter.condition.data.item)==player_informations.items.cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -246,15 +192,13 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                         }
                     break;
                     case CatchChallenger::MapConditionType_Quest:
-                        if(quests==NULL)
-                            break;
-                        if(quests->find(teleporter.condition.data.quest)==quests->cend())
+                        if(player_informations.quests.find(teleporter.condition.data.quest)==player_informations.quests.cend())
                         {
                             if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
                             return false;
                         }
-                        if(!quests->at(teleporter.condition.data.quest).finish_one_time)
+                        if(!player_informations.quests.at(teleporter.condition.data.quest).finish_one_time)
                         {
                             if(!map_client.teleport_condition_texts.at(index).empty())
                                 emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
@@ -277,7 +221,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             unsigned int index=0;
             while(index<botFightList.size())
             {
-                if(!haveBeatBot(botFightList.at(index)))
+                if(!client->haveBeatBot(botFightList.at(index)))
                 {
                     if(!client->getAbleToFight())
                     {
@@ -296,7 +240,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+            if(monstersCollision.item==0 || player_informations.items.find(monstersCollision.item)!=player_informations.items.cend())
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {

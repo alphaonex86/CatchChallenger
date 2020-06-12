@@ -32,6 +32,7 @@ public:
     void sslHandcheckIsFinished();
     void closeSocket() override;
     void errorFromFightEngine(const std::string &error);
+    bool haveBeatBot(const uint16_t &botFightId) const;
 
     ssize_t read(char * data, const size_t &size) override;
     ssize_t write(const char * const data, const size_t &size) override;

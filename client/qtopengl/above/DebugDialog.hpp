@@ -10,7 +10,7 @@
 #include "../CustomText.hpp"
 #include "../CCGraphicsTextItem.hpp"
 
-class DebugDialog : public QObject, public ScreenInput
+class DebugDialog : public ScreenInput
 {
     Q_OBJECT
 public:
