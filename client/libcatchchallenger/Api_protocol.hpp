@@ -28,6 +28,16 @@ public:
     const std::vector<ChatEntry> &getChatContent();
     void add_system_text(Chat_type chat_type,std::string text);
     void add_chat_text(Chat_type chat_type, std::string text, std::string pseudo, CatchChallenger::Player_type player_type);
+    //reputation
+    bool haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const;
+    //quest
+    bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const;
+    bool haveStartQuestRequirement(const CatchChallenger::Quest &quest) const;
+    //item
+    uint32_t itemQuantity(const uint16_t &itemId) const;
+    //fight
+    void addBeatenBotFight(const uint16_t &botFightId);
+    virtual bool haveBeatBot(const uint16_t &botFightId) const = 0;
 
     //protocol command
     virtual void hashSha224(const char * const data,const int size,char *buffer) = 0;

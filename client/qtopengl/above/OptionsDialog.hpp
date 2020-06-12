@@ -12,7 +12,7 @@
 #include "../LineEdit.hpp"
 #include "../ComboBox.hpp"
 
-class OptionsDialog : public QObject, public ScreenInput
+class OptionsDialog : public ScreenInput
 {
     Q_OBJECT
 public:

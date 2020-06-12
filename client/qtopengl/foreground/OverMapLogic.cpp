@@ -3,13 +3,14 @@
 #include "../AudioGL.hpp"
 #include "../background/CCMap.hpp"
 #include "../cc/QtDatapackClientLoader.hpp"
-#include "../../qt/FacilityLibClient.hpp"
+#include "../above/Inventory.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
 
 OverMapLogic::OverMapLogic()
 {
+    inventory=nullptr;
     multiplayer=true;
     lastReplyTimeValue=0;
     worseQueryTime=0;
@@ -60,6 +61,9 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
     if(!connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
         abort();
     OverMap::setVar(ccmap,connexionManager);
+
+    if(!connect(bag,&CustomButton::clicked,this,&OverMapLogic::bag_open))
+        abort();
 }
 
 void OverMapLogic::resetAll()
@@ -469,6 +473,18 @@ void OverMapLogic::errorWithTheCurrentMap()
     error(tr("The current map into the datapack is in error (not found, read failed, wrong format, corrupted, ...)\nReport the bug to the datapack maintainer.").toStdString());
 }
 
+void OverMapLogic::bag_open()
+{
+    if(inventory==nullptr)
+    {
+        inventory=new Inventory();
+        if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+    }
+    inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
+    setAbove(inventory);
+}
+
 void OverMapLogic::currentMapLoaded()
 {
     qDebug() << "OverMapLogic::currentMapLoaded(): map: " << QString::fromStdString(ccmap->mapController.currentMap())
@@ -675,7 +691,7 @@ void OverMapLogic::composeAndDisplayGain()
                 +"</li></ul>";
     else if(!add_to_inventoryGainList.empty())
         text+=tr("You have obtained: ").toStdString()+stringimplode(add_to_inventoryGainList,"");
-    std::cout << "Show gain: \"" << text << "\"" << std::endl;
+    //std::cout << "Show gain: \"" << text << "\"" << std::endl;
     gainString=QString::fromStdString(text);
     gain->setHtml(gainString);
 }
@@ -1356,50 +1372,7 @@ void OverMapLogic::load_crafting_inventory()
     on_listCraftingList_itemSelectionChanged();
 }*/
 
-std::string OverMapLogic::reputationRequirementsToText(const CatchChallenger::ReputationRequirements &reputationRequirements)
-{
-    if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
-    {
-        std::cerr << "reputationRequirements.reputationId" << reputationRequirements.reputationId
-                  << ">=CatchChallenger::CommonDatapack::commonDatapack.reputation.size()"
-                  << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
-        return tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
-    }
-    const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)==
-            QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
-    {
-        std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
-        return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
-    }
-    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name);
-    if(reputationRequirements.positif)
-    {
-        if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
-        {
-            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name << std::endl;
-            return QStringLiteral("No text for level %1 for reputation %2")
-                    .arg(reputationRequirements.level)
-                    .arg(QString::fromStdString(reputationExtra.name))
-                    .toStdString();
-        }
-        else
-            return reputationExtra.reputation_positive.at(reputationRequirements.level);
-    }
-    else
-    {
-        if(reputationRequirements.level>=reputationExtra.reputation_negative.size())
-        {
-            std::cerr << "No text for level "+std::to_string(reputationRequirements.level)+" for reputation "+reputationExtra.name << std::endl;
-            return QStringLiteral("No text for level %1 for reputation %2")
-                    .arg(reputationRequirements.level)
-                    .arg(QString::fromStdString(reputationExtra.name))
-                    .toStdString();
-        }
-        else
-            return reputationExtra.reputation_negative.at(reputationRequirements.level);
-    }
-}
+
 
 void OverMapLogic::botFight(const uint16_t &fightId)
 {
@@ -1812,47 +1785,6 @@ void OverMapLogic::appendReputationRewards(const std::vector<CatchChallenger::Re
     }
 }
 
-bool OverMapLogic::haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const
-{
-    unsigned int index=0;
-    while(index<reputationList.size())
-    {
-        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
-        if(connexionManager->client->player_informations.reputation.find(reputation.reputationId)!=connexionManager->client->player_informations.reputation.cend())
-        {
-            const CatchChallenger::PlayerReputation &playerReputation=connexionManager->client->player_informations.reputation.at(reputation.reputationId);
-            if(!reputation.positif)
-            {
-                if(-reputation.level<playerReputation.level)
-                {
-                    /*emit message(QStringLiteral("reputation.level(%1)<playerReputation.level(%2)")
-                                 .arg(reputation.level).arg(playerReputation.level).toStdString());*/
-                    return false;
-                }
-            }
-            else
-            {
-                if(reputation.level>playerReputation.level || playerReputation.point<0)
-                {
-                    /*emit message(QStringLiteral("reputation.level(%1)>playerReputation.level(%2) || playerReputation.point(%3)<0")
-                                 .arg(reputation.level).arg(playerReputation.level).arg(playerReputation.point).toStdString());*/
-                    return false;
-                }
-            }
-        }
-        else
-            if(!reputation.positif)//default level is 0, but required level is negative
-            {
-                /*emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(
-                                 QString::fromStdString(CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name)
-                                 ).toStdString());*/
-                return false;
-            }
-        index++;
-    }
-    return true;
-}
-
 //reputation
 void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &point)
 {
@@ -1902,14 +1834,6 @@ void OverMapLogic::appendReputationPoint(const std::string &type,const int32_t &
             showTip(tr("You have worse reputation into %1")
                     .arg("???").toStdString());
     }
-}
-
-uint32_t OverMapLogic::itemQuantity(const uint16_t &itemId) const
-{
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
-        return playerInformations.items.at(itemId);
-    return 0;
 }
 
 void OverMapLogic::objectSelection(const bool &ok, const uint16_t &itemId, const uint32_t &quantity)

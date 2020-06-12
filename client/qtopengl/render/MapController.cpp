@@ -67,24 +67,23 @@ MapController::~MapController()
 
 bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
+    CatchChallenger::Player_private_and_public_informations &player_informations=client->get_player_informations();
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
         {
             if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(fileName)!=
                     QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
             {
-                if(plantOnMap==NULL)
-                    abort();
                 const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::datapackLoader->plantOnMap.at(fileName);
                 for (const auto &n : plantCoor) {
                     const uint16_t indexOfMap=n.second;
-                    if(plantOnMap->size()>1000000)
+                    if(player_informations.plantOnMap.size()>1000000)
                         abort();
-                    if(plantOnMap->find(indexOfMap)!=plantOnMap->cend())
+                    if(player_informations.plantOnMap.find(indexOfMap)!=player_informations.plantOnMap.cend())
                     {
                         const uint8_t &x=n.first.first;
                         const uint8_t &y=n.first.second;
-                        const CatchChallenger::PlayerPlant &playerPlant=plantOnMap->at(indexOfMap);
+                        const CatchChallenger::PlayerPlant &playerPlant=player_informations.plantOnMap.at(indexOfMap);
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=static_cast<uint32_t>(playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000);

@@ -390,8 +390,6 @@ void MapControllerMP::haveCharacter()
         std::cerr << "void BaseWindow::updateConnectingStatus(): waitedData.isEmpty(), playerInformations.bot_already_beaten==NULL" << std::endl;
         abort();
     }
-    setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
-    setInformations(&playerInformations.items,&playerInformations.quests,&client->events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
 }
 
 bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
@@ -851,7 +849,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * temp
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
+            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,client->get_player_informations_ro().items);
             if(pathList.empty())
             {
                 while(pathList.size()>1)

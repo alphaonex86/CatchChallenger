@@ -14,6 +14,7 @@
 
 class CCMap;
 class ConnexionManager;
+class Inventory;
 
 class OverMapLogic : public OverMap
 {
@@ -80,6 +81,7 @@ public slots:
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void lastReplyTime(const uint32_t &time);
+    void bag_open();
 
     void pathFindingNotFound();
     void repelEffectIsOver();
@@ -142,7 +144,6 @@ public slots:
     //void load_inventory();
     //void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const CatchChallenger::ObjectUsage &objectUsage);
-    uint32_t itemQuantity(const uint16_t &itemId) const;
     //shop
     void haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items);
     void haveBuyObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice);
@@ -163,11 +164,9 @@ public slots:
     //bot
     void goToBotStep(const uint8_t &step);
     std::string parseHtmlToDisplay(const std::string &htmlContent);
-    std::string reputationRequirementsToText(const CatchChallenger::ReputationRequirements &reputationRequirements);
     void IG_dialog_text_linkActivated(const std::string &rawlink);
     void on_IG_dialog_text_linkActivated(const QString &rawlink);
     //quest
-    bool haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const std::vector<CatchChallenger::ReputationRewards> &reputationList);
     void showQuestText(const uint32_t &textId);
     bool tryValidateQuestStep(const uint16_t &questId, const uint16_t &botId, bool silent=false);
@@ -219,6 +218,7 @@ signals:
 private:
     CCMap *ccmap;
     bool multiplayer;
+    Inventory *inventory;
 
     QTimer tip_timeout;
     QTimer gain_timeout;

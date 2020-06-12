@@ -67,9 +67,6 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests,
-                         std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap,
-                         std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
     virtual bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
     void centerOnPlayer();
@@ -127,12 +124,6 @@ protected:
     Tiled::Tileset * animationTileset;
     uint16_t currentPlayerSpeed;
     bool animationDisplayed;
-
-    std::vector<uint8_t> *events;
-    std::unordered_map<uint16_t,uint32_t> *items;
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
-    std::unordered_set<uint16_t> *itemOnMap;
-    std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:
     //current player
     bool player_informations_is_set;

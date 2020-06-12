@@ -1,6 +1,6 @@
 #include "SubServer.hpp"
 #include "../Language.hpp"
-#include "../../qt/FacilityLibClient.hpp"
+#include "../FacilityLibClient.hpp"
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <iostream>
