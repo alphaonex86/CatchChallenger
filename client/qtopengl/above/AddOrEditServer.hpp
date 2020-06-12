@@ -13,7 +13,7 @@
 #include "../LineEdit.hpp"
 #include "../SpinBox.hpp"
 
-class AddOrEditServer : public QObject, public ScreenInput
+class AddOrEditServer : public ScreenInput
 {
     Q_OBJECT
 public:

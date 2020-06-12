@@ -13,7 +13,7 @@
 #include "../SpinBox.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 
-class NewGame : public QObject, public ScreenInput
+class NewGame : public ScreenInput
 {
     Q_OBJECT
 public:

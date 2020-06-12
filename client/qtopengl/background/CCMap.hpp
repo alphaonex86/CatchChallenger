@@ -6,7 +6,7 @@
 
 class ConnexionManager;
 
-class CCMap : public QObject, public ScreenInput
+class CCMap : public ScreenInput
 {
     Q_OBJECT
 public:

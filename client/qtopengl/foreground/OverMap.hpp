@@ -15,7 +15,7 @@ class CustomText;
 class ConnexionManager;
 class CCMap;
 
-class OverMap : public QObject, public ScreenInput
+class OverMap : public ScreenInput
 {
     Q_OBJECT
 public:
@@ -31,6 +31,7 @@ public:
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void lineEdit_chat_text_returnPressed();
+    void buyClicked();
     void IG_dialog_close();
     void comboBox_chat_type_currentIndexChanged(int index);
     void new_system_text(const CatchChallenger::Chat_type &chat_type, const std::string &text);

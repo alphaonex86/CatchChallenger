@@ -112,6 +112,11 @@ void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
+bool Api_protocol_Qt::haveBeatBot(const uint16_t &botFightId) const
+{
+    return CommonFightEngine::haveBeatBot(botFightId);
+}
+
 void Api_protocol_Qt::errorFromFightEngine(const std::string &error)
 {
     emit QtnewError(error,error);

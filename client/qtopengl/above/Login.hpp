@@ -16,7 +16,7 @@
 #include "../CheckBox.hpp"
 #include "../CustomText.hpp"
 
-class Login : public QObject, public ScreenInput
+class Login : public ScreenInput
 {
     Q_OBJECT
 public:

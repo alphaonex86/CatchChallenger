@@ -12,7 +12,6 @@
 #include "../../qt/QtDatapackChecksum.hpp"
 #include "../../qt/tiled/tiled_tileset.hpp"
 #include "../../qt/tiled/tiled_mapreader.hpp"
-#include "../../qt/FacilityLibClient.hpp"
 #include "../../qt/Settings.hpp"
 #include "../Language.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS

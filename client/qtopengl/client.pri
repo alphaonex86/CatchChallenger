@@ -285,7 +285,7 @@ SOURCES += \
     $$PWD/foreground/SubServer.cpp \
     $$PWD/above/AddCharacter.cpp \
     $$PWD/above/NewGame.cpp \
-    $$PWD/../qt/FacilityLibClient.cpp \
+    $$PWD/FacilityLibClient.cpp \
     $$PWD/cc/Api_client_real.cpp \
     $$PWD/cc/Api_client_real_base.cpp \
     $$PWD/cc/Api_client_real_main.cpp \
@@ -328,7 +328,8 @@ SOURCES += \
     $$PWD/foreground/OverMapLogicTrade.cpp \
     $$PWD/foreground/OverMapLogicShop.cpp \
     $$PWD/foreground/OverMapLogicBot.cpp \
-    $$PWD/foreground/OverMapLogicFactory.cpp
+    $$PWD/foreground/OverMapLogicFactory.cpp \
+    $$PWD/above/Inventory.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -380,7 +381,7 @@ HEADERS  += \
     $$PWD/foreground/SubServer.hpp \
     $$PWD/above/AddCharacter.hpp \
     $$PWD/above/NewGame.hpp \
-    $$PWD/../qt/FacilityLibClient.hpp \
+    $$PWD/FacilityLibClient.hpp \
     $$PWD/cc/Api_client_real.hpp \
     $$PWD/cc/Api_client_virtual.hpp \
     $$PWD/cc/Api_protocol_Qt.hpp \
@@ -412,7 +413,8 @@ HEADERS  += \
     $$PWD/MyApplication.h \
     $$PWD/above/DebugDialog.hpp \
     $$PWD/cc/QtDatapackClientLoaderThread.hpp \
-    $$PWD/foreground/OverMapLogic.hpp
+    $$PWD/foreground/OverMapLogic.hpp \
+    $$PWD/above/Inventory.hpp
 
 
 wasm: {

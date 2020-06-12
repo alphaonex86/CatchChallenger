@@ -7,7 +7,7 @@
 #include <chrono>
 #include "../ScreenInput.hpp"
 
-class CCBackground : public QObject, public ScreenInput
+class CCBackground : public ScreenInput
 {
     Q_OBJECT
 public:

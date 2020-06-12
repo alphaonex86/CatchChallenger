@@ -1,6 +1,5 @@
 #include "OverMap.hpp"
 #include "../Language.hpp"
-#include "../../qt/FacilityLibClient.hpp"
 #include "../../qt/GameLoader.hpp"
 #include "../../qt/QtDatapackClientLoader.hpp"
 #include "../ConnexionManager.hpp"
@@ -12,6 +11,7 @@
 #include <QTreeWidgetItem>
 #include <QHeaderView>
 #include <iostream>
+#include <QDesktopServices>
 
 OverMap::OverMap()
 {
@@ -117,6 +117,8 @@ OverMap::OverMap()
     if(!connect(chatInput,&LineEdit::returnPressed,this,&OverMap::lineEdit_chat_text_returnPressed))
         abort();
     if(!connect(IG_dialog_quit,&CustomButton::clicked,this,&OverMap::IG_dialog_close))
+        abort();
+    if(!connect(buy,&CustomButton::clicked,this,&OverMap::buyClicked))
         abort();
 
     stopFlood.setSingleShot(false);
@@ -550,4 +552,9 @@ void OverMap::keyReleaseEvent(QKeyEvent *event)
 {
     if(chat->isChecked() && chatInput->hasFocus())
         chatInput->keyReleaseEvent(event);
+}
+
+void OverMap::buyClicked()
+{
+    QDesktopServices::openUrl(tr("https://shop.first-world.info/en/")+"#CatchChallenger");
 }

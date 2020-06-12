@@ -30,11 +30,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &debugTags) :
     teleportedOnPush=false;
     x=0;
     y=0;
-    events=NULL;
-    items=NULL;
-    quests=NULL;
-    itemOnMap=NULL;
-    plantOnMap=NULL;
     animationDisplayed=false;
     monsterTileset=nullptr;
     monsterMapObject=nullptr;
@@ -674,11 +669,7 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
-    if(itemOnMap==nullptr)
-    {
-        std::cerr << "error: itemOnMap is not loaded, do you have call setInformations()?" << std::endl;
-        abort();
-    }
+    const CatchChallenger::Player_private_and_public_informations &player_informations=client->get_player_informations_ro();
     if(current_map.empty())
         return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
@@ -730,7 +721,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * 
                                                     tempIndexItem.cend())
                                             {
                                                 const uint16_t &itemIndex=tempIndexItem.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                                                if(itemOnMap->find(itemIndex)!=itemOnMap->cend())
+                                                if(player_informations.itemOnMap.find(itemIndex)!=player_informations.itemOnMap.cend())
                                                 {
                                                     if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
                                                     {
@@ -803,23 +794,6 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * 
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t> *items, std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap, std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap)
-{
-    this->events=events;
-    this->items=items;
-    this->quests=quests;
-    this->itemOnMap=itemOnMap;
-    this->plantOnMap=plantOnMap;
-    if(plantOnMap->size()>65535)
-        abort();
-    if(items->size()>65535)
-        abort();
-    if(quests->size()>65535)
-        abort();
-    if(itemOnMap->size()>65535)
-        abort();
-}
-
 void MapVisualiserPlayer::unblock()
 {
     blocked=false;
@@ -877,6 +851,7 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
 
 void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
 {
+    const CatchChallenger::Player_private_and_public_informations &player_informations=client->get_player_informations_ro();
     if(all_map.find(current_map)==all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
@@ -915,7 +890,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
                         const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
-                        if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                        if(monstersCollision.item==0 || player_informations.items.find(monstersCollision.item)!=player_informations.items.cend())
                         {
                             monsterMapObject->setVisible((monstersCollisionTemp.tile.empty() && pendingMonsterMoves.size()>=1) ||
                                                          (pendingMonsterMoves.size()==1 && !inMove)
@@ -939,7 +914,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
                 const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
-                if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                if(monstersCollision.item==0 || player_informations.items.find(monstersCollision.item)!=player_informations.items.cend())
                 {
                     //change tile if needed (water to walk transition)
                     if(monstersCollisionTemp.tile!=lastTileset)

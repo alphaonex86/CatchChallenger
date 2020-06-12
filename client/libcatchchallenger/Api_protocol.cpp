@@ -75,7 +75,7 @@ Api_protocol::Api_protocol() :
 
 Api_protocol::~Api_protocol()
 {
-    //qDebug() << "Api_protocol::~Api_protocol()";
+    //std::cout << "Api_protocol::~Api_protocol()";
     if(player_informations.encyclopedia_monster!=NULL)
     {
         delete player_informations.encyclopedia_monster;
@@ -2492,4 +2492,156 @@ void Api_protocol::add_chat_text(CatchChallenger::Chat_type chat_type,std::strin
 const std::vector<Api_protocol::ChatEntry> &Api_protocol::getChatContent()
 {
     return chat_list;
+}
+
+bool Api_protocol::haveReputationRequirements(const std::vector<CatchChallenger::ReputationRequirements> &reputationList) const
+{
+    unsigned int index=0;
+    while(index<reputationList.size())
+    {
+        const CatchChallenger::ReputationRequirements &reputation=reputationList.at(index);
+        if(player_informations.reputation.find(reputation.reputationId)!=player_informations.reputation.cend())
+        {
+            const CatchChallenger::PlayerReputation &playerReputation=player_informations.reputation.at(reputation.reputationId);
+            if(!reputation.positif)
+            {
+                if(-reputation.level<playerReputation.level)
+                    return false;
+            }
+            else
+            {
+                if(reputation.level>playerReputation.level || playerReputation.point<0)
+                    return false;
+            }
+        }
+        else
+            if(!reputation.positif)//default level is 0, but required level is negative
+                return false;
+        index++;
+    }
+    return true;
+}
+
+uint32_t Api_protocol::itemQuantity(const uint16_t &itemId) const
+{
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
+    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
+        return playerInformations.items.at(itemId);
+    return 0;
+}
+
+bool Api_protocol::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const
+{
+    #ifdef DEBUG_CLIENT_QUEST
+    std::cout << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId) << std::endl;
+    #endif
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
+    if(playerInformations.quests.find(quest.id)==playerInformations.quests.cend())
+    {
+        std::cout << "step out of range for: " << quest.id << std::endl;
+        return false;
+    }
+    uint8_t step=playerInformations.quests.at(quest.id).step;
+    if(step<=0 || step>quest.steps.size())
+    {
+        std::cout << "step out of range for: " << quest.id << std::endl;
+        return false;
+    }
+    #ifdef DEBUG_CLIENT_QUEST
+    std::cout << QStringLiteral("haveNextStepQuestRequirements for quest: %1, step: %2").arg(questId).arg(step) << std::endl;
+    #endif
+    const CatchChallenger::Quest::StepRequirements &requirements=quest.steps.at(step-1).requirements;
+    unsigned int index=0;
+    while(index<requirements.items.size())
+    {
+        const CatchChallenger::Quest::Item &item=requirements.items.at(index);
+        if(itemQuantity(item.item)<item.quantity)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "quest requirement, have not the quantity for the item: " << item.item << std::endl;
+            #endif
+            return false;
+        }
+        index++;
+    }
+    index=0;
+    while(index<requirements.fightId.size())
+    {
+        const uint16_t &fightId=requirements.fightId.at(index);
+        if(!haveBeatBot(fightId))
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "quest requirement, have not beat the bot: " << fightId << std::endl;
+            #endif
+            return false;
+        }
+        index++;
+    }
+    return true;
+}
+
+bool Api_protocol::haveStartQuestRequirement(const CatchChallenger::Quest &quest) const
+{
+    #ifdef DEBUG_CLIENT_QUEST
+    std::cout << "check quest requirement for: " << quest.id << std::endl;
+    #endif
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
+    if(playerInformations.quests.find(quest.id)!=playerInformations.quests.cend())
+    {
+        const PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
+        if(playerquest.step!=0)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "can start the quest because is already running: " << questId << std::endl;
+            #endif
+            return false;
+        }
+        if(playerquest.finish_one_time && !quest.repeatable)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "done one time and no repeatable: " << questId << std::endl;
+            #endif
+            return false;
+        }
+    }
+    unsigned int index=0;
+    while(index<quest.requirements.quests.size())
+    {
+        const uint16_t &questId=quest.requirements.quests.at(index).quest;
+        if(
+                (playerInformations.quests.find(questId)==playerInformations.quests.cend() && !quest.requirements.quests.at(index).inverse)
+                ||
+                (playerInformations.quests.find(questId)!=playerInformations.quests.cend() && quest.requirements.quests.at(index).inverse)
+                )
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "have never started the quest: " << questId << std::endl;
+            #endif
+            return false;
+        }
+        if(playerInformations.quests.find(questId)!=playerInformations.quests.cend())
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "quest never started: " << questId << std::endl;
+            #endif
+            return false;
+        }
+        const PlayerQuest &playerquest=playerInformations.quests.at(quest.id);
+        if(!playerquest.finish_one_time)
+        {
+            #ifdef DEBUG_CLIENT_QUEST
+            std::cout << "quest never finished: " << questId << std::endl;
+            #endif
+            return false;
+        }
+        index++;
+    }
+    return haveReputationRequirements(quest.requirements.reputation);
+}
+
+void Api_protocol::addBeatenBotFight(const uint16_t &botFightId)
+{
+    if(player_informations.bot_already_beaten==NULL)
+        abort();
+    player_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
 }
