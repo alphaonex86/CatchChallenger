@@ -11,7 +11,7 @@ namespace Ui {
 class LoadingScreen;
 }
 
-class LoadingScreen : public QObject, public ScreenInput
+class LoadingScreen : public ScreenInput
 {
     Q_OBJECT
 

@@ -17,7 +17,7 @@
 #include "../tiled/tiled_tile.hpp"
 #include "../../../general/base/CommonMap.hpp"
 #include "../../qt/ClientVariable.hpp"
-#include "../../qt/FacilityLibClient.hpp"
+#include "../FacilityLibClient.hpp"
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
 void MapVisualiser::destroyMap(Map_full *map)

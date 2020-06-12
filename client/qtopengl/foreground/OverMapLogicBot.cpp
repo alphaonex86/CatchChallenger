@@ -627,7 +627,7 @@ bool OverMapLogic::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
     while(index<requirements.items.size())
     {
         const CatchChallenger::Quest::Item &item=requirements.items.at(index);
-        if(itemQuantity(item.item)<item.quantity)
+        if(connexionManager->client->itemQuantity(item.item)<item.quantity)
         {
             #ifdef DEBUG_CLIENT_QUEST
             qDebug() << "quest requirement, have not the quantity for the item: " << item.item;
@@ -678,7 +678,7 @@ bool OverMapLogic::haveStartQuestRequirement(const CatchChallenger::Quest &quest
             return false;
         index++;
     }
-    return haveReputationRequirements(quest.requirements.reputation);
+    return connexionManager->client->haveReputationRequirements(quest.requirements.reputation);
 }
 
 void OverMapLogic::on_IG_dialog_text_linkActivated(const QString &rawlink)

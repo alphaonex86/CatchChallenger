@@ -259,6 +259,7 @@ void ScreenTransition::setBackground(ScreenInput *widget)
     m_backgroundStack=widget;
     if(widget!=nullptr)
     {
+        connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
         mScene->addItem(m_backgroundStack);
         m_backgroundStack->setZValue(-1);
     }
@@ -278,7 +279,10 @@ void ScreenTransition::setForeground(ScreenInput *widget)
         mScene->removeItem(m_foregroundStack);
     m_foregroundStack=widget;
     if(widget!=nullptr)
+    {
+        connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
         mScene->addItem(m_foregroundStack);
+    }
 }
 
 void ScreenTransition::setAbove(ScreenInput *widget)
@@ -295,7 +299,10 @@ void ScreenTransition::setAbove(ScreenInput *widget)
         mScene->removeItem(m_aboveStack);
     m_aboveStack=widget;
     if(widget!=nullptr)
+    {
+        connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
         mScene->addItem(m_aboveStack);
+    }
 }
 
 void ScreenTransition::loadingFinished()
@@ -331,8 +338,6 @@ void ScreenTransition::toInGame()
     {
         characterList=new CharacterList();
         if(!connect(characterList,&CharacterList::backSubServer,this,&ScreenTransition::toSubServer))
-            abort();
-        if(!connect(characterList,&CharacterList::setAbove,this,&ScreenTransition::setAbove))
             abort();
         if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();
@@ -628,8 +633,6 @@ void ScreenTransition::openMulti()
             abort();
         if(!connect(multi,&Multi::connectToServer,this,&ScreenTransition::connectToServer))
             abort();
-        if(!connect(multi,&Multi::setAbove,this,&ScreenTransition::setAbove))
-            abort();
     }
     setForeground(multi);
 }
@@ -716,8 +719,6 @@ void ScreenTransition::connectToSubServer(const int indexSubServer)
     {
         characterList=new CharacterList();
         if(!connect(characterList,&CharacterList::backSubServer,this,&ScreenTransition::backSubServer))
-            abort();
-        if(!connect(characterList,&CharacterList::setAbove,this,&ScreenTransition::setAbove))
             abort();
         if(!connect(characterList,&CharacterList::selectCharacter,this,&ScreenTransition::selectCharacter))
             abort();
@@ -872,26 +873,58 @@ void ScreenTransition::setTargetFPS(int targetFPS)
 
 void ScreenTransition::keyPressEvent(QKeyEvent * event)
 {
+    bool eventTriggerGeneral=false;
     event->setAccepted(false);
     if(m_aboveStack!=nullptr)
-        static_cast<ScreenInput *>(m_aboveStack)->keyPressEvent(event);
+        static_cast<ScreenInput *>(m_aboveStack)->keyPressEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted() && m_foregroundStack!=nullptr)
-        static_cast<ScreenInput *>(m_foregroundStack)->keyPressEvent(event);
+        static_cast<ScreenInput *>(m_foregroundStack)->keyPressEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted() && m_backgroundStack!=nullptr)
-        static_cast<ScreenInput *>(m_backgroundStack)->keyPressEvent(event);
+        static_cast<ScreenInput *>(m_backgroundStack)->keyPressEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted())
         QGraphicsView::keyPressEvent(event);
 }
 
 void ScreenTransition::keyReleaseEvent(QKeyEvent *event)
 {
+    bool eventTriggerGeneral=false;
     event->setAccepted(false);
     if(m_aboveStack!=nullptr)
-        static_cast<ScreenInput *>(m_aboveStack)->keyReleaseEvent(event);
+        static_cast<ScreenInput *>(m_aboveStack)->keyReleaseEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted() && m_foregroundStack!=nullptr)
-        static_cast<ScreenInput *>(m_foregroundStack)->keyReleaseEvent(event);
+        static_cast<ScreenInput *>(m_foregroundStack)->keyReleaseEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted() && m_backgroundStack!=nullptr)
-        static_cast<ScreenInput *>(m_backgroundStack)->keyReleaseEvent(event);
+        static_cast<ScreenInput *>(m_backgroundStack)->keyReleaseEvent(event,eventTriggerGeneral);
+    if(eventTriggerGeneral)
+    {
+        QGraphicsView::keyPressEvent(event);
+        return;
+    }
     if(!event->isAccepted())
         QGraphicsView::keyReleaseEvent(event);
 }
