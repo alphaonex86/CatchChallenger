@@ -123,7 +123,7 @@ void Inventory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
         label.setPos(x+(idealW-label.pixmap().width()/2)/2,y-36/2);
         title->setPixelSize(30/2);
         font.setPixelSize(18/2);
-        updateInventory(16);
+        updateInventory(24);
     }
     else {
         label.setScale(1);
@@ -147,7 +147,7 @@ void Inventory::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *wi
             if(itemCount<7)
                 updateInventory(48);
             else
-                updateInventory(32);
+                updateInventory(24);
         }
     }
 
@@ -293,9 +293,9 @@ void Inventory::updateInventory(uint8_t targetSize)
                     item->setText(QStringLiteral("id: %1").arg(id));
             }
             item->setData(99,id);
+            inventory->addItem(item);
             if(id==lastItemSelected)
                 item->setSelected(true);
-            inventory->addItem(item);
         }
         ++i;
     }
