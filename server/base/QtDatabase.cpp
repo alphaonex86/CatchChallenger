@@ -338,9 +338,10 @@ const std::string QtDatabase::value(const int &value) const
 
 QtDatabaseThread::QtDatabaseThread()
 {
-    moveToThread(this);
+    //produce bug, if you need performance optimised, then user server epoll cli version
+    //moveToThread(this);
     setObjectName("Db thread");
-    start();
+    //start();
 }
 
 QtDatabaseThread::~QtDatabaseThread()

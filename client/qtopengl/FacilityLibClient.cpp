@@ -14,13 +14,36 @@ std::string FacilityLibClient::timeToString(const uint32_t &sec)
     else if(sec>=3600*24*10)
         timeText=QObject::tr("%n day(s)","",sec/(3600*24)).toStdString();
     else if(sec>=3600*24)
-        timeText=QObject::tr("%n day(s) and %1","",sec/(3600*24)).arg(QObject::tr("%n hour(s)","",(sec%(3600*24))/3600)).toStdString();
+    {
+        int d=sec/(3600*24);
+        int h=(sec%(3600*24))/3600;
+        if(h!=0)
+            timeText=QObject::tr("%n day(s) and %1","",d).arg(QObject::tr("%n hour(s)","",h)).toStdString();
+        else
+            timeText=QObject::tr("%n day(s)","",d).toStdString();
+    }
     else if(sec>=3600)
-        timeText=QObject::tr("%n hour(s) and %1","",sec/3600).arg(QObject::tr("%n minute(s)","",(sec%3600)/60)).toStdString();
+    {
+        int h=sec/3600;
+        int m=(sec%3600)/60;
+        if(m!=0)
+            timeText=QObject::tr("%n hour(s) and %1","",h).arg(QObject::tr("%n minute(s)","",m)).toStdString();
+        else
+            timeText=QObject::tr("%n hour(s)","",h).toStdString();
+    }
     else if(sec>=60)
-        timeText=QObject::tr("%n minute(s) and %1","",sec/60).arg(QObject::tr("%n second(s)","",sec%60)).toStdString();
+    {
+        int m=sec/60;
+        int s=sec%60;
+        if(s!=0)
+            timeText=QObject::tr("%n minute(s) and %1","",m).arg(QObject::tr("%n second(s)","",s)).toStdString();
+        else
+            timeText=QObject::tr("%n minute(s)","",m).toStdString();
+    }
     else
+    {
         timeText=QObject::tr("%n second(s)","",sec).toStdString();
+    }
     return timeText;
 }
 
