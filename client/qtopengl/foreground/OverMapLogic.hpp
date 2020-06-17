@@ -15,6 +15,8 @@
 class CCMap;
 class ConnexionManager;
 class Inventory;
+class Plant;
+class Crafting;
 
 class OverMapLogic : public OverMap
 {
@@ -82,6 +84,8 @@ public slots:
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void lastReplyTime(const uint32_t &time);
     void bag_open();
+    void inventoryNext();
+    void inventoryBack();
 
     void pathFindingNotFound();
     void repelEffectIsOver();
@@ -135,12 +139,14 @@ public slots:
     //inventory
     //void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
+    void add_to_inventory_slotpair(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
     void add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain=true);
     void add_to_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const bool &showGain=true);
     void add_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items);
     void remove_to_inventory(const uint16_t &itemId, const uint32_t &quantity=1);
+    void remove_to_inventory_slotpair(const uint16_t &itemId, const uint32_t &quantity=1);
     //void load_inventory();
     //void on_inventory_itemActivated(QListWidgetItem *item);
     void objectUsed(const CatchChallenger::ObjectUsage &objectUsage);
@@ -219,6 +225,9 @@ private:
     CCMap *ccmap;
     bool multiplayer;
     Inventory *inventory;
+    Plant *plant;
+    Crafting *crafting;
+    int inventoryIndex;
 
     QTimer tip_timeout;
     QTimer gain_timeout;
