@@ -329,7 +329,9 @@ SOURCES += \
     $$PWD/foreground/OverMapLogicShop.cpp \
     $$PWD/foreground/OverMapLogicBot.cpp \
     $$PWD/foreground/OverMapLogicFactory.cpp \
-    $$PWD/above/Inventory.cpp
+    $$PWD/above/Inventory.cpp \
+    $$PWD/above/Plant.cpp \
+    $$PWD/above/Crafting.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -414,7 +416,9 @@ HEADERS  += \
     $$PWD/above/DebugDialog.hpp \
     $$PWD/cc/QtDatapackClientLoaderThread.hpp \
     $$PWD/foreground/OverMapLogic.hpp \
-    $$PWD/above/Inventory.hpp
+    $$PWD/above/Inventory.hpp \
+    $$PWD/above/Plant.hpp \
+    $$PWD/above/Crafting.hpp
 
 
 wasm: {

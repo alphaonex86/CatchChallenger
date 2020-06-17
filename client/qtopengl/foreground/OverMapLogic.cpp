@@ -4,6 +4,8 @@
 #include "../background/CCMap.hpp"
 #include "../cc/QtDatapackClientLoader.hpp"
 #include "../above/Inventory.hpp"
+#include "../above/Plant.hpp"
+#include "../above/Crafting.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
@@ -11,9 +13,12 @@
 OverMapLogic::OverMapLogic()
 {
     inventory=nullptr;
+    plant=nullptr;
+    crafting=nullptr;
     multiplayer=true;
     lastReplyTimeValue=0;
     worseQueryTime=0;
+    inventoryIndex=0;
 
     checkQueryTime.start(200);
     if(!connect(&checkQueryTime,&QTimer::timeout,   this,&OverMapLogic::detectSlowDown))
@@ -480,9 +485,127 @@ void OverMapLogic::bag_open()
         inventory=new Inventory();
         if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
             abort();
+        if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
+            abort();
+        if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
+            abort();
     }
     inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
     setAbove(inventory);
+}
+
+void OverMapLogic::inventoryNext()
+{
+    switch(inventoryIndex)
+    {
+        case 0:
+        if(plant==nullptr)
+        {
+            plant=new Plant();
+            if(!connect(plant,&Plant::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(plant,&Plant::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(plant,&Plant::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+        }
+        plant->setVar(connexionManager,false);
+        setAbove(plant);
+        break;
+        case 1:
+        if(crafting==nullptr)
+        {
+            crafting=new Crafting();
+            if(!connect(crafting,&Crafting::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(crafting,&Crafting::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(crafting,&Crafting::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+            if(!connect(crafting,&Crafting::remove_to_inventory,this,&OverMapLogic::remove_to_inventory_slotpair))
+                abort();
+            if(!connect(crafting,&Crafting::add_to_inventory,this,&OverMapLogic::add_to_inventory_slotpair))
+                abort();
+            if(!connect(crafting,&Crafting::appendReputationRewards,this,&OverMapLogic::appendReputationRewards))
+                abort();
+        }
+        crafting->setVar(connexionManager);
+        setAbove(crafting);
+        break;
+        default:
+        if(inventory==nullptr)
+        {
+            inventory=new Inventory();
+            if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+        }
+        inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
+        setAbove(inventory);
+        inventoryIndex=0;
+        return;
+    }
+    inventoryIndex++;
+}
+
+void OverMapLogic::inventoryBack()
+{
+    switch(inventoryIndex)
+    {
+        case 1:
+        if(inventory==nullptr)
+        {
+            inventory=new Inventory();
+            if(!connect(inventory,&Inventory::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(inventory,&Inventory::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(inventory,&Inventory::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+        }
+        inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
+        setAbove(inventory);
+        break;
+        case 2:
+        if(plant==nullptr)
+        {
+            plant=new Plant();
+            if(!connect(plant,&Plant::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(plant,&Plant::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(plant,&Plant::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+        }
+        plant->setVar(connexionManager,false);
+        setAbove(plant);
+        break;
+        default:
+        if(crafting==nullptr)
+        {
+            crafting=new Crafting();
+            if(!connect(crafting,&Crafting::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(crafting,&Crafting::sendNext,this,&OverMapLogic::inventoryNext))
+                abort();
+            if(!connect(crafting,&Crafting::sendBack,this,&OverMapLogic::inventoryBack))
+                abort();
+            if(!connect(crafting,&Crafting::add_to_inventory,this,&OverMapLogic::add_to_inventory_slotpair))
+                abort();
+            if(!connect(crafting,&Crafting::remove_to_inventory,this,&OverMapLogic::remove_to_inventory_slotpair))
+                abort();
+            if(!connect(crafting,&Crafting::appendReputationRewards,this,&OverMapLogic::appendReputationRewards))
+                abort();
+        }
+        crafting->setVar(connexionManager,false);
+        setAbove(crafting);
+        inventoryIndex=2;
+        return;
+    }
+    inventoryIndex--;
 }
 
 void OverMapLogic::currentMapLoaded()
@@ -1149,6 +1272,11 @@ void OverMapLogic::add_to_inventory_slot(const std::unordered_map<uint16_t,uint3
     add_to_inventory(items);
 }
 
+void OverMapLogic::add_to_inventory_slotpair(const uint16_t &item, const uint32_t &quantity, const bool &showGain)
+{
+    add_to_inventory(item,quantity,showGain);
+}
+
 void OverMapLogic::add_to_inventory(const uint16_t &item,const uint32_t &quantity,const bool &showGain)
 {
     std::vector<std::pair<uint16_t,uint32_t> > items;
@@ -1250,6 +1378,11 @@ void OverMapLogic::remove_to_inventory(const uint16_t &itemId,const uint32_t &qu
     std::unordered_map<uint16_t,uint32_t> items;
     items[itemId]=quantity;
     remove_to_inventory(items);
+}
+
+void OverMapLogic::remove_to_inventory_slotpair(const uint16_t &itemId, const uint32_t &quantity)
+{
+    remove_to_inventory(itemId,quantity);
 }
 
 void OverMapLogic::remove_to_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
