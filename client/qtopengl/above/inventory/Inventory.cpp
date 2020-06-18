@@ -1,8 +1,8 @@
 #include "Inventory.hpp"
-#include "../Language.hpp"
-#include "../ConnexionManager.hpp"
-#include "../FacilityLibClient.hpp"
-#include "../cc/QtDatapackClientLoader.hpp"
+#include "../../Language.hpp"
+#include "../../ConnexionManager.hpp"
+#include "../../FacilityLibClient.hpp"
+#include "../../cc/QtDatapackClientLoader.hpp"
 #include "../../qt/GameLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include <QPainter>

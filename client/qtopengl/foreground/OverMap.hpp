@@ -19,6 +19,15 @@ class OverMap : public ScreenInput
 {
     Q_OBJECT
 public:
+    enum ActionClan
+    {
+        ActionClan_Create,
+        ActionClan_Leave,
+        ActionClan_Dissolve,
+        ActionClan_Invite,
+        ActionClan_Eject
+    };
+
     explicit OverMap();
     ~OverMap();
     virtual void resetAll();
@@ -86,6 +95,10 @@ protected:
     ImagesStrechMiddle *persistant_tipBack;
     QGraphicsTextItem *persistant_tip;
     QString persistant_tipString;
+
+    std::vector<ActionClan> actionClan;
+    std::string clanName;
+    bool haveClanInformations;
 private:
     void updateChat();
 };
