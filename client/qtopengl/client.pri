@@ -329,9 +329,14 @@ SOURCES += \
     $$PWD/foreground/OverMapLogicShop.cpp \
     $$PWD/foreground/OverMapLogicBot.cpp \
     $$PWD/foreground/OverMapLogicFactory.cpp \
-    $$PWD/above/Inventory.cpp \
-    $$PWD/above/Plant.cpp \
-    $$PWD/above/Crafting.cpp
+    $$PWD/foreground/OverMapLogicClan.cpp \
+    $$PWD/above/inventory/Inventory.cpp \
+    $$PWD/above/inventory/Plant.cpp \
+    $$PWD/above/inventory/Crafting.cpp \
+    $$PWD/above/player/Player.cpp \
+    $$PWD/above/player/Reputations.cpp \
+    $$PWD/above/player/Quests.cpp \
+    $$PWD/above/player/FinishedQuests.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -416,9 +421,13 @@ HEADERS  += \
     $$PWD/above/DebugDialog.hpp \
     $$PWD/cc/QtDatapackClientLoaderThread.hpp \
     $$PWD/foreground/OverMapLogic.hpp \
-    $$PWD/above/Inventory.hpp \
-    $$PWD/above/Plant.hpp \
-    $$PWD/above/Crafting.hpp
+    $$PWD/above/inventory/Inventory.hpp \
+    $$PWD/above/inventory/Plant.hpp \
+    $$PWD/above/inventory/Crafting.hpp \
+    $$PWD/above/player/Player.hpp \
+    $$PWD/above/player/Quests.hpp \
+    $$PWD/above/player/Reputations.hpp \
+    $$PWD/above/player/FinishedQuests.hpp
 
 
 wasm: {
