@@ -431,6 +431,7 @@ void OverMap::IG_dialog_close()
 
 void OverMap::lineEdit_chat_text_returnPressed()
 {
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
     QString text=chatInput->text();
     text.remove("\n");
     text.remove("\r");
@@ -487,6 +488,43 @@ void OverMap::lineEdit_chat_text_returnPressed()
         if(!text.startsWith('/'))
             connexionManager->client->add_chat_text(chat_type,text.toStdString(),connexionManager->client->player_informations.public_informations.pseudo,
                  connexionManager->client->player_informations.public_informations.type);
+    }
+    else if(text=="/clan_leave")
+    {
+        actionClan.push_back(ActionClan_Leave);
+        connexionManager->client->leaveClan();
+    }
+    else if(text=="/clan_dissolve")
+    {
+        actionClan.push_back(ActionClan_Dissolve);
+        connexionManager->client->dissolveClan();
+    }
+    else if(!text.startsWith("/clan_invite "))
+    {
+        text.remove(0,std::string("/clan_invite ").size());
+        if(!text.isEmpty())
+        {
+            actionClan.push_back(ActionClan_Invite);
+            connexionManager->client->inviteClan(text.toStdString());
+        }
+    }
+    else if(!text.startsWith("/clan_eject "))
+    {
+        text.remove(0,std::string("/clan_eject ").size());
+        if(!text.isEmpty())
+        {
+            actionClan.push_back(ActionClan_Eject);
+            connexionManager->client->ejectClan(text.toStdString());
+        }
+    }
+    else if(text=="/clan_informations")
+    {
+        if(!haveClanInformations)
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan information");
+        else if(clanName.empty() || playerInformations.clan==0)
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan");
+        else
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"Name: "+clanName);
     }
     else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
     {

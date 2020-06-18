@@ -3,14 +3,14 @@
 
 #include <QObject>
 #include <QListWidget>
-#include "../ImagesStrechMiddle.hpp"
-#include "../ScreenInput.hpp"
-#include "../CustomButton.hpp"
-#include "../CustomText.hpp"
-#include "../CCGraphicsTextItem.hpp"
-#include "../CCSliderH.hpp"
-#include "../LineEdit.hpp"
-#include "../SpinBox.hpp"
+#include "../../ImagesStrechMiddle.hpp"
+#include "../../ScreenInput.hpp"
+#include "../../CustomButton.hpp"
+#include "../../CustomText.hpp"
+#include "../../CCGraphicsTextItem.hpp"
+#include "../../CCSliderH.hpp"
+#include "../../LineEdit.hpp"
+#include "../../SpinBox.hpp"
 
 class ConnexionManager;
 
