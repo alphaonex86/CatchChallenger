@@ -51,6 +51,12 @@ void MapMonsterPreview::regenCache()
     QPixmap backgroundbar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbb.png");
     painter.drawPixmap(bx+3,by+46,backgroundbar.width(),backgroundbar.height(),backgroundbar);
 
+    if(monster.hp==0)
+    {
+        QPixmap monsterko=QPixmap(":/CC/images/interface/monsterko.png");
+        painter.drawPixmap(cache.width()/2-monsterko.width()/2,cache.height()/2-monsterko.height()/2,monsterko.width(),monsterko.height(),monsterko);
+    }
+    
     QPixmap bar;
     if(monster.hp>(stat.hp/2))
         bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png");
@@ -58,7 +64,7 @@ void MapMonsterPreview::regenCache()
         bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mborange.png");
     else
         bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbred.png");
-    painter.drawPixmap(bx+3,by+46,bar.width()*stat.hp/monster.hp,bar.height(),bar);
+    painter.drawPixmap(bx+3,by+46,bar.width()*monster.hp/stat.hp,bar.height(),bar);
 
     setPixmap(QPixmap::fromImage(cache));
 }
