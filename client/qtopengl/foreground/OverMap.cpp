@@ -264,7 +264,7 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
                 m->setPos(tempx,playerBackground->y());
             else
                 m->setPos(tempx,0);
-            tempx+=monsterIndex*(space+56);
+            tempx+=space+56;
             monsterIndex++;
         }
     }
