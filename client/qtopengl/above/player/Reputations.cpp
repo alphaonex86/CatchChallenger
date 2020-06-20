@@ -116,7 +116,7 @@ void Reputations::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *
     back->setPos(widget->width()/2-label.pixmap().width()/2*label.scale()-back->width(),label.y());
     next->setPos(widget->width()/2+label.pixmap().width()/2*label.scale(),label.y());
 
-    labelReputation->setPos(space,space);
+    labelReputation->setPos(space,space+label.pixmap().height()/2*label.scale());
 
     labelReputation->setFont(font);
 
@@ -158,15 +158,20 @@ void Reputations::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 
 void Reputations::newLanguage()
 {
-    title->setText(tr("Bag","You can translate by inventory if the word is shorter"));
+    title->setText(tr("Reputations"));
 }
 
 void Reputations::setVar(ConnexionManager *connexionManager)
 {
     this->connexionManager=connexionManager;
 
-    std::string html="<ul>";
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+    if(playerInformations.reputation.size()==0)
+    {
+        labelReputation->setHtml(tr("Empty"));
+        return;
+    }
+    std::string html="<ul>";
     auto i=playerInformations.reputation.begin();
     while(i!=playerInformations.reputation.cend())
     {

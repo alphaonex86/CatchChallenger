@@ -1,11 +1,16 @@
-#include "OverMapLogic.hpp"
+﻿#include "OverMapLogic.hpp"
 #include "../ConnexionManager.hpp"
 #include "../AudioGL.hpp"
+#include "../QGraphicsPixmapItemClick.hpp"
 #include "../background/CCMap.hpp"
 #include "../cc/QtDatapackClientLoader.hpp"
 #include "../above/inventory/Inventory.hpp"
 #include "../above/inventory/Plant.hpp"
 #include "../above/inventory/Crafting.hpp"
+#include "../above/player/Player.hpp"
+#include "../above/player/Reputations.hpp"
+#include "../above/player/Quests.hpp"
+#include "../above/player/FinishedQuests.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
@@ -15,10 +20,17 @@ OverMapLogic::OverMapLogic()
     inventory=nullptr;
     plant=nullptr;
     crafting=nullptr;
+    inventoryIndex=0;
+
+    player=nullptr;
+    reputations=nullptr;
+    quests=nullptr;
+    finishedQuests=nullptr;
+    playerIndex=0;
+
     multiplayer=true;
     lastReplyTimeValue=0;
     worseQueryTime=0;
-    inventoryIndex=0;
 
     checkQueryTime.start(200);
     if(!connect(&checkQueryTime,&QTimer::timeout,   this,&OverMapLogic::detectSlowDown))
@@ -66,20 +78,11 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
     if(!connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
         abort();
 
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtclanActionFailed,   this,&OverMapLogic::clanActionFailed, Qt::QueuedConnection))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtclanActionSuccess,  this,&OverMapLogic::clanActionSuccess,Qt::QueuedConnection))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtclanDissolved,      this,&OverMapLogic::clanDissolved,    Qt::QueuedConnection))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtclanInformations,   this,&OverMapLogic::clanInformations, Qt::QueuedConnection))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtclanInvite,         this,&OverMapLogic::clanInvite,       Qt::QueuedConnection))
-        abort();
-
     OverMap::setVar(ccmap,connexionManager);
 
     if(!connect(bag,&CustomButton::clicked,this,&OverMapLogic::bag_open))
+        abort();
+    if(!connect(playerBackground,&QGraphicsPixmapItemClick::clicked,this,&OverMapLogic::player_open))
         abort();
 }
 
@@ -504,6 +507,7 @@ void OverMapLogic::bag_open()
     }
     inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
     setAbove(inventory);
+    inventoryIndex=0;
 }
 
 void OverMapLogic::inventoryNext()
@@ -618,6 +622,153 @@ void OverMapLogic::inventoryBack()
         return;
     }
     inventoryIndex--;
+}
+
+void OverMapLogic::player_open()
+{
+    if(player==nullptr)
+    {
+        player=new Player();
+        if(!connect(player,&Player::setAbove,this,&OverMapLogic::setAbove))
+            abort();
+        if(!connect(player,&Player::sendNext,this,&OverMapLogic::playerNext))
+            abort();
+        if(!connect(player,&Player::sendBack,this,&OverMapLogic::playerBack))
+            abort();
+    }
+    player->setVar(connexionManager);
+    setAbove(player);
+    playerIndex=0;
+}
+
+void OverMapLogic::playerNext()
+{
+    switch(playerIndex)
+    {
+        case 0:
+        if(reputations==nullptr)
+        {
+            reputations=new Reputations();
+            if(!connect(reputations,&Reputations::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(reputations,&Reputations::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(reputations,&Reputations::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        reputations->setVar(connexionManager);
+        setAbove(reputations);
+        break;
+        case 1:
+        if(quests==nullptr)
+        {
+            quests=new Quests();
+            if(!connect(quests,&Quests::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(quests,&Quests::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(quests,&Quests::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        quests->setVar(connexionManager);
+        setAbove(quests);
+        break;
+        case 2:
+        if(finishedQuests==nullptr)
+        {
+            finishedQuests=new FinishedQuests();
+            if(!connect(finishedQuests,&FinishedQuests::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(finishedQuests,&FinishedQuests::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(finishedQuests,&FinishedQuests::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        finishedQuests->setVar(connexionManager);
+        setAbove(finishedQuests);
+        break;
+        default:
+        if(player==nullptr)
+        {
+            player=new Player();
+            if(!connect(player,&Player::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(player,&Player::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(player,&Player::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        player->setVar(connexionManager);
+        setAbove(player);
+        playerIndex=0;
+        return;
+    }
+    playerIndex++;
+}
+
+void OverMapLogic::playerBack()
+{
+    switch(playerIndex)
+    {
+        case 1:
+        if(player==nullptr)
+        {
+            player=new Player();
+            if(!connect(player,&Player::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(player,&Player::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(player,&Player::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        player->setVar(connexionManager);
+        setAbove(player);
+        break;
+        case 2:
+        if(reputations==nullptr)
+        {
+            reputations=new Reputations();
+            if(!connect(reputations,&Reputations::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(reputations,&Reputations::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(reputations,&Reputations::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        reputations->setVar(connexionManager);
+        setAbove(reputations);
+        break;
+        case 3:
+        if(quests==nullptr)
+        {
+            quests=new Quests();
+            if(!connect(quests,&Quests::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(quests,&Quests::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(quests,&Quests::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        quests->setVar(connexionManager);
+        setAbove(quests);
+        break;
+        default:
+        if(finishedQuests==nullptr)
+        {
+            finishedQuests=new FinishedQuests();
+            if(!connect(finishedQuests,&FinishedQuests::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(finishedQuests,&FinishedQuests::sendNext,this,&OverMapLogic::playerNext))
+                abort();
+            if(!connect(finishedQuests,&FinishedQuests::sendBack,this,&OverMapLogic::playerBack))
+                abort();
+        }
+        finishedQuests->setVar(connexionManager);
+        setAbove(finishedQuests);
+        playerIndex=2;
+        return;
+    }
+    playerIndex--;
 }
 
 void OverMapLogic::currentMapLoaded()

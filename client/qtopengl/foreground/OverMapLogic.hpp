@@ -17,6 +17,10 @@ class ConnexionManager;
 class Inventory;
 class Plant;
 class Crafting;
+class Player;
+class Reputations;
+class Quests;
+class FinishedQuests;
 
 class OverMapLogic : public OverMap
 {
@@ -86,6 +90,9 @@ public slots:
     void bag_open();
     void inventoryNext();
     void inventoryBack();
+    void player_open();
+    void playerNext();
+    void playerBack();
 
     void pathFindingNotFound();
     void repelEffectIsOver();
@@ -228,6 +235,12 @@ private:
     Plant *plant;
     Crafting *crafting;
     int inventoryIndex;
+
+    Player *player;
+    Reputations *reputations;
+    Quests *quests;
+    FinishedQuests *finishedQuests;
+    int playerIndex;
 
     QTimer tip_timeout;
     QTimer gain_timeout;

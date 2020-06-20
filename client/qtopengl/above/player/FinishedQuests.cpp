@@ -135,7 +135,7 @@ void FinishedQuests::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidge
     back->setPos(widget->width()/2-label.pixmap().width()/2*label.scale()-back->width(),label.y());
     next->setPos(widget->width()/2+label.pixmap().width()/2*label.scale(),label.y());
 
-    finishedQuests->setPos(space,space);
+    finishedQuests->setPos(space,space+label.pixmap().height()/2*label.scale());
     finishedQuests->setTextWidth(idealW-space*2);
 
     finishedQuests->setFont(font);
