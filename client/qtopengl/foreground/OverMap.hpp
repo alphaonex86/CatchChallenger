@@ -14,6 +14,7 @@ class ComboBox;
 class CustomText;
 class ConnexionManager;
 class CCMap;
+class QGraphicsPixmapItemClick;
 
 class OverMap : public ScreenInput
 {
@@ -37,6 +38,7 @@ public:
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
+    void mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);
     void keyPressEvent(QKeyEvent * event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void lineEdit_chat_text_returnPressed();
@@ -55,11 +57,15 @@ protected:
     std::string lastMessageSend;
     ConnexionManager *connexionManager;
 
-    QGraphicsPixmapItem *playerUI;
-    QGraphicsPixmapItem *player;
+    QGraphicsPixmapItemClick *playerBackground;
+    bool playerBackgroundBig;
+    QGraphicsPixmapItem *playerImage;
     QGraphicsTextItem *name;
     QGraphicsTextItem *cash;
     QList<MapMonsterPreview *> monsters;
+    QPointF m_startPress;
+    bool wasDragged;
+    MapMonsterPreview * monstersDragged;
 
     QGraphicsPixmapItem *playersCountBack;
     QGraphicsTextItem *playersCount;

@@ -7,6 +7,7 @@
 #include "../CustomText.hpp"
 #include "../LineEdit.hpp"
 #include "../ComboBox.hpp"
+#include "../QGraphicsPixmapItemClick.hpp"
 #include "widgets/MapMonsterPreview.hpp"
 #include <QTreeWidgetItem>
 #include <QHeaderView>
@@ -16,12 +17,15 @@
 OverMap::OverMap()
 {
     connexionManager=nullptr;
+    monstersDragged=nullptr;
+    wasDragged=false;
 
-    playerUI=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"),this);
-    playerUI->setVisible(false);
-    player=new QGraphicsPixmapItem(playerUI);
-    name=new QGraphicsTextItem(playerUI);
-    cash=new QGraphicsTextItem(playerUI);
+    playerBackground=new QGraphicsPixmapItemClick(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"),this);
+    playerBackgroundBig=true;
+    playerBackground->setVisible(false);
+    playerImage=new QGraphicsPixmapItem(playerBackground);
+    name=new QGraphicsTextItem(playerBackground);
+    cash=new QGraphicsTextItem(playerBackground);
 
     playersCountBack=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/multicount.png"),this);
     playersCount=new QGraphicsTextItem(this);
@@ -166,10 +170,11 @@ void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
 
 void OverMap::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
-    playerUI->setVisible(true);
+    playerBackground->setVisible(true);
     QPixmap pPixm=QString::fromStdString(QtDatapackClientLoader::datapackLoader->getFrontSkinPath(informations.public_informations.skinId));
-    pPixm=pPixm.scaledToHeight(pPixm.height()*2,Qt::FastTransformation);
-    player->setPixmap(pPixm);
+    if(playerBackgroundBig==true)
+        pPixm=pPixm.scaledToHeight(pPixm.height()*2,Qt::FastTransformation);
+    playerImage->setPixmap(pPixm);
     name->setHtml("<span style=\"color:#fff;\">"+QString::fromStdString(informations.public_informations.pseudo)+"<span>");
     std::cout << "info.public_informations.pseudo: " << informations.public_informations.pseudo << std::endl;
     cash->setHtml("<span style=\"color:#fff;\">"+QString::number(informations.cash)+"<span>");
@@ -208,17 +213,58 @@ QRectF OverMap::boundingRect() const
 void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 {
     unsigned int space=10;
-    if(playerUI->isVisible())
+    if(playerBackground->isVisible())
     {
-        playerUI->setPos(space,space);
-        player->setPos(0,-10);
-        name->setPos(playerUI->x()+160,playerUI->y()+10);
-        cash->setPos(playerUI->x()+220,playerUI->y()+57);
+        if(playerBackgroundBig==true && (w->width()<800 || w->height()<600))
+        {
+            playerBackgroundBig=false;
+            playerBackground->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/playeruiL.png"));
+
+            const CatchChallenger::Player_private_and_public_informations &informations=connexionManager->client->get_player_informations_ro();
+            QPixmap pPixm=QString::fromStdString(QtDatapackClientLoader::datapackLoader->getFrontSkinPath(informations.public_informations.skinId));
+            playerImage->setPixmap(pPixm);
+
+        }
+        else if(playerBackgroundBig==false && w->width()>800 && w->height()>600)
+        {
+            playerBackgroundBig=true;
+            playerBackground->setPixmap(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"));
+
+            const CatchChallenger::Player_private_and_public_informations &informations=connexionManager->client->get_player_informations_ro();
+            QPixmap pPixm=QString::fromStdString(QtDatapackClientLoader::datapackLoader->getFrontSkinPath(informations.public_informations.skinId));
+            pPixm=pPixm.scaledToHeight(pPixm.height()*2,Qt::FastTransformation);
+            playerImage->setPixmap(pPixm);
+
+        }
+        if(playerBackgroundBig==true)
+            playerImage->setPos(0,-10);
+        else
+            playerImage->setPos(0,-5);
+        playerBackground->setPos(space,space);
+        if(playerBackgroundBig)
+        {
+            name->setPos(playerBackground->x()+160,playerBackground->y()+10);
+            cash->setPos(playerBackground->x()+220,playerBackground->y()+57);
+            name->setVisible(true);
+            cash->setVisible(true);
+        }
+        else
+        {
+            name->setVisible(false);
+            cash->setVisible(false);
+        }
+        int tempx=playerBackground->x()+playerBackground->pixmap().width()+space;
+        if(playerBackgroundBig!=true)
+            tempx=playerBackground->x()+playerBackground->pixmap().width();
         unsigned int monsterIndex=0;
         while(monsterIndex<monsters.size())
         {
             MapMonsterPreview *m=monsters.at(monsterIndex);
-            m->setPos(playerUI->x()+425+space+monsterIndex*(space+56),playerUI->y());
+            if(playerBackgroundBig==true)
+                m->setPos(tempx,playerBackground->y());
+            else
+                m->setPos(tempx,0);
+            tempx+=monsterIndex*(space+56);
             monsterIndex++;
         }
     }
@@ -229,7 +275,16 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     int physicalDpiX=w->physicalDpiX();
 
     unsigned int xLeft=space;
-    chat->setSize(84,93);
+    if(w->width()<800 || w->height()<600)
+    {
+        chat->setSize(84/2,93/2);
+        chatOver->setVisible(false);
+    }
+    else
+    {
+        chat->setSize(84,93);
+        chatOver->setVisible(physicalDpiX<200);
+    }
     if(w->width()<800 || w->height()<600)
     {
         chatBack->setSize(200,200);
@@ -246,9 +301,11 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     unsigned int chatY=w->height()-space-chat->height();
     chat->setPos(chatX,chatY);
     xLeft+=chat->width()+space;
-    chatOver->setVisible(physicalDpiX<200);
-    chatOver->setPixelSize(18);
-    chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
+    if(chatOver->isVisible())
+    {
+        chatOver->setPixelSize(18);
+        chatOver->setPos(chatX+chat->width()/2-chatOver->boundingRect().width()/2,w->height()-space-chatOver->boundingRect().height());
+    }
     chatBack->setVisible(chat->isChecked());
     chatText->setVisible(chat->isChecked());
     chatInput->setVisible(chat->isChecked());
@@ -273,22 +330,44 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     unsigned int xRight=w->width()-space;
     if(buy->isVisible())
     {
-        buy->setSize(84,93);
+        if(w->width()<800 || w->height()<600)
+        {
+            buy->setSize(84/2,93/2);
+            buyOver->setVisible(false);
+        }
+        else
+        {
+            buy->setSize(84,93);
+            buyOver->setVisible(physicalDpiX<200);
+        }
         unsigned int buyX=xRight-buy->width();
         buy->setPos(buyX,w->height()-space-buy->height());
         xRight-=buy->width()+space;
-        buyOver->setVisible(physicalDpiX<200);
-        buyOver->setPixelSize(18);
-        buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
+        if(buyOver->isVisible())
+        {
+            buyOver->setPixelSize(18);
+            buyOver->setPos(buyX+buy->width()/2-buyOver->boundingRect().width()/2,w->height()-space-buyOver->boundingRect().height());
+        }
     }
     {
-        bag->setSize(84,93);
+        if(w->width()<800 || w->height()<600)
+        {
+            bag->setSize(84/2,93/2);
+            bagOver->setVisible(false);
+        }
+        else
+        {
+            bag->setSize(84,93);
+            bagOver->setVisible(physicalDpiX<200);
+        }
         unsigned int bagX=xRight-bag->width();
         bag->setPos(bagX,w->height()-space-bag->height());
         xRight-=bag->width()+space;
-        bagOver->setVisible(physicalDpiX<200);
-        bagOver->setPixelSize(18);
-        bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
+        if(bagOver->isVisible())
+        {
+            bagOver->setPixelSize(18);
+            bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
+        }
     }
     Q_UNUSED(xRight);
 
@@ -395,10 +474,26 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
         if(!t2.contains(p))
             chatInput->clearFocus();
     }
+
+    playerBackground->mousePressEventXY(p,pressValidated);
+    for (int i = 0; i < monsters.size(); ++i)
+    {
+        bool previousState=pressValidated;
+        monsters.at(i)->mousePressEventXY(p,pressValidated);
+        if(previousState==false && pressValidated==true)
+        {
+            wasDragged=false;
+            m_startPress=p;
+            monstersDragged=monsters.at(i);
+        }
+    }
 }
 
 void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
 {
+    if(monstersDragged!=nullptr)
+        monstersDragged->setInDrag(false);
+    monstersDragged=nullptr;
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
@@ -421,6 +516,30 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
         const QRectF &t2=mapRectToScene(b2);
         if(!t2.contains(p))
             chatInput->clearFocus();
+    }
+
+    playerBackground->mouseReleaseEventXY(p,pressValidated);
+    if(wasDragged)
+        pressValidated=true;
+    for (int i = 0; i < monsters.size(); ++i)
+        monsters.at(i)->mouseReleaseEventXY(p,pressValidated);
+    wasDragged=false;
+    m_startPress=QPointF(0.0,0.0);
+}
+
+void OverMap::mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass)
+{
+    qreal xDiff=p.x()-m_startPress.x();
+    qreal yDiff=p.y()-m_startPress.y();
+    if(xDiff<-10 || xDiff>10 || yDiff<-10 || yDiff>10)
+    {
+        wasDragged=true;
+        if(monstersDragged!=nullptr)
+        {
+            bool fakeBool=true;
+            monstersDragged->mouseReleaseEventXY(p,fakeBool);
+            monstersDragged->setInDrag(true);
+        }
     }
 }
 

@@ -9,11 +9,21 @@ MapMonsterPreview::MapMonsterPreview(const CatchChallenger::PlayerMonster &monst
     QGraphicsPixmapItem(parent)
 {
     this->monster=monster;
+    pressed=false;
+    m_drag=false;
     regenCache();
 }
 
 MapMonsterPreview::~MapMonsterPreview()
 {
+}
+
+void MapMonsterPreview::setInDrag(bool drag)
+{
+    if(m_drag==drag)
+        return;
+    m_drag=drag;
+    regenCache();
 }
 
 void MapMonsterPreview::regenCache()
@@ -22,7 +32,11 @@ void MapMonsterPreview::regenCache()
     cache.fill(Qt::transparent);
     QPainter painter(&cache);
 
-    QPixmap background=*GameLoader::gameLoader->getImage(":/CC/images/interface/mgb.png");
+    QPixmap background;
+    if(m_drag)
+        background=*GameLoader::gameLoader->getImage(":/CC/images/interface/mgbDrag.png");
+    else
+        background=*GameLoader::gameLoader->getImage(":/CC/images/interface/mgb.png");
     unsigned int bx=cache.width()/2-background.width()/2;
     unsigned int by=cache.height()/2-background.height()/2;
     painter.drawPixmap(bx,by,background.width(),background.height(),background);
@@ -47,4 +61,58 @@ void MapMonsterPreview::regenCache()
     painter.drawPixmap(bx+3,by+46,bar.width()*stat.hp/monster.hp,bar.height(),bar);
 
     setPixmap(QPixmap::fromImage(cache));
+}
+
+void MapMonsterPreview::mousePressEventXY(const QPointF &p,bool &pressValidated)
+{
+    if(this->pressed)
+        return;
+    if(pressValidated)
+        return;
+    if(!isVisible())
+        return;
+    if(!isEnabled())
+        return;
+    const QRectF &b=boundingRect();
+    const QRectF &t=mapRectToScene(b);
+    if(t.contains(p))
+    {
+        pressValidated=true;
+        setPressed(true);
+    }
+}
+
+void MapMonsterPreview::mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated)
+{
+    if(previousPressValidated)
+    {
+        setPressed(false);
+        return;
+    }
+    const QRectF &b=boundingRect();
+    const QRectF &t=mapRectToScene(b);
+    if(!this->pressed)
+        return;
+    if(!isEnabled())
+        return;
+    if(!previousPressValidated && isVisible())
+    {
+        if(t.contains(p))
+        {
+            emit clicked();
+            previousPressValidated=true;
+        }
+    }
+    setPressed(false);
+}
+
+void MapMonsterPreview::setPressed(const bool &pressed)
+{
+    this->pressed=pressed;
+    //regenCache();
+}
+
+bool MapMonsterPreview::isPressed()
+{
+    return this->pressed;
 }

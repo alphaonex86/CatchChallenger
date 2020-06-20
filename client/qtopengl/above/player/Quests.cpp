@@ -31,7 +31,7 @@ Quests::Quests() :
     next=new CustomButton(":/CC/images/interface/next.png",this);
     back=new CustomButton(":/CC/images/interface/back.png",this);
 
-    proxy=new QGraphicsProxyWidget(this);
+    proxy=new QGraphicsProxyWidget(wdialog);
     questsList=new QListWidget();
     proxy->setWidget(questsList);
 
@@ -127,11 +127,11 @@ void Quests::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widge
     back->setPos(widget->width()/2-label.pixmap().width()/2*label.scale()-back->width(),label.y());
     next->setPos(widget->width()/2+label.pixmap().width()/2*label.scale(),label.y());
 
-    questsList->setFixedSize(idealW/2-space-space/2,idealH-space*2);
-    proxy->setPos(space,space);
-    questDetails->setPos(space+idealW+space,space);
-    questDetails->setTextWidth(idealW/2-space*2);
-    cancelButton->setPos(idealW*3/2-cancelButton->width()/2,idealH-space-cancelButton->height());
+    questsList->setFixedSize(idealW/2-space-space/2,idealH-space*2-label.pixmap().height()/2*label.scale());
+    proxy->setPos(space,space+label.pixmap().height()/2*label.scale());
+    questDetails->setPos(space+idealW/2+space,space+label.pixmap().height()/2*label.scale());
+    questDetails->setTextWidth(idealW/2-space*2-label.pixmap().height()/2*label.scale());
+    cancelButton->setPos(idealW*3/4-cancelButton->width()/2,idealH-space-cancelButton->height());
 
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
@@ -171,7 +171,7 @@ void Quests::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 
 void Quests::newLanguage()
 {
-    title->setText(tr("Bag","You can translate by inventory if the word is shorter"));
+    title->setText(tr("Quests"));
     cancelButton->setText(tr("Cancel"));
 }
 

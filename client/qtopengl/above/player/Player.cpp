@@ -128,12 +128,16 @@ void Player::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *widge
     type_label->setFont(font);
     type_value->setFont(font);
 
-    name_label->setPos(space,space);
-    name_value->setPos(idealW/2,space);
-    cash_label->setPos(space,space+name_label->boundingRect().height());
-    cash_value->setPos(idealW/2,space+name_label->boundingRect().height());
-    type_label->setPos(space,space+name_label->boundingRect().height()+cash_label->boundingRect().height());
-    type_value->setPos(idealW/2,space+name_label->boundingRect().height()+cash_label->boundingRect().height());
+    int tempY=space+label.pixmap().height()/2*label.scale();
+    name_label->setPos(space,tempY);
+    name_value->setPos(idealW/2,tempY);
+    tempY+=name_label->boundingRect().height()+space;
+    cash_label->setPos(space,tempY);
+    cash_value->setPos(idealW/2,tempY);
+    tempY+=cash_label->boundingRect().height()+space;
+    type_label->setPos(space,tempY);
+    type_value->setPos(idealW/2,tempY);
+    tempY+=type_label->boundingRect().height()+space;
 
     const QRectF trect=title->boundingRect();
     title->setPos(x+(idealW-title->boundingRect().width())/2,y-trect.height()/2);
@@ -174,6 +178,10 @@ void Player::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 void Player::newLanguage()
 {
     title->setText(tr("Player"));
+
+    name_label->setHtml("Name: ");
+    cash_label->setHtml("Cash: ");
+    type_label->setHtml("Type: ");
 }
 
 void Player::setVar(ConnexionManager *connexionManager)
