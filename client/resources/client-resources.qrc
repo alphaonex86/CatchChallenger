@@ -114,7 +114,9 @@
         <file>images/interface/mborange.png</file>
         <file>images/interface/mbred.png</file>
         <file>images/interface/mgb.png</file>
+        <file>images/interface/mgbDrag.png</file>
         <file>images/interface/playerui.png</file>
+        <file>images/interface/playeruiL.png</file>
         <file>images/interface/chatBackground.png</file>
     </qresource>
 </RCC>
