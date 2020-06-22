@@ -53,7 +53,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>5</number>
+        <number>15</number>
        </property>
        <widget class="QWidget" name="page_serverList">
         <layout class="QVBoxLayout" name="verticalLayout_36">
@@ -6602,7 +6602,7 @@ padding-bottom:3px;
          <item>
           <widget class="QTabWidget" name="tabWidgetEncyclopedia">
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tabEncyclopediaMonster">
             <attribute name="icon">
