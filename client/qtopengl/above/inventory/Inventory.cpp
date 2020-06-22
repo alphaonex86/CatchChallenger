@@ -65,8 +65,8 @@ Inventory::Inventory() :
 Inventory::~Inventory()
 {
     delete wdialog;
-    delete quit;
-    delete title;
+    /*delete quit;
+    delete title;*/
 }
 
 void Inventory::removeAbove()

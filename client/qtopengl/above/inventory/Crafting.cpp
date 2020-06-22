@@ -66,8 +66,8 @@ Crafting::Crafting() :
 Crafting::~Crafting()
 {
     delete wdialog;
-    delete quit;
-    delete title;
+    //delete quit;
+    //delete title;
 }
 
 void Crafting::removeAbove()
@@ -209,8 +209,7 @@ void Crafting::setVar(ConnexionManager *connexionManager,int lastItemSelected)
 {
     this->connexionManager=connexionManager;
     this->lastItemSelected=lastItemSelected;
-    if(!connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QtrecipeUsed,this,&Crafting::recipeUsed,Qt::UniqueConnection))
-        abort();
+    connect(connexionManager->client,&CatchChallenger::Api_protocol_Qt::QtrecipeUsed,this,&Crafting::recipeUsed,Qt::UniqueConnection);
     /*materialOfRecipeInUsing.clear();
     productOfRecipeInUsing.clear();*/
     updateCrafting();

@@ -72,8 +72,8 @@ Plant::Plant() :
 Plant::~Plant()
 {
     delete wdialog;
-    delete quit;
-    delete title;
+    /*delete quit;
+    delete title;*/
 }
 
 void Plant::removeAbove()
@@ -276,7 +276,8 @@ void Plant::updatePlant()
             const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->QtplantExtra[id];
             const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[id];
             QTreeWidgetItem *item=new QTreeWidgetItem();
-            if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(id)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+            if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(id)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend()
+                    && contentExtra.tileset!=nullptr)
             {
                 QPixmap p=QtDatapackClientLoader::datapackLoader->getImageExtra(id).image;
                 //Plant::setCanvas(p,64)
@@ -285,11 +286,14 @@ void Plant::updatePlant()
 
                 item->setText(0,QString::fromStdString(itemExtra.name)+"\n"+tr("Quantity: ")+QString::number(i->second)+" ");
 
-                item->setIcon(1,Plant::setCanvas(contentExtra.tileset->tileAt(0)->image(),32));
-                item->setIcon(2,Plant::setCanvas(contentExtra.tileset->tileAt(1)->image(),32));
-                item->setIcon(3,Plant::setCanvas(contentExtra.tileset->tileAt(2)->image(),32));
-                item->setIcon(4,Plant::setCanvas(contentExtra.tileset->tileAt(3)->image(),32));
-                item->setIcon(5,Plant::setCanvas(contentExtra.tileset->tileAt(4)->image(),32));
+                if(contentExtra.tileset!=nullptr)
+                {
+                    item->setIcon(1,Plant::setCanvas(contentExtra.tileset->tileAt(0)->image(),32));
+                    item->setIcon(2,Plant::setCanvas(contentExtra.tileset->tileAt(1)->image(),32));
+                    item->setIcon(3,Plant::setCanvas(contentExtra.tileset->tileAt(2)->image(),32));
+                    item->setIcon(4,Plant::setCanvas(contentExtra.tileset->tileAt(3)->image(),32));
+                    item->setIcon(5,Plant::setCanvas(contentExtra.tileset->tileAt(4)->image(),32));
+                }
 
                 item->setText(5,QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(plant.fruits_seconds)));
                 item->setText(6,tr("Quantity: %1").arg((double)plant.fix_quantity+((double)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
@@ -303,11 +307,14 @@ void Plant::updatePlant()
                 else
                     item->setText(0,QStringLiteral("id: %1").arg(id));
 
-                item->setIcon(1,contentExtra.tileset->tileAt(0)->image());
-                item->setIcon(2,contentExtra.tileset->tileAt(1)->image());
-                item->setIcon(3,contentExtra.tileset->tileAt(2)->image());
-                item->setIcon(4,contentExtra.tileset->tileAt(3)->image());
-                item->setIcon(5,contentExtra.tileset->tileAt(4)->image());
+                if(contentExtra.tileset!=nullptr)
+                {
+                    item->setIcon(1,Plant::setCanvas(contentExtra.tileset->tileAt(0)->image(),32));
+                    item->setIcon(2,Plant::setCanvas(contentExtra.tileset->tileAt(1)->image(),32));
+                    item->setIcon(3,Plant::setCanvas(contentExtra.tileset->tileAt(2)->image(),32));
+                    item->setIcon(4,Plant::setCanvas(contentExtra.tileset->tileAt(3)->image(),32));
+                    item->setIcon(5,Plant::setCanvas(contentExtra.tileset->tileAt(4)->image(),32));
+                }
 
                 item->setText(5,QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(plant.fruits_seconds)));
                 item->setText(6,tr("Quantity: %1").arg((double)plant.fix_quantity+((double)plant.random_quantity)/RANDOM_FLOAT_PART_DIVIDER));
