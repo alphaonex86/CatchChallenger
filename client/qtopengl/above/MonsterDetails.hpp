@@ -8,6 +8,7 @@
 
 class CustomButton;
 class CustomText;
+class ProgressBarPixel;
 
 class MonsterDetails : public ScreenInput
 {
@@ -36,11 +37,9 @@ private:
     CustomText *monsterDetailsName;
     QGraphicsTextItem *monsterDetailsLevel;
     QGraphicsTextItem *hp_text;
-    QGraphicsPixmapItem *hp_back;
-    QGraphicsPixmapItem *hp_bar;
+    ProgressBarPixel *hp_bar;
     QGraphicsTextItem *xp_text;
-    QGraphicsPixmapItem *xp_back;
-    QGraphicsPixmapItem *xp_bar;
+    ProgressBarPixel *xp_bar;
 };
 
 #endif // MONSTERDETAILS_H

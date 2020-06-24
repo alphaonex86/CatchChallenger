@@ -1,8 +1,9 @@
-#include "CCprogressbar.hpp"
+#include "ProgressBarPixel.hpp"
 #include <QPainter>
 
-CCprogressbar::CCprogressbar(QGraphicsItem *parent) :
-    QGraphicsItem(parent)
+ProgressBarPixel::ProgressBarPixel(QGraphicsItem *parent,const bool onlygreen) :
+    QGraphicsItem(parent),
+    onlygreen(onlygreen)
 {
     textPath=nullptr;
 
@@ -12,7 +13,7 @@ CCprogressbar::CCprogressbar(QGraphicsItem *parent) :
     font->setStyleHint(QFont::Monospace);
     font->setBold(true);
     font->setStyleStrategy(QFont::ForceOutline);
-    m_boundingRect=QRectF(0.0,0.0,200.0,82.0);
+    m_boundingRect=QRectF(0.0,0.0,50.0,8.0);
     cache=nullptr;
 
     m_value=0;
@@ -20,7 +21,7 @@ CCprogressbar::CCprogressbar(QGraphicsItem *parent) :
     m_max=0;
 }
 
-CCprogressbar::~CCprogressbar()
+ProgressBarPixel::~ProgressBarPixel()
 {
     if(textPath!=nullptr)
     {
@@ -39,12 +40,12 @@ CCprogressbar::~CCprogressbar()
     }
 }
 
-QRectF CCprogressbar::boundingRect() const
+QRectF ProgressBarPixel::boundingRect() const
 {
     return m_boundingRect;
 }
 
-void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
+void ProgressBarPixel::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     if(cache!=nullptr)
     {
@@ -63,31 +64,41 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
         abort();
     paint.begin(&image);
 
+    QPixmap backgroundLeft,backgroundMiddle,backgroundRight;
+    QPixmap barLeft,barMiddle,barRight;
     if(backgroundLeft.isNull() || backgroundLeft.height()!=m_boundingRect.height())
     {
-        QPixmap background(":/CC/images/interface/Pbarbackground.png");
+        QPixmap background(":/CC/images/interface/mbb.png");
         if(background.isNull())
             abort();
-        QPixmap bar(":/CC/images/interface/Pbarforeground.png");
+        QPixmap bar;
+        int val=m_value;
+        int max=m_max;
+        if(val>(max/2) || onlygreen)
+            bar=QPixmap(":/CC/images/interface/mbgreen.png");
+        else if(value()>(maximum()/4))
+            bar=QPixmap(":/CC/images/interface/mborange.png");
+        else
+            bar=QPixmap(":/CC/images/interface/mbred.png");
         if(bar.isNull())
             abort();
         if(m_boundingRect.height()==background.height())
         {
-            backgroundLeft=background.copy(0,0,41,82);
-            backgroundMiddle=background.copy(41,0,824,82);
-            backgroundRight=background.copy(865,0,41,82);
-            barLeft=bar.copy(0,0,26,82);
-            barMiddle=bar.copy(26,0,620,82);
-            barRight=bar.copy(646,0,26,82);
+            backgroundLeft=background.copy(0,0,3,8);
+            backgroundMiddle=background.copy(3,0,44,8);
+            backgroundRight=background.copy(47,0,3,8);
+            barLeft=bar.copy(0,0,2,8);
+            barMiddle=bar.copy(2,0,46,8);
+            barRight=bar.copy(48,0,2,8);
         }
         else
         {
-            backgroundLeft=background.copy(0,0,41,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
-            backgroundMiddle=background.copy(41,0,824,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
-            backgroundRight=background.copy(865,0,41,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
-            barLeft=bar.copy(0,0,26,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
-            barMiddle=bar.copy(26,0,620,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
-            barRight=bar.copy(646,0,26,82).scaledToHeight(m_boundingRect.height(),Qt::SmoothTransformation);
+            backgroundLeft=background.copy(0,0,3,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
+            backgroundMiddle=background.copy(3,0,44,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
+            backgroundRight=background.copy(47,0,3,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
+            barLeft=bar.copy(0,0,2,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
+            barMiddle=bar.copy(2,0,46,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
+            barRight=bar.copy(48,0,2,8).scaledToHeight(m_boundingRect.height(),Qt::FastTransformation);
         }
     }
     paint.drawPixmap(0,0,backgroundLeft.width(),    backgroundLeft.height(),    backgroundLeft);
@@ -95,7 +106,7 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
                      m_boundingRect.width()-backgroundLeft.width()-backgroundRight.width(),    backgroundLeft.height(),backgroundMiddle);
     paint.drawPixmap(m_boundingRect.width()-backgroundRight.width(),0,                         backgroundRight.width(),    backgroundRight.height(),backgroundRight);
 
-    int startX=18*m_boundingRect.height()/82;
+    int startX=0;//18*m_boundingRect.height()/8;
     int size=m_boundingRect.width()-startX-startX;
     int inpixel=value()*size/maximum();
     if(inpixel<(barLeft.width()+barRight.width()))
@@ -126,45 +137,6 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
         paint.drawPixmap(startX+barLeft.width()+pixelremaining,  0,barRight.width(),                  barRight.height(),barRight);
     }
 
-    if(false)
-    {
-        const unsigned int fontheight=m_boundingRect.height()/4;
-        if(fontheight>=11)
-        {
-            QString text="%p";
-            text.replace("%p",QString::number(value()*100/maximum()));
-
-            if(oldText!=text)
-            {
-                font->setPixelSize(fontheight);
-                if(textPath!=nullptr)
-                    delete textPath;
-                QPainterPath tempPath;
-                tempPath.addText(0, 0, *font, text);
-                QRectF rect=tempPath.boundingRect();
-                textPath=new QPainterPath();
-                const int h=m_boundingRect.height();
-                const int newHeight=h*95/100;
-                const int p=font->pointSize();
-                const int tempHeight=newHeight/2+p/2;
-                textPath->addText(m_boundingRect.width()/2-rect.width()/2, tempHeight, *font, text);
-
-                oldText=text;
-            }
-
-            if(paint.isActive())
-            {
-                paint.setRenderHint(QPainter::Antialiasing);
-                int penWidth=1;
-                if(fontheight>16)
-                    penWidth=2;
-                paint.setPen(QPen(QColor(14,102,0)/*penColor*/, penWidth/*penWidth*/, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-                paint.setBrush(Qt::white);
-                paint.drawPath(*textPath);
-            }
-        }
-    }
-
     *cache=QPixmap::fromImage(image);
 
     {
@@ -173,7 +145,7 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
     }
 }
 
-void CCprogressbar::setMaximum(const int &value)
+void ProgressBarPixel::setMaximum(const int &value)
 {
     if(this->m_max==value)
         return;
@@ -185,7 +157,7 @@ void CCprogressbar::setMaximum(const int &value)
     }
 }
 
-void CCprogressbar::setMinimum(const int &value)
+void ProgressBarPixel::setMinimum(const int &value)
 {
     if(this->m_min==value)
         return;
@@ -197,7 +169,7 @@ void CCprogressbar::setMinimum(const int &value)
     }
 }
 
-void CCprogressbar::setValue(const int &value)
+void ProgressBarPixel::setValue(const int &value)
 {
     if(this->m_value==value)
         return;
@@ -209,22 +181,22 @@ void CCprogressbar::setValue(const int &value)
     }
 }
 
-int CCprogressbar::maximum()
+int ProgressBarPixel::maximum()
 {
     return this->m_max;
 }
 
-int CCprogressbar::minimum()
+int ProgressBarPixel::minimum()
 {
     return this->m_min;
 }
 
-int CCprogressbar::value()
+int ProgressBarPixel::value()
 {
     return this->m_value;
 }
 
-void CCprogressbar::setPos(qreal ax, qreal ay)
+void ProgressBarPixel::setPos(qreal ax, qreal ay)
 {
     if(m_boundingRect.x()==ax && m_boundingRect.y()==ay)
         return;
@@ -234,6 +206,7 @@ void CCprogressbar::setPos(qreal ax, qreal ay)
     m_boundingRect.setY(ay);
     m_boundingRect.setWidth(width);
     m_boundingRect.setHeight(height);
+
     if(cache!=nullptr)
     {
         delete cache;
@@ -241,7 +214,7 @@ void CCprogressbar::setPos(qreal ax, qreal ay)
     }
 }
 
-void CCprogressbar::setSize(qreal width,qreal height)
+void ProgressBarPixel::setSize(qreal width,qreal height)
 {
     if(m_boundingRect.width()==width && m_boundingRect.height()==height)
         return;

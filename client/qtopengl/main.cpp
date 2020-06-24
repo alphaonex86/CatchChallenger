@@ -164,10 +164,11 @@ int main(int argc, char *argv[])
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
     Settings::init();
 
-    QFontDatabase::addApplicationFont(":/other/comicbd.ttf");
+    /*QFontDatabase::addApplicationFont(":/other/comicbd.ttf");
     QFont font("Comic Sans MS");
-    font.setStyleHint(QFont::Monospace);
+    font.setStyleHint(QFont::Monospace);*/
     //font.setBold(true);
+    QFont font;
     font.setPixelSize(15);
     QApplication::setFont(font);
 
