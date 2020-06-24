@@ -342,13 +342,7 @@ void Inventory::on_inventory_itemSelectionChanged()
     const QtDatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item->data(99).toInt());
     inventoryDestroy->setEnabled(!inSelection);
     inventory_description->setHtml(QString::fromStdString(content.description));
-    //std::cout << "description: " << content.description << std::endl;
 
-    inventory_description->setVisible(!inSelection &&
-                                         /* is a plant */
-                                         QtDatapackClientLoader::datapackLoader->itemToPlants.find(item->data(99).toInt())!=
-                                         QtDatapackClientLoader::datapackLoader->itemToPlants.cend()
-                                         );
     bool isRecipe=false;
     {
         /* is a recipe */

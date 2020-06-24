@@ -1,5 +1,6 @@
 #include "MonsterDetails.hpp"
 #include "../CustomButton.hpp"
+#include "../ProgressBarPixel.hpp"
 #include "../CustomText.hpp"
 #include "../Language.hpp"
 #include "../cc/QtDatapackClientLoader.hpp"
@@ -12,7 +13,6 @@
 
 MonsterDetails::MonsterDetails()
 {
-
     quit=new CustomButton(":/CC/images/interface/cancel.png",this);
     connect(quit,&CustomButton::clicked,this,&MonsterDetails::removeAbove);
 
@@ -37,12 +37,10 @@ MonsterDetails::MonsterDetails()
     monsterDetailsLevel->setDefaultTextColor(Qt::white);
     hp_text=new QGraphicsTextItem(this);
     hp_text->setDefaultTextColor(Qt::white);
-    hp_back=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/mbb.png"),this);
-    hp_bar=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png"),this);;
+    hp_bar=new ProgressBarPixel(this);
     xp_text=new QGraphicsTextItem(this);
     xp_text->setDefaultTextColor(Qt::white);
-    xp_back=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/mbb.png"),this);;
-    xp_bar=new QGraphicsPixmapItem(*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png"),this);;
+    xp_bar=new ProgressBarPixel(this,true);
 
     if(!connect(&Language::language,&Language::newLanguage,this,&MonsterDetails::newLanguage,Qt::QueuedConnection))
         abort();
@@ -87,10 +85,8 @@ void MonsterDetails::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidge
         bigSpace/=2;
         space=10;
         monsterDetailsCatched->setScale(1.0);
-        hp_back->setScale(2.0);
-        hp_bar->setScale(2.0);
-        xp_back->setScale(2.0);
-        xp_bar->setScale(2.0);
+        hp_bar->setSize(50*2,8*2);
+        xp_bar->setSize(50*2,8*2);
         lineSize=2.0;
         monsterDetailsName->setPixelSize(50/2);
     }
@@ -101,18 +97,14 @@ void MonsterDetails::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidge
         monsterDetailsCatched->setScale(2.0);
         if(widget->width()<1400 || widget->height()<800)
         {
-            hp_back->setScale(3.0);
-            hp_bar->setScale(3.0);
-            xp_back->setScale(3.0);
-            xp_bar->setScale(3.0);
+            hp_bar->setSize(50*3,8*3);
+            xp_bar->setSize(50*3,8*3);
             lineSize=3.0;
         }
         else
         {
-            hp_back->setScale(4.0);
-            hp_bar->setScale(4.0);
-            xp_back->setScale(4.0);
-            xp_bar->setScale(4.0);
+            hp_bar->setSize(50*4,8*4);
+            xp_bar->setSize(50*4,8*4);
             lineSize=4.0;
         }
         monsterDetailsName->setPixelSize(50);
@@ -154,17 +146,17 @@ void MonsterDetails::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidge
                                   tempY-(monsterDetailsCatched->pixmap().height()-monsterDetailsName->boundingRect().height())/2-18);
     monsterDetailsLevel->setPos(widget->width()/2+monsterDetailsName->boundingRect().width()/2+space,tempY+(monsterDetailsName->boundingRect().height()-monsterDetailsLevel->boundingRect().height())/2+15);
 
+    int hp_bar_width=hp_bar->boundingRect().width();
+    int hp_bar_height=hp_bar->boundingRect().height();
     tempY+=monsterDetailsCatched->pixmap().height()*monsterDetailsCatched->scale();
-    unsigned int tempBarW=hp_text->boundingRect().width()+space+hp_back->pixmap().width()*hp_back->scale();
+    unsigned int tempBarW=hp_text->boundingRect().width()+space+hp_bar_width*hp_bar->scale();
     unsigned int tempX=widget->width()/2-tempBarW/2+hp_text->boundingRect().width()+space;
     hp_text->setPos(tempX-hp_text->boundingRect().width()-space/3,tempY+10);
-    int o=+(hp_text->boundingRect().height()-hp_back->pixmap().height())/2;
-    hp_back->setPos(tempX,tempY+o);
+    int o=+(hp_text->boundingRect().height()-hp_bar_height)/2;
     hp_bar->setPos(tempX,tempY+o);
     tempY+=hp_text->boundingRect().height();
     xp_text->setPos(tempX-xp_text->boundingRect().width()-space/3,tempY+10);
-    o=+(hp_text->boundingRect().height()-hp_back->pixmap().height())/2;
-    xp_back->setPos(tempX,tempY+o);
+    o=+(hp_text->boundingRect().height()-hp_bar_height)/2;
     xp_bar->setPos(tempX,tempY+o);
 }
 
@@ -296,16 +288,12 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
     const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
     monsterDetailsLevel->setHtml(QString::number(monster.level));
 
-    QPixmap bar;
-    if(monster.hp>(stat.hp/2))
-        bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png");
-    else if(monster.hp>(stat.hp/4))
-        bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mborange.png");
-    else
-        bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbred.png");
-    hp_bar->setPixmap(bar.scaled(bar.width()*monster.hp/stat.hp,bar.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
-    bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png");
-    xp_bar->setPixmap(bar.scaled(bar.width()*monster.remaining_xp/maxXp,bar.height(),Qt::IgnoreAspectRatio,Qt::SmoothTransformation));
+    hp_bar->setMaximum(stat.hp);
+    hp_bar->setValue(monster.hp);
+    hp_bar->setSize(50,8);
+    xp_bar->setMaximum(maxXp);
+    xp_bar->setValue(monster.remaining_xp);
+    xp_bar->setSize(50,8);
 
     QString detailsString;
     detailsString+=tr("Speed: %1").arg(stat.speed)+"<br />";
