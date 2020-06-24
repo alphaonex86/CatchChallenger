@@ -32,3 +32,8 @@ void ScreenInput::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
     Q_UNUSED(event);
     Q_UNUSED(eventTriggerGeneral);
 }
+
+void ScreenInput::removeAbove()
+{
+    emit setAbove(nullptr);
+}

@@ -337,7 +337,8 @@ SOURCES += \
     $$PWD/above/player/Reputations.cpp \
     $$PWD/above/player/Quests.cpp \
     $$PWD/above/player/FinishedQuests.cpp \
-    $$PWD/QGraphicsPixmapItemClick.cpp
+    $$PWD/QGraphicsPixmapItemClick.cpp \
+    $$PWD/above/MonsterDetails.cpp
 HEADERS  += \
     $$PWD/../libzstd/lib/zstd.h \
     $$PWD/../libzstd/lib/common/compiler.h \
@@ -429,7 +430,8 @@ HEADERS  += \
     $$PWD/above/player/Quests.hpp \
     $$PWD/above/player/Reputations.hpp \
     $$PWD/above/player/FinishedQuests.hpp \
-    $$PWD/QGraphicsPixmapItemClick.hpp
+    $$PWD/QGraphicsPixmapItemClick.hpp \
+    $$PWD/above/MonsterDetails.hpp
 
 
 wasm: {
