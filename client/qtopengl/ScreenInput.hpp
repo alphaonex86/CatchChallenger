@@ -14,6 +14,7 @@ public:
     virtual void mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);
     virtual void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral);
     virtual void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral);
+    void removeAbove();
 signals:
     void setAbove(ScreenInput *widget);//first plan popup
 };

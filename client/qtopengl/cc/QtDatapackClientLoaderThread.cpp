@@ -93,7 +93,7 @@ void QtDatapackClientLoaderThread::run()
             }
             if(stopIt)
                 return;
-            entry->thumb=entry->thumb.scaled(64,64);
+            //entry->thumb=entry->thumb.scaled(64,64);
             if(stopIt)
                 return;
             emit loadMonsterImage(id,entry);

@@ -16,6 +16,7 @@ public:
     void mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated);
     void setInDrag(bool drag);
     bool isPressed();
+    const CatchChallenger::PlayerMonster &getMonster() const;
 private:
     void setPressed(const bool &pressed);
 private:

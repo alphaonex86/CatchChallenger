@@ -8,6 +8,7 @@
 #include "../LineEdit.hpp"
 #include "../ComboBox.hpp"
 #include "../QGraphicsPixmapItemClick.hpp"
+#include "../above/MonsterDetails.hpp"
 #include "widgets/MapMonsterPreview.hpp"
 #include <QTreeWidgetItem>
 #include <QHeaderView>
@@ -19,6 +20,7 @@ OverMap::OverMap()
     connexionManager=nullptr;
     monstersDragged=nullptr;
     wasDragged=false;
+    monsterDetails=nullptr;
 
     playerBackground=new QGraphicsPixmapItemClick(*GameLoader::gameLoader->getImage(":/CC/images/interface/playerui.png"),this);
     playerBackgroundBig=true;
@@ -182,9 +184,23 @@ void OverMap::have_current_player_info(const CatchChallenger::Player_private_and
         delete m;
     monsters.clear();
     for(CatchChallenger::PlayerMonster m : informations.playerMonster)
-        monsters.push_back(new MapMonsterPreview(m,this));
+    {
+        MapMonsterPreview *t=new MapMonsterPreview(m,this);
+        if(!connect(t,&MapMonsterPreview::clicked,this,&OverMap::openMonster))
+            abort();
+        monsters.push_back(t);
+    }
     std::pair<uint16_t,uint16_t> t=connexionManager->client->getLast_number_of_player();
     playersCount->setHtml("<span stlye=\"color:#fff;\">"+QString::number(t.first)+"<span>");
+}
+
+void OverMap::openMonster()
+{
+    MapMonsterPreview *m=qobject_cast<MapMonsterPreview *>(sender());
+    if(monsterDetails==nullptr)
+        monsterDetails=new MonsterDetails();
+    monsterDetails->setVar(m->getMonster());
+    emit setAbove(monsterDetails);
 }
 
 void OverMap::updatePlayerNumber(const uint16_t &number,const uint16_t &max_players)

@@ -940,7 +940,7 @@ const QtDatapackClientLoader::QtMonsterExtra &QtDatapackClientLoader::getMonster
         if(n.thumb.isNull())
             n.thumb=QPixmap(":/CC/images/monsters/default/small.png");
     }
-    n.thumb=n.thumb.scaled(64,64);
+    //n.thumb=n.thumb.scaled(64,64);
 
     QtmonsterExtra[id]=n;
     ImagemonsterExtra.erase(id);
