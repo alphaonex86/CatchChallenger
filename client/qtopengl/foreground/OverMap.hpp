@@ -15,6 +15,7 @@ class CustomText;
 class ConnexionManager;
 class CCMap;
 class QGraphicsPixmapItemClick;
+class MonsterDetails;
 
 class OverMap : public ScreenInput
 {
@@ -49,6 +50,7 @@ public:
     void new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type);
     void removeNumberForFlood();
 
+    void openMonster();
     void updatePlayerNumber(const uint16_t &number,const uint16_t &max_players);
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
 protected:
@@ -56,6 +58,7 @@ protected:
     int numberForFlood;
     std::string lastMessageSend;
     ConnexionManager *connexionManager;
+    MonsterDetails *monsterDetails;
 
     QGraphicsPixmapItemClick *playerBackground;
     bool playerBackgroundBig;

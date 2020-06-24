@@ -43,6 +43,23 @@ CustomText::~CustomText()
     }
 }
 
+void CustomText::setGradient(QLinearGradient pen_gradient, QLinearGradient brush_gradient)
+{
+    m_pen_gradient=pen_gradient;
+    m_brush_gradient=brush_gradient;
+
+    if(textPath!=nullptr)
+    {
+        delete textPath;
+        textPath=nullptr;
+    }
+    if(cache!=nullptr)
+    {
+        delete cache;
+        cache=nullptr;
+    }
+}
+
 void CustomText::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     //this var is not inline to fix performance due to type mismatch problem

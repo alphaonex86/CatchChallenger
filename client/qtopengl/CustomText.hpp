@@ -14,6 +14,7 @@ public:
     void setFont(const QFont &font);
     QFont getFont() const;
     bool setPixelSize(uint8_t size);
+    void setGradient(QLinearGradient pen_gradient, QLinearGradient brush_gradient);
 
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *) override;
     QRectF boundingRect() const override;

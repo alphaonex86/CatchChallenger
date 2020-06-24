@@ -42,8 +42,9 @@ void MapMonsterPreview::regenCache()
     painter.drawPixmap(bx,by,background.width(),background.height(),background);
 
     const QtDatapackClientLoader::QtMonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster);
-    QPixmap front=monsterExtra.front;
-    painter.drawPixmap(0,0,front.width(),front.height(),front);
+    //QPixmap front=monsterExtra.front;
+    QPixmap front=monsterExtra.thumb.scaledToWidth(monsterExtra.thumb.width()*2,Qt::FastTransformation);
+    painter.drawPixmap(cache.width()/2-front.width()/2,cache.height()/2-front.height()/2,front.width(),front.height(),front);
 
     const CatchChallenger::Monster &monsterGeneralInfo=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster);
     const CatchChallenger::Monster::Stat &stat=CatchChallenger::CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
@@ -56,7 +57,7 @@ void MapMonsterPreview::regenCache()
         QPixmap monsterko=QPixmap(":/CC/images/interface/monsterko.png");
         painter.drawPixmap(cache.width()/2-monsterko.width()/2,cache.height()/2-monsterko.height()/2,monsterko.width(),monsterko.height(),monsterko);
     }
-    
+
     QPixmap bar;
     if(monster.hp>(stat.hp/2))
         bar=*GameLoader::gameLoader->getImage(":/CC/images/interface/mbgreen.png");
@@ -121,4 +122,9 @@ void MapMonsterPreview::setPressed(const bool &pressed)
 bool MapMonsterPreview::isPressed()
 {
     return this->pressed;
+}
+
+const CatchChallenger::PlayerMonster &MapMonsterPreview::getMonster() const
+{
+    return monster;
 }
