@@ -102,15 +102,19 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
     {
         if(inpixel>0)
         {
-            QPixmap barLeftC=barLeft.copy(0,0,inpixel/2,barLeft.height());
-            paint.drawPixmap(startX,0,barLeftC.width(),           barLeftC.height(),           barLeftC);
-            const unsigned int pixelremaining=inpixel-barLeftC.width();
-            if(pixelremaining>0)
+            const int tempW=inpixel/2;
+            if(tempW>0)
             {
+                QPixmap barLeftC=barLeft.copy(0,0,tempW,barLeft.height());
+                paint.drawPixmap(startX,0,barLeftC.width(),           barLeftC.height(),           barLeftC);
+                const unsigned int pixelremaining=inpixel-barLeftC.width();
+                if(pixelremaining>0)
+                {
 
-                QPixmap barRightC=barRight.copy(barRight.width()-pixelremaining,0,pixelremaining,barRight.height());
-                paint.drawPixmap(startX+barLeftC.width(),               0,
-                             barRightC.width(),                  barRightC.height(),barRightC);
+                    QPixmap barRightC=barRight.copy(barRight.width()-pixelremaining,0,pixelremaining,barRight.height());
+                    paint.drawPixmap(startX+barLeftC.width(),               0,
+                                 barRightC.width(),                  barRightC.height(),barRightC);
+                }
             }
         }
     }
@@ -224,8 +228,12 @@ void CCprogressbar::setPos(qreal ax, qreal ay)
 {
     if(m_boundingRect.x()==ax && m_boundingRect.y()==ay)
         return;
+    qreal width=m_boundingRect.width();
+    qreal height=m_boundingRect.height();
     m_boundingRect.setX(ax);
     m_boundingRect.setY(ay);
+    m_boundingRect.setWidth(width);
+    m_boundingRect.setHeight(height);
     if(cache!=nullptr)
     {
         delete cache;
