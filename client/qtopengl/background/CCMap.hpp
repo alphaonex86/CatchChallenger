@@ -18,8 +18,8 @@ public:
     void mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void keyPressReset();
-    void keyPressEvent(QKeyEvent * event);
-    void keyReleaseEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral);
+    void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral);
 public:
     MapController mapController;
 private:
