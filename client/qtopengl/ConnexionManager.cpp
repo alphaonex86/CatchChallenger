@@ -303,6 +303,7 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
     //work around for the resetAll() of protocol
     const std::string mainDatapackCode=CommonSettingsServer::commonSettingsServer.mainDatapackCode;
     const std::string subDatapackCode=CommonSettingsServer::commonSettingsServer.subDatapackCode;
+    //if(!connexionInfo.unique_code.isEmpty())
     client->setDatapackPath(datapack.absolutePath().toStdString());
     CommonSettingsServer::commonSettingsServer.mainDatapackCode=mainDatapackCode;
     CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapackCode;

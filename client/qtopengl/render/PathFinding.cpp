@@ -115,8 +115,92 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
     emit emitSearchPath(destination_map,destination_x,destination_y,current_map,x,y,items);
 }
 
-bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y)
+bool PathFinding::tryMove(SimplifiedMapForPathFinding **current_map,
+                          uint8_t &x, uint8_t &y,const CatchChallenger::Orientation &orientation)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    switch(orientation)
+    {
+        case CatchChallenger::Orientation::Orientation_bottom:
+        case CatchChallenger::Orientation::Orientation_top:
+        case CatchChallenger::Orientation::Orientation_right:
+        case CatchChallenger::Orientation::Orientation_left:
+        break;
+        default:
+            abort();//wrong direction send
+    }
+    #endif
+    switch(orientation)
+    {
+        case CatchChallenger::Orientation::Orientation_left:
+            if(x>0)
+            {
+                x-=1;
+                return true;
+            }
+            else if((*current_map)->border.left.map!=nullptr)
+            {
+                x=(*current_map)->border.left.map->width-1;
+                y+=(*current_map)->border.left.y_offset;
+                *current_map=(*current_map)->border.left.map;
+                return true;
+            }
+        break;
+        case CatchChallenger::Orientation::Orientation_right:
+            if(x<((*current_map)->width-1))
+            {
+                x+=1;
+                return true;
+            }
+            else if((*current_map)->border.right.map!=nullptr)
+            {
+                x=0;
+                y+=(*current_map)->border.right.y_offset;
+                *current_map=(*current_map)->border.right.map;
+                return true;
+            }
+        break;
+        case CatchChallenger::Orientation::Orientation_top:
+            if(y>0)
+            {
+                y-=1;
+                return true;
+            }
+            else if((*current_map)->border.top.map!=nullptr)
+            {
+                y=(*current_map)->border.top.map->height-1;
+                x+=(*current_map)->border.top.x_offset;
+                *current_map=(*current_map)->border.top.map;
+                return true;
+            }
+        break;
+        case CatchChallenger::Orientation::Orientation_bottom:
+            if(y<((*current_map)->height-1))
+            {
+                y+=1;
+                return true;
+            }
+            else if((*current_map)->border.bottom.map!=nullptr)
+            {
+                y=0;
+                x+=(*current_map)->border.bottom.x_offset;
+                *current_map=(*current_map)->border.bottom.map;
+                return true;
+            }
+        break;
+        default:
+            return false;
+    }
+    return false;
+}
+
+bool PathFinding::canGo(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,
+                          const uint8_t &x, const uint8_t &y)
+{
+    if(x>=simplifiedMapForPathFinding.width)
+        return false;
+    if(y>=simplifiedMapForPathFinding.height)
+        return false;
     const uint8_t &var=simplifiedMapForPathFinding.simplifiedMap[x+y*(simplifiedMapForPathFinding.width)];
     return var==255 || var<200;
 }
@@ -249,87 +333,111 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 }
                 {
                     //if the right case have been parsed
-                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
-                    if(simplifiedMapForPathFinding.pathToGo.find(coord)!=simplifiedMapForPathFinding.pathToGo.cend())
                     {
-                        const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding.pathToGo.at(coord);
-                        if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
+                        MapPointToParse newPoint=tempPoint;
+                        SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                        if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_right))
                         {
-                            pathToGo.left=nearPathToGo.left;
-                            pathToGo.left.back().second++;
-                        }
-                        if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
-                        {
-                            pathToGo.top=nearPathToGo.left;
-                            pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
-                        }
-                        if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
-                        {
-                            pathToGo.bottom=nearPathToGo.left;
-                            pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                            if(simplifiedMapForPathFinding->pathToGo.find(coord)!=simplifiedMapForPathFinding->pathToGo.cend())
+                            {
+                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding->pathToGo.at(coord);
+                                if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
+                                {
+                                    pathToGo.left=nearPathToGo.left;
+                                    pathToGo.left.back().second++;
+                                }
+                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.left.size()+1))
+                                {
+                                    pathToGo.top=nearPathToGo.left;
+                                    pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+                                }
+                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.left.size()+1))
+                                {
+                                    pathToGo.bottom=nearPathToGo.left;
+                                    pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                }
+                            }
                         }
                     }
                     //if the left case have been parsed
-                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
-                    if(simplifiedMapForPathFinding.pathToGo.find(coord)!=simplifiedMapForPathFinding.pathToGo.cend())
                     {
-                        const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding.pathToGo.at(coord);
-                        if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
+                        MapPointToParse newPoint=tempPoint;
+                        SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                        if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_left))
                         {
-                            pathToGo.right=nearPathToGo.right;
-                            pathToGo.right.back().second++;
-                        }
-                        if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
-                        {
-                            pathToGo.top=nearPathToGo.right;
-                            pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
-                        }
-                        if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
-                        {
-                            pathToGo.bottom=nearPathToGo.right;
-                            pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                            if(simplifiedMapForPathFinding->pathToGo.find(coord)!=simplifiedMapForPathFinding->pathToGo.cend())
+                            {
+                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding->pathToGo.at(coord);
+                                if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
+                                {
+                                    pathToGo.right=nearPathToGo.right;
+                                    pathToGo.right.back().second++;
+                                }
+                                if(pathToGo.top.empty() || pathToGo.top.size()>(nearPathToGo.right.size()+1))
+                                {
+                                    pathToGo.top=nearPathToGo.right;
+                                    pathToGo.top.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_top,1));
+                                }
+                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>(nearPathToGo.right.size()+1))
+                                {
+                                    pathToGo.bottom=nearPathToGo.right;
+                                    pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
+                                }
+                            }
                         }
                     }
                     //if the top case have been parsed
-                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
-                    if(simplifiedMapForPathFinding.pathToGo.find(coord)!=simplifiedMapForPathFinding.pathToGo.cend())
                     {
-                        const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding.pathToGo.at(coord);
-                        if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
+                        MapPointToParse newPoint=tempPoint;
+                        SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                        if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_top))
                         {
-                            pathToGo.top=nearPathToGo.top;
-                            pathToGo.top.back().second++;
-                        }
-                        if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
-                        {
-                            pathToGo.left=nearPathToGo.top;
-                            pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
-                        }
-                        if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
-                        {
-                            pathToGo.right=nearPathToGo.top;
-                            pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                            if(simplifiedMapForPathFinding->pathToGo.find(coord)!=simplifiedMapForPathFinding->pathToGo.cend())
+                            {
+                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding->pathToGo.at(coord);
+                                if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
+                                {
+                                    pathToGo.top=nearPathToGo.top;
+                                    pathToGo.top.back().second++;
+                                }
+                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.top.size()+1))
+                                {
+                                    pathToGo.left=nearPathToGo.top;
+                                    pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
+                                }
+                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.top.size()+1))
+                                {
+                                    pathToGo.right=nearPathToGo.top;
+                                    pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                }
+                            }
                         }
                     }
                     //if the bottom case have been parsed
-                    coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
-                    if(simplifiedMapForPathFinding.pathToGo.find(coord)!=simplifiedMapForPathFinding.pathToGo.cend())
                     {
-                        const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding.pathToGo.at(coord);
-                        if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                        MapPointToParse newPoint=tempPoint;
+                        SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                        if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_bottom))
                         {
-                            pathToGo.bottom=nearPathToGo.bottom;
-                            pathToGo.bottom.back().second++;
-                        }
-                        if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
-                        {
-                            pathToGo.left=nearPathToGo.bottom;
-                            pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
-                        }
-                        if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
-                        {
-                            pathToGo.right=nearPathToGo.bottom;
-                            pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                            if(simplifiedMapForPathFinding->pathToGo.find(coord)!=simplifiedMapForPathFinding->pathToGo.cend())
+                            {
+                                const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=simplifiedMapForPathFinding->pathToGo.at(coord);
+                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                                {
+                                    pathToGo.bottom=nearPathToGo.bottom;
+                                    pathToGo.bottom.back().second++;
+                                }
+                                if(pathToGo.left.empty() || pathToGo.left.size()>(nearPathToGo.bottom.size()+1))
+                                {
+                                    pathToGo.left=nearPathToGo.bottom;
+                                    pathToGo.left.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
+                                }
+                                if(pathToGo.right.empty() || pathToGo.right.size()>(nearPathToGo.bottom.size()+1))
+                                {
+                                    pathToGo.right=nearPathToGo.bottom;
+                                    pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
+                                }
+                            }
                         }
                     }
                 }
@@ -388,72 +496,71 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
             //add to point to parse
             {
                 //if the right case have been parsed
-                coord=std::pair<uint8_t,uint8_t>(tempPoint.x+1,tempPoint.y);
-                if(simplifiedMapForPathFinding.pathToGo.find(coord)==simplifiedMapForPathFinding.pathToGo.cend())
                 {
                     MapPointToParse newPoint=tempPoint;
-                    newPoint.x++;
-                    if(newPoint.x<simplifiedMapForPathFinding.width)
-                        if(PathFinding::canGoOn(simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                    if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_right))
+                    {
+                        if(PathFinding::canGo(*simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==newPoint.map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
-                            if(simplifiedMapForPathFinding.pointQueued.find(point)==simplifiedMapForPathFinding.pointQueued.cend())
+                            std::pair<uint8_t,uint8_t> p(newPoint.x,newPoint.y);
+                            if(simplifiedMapForPathFinding->pointQueued.find(p)==simplifiedMapForPathFinding->pointQueued.cend())
                             {
-                                simplifiedMapList[current_map].pointQueued.insert(point);
+                                simplifiedMapForPathFinding->pointQueued.insert(p);
                                 mapPointToParseList.push_back(newPoint);
                             }
                         }
+                    }
                 }
                 //if the left case have been parsed
-                coord=std::pair<uint8_t,uint8_t>(tempPoint.x-1,tempPoint.y);
-                if(simplifiedMapForPathFinding.pathToGo.find(coord)==simplifiedMapForPathFinding.pathToGo.cend())
                 {
                     MapPointToParse newPoint=tempPoint;
-                    if(newPoint.x>0)
+                    SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                    if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_left))
                     {
-                        newPoint.x--;
-                        if(PathFinding::canGoOn(simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                        SimplifiedMapForPathFinding &simplifiedMap=simplifiedMapList[current_map];
+                        if(PathFinding::canGo(simplifiedMap,newPoint.x,newPoint.y) || (destination_map==newPoint.map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
-                            if(simplifiedMapForPathFinding.pointQueued.find(point)==simplifiedMapForPathFinding.pointQueued.cend())
+                            std::pair<uint8_t,uint8_t> p(newPoint.x,newPoint.y);
+                            if(simplifiedMapForPathFinding->pointQueued.find(p)==simplifiedMapForPathFinding->pointQueued.cend())
                             {
-                                simplifiedMapList[current_map].pointQueued.insert(point);
+                                simplifiedMapForPathFinding->pointQueued.insert(p);
                                 mapPointToParseList.push_back(newPoint);
                             }
                         }
                     }
                 }
                 //if the bottom case have been parsed
-                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y+1);
-                if(simplifiedMapForPathFinding.pathToGo.find(coord)==simplifiedMapForPathFinding.pathToGo.cend())
                 {
                     MapPointToParse newPoint=tempPoint;
-                    newPoint.y++;
-                    if(newPoint.y<simplifiedMapForPathFinding.height)
-                        if(PathFinding::canGoOn(simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                    SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                    if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_bottom))
+                    {
+                        SimplifiedMapForPathFinding &simplifiedMap=simplifiedMapList[current_map];
+                        if(PathFinding::canGo(simplifiedMap,newPoint.x,newPoint.y) || (destination_map==newPoint.map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
-                            if(simplifiedMapForPathFinding.pointQueued.find(point)==simplifiedMapForPathFinding.pointQueued.cend())
+                            std::pair<uint8_t,uint8_t> p(newPoint.x,newPoint.y);
+                            if(simplifiedMapForPathFinding->pointQueued.find(p)==simplifiedMapForPathFinding->pointQueued.cend())
                             {
-                                simplifiedMapList[current_map].pointQueued.insert(point);
+                                simplifiedMapForPathFinding->pointQueued.insert(p);
                                 mapPointToParseList.push_back(newPoint);
                             }
                         }
+                    }
                 }
                 //if the top case have been parsed
-                coord=std::pair<uint8_t,uint8_t>(tempPoint.x,tempPoint.y-1);
-                if(simplifiedMapForPathFinding.pathToGo.find(coord)==simplifiedMapForPathFinding.pathToGo.cend())
                 {
                     MapPointToParse newPoint=tempPoint;
-                    if(newPoint.y>0)
+                    SimplifiedMapForPathFinding *simplifiedMapForPathFinding=&simplifiedMapList.at(newPoint.map);
+                    if(PathFinding::tryMove(&simplifiedMapForPathFinding,newPoint.x,newPoint.y,CatchChallenger::Orientation::Orientation_top))
                     {
-                        newPoint.y--;
-                        if(PathFinding::canGoOn(simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==current_map && newPoint.x==destination_x && newPoint.y==destination_y))
+                        SimplifiedMapForPathFinding &simplifiedMap=simplifiedMapList[current_map];
+                        if(PathFinding::canGo(simplifiedMap,newPoint.x,newPoint.y) || (destination_map==newPoint.map && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            std::pair<uint8_t,uint8_t> point(newPoint.x,newPoint.y);
-                            if(simplifiedMapForPathFinding.pointQueued.find(point)==simplifiedMapForPathFinding.pointQueued.cend())
+                            std::pair<uint8_t,uint8_t> p(newPoint.x,newPoint.y);
+                            if(simplifiedMapForPathFinding->pointQueued.find(p)==simplifiedMapForPathFinding->pointQueued.cend())
                             {
-                                simplifiedMapList[current_map].pointQueued.insert(point);
+                                simplifiedMapForPathFinding->pointQueued.insert(p);
                                 mapPointToParseList.push_back(newPoint);
                             }
                         }

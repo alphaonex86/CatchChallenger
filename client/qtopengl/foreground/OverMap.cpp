@@ -715,16 +715,20 @@ void OverMap::removeNumberForFlood()
     numberForFlood--;
 }
 
-void OverMap::keyPressEvent(QKeyEvent * event)
+void OverMap::keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral)
 {
     if(chat->isChecked() && chatInput->hasFocus())
         chatInput->keyPressEvent(event);
+    else
+        eventTriggerGeneral=false;
 }
 
-void OverMap::keyReleaseEvent(QKeyEvent *event)
+void OverMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 {
     if(chat->isChecked() && chatInput->hasFocus())
         chatInput->keyReleaseEvent(event);
+    else
+        eventTriggerGeneral=false;
 }
 
 void OverMap::buyClicked()

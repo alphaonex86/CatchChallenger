@@ -40,8 +40,8 @@ public:
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);
-    void keyPressEvent(QKeyEvent * event) override;
-    void keyReleaseEvent(QKeyEvent *event) override;
+    void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral) override;
+    void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
     void lineEdit_chat_text_returnPressed();
     void buyClicked();
     void IG_dialog_close();
