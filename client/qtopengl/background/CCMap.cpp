@@ -160,13 +160,15 @@ void CCMap::keyPressReset()
     mapController.keyPressReset();
 }
 
-void CCMap::keyPressEvent(QKeyEvent * event)
+void CCMap::keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral)
 {
     mapController.keyPressEvent(event);
+    eventTriggerGeneral=false;
 }
 
-void CCMap::keyReleaseEvent(QKeyEvent *event)
+void CCMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 {
     mapController.keyReleaseEvent(event);
+    eventTriggerGeneral=false;
 }
 
