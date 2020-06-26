@@ -1,5 +1,5 @@
 #include "ZstdDecode.hpp"
-#include "../libzstd/lib/zstd.h"
+#include "../../general/libzstd/lib/zstd.h"
 
 ZstdDecode::ZstdDecode()
 {

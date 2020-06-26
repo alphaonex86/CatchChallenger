@@ -11,8 +11,8 @@ using namespace CatchChallenger;
 #include <stdio.h>
 #include <thread>
 #include <chrono>
-#include <zstd.h>
 
+#include "../../general/libzstd/lib/zstd.h"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"

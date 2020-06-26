@@ -7,13 +7,13 @@ using namespace CatchChallenger;
 #include <regex>
 #include <thread>
 #include <chrono>
-#include <zstd.h>
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/libzstd/lib/zstd.h"
 #include "../../client/tarcompressed/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollServerLoginSlave.hpp"
