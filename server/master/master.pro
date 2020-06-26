@@ -14,8 +14,6 @@ DEFINES += EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 DEFINES += EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
 DEFINES += CATCHCHALLENGER_CLASS_MASTER
 
-LIBS += -lssl -lcrypto
-
 # postgresql 9+
 DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
 LIBS    += -lpq
@@ -31,6 +29,7 @@ CONFIG   += console
 TEMPLATE = app
 
 SOURCES += \
+    ../../general/sha224/sha224.cpp \
     main-epoll-login-master.cpp \
     EpollClientLoginMaster.cpp \
     EpollServerLoginMaster.cpp \
@@ -84,6 +83,7 @@ SOURCES += \
     ../../general/base/Version.cpp
 
 HEADERS += \
+    ../../general/sha224/sha224.hpp \
     EpollClientLoginMaster.h \
     EpollServerLoginMaster.h \
     CharactersGroup.h \

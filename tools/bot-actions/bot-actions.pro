@@ -10,7 +10,6 @@ QT += widgets
 
 TARGET = bot-actions
 TEMPLATE = app
-LIBS += -lzstd
 
 DEFINES += BOTACTIONS CATCHCHALLENGER_BOT
 

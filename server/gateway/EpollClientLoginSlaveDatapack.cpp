@@ -1,12 +1,12 @@
 #include "EpollClientLoginSlave.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/sha224/sha224.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 
 #include <iostream>
 #include <vector>
 #include <regex>
-#include <openssl/sha.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -51,7 +51,10 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
                         #endif
 
                         const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(file);
-                        SHA224(reinterpret_cast<const unsigned char *>(data.data()),data.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                        SHA224 hash = SHA224();
+                        hash.init();
+                        hash.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+                        hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         ::memcpy(&datapackCacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
 
                         filesList[fileName]=datapackCacheFile;

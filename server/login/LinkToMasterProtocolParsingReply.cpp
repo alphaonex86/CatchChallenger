@@ -4,11 +4,11 @@
 #include "EpollClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/sha224/sha224.hpp"
 #include "../epoll/EpollSocket.hpp"
 #include "VariableLoginServer.hpp"
 
 #include <iostream>
-#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
@@ -64,20 +64,16 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 stat=Stat::ProtocolGood;
                 //send the query 0x08
                 {
-                    SHA256_CTX hash;
-                    if(SHA224_Init(&hash)!=1)
-                    {
-                        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-                        abort();
-                    }
-                    SHA224_Update(&hash,reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
-                    SHA224_Update(&hash,data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
+                    SHA224 hash = SHA224();
+                    hash.init();
+                    hash.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH);
+                    hash.update(reinterpret_cast<const unsigned char *>(data)+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                    hash.final(tempHashResult);
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     std::cout << "SHA224(" << binarytoHexa(reinterpret_cast<const char *>(LinkToMaster::private_token_master),TOKEN_SIZE_FOR_MASTERAUTH)
                               << " " << binarytoHexa(data+1,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT) << ") to auth on master" << std::endl;
                     #endif
-                    unsigned char tempHashResult[CATCHCHALLENGER_SHA224HASH_SIZE];
-                    SHA224_Final(tempHashResult,&hash);
 
                     //memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));//To reauth after disconnexion
 

@@ -1,9 +1,9 @@
 #include "BaseServer.hpp"
 #include "GlobalServerData.hpp"
-#include <openssl/sha.h>
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/xxhash/xxhash.h"
+#include "../../general/sha224/sha224.hpp"
 
 using namespace CatchChallenger;
 
@@ -78,12 +78,8 @@ void BaseServer::preload_the_datapack()
 
     //do the base
     {
-        SHA256_CTX hashBase;
-        if(SHA224_Init(&hashBase)!=1)
-        {
-            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-            abort();
-        }
+        SHA224 hashBase = SHA224();
+        hashBase.init();
         #ifdef _WIN32
         const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"",false);
         #else
@@ -185,7 +181,7 @@ void BaseServer::preload_the_datapack()
                         #endif
                         #endif
 
-                        SHA224_Update(&hashBase,data.data(),data.size());
+                        hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                     }
                 }
                 else
@@ -198,7 +194,7 @@ void BaseServer::preload_the_datapack()
         }
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()==CATCHCHALLENGER_SHA224HASH_SIZE)
         {
-            SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hashBase);
+            hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
             if(memcmp(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
             {
                 std::cerr << "datapackHashBase sha224 sum not match master "
@@ -212,19 +208,15 @@ void BaseServer::preload_the_datapack()
         else
         {
             CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-            SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
+            hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
         }
     }
     /// \todo check if big file is compressible under 1MB
 
     //do the main
     {
-        SHA256_CTX hashMain;
-        if(SHA224_Init(&hashMain)!=1)
-        {
-            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-            abort();
-        }
+        SHA224 hashMain = SHA224();
+        hashMain.init();
         const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/",false);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         {
@@ -315,7 +307,7 @@ void BaseServer::preload_the_datapack()
                         }
                         #endif
 
-                        SHA224_Update(&hashMain,data.data(),data.size());
+                        hashMain.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                     }
                 }
                 else
@@ -327,17 +319,13 @@ void BaseServer::preload_the_datapack()
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data()),&hashMain);
+        hashMain.final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data()));
     }
     //do the sub
     if(GlobalServerData::serverPrivateVariables.subDatapackFolder.size()>0)
     {
-        SHA256_CTX hashSub;
-        if(SHA224_Init(&hashSub)!=1)
-        {
-            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-            abort();
-        }
+        SHA224 hashSub = SHA224();
+        hashSub.init();
         const std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> &pair=Client::datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"",false);
         std::vector<std::string> datapack_file_temp=unordered_map_keys_vector(pair);
         std::sort(datapack_file_temp.begin(), datapack_file_temp.end());
@@ -389,7 +377,7 @@ void BaseServer::preload_the_datapack()
                     }
                     #endif
 
-                    SHA224_Update(&hashSub,data.data(),data.size());
+                    hashSub.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                 }
                 else
                 {
@@ -400,7 +388,7 @@ void BaseServer::preload_the_datapack()
             index++;
         }
         CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data()),&hashSub);
+        hashSub.final(reinterpret_cast<unsigned char *>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data()));
     }
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

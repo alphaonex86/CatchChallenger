@@ -1,9 +1,9 @@
 #include "EpollClientLoginMaster.hpp"
 #include "EpollServerLoginMaster.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/sha224/sha224.hpp"
 
 #include <iostream>
-#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
@@ -335,15 +335,11 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                SHA256_CTX hash;
-                if(SHA224_Init(&hash)!=1)
-                {
-                    std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-                    abort();
-                }
-                SHA224_Update(&hash,EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH);
-                SHA224_Update(&hash,tokenForAuth.data(),tokenForAuth.size());
-                SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+                SHA224 hash = SHA224();
+                hash.init();
+                hash.update(reinterpret_cast<const unsigned char *>(EpollClientLoginMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+                hash.update(reinterpret_cast<const unsigned char *>(tokenForAuth.data()),tokenForAuth.size());
+                hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data+pos,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -623,15 +619,11 @@ bool EpollClientLoginMaster::parseQuery(const uint8_t &mainCodeType,const uint8_
                     parseNetworkReadError("tokenForAuth.isEmpty()");
                     return false;
                 }
-                SHA256_CTX hash;
-                if(SHA224_Init(&hash)!=1)
-                {
-                    std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-                    abort();
-                }
-                SHA224_Update(&hash,EpollClientLoginMaster::private_token,TOKEN_SIZE_FOR_MASTERAUTH);
-                SHA224_Update(&hash,tokenForAuth.data(),tokenForAuth.size());
-                SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput),&hash);
+                SHA224 hash = SHA224();
+                hash.init();
+                hash.update(reinterpret_cast<const unsigned char *>(EpollClientLoginMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+                hash.update(reinterpret_cast<const unsigned char *>(tokenForAuth.data()),tokenForAuth.size());
+                hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                 if(memcmp(ProtocolParsingBase::tempBigBufferForOutput,data,CATCHCHALLENGER_SHA224HASH_SIZE)!=0)
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK

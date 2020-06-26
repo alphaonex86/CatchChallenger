@@ -1,5 +1,6 @@
 #include "LinkToMaster.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/sha224/sha224.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/Client.hpp"
 #include "../epoll/Epoll.hpp"
@@ -17,7 +18,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <cstring>
-#include <openssl/sha.h>
 #include <iomanip>
 
 using namespace CatchChallenger;
@@ -445,16 +445,12 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     posOutput+=1+4;
 
     {
-        SHA256_CTX hashToken;
-        if(SHA224_Init(&hashToken)!=1)
-        {
-            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-            abort();
-        }
+        SHA224 hashToken = SHA224();
+        hashToken.init();
 
-        SHA224_Update(&hashToken,reinterpret_cast<const char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
-        SHA224_Update(&hashToken,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashToken);
+        hashToken.update(reinterpret_cast<const unsigned char *>(LinkToMaster::private_token),TOKEN_SIZE_FOR_MASTERAUTH);
+        hashToken.update(reinterpret_cast<const unsigned char *>(dynamicToken),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        hashToken.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput));
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         //memset(LinkToMaster::private_token,0x00,sizeof(LinkToMaster::private_token));->to reconnect after be disconnected
     }
