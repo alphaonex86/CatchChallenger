@@ -1,6 +1,5 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
-LIBS += -lzstd
 include(../../general/general.pri)
 include(../bot/simple/Simple.pri)
 

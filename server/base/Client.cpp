@@ -5,7 +5,7 @@
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
 #else
-#include <openssl/sha.h>
+#include "../../general/sha224/sha224.hpp"
 #endif
 
 #include "BaseServerLogin.hpp"
@@ -572,7 +572,10 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
                     abort();
                 }
                 #endif
-                SHA224(Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT,reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                SHA224 ctx = SHA224();
+                ctx.init();
+                ctx.update(Client::private_token_statclient,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+                ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
 
                 BaseServerLogin::tokenForAuthSize--;
                 //see to do with SIMD

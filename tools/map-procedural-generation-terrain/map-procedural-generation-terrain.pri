@@ -9,7 +9,7 @@ QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
 CONFIG -= c++14
 
 DEFINES += TILED_ZLIB
-LIBS += -lz -lzstd
+LIBS += -lz
 
 QT += xml
 
