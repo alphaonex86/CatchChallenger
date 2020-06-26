@@ -8,7 +8,6 @@
 #include "VariableLoginServer.hpp"
 
 #include <iostream>
-#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 

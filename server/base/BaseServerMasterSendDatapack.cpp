@@ -5,10 +5,11 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../VariableServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/sha224/sha224.hpp"
+#include "../../general/xxhash/xxhash.h"
 
 #include <regex>
 #include <iostream>
-#include <openssl/sha.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -89,12 +90,8 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     std::string text_datapack(datapack_basePathLogin);
     std::string text_exclude("map/main/");
 
-    SHA256_CTX hashBase;
-    if(SHA224_Init(&hashBase)!=1)
-    {
-        std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-        abort();
-    }
+    SHA224 hashBase;
+    hashBase.init();
     std::vector<std::string> datapack_file_temp=FacilityLibGeneral::listFolder(text_datapack);
     std::sort(datapack_file_temp.begin(),datapack_file_temp.end());
 
@@ -121,22 +118,23 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                             const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
                             if(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
                             {
-                                SHA256_CTX hashFile;
-                                if(SHA224_Init(&hashFile)!=1)
-                                {
-                                    std::cerr << "SHA224_Init(&hashFile)!=1" << std::endl;
-                                    abort();
-                                }
-                                SHA224_Update(&hashFile,data.data(),data.size());
                                 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+                                //from sha224 to xxhash
+                                BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
+                                cacheFile.partialHash=XXH32(data.data(),data.size(),0);
+                                datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+                             /*   SHA224 hashFile;
+                                hashFile.init();
+                                SHA224_Update(&hashFile,data.data(),data.size());
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
                                 //cacheFile.mtime=buf.st_mtime;
                                 SHA224_Final(reinterpret_cast<unsigned char *>(tempBigBufferForOutput),&hashFile);
                                 ::memcpy(&cacheFile.partialHash,tempBigBufferForOutput,sizeof(uint32_t));
                                 datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
+                                */
                                 #endif
                             }
-                            SHA224_Update(&hashBase,data.data(),data.size());
+                            hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                         }
                         #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                         else
@@ -164,7 +162,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
     }
 
     CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-    SHA224_Final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()),&hashBase);
+    hashBase.final(reinterpret_cast<unsigned char *>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data()));
 
     std::cout << datapack_file_temp.size() << " files for datapack loaded" << std::endl;
 }

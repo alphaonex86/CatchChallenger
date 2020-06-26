@@ -2,7 +2,6 @@
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
 #include "StaticText.hpp"
-#include <openssl/sha.h>
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.hpp"
 #endif
@@ -10,6 +9,7 @@
 #include "SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/sha224/sha224.hpp"
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -31,7 +31,10 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     }
     #endif
     AskLoginParam *askLoginParam=new AskLoginParam;
-    SHA224(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE,reinterpret_cast<unsigned char *>(askLoginParam->login));
+    SHA224 ctx = SHA224();
+    ctx.init();
+    ctx.update(reinterpret_cast<const unsigned char *>(rawdata),CATCHCHALLENGER_SHA224HASH_SIZE);
+    ctx.final(reinterpret_cast<unsigned char *>(askLoginParam->login));
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
@@ -161,7 +164,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                             abort();
                         }
                         #endif
-                        SHA224(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size(),reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                        SHA224 ctx = SHA224();
+                        ctx.init();
+                        ctx.update(reinterpret_cast<const unsigned char *>(secretTokenBinary.data()),secretTokenBinary.size());
+                        ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         BaseServerLogin::tokenForAuthSize--;
                         //see to do with SIMD
                         if(BaseServerLogin::tokenForAuthSize>0)

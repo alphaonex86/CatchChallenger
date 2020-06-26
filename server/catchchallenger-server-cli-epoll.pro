@@ -3,7 +3,6 @@ DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 include(../general/general.pri)
 include(catchchallenger-server.pri)
 include(../general/hps/hps.pri)
-LIBS += -lzstd
 
 QT       -= gui widgets network sql
 #QT       -= core xml
@@ -20,8 +19,6 @@ QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
 
 DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 #DEFINES += CATCHCHALLENGERSERVERDROPIFCLENT
-
-LIBS += -lssl -lcrypto
 
 # postgresql 9+
 DEFINES += CATCHCHALLENGER_DB_POSTGRESQL

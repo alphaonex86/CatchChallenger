@@ -4,13 +4,6 @@
 #include <string>
 #include <unordered_set>
 #include <iostream>
-#if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-//with Qt client
-#include <QCryptographicHash>
-#else
-//with gateway
-#include <openssl/sha.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -19,6 +12,7 @@
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/sha224/sha224.hpp"
 
 using namespace CatchChallenger;
 
@@ -32,16 +26,8 @@ DatapackChecksum::~DatapackChecksum()
 
 std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPath)
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    #else
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
-    #endif
+    SHA224 hash = SHA224();
+    hash.init();
     {
         std::regex excludePath("^map[/\\\\]main[/\\\\]");
 
@@ -67,11 +53,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
-                        #else
-                        SHA224_Update(&hash,data.data(),data.size());
-                        #endif
+                        hash.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                     }
                     else
                     {
@@ -86,11 +68,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
-        #else
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
-        #endif
+        hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;
 }
@@ -136,16 +114,8 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPath)
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    #else
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
-    #endif
+    SHA224 hash = SHA224();
+    hash.init();
     {
         std::regex excludePath("^sub[/\\\\]");
 
@@ -171,11 +141,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
-                        #else
-                        SHA224_Update(&hash,data.data(),data.size());
-                        #endif
+                        hash.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                     }
                     else
                     {
@@ -190,11 +156,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
-        #else
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
-        #endif
+        hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;
 }
@@ -240,16 +202,8 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 
 std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPath)
 {
-    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    #else
-    SHA256_CTX hash;
-    if(SHA224_Init(&hash)!=1)
-    {
-        std::cerr << "SHA224_Init(&hash)!=1" << std::endl;
-        abort();
-    }
-    #endif
+    SHA224 hash = SHA224();
+    hash.init();
     {
         const std::vector<std::string> &extensionAllowedList=stringsplit(CATCHCHALLENGER_EXTENSION_ALLOWED,';');
         const std::unordered_set<std::string> extensionAllowed(extensionAllowedList.cbegin(),extensionAllowedList.cend());
@@ -273,11 +227,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
                     if(file!=NULL)
                     {
                         const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(file);
-                        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-                        hash.addData(QByteArray(reinterpret_cast<const char *>(data.data()),data.size()));
-                        #else
-                        SHA224_Update(&hash,data.data(),data.size());
-                        #endif
+                        hash.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
                     }
                     else
                     {
@@ -292,11 +242,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
     std::vector<char> hashResult;
     {
         hashResult.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
-        #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER)
-        memcpy(hashResult.data(),hash.result().constData(),hashResult.size());
-        #else
-        SHA224_Final(reinterpret_cast<unsigned char *>(hashResult.data()),&hash);
-        #endif
+        hash.final(reinterpret_cast<unsigned char *>(hashResult.data()));
     }
     return hashResult;
 }
