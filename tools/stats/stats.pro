@@ -3,7 +3,6 @@ CONFIG += c++11
 QMAKE_CFLAGS="-std=c++0x"
 QMAKE_CXXFLAGS="-std=c++0x"
 
-LIBS += -lcrypto
 TARGET = stats
 CONFIG   += console
 CONFIG   -= app_bundle
@@ -14,6 +13,7 @@ DEFINES += CATCHCHALLENGER_CLASS_STATS NOWEBSOCKET
 TEMPLATE = app
 
 SOURCES += main.cpp \
+    ../../general/sha224/sha224.cpp \
     LinkToLogin.cpp \
     LinkToLoginProtocolParsing.cpp \
     LinkToLoginStaticVar.cpp \
@@ -33,6 +33,7 @@ SOURCES += main.cpp \
     EpollServerStats.cpp
 
 HEADERS += \
+    ../../general/sha224/sha224.hpp \
     LinkToLogin.h \
     ../../server/epoll/Epoll.h \
     ../../server/epoll/EpollSocket.h \

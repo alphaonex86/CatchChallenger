@@ -1,6 +1,7 @@
 #include "LinkToLogin.h"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#include "../../general/sha224/sha224.hpp"
 #include "../../server/epoll/Epoll.hpp"
 #include "../../server/epoll/EpollSocket.hpp"
 #include <netinet/in.h>
@@ -14,7 +15,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <cstring>
-#include <openssl/sha.h>
 
 using namespace CatchChallenger;
 
@@ -345,24 +345,11 @@ bool LinkToLogin::registerStatsClient(const char * const dynamicToken)
     posOutput+=1;
 
     {
-        SHA256_CTX hashFile;
-        if(SHA224_Init(&hashFile)!=1)
-        {
-            std::cerr << "SHA224_Init(&hashBase)!=1" << std::endl;
-            abort();
-        }
-
-        SHA224_Update(&hashFile,reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        SHA224_Update(&hashFile,dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
-        SHA224_Final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput),&hashFile);
-        /*#ifdef CATCHCHALLENGER_EXTRA_CHECK
-        std::cerr << "Hash this to reply: " << binarytoHexa(reinterpret_cast<const char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                  << " + "
-                  << binarytoHexa(dynamicToken,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT)
-                  << " = "
-                  << binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CATCHCHALLENGER_SHA224HASH_SIZE)
-                  << std::endl;
-        #endif*/
+        SHA224 hashFile = SHA224();
+        hashFile.init();
+        hashFile.update(reinterpret_cast<const unsigned char *>(LinkToLogin::private_token_statclient),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        hashFile.update(reinterpret_cast<const unsigned char *>(dynamicToken),TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
+        hashFile.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput));
         posOutput+=CATCHCHALLENGER_SHA224HASH_SIZE;
         //memset(LinkToLogin::private_token,0x00,sizeof(LinkToLogin::private_token));->to reconnect after be disconnected
     }
