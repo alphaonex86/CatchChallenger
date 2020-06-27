@@ -33,6 +33,7 @@ public slots:
     void cancel();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     static void extraControlOnData(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);
+    static std::string stepToString(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &data);
     #endif
 private:
     struct SimplifiedMapForPathFinding

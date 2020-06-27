@@ -27,11 +27,8 @@ Use **C++11**
 
 Dependency:
 * zlib (can be disabled but it's for tiled map editor)
-* zstd
-* openssl
 * Client
   * Qt openssl enabled to have QSslSocket or QtWebSocket
-  * libopus
 * Server
   * Qt if generic server
   * db
