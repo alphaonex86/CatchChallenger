@@ -147,7 +147,7 @@ void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &call
                 if(diffY>=map->relative_y && diffY<=(map->relative_y+map->logicalMap.height))
                 {
                     std::cout << "click on " << map->logicalMap.map_file << " " << diffX << "," << diffY << std::endl;
-                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,map,diffX,diffY);
+                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,map,(int)floor(diffX)-map->relative_x,(int)floor(diffY)-map->relative_y);
                     return;
                 }
         }
