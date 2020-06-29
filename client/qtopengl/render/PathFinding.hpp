@@ -86,11 +86,12 @@ private:
     };
 
     QMutex mutex;
-    std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;
+    //pointer to easy ref on object without error
+    std::unordered_map<std::string,SimplifiedMapForPathFinding *> simplifiedMapList;
     bool tryCancel;
     std::vector<Map_full> mapList;
 public:
-    static bool tryMove(SimplifiedMapForPathFinding **current_map,
+    static bool tryMove(SimplifiedMapForPathFinding *&current_map,
                         uint8_t &x, uint8_t &y, const CatchChallenger::Orientation &orientation);
     static bool canGo(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,
                               const uint8_t &x, const uint8_t &y);
