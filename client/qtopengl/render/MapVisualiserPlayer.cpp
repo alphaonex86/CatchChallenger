@@ -2295,7 +2295,13 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
                 }
             }
             else
+            {
+                std::cout << this->current_map << " " << std::to_string(this->x) << "," << std::to_string(this->y)
+                        << " != "
+                        << current_map << " " << std::to_string(x) << "," << std::to_string(y)
+                        << std::endl;
                 std::cerr << "Wrong start point to start the path finding" << std::endl;
+            }
         }
         wasPathFindingUsed=true;
         return;

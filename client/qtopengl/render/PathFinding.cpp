@@ -352,6 +352,11 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
     }
     if(simplifiedMapList.at(current_map)->simplifiedMap==nullptr)
         std::cout << "PathFinding::canGoOn() walkable is NULL for " << current_map << std::endl;
+
+    MapPointToParse fromPoint;
+    fromPoint.map=current_map;
+    fromPoint.x=x;
+    fromPoint.y=y;
     //resolv the path
     if(!tryCancel)
     {
@@ -425,12 +430,12 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                                     pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
                                 }
                                 //debug
-                                std::cout << "1a)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
+                                /*std::cout << "1a)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
                                           << " \"" << stepToString(pathToGo.left) << "\""
                                           << " \"" << stepToString(pathToGo.right) << "\""
                                           << " \"" << stepToString(pathToGo.top) << "\""
                                           << " \"" << stepToString(pathToGo.bottom) << "\""
-                                          << std::endl;
+                                          << std::endl;*/
                             }
                         }
                     }
@@ -463,12 +468,12 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                                     pathToGo.bottom.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_bottom,1));
                                 }
                                 //debug
-                                std::cout << "1b)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
+                                /*std::cout << "1b)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
                                           << " \"" << stepToString(pathToGo.left) << "\""
                                           << " \"" << stepToString(pathToGo.right) << "\""
                                           << " \"" << stepToString(pathToGo.top) << "\""
                                           << " \"" << stepToString(pathToGo.bottom) << "\""
-                                          << std::endl;
+                                          << std::endl;*/
                             }
                         }
                     }
@@ -501,12 +506,12 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                                     pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
                                 }
                                 //debug
-                                std::cout << "1c)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
+                                /*std::cout << "1c)" << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
                                           << " \"" << stepToString(pathToGo.left) << "\""
                                           << " \"" << stepToString(pathToGo.right) << "\""
                                           << " \"" << stepToString(pathToGo.top) << "\""
                                           << " \"" << stepToString(pathToGo.bottom) << "\""
-                                          << std::endl;
+                                          << std::endl;*/
                             }
                         }
                     }
@@ -539,12 +544,12 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                                     pathToGo.right.push_back(std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_right,1));
                                 }
                                 //debug
-                                std::cout << "1d)"  << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
+                                /*std::cout << "1d)"  << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y)
                                           << " \"" << stepToString(pathToGo.left) << "\""
                                           << " \"" << stepToString(pathToGo.right) << "\""
                                           << " \"" << stepToString(pathToGo.top) << "\""
                                           << " \"" << stepToString(pathToGo.bottom) << "\""
-                                          << std::endl;
+                                          << std::endl;*/
                             }
                         }
                     }
@@ -562,7 +567,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 #endif
                 simplifiedMapList[current_map]->pathToGo[coord]=pathToGo;
                 //debug
-                std::string s=current_map;
+                /*std::string s=current_map;
                 std::string::size_type pos=s.rfind("/");
                 if(pos != std::string::npos)
                     s=s.substr(pos+1);
@@ -571,7 +576,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                           << " \"" << stepToString(pathToGo.right) << "\""
                           << " \"" << stepToString(pathToGo.top) << "\""
                           << " \"" << stepToString(pathToGo.bottom) << "\""
-                          << std::endl;
+                          << std::endl;*/
             }
             if(destination_map==current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
             {
@@ -598,9 +603,11 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     }
                     else
                     {
-                        std::cout << "Path result into " << time.elapsed() << "ms" << std::endl;
+                        std::cout << "Path result into " << time.elapsed() << "ms from "
+                                  << fromPoint.map << " " << std::to_string(fromPoint.x) << "," << std::to_string(fromPoint.y)
+                                  << std::endl;
                         returnedVar.back().second--;
-                        emit result(current_map,x,y,returnedVar);
+                        emit result(fromPoint.map,fromPoint.x,fromPoint.y,returnedVar);
                         return;
                     }
                 }
@@ -642,16 +649,15 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     {
                         if(mapToString.find(simplifiedMapForPathFinding)==mapToString.cend())
                             abort();
-
+/*
                         std::string m1=destination_map;
                         std::string::size_type pos=m1.rfind("/");
                         if(pos != std::string::npos)
                             m1=m1.substr(pos+1);
                         std::cout << "PathFinding::canGo() " << mapToString.at(simplifiedMapForPathFinding) << "," << std::to_string(newPoint.x) << "," << std::to_string(newPoint.y) << ")"
-                                  << " OR == destination: " << m1 << " " << std::to_string(destination_x) << "," << std::to_string(destination_y) << std::endl;
+                                  << " OR == destination: " << m1 << " " << std::to_string(destination_x) << "," << std::to_string(destination_y) << std::endl;*/
                         if(PathFinding::canGo(*simplifiedMapForPathFinding,newPoint.x,newPoint.y) || (destination_map==mapToStringFull.at(simplifiedMapForPathFinding) && newPoint.x==destination_x && newPoint.y==destination_y))
                         {
-                            std::cout << "can go" << std::endl;
                             std::pair<uint8_t,uint8_t> p(newPoint.x,newPoint.y);
                             if(simplifiedMapForPathFinding->pointQueued.find(p)==simplifiedMapForPathFinding->pointQueued.cend())
                             {
