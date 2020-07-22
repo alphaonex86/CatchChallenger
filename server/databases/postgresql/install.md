@@ -7,10 +7,10 @@ psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
 psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
 psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
 psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_base postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_login postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-base";' | psql catchchallenger_base postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_common postgres
+echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_server postgres
 
 = Custom part =
 Based on my usage (automatic account creation and character creation/delete):
