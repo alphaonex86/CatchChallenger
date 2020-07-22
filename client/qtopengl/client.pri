@@ -249,6 +249,7 @@ SOURCES += \
     $$PWD/above/OptionsDialog.cpp \
     $$PWD/above/Login.cpp \
     $$PWD/CheckBox.cpp \
+    $$PWD/foreground/Battle.cpp \
     $$PWD/foreground/MainScreen.cpp \
     $$PWD/foreground/Multi.cpp \
     $$PWD/../qt/BlacklistPassword.cpp \
@@ -325,6 +326,7 @@ HEADERS  += \
     $$PWD/above/OptionsDialog.hpp \
     $$PWD/above/Login.hpp \
     $$PWD/CheckBox.hpp \
+    $$PWD/foreground/Battle.hpp \
     $$PWD/foreground/MainScreen.hpp \
     $$PWD/foreground/Multi.hpp \
     $$PWD/../qt/BlacklistPassword.hpp \
