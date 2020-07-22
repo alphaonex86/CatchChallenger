@@ -101,7 +101,7 @@ chmod a+x catchchallenger-server-cli-epoll
 **Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev
 
 ```sh
-cd client/ultimate/
+cd client/
 qmake *.pro
 make
 git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
