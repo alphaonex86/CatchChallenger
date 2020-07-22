@@ -32,6 +32,7 @@
 *.out
 *.app
 /server/catchchallenger-server-cli-epoll
+/client/catchchallenger
 
 ### Qt ###
 # C++ objects and libs
@@ -92,3 +93,5 @@ tools/to-pack/data/windows-x*
 
 # Configurations
 /server/server-properties.xml
+/client/datapack
+/server/datapack

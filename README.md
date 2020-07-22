@@ -104,9 +104,9 @@ chmod a+x catchchallenger-server-cli-epoll
 cd client/ultimate/
 qmake *.pro
 make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack
-mkdir -p datapack/
-mv CatchChallenger-datapack/datapack/ datapack/internal/
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
+chmod a+x catchchallenger
+./catchchallenger
 ```
 
 # Sources
