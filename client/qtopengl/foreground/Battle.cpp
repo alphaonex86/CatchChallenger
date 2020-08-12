@@ -2,24 +2,25 @@
 #include "../CCprogressbar.hpp"
 #include "../CustomButton.hpp"
 #include "../ImagesStrechMiddle.hpp"
+#include "../cc/QtDatapackClientLoader.hpp"
 #include <QGraphicsProxyWidget>
 #include <QListWidget>
 #include <QListWidgetItem>
 
 Battle::Battle()
 {
-    frameFightBottom=new QGraphicsPixmapItem(this);
-    labelFightBottomLevel=new QGraphicsTextItem(this);
+    frameFightBottom=new QGraphicsPixmapItem(28,":/CC/images/interface/b1.png",this);
     labelFightBottomName=new QGraphicsTextItem(this);
     progressBarFightBottomHP=new CCprogressbar(this);
 
-    frameFightTop=new QGraphicsPixmapItem(this);
-    labelFightTopLevel=new QGraphicsTextItem(this);
+    frameFightTop=new QGraphicsPixmapItem(28,":/CC/images/interface/b1.png",this);
     labelFightTopName=new QGraphicsTextItem(this);
     progressBarFightTopHP=new CCprogressbar(this);
 
     labelFightBackground=new QGraphicsPixmapItem(this);
+    labelFightBackgroundPix=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+"/map/fight/grass/background.png");
     labelFightForeground=new QGraphicsPixmapItem(this);
+    labelFightForegroundPix=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+"/map/fight/grass/foreground.png");
 
     labelFightMonsterAttackBottom=new QGraphicsPixmapItem(this);
     labelFightMonsterAttackTop=new QGraphicsPixmapItem(this);
@@ -172,6 +173,46 @@ void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         pushButtonFightReturn->setPixelSize(35);
     }
 
+    unsigned int minRatio=w->width()/220;
+    unsigned int tempRatio=w->height()/150;
+    if(minRatio>tempRatio)
+        minRatio=tempRatio;
+    unsigned int finalWidth=220*minRatio;
+    unsigned int finalHeight=150*minRatio;
+    unsigned int finalX=(w->width()-finalWidth)/2;
+    unsigned int finalY=(w->height()-finalHeight)/2;
+    if(labelFightBackground->pixmap().width()!=labelFightBackgroundPix.width()*minRatio)
+    {
+        QPixmap t=labelFightBackgroundPix;
+        t.scaled(labelFightBackgroundPix.width()*minRatio,labelFightBackgroundPix.height()*minRatio);
+        labelFightBackground->setPixmap(t);
+    }
+    labelFightBackground->setPos(finalX,finalY);
+
+    frameFightBottom->setPos(480,310);
+    frameFightBottom->setSize(300,88);
+    labelFightBottomName->setSize(10,10);
+    progressBarFightBottomHP->setSize(10,10+labelFightBottomName->height()+10);
+
+    frameFightTop->setPos(70,70);
+    frameFightTop->setSize(300,88);
+    labelFightTopName;
+    progressBarFightTopHP;
+
+    labelFightMonsterAttackBottom->setPos(60,280);
+    labelFightMonsterAttackBottom->setSize(160,160);
+    labelFightMonsterAttackTop->setPos(510,90);
+    labelFightMonsterAttackTop->setSize(160,160);
+    labelFightMonsterBottom->setPos(60,280);
+    labelFightMonsterBottom->setSize(160,160);
+    labelFightMonsterTop->setPos(510,90);
+    labelFightMonsterTop->setSize(160,160);
+    labelFightPlateformBottom->setPos(30,350);
+    labelFightPlateformBottom->setSize(230,90);
+    labelFightPlateformTop->setPos(460,170);
+    labelFightPlateformTop->setSize(260,90);
+    labelFightTrap->setPos(280,230);
+    labelFightTrap->setSize(160,160);
 
     unsigned int tWidthTButton=server_add->width()+space+
             server_edit->width()+space+
