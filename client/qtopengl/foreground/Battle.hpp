@@ -45,7 +45,9 @@ private:
     CCprogressbar *progressBarFightTopHP;
 
     QGraphicsPixmapItem *labelFightBackground;
+    QPixmap labelFightBackgroundPix;
     QGraphicsPixmapItem *labelFightForeground;
+    QPixmap labelFightForegroundPix;
 
     QGraphicsPixmapItem *labelFightMonsterAttackBottom;
     QGraphicsPixmapItem *labelFightMonsterAttackTop;
