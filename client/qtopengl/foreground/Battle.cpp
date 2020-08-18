@@ -9,13 +9,13 @@
 
 Battle::Battle()
 {
-    frameFightBottom=new QGraphicsPixmapItem(28,":/CC/images/interface/b1.png",this);
-    labelFightBottomName=new QGraphicsTextItem(this);
-    progressBarFightBottomHP=new CCprogressbar(this);
+    frameFightBottom=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
+    labelFightBottomName=new QGraphicsTextItem(frameFightBottom);
+    progressBarFightBottomHP=new CCprogressbar(frameFightBottom);
 
-    frameFightTop=new QGraphicsPixmapItem(28,":/CC/images/interface/b1.png",this);
-    labelFightTopName=new QGraphicsTextItem(this);
-    progressBarFightTopHP=new CCprogressbar(this);
+    frameFightTop=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
+    labelFightTopName=new QGraphicsTextItem(frameFightTop);
+    progressBarFightTopHP=new CCprogressbar(frameFightTop);
 
     labelFightBackground=new QGraphicsPixmapItem(this);
     labelFightBackgroundPix=QPixmap(QString::fromStdString(QtDatapackClientLoader::datapackLoader->getDatapackPath())+"/map/fight/grass/background.png");
@@ -31,18 +31,18 @@ Battle::Battle()
     labelFightTrap=new QGraphicsPixmapItem(this);
 
     stackedWidgetFightBottomBar=new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this);
-    labelFightEnter=new QGraphicsTextItem(this);
-    pushButtonFightEnterNext=new CustomButton(":/CC/images/interface/greenbutton.png",this);
+    labelFightEnter=new QGraphicsTextItem(stackedWidgetFightBottomBar);
+    pushButtonFightEnterNext=new CustomButton(":/CC/images/interface/greenbutton.png",stackedWidgetFightBottomBar);
 
-    pushButtonFightAttack=new CustomButton(":/CC/images/interface/greenbutton.png",this);
-    pushButtonFightBag=new CustomButton(":/CC/images/interface/button.png",this);
-    pushButtonFightMonster=new CustomButton(":/CC/images/interface/button.png",this);
-    toolButtonFightQuit=new CustomButton(":/CC/images/interface/button.png",this);
+    pushButtonFightAttack=new CustomButton(":/CC/images/interface/greenbutton.png",stackedWidgetFightBottomBar);
+    pushButtonFightBag=new CustomButton(":/CC/images/interface/button.png",stackedWidgetFightBottomBar);
+    pushButtonFightMonster=new CustomButton(":/CC/images/interface/button.png",stackedWidgetFightBottomBar);
+    toolButtonFightQuit=new CustomButton(":/CC/images/interface/button.png",stackedWidgetFightBottomBar);
 
-    pushButtonFightAttackConfirmed=new CustomButton(":/CC/images/interface/greenbutton.png",this);
-    pushButtonFightReturn=new CustomButton(":/CC/images/interface/button.png",this);
-    labelFightAttackDetails=new QGraphicsTextItem(this);
-    listWidgetFightAttackProxy=new QGraphicsProxyWidget(this);
+    pushButtonFightAttackConfirmed=new CustomButton(":/CC/images/interface/greenbutton.png",stackedWidgetFightBottomBar);
+    pushButtonFightReturn=new CustomButton(":/CC/images/interface/button.png",stackedWidgetFightBottomBar);
+    labelFightAttackDetails=new QGraphicsTextItem(stackedWidgetFightBottomBar);
+    listWidgetFightAttackProxy=new QGraphicsProxyWidget(stackedWidgetFightBottomBar);
     listWidgetFightAttack=new QListWidget();
     listWidgetFightAttackProxy->setWidget(listWidgetFightAttack);
 
@@ -181,7 +181,7 @@ void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     unsigned int finalHeight=150*minRatio;
     unsigned int finalX=(w->width()-finalWidth)/2;
     unsigned int finalY=(w->height()-finalHeight)/2;
-    if(labelFightBackground->pixmap().width()!=labelFightBackgroundPix.width()*minRatio)
+    if(labelFightBackground->pixmap().width()!=labelFightBackgroundPix.width()*(int)minRatio)
     {
         QPixmap t=labelFightBackgroundPix;
         t.scaled(labelFightBackgroundPix.width()*minRatio,labelFightBackgroundPix.height()*minRatio);
@@ -191,71 +191,50 @@ void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 
     frameFightBottom->setPos(480,310);
     frameFightBottom->setSize(300,88);
-    labelFightBottomName->setSize(10,10);
-    progressBarFightBottomHP->setSize(10,10+labelFightBottomName->height()+10);
+    //labelFightBottomName->setSize(10,10);
+    progressBarFightBottomHP->setSize(10,10+24+10);
 
     frameFightTop->setPos(70,70);
     frameFightTop->setSize(300,88);
-    labelFightTopName;
-    progressBarFightTopHP;
+    //labelFightTopName->setSize(10,10);
+    progressBarFightTopHP->setSize(10,10+24+10);
 
-    labelFightMonsterAttackBottom->setPos(60,280);
-    labelFightMonsterAttackBottom->setSize(160,160);
-    labelFightMonsterAttackTop->setPos(510,90);
-    labelFightMonsterAttackTop->setSize(160,160);
-    labelFightMonsterBottom->setPos(60,280);
-    labelFightMonsterBottom->setSize(160,160);
-    labelFightMonsterTop->setPos(510,90);
-    labelFightMonsterTop->setSize(160,160);
-    labelFightPlateformBottom->setPos(30,350);
-    labelFightPlateformBottom->setSize(230,90);
-    labelFightPlateformTop->setPos(460,170);
-    labelFightPlateformTop->setSize(260,90);
-    labelFightTrap->setPos(280,230);
-    labelFightTrap->setSize(160,160);
+    labelFightMonsterAttackBottom->setPos(finalX+60*minRatio,finalY+280*minRatio);
+    //labelFightMonsterAttackBottom->setSize(160*minRatio,160*minRatio);
+    labelFightMonsterAttackTop->setPos(finalX+510*minRatio,finalY+90*minRatio);
+    //labelFightMonsterAttackTop->setSize(160*minRatio,160*minRatio);
+    labelFightMonsterBottom->setPos(finalX+60*minRatio,finalY+280*minRatio);
+    //labelFightMonsterBottom->setSize(160*minRatio,160*minRatio);
+    labelFightMonsterTop->setPos(finalX+510*minRatio,finalY+90*minRatio);
+    //labelFightMonsterTop->setSize(160*minRatio,160*minRatio);
+    labelFightPlateformBottom->setPos(finalX+30*minRatio,finalY+350*minRatio);
+    //labelFightPlateformBottom->setSize(230*minRatio,90*minRatio);
+    labelFightPlateformTop->setPos(finalX+460*minRatio,finalY+170*minRatio);
+    //labelFightPlateformTop->setSize(260*minRatio,90*minRatio);
+    labelFightTrap->setPos(finalX+280*minRatio,finalY+230*minRatio);
+    //labelFightTrap->setSize(160*minRatio,160*minRatio);
 
-    unsigned int tWidthTButton=server_add->width()+space+
-            server_edit->width()+space+
-            server_remove->width()+space+
-            server_refresh->width();
-    unsigned int tXTButton=w->width()/2-tWidthTButton/2;
-    unsigned int tWidthTButtonOffset=0;
-    unsigned int y=w->height()-space-server_select->height()-space-server_add->height();
-    server_remove->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=server_remove->width()+space;
-    server_add->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=server_add->width()+space;
-    server_edit->setPos(tXTButton+tWidthTButtonOffset,y);
-    tWidthTButtonOffset+=server_edit->width()+space;
-    server_refresh->setPos(tXTButton+tWidthTButtonOffset,y);
-
-    tWidthTButton=server_select->width()+space+
-            back->width();
-    y=w->height()-space-server_select->height();
-    tXTButton=w->width()/2-tWidthTButton/2;
-    back->setPos(tXTButton,y);
-    server_select->setPos(tXTButton+back->width()+space,y);
-
-    y=w->height()-space-server_select->height()-space-server_add->height();
-    wdialog->setHeight(w->height()-space-server_select->height()-space-server_add->height()-space-space);
-    if((unsigned int)w->width()<(800+space*2))
+    stackedWidgetFightBottomBar->setSize(w->width(),160*minRatio);
+    stackedWidgetFightBottomBar->setPos(0,w->height()-160*minRatio);
+    switch(m_stackedWidgetFightBottomBarIndex)
     {
-        wdialog->setWidth(w->width()-space*2);
-        wdialog->setPos(space,space);
-    }
-    else
-    {
-        wdialog->setWidth(800);
-        wdialog->setPos(w->width()/2-wdialog->width()/2,space);
-    }
-    warning->setPos(w->width()/2-warning->boundingRect().width(),space+wdialog->height()-wdialog->currentBorderSize()-warning->boundingRect().height());
-
-    unsigned int offsetBattleItem=0;
-    foreach(BattleItem *item, serverConnexion)
-    {
-        item->setPos(wdialog->x()+wdialog->currentBorderSize(),space+wdialog->currentBorderSize()+offsetBattleItem);
-        item->setSize(wdialog->width()-wdialog->currentBorderSize()*2,multiItemH);
-        offsetBattleItem+=multiItemH+space/3;
+        case 0:
+            labelFightEnter->setPos(space,stackedWidgetFightBottomBar->height()/2-24/2);
+            pushButtonFightEnterNext->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightEnterNext->width(),stackedWidgetFightBottomBar->height()/2-pushButtonFightEnterNext->height()/2);
+        break;
+        case 1:
+            pushButtonFightAttack->setPos(stackedWidgetFightBottomBar->width()/2-space/2-pushButtonFightAttack->width(),stackedWidgetFightBottomBar->height()/2-space/2-pushButtonFightAttack->height());
+            pushButtonFightBag->setPos(stackedWidgetFightBottomBar->width()/2+space/2+pushButtonFightBag->width(),stackedWidgetFightBottomBar->height()/2-space/2-pushButtonFightBag->height());
+            pushButtonFightMonster->setPos(stackedWidgetFightBottomBar->width()/2-space/2-pushButtonFightMonster->width(),stackedWidgetFightBottomBar->height()/2+space/2+pushButtonFightMonster->height());
+            toolButtonFightQuit->setPos(stackedWidgetFightBottomBar->width()/2+space/2+toolButtonFightQuit->width(),stackedWidgetFightBottomBar->height()/2+space/2+toolButtonFightQuit->height());
+        break;
+        case 2:
+            pushButtonFightReturn->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightReturn->width(),stackedWidgetFightBottomBar->height()-space-pushButtonFightReturn->height());
+            pushButtonFightAttackConfirmed->setPos(stackedWidgetFightBottomBar->width()-space-pushButtonFightAttackConfirmed->width(),stackedWidgetFightBottomBar->height()-space-pushButtonFightReturn->height()-space-pushButtonFightAttackConfirmed->height());
+            labelFightAttackDetails->setPos(stackedWidgetFightBottomBar->width()/2+space/2,space);
+            listWidgetFightAttackProxy->setPos(space,space);
+            listWidgetFightAttack->setFixedSize(stackedWidgetFightBottomBar->width()/2-space-space/2,stackedWidgetFightBottomBar->height()-space*2);
+        break;
     }
 }
 
