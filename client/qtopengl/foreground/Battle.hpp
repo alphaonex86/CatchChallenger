@@ -32,15 +32,13 @@ public slots:
     void on_listWidgetFightAttack_itemSelectionChanged();
     void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);
 private:
-    QGraphicsPixmapItem *frameFightBottom;
+    ImagesStrechMiddle *frameFightBottom;
     QList<QGraphicsPixmapItem *> bottomBuff;
-    QGraphicsTextItem *labelFightBottomLevel;
     QGraphicsTextItem *labelFightBottomName;
     CCprogressbar *progressBarFightBottomHP;
 
-    QGraphicsPixmapItem *frameFightTop;
+    ImagesStrechMiddle *frameFightTop;
     QList<QGraphicsPixmapItem *> topBuff;
-    QGraphicsTextItem *labelFightTopLevel;
     QGraphicsTextItem *labelFightTopName;
     CCprogressbar *progressBarFightTopHP;
 
