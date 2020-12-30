@@ -52,6 +52,13 @@ int main(int argc, char *argv[])
 
     //blocking due to db connexion
     EpollServerLoginSlave::epollServerLoginSlave=new EpollServerLoginSlave();
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    const bool save=argc==2 && strcmp(argv[1],"save")==0;
+    if(save)
+        EpollServerLoginSlave::epollServerLoginSlave->setSave(datapackCache);
+    else
+        EpollServerLoginSlave::epollServerLoginSlave->setLoad(datapackCache);
+    #endif
 
     char buf[4096];
     memset(buf,0,4096);

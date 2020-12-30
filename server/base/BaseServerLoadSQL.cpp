@@ -343,6 +343,8 @@ void BaseServer::preload_industries_return()
         out_file->flush();
         out_file->close();
         delete out_file;
+        ::rename((FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin.tmp").c_str(),
+                 (FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin").c_str());
         ::exit(0);
         return;
     }

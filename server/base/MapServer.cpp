@@ -90,7 +90,19 @@ CommonMap * MapServer::posToPointer(const int32_t &pos)
     if((uint32_t)pos<mapListSize)
         return GlobalServerData::serverPrivateVariables.flat_map_list[pos];
     else
+    {
+        std::cerr << pos << " not into list: ";
+        size_t index=0;
+        while(index<mapListSize)
+        {
+            if(index>0)
+                std::cerr << ", ";
+            std::cerr << GlobalServerData::serverPrivateVariables.flat_map_list[index]->id;
+            index++;
+        }
+        std::cerr << " (" << mapListSize << ")";
         abort();
+    }
     return nullptr;
 }
 #endif

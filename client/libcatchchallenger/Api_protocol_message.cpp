@@ -1531,9 +1531,17 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     warehouse_items[id]=quantity;
                 index++;
             }
+            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             player_informations.items=items;
             player_informations.warehouse_items=warehouse_items;
+            have_inventory(player_informations.items,player_informations.warehouse_items);
+            #else
+            for (auto itr = items.cbegin(); itr != items.cend(); ++itr)
+                player_informations.items[itr->first]=itr->second;
+            for (auto itr = warehouse_items.cbegin(); itr != warehouse_items.cend(); ++itr)
+                player_informations.warehouse_items[itr->first]=itr->second;
             have_inventory(items,warehouse_items);
+            #endif
         }
         break;
         //Add object

@@ -213,6 +213,7 @@ std::string binarytoHexa(const char * const data, const uint32_t &size, bool *ok
     if(__builtin_expect((size>100000000),0))
     {
         std::cerr << "cpp11addition binarytoHexa() size>100000000, seam be a bug, dropped to empty string" << std::endl;
+        abort();
         return std::string();
     }
     #endif
