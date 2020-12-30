@@ -327,18 +327,29 @@ void BaseServer::preload_the_data()
                 break;
             }
         }
+        std::unordered_set<uint32_t> detectDuplicateMapId;
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
         {
             std::string string;
             uint32_t id=0;
             *serialBuffer >> id;
-            if(id>4000000000)
+            if(detectDuplicateMapId.find(id)!=detectDuplicateMapId.cend())
+            {
+                std::cerr << "duplicate id for map: " << id << std::endl;
                 abort();
+            }
+            std::cerr << "map id " << id << " at " << serialBuffer->tellg() << std::endl;
+            if(id>100000)
+            {
+                std::cerr << "map id " << id << " too big, abort to prevent problem at " << serialBuffer->tellg() << std::endl;
+                abort();
+            }
             *serialBuffer >> string;
             MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             *serialBuffer >> *map;
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
+            std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
         }
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 

@@ -35,6 +35,9 @@ public:
     void resetAll();
     void closeDownload();
 
+    void errorFromFightEngine(const std::string &error);
+    bool haveBeatBot(const uint16_t &botFightId) const;
+
     //connection related
     void tryConnect(std::string host,uint16_t port);
     void tryDisconnect();

@@ -2,6 +2,8 @@
 #define Battle_H
 
 #include "../ScreenInput.hpp"
+#include "../Map_client.hpp"
+#include "../ConnexionManager.hpp"
 #include <QObject>
 class CCprogressbar;
 class ImagesStrechMiddle;
@@ -22,7 +24,15 @@ public:
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
     void stackedWidgetFightBottomBarsetCurrentWidget(int index);
+
+    void on_monsterList_itemActivated(uint8_t monsterPosition);
+    bool check_monsters();
+    void init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void setVar(ConnexionManager *connexionManager);
+    void init_current_monster_display(CatchChallenger::PlayerMonster *fightMonster);
 public slots:
+    void on_pushButtonFightEnterNext_clicked();
+/*
     void on_pushButtonFightEnterNext_clicked();
     void on_toolButtonFightQuit_clicked();
     void on_pushButtonFightAttack_clicked();
@@ -30,7 +40,7 @@ public slots:
     void on_pushButtonFightAttackConfirmed_clicked();
     void on_pushButtonFightReturn_clicked();
     void on_listWidgetFightAttack_itemSelectionChanged();
-    void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);
+    void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);*/
 private:
     ImagesStrechMiddle *frameFightBottom;
     QList<QGraphicsPixmapItem *> bottomBuff;
@@ -46,13 +56,15 @@ private:
     QPixmap labelFightBackgroundPix;
     QGraphicsPixmapItem *labelFightForeground;
     QPixmap labelFightForegroundPix;
+    QGraphicsPixmapItem *labelFightPlateformBottom;
+    QPixmap labelFightPlateformBottomPix;
+    QGraphicsPixmapItem *labelFightPlateformTop;
+    QPixmap labelFightPlateformTopPix;
 
     QGraphicsPixmapItem *labelFightMonsterAttackBottom;
     QGraphicsPixmapItem *labelFightMonsterAttackTop;
     QGraphicsPixmapItem *labelFightMonsterBottom;
     QGraphicsPixmapItem *labelFightMonsterTop;
-    QGraphicsPixmapItem *labelFightPlateformBottom;
-    QGraphicsPixmapItem *labelFightPlateformTop;
     QGraphicsPixmapItem *labelFightTrap;
 
     ImagesStrechMiddle *stackedWidgetFightBottomBar;
@@ -72,6 +84,10 @@ private:
     QListWidget *listWidgetFightAttack;
 
     int m_stackedWidgetFightBottomBarIndex=0;
+
+    bool escape;
+    bool escapeSuccess;
+    ConnexionManager *connexionManager;
 };
 
 #endif // MULTI_H

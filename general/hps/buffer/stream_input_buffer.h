@@ -68,10 +68,23 @@ class StreamInputBuffer {
   }
 
   void load() {
-      //const size_t oldpos=stream->tellg();
+      const size_t oldpos=stream->tellg();
       stream->read(buffer, STREAM_INPUT_BUFFER_SIZE);
-      //const size_t size=stream->tellg()-oldpos;
-    //std::cout << "read: " << size << " " << binarytoHexa(buffer,size) << std::endl;
+      const auto temppos=stream->tellg();
+      if(temppos<0)
+      {
+          std::cerr << "stream->tellg(): " << stream->tellg() << " then buggy file, abort()" << std::endl;
+          abort();
+      }
+      const size_t size=temppos-oldpos;
+      if(size>STREAM_INPUT_BUFFER_SIZE)
+      {
+          std::cerr << "stream->tellg(): " << stream->tellg() << "-" << oldpos << " greater than max then buggy file, abort()" << std::endl;
+          abort();
+      }
+      if(size==0)
+          std::cerr << "read 0 bytes from HPS source, maybe a problem" << std::endl;
+        //std::cout << "read: " << size << " " << binarytoHexa(buffer,size) << std::endl;
     pos = 0;
   }
 };
