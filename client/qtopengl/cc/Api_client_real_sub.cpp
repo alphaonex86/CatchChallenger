@@ -525,8 +525,8 @@ void Api_client_real::httpFinishedForDatapackListSub()
             {
                 if(partialHashListRaw.size()%4!=0)
                 {
-                    std::cerr << "partialHashList not divisible by 4" << std::endl;
-                    newError("Wrong datapack format","partialHashList not divisible by 4");
+                    std::cerr << "partialHashList not divisible by 4 (sub), check: "+reply->url().toString().toStdString() << std::endl;
+                    newError("Wrong datapack format","partialHashList not divisible by 4 (sub), check: "+reply->url().toString().toStdString());
                     return;
                 }
                 {
