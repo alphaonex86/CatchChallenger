@@ -103,6 +103,16 @@ Api_client_real::~Api_client_real()
     #endif
 }
 
+void Api_client_real::errorFromFightEngine(const std::string &error)
+{
+    std::cerr << "Api_client_real::errorFromFightEngine(): " << error << std::endl;
+}
+
+bool Api_client_real::haveBeatBot(const uint16_t &botFightId) const
+{
+    return false;
+}
+
 bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     return Api_client_real::parseReplyData(mainCodeType,queryNumber,std::string(data,size));

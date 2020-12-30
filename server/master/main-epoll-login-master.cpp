@@ -83,6 +83,13 @@ int main(int argc, char *argv[])
         return EPOLLERR;
 
     EpollServerLoginMaster::epollServerLoginMaster=new EpollServerLoginMaster();
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    const bool save=argc==2 && strcmp(argv[1],"save")==0;
+    if(save)
+        EpollServerLoginMaster::epollServerLoginMaster->setSave(datapackCache);
+    else
+        EpollServerLoginMaster::epollServerLoginMaster->setLoad(datapackCache);
+    #endif
 
     char buf[4096];
     memset(buf,0,4096);
