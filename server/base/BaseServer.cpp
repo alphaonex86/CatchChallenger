@@ -332,24 +332,30 @@ void BaseServer::preload_the_data()
         {
             std::string string;
             uint32_t id=0;
+            //ssize_t lastPos=0;
+            //lastPos=serialBuffer->tellg();
             *serialBuffer >> id;
+            //std::cerr << "map id " << id << " at " << lastPos << std::endl;
             if(detectDuplicateMapId.find(id)!=detectDuplicateMapId.cend())
             {
                 std::cerr << "duplicate id for map: " << id << std::endl;
                 abort();
             }
-            std::cerr << "map id " << id << " at " << serialBuffer->tellg() << std::endl;
             if(id>100000)
             {
                 std::cerr << "map id " << id << " too big, abort to prevent problem at " << serialBuffer->tellg() << std::endl;
                 abort();
             }
+            //lastPos=serialBuffer->tellg();
             *serialBuffer >> string;
+            //std::cerr << "map string " << string << " at " << lastPos << std::endl;
             MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
+            //lastPos=serialBuffer->tellg();
             *serialBuffer >> *map;
+            //std::cerr << "map " << id << " at " << lastPos << std::endl;
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
-            std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
+            //std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
         }
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
@@ -434,12 +440,23 @@ void BaseServer::preload_the_data()
                 const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
                 const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
                 const uint32_t &id=id_map_to_map_reverse.at(string);
+
+                //std::cerr << "map id " << id << " at " << out_file->tellp() << std::endl;
+
                 hps::to_stream(id, *out_file);
                 idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+                //std::cerr << "map string " << string << " at " << out_file->tellp() << std::endl;
+
                 hps::to_stream(string, *out_file);
                 pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+                //std::cerr << "map at " << out_file->tellp() << std::endl;
+
                 hps::to_stream(*map, *out_file);
                 mapSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+                //std::cerr << "map end at " << out_file->tellp() << std::endl;
             }
             std::cout << "map id size: " << idSize << "B" << std::endl;
             std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
