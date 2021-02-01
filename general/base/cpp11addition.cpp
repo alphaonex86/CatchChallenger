@@ -41,6 +41,16 @@ std::size_t pairhash::operator()(const std::pair<uint16_t, uint16_t> &x) const
     return (x.first << 16) + x.second;
 }
 
+std::string str_tolower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(),
+                // static_cast<int(*)(int)>(std::tolower)         // wrong
+                // [](int c){ return std::tolower(c); }           // wrong
+                // [](char c){ return std::tolower(c); }          // wrong
+                   [](unsigned char c){ return std::tolower(c); } // correct
+                  );
+    return s;
+}
+
 bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to)
 {
     const size_t start_pos = str.find(from);

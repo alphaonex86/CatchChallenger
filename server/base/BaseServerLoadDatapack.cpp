@@ -128,7 +128,6 @@ void BaseServer::preload_the_datapack()
                     //read and load the file
                     const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
 
-
                     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                     if((1+fileName.size()+4+data.size())>=CATCHCHALLENGER_MAX_PACKET_SIZE)
                     {
@@ -182,6 +181,14 @@ void BaseServer::preload_the_datapack()
                         #endif
 
                         hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
+
+                        /*usefull to debug: hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                        std::cout << str_tolower(binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)) << "  " << fullPathFileToOpen.c_str() << std::endl;
+                        if(fullPathFileToOpen.find("/map/main/")!=std::string::npos)
+                        {
+                            std::cerr << "final ilegal abort fileName: " << fileName << ", mainDatapackBaseFilter: " << mainDatapackBaseFilter << std::endl;
+                            abort();
+                        }*/
                     }
                 }
                 else
@@ -209,8 +216,21 @@ void BaseServer::preload_the_datapack()
         {
             CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
             hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+            memcpy(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE);
         }
     }
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    {
+        char tempArrayOfZero[CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()];
+        memset(tempArrayOfZero,0,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
+        if(memcmp(tempArrayOfZero,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())==0)
+        {
+            std::cerr << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
+                      << " hash for datapack loaded base, wrong unable to sync with master (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+    }
+    #endif
     /// \todo check if big file is compressible under 1MB
 
     //do the main

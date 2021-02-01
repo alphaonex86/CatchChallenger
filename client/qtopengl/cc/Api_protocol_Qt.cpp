@@ -91,6 +91,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         abort();*/
     if(!connect(this,&Api_protocol_Qt::Qtrandom_seeds,this,&Api_protocol_Qt::newRandomNumber))
            abort();
+    socketDisconnectedForReconnectFirstTry=false;
 }
 
 Api_protocol_Qt::~Api_protocol_Qt()
@@ -421,6 +422,7 @@ void Api_protocol_Qt::resetAll()
 
 bool Api_protocol_Qt::tryLogin(const std::string &login, const std::string &pass)
 {
+    socketDisconnectedForReconnectFirstTry=false;
     std::string peerName=socket->peerName().toStdString();
     if(peerName.size()>255)
     {
@@ -432,8 +434,12 @@ bool Api_protocol_Qt::tryLogin(const std::string &login, const std::string &pass
 
 std::string Api_protocol_Qt::socketDisconnectedForReconnect()
 {
+    if(socketDisconnectedForReconnectFirstTry)
+        return std::string();
+    socketDisconnectedForReconnectFirstTry=true;
     std::string returnVar=Api_protocol::socketDisconnectedForReconnect();
     const ServerFromPoolForDisplay &serverFromPoolForDisplay=serverOrdenedList.at(selectedServerIndex);
+    std::cout << "try reconnect on game server: " << serverFromPoolForDisplay.host << ":" << std::to_string(serverFromPoolForDisplay.port) << std::endl;
     if(socket==NULL)
     {
         parseError("Internal error, file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),std::string("socket==NULL with Api_protocol_Qt::socketDisconnectedForReconnect()"));

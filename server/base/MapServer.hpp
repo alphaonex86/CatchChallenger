@@ -3,6 +3,7 @@
 
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/hps/hps.h"
 #include "../crafting/MapServerCrafting.hpp"
 #include "../VariableServer.hpp"
 #include "GlobalServerData.hpp"
@@ -72,10 +73,16 @@ public:
         }
         buf << width;
         buf << height;
+        const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
+        if(mapSize>hps::STREAM_INPUT_BUFFER_SIZE/2)
+        {
+            std::cerr << "mapSize: " << mapSize << ">STREAM_INPUT_BUFFER_SIZE: " << hps::STREAM_INPUT_BUFFER_SIZE << "/2" << std::endl;
+            abort();
+        }
         //buf << group;
         buf << id;
         buf << parsed_layer.monstersCollisionList;
-        buf.write((char *)parsed_layer.simplifiedMap,width*height);
+        buf.write((char *)parsed_layer.simplifiedMap,mapSize);
         buf << (uint8_t)shops.size();
         for (const auto x : shops)
               buf << x.first << x.second;
@@ -131,11 +138,17 @@ public:
         }
         buf >> width;
         buf >> height;
+        const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
+        if(mapSize>hps::STREAM_INPUT_BUFFER_SIZE)
+        {
+            std::cerr << "mapSize: " << mapSize << ">STREAM_INPUT_BUFFER_SIZE: " << hps::STREAM_INPUT_BUFFER_SIZE << "/2" << std::endl;
+            abort();
+        }
         //buf >> group;
         buf >> id;
         buf >> parsed_layer.monstersCollisionList;
-        parsed_layer.simplifiedMap=(uint8_t *)malloc(width*height);
-        buf.read((char *)parsed_layer.simplifiedMap,width*height);
+        parsed_layer.simplifiedMap=(uint8_t *)malloc(mapSize);
+        buf.read((char *)parsed_layer.simplifiedMap,mapSize);
         uint8_t smallsize=0;
         std::pair<uint8_t,uint8_t> posXY;posXY.first=0;posXY.second=0;
         buf >> smallsize;
