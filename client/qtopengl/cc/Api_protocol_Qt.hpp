@@ -379,6 +379,7 @@ public:
 private:
     uint32_t randomSeedsSize() const override;
 private:
+    bool socketDisconnectedForReconnectFirstTry;
     uint32_t mLastGivenXP;
     std::vector<uint8_t> mEvolutionByLevelUp;
     std::vector<Skill::AttackReturn> fightEffectList;

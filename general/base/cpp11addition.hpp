@@ -23,6 +23,7 @@ public:
   std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const;
 };
 
+std::string str_tolower(std::string s);
 bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
 uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to);
 std::vector<std::string> stringregexsplit(const std::string& input, const std::regex& regex);

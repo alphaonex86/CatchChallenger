@@ -134,7 +134,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         #ifdef CATCHCHALLENGER_CACHE_HPS
             if(!cachepath.empty())
             {
-                std::ofstream out_file(cachepath, std::ofstream::binary);
+                std::ofstream out_file(cachepath+".tmp", std::ofstream::binary);
                 if(out_file.good() && out_file.is_open())
                 {
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack, out_file);
@@ -148,6 +148,10 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     hps::to_stream(monsterExtra, out_file);
                     hps::to_stream(monsterBuffsExtra, out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp, out_file);
+                    out_file.flush();
+                    out_file.close();
+                    if(::rename((cachepath+".tmp").c_str(),cachepath.c_str())!=0)
+                        std::cerr << "unable to rename from: " << (cachepath+".tmp") << " to: " << cachepath << std::endl;
                 }
             }
             auto end_time = std::chrono::high_resolution_clock::now();

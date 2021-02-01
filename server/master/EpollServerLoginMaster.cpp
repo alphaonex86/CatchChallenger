@@ -1278,6 +1278,7 @@ void EpollServerLoginMaster::loadTheDictionary()
 
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
     posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
+    std::cout << "datapackHashBase is " << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << std::endl;
 
     if(EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver!=NULL)
         delete EpollServerLoginMaster::fixedValuesRawDictionaryCacheForGameserver;
