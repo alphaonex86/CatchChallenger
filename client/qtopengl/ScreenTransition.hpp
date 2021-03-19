@@ -33,6 +33,7 @@ public:
     ~ScreenTransition();
     void setBackground(ScreenInput *widget);
     void setForeground(ScreenInput *widget);
+    void setForegroundInGame(ScreenInput *widget);
     void setAbove(ScreenInput *widget);//first plan popup
 protected:
     void resizeEvent(QResizeEvent *event) override;
@@ -105,6 +106,7 @@ private:
     QTime timeUpdateFPS;
 
     bool multiplaySelected;
+    bool inGame;
 };
 
 #endif // SCREENTRANSITION_H

@@ -221,10 +221,10 @@ public slots:
     */
     //fight
     void botFight(const uint16_t &fightId);
-signals:
-    void error(const std::string &error);
     void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
     void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+signals:
+    void error(const std::string &error);
     //plant, can do action only if the previous is finish
     void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();

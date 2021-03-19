@@ -16,6 +16,7 @@ public:
     virtual void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral);
     void removeAbove();
 signals:
+    void setForeground(ScreenInput *widget);
     void setAbove(ScreenInput *widget);//first plan popup
 };
 

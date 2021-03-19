@@ -84,6 +84,7 @@ ScreenTransition::ScreenTransition() :
     /*solo=nullptr;*/
     multi=nullptr;
     login=nullptr;
+    inGame=false;
     #ifdef CATCHCHALLENGER_SOLO
     internalServer=nullptr;
     #endif
@@ -238,6 +239,7 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
 
 void ScreenTransition::closeEvent(QCloseEvent *event)
 {
+    inGame=false;
     #ifdef CATCHCHALLENGER_SOLO
     if(internalServer!=nullptr)
     {
@@ -260,6 +262,7 @@ void ScreenTransition::setBackground(ScreenInput *widget)
     if(widget!=nullptr)
     {
         connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
+        connect(widget,&ScreenInput::setForeground,this,&ScreenTransition::setForegroundInGame,Qt::UniqueConnection);
         mScene->addItem(m_backgroundStack);
         m_backgroundStack->setZValue(-1);
     }
@@ -281,8 +284,16 @@ void ScreenTransition::setForeground(ScreenInput *widget)
     if(widget!=nullptr)
     {
         connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
+        connect(widget,&ScreenInput::setForeground,this,&ScreenTransition::setForegroundInGame,Qt::UniqueConnection);
         mScene->addItem(m_foregroundStack);
     }
+}
+
+void ScreenTransition::setForegroundInGame(ScreenInput *widget)
+{
+    if(!inGame)
+        return;
+    setForeground(widget);
 }
 
 void ScreenTransition::setAbove(ScreenInput *widget)
@@ -301,6 +312,7 @@ void ScreenTransition::setAbove(ScreenInput *widget)
     if(widget!=nullptr)
     {
         connect(widget,&ScreenInput::setAbove,this,&ScreenTransition::setAbove,Qt::UniqueConnection);
+        connect(widget,&ScreenInput::setForeground,this,&ScreenTransition::setForegroundInGame,Qt::UniqueConnection);
         mScene->addItem(m_aboveStack);
     }
 }
@@ -773,6 +785,7 @@ void ScreenTransition::selectCharacter(const int indexSubServer,const int indexC
 
 void ScreenTransition::disconnectedFromServer()
 {
+    inGame=false;
     #ifdef CATCHCHALLENGER_SOLO
     if(internalServer!=nullptr)
         internalServer->stop();
@@ -785,6 +798,7 @@ void ScreenTransition::disconnectedFromServer()
 
 void ScreenTransition::errorString(std::string error)
 {
+    inGame=false;
     if(!error.empty())
     {
         std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
@@ -805,6 +819,7 @@ void ScreenTransition::goToServerList()
 
 void ScreenTransition::goToMap()
 {
+    inGame=true;
     setBackground(ccmap);
     setForeground(overmap);
     setAbove(nullptr);
