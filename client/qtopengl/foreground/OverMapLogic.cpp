@@ -13,6 +13,7 @@
 #include "../above/player/FinishedQuests.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include "Battle.hpp"
 #include <iostream>
 
 OverMapLogic::OverMapLogic()
@@ -76,6 +77,10 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
     if(!connect(ccmap,&CCMap::errorWithTheCurrentMap,this,&OverMapLogic::errorWithTheCurrentMap))
         abort();
     if(!connect(ccmap,&CCMap::currentMapLoaded,this,&OverMapLogic::currentMapLoaded))
+        abort();
+    if(!connect(ccmap,&CCMap::wildFightCollision,this,&OverMapLogic::wildFightCollision))
+        abort();
+    if(!connect(ccmap,&CCMap::botFightCollision,this,&OverMapLogic::botFightCollision))
         abort();
 
     OverMap::setVar(ccmap,connexionManager);
@@ -1567,6 +1572,31 @@ void OverMapLogic::load_crafting_inventory()
 void OverMapLogic::botFight(const uint16_t &fightId)
 {
     //todo
+    std::cerr << "OverMapLogic::botFight " << fightId << std::endl;
+}
+
+void OverMapLogic::wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
+{
+    (void)map;
+    (void)x;
+    (void)y;
+    std::cerr << "OverMapLogic::wildFightCollision" << std::endl;
+
+    if(Battle::battle==nullptr)
+        Battle::battle=new Battle();
+    emit setForeground(Battle::battle);
+}
+
+void OverMapLogic::botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
+{
+    (void)map;
+    (void)x;
+    (void)y;
+    std::cerr << "OverMapLogic::botFightCollision" << std::endl;
+
+    if(Battle::battle==nullptr)
+        Battle::battle=new Battle();
+    emit setForeground(Battle::battle);
 }
 
 void OverMapLogic::cityCapture(const uint32_t &remainingTime,const uint8_t &type)

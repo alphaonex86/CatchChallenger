@@ -18,6 +18,7 @@ class Battle : public ScreenInput
 public:
     explicit Battle();
     ~Battle();
+    static Battle *battle;
     void newLanguage();
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget = nullptr) override;
