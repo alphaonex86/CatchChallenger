@@ -97,6 +97,8 @@ void CCprogressbar::paint(QPainter *painter, const QStyleOptionGraphicsItem *, Q
 
     int startX=18*m_boundingRect.height()/82;
     int size=m_boundingRect.width()-startX-startX;
+    if(maximum()==0)
+        return;
     int inpixel=value()*size/maximum();
     if(inpixel<(barLeft.width()+barRight.width()))
     {

@@ -10,6 +10,8 @@
 #include <QListWidgetItem>
 #include <QImageReader>
 
+Battle * Battle::battle=nullptr;
+
 Battle::Battle()
 {
     frameFightBottom=new ImagesStrechMiddle(28,":/CC/images/interface/b1.png",this);
