@@ -9,6 +9,7 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QImageReader>
+#include <QPainter>
 
 Battle * Battle::battle=nullptr;
 
@@ -134,8 +135,11 @@ QRectF Battle::boundingRect() const
     return QRectF();
 }
 
-void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
+void Battle::paint(QPainter * painter, const QStyleOptionGraphicsItem *, QWidget *w)
 {
+    painter->setBackground(QBrush(QColor(0,0,0)));
+    painter->setPen(Qt::NoPen);
+    painter->drawRect(0,0,10,10);
     unsigned int space=10;
 //    unsigned int fontSize=20;
     //unsigned int multiItemH=100;
@@ -222,8 +226,9 @@ void Battle::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     labelFightTrap->setPos(finalX+280*minRatio,finalY+230*minRatio);
     //labelFightTrap->setSize(160*minRatio,160*minRatio);
 
-    stackedWidgetFightBottomBar->setSize(w->width(),160*minRatio);
-    stackedWidgetFightBottomBar->setPos(0,w->height()-160*minRatio);
+    unsigned int t160=160*minRatio;
+    stackedWidgetFightBottomBar->setSize(w->width(),t160);
+    stackedWidgetFightBottomBar->setPos(0,w->height()-t160);
     switch(m_stackedWidgetFightBottomBarIndex)
     {
         case 0:
