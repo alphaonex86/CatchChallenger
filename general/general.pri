@@ -17,6 +17,10 @@ wasm: {
 android: {
 INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/include
 }
+win32: {
+    QMAKE_CLFLAGS += "-Wa,-mbig-obj"
+    QMAKE_CXXFLAGS += "-Wa,-mbig-obj"
+}
 
 TEMPLATE = app
 
