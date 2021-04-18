@@ -7,6 +7,7 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
+    $$PWD/base/BaseServer2.cpp \
     $$PWD/base/BaseServerSettings.cpp \
     $$PWD/base/BaseServerLoad.cpp \
     $$PWD/base/BaseServerLoadProfile.cpp \
@@ -43,6 +44,7 @@ SOURCES += \
     $$PWD/base/ClientStaticVar.cpp \
     $$PWD/base/ClientHeavyLoad.cpp \
     $$PWD/base/ClientHeavyLoadLogin.cpp \
+    $$PWD/base/ClientHeavyLoadLogin2.cpp \
     $$PWD/base/ClientHeavyLoadMirror.cpp \
     $$PWD/base/ClientHeavyLoadSelectChar.cpp \
     $$PWD/base/ClientHeavyLoadSelectCharCommon.cpp \

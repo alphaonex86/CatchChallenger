@@ -95,7 +95,11 @@ void BaseServer::preload_the_datapack()
             auto i=pair.begin();
             while(i!=pair.cend())
             {
-                if(i->first.find("map/main/")!=std::string::npos)
+                if(i->first.find("map/main/")!=std::string::npos
+                    #ifdef _WIN32
+                    && i->first.find("map\\main\\")!=std::string::npos
+                    #endif                    
+                )
                 {
                     std::cerr << "map/main/ found into: " << i->first << " (abort)" << std::endl;
                     abort();
