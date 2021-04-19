@@ -21,6 +21,7 @@ public:
     /// \param settings ref is destroyed after this call
     explicit InternalServer();
     virtual ~InternalServer();
+    virtual void run();
 private slots:
     //starting function
     void start_internal_server();
