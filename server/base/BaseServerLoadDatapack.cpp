@@ -76,6 +76,7 @@ void BaseServer::preload_the_datapack()
     }
     #endif
 
+    #ifndef CATCHCHALLENGER_CLIENT
     //do the base
     {
         SHA224 hashBase = SHA224();
@@ -98,7 +99,7 @@ void BaseServer::preload_the_datapack()
                 if(i->first.find("map/main/")!=std::string::npos
                     #ifdef _WIN32
                     && i->first.find("map\\main\\")!=std::string::npos
-                    #endif                    
+                    #endif
                 )
                 {
                     std::cerr << "map/main/ found into: " << i->first << " (abort)" << std::endl;
@@ -439,6 +440,14 @@ void BaseServer::preload_the_datapack()
               << " file for datapack loaded main, "
               << Client::datapack_file_hash_cache_sub.size()
               << " file for datapack loaded sub" << std::endl;
+    #endif
+    #else
+    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    std::fill( CommonSettingsCommon::commonSettingsCommon.datapackHashBase.begin(), CommonSettingsCommon::commonSettingsCommon.datapackHashBase.end(), 0 );
+    CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    std::fill( CommonSettingsServer::commonSettingsServer.datapackHashServerMain.begin(), CommonSettingsServer::commonSettingsServer.datapackHashServerMain.end(), 0 );
+    CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+    std::fill( CommonSettingsServer::commonSettingsServer.datapackHashServerSub.begin(), CommonSettingsServer::commonSettingsServer.datapackHashServerSub.end(), 0 );
     #endif
     std::cout << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
               << " hash for datapack loaded base, "

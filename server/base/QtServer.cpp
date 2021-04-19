@@ -67,6 +67,7 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
+    connect(this,&QtServer::stop_internal_server_signal,this,&QtServer::stop_internal_server_slot,Qt::QueuedConnection);
 }
 
 QtServer::~QtServer()
@@ -118,6 +119,7 @@ void QtServer::preload_the_city_capture()
 void QtServer::preload_finish()
 {
     BaseServer::preload_finish();
+    moveToThread(QCoreApplication::instance()->thread());
     emit is_started(true);
 }
 
@@ -309,6 +311,7 @@ bool QtServer::check_if_now_stopped()
 //call by normal stop
 void QtServer::stop_internal_server()
 {
+    moveToThread(QThread::currentThread());
     if(stat!=Up && stat!=InDown)
     {
         if(stat!=Down)
@@ -317,7 +320,11 @@ void QtServer::stop_internal_server()
     }
     qDebug() << ("Try stop");
     stat=InDown;
+    emit stop_internal_server_signal();
+}
 
+void QtServer::stop_internal_server_slot()
+{
     //#ifndef CATCHCHALLENGER_SOLO
     auto i=client_list.begin();
     while(i!=client_list.cend())
