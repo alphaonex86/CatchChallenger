@@ -252,7 +252,9 @@ void ScreenTransition::closeEvent(QCloseEvent *event)
     if(internalServer!=nullptr)
     {
         hide();
-        connexionManager->client->disconnectFromHost();
+        if(connexionManager!=nullptr)
+            if(connexionManager->client!=nullptr)
+                connexionManager->client->disconnectFromHost();
         ///internalServer->stop();
         event->accept();
         return;
@@ -508,7 +510,7 @@ void ScreenTransition::openSolo()
         internalServer=new CatchChallenger::InternalServer();
         #ifndef NOTHREADS
         threadSolo->start();
-        //internalServer->moveToThread(threadSolo);//-> Timers cannot be stopped from another thread
+        //internalServer->moveToThread(threadSolo);//-> Timers cannot be stopped from another thread, fixed by using QThread InternalServer::run()
         #endif
     }
     if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&ScreenTransition::is_started,Qt::QueuedConnection))
