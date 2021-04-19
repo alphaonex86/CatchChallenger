@@ -5,7 +5,11 @@
 #include "BaseServer.hpp"
 
 namespace CatchChallenger {
+#ifndef NOTHREADS
+class QtServer : public QThread, public BaseServer
+#else
 class QtServer : public QObject, public BaseServer
+#endif
 {
     Q_OBJECT
 public:
@@ -25,7 +29,7 @@ public:
     void stop();
     bool check_if_now_stopped();//return true if can be stopped
     void stop_internal_server();
-    void preload_finish();
+    virtual void preload_finish();
     void quitForCriticalDatabaseQueryFailed();
 signals:
     void try_initAll() const;

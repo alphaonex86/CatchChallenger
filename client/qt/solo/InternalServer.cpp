@@ -72,6 +72,16 @@ void InternalServer::start_internal_server()
         return;
     }
     stat=InUp;
+    setObjectName("InternalServer");
+    #ifndef NOTHREADS
+    QThread::start();
+    #else
+    InternalServer::run();
+    #endif
+}
+
+void InternalServer::run()
+{
     loadAndFixSettings();
 
     if(!QFakeServer::server.listen())
@@ -92,7 +102,6 @@ void InternalServer::start_internal_server()
     }
     preload_the_data();
     stat=Up;
-    return;
 }
 
 /////////////////////////////////////////////////// Object removing /////////////////////////////////////
