@@ -85,6 +85,9 @@ private:
     #ifdef CATCHCHALLENGER_SOLO
     CatchChallenger::InternalServer *internalServer;
     #endif
+    #ifndef NOTHREADS
+    QThread *threadSolo;
+    #endif
     //Solo *solo;
     Multi *multi;
     Login *login;

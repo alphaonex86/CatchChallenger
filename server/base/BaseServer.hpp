@@ -94,7 +94,7 @@ protected:
         Up=2,
         InDown=3
     };
-    ServerStat stat;
+    std::atomic<ServerStat> stat;
 
     //to load/unload the content
     struct Map_semi
