@@ -92,6 +92,9 @@ ScreenTransition::ScreenTransition() :
     setForeground(&l);
     if(!connect(&l,&LoadingScreen::finished,this,&ScreenTransition::loadingFinished))
         abort();
+    #ifndef NOTHREADS
+    threadSolo=new QThread(this);
+    #endif
 
     timerUpdateFPS.setSingleShot(true);
     timerUpdateFPS.setInterval(1000);
@@ -131,6 +134,11 @@ ScreenTransition::ScreenTransition() :
 
 ScreenTransition::~ScreenTransition()
 {
+    #ifndef NOTHREADS
+    threadSolo->exit();
+    threadSolo->wait();
+    threadSolo->deleteLater();
+    #endif
 }
 
 void ScreenTransition::resizeEvent(QResizeEvent *event)
@@ -496,7 +504,13 @@ void ScreenTransition::openSolo()
         internalServer=nullptr;
     }
     if(internalServer==nullptr)
+    {
         internalServer=new CatchChallenger::InternalServer();
+        #ifndef NOTHREADS
+        threadSolo->start();
+        //internalServer->moveToThread(threadSolo);//-> Timers cannot be stopped from another thread
+        #endif
+    }
     if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&ScreenTransition::is_started,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -507,6 +521,7 @@ void ScreenTransition::openSolo()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
+    toLoading("Open the local game");
 
     {
         //std::string datapackPathBase=client->datapackPathBase();
@@ -551,7 +566,7 @@ void ScreenTransition::openSolo()
             const QFileInfoList &list=QDir(QString::fromStdString(datapackPathBase)+"/map/main/").entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(list.isEmpty())
             {
-                errorString(tr("No main code detected into the current datapack").toStdString());
+                errorString((tr("No main code detected into the current datapack, base, check: ")+QString::fromStdString(datapackPathBase)+"/map/main/").toStdString());
                 return;
             }
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();
@@ -564,7 +579,7 @@ void ScreenTransition::openSolo()
                     .entryInfoList(QDir::Dirs|QDir::NoDotAndDotDot,QDir::Name);
             if(list.isEmpty())
             {
-                errorString(tr("No main code detected into the current datapack").toStdString());
+                errorString((tr("No main code detected into the current datapack, empty main, check: ")+QString::fromStdString(datapackPathBase)+"/map/main/").toStdString());
                 return;
             }
             CommonSettingsServer::commonSettingsServer.mainDatapackCode=list.at(0).fileName().toStdString();

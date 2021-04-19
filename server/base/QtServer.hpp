@@ -34,10 +34,13 @@ signals:
     //stat
     void is_started(const bool &) const;
     void error(const std::string &error) const;
+    void stop_internal_server_signal();
 
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
     std::unordered_set<ClientWithSocket *> client_list;
+private:
+    void stop_internal_server_slot();
 };
 }
 
