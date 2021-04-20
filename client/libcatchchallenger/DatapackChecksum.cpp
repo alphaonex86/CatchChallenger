@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+//#include <unistd.h>--> problem with Microsoft Visual C++ Compiler
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/FacilityLib.hpp"
