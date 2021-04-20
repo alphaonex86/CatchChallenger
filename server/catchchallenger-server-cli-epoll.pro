@@ -10,8 +10,8 @@ QT       -= gui widgets network sql
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations  -fno-rtti"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x  -fno-rtti"
 
-QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+linux:QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
+linux:QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
 
 #DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #DEFINES += SERVERSSL

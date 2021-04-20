@@ -8,6 +8,7 @@ SOURCES += \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer.cpp \
     $$PWD/base/BaseServer2.cpp \
+    $$PWD/base/BaseServer3.cpp \
     $$PWD/base/BaseServerSettings.cpp \
     $$PWD/base/BaseServerLoad.cpp \
     $$PWD/base/BaseServerLoadProfile.cpp \
