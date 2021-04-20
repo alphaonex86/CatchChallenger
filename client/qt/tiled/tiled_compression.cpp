@@ -29,7 +29,7 @@
 #include "tiled_compression.hpp"
 
 #ifdef TILED_ZLIB
-    #if defined(Q_OS_WIN) && defined(Q_CC_MSVC)
+    #if defined(Q_OS_WIN) && defined(Q_CC_MSVC) || defined(_MSVC_VER)
         #include "QtZlib/zlib.h"
     #else
         #ifndef __EMSCRIPTEN__
