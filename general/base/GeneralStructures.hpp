@@ -479,14 +479,14 @@ public:
 #ifdef CATCHCHALLENGER_CACHE_HPS
 template <class B>
 void serialize(B& buf) const {
-    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLIENT)
     buf << name;
     #endif
     buf << multiplicator;
 }
 template <class B>
 void parse(B& buf) {
-    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_CLIENT)
     buf >> name;
     #endif
     buf >> multiplicator;
