@@ -802,7 +802,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             quantity=effect.quantity;
         else
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.types.size()<type)
+            if(type<CatchChallenger::CommonDatapack::commonDatapack.types.size())
             {
                 const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
                 float OtherMulti=1.0;
