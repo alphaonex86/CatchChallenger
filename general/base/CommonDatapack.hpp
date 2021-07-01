@@ -64,7 +64,8 @@ public:
         buf << monstersCollisionTemp;
         buf << isParsed;
         #endif
-        //<< types
+        //CatchChallenger::CommonDatapack::commonDatapack.types for typeDefinition.multiplicator
+        buf << types;
         buf << layersOptions;
         buf << events;
         buf << monstersCollision;
@@ -92,7 +93,8 @@ public:
         buf >> monstersCollisionTemp;
         buf >> isParsed;
         #endif
-        //<< types
+        //CatchChallenger::CommonDatapack::commonDatapack.types for typeDefinition.multiplicator
+        buf >> types;
         buf >> layersOptions;
         buf >> events;
         buf >> monstersCollision;
