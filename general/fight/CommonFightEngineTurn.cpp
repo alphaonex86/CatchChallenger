@@ -802,102 +802,109 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             quantity=effect.quantity;
         else
         {
-            const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
-            float OtherMulti=1.0;
-            if(vectorcontainsAtLeastOne(commonMonster.type,type))
+            if(CatchChallenger::CommonDatapack::commonDatapack.types.size()<type)
             {
-                std::cout << "1.45x because the attack is same type as the current monster: " << typeDefinition.name << std::endl;
-                OtherMulti*=1.45;
-            }
-            effect_to_return.effective=1.0;
-            const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
-            if(type!=255 && !typeList.empty())
-            {
-                unsigned int index=0;
-                while(index<typeList.size())
+                const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
+                float OtherMulti=1.0;
+                if(vectorcontainsAtLeastOne(commonMonster.type,type))
                 {
-                    if(typeDefinition.multiplicator.find(typeList.at(index))!=typeDefinition.multiplicator.cend())
-                    {
-                        const int8_t &multiplicator=typeDefinition.multiplicator.at(typeList.at(index));
-                        if(multiplicator>0)
-                        {
-                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-                            std::cout << "type: " << typeList.at(index) << "very effective againts" << typeDefinition.name << std::endl;
-                            #endif
-                            effect_to_return.effective*=multiplicator;
-                        }
-                        else
-                        {
-                            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-                            std::cout << "type: " << typeList.at(index) << "not effective againts" << typeDefinition.name << std::endl;
-                            #endif
-                            effect_to_return.effective/=-multiplicator;
-                        }
-                    }
-                    index++;
+                    std::cout << "1.45x because the attack is same type as the current monster: " << typeDefinition.name << std::endl;
+                    OtherMulti*=1.45;
                 }
-            }
-            float criticalHit=1.0;
-            effect_to_return.critical=(getOneSeed(255)<20);
-            if(effect_to_return.critical)
-            {
+                effect_to_return.effective=1.0;
+                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
+                if(type!=255 && !typeList.empty())
+                {
+                    unsigned int index=0;
+                    while(index<typeList.size())
+                    {
+                        if(typeDefinition.multiplicator.find(typeList.at(index))!=typeDefinition.multiplicator.cend())
+                        {
+                            const int8_t &multiplicator=typeDefinition.multiplicator.at(typeList.at(index));
+                            if(multiplicator>0)
+                            {
+                                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                                std::cout << "type: " << typeList.at(index) << "very effective againts" << typeDefinition.name << std::endl;
+                                #endif
+                                effect_to_return.effective*=multiplicator;
+                            }
+                            else
+                            {
+                                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                                std::cout << "type: " << typeList.at(index) << "not effective againts" << typeDefinition.name << std::endl;
+                                #endif
+                                effect_to_return.effective/=-multiplicator;
+                            }
+                        }
+                        index++;
+                    }
+                }
+                float criticalHit=1.0;
+                effect_to_return.critical=(getOneSeed(255)<20);
+                if(effect_to_return.critical)
+                {
+                    #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                    std::cout << "critical hit, then: 1.5x" << std::endl;
+                    #endif
+                    criticalHit=1.5;
+                }
+                uint32_t attack;
+                uint32_t defense;
+                if(type==0)
+                    attack=stat.attack;
+                else
+                    attack=stat.special_attack;
+                if(type==0)
+                    defense=otherStat.defense;
+                else
+                    defense=otherStat.special_defense;
+                if(defense<1)
+                    defense=1;
+                const uint8_t &seed=getOneSeed(17);
+                quantity = effect_to_return.effective*
+                        static_cast<float>(currentMonster->level)*static_cast<float>(1.99+10.5)/
+                         static_cast<float>(255)*static_cast<float>(attack)/static_cast<float>(defense)*
+                         static_cast<float>(effect.quantity)*static_cast<float>(criticalHit)*static_cast<float>(OtherMulti)*
+                        static_cast<float>(100-seed)/100;
                 #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-                std::cout << "critical hit, then: 1.5x" << std::endl;
-                #endif
-                criticalHit=1.5;
-            }
-            uint32_t attack;
-            uint32_t defense;
-            if(type==0)
-                attack=stat.attack;
-            else
-                attack=stat.special_attack;
-            if(type==0)
-                defense=otherStat.defense;
-            else
-                defense=otherStat.special_defense;
-            if(defense<1)
-                defense=1;
-            const uint8_t &seed=getOneSeed(17);
-            quantity = effect_to_return.effective*
-                    static_cast<float>(currentMonster->level)*static_cast<float>(1.99+10.5)/
-                     static_cast<float>(255)*static_cast<float>(attack)/static_cast<float>(defense)*
-                     static_cast<float>(effect.quantity)*static_cast<float>(criticalHit)*static_cast<float>(OtherMulti)*
-                    static_cast<float>(100-seed)/100;
-            #ifdef CATCHCHALLENGER_DEBUG_FIGHT
-            {
-                int32_t effect_quantity=effect.quantity;
-                if(effect_quantity<0)
-                    effect_quantity-=2;
-            }
-            std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << std::to_string(effect_to_return.effective) <<
-                         ")*(((float)currentMonster->level(" << std::to_string(currentMonster->level) << ")*(float)1.99+10.5)/(float)255*((float)attack("<<
-                         std::to_string(attack) << ")/(float)defense(" << std::to_string(defense) << "))*(float)effect.quantity(" << std::to_string(effect.quantity) <<
-                         "))*criticalHit(" << std::to_string(criticalHit) << ")*OtherMulti(" << std::to_string(OtherMulti) << ")*(100-getOneSeed(17)(" <<
-                         std::to_string(seed) << "))/100;" << std::endl;
-            #endif
-            /*if(effect.quantity<0)
-                quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
-            else if(effect.quantity>0)//ignore the def for heal
-                quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
-            if(type!=255 && !typeList.empty())
-            {
-                unsigned int index=0;
-                while(index<typeList.size())
                 {
-                    const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
-                    if(typeDefinition.multiplicator.contains(type))
-                    {
-                        const int8_t &multiplicator=typeDefinition.multiplicator.at(type);
-                        if(multiplicator>=0)
-                            quantity*=multiplicator;
-                        else
-                            quantity/=-multiplicator;
-                    }
-                    index++;
+                    int32_t effect_quantity=effect.quantity;
+                    if(effect_quantity<0)
+                        effect_quantity-=2;
                 }
-            }*/
+                std::cout << "quantity(" << quantity << ") = effect_to_return.effective(" << std::to_string(effect_to_return.effective) <<
+                             ")*(((float)currentMonster->level(" << std::to_string(currentMonster->level) << ")*(float)1.99+10.5)/(float)255*((float)attack("<<
+                             std::to_string(attack) << ")/(float)defense(" << std::to_string(defense) << "))*(float)effect.quantity(" << std::to_string(effect.quantity) <<
+                             "))*criticalHit(" << std::to_string(criticalHit) << ")*OtherMulti(" << std::to_string(OtherMulti) << ")*(100-getOneSeed(17)(" <<
+                             std::to_string(seed) << "))/100;" << std::endl;
+                #endif
+                /*if(effect.quantity<0)
+                    quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
+                else if(effect.quantity>0)//ignore the def for heal
+                    quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
+                if(type!=255 && !typeList.empty())
+                {
+                    unsigned int index=0;
+                    while(index<typeList.size())
+                    {
+                        const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(typeList.at(index));
+                        if(typeDefinition.multiplicator.contains(type))
+                        {
+                            const int8_t &multiplicator=typeDefinition.multiplicator.at(type);
+                            if(multiplicator>=0)
+                                quantity*=multiplicator;
+                            else
+                                quantity/=-multiplicator;
+                        }
+                        index++;
+                    }
+                }*/
+            }
+            else
+            {
+                std::cerr << "type (" << std::to_string(type) << ") of of range for CatchChallenger::CommonDatapack::commonDatapack.types (size: " << std::to_string(CatchChallenger::CommonDatapack::commonDatapack.types.size()) << ")" << std::endl;
+            }
         }
     }
     else
