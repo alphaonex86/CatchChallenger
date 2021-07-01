@@ -471,10 +471,27 @@ public:
     std::vector<MonstersCollisionEvent> events;
 };
 
-struct Type
+class Type
 {
+public:
     std::string name;
     std::unordered_map<uint8_t,int8_t> multiplicator;//negative = divide, not multiply
+#ifdef CATCHCHALLENGER_CACHE_HPS
+template <class B>
+void serialize(B& buf) const {
+    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
+    buf << name;
+    #endif
+    buf << multiplicator;
+}
+template <class B>
+void parse(B& buf) {
+    #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
+    buf >> name;
+    #endif
+    buf >> multiplicator;
+}
+#endif
 };
 
 /** ---------------- Static datapack for serialiser ------------------------ **/
