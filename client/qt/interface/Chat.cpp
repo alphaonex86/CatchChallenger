@@ -1,4 +1,5 @@
 #include "Chat.hpp"
+#include "ChatParsing.hpp"
 #include "ui_Chat.h"
 #include "../Api_client_real.hpp"
 #include "../render/MapController.hpp"
