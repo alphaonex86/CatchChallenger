@@ -73,6 +73,8 @@ public:
     void newRandomNumber(const std::string &data);
     void setClient(Api_protocol_Qt * client);
     uint32_t randomSeedsSize() const;
+    virtual Player_private_and_public_informations &get_public_and_private_informations();
+    virtual const Player_private_and_public_informations &get_public_and_private_informations_ro() const;
 private:
     uint32_t mLastGivenXP;
     std::vector<uint8_t> mEvolutionByLevelUp;
