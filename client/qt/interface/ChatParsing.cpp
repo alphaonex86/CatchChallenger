@@ -16,9 +16,9 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
         case Chat_type_clan://clan
             returned_html+="color:#AA7F00;";
         break;
-        case Chat_type_aliance://aliance
+        /*case Chat_type_aliance://aliance
             returned_html+="color:#60BF20;";
-        break;
+        break;*/
         case Chat_type_pm://to player
             returned_html+="color:#5C255F;";
         break;

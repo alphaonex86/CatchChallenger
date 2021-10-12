@@ -90,6 +90,7 @@ SOURCES += \
     $$PWD/interface/BaseWindowWarehouse.cpp \
     $$PWD/interface/ListEntryEnvolued.cpp \
     $$PWD/interface/Chat.cpp \
+    $$PWD/interface/ChatParsing.cpp \
     $$PWD/interface/WithAnotherPlayer.cpp \
     $$PWD/interface/GetPrice.cpp \
     $$PWD/interface/NewProfile.cpp \
@@ -109,6 +110,10 @@ SOURCES += \
     $$PWD/QtDatapackClientLoader.cpp \
     $$PWD/QtDatapackChecksum.cpp \
     $$PWD/Api_client_virtual.cpp \
+    $$PWD/Api_client_real.cpp \
+    $$PWD/Api_client_real_base.cpp \
+    $$PWD/Api_client_real_main.cpp \
+    $$PWD/Api_client_real_sub.cpp \
     $$PWD/Options.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/InternetUpdater.cpp \
@@ -135,73 +140,86 @@ SOURCES += \
     $$PWD/Login.cpp \
     $$PWD/AddServer.cpp \
     $$PWD/AskKey.cpp \
-    $$PWD/ConnexionManager.cpp
+    $$PWD/ConnexionManager.cpp \
+    $$PWD/ConnectedSocket.cpp \
+    $$PWD/FeedNews.cpp \
+    $$PWD/BlacklistPassword.cpp \
+    $$PWD/../tarcompressed/ZstdDecode.cpp \
+    $$PWD/../tarcompressed/TarDecode.cpp \
+    $$PWD/QZstdDecodeThread.cpp
 
 HEADERS  += \
-    $$PWD/Settings.h \
-    $$PWD/render/TileLayerItem.h \
-    $$PWD/render/ObjectGroupItem.h \
-    $$PWD/render/MapVisualiserPlayer.h \
-    $$PWD/render/MapVisualiser.h \
-    $$PWD/render/MapObjectItem.h \
-    $$PWD/render/MapItem.h \
-    $$PWD/render/PreparedLayer.h \
-    $$PWD/render/MapMark.h \
-    $$PWD/render/MapVisualiserThread.h \
-    $$PWD/render/MapVisualiserOrder.h \
-    $$PWD/render/MapDoor.h \
-    $$PWD/render/MapControllerMP.h \
-    $$PWD/render/MapController.h \
-    $$PWD/render/TriggerAnimation.h \
-    $$PWD/render/TemporaryTile.h \
-    $$PWD/render/PathFinding.h \
-    $$PWD/interface/BaseWindow.h \
-    $$PWD/interface/ListEntryEnvolued.h \
-    $$PWD/interface/Chat.h \
-    $$PWD/interface/WithAnotherPlayer.h \
-    $$PWD/interface/GetPrice.h \
-    $$PWD/interface/NewProfile.h \
-    $$PWD/interface/NewGame.h \
-    $$PWD/crafting/interface/QmlInterface/CraftingAnimation.h \
-    $$PWD/fight/interface/QmlInterface/QmlMonsterGeneralInformations.h \
-    $$PWD/fight/interface/QmlInterface/EvolutionControl.h \
-    $$PWD/fight/interface/ClientFightEngine.h \
-    $$PWD/fight/interface/MapVisualiserPlayerWithFight.h \
-    $$PWD/QmlInterface/AnimationControl.h \
-    $$PWD/QtDatapackClientLoader.h \
-    $$PWD/QtDatapackChecksum.h \
-    $$PWD/Api_protocol_Qt.h \
-    $$PWD/LanguagesSelect.h \
-    $$PWD/CachedString.h \
-    $$PWD/InternetUpdater.h \
-    $$PWD/ExtraSocket.h \
-    $$PWD/LocalListener.h \
-    $$PWD/Map_client.h \
-    $$PWD/ClientVariable.h \
-    $$PWD/Options.h \
-    $$PWD/Api_client_virtual.h \
-    $$PWD/FacilityLibClient.h \
-    $$PWD/ClientVariableAudio.h \
-    $$PWD/Ultimate.h \
-    $$PWD/LoadingScreen.h \
-    $$PWD/CCBackground.h \
-    $$PWD/CustomButton.h \
-    $$PWD/DisplayStructures.h \
-    $$PWD/ClientVariableAudio.h \
-    $$PWD/CCWidget.h \
-    $$PWD/CCprogressbar.h \
-    $$PWD/ScreenTransition.h \
-    $$PWD/GameLoader.h \
-    $$PWD/GameLoaderThread.h \
-    $$PWD/MainScreen.h \
-    $$PWD/CCTitle.h \
-    $$PWD/OptionsDialog.h \
-    $$PWD/Solo.h \
-    $$PWD/Multi.h \
-    $$PWD/Login.h \
-    $$PWD/AddServer.h \
-    $$PWD/AskKey.h \
-    $$PWD/ConnexionManager.h
+    $$PWD/Settings.hpp \
+    $$PWD/render/TileLayerItem.hpp \
+    $$PWD/render/ObjectGroupItem.hpp \
+    $$PWD/render/MapVisualiserPlayer.hpp \
+    $$PWD/render/MapVisualiser.hpp \
+    $$PWD/render/MapObjectItem.hpp \
+    $$PWD/render/MapItem.hpp \
+    $$PWD/render/PreparedLayer.hpp \
+    $$PWD/render/MapMark.hpp \
+    $$PWD/render/MapVisualiserThread.hpp \
+    $$PWD/render/MapVisualiserOrder.hpp \
+    $$PWD/render/MapDoor.hpp \
+    $$PWD/render/MapControllerMP.hpp \
+    $$PWD/render/MapController.hpp \
+    $$PWD/render/TriggerAnimation.hpp \
+    $$PWD/render/TemporaryTile.hpp \
+    $$PWD/render/PathFinding.hpp \
+    $$PWD/interface/BaseWindow.hpp \
+    $$PWD/interface/ListEntryEnvolued.hpp \
+    $$PWD/interface/Chat.hpp \
+    $$PWD/interface/WithAnotherPlayer.hpp \
+    $$PWD/interface/GetPrice.hpp \
+    $$PWD/interface/NewProfile.hpp \
+    $$PWD/interface/NewGame.hpp \
+    $$PWD/crafting/interface/QmlInterface/CraftingAnimation.hpp \
+    $$PWD/fight/interface/QmlInterface/QmlMonsterGeneralInformations.hpp \
+    $$PWD/fight/interface/QmlInterface/EvolutionControl.hpp \
+    $$PWD/fight/interface/ClientFightEngine.hpp \
+    $$PWD/fight/interface/MapVisualiserPlayerWithFight.hpp \
+    $$PWD/QmlInterface/AnimationControl.hpp \
+    $$PWD/QtDatapackClientLoader.hpp \
+    $$PWD/QtDatapackChecksum.hpp \
+    $$PWD/Api_protocol_Qt.hpp \
+    $$PWD/LanguagesSelect.hpp \
+    $$PWD/CachedString.hpp \
+    $$PWD/InternetUpdater.hpp \
+    $$PWD/ExtraSocket.hpp \
+    $$PWD/LocalListener.hpp \
+    $$PWD/Map_client.hpp \
+    $$PWD/ClientVariable.hpp \
+    $$PWD/Options.hpp \
+    $$PWD/Api_client_virtual.hpp \
+    $$PWD/Api_client_real.hpp \
+    $$PWD/FacilityLibClient.hpp \
+    $$PWD/ClientVariableAudio.hpp \
+    $$PWD/Ultimate.hpp \
+    $$PWD/LoadingScreen.hpp \
+    $$PWD/CCBackground.hpp \
+    $$PWD/CustomButton.hpp \
+    $$PWD/DisplayStructures.hpp \
+    $$PWD/ClientVariableAudio.hpp \
+    $$PWD/CCWidget.hpp \
+    $$PWD/CCprogressbar.hpp \
+    $$PWD/ScreenTransition.hpp \
+    $$PWD/GameLoader.hpp \
+    $$PWD/GameLoaderThread.hpp \
+    $$PWD/MainScreen.hpp \
+    $$PWD/CCTitle.hpp \
+    $$PWD/OptionsDialog.hpp \
+    $$PWD/Solo.hpp \
+    $$PWD/Multi.hpp \
+    $$PWD/Login.hpp \
+    $$PWD/AddServer.hpp \
+    $$PWD/AskKey.hpp \
+    $$PWD/ConnexionManager.hpp \
+    $$PWD/ConnectedSocket.hpp \
+    $$PWD/FeedNews.hpp \
+    $$PWD/BlacklistPassword.hpp \
+    $$PWD/../tarcompressed/ZstdDecode.hpp \
+    $$PWD/../tarcompressed/TarDecode.hpp \
+    $$PWD/QZstdDecodeThread.hpp
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

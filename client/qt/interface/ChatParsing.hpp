@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "GeneralStructures.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
 
 namespace CatchChallenger {
 class ChatParsing

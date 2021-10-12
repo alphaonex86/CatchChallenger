@@ -1,5 +1,6 @@
 #include "CCTitle.hpp"
 #include <QPainter>
+#include <QPainterPath>
 #include <QEvent>
 #include <QMouseEvent>
 #include <iostream>
