@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     internalId=0;
     srand(time(0));
     qRegisterMetaType<std::string>("std::string");

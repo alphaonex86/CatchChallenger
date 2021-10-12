@@ -721,6 +721,16 @@ uint32_t ClientFightEngine::randomSeedsSize() const
     return randomSeeds.size();
 }
 
+Player_private_and_public_informations &ClientFightEngine::get_public_and_private_informations()
+{
+    return player_informations_local;
+}
+
+const Player_private_and_public_informations &ClientFightEngine::get_public_and_private_informations_ro() const
+{
+    return player_informations_local;
+}
+
 uint8_t ClientFightEngine::getOneSeed(const uint8_t &max)
 {
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT

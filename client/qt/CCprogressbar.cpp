@@ -1,5 +1,6 @@
 #include "CCprogressbar.hpp"
 #include <QPainter>
+#include <QPainterPath>
 
 CCprogressbar::CCprogressbar(QWidget *parent) :
     QProgressBar(parent)
