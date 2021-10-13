@@ -142,19 +142,19 @@ void BotTargetList::updatePlayerStep()
                                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                 checkDuplicatePointOnMap_Item(playerMap->pointOnMap_Item);
                                 #endif
-                                //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
+                                std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 std::pair<uint8_t,uint8_t> p(x,y);
                                 if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
                                 {
-                                    //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
+                                    std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
                                     const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
                                     if(!itemOnMap.infinite && itemOnMap.visible)
                                         if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
                                         {
-                                            /*std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                            std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
                                                       << ", take the item, bot, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
                                                       << ", item: " << std::to_string(itemOnMap.item)
-                                                      << ", pseudo: " << api->getPseudo().toStdString() << std::endl;*/
+                                                      << ", pseudo: " << api->getPseudo() << std::endl;
                                             playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
                                             api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                             api->takeAnObjectOnMap();
@@ -162,8 +162,8 @@ void BotTargetList::updatePlayerStep()
                                         }
                                 }
                             }
-                            /*else
-                                std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move" << std::endl;*/
+                            else
+                                std::cerr << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << " can't move" << std::endl;
                         }
 
                         if(!player.target.bestPath.empty())
@@ -173,9 +173,9 @@ void BotTargetList::updatePlayerStep()
                                 abort();
                             const MapServerMini::BlockObject * blockObject=playerMap->step.at(1).layers.at(currentCodeZone-1).blockObject;
 
-                            //std::cout << "The player is into the zone: " << playerMap->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
+                            std::cout << "The player is into the zone: " << playerMap->map_file << " Block " << std::to_string(blockObject->id+1) << std::endl;
                             const MapServerMini::BlockObject * front=player.target.bestPath.front();
-                            //std::cout << "The next zone to remove is: " << front->map->map_file << " Block " << std::to_string(front->id+1) << std::endl;
+                            std::cout << "The next zone to remove is: " << front->map->map_file << " Block " << std::to_string(front->id+1) << std::endl;
 
                             if(blockObject==front)
                                 player.target.bestPath.erase(player.target.bestPath.cbegin());
@@ -210,7 +210,7 @@ void BotTargetList::updatePlayerStep()
                                     {
                                         if(player.target.bestPath.size()>2)
                                             abort();
-                                        //std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
+                                        std::cerr << "The current case is: " << std::to_string(player.x) << "," << std::to_string(player.y) << " can't do the next step for internal block change" << std::endl;
                                         player.target.bestPath.clear();
                                     }
                                 break;
@@ -422,9 +422,9 @@ void BotTargetList::updatePlayerStep()
                 if(player.target.localStep.empty() && player.target.bestPath.empty()
                         && player.target.blockObject!=NULL && player.target.type!=ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                 {
-                    std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                    /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                               << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                              << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
                     //get the next tile
                     if(player.target.type==ActionsBotInterface::GlobalTarget::GlobalTargetType::None)
                     {
@@ -546,10 +546,10 @@ void BotTargetList::updatePlayerStep()
                                     }
                                     if(!alreadyTake)
                                     {
-                                        /*std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
+                                        std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
                                                   << ", take the item, wish, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
                                                   << ", item: " << std::to_string(itemOnMap.item)
-                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;*/
+                                                  << ", pseudo: " << api->getPseudo() << std::endl;
                                         api->stopMove();
                                         api->takeAnObjectOnMap();
                                         ActionsAction::add_to_inventory(api,itemOnMap.item);
@@ -562,11 +562,11 @@ void BotTargetList::updatePlayerStep()
                                 std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
                                 abort();
                             }
-                            /*if(!alreadyTake)
+                            if(!alreadyTake)
                             {
                                 std::cerr << "On the next tile don't found the montioned item on map" << std::endl;
                                 abort();
-                            }can be take by auto take*/
+                            }//can be take by auto take*/
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
@@ -687,15 +687,15 @@ void BotTargetList::updatePlayerStep()
                         updatePlayerMap(true);
                     }
                 }
-                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             }
             else
             {
-                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
@@ -971,9 +971,9 @@ void BotTargetList::updatePlayerStep()
                             updateFightStats();
                    }
                 }
-                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             }
             /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                       << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
