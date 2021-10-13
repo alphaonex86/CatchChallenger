@@ -174,7 +174,7 @@ protected:
     //send reply
     bool postReplyData(const uint8_t &queryNumber, const char * const data,const int &size);
     //the internal serialiser
-    void send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction);
+    void send_player_move_internal(const uint8_t &moved_unit,const CatchChallenger::Direction &direction) override;
     void Qtlogged(const std::vector<std::vector<CharacterEntry> > &characterEntryList);
 protected:
     //have message without reply

@@ -14,6 +14,7 @@ TEMPLATE = app
 DEFINES += BOTACTIONS CATCHCHALLENGER_BOT
 
 SOURCES += main.cpp\
+    GenerateMapZone.cpp \
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
     ../bot/MultipleBotConnectionImplForGui.cpp \
@@ -24,7 +25,6 @@ SOURCES += main.cpp\
     MapBrowse.cpp \
     WaitScreen.cpp \
     BotTargetListPlayerInfo.cpp \
-    BotTargetListUpdateStep.cpp \
     BotTargetListNextPos.cpp \
     SocialChat.cpp \
     TargetFilter.cpp \
