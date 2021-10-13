@@ -100,7 +100,7 @@
             <string>Show the password</string>
            </property>
            <property name="icon">
-            <iconset resource="../../client/base/resources/client-resources-multi.qrc">
+            <iconset>
              <normaloff>:/images/multi/showpassword.png</normaloff>:/images/multi/showpassword.png</iconset>
            </property>
            <property name="checkable">
@@ -217,7 +217,7 @@
                <bool>false</bool>
               </property>
               <property name="minimum">
-               <number>2</number>
+               <number>1</number>
               </property>
               <property name="maximum">
                <number>65535</number>
@@ -393,9 +393,7 @@
   <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources>
-  <include location="../../client/base/resources/client-resources-multi.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>multipleConnexion</sender>

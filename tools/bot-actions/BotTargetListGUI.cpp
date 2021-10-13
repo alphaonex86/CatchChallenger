@@ -453,13 +453,13 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         //item on map
         if(itemFight)
         {
-            bool tooHard=false;
+            bool noGoBack=false;
             if(player_map!=nullptr)
             {
                 const MapServerMini::MapParsedForBot &step2=player_map->step[1];
                 const uint16_t codeZone=step2.map[player_x+player_y*player_map->width];
                 MapServerMini::BlockObject *playerBlockObject=step2.layers[codeZone-1].blockObject;
-                tooHard=!canGoFromBlockToBlock(blockObject,playerBlockObject);
+                noGoBack=!canGoFromBlockToBlock(blockObject,playerBlockObject);
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             {
@@ -555,7 +555,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         alternateColor=!alternateColor;
                         newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                     }
-                    if(tooHard)
+                    if(noGoBack)
                     {
                         if(!alternateColor)
                             newItem->setBackgroundColor(redAlternateColorValue);
