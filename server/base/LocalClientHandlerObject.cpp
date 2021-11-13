@@ -35,7 +35,7 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
 {
     if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
     {
-        errorOutput("Object is not found into the item list");
+        errorOutput("Object "+std::to_string(item)+" is not found into the item list");
         return;
     }
     if(public_and_private_informations.items.find(item)!=public_and_private_informations.items.cend())
