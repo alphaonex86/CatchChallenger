@@ -161,18 +161,19 @@ void Client::takeAnObjectOnMap()
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is item
-    if(static_cast<MapServer *>(map)->pointOnMap_Item.find(pos)==static_cast<MapServer *>(map)->pointOnMap_Item.cend())
+    const MapServer * const tempItempOnMap=static_cast<MapServer *>(map);
+    if(tempItempOnMap->pointOnMap_Item.find(pos)==tempItempOnMap->pointOnMap_Item.cend())
     {
-        errorOutput("Not on map item on this place: "+static_cast<MapServer *>(map)->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+") from "+std::to_string(this->x)+","+std::to_string(this->y)+" "+MoveOnTheMap::directionToString(getLastDirection()));
+        errorOutput("Not on map item on this place: "+tempItempOnMap->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+") from "+std::to_string(this->x)+","+std::to_string(this->y)+" "+MoveOnTheMap::directionToString(getLastDirection()));
         return;
     }
-    const MapServer::ItemOnMap &item=static_cast<MapServer *>(map)->pointOnMap_Item.at(pos);
+    const MapServer::ItemOnMap &item=tempItempOnMap->pointOnMap_Item.at(pos);
     //add get item from db
     if(!item.infinite)
     {
         if(public_and_private_informations.itemOnMap.find(item.pointOnMapDbCode)!=public_and_private_informations.itemOnMap.cend())
         {
-            errorOutput("Have already this item: "+std::to_string(item.item)+" at "+map->map_file+" "+std::to_string(x)+","+std::to_string(y));
+            errorOutput("Have already this item: "+std::to_string(item.item)+" ("+std::to_string(map->id)+") at "+map->map_file+" "+std::to_string(x)+","+std::to_string(y)+" item.pointOnMapDbCode: "+std::to_string(item.pointOnMapDbCode));
             return;
         }
         public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);

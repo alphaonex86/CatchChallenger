@@ -1,6 +1,7 @@
 #include "BaseServer.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
+#include "DictionaryServer.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -110,16 +111,68 @@ void BaseServer::preload_the_data()
             }
             //lastPos=serialBuffer->tellg();
             *serialBuffer >> string;
-            //std::cerr << "map string " << string << " at " << lastPos << std::endl;
+
             MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
             //lastPos=serialBuffer->tellg();
             *serialBuffer >> *map;
-            //std::cerr << "map " << id << " at " << lastPos << std::endl;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            //std::cerr << "map string " << string << " map " << id << " map->pointOnMap_Item " << std::to_string(map->pointOnMap_Item.size()) << std::endl;
+            for (const auto& kv : map->pointOnMap_Item)
+            {
+                const MapServer::ItemOnMap &item=kv.second;
+                //std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << " item.infinite: " << std::to_string(item.infinite) << std::endl;
+                /*if(!item.infinite)
+                    std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << std::endl;*/
+                if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                {
+                    std::cerr << "Object " << std::to_string(item.item) << " is not found into the item list" << std::endl;
+                    abort();
+                }
+            }
+            #endif
             GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
             //std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
         }
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
+
+        DictionaryServer::dictionary_pointOnMap_item_database_to_internal.clear();
+        uint32_t uint32size=0;
+        *serialBuffer >> uint32size;
+        for(uint32_t i=0; i<uint32size; i++)
+        {
+            DictionaryServer::MapAndPointItem v;
+            *serialBuffer >> v.datapack_index_item;
+            int32_t pos=0;
+            *serialBuffer >> pos;
+            v.map=static_cast<MapServer *>(MapServer::posToPointer(pos));
+            *serialBuffer >> v.x;
+            *serialBuffer >> v.y;
+            DictionaryServer::dictionary_pointOnMap_item_database_to_internal.push_back(v);
+        }
+        DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.clear();
+        *serialBuffer >> uint32size;
+        for(uint32_t i=0; i<uint32size; i++)
+        {
+            DictionaryServer::MapAndPointPlant v;
+            *serialBuffer >> v.datapack_index_plant;
+            int32_t pos=0;
+            *serialBuffer >> pos;
+            v.map=static_cast<MapServer *>(MapServer::posToPointer(pos));
+            *serialBuffer >> v.x;
+            *serialBuffer >> v.y;
+            DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.push_back(v);
+        }
+
+        /*std::cout << __FILE__ << ":" << __LINE__ << " DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
+        for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
+        {
+            const DictionaryServer::MapAndPointItem &t=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
+            std::cerr << "DictionaryServer::MapAndPointItem &t " << &t << std::endl;
+            if(t.map!=nullptr)
+                std::cerr << t.datapack_index_item << " " << t.map->id << " " << std::to_string(t.x) << " " << std::to_string(t.y) << " " << std::endl;
+        }*/
+
 
         if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
         {
@@ -183,46 +236,6 @@ void BaseServer::preload_the_data()
             std::cout << "other data size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, *out_file);
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
-            uint32_t mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
-            hps::to_stream(mapListSize, *out_file);
-
-            std::unordered_map<const CommonMap *,std::string> map_list_reverse;
-            for (const auto x : GlobalServerData::serverPrivateVariables.map_list)
-                  map_list_reverse[x.second]=x.first;
-            std::unordered_map<std::string,uint32_t> id_map_to_map_reverse;
-            for (const auto x : GlobalServerData::serverPrivateVariables.id_map_to_map)
-                  id_map_to_map_reverse[x.second]=x.first;
-
-            uint32_t idSize=0;
-            uint32_t pathSize=0;
-            uint32_t mapSize=0;
-            lastSize=out_file->tellp();
-            for(unsigned int i=0; i<mapListSize; i++)
-            {
-                const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
-                const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
-                const uint32_t &id=id_map_to_map_reverse.at(string);
-
-                //std::cerr << "map id " << id << " at " << out_file->tellp() << std::endl;
-
-                hps::to_stream(id, *out_file);
-                idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-
-                //std::cerr << "map string " << string << " at " << out_file->tellp() << std::endl;
-
-                hps::to_stream(string, *out_file);
-                pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-
-                //std::cerr << "map at " << out_file->tellp() << std::endl;
-
-                hps::to_stream(*map, *out_file);
-                mapSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-
-                //std::cerr << "map end at " << out_file->tellp() << std::endl;
-            }
-            std::cout << "map id size: " << idSize << "B" << std::endl;
-            std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
-            std::cout << "map size: " << mapSize << "B" << std::endl;
         }
         #endif
     }

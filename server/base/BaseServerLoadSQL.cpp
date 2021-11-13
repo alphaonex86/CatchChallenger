@@ -340,6 +340,92 @@ void BaseServer::preload_industries_return()
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(out_file!=nullptr)
     {
+        //save map content to cache
+        uint32_t mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
+        hps::to_stream(mapListSize, *out_file);
+
+        std::unordered_map<const CommonMap *,std::string> map_list_reverse;
+        for (const auto x : GlobalServerData::serverPrivateVariables.map_list)
+              map_list_reverse[x.second]=x.first;
+        std::unordered_map<std::string,uint32_t> id_map_to_map_reverse;
+        for (const auto x : GlobalServerData::serverPrivateVariables.id_map_to_map)
+              id_map_to_map_reverse[x.second]=x.first;
+        uint32_t idSize=0;
+        uint32_t pathSize=0;
+        uint32_t mapSize=0;
+        size_t lastSize=out_file->tellp();
+        for(unsigned int i=0; i<mapListSize; i++)
+        {
+            const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
+            const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
+            const uint32_t &id=id_map_to_map_reverse.at(string);
+
+            //std::cerr << "map id " << id << " at " << out_file->tellp() << std::endl;
+
+            hps::to_stream(id, *out_file);
+            idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+            //std::cerr << "map string " << string << " at " << out_file->tellp() << std::endl;
+
+            hps::to_stream(string, *out_file);
+            pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+            //std::cerr << "map at " << out_file->tellp() << " map->pointOnMap_Item.size(): " << std::to_string(map->pointOnMap_Item.size()) << std::endl;
+            /*for (const auto& kv : map->pointOnMap_Item)
+            {
+                const MapServer::ItemOnMap &item=kv.second;
+                //std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << " item.infinite: " << std::to_string(item.infinite) << std::endl;
+            }*/
+
+            hps::to_stream(*map, *out_file);
+            mapSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+
+            //std::cerr << "map end at " << out_file->tellp() << std::endl;
+        }
+
+        /*std::cout << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
+        for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
+        {
+            const DictionaryServer::MapAndPointItem &t=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
+            std::cerr << t.datapack_index_item << " " << t.map->id << " " << t.x << " " << t.y << " " << std::endl;
+        }*/
+
+        std::cout << "map id size: " << idSize << "B" << std::endl;
+        std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
+        std::cout << "map size: " << mapSize << "B" << std::endl;
+
+        uint32_t dbSize=0;
+        lastSize=out_file->tellp();
+
+        std::unordered_map<void *,int32_t> pointer_to_pos;
+        pointer_to_pos[nullptr]=-1;
+        for(int32_t i=0; i<(int32_t)GlobalServerData::serverPrivateVariables.map_list.size(); i++)
+            pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
+
+        //the player load well without this, is loaded by another way: std::vector<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
+
+        hps::to_stream((int32_t)DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(), *out_file);
+        for(int32_t i=0; i<(int32_t)DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
+        {
+            const DictionaryServer::MapAndPointItem &v=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
+            hps::to_stream(v.datapack_index_item, *out_file);
+            hps::to_stream(pointer_to_pos.at(v.map), *out_file);
+            hps::to_stream(v.x, *out_file);
+            hps::to_stream(v.y, *out_file);
+        }
+        hps::to_stream((int32_t)DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size(), *out_file);
+        for(int32_t i=0; i<(int32_t)DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size(); i++)
+        {
+            const DictionaryServer::MapAndPointPlant &v=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(i);
+            hps::to_stream(v.datapack_index_plant, *out_file);
+            hps::to_stream(pointer_to_pos.at(v.map), *out_file);
+            hps::to_stream(v.x, *out_file);
+            hps::to_stream(v.y, *out_file);
+        }
+
+        dbSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+        std::cout << "DictionaryServer Size: " << dbSize << "B" << std::endl;
+
         out_file->flush();
         out_file->close();
         delete out_file;

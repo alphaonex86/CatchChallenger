@@ -20,6 +20,7 @@ class Client;
 class MapServer : public CommonMap, public MapServerCrafting
 {
 public:
+    //on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
     MapServer();
     void doDDOSLocalChat();
     static unsigned int playerToFullInsert(const Client * const player, char * const bufferForOutput);
