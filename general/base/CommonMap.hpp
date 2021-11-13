@@ -46,7 +46,7 @@ public:
     uint8_t width;//why uint16_t if a map is not allowed be more than 255?
     uint8_t height;//why uint16_t if a map is not allowed be more than 255?
     //uint32_t group;
-    uint32_t id;
+    uint32_t id;//on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
 
     //the index is position (x+y*width)
     ParsedLayer parsed_layer;

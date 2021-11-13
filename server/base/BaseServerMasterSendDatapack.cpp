@@ -71,7 +71,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
             )
         return;//base already calculated
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
-    char tempBigBufferForOutput[CATCHCHALLENGER_SHA224HASH_SIZE];
+    //char tempBigBufferForOutput[CATCHCHALLENGER_SHA224HASH_SIZE];
     #endif
 
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR

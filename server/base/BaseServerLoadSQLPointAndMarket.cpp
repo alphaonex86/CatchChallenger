@@ -63,7 +63,6 @@ void BaseServer::preload_pointOnMap_item_return()
     nullvalue.x=0;
     nullvalue.y=0;
 
-    uint16_t datapack_index_temp_for_plant=0;
     unsigned int itemCount=0;
     unsigned int itemValidatedCount=0;
     bool ok;
@@ -128,24 +127,14 @@ void BaseServer::preload_pointOnMap_item_return()
                                         //if no new map (datapack cache)
                                         if(serialBuffer!=nullptr)
                                         {
-                                            //directly store
-                                            map_server->pointOnMap_Item[pair].pointOnMapDbCode=id;
-
-                                            while(DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size()<=id)
-                                                DictionaryServer::dictionary_pointOnMap_item_database_to_internal.push_back(nullvalue);
-
-                                            DictionaryServer::MapAndPointItem value;
-                                            value.datapack_index_item=datapack_index_temp_for_plant;
-                                            value.map=map_server;
-                                            value.x=x;
-                                            value.y=y;
-                                            DictionaryServer::dictionary_pointOnMap_item_database_to_internal[id]=value;
-                                            datapack_index_temp_for_plant++;
                                         }
                                         else
                                         #endif
-                                        //post processing (temp var)
+                                        {
+                                            //post processing (temp var)
+                                            std::cerr << "DictionaryServer::dictionary_pointOnMap_item_internal_to_database[" << map_server->map_file << "," << map_server->id << "][" << std::to_string(x) << "," << std::to_string(y) << "]=" << id << std::endl;
                                             DictionaryServer::dictionary_pointOnMap_item_internal_to_database[map_server->map_file][pair]=id;
+                                        }
                                     }
                                 }
                             }
@@ -155,6 +144,7 @@ void BaseServer::preload_pointOnMap_item_return()
             }
         }
     }
+
     GlobalServerData::serverPrivateVariables.db_server->clear();
     {
         #ifdef CATCHCHALLENGER_CACHE_HPS

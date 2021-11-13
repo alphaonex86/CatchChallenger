@@ -42,6 +42,13 @@ void Client::characterIsRightFinalStep()
         unsigned int index=0;
         while(index<GlobalServerData::serverPrivateVariables.events.size())
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(GlobalServerData::serverPrivateVariables.events.size()<=index)
+            {
+                std::cerr << "GlobalServerData::serverPrivateVariables.events.size()<=index" << std::endl;
+                abort();
+            }
+            #endif
             const uint8_t &value=GlobalServerData::serverPrivateVariables.events.at(index);
             if(value!=0)
                 events.push_back(std::pair<uint8_t,uint8_t>(index,value));
@@ -52,6 +59,13 @@ void Client::characterIsRightFinalStep()
         posOutput+=1;
         while(index<events.size())
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(events.size()<=index)
+            {
+                std::cerr << "events.size()<=index" << std::endl;
+                abort();
+            }
+            #endif
             const std::pair<uint8_t,uint8_t> &event=events.at(index);
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=event.first;
             posOutput+=1;
@@ -125,6 +139,13 @@ void Client::characterIsRightFinalStep()
     posOutput+=1;
     while(index<size)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(public_and_private_informations.playerMonster.size()<=index)
+        {
+            std::cerr << "public_and_private_informations.playerMonster.size()<=index" << std::endl;
+            abort();
+        }
+        #endif
         posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index),character_id);
         index++;
     }
@@ -134,6 +155,13 @@ void Client::characterIsRightFinalStep()
     posOutput+=1;
     while(index<size)
     {
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(public_and_private_informations.warehouse_playerMonster.size()<=index)
+        {
+            std::cerr << "public_and_private_informations.warehouse_playerMonster.size()<=index" << std::endl;
+            abort();
+        }
+        #endif
         posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index),character_id);
         index++;
     }
@@ -323,6 +351,15 @@ void Client::characterIsRightFinalStep()
         }
     }
 
+    /*std::cout << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
+    for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
+    {
+        const DictionaryServer::MapAndPointItem &t=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
+        std::cerr << "DictionaryServer::MapAndPointItem &t " << &t << std::endl;
+        if(t.map!=nullptr)
+            std::cerr << t.datapack_index_item << " " << t.map->id << " " << t.x << " " << t.y << " " << std::endl;
+    }*/
+
     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.itemOnMap.size());
     posOutput+=2;
     {
@@ -330,6 +367,13 @@ void Client::characterIsRightFinalStep()
         while (i!=public_and_private_informations.itemOnMap.cend())
         {
             /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size()<=*i)
+            {
+                std::cerr << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal<=*i" << std::endl;
+                abort();
+            }
+            #endif
             const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(*i).datapack_index_item;
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
             posOutput+=2;
@@ -344,6 +388,13 @@ void Client::characterIsRightFinalStep()
     while(i!=public_and_private_informations.plantOnMap.cend())
     {
         /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=i->first)
+        {
+            std::cerr << "DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=i->first" << std::endl;
+            abort();
+        }
+        #endif
         const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(i->first).datapack_index_plant;
         const PlayerPlant &playerPlant=i->second;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
