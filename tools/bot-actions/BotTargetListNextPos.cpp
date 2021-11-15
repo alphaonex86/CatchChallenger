@@ -208,10 +208,10 @@ bool BotTargetList::wildMonsterTarget(ActionsBotInterface::Player &player)
             player.target.localStep.clear();
             player.target.localStep.push_back(newEntry);
 
-            const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
+            /*const std::string &debugMapString=actionsAction->id_map_to_map.at(player.mapId);
             std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                       << " from " << debugMapString << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                      << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                      << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
 
             //reset some values
             MapServerMini::BlockObject::LinkPoint linkPoint;
