@@ -881,7 +881,8 @@ void BotTargetList::updateLayerElements()
     ui->localTargets->clear();
     contentToGUI(layer.blockObject,client->api,ui->localTargets);
 
-    ui->label_zone->setText(QString::fromStdString(layer.text));
+    int codeZone=step.map[player.x+player.y*mapServer->width];
+    ui->label_zone->setText(QString::fromStdString(layer.text)+" current block: "+QString::number(codeZone));
 }
 
 void BotTargetList::on_comboBox_Layer_activated(int index)
@@ -1755,17 +1756,31 @@ void BotTargetList::autoStartAction()
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         std::cout << player.api->getPseudo() << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                         startPlayerMove(api);
-                        /*if(!player.target.bestPath.empty())
+                        if(!player.target.bestPath.empty())
                         {
                             if(layer.blockObject->links.find(player.target.bestPath.front())==layer.blockObject->links.cend())
                             {
+                                std::string additionalInfo;
+                                if(actionsAction->id_map_to_map.find(mapId)!=actionsAction->id_map_to_map.cend())
+                                {
+                                    const std::string &mapStdString=actionsAction->id_map_to_map.at(player.mapId);
+                                    CatchChallenger::CommonMap *map=actionsAction->map_list.at(mapStdString);
+                                    MapServerMini *mapServer=static_cast<MapServerMini *>(map);
+                                    MapServerMini::MapParsedForBot &step=mapServer->step.at(ui->comboBoxStep->currentIndex());
+                                    if(step.map!=NULL)
+                                    {
+                                        int codeZone=step.map[player.x+player.y*mapServer->width];
+                                        additionalInfo="(codeZone: "+std::to_string(codeZone)+") ";
+                                    }
+                                }
                                 std::cerr << player.api->getPseudo() << ", can't go from " <<
+                                          "(" << player.x << "," << player.y << ") " << additionalInfo <<
                                              layer.blockObject->map->map_file << " block " << (layer.blockObject->id+1) <<
                                              " to " <<
                                              player.target.bestPath.front()->map->map_file << " block " << (player.target.bestPath.front()->id+1) << std::endl;
                                 abort();
                             }
-                        }*/
+                        }
                     break;
                     case ActionsBotInterface::GlobalTarget::GlobalTargetType::None:
                         //player.target.wildBackwardStep.clear();
