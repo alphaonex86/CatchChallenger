@@ -533,7 +533,10 @@ bool Client::haveMonsterChange() const
 bool Client::moveUpMonster(const uint8_t &number)
 {
     if(!CommonFightEngine::moveUpMonster(number))
+    {
+        errorOutput("Move monster have failed");
         return false;
+    }
     if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.playerMonster.at(number-1).id,number);
