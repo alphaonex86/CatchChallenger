@@ -204,8 +204,8 @@ void BaseServer::preload_map_semi_after_db_id()
                     mapAndPoint.x=item.point.x;
                     mapAndPoint.y=item.point.y;
                     mapAndPoint.datapack_index_item=datapack_index_temp_for_item;
-                    std::cerr << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal[" << pointOnMapDbCode << "] "
-                        << mapAndPoint.datapack_index_item << " " << mapAndPoint.map->id << " " << std::to_string(mapAndPoint.x) << " " << std::to_string(mapAndPoint.y) << " " << std::endl;
+                    /*std::cerr << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal[" << pointOnMapDbCode << "] "
+                        << mapAndPoint.datapack_index_item << " " << mapAndPoint.map->id << " " << std::to_string(mapAndPoint.x) << " " << std::to_string(mapAndPoint.y) << " " << std::endl;*/
                     datapack_index_temp_for_item++;
                 }
                 index++;

@@ -132,7 +132,7 @@ void BaseServer::preload_pointOnMap_item_return()
                                         #endif
                                         {
                                             //post processing (temp var)
-                                            std::cerr << "DictionaryServer::dictionary_pointOnMap_item_internal_to_database[" << map_server->map_file << "," << map_server->id << "][" << std::to_string(x) << "," << std::to_string(y) << "]=" << id << std::endl;
+                                            //std::cerr << "DictionaryServer::dictionary_pointOnMap_item_internal_to_database[" << map_server->map_file << "," << map_server->id << "][" << std::to_string(x) << "," << std::to_string(y) << "]=" << id << std::endl;
                                             DictionaryServer::dictionary_pointOnMap_item_internal_to_database[map_server->map_file][pair]=id;
                                         }
                                     }

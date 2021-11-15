@@ -459,7 +459,7 @@ int8_t ProtocolParsingBase::parseDataSize(const char * const commonBuffer, const
 
         if(dataSize>(CATCHCHALLENGER_BIGBUFFERSIZE-8))
         {
-            errorParsingLayer("packet size too big (define)"
+            errorParsingLayer("packet size too big (define) dataSize: "+std::to_string(dataSize)+">"+std::to_string(CATCHCHALLENGER_BIGBUFFERSIZE-8)+
                               ", data: "+binarytoHexa(commonBuffer,size)+
                               ", cursor: "+std::to_string(cursor));
             return -1;
