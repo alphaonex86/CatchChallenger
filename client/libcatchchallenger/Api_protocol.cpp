@@ -542,6 +542,11 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return false;
     }
+    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    {
+        newError(std::string("Internal problem"),std::to_string(profileIndex)+">=CommonDatapack::commonDatapack.profileList.size()");
+        return false;
+    }
     const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
     if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
@@ -728,7 +733,7 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
     packOutcommingData(0x0D,buffer,sizeof(buffer));
 }
 
-void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
+void Api_protocol::confirmEvolutionByPosition(const uint8_t &monsterPosition)
 {
     if(!is_logged)
     {
@@ -740,18 +745,13 @@ void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(monterPosition<0)
-    {
-        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
-    }
-    if(monterPosition>=player_informations.playerMonster.size())
+    if(monsterPosition>=player_informations.playerMonster.size())
     {
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     char buffer[2];
-    buffer[0]=(uint8_t)monterPosition;
+    buffer[0]=(uint8_t)monsterPosition;
     packOutcommingData(0x0F,buffer,sizeof(buffer));
 }
 
@@ -782,7 +782,6 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
         std::cerr << "can't move down the bottom monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    std::cerr << "confirm evolution of monster position: " << std::to_string(number) << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     char buffer[2];
     buffer[0]=(uint8_t)0x02;
     buffer[1]=number;
@@ -840,6 +839,16 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(isInTrade)
+    {
+        newError(std::string("Internal problem"),std::string("in trade to change on monster"));
+        return false;
+    }
+    if(monsterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
     char buffer[2+1];
@@ -1082,6 +1091,11 @@ void Api_protocol::requestFight(const uint16_t &fightId)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
+    if(isInTrade)
+    {
+        newError(std::string("Internal problem"),std::string("in trade to change on monster"));
+        return;
+    }
     if(player_informations.bot_already_beaten==NULL)
     {
         std::cerr << "player_informations.bot_already_beaten==NULL, line: " << __FILE__ << ": " << __LINE__ << std::endl;
@@ -1108,6 +1122,16 @@ void Api_protocol::changeOfMonsterInFightByPosition(const uint8_t &monsterPositi
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(isInTrade)
+    {
+        newError(std::string("Internal problem"),std::string("in trade to change on monster"));
+        return;
+    }
+    if(monsterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     char buffer[1];
@@ -1143,6 +1167,16 @@ void Api_protocol::learnSkillByPosition(const uint8_t &monsterPosition,const uin
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(isInTrade)
+    {
+        newError(std::string("Internal problem"),std::string("in trade to change on monster"));
+        return;
+    }
+    if(monsterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     char buffer[1+2];
@@ -1461,6 +1495,16 @@ void Api_protocol::putMarketMonsterByPosition(const uint8_t &monsterPosition,con
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
+    if(isInTrade)
+    {
+        newError(std::string("Internal problem"),std::string("in trade to change on monster"));
+        return;
+    }
+    if(monsterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
     char buffer[1+1+8];
     buffer[0]=(uint8_t)0x02;
     buffer[1]=monsterPosition;
@@ -1772,6 +1816,11 @@ void Api_protocol::addMonsterByPosition(const uint8_t &monsterPosition)
     if(!isInTrade)
     {
         newError(std::string("Internal problem"),std::string("no in trade to send monster"));
+        return;
+    }
+    if(monsterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     char buffer[1+1]={0x03};
