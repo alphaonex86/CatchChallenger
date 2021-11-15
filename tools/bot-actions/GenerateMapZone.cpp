@@ -687,15 +687,15 @@ void BotTargetList::updatePlayerStep()
                         updatePlayerMap(true);
                     }
                 }
-                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
             }
             else
             {
-                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
                 //can't move: can be in fight
                 if(player.fightEngine->isInFight())
                 {
@@ -932,16 +932,16 @@ void BotTargetList::updatePlayerStep()
                             else
                             {
                                 //loose, wait the server teleport, see ActionsAction::teleportTo()
-                                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
                             }
                             if(apiSelectedClient==api)
                                 ui->label_action->setText("Start this: "+QString::fromStdString(BotTargetList::stepToString(player.target.localStep)));
                         }
-                        std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                        /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                                   << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                                  << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
 
                         if(!player.canMoveOnMap && !player.fightEngine->isInFight())
                         {
@@ -971,9 +971,9 @@ void BotTargetList::updatePlayerStep()
                             updateFightStats();
                    }
                 }
-                std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
+                /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
-                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                          << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
             }
             /*std::cout << player.api->getPseudo() << ": localStep: " << BotTargetList::stepToString(player.target.localStep)
                       << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)

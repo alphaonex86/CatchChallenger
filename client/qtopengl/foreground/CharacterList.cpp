@@ -8,6 +8,7 @@
 #include "../../qt/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include <iostream>
 
 CharacterList::CharacterList()
 {
@@ -110,7 +111,9 @@ void CharacterList::add_finished()
     newGame->setDatapack(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin);
     if(!newGame->haveSkin())
     {
-        warning->setHtml(tr("Sorry but no skin found into: %1").arg(QFileInfo(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_SKIN).absoluteFilePath()));
+        QString s=tr("Sorry but no skin found into: %1").arg(QFileInfo(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_SKIN).absoluteFilePath());
+        warning->setHtml(s);
+        std::cerr << s.toStdString() << std::endl;
         warning->setVisible(true);
         return;
     }

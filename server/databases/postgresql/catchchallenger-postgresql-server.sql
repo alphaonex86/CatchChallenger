@@ -37,7 +37,7 @@ CREATE TABLE character_forserver (
     market_cash bigint NOT NULL,
     botfight_id bytea NOT NULL,
     itemonmap bytea NOT NULL,
-    plants bytea NOT NULL,
+    plants bytea,
     quest bytea NOT NULL,
     blob_version smallint NOT NULL
 );

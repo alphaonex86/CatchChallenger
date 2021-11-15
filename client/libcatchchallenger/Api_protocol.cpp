@@ -420,7 +420,7 @@ void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const Cat
         std::cerr << "direction given wrong: " << directionInt << std::endl;
         abort();
     }
-    std::cout << std::to_string(moved_unit) << " into " << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;
+    //std::cout << std::to_string(moved_unit) << " into " << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;-> spam for bot
     char buffer[2];
     buffer[0]=moved_unit;
     buffer[1]=directionInt;
@@ -707,6 +707,21 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
+    if(number<1)
+    {
+        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(number>player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(number==1)
+    {
+        std::cerr << "can't move up the top monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
     char buffer[2];
     buffer[0]=(uint8_t)0x01;
     buffer[1]=number;
@@ -725,6 +740,16 @@ void Api_protocol::confirmEvolutionByPosition(const uint8_t &monterPosition)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
+    if(monterPosition<0)
+    {
+        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(monterPosition>=player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
     char buffer[2];
     buffer[0]=(uint8_t)monterPosition;
     packOutcommingData(0x0F,buffer,sizeof(buffer));
@@ -740,6 +765,21 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(number<1)
+    {
+        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(number>player_informations.playerMonster.size())
+    {
+        std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return;
+    }
+    if(number==player_informations.playerMonster.size())
+    {
+        std::cerr << "can't move down the bottom monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
     std::cerr << "confirm evolution of monster position: " << std::to_string(number) << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
