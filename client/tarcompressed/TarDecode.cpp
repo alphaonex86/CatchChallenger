@@ -149,16 +149,21 @@ bool TarDecode::decodeData(const std::vector<char> &data)
     if(fileList.size()>0)
     {
         std::string baseDirToTest=fileList.at(0);
-        std::size_t found = baseDirToTest.find_last_of("/");
-        if(found!=std::string::npos && found>=baseDirToTest.size())
-            baseDirToTest.resize(baseDirToTest.size()-(baseDirToTest.size()-found));
-        bool isFoundForAllEntries=true;
-        for (unsigned int i = 0; i < fileList.size(); ++i)
-            if(!stringStartWith(fileList.at(i),baseDirToTest))
-                isFoundForAllEntries=false;
-        if(isFoundForAllEntries)
+        std::size_t found = baseDirToTest.find("/");
+        if(found!=std::string::npos)
+        {
+            baseDirToTest=baseDirToTest.substr(0,found+1);
+            bool isFoundForAllEntries=true;
             for (unsigned int i = 0; i < fileList.size(); ++i)
-                fileList[i].erase(0,baseDirToTest.size());
+                if(!stringStartWith(fileList.at(i),baseDirToTest))
+                {
+                    isFoundForAllEntries=false;
+                    break;
+                }
+            if(isFoundForAllEntries)
+                for (unsigned int i = 0; i < fileList.size(); ++i)
+                    fileList[i].erase(0,baseDirToTest.size());
+        }
     }
     return true;
 }
