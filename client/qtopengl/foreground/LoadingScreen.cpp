@@ -100,7 +100,13 @@ void LoadingScreen::updateProgression()
 
 void LoadingScreen::progression(uint32_t size,uint32_t total)
 {
-    if(size<=total)
+    if(total==0)
+    {
+        progressbar->setMinimum(0);
+        progressbar->setMaximum(0);
+        progressbar->setValue(0);
+    }
+    else if(size<=total)
     {
         lastProgression=size*100/total;
         if(timerProgression<lastProgression)
