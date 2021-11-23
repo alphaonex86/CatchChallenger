@@ -1,5 +1,7 @@
 #include "ZstdDecode.hpp"
 #include "../../general/libzstd/lib/zstd.h"
+#include "../../general/base/GeneralVariable.hpp"
+#include <iostream>
 
 ZstdDecode::ZstdDecode()
 {
@@ -41,6 +43,7 @@ void ZstdDecode::run()
     } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
         rSize=64*1024*1024;
         streamed=true;
+        std::cerr << "strange, std file is ZSTD_CONTENTSIZE_UNKNOWN, posible error here" << std::endl;
     } else if (rSize==0) {
         mErrorString="original size 0. Use streaming decompression instead.";
         return;
@@ -49,10 +52,18 @@ void ZstdDecode::run()
     dataToDecoded.resize(rSize);
 
     size_t const dSize = ZSTD_decompress(dataToDecoded.data(), rSize, mDataToDecode.data(), mDataToDecode.size());
-
+    if(ZSTD_isError(dSize)) {
+        mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
+        return;
+    }
     if (!streamed && dSize != rSize) {
         mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize);
         return;
+    }
+    if(dSize>CATCHCHALLENGER_MAX_UNCOMPRESSED_FILE_SIZE)
+    {
+           mErrorString=std::string("error decoding: ")+ZSTD_getErrorName(dSize)+", uncompressed file size > to "+std::to_string(CATCHCHALLENGER_MAX_UNCOMPRESSED_FILE_SIZE);
+           return;
     }
     dataToDecoded.resize(dSize);
 
