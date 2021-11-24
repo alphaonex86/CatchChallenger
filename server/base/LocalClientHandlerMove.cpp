@@ -114,6 +114,7 @@ bool Client::singleMove(const Direction &direction)
             {
                 case CatchChallenger::MapConditionType_None:
                 case CatchChallenger::MapConditionType_Clan://not do for now
+                /// \todo check if the clan own the city
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {

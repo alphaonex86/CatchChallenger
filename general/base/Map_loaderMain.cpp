@@ -316,19 +316,19 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                             {
                                                 //std::cerr << "CACHEDSTRING_condition_file: " << CACHEDSTRING_condition_file << std::endl;
                                                 //std::cerr << "CACHEDSTRING_condition_id: " << CACHEDSTRING_condition_id << std::endl;
-                                                if(property_text.find("condition_file")!=property_text.cend() &&
-                                                        property_text.find("condition_id")!=property_text.cend())
+                                                if(property_text.find("condition-file")!=property_text.cend() &&
+                                                        property_text.find("condition-id")!=property_text.cend())
                                                 {
-                                                    uint32_t conditionId=stringtouint32(property_text.at("condition_id"),&ok);
+                                                    uint32_t conditionId=stringtouint32(property_text.at("condition-id"),&ok);
                                                     if(!ok)
-                                                        std::cerr << "condition id is not a number, id: " << property_text.at("condition_id")
+                                                        std::cerr << "condition id is not a number, id: " << property_text.at("condition-id")
                                                                   << " (" << file << ")" << std::endl;
                                                     else
                                                     {
                                                         std::string conditionFile=FSabsoluteFilePath(
                                                                     FSabsolutePath(file)+
                                                                     "/"+
-                                                                    property_text.at("condition_file")
+                                                                    property_text.at("condition-file")
                                                                     );
                                                         if(!stringEndsWith(conditionFile,".xml"))
                                                             conditionFile+=".xml";

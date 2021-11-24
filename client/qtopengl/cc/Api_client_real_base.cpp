@@ -88,6 +88,7 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
 
 bool Api_client_real::getHttpFileBase(const std::string &url, const std::string &fileName)
 {
+    std::cout << "Api_client_real::getHttpFileBase(): " << url << "," << fileName << std::endl;
     if(httpError)
         return false;
     if(!httpModeBase)
@@ -317,6 +318,7 @@ void Api_client_real::test_mirror_base()
             .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarBase)
     {
+        std::cout << (httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst")).toStdString() << std::endl;
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
@@ -329,6 +331,7 @@ void Api_client_real::test_mirror_base()
             /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/base.txt, and only after that's quit */
             return;
 
+        std::cout << (httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt")).toStdString() << std::endl;
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("datapack-list/base.txt"));
         reply = qnam.get(networkRequest);
         if(reply->error()==QNetworkReply::NoError)
