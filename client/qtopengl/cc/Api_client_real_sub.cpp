@@ -86,6 +86,7 @@ void Api_client_real::writeNewFileSub(const std::string &fileName,const std::str
 
 bool Api_client_real::getHttpFileSub(const std::string &url, const std::string &fileName)
 {
+    std::cout << "Api_client_real::getHttpFileSub(): " << url << "," << fileName << std::endl;
     if(CommonSettingsServer::commonSettingsServer.subDatapackCode.empty())
     {
         qDebug() << "CommonSettingsServer::commonSettingsServer.subDatapackCode.empty() to get from mirror";
@@ -299,6 +300,7 @@ void Api_client_real::test_mirror_sub()
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
     if(!datapackTarSub)
     {
+        std::cout << (httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst")).toStdString() << std::endl;
         QString fullDatapack=httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("pack/datapack-sub-")+
                 QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
                 QStringLiteral("-")+
@@ -317,6 +319,7 @@ void Api_client_real::test_mirror_sub()
             /* here and not above because at last mirror you need try the tar.zst and after the datapack-list/sub-XXXXX-YYYYYY.txt, and only after that's quit */
             return;
 
+        std::cout << (httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst")).toStdString() << std::endl;
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_sub)+QStringLiteral("datapack-list/sub-")+
                                        QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
                                        QStringLiteral("-")+
