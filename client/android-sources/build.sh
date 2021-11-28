@@ -8,6 +8,12 @@ then
     #qmake -r /home/user/src/client/catchchallenger.pro CONFIG+=debug ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so QMAKE_CFLAGS+=-funwind-tables QMAKE_CXXFLAGS+=-funwind-tables
     qmake -r /home/user/src/client/catchchallenger.pro ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so
     make -j17
+    if [ $? -ne 0 ]
+    then
+        make clean
+        make
+        exit
+    fi
     make install INSTALL_ROOT=/home/user/build/dist/
     #cp -r /home/user/src/client/android-sources/* /home/user/build/dist/
     #make install INSTALL_ROOT=/home/user/dist/
@@ -20,7 +26,17 @@ else
     mkdir /home/user/build/dist/
     qmake -r /home/user/src/client/catchchallenger.pro CONFIG+=debug ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libcrypto.so ANDROID_EXTRA_LIBS+=$ANDROID_DEV/lib/libssl.so QMAKE_CFLAGS+=-funwind-tables QMAKE_CXXFLAGS+=-funwind-tables
     make -j17
+    if [ $? -ne 0 ]
+    then
+        make clean
+        make
+        exit
+    fi
     make install INSTALL_ROOT=/home/user/build/dist/
+    if [ $? -ne 0 ]
+    then
+        exit
+    fi
     cd /home/user/build/
     androiddeployqt --input android-libcatchchallenger.so-deployment-settings.json --output dist/ --android-platform 28 --deployment bundled --gradle --debug
 fi
