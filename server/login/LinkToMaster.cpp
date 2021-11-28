@@ -417,7 +417,7 @@ bool LinkToMaster::trySelectCharacter(void * const client,const uint8_t &client_
         std::cerr << listTheRunningQuery() << std::endl;
         return false;
     }
-    messageParsingLayer("try select (0xBE: 190)");
+    //messageParsingLayer("try select (0xBE: 190)");
     DataForSelectedCharacterReturn dataForSelectedCharacterReturn;
     dataForSelectedCharacterReturn.client=client;// EpollClientLoginSlave *
     dataForSelectedCharacterReturn.client_query_id=client_query_id;
