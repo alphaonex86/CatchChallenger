@@ -50,6 +50,7 @@ bool DatapackClientLoader::isParsingDatapack() const
 
 void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const std::string &cacheHash,const std::string &language)
 {
+    (void)language;
     if(inProgress)
     {
         std::cerr << "already in progress" << std::endl;

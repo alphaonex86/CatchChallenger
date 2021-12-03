@@ -615,7 +615,7 @@ void EpollClientLoginMaster::sendTimeRangeEvent()
 
 void EpollClientLoginMaster::disconnectForDuplicateConnexionDetected(const uint32_t &characterId)
 {
-    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+0x02)=htole32(characterId);
+    *reinterpret_cast<uint32_t *>(EpollClientLoginMaster::duplicateConnexionDetected+1)=htole32(characterId);
     internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginMaster::duplicateConnexionDetected),sizeof(EpollClientLoginMaster::duplicateConnexionDetected));
 }
 

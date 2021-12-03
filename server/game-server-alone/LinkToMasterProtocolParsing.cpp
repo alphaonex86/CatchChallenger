@@ -213,6 +213,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     settings.endGroup();
                     //implicit with destruct: settings.sync();
                 }
+                [[fallthrough]];
                 case 0x01:
                 {
                     if((size-pos)<4*CATCHCHALLENGER_SERVER_MAXIDBLOCK)
