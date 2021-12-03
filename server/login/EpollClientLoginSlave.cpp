@@ -15,12 +15,12 @@ EpollClientLoginSlave::EpollClientLoginSlave(
             const int &infd
         #endif
         ) :
+        EpollClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Server
             #endif
             ),
-        EpollClient(infd),
         stat(EpollClientLoginStat::None),
         linkToGameServer(NULL),
         charactersGroupIndex(0),

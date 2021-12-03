@@ -28,12 +28,12 @@ LinkToGameServer::LinkToGameServer(
             const int &infd
         #endif
         ) :
+        EpollClient(infd),
         ProtocolParsingInputOutput(
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
             #endif
             ),
-        EpollClient(infd),
         stat(Stat::Connected),
         gameServerMode(GameServerMode::None),
         client(NULL),
