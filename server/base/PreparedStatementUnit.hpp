@@ -18,7 +18,7 @@ class PreparedStatementUnit
 public:
     PreparedStatementUnit();
     PreparedStatementUnit(const std::string &query,CatchChallenger::DatabaseBase * const database);
-    ~PreparedStatementUnit();
+    virtual ~PreparedStatementUnit();
 
     PreparedStatementUnit(const PreparedStatementUnit& other);// copy constructor
     PreparedStatementUnit(PreparedStatementUnit&& other);// move constructor

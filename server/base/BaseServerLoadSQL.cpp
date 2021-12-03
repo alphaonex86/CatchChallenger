@@ -345,10 +345,10 @@ void BaseServer::preload_industries_return()
         hps::to_stream(mapListSize, *out_file);
 
         std::unordered_map<const CommonMap *,std::string> map_list_reverse;
-        for (const auto x : GlobalServerData::serverPrivateVariables.map_list)
+        for (const auto &x : GlobalServerData::serverPrivateVariables.map_list)
               map_list_reverse[x.second]=x.first;
         std::unordered_map<std::string,uint32_t> id_map_to_map_reverse;
-        for (const auto x : GlobalServerData::serverPrivateVariables.id_map_to_map)
+        for (const auto &x : GlobalServerData::serverPrivateVariables.id_map_to_map)
               id_map_to_map_reverse[x.second]=x.first;
         uint32_t idSize=0;
         uint32_t pathSize=0;

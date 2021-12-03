@@ -30,13 +30,13 @@ LinkToMaster::LinkToMaster(
             const int &infd
         #endif
         ) :
+        EpollClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
             #endif
             ),
-        stat(Stat::Connected),
-        EpollClient(infd)
+        stat(Stat::Connected)
 {
     flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);

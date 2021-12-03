@@ -18,12 +18,12 @@ EpollClientLoginMaster::EpollClientLoginMaster(
             const int &infd
         #endif
         ) :
+        EpollClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Server
             #endif
             ),
-        EpollClient(infd),
         stat(None),
         uniqueKey(0),
         charactersGroupForGameServer(NULL),
