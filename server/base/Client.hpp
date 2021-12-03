@@ -57,16 +57,16 @@ public:
     std::string getPseudo() const;
     void savePosition();
     static bool characterConnected(const uint32_t &characterId);
-    bool disconnectClient();
+    bool disconnectClient() override;
     static void disconnectClientById(const uint32_t &characterId);
     Client *getClientFight() const;
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
     #endif
-    void breakNeedMoreData();
+    void breakNeedMoreData() override;
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
-    void parseIncommingData();
+    void parseIncommingData() override;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     static void startTheCityCapture();
     #endif
@@ -423,7 +423,7 @@ private:
     //inventory
     void destroyObject(const uint16_t &itemId,const uint32_t &quantity);
     void useObject(const uint8_t &query_id,const uint16_t &itemId);
-    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
+    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition) override;
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
@@ -460,7 +460,7 @@ private:
     //battle
     void battleCanceled();
     void battleAccepted();
-    virtual bool tryEscape();
+    virtual bool tryEscape() override;
     void heal();
     void requestFight(const uint16_t &fightId);
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
@@ -518,14 +518,14 @@ private:
     bool checkCollision();
 
     bool getBattleIsValidated();
-    bool isInFight() const;
+    bool isInFight() const override;
     void saveCurrentMonsterStat();
     void saveMonsterStat(const PlayerMonster &monster);
     void syncMonsterSkillAndEndurance(const PlayerMonster &monster);
     void syncMonsterEndurance(const PlayerMonster &monster);
     void syncMonsterBuff(const PlayerMonster &monster);
     bool checkLoose(bool withTeleport=true);
-    bool isInBattle() const;
+    bool isInBattle() const override;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
     bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
@@ -540,25 +540,25 @@ private:
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     void displayCurrentStatus();
     #endif
-    bool useSkill(const uint16_t &skill);
-    bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const;
-    void healAllMonsters();
+    bool useSkill(const uint16_t &skill) override;
+    bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const override;
+    void healAllMonsters() override;
     void battleFakeAccepted(Client * otherPlayer);
     void battleFakeAcceptedInternal(Client *otherPlayer);
     bool botFightStart(const uint16_t &botFightId);
-    int addCurrentBuffEffect(const Skill::BuffEffect &effect);
-    bool moveUpMonster(const uint8_t &number);
-    bool moveDownMonster(const uint8_t &number);
+    int addCurrentBuffEffect(const Skill::BuffEffect &effect) override;
+    bool moveUpMonster(const uint8_t &number) override;
+    bool moveDownMonster(const uint8_t &number) override;
     void saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition);
-    bool doTheOtherMonsterTurn();
-    Skill::AttackReturn generateOtherAttack();
-    Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
-    uint8_t decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill);
+    bool doTheOtherMonsterTurn() override;
+    Skill::AttackReturn generateOtherAttack() override;
+    Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel) override;
+    uint8_t decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill) override;
     void emitBattleWin();
-    void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
-    bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
-    bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
-    bool addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel=1);
+    void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue) override;
+    bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId) override;
+    bool removeAllBuffOnMonster(PlayerMonster * currentMonster) override;
+    bool addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel=1) override;
 
     bool checkKOCurrentMonsters();
     void syncForEndOfTurn();
@@ -574,22 +574,22 @@ private:
     void internalBattleCanceled(const bool &send);
     void internalBattleAccepted(const bool &send);
     void resetTheBattle();
-    PublicPlayerMonster *getOtherMonster();
-    void fightFinished();
-    bool giveXPSP(int xp,int sp);
+    PublicPlayerMonster *getOtherMonster() override;
+    void fightFinished() override;
+    bool giveXPSP(int xp,int sp) override;
     bool useSkillAgainstBotMonster(const uint16_t &skill, const uint8_t &skillLevel);
-    void wildDrop(const uint16_t &monster);
-    uint8_t getOneSeed(const uint8_t &max);
+    void wildDrop(const uint16_t &monster) override;
+    uint8_t getOneSeed(const uint8_t &max) override;
     bool bothRealPlayerIsReady() const;
     bool checkIfCanDoTheTurn();
-    bool dropKOOtherMonster();
-    uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster);
+    bool dropKOOtherMonster() override;
+    uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) override;
     bool haveCurrentSkill() const;
     uint16_t getCurrentSkill() const;
     bool haveMonsterChange() const;
-    bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill);
-    bool setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level);
-    bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index);
+    bool addSkill(PlayerMonster * currentMonster,const PlayerMonster::PlayerSkill &skill) override;
+    bool setSkillLevel(PlayerMonster * currentMonster,const unsigned int &index,const uint8_t &level) override;
+    bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index) override;
 
     //trade
     Client * otherPlayerTrade;
@@ -638,8 +638,8 @@ private:
     void insertClientOnMap(CommonMap *map);
     void removeClientOnMap(CommonMap *map);
 
-    void errorFightEngine(const std::string &error);
-    void messageFightEngine(const std::string &message) const;
+    void errorFightEngine(const std::string &error) override;
+    void messageFightEngine(const std::string &message) const override;
 
     struct PlantInWaiting
     {
@@ -651,13 +651,13 @@ private:
 
     bool parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply
-    bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size);
+    bool parseMessage(const uint8_t &packetCode,const char * const data,const unsigned int &size) override;
     //have query with reply
-    bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
     //send reply
-    bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size);
+    bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
 
-    void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
+    void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) override;
 
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);
@@ -732,35 +732,35 @@ private:
     void loadPlayerMonsterSkills_return(const uint32_t &index);
 */
 
-    uint32_t tryCapture(const uint16_t &item);
-    bool changeOfMonsterInFight(const uint8_t &monsterPosition);
-    void confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster);
-    std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster);
-    std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster);
+    uint32_t tryCapture(const uint16_t &item) override;
+    bool changeOfMonsterInFight(const uint8_t &monsterPosition) override;
+    void confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster) override;
+    std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster) override;
+    std::vector<uint8_t> addPlayerMonster(const PlayerMonster &playerMonster) override;
     bool addPlayerMonsterWithChange(const PlayerMonster &playerMonster);
     bool addToEncyclopedia(const uint16_t &monster);
 
     bool sendInventory();
 
     void generateRandomNumber();
-    uint32_t randomSeedsSize() const;
+    uint32_t randomSeedsSize() const override;
 protected:
     //normal management related
-    void errorOutput(const std::string &errorString);
+    void errorOutput(const std::string &errorString) override;
     void kick();
-    void normalOutput(const std::string &message) const;
+    void normalOutput(const std::string &message) const override;
     std::string headerOutput() const;
     //drop all clients
     void dropAllClients();
     void dropAllBorderClients();
     //input/ouput layer
-    void errorParsingLayer(const std::string &error);
-    void messageParsingLayer(const std::string &message) const;
+    void errorParsingLayer(const std::string &error) override;
+    void messageParsingLayer(const std::string &message) const override;
     //map move
-    virtual bool singleMove(const Direction &direction);
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
-    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
-    virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
+    virtual bool singleMove(const Direction &direction) override;
+    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
     virtual void extraStop() = 0;
 };
 }

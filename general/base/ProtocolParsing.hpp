@@ -216,12 +216,12 @@ public:
     uint64_t getTXSize() const;
     uint64_t getRXSize() const;
     #endif
-    void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber);
+    void storeInputQuery(const uint8_t &packetCode,const uint8_t &queryNumber) override;
     bool haveInputQuery(const uint8_t &queryNumber) const;
-    virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode);
+    virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) override;
 
     virtual void closeSocket() = 0;
-    void resetForReconnect();
+    void resetForReconnect() override;
     #ifdef DYNAMICPACKETFIXEDSIZE
     void setMaxPlayers(const uint16_t &maxPlayers) override;
     #endif
@@ -229,10 +229,10 @@ protected:
     /*virtual for void LinkToGameServer::parseIncommingData()
     of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    ProtocolParsing::CompressionType getCompressType() const;
+    ProtocolParsing::CompressionType getCompressType() const override;
     #endif
-    virtual ssize_t read(char * data, const size_t &size);
-    virtual ssize_t write(const char * const data, const size_t &size);
+    virtual ssize_t read(char * data, const size_t &size) override;
+    virtual ssize_t write(const char * const data, const size_t &size) override;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ProtocolParsingCheck *protocolParsingCheck;
     #endif
