@@ -303,7 +303,7 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
             qDebug() << "Datapack don't match with server hash, get from mirror";
             QNetworkRequest networkRequest(
                         QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
-                        .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_main)+
+                        .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts).at(index_mirror_main)+
                         QStringLiteral("pack/diff/datapack-main-")+
                         QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
                         QStringLiteral("-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
@@ -320,7 +320,8 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
 void Api_client_real::test_mirror_main()
 {
     QNetworkReply *reply;
-    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+            .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts);
     if(!datapackTarMain)
     {
         QString fullDatapack=httpDatapackMirrorList.at(index_mirror_main)+QStringLiteral("pack/datapack-main-")+
@@ -347,7 +348,7 @@ void Api_client_real::test_mirror_main()
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventMain))
+        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::errorOccurred), this, &Api_client_real::httpErrorEventMain))
             abort();
         if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackMain))
             abort();
@@ -370,7 +371,8 @@ void Api_client_real::decodedIsFinishMain()
         TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QList<QString> l(QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma));
+            QSet<QString> extensionAllowed(l.cbegin(),l.cend());
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
             const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
@@ -424,7 +426,8 @@ bool Api_client_real::mirrorTryNextMain(const std::string &error)
     {
         datapackTarMain=false;
         index_mirror_main++;
-        if(index_mirror_main>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror_main>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+                .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+error,"Get the list failed: "+error);
             return false;
@@ -734,7 +737,8 @@ void Api_client_real::sendDatapackContentMain()
 
     //compute the mirror
     {
-        QStringList values=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+        QStringList values=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
+                .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts);
         {
             QString slash(QStringLiteral("/"));
             int index=0;

@@ -254,7 +254,7 @@ void IsometricRenderer::drawTileSelection(QPainter *painter,
 {
     painter->setBrush(color);
     painter->setPen(Qt::NoPen);
-    foreach (const QRect &r, region.rects()) {
+    for (const QRect &r : region) {
         QPolygonF polygon = tileRectToPolygon(r);
         if (QRectF(polygon.boundingRect()).intersects(exposed))
             painter->drawConvexPolygon(polygon);

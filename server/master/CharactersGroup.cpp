@@ -266,12 +266,12 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
                         }
                         this->lockedAccount[*i]=now+CharactersGroup::maxLockAge;//wait 5min before reconnect
                         addToCacheLockToDelete(*i,now+CharactersGroup::maxLockAge);
-                        static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
+                        client->disconnectForDuplicateConnexionDetected(*i);
                     }
                     else
                     {
                         //recent normal disconnected, just wait the 5s timeout
-                        static_cast<EpollClientLoginMaster *>(client)->disconnectForDuplicateConnexionDetected(*i);
+                        client->disconnectForDuplicateConnexionDetected(*i);
                     }
                 }
             }
@@ -285,16 +285,15 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
     }
 
     gameServers[uniqueKey]=tempServer;
-    EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
+    EpollClientLoginMaster * const clientCast=client;
     clientCast->uniqueKey=uniqueKey;
 
     return &gameServers[uniqueKey];
 }
 
-void CharactersGroup::removeGameServerUniqueKey(void * const client)
+void CharactersGroup::removeGameServerUniqueKey(EpollClientLoginMaster * const client)
 {
-    EpollClientLoginMaster * const clientCast=static_cast<EpollClientLoginMaster * const>(client);
-    const uint32_t &uniqueKey=clientCast->uniqueKey;
+    const uint32_t &uniqueKey=client->uniqueKey;
 
     if(gameServers.find(uniqueKey)==gameServers.cend())
     {

@@ -33,12 +33,12 @@ LinkToLogin::LinkToLogin(
             const int &infd
         #endif
         ) :
+        EpollClient(infd),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
             #endif
             ),
-        EpollClient(infd),
         stat(Stat::Unconnected),
         tryInterval(5),
         considerDownAfterNumberOfTry(3)
@@ -374,7 +374,7 @@ void LinkToLogin::tryReconnect()
         #endif
         if(tryInterval<=0 || tryInterval>=60)
             this->tryInterval=5;
-        if(considerDownAfterNumberOfTry<=0 && considerDownAfterNumberOfTry>=60)
+        if(considerDownAfterNumberOfTry<=0 || considerDownAfterNumberOfTry>=60)
             this->considerDownAfterNumberOfTry=3;
         do
         {

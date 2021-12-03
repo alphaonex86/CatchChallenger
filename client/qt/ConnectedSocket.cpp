@@ -53,7 +53,7 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
         abort();
     if(!connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection))
         abort();
-    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
+    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::errorOccurred),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
         abort();
     if(!connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection))
         abort();
@@ -82,7 +82,7 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
         abort();
     if(!connect(socket,&QTcpSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection))
         abort();
-    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
+    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::errorOccurred),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
         abort();
     if(!connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection))
         abort();
@@ -184,7 +184,7 @@ QList<QSslError> ConnectedSocket::sslErrors() const
 {
     #ifndef NOTCPSOCKET
     if(sslSocket!=nullptr)
-        return sslSocket->sslErrors();
+        return sslSocket->sslHandshakeErrors();
     #endif
     #ifndef NOWEBSOCKET
     return m_sslErrors;
