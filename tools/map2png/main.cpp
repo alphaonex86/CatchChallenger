@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
                 mainDatapack=dirDatapack2.absoluteFilePath();
             }
         }
-        QTime time;
+        QElapsedTimer time;
         time.restart();
         QStringList files=Map2Png::listFolder(dir.absoluteFilePath()+Map2Png::text_slash);
         int index=0;

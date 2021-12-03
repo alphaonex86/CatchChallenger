@@ -207,7 +207,7 @@ void StaggeredRenderer::drawTileSelection(QPainter *painter,
     painter->setBrush(color);
     painter->setPen(Qt::NoPen);
 
-    foreach (const QRect &r, region.rects()) {
+    for (const QRect &r : region) {
         for (int y = r.top(); y <= r.bottom(); ++y) {
             for (int x = r.left(); x <= r.right(); ++x) {
                 const QPolygonF polygon = tileToPolygon(x, y);
