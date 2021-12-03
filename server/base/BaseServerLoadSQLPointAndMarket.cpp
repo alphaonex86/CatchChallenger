@@ -57,11 +57,11 @@ void BaseServer::preload_pointOnMap_item_static(void *object)
 
 void BaseServer::preload_pointOnMap_item_return()
 {
-    DictionaryServer::MapAndPointItem nullvalue;
+    /*DictionaryServer::MapAndPointItem nullvalue;
     nullvalue.datapack_index_item=0;
     nullvalue.map=nullptr;
     nullvalue.x=0;
-    nullvalue.y=0;
+    nullvalue.y=0;*/
 
     unsigned int itemCount=0;
     unsigned int itemValidatedCount=0;
@@ -221,11 +221,13 @@ void BaseServer::preload_pointOnMap_plant_static(void *object)
 
 void BaseServer::preload_pointOnMap_plant_return()
 {
+    #ifdef CATCHCHALLENGER_CACHE_HPS
     DictionaryServer::MapAndPointPlant nullvalue;
     nullvalue.datapack_index_plant=0;
     nullvalue.map=nullptr;
     nullvalue.x=0;
     nullvalue.y=0;
+    #endif
     uint16_t datapack_index_temp_for_plant=0;
 
     unsigned int plantCount=0;

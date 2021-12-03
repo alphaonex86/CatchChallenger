@@ -271,7 +271,7 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
             qDebug() << "Datapack don't match with server hash, get from mirror";
             QNetworkRequest networkRequest(
                         QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)
-                        .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_base)+
+                        .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts).at(index_mirror_base)+
                         QStringLiteral("pack/diff/datapack-base-%1.tar.zst").arg(QString::fromStdString(binarytoHexa(hash)))
                         );
             QNetworkReply *reply = qnam.get(networkRequest);
@@ -297,7 +297,7 @@ void Api_client_real::test_mirror_base()
 {
     QNetworkReply *reply;
     const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)
-            .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+            .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts);
     if(!datapackTarBase)
     {
         QNetworkRequest networkRequest(httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst"));
@@ -320,7 +320,7 @@ void Api_client_real::test_mirror_base()
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase))
+        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::errorOccurred), this, &Api_client_real::httpErrorEventBase))
             abort();
         if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase))
             abort();
@@ -347,7 +347,8 @@ void Api_client_real::decodedIsFinishBase()
         TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QList<QString> l(QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma));
+            QSet<QString> extensionAllowed(l.cbegin(),l.cend());
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
             const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
@@ -407,7 +408,7 @@ bool Api_client_real::mirrorTryNextBase(const std::string &error)
         datapackTarBase=false;
         index_mirror_base++;
         if(index_mirror_base>=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)
-                .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+                .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+error,QStringLiteral("Get the list failed: ").toStdString()+error);
             return false;
@@ -687,7 +688,7 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
     //compute the mirror
     {
         QStringList values=QString::fromStdString(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase)
-                .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+                .split(Api_client_real::text_dotcoma,Qt::SkipEmptyParts);
         {
             QString slash("/");
             int index=0;

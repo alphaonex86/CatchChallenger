@@ -110,6 +110,7 @@ void Api_client_real::errorFromFightEngine(const std::string &error)
 
 bool Api_client_real::haveBeatBot(const uint16_t &botFightId) const
 {
+    (void)botFightId;
     return false;
 }
 
