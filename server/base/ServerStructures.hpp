@@ -419,8 +419,8 @@ struct MarketItem
 
 struct Clan
 {
-    std::string captureCityInProgress;
-    std::string capturedCity;
+    uint16_t captureCityInProgress;//65535 no capture in progress
+    uint16_t capturedCity;//65535 no city captured
     uint32_t clanId;
     std::vector<Client *> players;
 
@@ -478,6 +478,8 @@ struct ServerPrivateVariables
     CatchChallenger::DatabaseBase *db_common;
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
     std::vector<TimerEvents *> timerEvents;
+    std::unordered_map<std::string,uint16_t> zoneToId;//tempory var to load zone
+    std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
     #else
     QtDatabase *db_login;
     QtDatabase *db_base;
@@ -516,9 +518,10 @@ struct ServerPrivateVariables
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
     #endif
-    std::unordered_map<std::string,std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
-    std::unordered_map<std::string,CityStatus> cityStatusList;
-    std::unordered_map<uint32_t,std::string > cityStatusListReverse;
+    //to the zone id, see GlobalServerData::serverPrivateVariables.zoneToId
+    std::vector<std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
+    std::vector<CityStatus> cityStatusList;
+    std::unordered_map<uint32_t,uint16_t> cityStatusListReverse;
     std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
 
@@ -531,12 +534,11 @@ struct ServerPrivateVariables
 
     //timer and thread
     #ifndef EPOLLCATCHCHALLENGERSERVER
-        QTimer *timer_city_capture;
+        QTimer *timer_city_capture;//moved to epoll loop
         QTimer *timer_to_send_insert_move_remove;
         QTimer positionSync;
         QTimer ddosTimer;
     #else
-        //TimerCityCapture *timer_city_capture;
         TimerDdos ddosTimer;
         TimerPositionSync positionSync;
         TimerSendInsertMoveRemove *timer_to_send_insert_move_remove;

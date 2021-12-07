@@ -12,7 +12,8 @@ uint32_t MapServer::mapListSize=0;
 MapServer::MapServer() :
     localChatDropTotalCache(0),
     localChatDropNewValue(0),
-    reverse_db_id(0)
+    reverse_db_id(0),
+    zone(65535)
 {
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }

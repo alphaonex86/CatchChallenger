@@ -29,6 +29,8 @@ public:
     uint8_t localChatDropTotalCache;
     uint8_t localChatDropNewValue;
     int reverse_db_id;
+    //the next variable is related to GlobalServerData::serverPrivateVariables.idToZone
+    uint16_t zone;//65535 if no zone
 
     //at last to improve the other variable cache
     std::vector<Client *> clientsForBroadcast;//frequent remove/insert due to map change
@@ -111,7 +113,7 @@ public:
         buf << (uint8_t)rescue.size();
         for (const auto &x : rescue)
               buf << x.first << (uint8_t)x.second;
-        buf << reverse_db_id << pointOnMap_Item;
+        buf << reverse_db_id << zone << pointOnMap_Item;
     }
     static uint32_t mapListSize;
     static CommonMap * posToPointer(const int32_t &pos);
@@ -180,7 +182,7 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::string value;
+            uint16_t value;
             buf >> posXY >> value;
             zonecapture[posXY]=value;
         }
@@ -208,7 +210,7 @@ public:
             buf >> posXY >> value;
             rescue[posXY]=(Orientation)value;
         }
-        buf >> reverse_db_id >> pointOnMap_Item;
+        buf >> reverse_db_id >> zone >> pointOnMap_Item;
     }
     #endif
 };

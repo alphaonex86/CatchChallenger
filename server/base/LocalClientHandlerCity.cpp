@@ -10,7 +10,7 @@ bool Client::captureCityInProgress()
 {
     if(clan==NULL)
         return false;
-    if(clan->captureCityInProgress.size()==0)
+    if(clan->captureCityInProgress==65535)
         return false;
     //search in capture not validated
     if(captureCity.find(clan->captureCityInProgress)!=captureCity.end())
@@ -125,10 +125,10 @@ void Client::waitingForCityCaputre(const bool &cancel)
             }
         }
         //send the zone capture
-        const std::string &zoneName=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
+        const uint16_t &zoneId=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
         if(!public_and_private_informations.clan_leader)
         {
-            if(clan->captureCityInProgress.size()==0)
+            if(clan->captureCityInProgress==65535)
             {
                 //send the network message
                 uint32_t posOutput=0;
@@ -145,10 +145,10 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         else
         {
-            if(clan->captureCityInProgress.empty())
-                clan->captureCityInProgress=zoneName;
+            if(clan->captureCityInProgress==65535)
+                clan->captureCityInProgress=zoneId;
         }
-        if(clan->captureCityInProgress!=zoneName)
+        if(clan->captureCityInProgress!=zoneId)
         {
             //send the network message
             uint32_t posOutput=0;
@@ -159,7 +159,8 @@ void Client::waitingForCityCaputre(const bool &cancel)
             posOutput+=1;
 
             {
-                const std::string &text=clan->captureCityInProgress;
+                //const std::string &text=clan->captureCityInProgress;
+                const std::string text;/// \todo no change to uint16_t to not change the protocol, change when protocol change
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
                 posOutput+=1;
                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
@@ -169,17 +170,18 @@ void Client::waitingForCityCaputre(const bool &cancel)
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
-        if(captureCity.count(zoneName)>0)
+        std::vector<Client *> &z=captureCity[zoneId];
+        if(vectorcontainsAtLeastOne(z,this))
         {
             errorOutput("already in capture city");
             return;
         }
-        captureCity[zoneName].push_back(this);
+        z.push_back(this);
         setInCityCapture(true);
     }
     else
     {
-        if(clan->captureCityInProgress.size()==0)
+        if(clan->captureCityInProgress==65535)
         {
             errorOutput("your clan is not in capture city");
             return;
@@ -197,7 +199,7 @@ void Client::leaveTheCityCapture()
 {
     if(clan==NULL)
         return;
-    if(clan->captureCityInProgress.size()==0)
+    if(clan->captureCityInProgress==65535)
         return;
     if(vectorremoveOne(captureCity[clan->captureCityInProgress],this))
     {
@@ -205,7 +207,7 @@ void Client::leaveTheCityCapture()
         if(captureCity.at(clan->captureCityInProgress).size()==0)
         {
             captureCity.erase(clan->captureCityInProgress);
-            clan->captureCityInProgress.clear();
+            clan->captureCityInProgress=65535;
         }
         else
         {
@@ -218,7 +220,7 @@ void Client::leaveTheCityCapture()
                 index++;
             }
             if(index==captureCity.at(clan->captureCityInProgress).size())
-                clan->captureCityInProgress.clear();
+                clan->captureCityInProgress=65535;
         }
     }
     setInCityCapture(false);
@@ -244,11 +246,18 @@ void Client::startTheCityCapture()
         else
         {
             CaptureCityValidated tempCaptureCityValidated;
-            if(GlobalServerData::serverPrivateVariables.cityStatusList.find(i->first)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
-                GlobalServerData::serverPrivateVariables.cityStatusList[i->first].clan=0;
+            if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>i->first)
+            {
+                //init with empty data
+                CityStatus e;
+                e.clan=0;
+                GlobalServerData::serverPrivateVariables.cityStatusList[i->first]=e;
+            }
             if(GlobalServerData::serverPrivateVariables.cityStatusList.at(i->first).clan==0)
-                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(i->first)!=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.cend())
+            {
+                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size()>i->first)
                     tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.at(i->first);
+            }
             tempCaptureCityValidated.players=i->second;
             unsigned int index;
             unsigned int sub_index;
@@ -430,7 +439,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
 {
     if(clan!=NULL)
     {
-        if(clan->captureCityInProgress.size()>0 && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
+        if(clan->captureCityInProgress!=65535 && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
             //check if this player is into the capture city with the other player of the team
@@ -503,16 +512,18 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                 if(captureCityValidated.bots.size()==0 && captureCityValidated.botsInFight.size()==0 && captureCityValidated.playersInFight.size()==0)
                 {
                     if(clan->capturedCity==clan->captureCityInProgress)
-                        clan->captureCityInProgress.clear();
+                        clan->captureCityInProgress=65535;
                     else
                     {
-                        if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->capturedCity)!=GlobalServerData::serverPrivateVariables.cityStatusList.cend())
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan->capturedCity)
                         {
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
-                        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
-                        if(GlobalServerData::serverPrivateVariables.cityStatusList.find(clan->captureCityInProgress)==GlobalServerData::serverPrivateVariables.cityStatusList.cend())
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
+                        GlobalServerData::serverPrivateVariables.idToZone.at(clan->capturedCity)
+                        });
+                        if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan->captureCityInProgress)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
 
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.at(clan->captureCityInProgress).clan!=0)
@@ -523,12 +534,12 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                         else
                             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_city.asyncWrite({
                                         std::to_string(clan->clanId),
-                                        clan->captureCityInProgress
+                                        GlobalServerData::serverPrivateVariables.idToZone.at(clan->captureCityInProgress)
                                         });
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
-                        clan->captureCityInProgress.clear();
+                        clan->captureCityInProgress=65535;
                         unsigned int index=0;
                         while(index<captureCityValidated.players.size())
                         {

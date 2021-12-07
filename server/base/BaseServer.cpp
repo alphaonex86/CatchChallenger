@@ -11,16 +11,15 @@
 
 using namespace CatchChallenger;
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
+//cleab this, it's done before the main epoll loop
 bool BaseServer::load_next_city_capture()
 {
-    GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
+    /*GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
     std::time_t result = std::time(nullptr);
     const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-result;
-    GlobalServerData::serverPrivateVariables.timer_city_capture->start(static_cast<int>(time));
+    GlobalServerData::serverPrivateVariables.timer_city_capture->start(static_cast<int>(time));*/
     return true;
 }
-#endif
 
 void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::string &)
 {
