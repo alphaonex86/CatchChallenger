@@ -67,9 +67,7 @@ public:
     void breakNeedMoreData() override;
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
     void parseIncommingData() override;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     static void startTheCityCapture();
-    #endif
     static void setEvent(const uint8_t &event, const uint8_t &new_value);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     static char * addAuthGetToken(const uint32_t &characterId,const uint32_t &accountIdRequester);
@@ -256,9 +254,7 @@ private:
     bool mHaveCurrentSkill,mMonsterChange;
     uint64_t botFightCash;
     uint16_t botFightId;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isInCityCapture;
-    #endif
     std::vector<Skill::AttackReturn> attackReturn;
     //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;
     std::unordered_set<PlayerMonster *> deferedEnduranceSync;
@@ -276,10 +272,8 @@ private:
     //info linked
     static Direction	temp_direction;
     static std::unordered_map<uint32_t,Client *> playerById;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     static std::unordered_map<std::string,std::vector<Client *> > captureCity;
     static std::unordered_map<std::string,CaptureCityValidated> captureCityValidatedList;
-    #endif
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
     //socket related
@@ -475,7 +469,6 @@ private:
     void clanInvite(const bool &accept);
     uint32_t clanId() const;
     void removeFromClan();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void waitingForCityCaputre(const bool &cancel);
     void previousCityCaptureNotFinished();
     void leaveTheCityCapture();
@@ -489,7 +482,6 @@ private:
     void setInCityCapture(const bool &isInCityCapture);
     //map move
     bool captureCityInProgress();
-    #endif
     void fightOrBattleFinish(const bool &win, const uint16_t &fightId);//fightId == 0 if is in battle
     void moveMonster(const bool &up,const uint8_t &number);
     //market
@@ -600,9 +592,7 @@ private:
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
     Clan *clan;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     Client * otherCityPlayerBattle;
-    #endif
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     char *socketString;

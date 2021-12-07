@@ -156,11 +156,9 @@ public:
     PreparedStatementUnit db_query_update_character_forserver_map;
     PreparedStatementUnit db_query_insert_factory;
     PreparedStatementUnit db_query_update_factory;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     PreparedStatementUnit db_query_delete_city;
     PreparedStatementUnit db_query_update_city_clan;
     PreparedStatementUnit db_query_insert_city;
-    #endif
     PreparedStatementUnit db_query_insert_monster_market_price;
     PreparedStatementUnit db_query_delete_monster_market_price;
     PreparedStatementUnit db_query_delete_all_item_market;
