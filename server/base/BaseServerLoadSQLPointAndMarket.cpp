@@ -36,10 +36,8 @@ void BaseServer::preload_pointOnMap_item_sql()
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_visibility_algorithm();
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         preload_the_city_capture();
         preload_zone();
-        #endif
 
         const auto now=msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
@@ -155,12 +153,10 @@ void BaseServer::preload_pointOnMap_item_return()
             std::cout << DictionaryServer::dictionary_pointOnMap_item_internal_to_database.size() << " SQL item on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!preload_the_city_capture())
             return;
         if(!preload_zone())
             return;
-        #endif
         const auto now = msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;
@@ -200,10 +196,8 @@ void BaseServer::preload_pointOnMap_plant_sql()
         criticalDatabaseQueryFailed();return;//stop because can't do the first db access
 
         preload_the_visibility_algorithm();
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         preload_the_city_capture();
         preload_zone();
-        #endif
 
         const auto now=msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
@@ -332,12 +326,10 @@ void BaseServer::preload_pointOnMap_plant_return()
             std::cout << DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.size() << " SQL plant on map dictionary" << std::endl;
 
         preload_the_visibility_algorithm();
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(!preload_the_city_capture())
             return;
         if(!preload_zone())
             return;
-        #endif
         const auto now = msFrom1970();
         std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
         timeDatapack=now;

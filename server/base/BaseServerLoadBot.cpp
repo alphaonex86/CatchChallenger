@@ -293,7 +293,26 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::to_string(i->first)
                                               << std::endl;
                                 #endif
-                                mapServer->zonecapture[pairpoint]=step->Attribute("zone");
+                                const std::string &std=step->Attribute("zone");
+                                if(GlobalServerData::serverPrivateVariables.zoneToId.find(std)!=GlobalServerData::serverPrivateVariables.zoneToId.cend())
+                                    mapServer->zonecapture[pairpoint]=GlobalServerData::serverPrivateVariables.zoneToId.at(std);
+                                else
+                                {
+                                    std::cerr << "zonecapture point put at: for bot id: "
+                                              << bot_Semi.id
+                                              << " ("
+                                              << bot_Semi.file
+                                              << "), spawn at: "
+                                              << current_map.map->map_file
+                                              << " ("
+                                              << std::to_string(bot_Semi.point.x)
+                                              << ","
+                                              << std::to_string(bot_Semi.point.y)
+                                              << "), for step: "
+                                              << std::to_string(i->first)
+                                              << " no zone found: " << std
+                                              << std::endl;
+                                }
                                 zonecapturepoint_number++;
                             }
                         }

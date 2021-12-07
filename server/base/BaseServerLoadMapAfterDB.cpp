@@ -216,9 +216,5 @@ void BaseServer::preload_map_semi_after_db_id()
 
     semi_loaded_map.clear();
     plant_on_the_map=0;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     preload_zone_sql();
-    #else
-    preload_market_monsters_prices_sql();
-    #endif
 }
