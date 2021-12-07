@@ -9,6 +9,7 @@
 #ifdef CATCHCHALLENGER_SOLO
 #include "../../client/qt/QFakeServer.hpp"
 #endif
+#include <QCoreApplication>
 
 using namespace CatchChallenger;
 
@@ -119,6 +120,7 @@ void QtServer::preload_the_city_capture()
 void QtServer::preload_finish()
 {
     BaseServer::preload_finish();
+
     moveToThread(QCoreApplication::instance()->thread());
     emit is_started(true);
 }

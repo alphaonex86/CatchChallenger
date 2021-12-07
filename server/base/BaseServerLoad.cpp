@@ -159,7 +159,7 @@ bool BaseServer::preload_zone_init()
                 }
                 if(sub_index==fightIdStringList.size() && !fightIdList.empty())
                 {
-                    const uint16_t &zoneId=GlobalServerData::serverPrivateVariables.zoneToId.at(zoneCodeName);
+                    const uint16_t &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
                     while(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size()<zoneId)
                     {
                         std::vector<uint16_t> t;

@@ -146,7 +146,7 @@ void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
         delete[] parsed_layer.simplifiedMap;
 }
 
-bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer)
+bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     tinyxml2::XMLDocument *domDocument=NULL;
 
@@ -185,6 +185,8 @@ bool Map_loader::loadMonsterMap(const std::string &file, std::vector<std::string
         std::cerr << file+", loadMonsterMap(): \"map\" root balise not found for the xml file" << std::endl;
         return false;
     }
+    if(this->map_to_send.xmlRoot->Attribute("zone")!=NULL)
+        zoneName=this->map_to_send.xmlRoot->Attribute("zone");
     //std::cerr << file+", loadMonsterMap(): this->map_to_send.xmlRoot->Name()" << this->map_to_send.xmlRoot->Name() << std::endl;
 
     //found the cave name

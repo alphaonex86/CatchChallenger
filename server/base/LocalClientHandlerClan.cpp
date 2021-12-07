@@ -120,7 +120,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            if(clan->captureCityInProgress.size()>0)
+            if(clan->captureCityInProgress!=65535)
             {
                 errorOutput("You can't disolv the clan if is in city capture");
                 return;
@@ -143,9 +143,12 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #ifndef EPOLLCATCHCHALLENGERSERVER
             {
-                GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
-                            clan->capturedCity
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.size()>clan->capturedCity)
+                    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
+                            CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.at(clan->capturedCity)
                             });
+                else
+                    errorOutput("clan->capturedCity not found into CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId");
             }
             #endif
             //update the object

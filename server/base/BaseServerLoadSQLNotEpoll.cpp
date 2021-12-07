@@ -29,9 +29,9 @@ void BaseServer::preload_zone_return()
         const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
         {
-            if(GlobalServerData::serverPrivateVariables.zoneToId.find(zoneCodeName)!=GlobalServerData::serverPrivateVariables.zoneToId.cend())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
             {
-                const uint16_t &zoneId=GlobalServerData::serverPrivateVariables.zoneToId.at(zoneCodeName);
+                const uint16_t &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
                 GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
                 GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
             }
@@ -59,10 +59,10 @@ void BaseServer::preload_zone_sql()
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
             std::string queryText;
-            if(GlobalServerData::serverPrivateVariables.zoneToId.find(zoneCodeName)==GlobalServerData::serverPrivateVariables.zoneToId.cend())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
             {
-                GlobalServerData::serverPrivateVariables.zoneToId[zoneCodeName]=indexZone;
-                GlobalServerData::serverPrivateVariables.idToZone[indexZone]=zoneCodeName;
+                CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId[zoneCodeName]=indexZone;
+                CommonDatapackServerSpec::commonDatapackServerSpec.idToZone[indexZone]=zoneCodeName;
                 if(indexZone>60000)
                 {
                     std::cerr << "Error, zone count can't be > 60000" << std::endl;

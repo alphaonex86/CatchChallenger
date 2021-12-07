@@ -294,8 +294,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::endl;
                                 #endif
                                 const std::string &std=step->Attribute("zone");
-                                if(GlobalServerData::serverPrivateVariables.zoneToId.find(std)!=GlobalServerData::serverPrivateVariables.zoneToId.cend())
-                                    mapServer->zonecapture[pairpoint]=GlobalServerData::serverPrivateVariables.zoneToId.at(std);
+                                if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(std)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
+                                    mapServer->zonecapture[pairpoint]=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(std);
                                 else
                                 {
                                     std::cerr << "zonecapture point put at: for bot id: "
