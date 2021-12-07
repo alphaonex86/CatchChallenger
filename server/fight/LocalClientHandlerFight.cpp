@@ -298,12 +298,10 @@ bool Client::botFightStart(const uint16_t &botFightId)
     return true;
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 void Client::setInCityCapture(const bool &isInCityCapture)
 {
     this->isInCityCapture=isInCityCapture;
 }
-#endif
 
 PublicPlayerMonster *Client::getOtherMonster()
 {

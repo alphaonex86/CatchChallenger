@@ -33,11 +33,9 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_delete_monster_market_price=PreparedStatementUnit("DELETE FROM `monster_market_price` WHERE `id`=%1",database);
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4)",database);
         PreparedDBQueryServer::db_query_update_factory=PreparedStatementUnit("UPDATE `factory` SET `resources`='%1',`products`='%2',`last_update`=%3 WHERE `id`=%4",database);
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         PreparedDBQueryServer::db_query_delete_city=PreparedStatementUnit("DELETE FROM `city` WHERE `city`='%1'",database);
         PreparedDBQueryServer::db_query_update_city_clan=PreparedStatementUnit("UPDATE `city` SET `clan`=%1 WHERE `city`='%2';",database);
         PreparedDBQueryServer::db_query_insert_city=PreparedStatementUnit("INSERT INTO `city`(`clan`,`city`) VALUES(%1,'%2');",database);
-        #endif
         PreparedDBQueryServer::db_query_update_character_quests=PreparedStatementUnit("UPDATE character_forserver SET quest=UNHEX('%1') WHERE character=%2",database);
         PreparedDBQueryServer::db_query_update_plant=PreparedStatementUnit("UPDATE character_forserver SET plants=UNHEX('%1') WHERE character=%2",database);
         PreparedDBQueryServer::db_query_update_itemonmap=PreparedStatementUnit("UPDATE character_forserver SET itemonmap=UNHEX('%1') WHERE character=%2",database);
@@ -62,11 +60,9 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_delete_monster_market_price=PreparedStatementUnit("DELETE FROM monster_market_price WHERE id=%1",database);
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)",database);
         PreparedDBQueryServer::db_query_update_factory=PreparedStatementUnit("UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4",database);
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         PreparedDBQueryServer::db_query_delete_city=PreparedStatementUnit("DELETE FROM city WHERE city='%1'",database);
         PreparedDBQueryServer::db_query_update_city_clan=PreparedStatementUnit("UPDATE city SET clan=%1 WHERE city='%2';",database);
         PreparedDBQueryServer::db_query_insert_city=PreparedStatementUnit("INSERT INTO city(clan,city) VALUES(%1,'%2');",database);
-        #endif
         PreparedDBQueryServer::db_query_update_character_quests=PreparedStatementUnit("UPDATE character_forserver SET quest='%1' WHERE character=%2",database);
         PreparedDBQueryServer::db_query_update_plant=PreparedStatementUnit("UPDATE character_forserver SET plants='%1' WHERE character=%2",database);
         PreparedDBQueryServer::db_query_update_itemonmap=PreparedStatementUnit("UPDATE character_forserver SET itemonmap='%1' WHERE character=%2",database);
@@ -85,11 +81,9 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)",database);
         PreparedDBQueryServer::db_query_update_factory=PreparedStatementUnit("UPDATE factory SET resources='%1',products='%2',last_update=%3 WHERE id=%4",database);
         #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         PreparedDBQueryServer::db_query_delete_city=PreparedStatementUnit("DELETE FROM city WHERE city='%1'",database);
         PreparedDBQueryServer::db_query_update_city_clan=PreparedStatementUnit("UPDATE city SET clan=%1 WHERE city='%2';",database);
         PreparedDBQueryServer::db_query_insert_city=PreparedStatementUnit("INSERT INTO city(clan,city) VALUES(%1,'%2');",database);
-        #endif
 
         PreparedDBQueryServer::db_query_delete_all_item_market=PreparedStatementUnit("DELETE FROM item_market WHERE character=%1",database);
         PreparedDBQueryServer::db_query_insert_item_market=PreparedStatementUnit("INSERT INTO item_market(item,character,quantity,market_price) VALUES(%1,%2,%3,%4)",database);

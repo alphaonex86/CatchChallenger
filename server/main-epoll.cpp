@@ -11,6 +11,7 @@
 #include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
 #include "../general/base/tinyXML2/tinyxml2.hpp"
 #include "../general/base/CommonSettingsCommon.hpp"
+#include "../general/base/FacilityLib.hpp"
 #include "epoll/EpollServer.hpp"
 #include "epoll/Epoll.hpp"
 #include "NormalServerGlobal.hpp"
@@ -425,9 +426,8 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     TimerPurgeTokenAuthList timerPurgeTokenAuthList;
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     {
-        GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
+        GlobalServerData::serverPrivateVariables.time_city_capture=CatchChallenger::FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
         const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-sFrom1970();
         timerCityCapture.setSingleShot(true);
         if(!timerCityCapture.start(time))
@@ -436,7 +436,6 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
     }
-    #endif
     {
         if(!timerDdos.start(GlobalServerData::serverSettings.ddos.computeAverageValueTimeInterval*1000))
         {
