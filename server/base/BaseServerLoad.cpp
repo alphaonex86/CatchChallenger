@@ -100,7 +100,6 @@ void BaseServer::preload_the_ddos()
     Client::privateChatDrop.reset();
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::preload_zone_init()
 {
     unsigned int index=0;
@@ -116,34 +115,13 @@ bool BaseServer::preload_zone_init()
         stringreplaceOne(zoneCodeName,".xml","");
         const std::string &file=entryListZone.at(index).absoluteFilePath;
         tinyxml2::XMLDocument *domDocument;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
-        else
+        domDocument=new tinyxml2::XMLDocument();
+        const auto loadOkay = domDocument->LoadFile(file.c_str());
+        if(loadOkay!=0)
         {
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
-            #else
-            domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
-            #endif
-            const auto loadOkay = domDocument->LoadFile(file.c_str());
-            if(loadOkay!=0)
-            {
-                std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
-                index++;
-                continue;
-            }
-            #ifndef EPOLLCATCHCHALLENGERSERVER
+            std::cerr << file+", "+tinyxml2errordoc(domDocument) << std::endl;
+            return false;
         }
-        #endif
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        auto search = GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.find(zoneCodeName);
-        if(search != GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.end())
-        {
-            std::cerr << "Unable to open the file: " << file.c_str() << ", zone code name already found" << std::endl;
-            index++;
-            continue;
-        }
-        #endif
         const tinyxml2::XMLElement *root = domDocument->RootElement();
         if(root==NULL)
         {
@@ -180,7 +158,15 @@ bool BaseServer::preload_zone_init()
                     sub_index++;
                 }
                 if(sub_index==fightIdStringList.size() && !fightIdList.empty())
-                    GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneCodeName]=fightIdList;
+                {
+                    const uint16_t &zoneId=GlobalServerData::serverPrivateVariables.zoneToId.at(zoneCodeName);
+                    while(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size()<zoneId)
+                    {
+                        std::vector<uint16_t> t;
+                        GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.push_back(t);
+                    }
+                    GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneId]=fightIdList;
+                }
                 break;
             }
             else
@@ -195,18 +181,15 @@ bool BaseServer::preload_zone_init()
     std::cout << GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size() << " zone(s) loaded" << std::endl;
     return true;
 }
-#endif
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::preload_the_city_capture()
 {
-    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
+/*    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
         delete GlobalServerData::serverPrivateVariables.timer_city_capture;
     GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
-    GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);
+    GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);*/
     return load_next_city_capture();
 }
-#endif
 
 void BaseServer::preload_the_skin()
 {
