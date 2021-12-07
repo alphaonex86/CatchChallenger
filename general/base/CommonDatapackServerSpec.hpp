@@ -24,6 +24,8 @@ public:
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     static CommonDatapackServerSpec commonDatapackServerSpec;
+    std::unordered_map<std::string,uint16_t> zoneToId;//tempory var to load zone
+    std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
@@ -33,6 +35,7 @@ public:
         buf << shops;
         buf << serverProfileList;
         buf << monsterDrops;
+        buf << idToZone;
     }
     template <class B>
     void parse(B& buf) {
@@ -42,6 +45,7 @@ public:
         buf >> shops;
         buf >> serverProfileList;
         buf >> monsterDrops;
+        buf >> idToZone;
     }
     #endif
 private:

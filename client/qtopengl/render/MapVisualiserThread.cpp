@@ -752,8 +752,14 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                                 qDebug() << (QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2)")
                                                                     .arg(botId).arg(QString::fromStdString(botFile)));
                                                             else
-                                                                parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=
-                                                                        step->Attribute("zone");
+                                                            {
+                                                                if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(step->Attribute("zone"))!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
+                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=
+                                                                        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(step->Attribute("zone"));
+                                                                else
+                                                                    qDebug() << (QStringLiteral("zonecapture %1 (%2) can't be converted because zone not exists: %3")
+                                                                        .arg(botId).arg(QString::fromStdString(botFile)).arg(step->Attribute("zone")));
+                                                            }
                                                         }
                                                         else if(strcmp(step->Attribute("type"),"fight")==0)
                                                         {

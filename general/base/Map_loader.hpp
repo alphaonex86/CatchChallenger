@@ -29,7 +29,7 @@ public:
     std::string errorString();
     bool tryLoadMap(const std::string &file, const bool &botIsNotWalkable=true);
     static void removeMapLayer(const ParsedLayer &parsed_layer);
-    bool loadMonsterMap(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer);
+    bool loadMonsterOnMapAndExtra(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static tinyxml2::XMLElement * getXmlCondition(const std::string &fileName, const std::string &file, const uint16_t &conditionId);
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);

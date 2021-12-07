@@ -478,8 +478,6 @@ struct ServerPrivateVariables
     CatchChallenger::DatabaseBase *db_common;
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
     std::vector<TimerEvents *> timerEvents;
-    std::unordered_map<std::string,uint16_t> zoneToId;//tempory var to load zone
-    std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
     #else
     QtDatabase *db_login;
     QtDatabase *db_base;
