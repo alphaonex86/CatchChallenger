@@ -6,15 +6,6 @@
 #include <regex>
 #include <atomic>
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QSqlDatabase>
-#include <QObject>
-#include <QTimer>
-#include <QCoreApplication>
-#include <QDir>
-#include <QSemaphore>
-#endif
-
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
@@ -75,9 +66,7 @@ protected:
     //init, constructor, destructor
     void initAll();//call before all
     //remove all finished client
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     bool load_next_city_capture();
-    #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void SQL_common_load_finish();
     #endif
@@ -117,17 +106,13 @@ protected:
     void preload_the_data();
     void preload_the_events();
     void preload_the_ddos();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     bool preload_zone();
-    #endif
     void preload_industries();
     void preload_market_monsters_prices_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
     void preload_market_monsters_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
     void preload_market_items();
     void baseServerMasterLoadDictionaryLoad();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     bool preload_the_city_capture();
-    #endif
     bool preload_the_map();
     void preload_the_skin();
     void preload_the_datapack();
@@ -144,12 +129,10 @@ protected:
     virtual void criticalDatabaseQueryFailed();
     virtual void quitForCriticalDatabaseQueryFailed() = 0;
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     static void preload_zone_static(void *object);
     bool preload_zone_init();
     void preload_zone_sql();
     void preload_zone_return();
-    #endif
     static void preload_industries_static(void *object);
     void preload_industries_return();
     static void preload_market_items_static(void *object);
@@ -172,13 +155,9 @@ protected:
     void unload_other();
     void unload_randomBlock();
     void unload_industries();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void unload_zone();
-    #endif
     void unload_market();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     void unload_the_city_capture();
-    #endif
     void unload_the_bots();
     void unload_the_data();
     void unload_the_static_data();
@@ -217,9 +196,7 @@ protected:
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
     std::vector<Monster_Semi_Market> monsterSemiMarketList;
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
-    #endif
     unsigned int entryListIndex;
     unsigned int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;

@@ -1,11 +1,8 @@
 #include "BaseServer.hpp"
-#ifndef EPOLLCATCHCHALLENGERSERVER
 #include "GlobalServerData.hpp"
-#endif
 
 using namespace CatchChallenger;
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 bool BaseServer::preload_zone()
 {
     //open and quick check the file
@@ -23,7 +20,6 @@ void BaseServer::preload_zone_static(void *object)
 
 void BaseServer::preload_zone_return()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
@@ -33,20 +29,27 @@ void BaseServer::preload_zone_return()
         const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
         {
-            GlobalServerData::serverPrivateVariables.cityStatusList[zoneCodeName].clan=clanId;
-            GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneCodeName;
+            if(GlobalServerData::serverPrivateVariables.zoneToId.find(zoneCodeName)!=GlobalServerData::serverPrivateVariables.zoneToId.cend())
+            {
+                const uint16_t &zoneId=GlobalServerData::serverPrivateVariables.zoneToId.at(zoneCodeName);
+                GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
+                GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
+            }
+            else
+                std::cerr << "preload_zone_return() zone not found: " << zoneCodeName << std::endl;
         }
         else
             std::cerr << "clan id is failed to convert to number for city status" << std::endl;
     }
-    #endif
     GlobalServerData::serverPrivateVariables.db_server->clear();
     entryListIndex++;
     preload_market_monsters_prices_sql();
 }
 
+//call before load map
 void BaseServer::preload_zone_sql()
 {
+    uint16_t indexZone=0;
     if(entryListZone.empty())
         preload_market_monsters_prices_sql();
     else
@@ -56,6 +59,17 @@ void BaseServer::preload_zone_sql()
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
             std::string queryText;
+            if(GlobalServerData::serverPrivateVariables.zoneToId.find(zoneCodeName)==GlobalServerData::serverPrivateVariables.zoneToId.cend())
+            {
+                GlobalServerData::serverPrivateVariables.zoneToId[zoneCodeName]=indexZone;
+                GlobalServerData::serverPrivateVariables.idToZone[indexZone]=zoneCodeName;
+                if(indexZone>60000)
+                {
+                    std::cerr << "Error, zone count can't be > 60000" << std::endl;
+                    abort();
+                }
+                indexZone++;
+            }
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
@@ -65,7 +79,7 @@ void BaseServer::preload_zone_sql()
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="SELECT `clan` FROM `city` WHERE `city`='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
                 break;
-                    #endif
+                #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="SELECT clan FROM city WHERE city='"+zoneCodeName+"'";//ORDER BY city-> drop, unique key
@@ -91,4 +105,3 @@ void BaseServer::preload_zone_sql()
         preload_market_monsters_sql();
     }
 }
-#endif

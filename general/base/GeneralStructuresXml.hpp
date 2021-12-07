@@ -29,6 +29,7 @@ struct Map_to_send
     //uint32_t because the format allow it, checked into tryLoadMap()
     uint32_t width;
     uint32_t height;
+    std::string zoneName;
 
     std::unordered_map<std::string,std::string> property;
 

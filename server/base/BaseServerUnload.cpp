@@ -39,10 +39,8 @@ void BaseServer::unload_the_data()
     unload_dictionary();
     unload_market();
     unload_industries();
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     unload_zone();
     unload_the_city_capture();
-    #endif
     unload_profile();
     unload_the_visibility_algorithm();
     unload_the_map();
@@ -80,12 +78,10 @@ void BaseServer::unload_the_static_data()
     Client::simplifiedIdList.clear();
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.clear();
 }
-#endif
 
 void BaseServer::unload_market()
 {
@@ -99,16 +95,9 @@ void BaseServer::unload_industries()
     GlobalServerData::serverPrivateVariables.industriesStatus.clear();
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 void BaseServer::unload_the_city_capture()
 {
-    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
-    {
-        delete GlobalServerData::serverPrivateVariables.timer_city_capture;
-        GlobalServerData::serverPrivateVariables.timer_city_capture=NULL;
-    }
 }
-#endif
 
 void BaseServer::unload_the_bots()
 {
