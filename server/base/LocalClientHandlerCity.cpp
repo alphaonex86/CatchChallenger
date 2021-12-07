@@ -3,7 +3,6 @@
 
 using namespace CatchChallenger;
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
 #include "MapServer.hpp"
 #include "GlobalServerData.hpp"
 
@@ -425,15 +424,12 @@ void Client::previousCityCaptureNotFinished()
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
-#endif
-
 
 //fightId == 0 if is in battle
 void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
 {
     if(clan!=NULL)
     {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         if(clan->captureCityInProgress.size()>0 && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
@@ -546,9 +542,5 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                 return;
             }
         }
-        #else
-        (void)fightId;
-        (void)win;
-        #endif
     }
 }
