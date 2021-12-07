@@ -113,8 +113,18 @@ bool Client::singleMove(const Direction &direction)
             switch(teleporter.condition.type)
             {
                 case CatchChallenger::MapConditionType_None:
-                case CatchChallenger::MapConditionType_Clan://not do for now
-                /// \todo check if the clan own the city
+                break;
+                case CatchChallenger::MapConditionType_Clan:
+                if(public_and_private_informations.clan==0)
+                {
+                    errorOutput("You are not in clan to try pass");
+                    return false;
+                }
+                if(GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan!=public_and_private_informations.clan)
+                {
+                    errorOutput("This city is not owned by you clan");
+                    return false;
+                }
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {
