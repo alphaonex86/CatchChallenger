@@ -62,6 +62,8 @@ void BaseServer::preload_zone_sql()
             if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
             {
                 CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId[zoneCodeName]=indexZone;
+                while(CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.size()<=indexZone)
+                    CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.push_back(std::string());
                 CommonDatapackServerSpec::commonDatapackServerSpec.idToZone[indexZone]=zoneCodeName;
                 if(indexZone>60000)
                 {
