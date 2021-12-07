@@ -94,12 +94,12 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     //check the size
     if(map_to_send_temp.width<1 || map_to_send_temp.width>255)
     {
-        error="the width should be greater or equal than 1, and lower or equal than 32000";
+        error="the width should be greater or equal than 1, and lower or equal to 255";
         return false;
     }
     if(map_to_send_temp.height<1 || map_to_send_temp.height>255)
     {
-        error="the height should be greater or equal than 1, and lower or equal than 32000";
+        error="the height should be greater or equal than 1, and lower or equal to 255";
         return false;
     }
 
@@ -894,7 +894,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadMonsterMap(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer);
+    loadMonsterOnMapAndExtra(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {

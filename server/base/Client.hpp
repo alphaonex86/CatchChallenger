@@ -647,7 +647,15 @@ private:
     //send reply
     bool parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber,const char * const data,const unsigned int &size) override;
 
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    #if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction) override;
+    #else
+    void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
+    #endif
+    #else
+    void moveClientFastPath(const uint8_t &previousMovedUnit,const uint8_t &direction);
+    #endif
 
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);

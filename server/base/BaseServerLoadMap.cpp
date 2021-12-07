@@ -122,8 +122,8 @@ bool BaseServer::preload_the_map()
                 }
 
                 map_semi.old_map=map_temp.map_to_send;
-                if(GlobalServerData::serverPrivateVariables.zoneToId.find(map_semi.old_map.zoneName)!=GlobalServerData::serverPrivateVariables.zoneToId.cend())
-                    mapServer->zone=GlobalServerData::serverPrivateVariables.zoneToId.at(map_semi.old_map.zoneName);
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(map_semi.old_map.zoneName)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
+                    mapServer->zone=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(map_semi.old_map.zoneName);
 
                 semi_loaded_map.push_back(map_semi);
             }
