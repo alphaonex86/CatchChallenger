@@ -42,6 +42,8 @@ public:
     void setSave(const std::string &file);
     void setLoad(const std::string &file);
     bool binaryCacheIsOpen() const;
+    bool binaryInputCacheIsOpen() const;
+    bool binaryOutputCacheIsOpen() const;
     NormalServerSettings loadSettingsFromBinaryCache(std::string &master_host,
                                                      uint16_t &master_port,
                                                      uint8_t &master_tryInterval,

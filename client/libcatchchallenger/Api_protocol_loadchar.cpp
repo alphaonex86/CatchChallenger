@@ -948,7 +948,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
             uint16_t seconds_to_mature=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
-            playerPlant.mature_at=std::time(nullptr)/1000+seconds_to_mature;
+            playerPlant.mature_at=std::time(nullptr)+seconds_to_mature;
 
             player_informations.plantOnMap[plantOnMap]=playerPlant;
             index++;

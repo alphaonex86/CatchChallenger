@@ -320,8 +320,13 @@ void Api_client_real::test_mirror_base()
     }
     if(reply->error()==QNetworkReply::NoError)
     {
+        #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventBase))
+            abort();
+        #else
         if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::errorOccurred), this, &Api_client_real::httpErrorEventBase))
             abort();
+        #endif
         if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackBase))
             abort();
     }

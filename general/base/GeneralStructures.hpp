@@ -235,7 +235,7 @@ struct PlayerReputation
 struct PlayerPlant
 {
     uint8_t plant;//plant id
-    uint64_t mature_at;//timestamp when is mature
+    uint64_t mature_at;//timestamp when is mature in second
 };
 
 struct Player_private_and_public_informations

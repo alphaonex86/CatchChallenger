@@ -597,8 +597,13 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
 
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
         abort();
+    #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),this,&MultipleBotConnection::newSocketError))
+        abort();
+    #else
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::errorOccurred),this,&MultipleBotConnection::newSocketError))
         abort();
+    #endif
     #ifdef BOTTESTCONNECT
     qDebug() << "Try connect on: " << host() << ":" << port();
     #endif

@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
-    if(save || !server->binaryCacheIsOpen())
+    if(save || !server->binaryInputCacheIsOpen())
     #endif
         if(!CatchChallenger::FacilityLibGeneral::isFile(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/informations.xml"))
         {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
     //before linkToMaster->registerGameServer() to have the correct settings loaded
     //after server to have the settings
     #ifdef CATCHCHALLENGER_CACHE_HPS
-    if(!save && server->binaryCacheIsOpen())
+    if(!save && server->binaryInputCacheIsOpen())
         server->setNormalSettings(server->loadSettingsFromBinaryCache(master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry));
     else
     #endif

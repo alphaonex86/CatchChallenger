@@ -112,7 +112,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 1" << std::endl;
             unsigned int index=0;
-            while(index<considerDownAfterNumberOfTry && connStatusType<0)
+            while((considerDownAfterNumberOfTry>1 || index<considerDownAfterNumberOfTry) && connStatusType<0)
             {
                 std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
@@ -120,7 +120,8 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
                 connStatusType=::connect(sfd, rp->ai_addr, rp->ai_addrlen);
                 auto end = std::chrono::high_resolution_clock::now();
                 std::chrono::duration<double, std::milli> elapsed = end-start;
-                index++;
+                if(considerDownAfterNumberOfTry>0)
+                    index++;
                 if(elapsed.count()<(uint32_t)tryInterval*1000 && index<considerDownAfterNumberOfTry && connStatusType<0)
                 {
                     const unsigned int ms=(uint32_t)tryInterval*1000-elapsed.count();
