@@ -1,5 +1,8 @@
 #include "LinkToMaster.hpp"
 #include "../base/Client.hpp"
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include "../base/BaseServer.hpp"
+#endif
 #include "../base/GlobalServerData.hpp"
 #include "../base/DictionaryLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -202,6 +205,21 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     std::cerr << "reply to 07 size too small (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
                     abort();
                 }
+                #ifdef CATCHCHALLENGER_CACHE_HPS
+                if(baseServer!=nullptr)
+                {
+                    if(static_cast<BaseServer *>(baseServer)->binaryOutputCacheIsOpen())
+                    {
+                        std::cerr << "unable to change token when save datapack content (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                    if(static_cast<BaseServer *>(baseServer)->binaryInputCacheIsOpen())
+                    {
+                        std::cerr << "unable to change token when load datapack content (abort) in " << __FILE__ << ":" <<__LINE__ << std::endl;
+                        abort();
+                    }
+                }
+                #endif
                 {
                     const uint32_t &uniqueKey=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                     pos+=4;

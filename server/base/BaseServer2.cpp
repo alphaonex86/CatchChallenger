@@ -175,7 +175,17 @@ void BaseServer::setLoad(const std::string &file)
 
 bool BaseServer::binaryCacheIsOpen() const
 {
+    return in_file!=nullptr || out_file!=nullptr;
+}
+
+bool BaseServer::binaryInputCacheIsOpen() const
+{
     return in_file!=nullptr;
+}
+
+bool BaseServer::binaryOutputCacheIsOpen() const
+{
+    return out_file!=nullptr;
 }
 
 NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master_host, uint16_t &master_port,

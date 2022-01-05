@@ -53,8 +53,13 @@ ConnectedSocket::ConnectedSocket(QSslSocket *socket) :
         abort();
     if(!connect(socket,&QSslSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection))
         abort();
+    #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
+        abort();
+    #else
     if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::errorOccurred),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
         abort();
+    #endif
     if(!connect(socket,&QSslSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection))
         abort();
     if(!connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,static_cast<void(ConnectedSocket::*)(const QList<QSslError> &errors)>(&ConnectedSocket::sslErrors),Qt::QueuedConnection))
@@ -82,8 +87,13 @@ ConnectedSocket::ConnectedSocket(QTcpSocket *socket) :
         abort();
     if(!connect(socket,&QTcpSocket::disconnected,   this,&ConnectedSocket::disconnected,Qt::QueuedConnection))
         abort();
+    #if QT_VERSION < QT_VERSION_CHECK(5, 15, 0)
+    if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::error),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
+        abort();
+    #else
     if(!connect(socket,static_cast<void(QAbstractSocket::*)(QAbstractSocket::SocketError)>(&QAbstractSocket::errorOccurred),this,static_cast<void(ConnectedSocket::*)(QAbstractSocket::SocketError)>(&ConnectedSocket::error)))
         abort();
+    #endif
     if(!connect(socket,&QTcpSocket::stateChanged,   this,&ConnectedSocket::stateChanged,Qt::QueuedConnection))
         abort();
     open(QIODevice::ReadWrite|QIODevice::Unbuffered);
