@@ -17,6 +17,8 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
                                                                                   #endif // CATCHCHALLENGER_CLASS_MASTER
                                                                                   const std::unordered_map<uint16_t,Monster> &monsters,const std::vector<Reputation> &reputations)
 {
+    //DatapackClientLoader::DatapackClientLoader.skins=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
+    CommonDatapack::commonDatapack.skins=DatapackGeneralLoader::loadSkins(datapackPath+DATAPACK_BASE_PATH_SKIN);
     std::unordered_set<std::string> idDuplicate;
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {

@@ -873,38 +873,52 @@ void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[8+2+(2+4)+4+(4)+4+(4)];
+    char buffer[
+            sizeof(uint64_t)+
+            sizeof(uint16_t)+items.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
+            sizeof(uint8_t)+withdrawMonsters.size()*(sizeof(uint32_t))+
+            sizeof(uint8_t)+depositeMonsters.size()*(sizeof(uint32_t))
+            ];
+    unsigned int pos=0;
     const uint64_t &cashLittleEndian=htole64(cash);
-    memcpy(buffer,&cashLittleEndian,sizeof(cashLittleEndian));
+    memcpy(buffer+pos,&cashLittleEndian,sizeof(cashLittleEndian));
+    pos+=sizeof(uint64_t);
 
     const uint16_t &index16=htole16(items.size());
-    memcpy(buffer+8,&index16,sizeof(index16));
+    memcpy(buffer+pos,&index16,sizeof(index16));
+    pos+=sizeof(uint16_t);
     unsigned int index=0;
     while(index<items.size())
     {
         const uint16_t &index16=htole16(items.at(index).first);
-        memcpy(buffer+8+2+(2+4)*index,&index16,sizeof(index16));
+        memcpy(buffer+pos,&index16,sizeof(index16));
+        pos+=sizeof(uint16_t);
         const uint32_t &index32=htole32(items.at(index).second);
-        memcpy(buffer+8+2+(2+4)*index+2,&index32,sizeof(index32));
+        memcpy(buffer+pos,&index32,sizeof(index32));
+        pos+=sizeof(uint32_t);
         index++;
     }
 
-    uint32_t index32=htole32(withdrawMonsters.size());
-    memcpy(buffer+8+2+(2+4)*items.size(),&index32,sizeof(index32));
+    uint8_t index8=htole32(withdrawMonsters.size());
+    memcpy(buffer+pos,&index8,sizeof(index8));
+    pos+=sizeof(uint8_t);
     index=0;
     while(index<withdrawMonsters.size())
     {
         uint32_t index32=htole32(withdrawMonsters.at(index));
-        memcpy(buffer+8+2+(2+4)*items.size()+4+4*index,&index32,sizeof(index32));
+        memcpy(buffer+pos,&index32,sizeof(index32));
+        pos+=sizeof(uint32_t);
         index++;
     }
-    index32=htole32(depositeMonsters.size());
-    memcpy(buffer+8+2+(2+4)*items.size()+4+4*withdrawMonsters.size(),&index32,sizeof(index32));
+    index8=htole32(depositeMonsters.size());
+    memcpy(buffer+pos,&index8,sizeof(index8));
+    pos+=sizeof(uint8_t);
     index=0;
     while(index<depositeMonsters.size())
     {
-        index32=htole32(depositeMonsters.at(index));
-        memcpy(buffer+8+2+(2+4)*items.size()+4+4*withdrawMonsters.size()+4+4*index,&index32,sizeof(index32));
+        index8=htole32(depositeMonsters.at(index));
+        memcpy(buffer+pos,&index8,sizeof(index8));
+        pos+=sizeof(uint32_t);
         index++;
     }
 

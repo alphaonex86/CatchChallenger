@@ -629,11 +629,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse monster list");
                 return false;
             }
-            uint32_t size32;
-            size32=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(uint32_t);
+            uint32_t size8=0;
+            size8=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint8_t);
             uint32_t index=0;
-            while(index<size32)
+            while(index<size8)
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {
@@ -650,10 +650,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse sub monster id");
                 return false;
             }
-            size32=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(uint32_t);
+            size8=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            pos+=sizeof(uint8_t);
             index=0;
-            while(index<size32)
+            while(index<size8)
             {
                 if((size-pos)<((int)sizeof(uint32_t)))
                 {
