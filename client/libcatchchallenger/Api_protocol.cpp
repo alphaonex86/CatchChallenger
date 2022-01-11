@@ -859,7 +859,6 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
     return true;
 }
 
-
 bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
                                   const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
                                   const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
