@@ -338,7 +338,7 @@ bool Client::otherPlayerIsInRange(Client * otherPlayer)
 void Client::moveMonster(const bool &up,const uint8_t &number)
 {
     if(up)
-        moveUpMonster(number-1);
+        moveUpMonster(number);
     else
-        moveDownMonster(number-1);
+        moveDownMonster(number);
 }

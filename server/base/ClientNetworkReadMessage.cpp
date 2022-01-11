@@ -635,7 +635,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             uint32_t index=0;
             while(index<size8)
             {
-                if((size-pos)<((int)sizeof(uint32_t)))
+                if((size-pos)<((int)sizeof(uint8_t)))
                 {
                     errorOutput("wrong remaining size for warehouse monster id");
                     return false;
@@ -655,7 +655,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             index=0;
             while(index<size8)
             {
-                if((size-pos)<((int)sizeof(uint32_t)))
+                if((size-pos)<((int)sizeof(uint8_t)))
                 {
                     errorOutput("wrong remaining size for warehouse monster deposite");
                     return false;
