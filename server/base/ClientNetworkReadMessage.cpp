@@ -580,8 +580,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         {
             uint32_t pos=0;
             std::vector<std::pair<uint16_t, int32_t> > items;
-            std::vector<uint32_t> withdrawMonsters;
-            std::vector<uint32_t> depositeMonsters;
+            std::vector<uint8_t> withdrawMonsters;
+            std::vector<uint8_t> depositeMonsters;
             if((size-pos)<((int)sizeof(int64_t)))
             {
                 errorOutput("wrong remaining size for warehouse cash");
@@ -624,13 +624,13 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                     index++;
                 }
             }
-            if((size-pos)<((int)sizeof(uint32_t)))
+            if((size-pos)<((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for warehouse monster list");
                 return false;
             }
-            uint32_t size8=0;
-            size8=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            uint8_t size8=0;
+            size8=data[pos];
             pos+=sizeof(uint8_t);
             uint32_t index=0;
             while(index<size8)
@@ -640,17 +640,17 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                     errorOutput("wrong remaining size for warehouse monster id");
                     return false;
                 }
-                const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
-                withdrawMonsters.push_back(id);
+                const uint8_t &monsterPos=data[pos];
+                pos+=sizeof(uint8_t);
+                withdrawMonsters.push_back(monsterPos);
                 index++;
             }
-            if((size-pos)<((int)sizeof(uint32_t)))
+            if((size-pos)<((int)sizeof(uint8_t)))
             {
                 errorOutput("wrong remaining size for warehouse sub monster id");
                 return false;
             }
-            size8=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+            size8=data[pos];
             pos+=sizeof(uint8_t);
             index=0;
             while(index<size8)
@@ -660,9 +660,9 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                     errorOutput("wrong remaining size for warehouse monster deposite");
                     return false;
                 }
-                const uint32_t &id=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint32_t);
-                depositeMonsters.push_back(id);
+                const uint8_t &monsterPos=data[pos];
+                pos+=sizeof(uint8_t);
+                depositeMonsters.push_back(monsterPos);
                 index++;
             }
             wareHouseStore(cash,items,withdrawMonsters,depositeMonsters);

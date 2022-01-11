@@ -411,7 +411,7 @@ public:
     void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
     bool useObject(const uint16_t &object);
     bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
-    void wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters);
+    bool wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
     void takeAnObjectOnMap();
 
     //shop

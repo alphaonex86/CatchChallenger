@@ -860,54 +860,113 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
 }
 
 
-void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t,int32_t> > &items,
-                                  const std::vector<uint32_t> &withdrawMonsters, const std::vector<uint32_t> &depositeMonsters)
+bool Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t,int32_t> > &items,
+                                  const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
 {
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     if(!character_selected)
     {
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
+        return false;
     }
     char buffer[
             sizeof(uint64_t)+
             sizeof(uint16_t)+items.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
-            sizeof(uint8_t)+withdrawMonsters.size()*(sizeof(uint32_t))+
-            sizeof(uint8_t)+depositeMonsters.size()*(sizeof(uint32_t))
+            sizeof(uint8_t)+withdrawMonsters.size()*(sizeof(uint8_t))+
+            sizeof(uint8_t)+depositeMonsters.size()*(sizeof(uint8_t))
             ];
     unsigned int pos=0;
     const uint64_t &cashLittleEndian=htole64(cash);
     memcpy(buffer+pos,&cashLittleEndian,sizeof(cashLittleEndian));
     pos+=sizeof(uint64_t);
 
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
+    if(cash<0)
+    {
+        if((uint64_t)-cash>playerInformations.cash)
+        {
+            std::cerr << "-cash>playerInformations.cash" << std::endl;
+            return false;
+        }
+    }
+    else if(cash>0)
+    {
+        if((uint64_t)cash>playerInformations.warehouse_cash)
+        {
+            std::cerr << "cash>playerInformations.cash" << std::endl;
+            return false;
+        }
+    }
+
+    std::unordered_set<uint16_t> itemAlreadyMoved;
     const uint16_t &index16=htole16(items.size());
     memcpy(buffer+pos,&index16,sizeof(index16));
     pos+=sizeof(uint16_t);
     unsigned int index=0;
     while(index<items.size())
     {
-        const uint16_t &index16=htole16(items.at(index).first);
-        memcpy(buffer+pos,&index16,sizeof(index16));
+        const uint16_t &itemId=htole16(items.at(index).first);
+        memcpy(buffer+pos,&itemId,sizeof(itemId));
         pos+=sizeof(uint16_t);
-        const uint32_t &index32=htole32(items.at(index).second);
-        memcpy(buffer+pos,&index32,sizeof(index32));
-        pos+=sizeof(uint32_t);
+        if(itemAlreadyMoved.find(itemId)!=itemAlreadyMoved.cend())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        itemAlreadyMoved.insert(itemId);
+        const int32_t &quantity=htole32(items.at(index).second);
+
+        if(quantity==0)
+        {
+            std::cerr << "can't have item quantity to store" << std::endl;
+            return false;
+        }
+        else if(quantity<0)
+        {
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend() || playerInformations.items.at(itemId)<(uint16_t)-quantity)
+            {
+                std::cerr << "too many item quantity to deposite" << std::endl;
+                return false;
+            }
+        }
+        else if(playerInformations.warehouse_items.find(itemId)==playerInformations.items.cend() || playerInformations.warehouse_items.at(itemId)<(uint16_t)quantity)
+        {
+            std::cerr << "too many item quantity to deposite" << std::endl;
+            return false;
+        }
+
+        memcpy(buffer+pos,&quantity,sizeof(quantity));
+        pos+=sizeof(int32_t);
         index++;
     }
 
+    std::unordered_set<uint8_t> alreadyMovedToWarehouse,alreadyMovedFromWarehouse;
+    int count_change=0;
     uint8_t index8=htole32(withdrawMonsters.size());
     memcpy(buffer+pos,&index8,sizeof(index8));
     pos+=sizeof(uint8_t);
     index=0;
     while(index<withdrawMonsters.size())
     {
-        uint32_t index32=htole32(withdrawMonsters.at(index));
-        memcpy(buffer+pos,&index32,sizeof(index32));
-        pos+=sizeof(uint32_t);
+        index8=withdrawMonsters.at(index);
+        if(index8>=player_informations.warehouse_playerMonster.size())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        if(alreadyMovedFromWarehouse.find(index8)!=alreadyMovedFromWarehouse.cend())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        alreadyMovedFromWarehouse.insert(index8);
+        count_change++;
+        memcpy(buffer+pos,&index8,sizeof(index8));
+        pos+=sizeof(uint8_t);
         index++;
     }
     index8=htole32(depositeMonsters.size());
@@ -916,13 +975,29 @@ void Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
     index=0;
     while(index<depositeMonsters.size())
     {
-        index8=htole32(depositeMonsters.at(index));
+        index8=depositeMonsters.at(index);
+        if(index8>=player_informations.playerMonster.size())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        if(alreadyMovedToWarehouse.find(index8)!=alreadyMovedToWarehouse.cend())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        alreadyMovedToWarehouse.insert(index8);
         memcpy(buffer+pos,&index8,sizeof(index8));
-        pos+=sizeof(uint32_t);
+        pos+=sizeof(uint8_t);
         index++;
     }
+    if((player_informations.playerMonster.size()+count_change)>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+    {
+        std::cerr << "have more monster to withdraw than the allowed" << std::endl;
+        return false;
+    }
 
-    packOutcommingData(0x17,buffer,sizeof(buffer));
+    return packOutcommingData(0x17,buffer,sizeof(buffer));
 }
 
 void Api_protocol::takeAnObjectOnMap()
