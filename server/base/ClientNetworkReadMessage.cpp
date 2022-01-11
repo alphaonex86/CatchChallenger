@@ -592,10 +592,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             uint64_t tempVar=0;
             memcpy(&tempVar,data+pos,sizeof(int64_t));
             const uint64_t &withdrawCash=le64toh(tempVar);
-            pos+=sizeof(int64_t);
+            pos+=sizeof(uint64_t);
             memcpy(&tempVar,data+pos,sizeof(int64_t));
             const uint64_t &depositeCash=le64toh(tempVar);
-            pos+=sizeof(int64_t);
+            pos+=sizeof(uint64_t);
 
             uint16_t size16;
             if((size-pos)<((int)sizeof(uint16_t)))
@@ -603,10 +603,10 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse item list");
                 return false;
             }
-            size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-            pos+=sizeof(uint16_t);
-
             {
+                size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
+
                 withdrawItems.reserve(size16);
                 uint16_t id;
                 uint32_t index=0;
@@ -624,13 +624,16 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         errorOutput("wrong remaining size for warehouse item quantity");
                         return false;
                     }
-                    const int32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
-                    pos+=sizeof(int32_t);
+                    const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
+                    pos+=sizeof(uint32_t);
                     withdrawItems.push_back(std::pair<uint16_t, int32_t>(id,quantity));
                     index++;
                 }
             }
             {
+                size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
+                pos+=sizeof(uint16_t);
+
                 depositeItems.reserve(size16);
                 uint16_t id;
                 uint32_t index=0;

@@ -1151,7 +1151,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     {
                         while(stepItem!=NULL)
                         {
-                            if(stepItem->Attribute("lang")!=NULL || stepItem->Attribute("lang")==language)
+                            if(stepItem->Attribute("lang")!=NULL && stepItem->Attribute("lang")==language)
                                 if(stepItem->GetText()!=NULL)
                                 {
                                     found=true;
