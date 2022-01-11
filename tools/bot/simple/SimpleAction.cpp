@@ -36,7 +36,7 @@ void SimpleAction::purgeCpuCache()
     memset(var,0,size);
     if(memcmp(var,var,size)!=0)
         abort();
-    delete var;
+    free(var);
 }
 
 void SimpleAction::doMove()
