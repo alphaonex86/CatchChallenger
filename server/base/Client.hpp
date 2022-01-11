@@ -404,8 +404,10 @@ private:
     void removeCash(const uint64_t &cash);
     void addWarehouseCash(const uint64_t &cash,const bool &forceSave=false);
     void removeWarehouseCash(const uint64_t &cash);
-    void wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
-    bool wareHouseStoreCheck(const int64_t &cash, const std::vector<std::pair<uint16_t, int32_t> > &items, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
+    void wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash, const std::vector<std::pair<uint16_t, uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t, uint32_t> > &depositeItems, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
+    bool wareHouseStoreCheck(const uint64_t &withdrawCash, const uint64_t &depositeCash,
+                             const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
+                             const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
     void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
     uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
 
