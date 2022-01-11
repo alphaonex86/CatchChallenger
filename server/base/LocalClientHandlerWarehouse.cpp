@@ -128,8 +128,8 @@ void Client::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uin
     {
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.back());
-//        updateMonsterInDatabase();
-//        updateMonsterInWarehouseDatabase();
+        /*updateMonsterInDatabase();
+        updateMonsterInWarehouseDatabase();*/
     }
     if(!items.empty())
     {
