@@ -860,7 +860,8 @@ bool Api_protocol::useObjectOnMonsterByPosition(const uint16_t &object,const uin
 }
 
 
-bool Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pair<uint16_t,int32_t> > &items,
+bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
+                                  const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
                                   const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
 {
     if(!is_logged)
@@ -874,28 +875,44 @@ bool Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
         return false;
     }
     char buffer[
-            sizeof(uint64_t)+
-            sizeof(uint16_t)+items.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
+            sizeof(uint64_t)+sizeof(uint64_t)+
+            sizeof(uint16_t)+withdrawItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
+            sizeof(uint16_t)+depositeItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
             sizeof(uint8_t)+withdrawMonsters.size()*(sizeof(uint8_t))+
             sizeof(uint8_t)+depositeMonsters.size()*(sizeof(uint8_t))
             ];
     unsigned int pos=0;
-    const uint64_t &cashLittleEndian=htole64(cash);
-    memcpy(buffer+pos,&cashLittleEndian,sizeof(cashLittleEndian));
+
+    const uint64_t &withdrawCashLittleEndian=htole64(withdrawCash);
+    memcpy(buffer+pos,&withdrawCashLittleEndian,sizeof(withdrawCashLittleEndian));
+    pos+=sizeof(uint64_t);
+    const uint64_t &depositeCashLittleEndian=htole64(depositeCash);
+    memcpy(buffer+pos,&depositeCashLittleEndian,sizeof(depositeCashLittleEndian));
     pos+=sizeof(uint64_t);
 
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
-    if(cash<0)
+    if(withdrawCash!=0 && depositeCash!=0)
     {
-        if((uint64_t)-cash>playerInformations.cash)
+        std::cerr << "withdrawCash!=0 && depositeCash!=0, return" << std::endl;
+        return true;
+    }
+    if(withdrawCash==0 && depositeCash==0 && withdrawItems.empty() && depositeItems.empty() && withdrawMonsters.empty() && depositeMonsters.empty())
+    {
+        std::cerr << "nothing to store, return" << std::endl;
+        return true;
+    }
+
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=get_player_informations_ro();
+    if(depositeCash>0)
+    {
+        if(depositeCash>playerInformations.cash)
         {
             std::cerr << "-cash>playerInformations.cash" << std::endl;
             return false;
         }
     }
-    else if(cash>0)
+    else if(withdrawCash>0)
     {
-        if((uint64_t)cash>playerInformations.warehouse_cash)
+        if(withdrawCash>playerInformations.warehouse_cash)
         {
             std::cerr << "cash>playerInformations.cash" << std::endl;
             return false;
@@ -903,13 +920,13 @@ bool Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
     }
 
     std::unordered_set<uint16_t> itemAlreadyMoved;
-    const uint16_t &index16=htole16(items.size());
+    uint16_t index16=htole16(withdrawItems.size());
     memcpy(buffer+pos,&index16,sizeof(index16));
     pos+=sizeof(uint16_t);
     unsigned int index=0;
-    while(index<items.size())
+    while(index<withdrawItems.size())
     {
-        const uint16_t &itemId=htole16(items.at(index).first);
+        const uint16_t &itemId=htole16(withdrawItems.at(index).first);
         memcpy(buffer+pos,&itemId,sizeof(itemId));
         pos+=sizeof(uint16_t);
         if(itemAlreadyMoved.find(itemId)!=itemAlreadyMoved.cend())
@@ -918,29 +935,56 @@ bool Api_protocol::wareHouseStore(const int64_t &cash, const std::vector<std::pa
             return false;
         }
         itemAlreadyMoved.insert(itemId);
-        const int32_t &quantity=htole32(items.at(index).second);
+        const uint32_t &quantity=htole32(withdrawItems.at(index).second);
 
         if(quantity==0)
         {
             std::cerr << "can't have item quantity to store" << std::endl;
             return false;
         }
-        else if(quantity<0)
-        {
-            if(playerInformations.items.find(itemId)==playerInformations.items.cend() || playerInformations.items.at(itemId)<(uint16_t)-quantity)
-            {
-                std::cerr << "too many item quantity to deposite" << std::endl;
-                return false;
-            }
-        }
-        else if(playerInformations.warehouse_items.find(itemId)==playerInformations.items.cend() || playerInformations.warehouse_items.at(itemId)<(uint16_t)quantity)
+        else if(playerInformations.warehouse_items.find(itemId)==playerInformations.items.cend() || playerInformations.warehouse_items.at(itemId)<quantity)
         {
             std::cerr << "too many item quantity to deposite" << std::endl;
             return false;
         }
 
         memcpy(buffer+pos,&quantity,sizeof(quantity));
-        pos+=sizeof(int32_t);
+        pos+=sizeof(uint32_t);
+        index++;
+    }
+    index16=htole16(depositeItems.size());
+    memcpy(buffer+pos,&index16,sizeof(index16));
+    pos+=sizeof(uint16_t);
+    index=0;
+    while(index<depositeItems.size())
+    {
+        const uint16_t &itemId=htole16(depositeItems.at(index).first);
+        memcpy(buffer+pos,&itemId,sizeof(itemId));
+        pos+=sizeof(uint16_t);
+        if(itemAlreadyMoved.find(itemId)!=itemAlreadyMoved.cend())
+        {
+            std::cerr << "withdrawMonsters pos already moved" << std::endl;
+            return false;
+        }
+        itemAlreadyMoved.insert(itemId);
+        const uint32_t &quantity=htole32(depositeItems.at(index).second);
+
+        if(quantity==0)
+        {
+            std::cerr << "can't have item quantity to store" << std::endl;
+            return false;
+        }
+        else
+        {
+            if(playerInformations.items.find(itemId)==playerInformations.items.cend() || playerInformations.items.at(itemId)<quantity)
+            {
+                std::cerr << "too many item quantity to deposite" << std::endl;
+                return false;
+            }
+        }
+
+        memcpy(buffer+pos,&quantity,sizeof(quantity));
+        pos+=sizeof(uint32_t);
         index++;
     }
 
