@@ -244,7 +244,7 @@ struct Player_private_and_public_informations
     uint64_t cash,warehouse_cash;
     //crafting
     char * recipes;
-    /// \todo put out of here to have mutalised engine
+    /// max monster 255 inventory, 255 storage
     std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
     CLAN_ID_TYPE clan;//0 == no clan
     char * encyclopedia_monster;
