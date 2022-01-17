@@ -1,5 +1,6 @@
 #include "QtServer.hpp"
 #include "QFakeServer.hpp"
+#include "QFakeSocket.hpp"
 #include "QtPlayerUpdater.hpp"
 #include "QtTimeRangeEventScanBase.hpp"
 #include "QtClientMapManagement.hpp"
@@ -65,6 +66,8 @@ QtServer::QtServer()
     Qtdb_server->dbThread.setObjectName("db_server");
     CatchChallenger::GlobalServerData::serverPrivateVariables.db_server=Qtdb_server;
 
+    /*
+    do via direct connection
     if(!connect(&QtServer::qtServerPrivateVariables.player_updater,&CatchChallenger::QtPlayerUpdater::newConnectedPlayer,
                 &CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender,&CatchChallenger::BroadCastWithoutSender::receive_instant_player_number,
                 Qt::QueuedConnection))
@@ -78,7 +81,7 @@ QtServer::QtServer()
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
-    }
+    }*/
     connect(this,&QtServer::stop_internal_server_signal,this,&QtServer::stop_internal_server_slot,Qt::QueuedConnection);
 }
 
@@ -87,7 +90,7 @@ QtServer::~QtServer()
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
-        CatchChallenger::QtClient *client=(*i);
+        CatchChallenger::Client *client=(*i);
         client->disconnectClient();
         delete client;
         ++i;
@@ -183,12 +186,43 @@ void QtServer::removeOneClient()
         qDebug() << ("removeOneClient(): NULL CatchChallenger::QtClient at disconnection");
         return;
     }
-    for(CatchChallenger::QtClient * const client : client_list)
+    for(CatchChallenger::Client * client : client_list)
     {
-        if(client->socket==socket)
+        switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
         {
-            delete client;
-            client_list.erase(client);
+            case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+            {
+                QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(client);
+                if(c->socket==socket)
+                {
+                    delete c;
+                    client_list.erase(c);
+                    break;
+                }
+            }
+            break;
+            case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
+            {
+                QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(client);
+                if(c->socket==socket)
+                {
+                    delete c;
+                    client_list.erase(c);
+                    break;
+                }
+            }
+            break;
+            default:
+            case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+            {
+                QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(client);
+                if(c->socket==socket)
+                {
+                    delete c;
+                    client_list.erase(c);
+                    break;
+                }
+            }
             break;
         }
     }
@@ -204,21 +238,18 @@ void QtServer::newConnection()
         if(socket!=NULL)
         {
             qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by fake socket");
-            CatchChallenger::QtClient *client=nullptr;
+            CatchChallenger::Client *client=nullptr;
             switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
             {
                 case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender();
-                    client->qtSocket=new ConnectedSocket(socket);
+                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
                 break;
                 case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender();
-                    client->qtSocket=new ConnectedSocket(socket);
+                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
                 break;
                 default:
                 case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-                    client=new QtMapVisibilityAlgorithm_None();
-                    client->qtSocket=new ConnectedSocket(socket);
+                    client=new QtMapVisibilityAlgorithm_None(socket);
                 break;
             }
             connect_the_last_client(client,socket);
@@ -233,13 +264,35 @@ void QtServer::newConnection()
     }
 }
 
-void QtServer::connect_the_last_client(CatchChallenger::QtClient *client, QIODevice *socket)
+void QtServer::connect_the_last_client(CatchChallenger::Client *client, QIODevice *socket)
 {
-    if(!connect(socket,&QIODevice::readyRead,client,&CatchChallenger::QtClient::parseIncommingData,Qt::QueuedConnection))
-        abort();
+    switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    {
+        case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+        {
+            QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(client);
+            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_Simple_StoreOnSender::parseIncommingData,Qt::QueuedConnection))
+                abort();
+        }
+        break;
+        case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
+        {
+            QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(client);
+            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::parseIncommingData,Qt::QueuedConnection))
+                abort();
+        }
+        break;
+        default:
+        case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+        {
+            QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(client);
+            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_None::parseIncommingData,Qt::QueuedConnection))
+                abort();
+        }
+        break;
+    }
     if(!connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection))
         abort();
-    client->qtSocket=socket;
     client_list.insert(client);
 }
 
@@ -287,29 +340,29 @@ bool QtServer::check_if_now_stopped()
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->isConnected())
     {
         qDebug() << (QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType())))
-                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_login.host)));
+                                 .arg(QString::fromStdString(CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType())))
+                                 .arg(QString::fromStdString(CatchChallenger::GlobalServerData::serverSettings.database_login.host)));
         CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
     }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->isConnected())
     {
         qDebug() << (QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType())))
-                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_base.host)));
+                                 .arg(QString::fromStdString(CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType())))
+                                 .arg(QString::fromStdString(CatchChallenger::GlobalServerData::serverSettings.database_base.host)));
         CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->isConnected())
     {
         qDebug() << (QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType())))
-                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_common.host)));
+                                 .arg(QString::fromStdString(CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType())))
+                                 .arg(QString::fromStdString(CatchChallenger::GlobalServerData::serverSettings.database_common.host)));
         CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
     }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->isConnected())
     {
         qDebug() << (QStringLiteral("Disconnected to %1 at %2")
-                                 .arg(QString::fromStdString(DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType())))
-                                 .arg(QString::fromStdString(GlobalServerData::serverSettings.database_server.host)));
+                                 .arg(QString::fromStdString(CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType())))
+                                 .arg(QString::fromStdString(CatchChallenger::GlobalServerData::serverSettings.database_server.host)));
         CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     }
     stat=Down;
@@ -340,9 +393,34 @@ void QtServer::stop_internal_server_slot()
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
-        CatchChallenger::QtClient * client=*i;
-        client->disconnectClient();
-        delete client;
+        switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+        {
+            case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+            {
+                QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(*i);
+                (*i)->disconnectClient();
+                delete c;
+                break;
+            }
+            break;
+            case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
+            {
+                QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(*i);
+                (*i)->disconnectClient();
+                delete c;
+                break;
+            }
+            break;
+            default:
+            case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+            {
+                QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(*i);
+                (*i)->disconnectClient();
+                delete c;
+                break;
+            }
+            break;
+        }
         ++i;
     }
     //#endif
@@ -363,11 +441,9 @@ void QtServer::quitForCriticalDatabaseQueryFailed()
 
 void QtServer::loadAndFixSettings()
 {
-    if(GlobalServerData::serverSettings.secondToPositionSync==0)
+    if(CatchChallenger::GlobalServerData::serverSettings.secondToPositionSync==0)
     {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        CatchChallenger::GlobalServerData::serverPrivateVariables.positionSync.stop();
-        #endif
+        QtServer::qtServerPrivateVariables.positionSync.stop();
     }
     BaseServer::loadAndFixSettings();
 }
