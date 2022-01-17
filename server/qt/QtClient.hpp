@@ -5,10 +5,10 @@
 #include "../base/Client.hpp"
 
 namespace CatchChallenger {
-class QtClient : public Client
+class QtClient
 {
 public:
-    QtClient(QIODevice *socket);
+    QtClient(QIODevice *qtSocket);
     ssize_t read(char * data, const size_t &size);
     ssize_t write(const char * const data, const size_t &size);
     bool disconnectClientTimer();

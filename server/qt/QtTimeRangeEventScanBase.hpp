@@ -10,7 +10,6 @@
 
 #include <stdint.h>
 
-namespace CatchChallenger {
 class QtTimeRangeEventScan
         #ifndef EPOLLCATCHCHALLENGERSERVER
         : public QObject
@@ -36,6 +35,5 @@ private:
     QTimer *next_send_timer;
     #endif
 };
-}
 
 #endif // PLAYERUPDATER_H
