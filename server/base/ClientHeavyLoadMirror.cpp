@@ -438,12 +438,12 @@ void Client::sendCompressedFileContent()
             return;
         }
 
-        const uint32_t &compressedSize=computeCompression(
+        const uint32_t &compressedSize=CompressionProtocol::computeCompression(
                     BaseServerMasterSendDatapack::compressedFilesBuffer.data(),
                     ProtocolParsingBase::tempBigBufferForOutput+posOutput,
                     static_cast<uint32_t>(BaseServerMasterSendDatapack::compressedFilesBuffer.size()),
                     sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput,
-                    ProtocolParsingBase::compressionTypeServer
+                    CompressionProtocol::compressionTypeServer
                     );
         posOutput+=compressedSize;
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
@@ -475,7 +475,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
 
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        if(ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
+        if(CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
                 BaseServerMasterSendDatapack::compressedExtension.find(suffix)!=BaseServerMasterSendDatapack::compressedExtension.cend() &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
@@ -498,10 +498,10 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             binaryAppend(BaseServerMasterSendDatapack::compressedFilesBuffer,content);
             BaseServerMasterSendDatapack::compressedFilesBufferCount++;
-            switch(ProtocolParsing::compressionTypeServer)
+            switch(CompressionProtocol::compressionTypeServer)
             {
                 default:
-                case ProtocolParsing::CompressionType::Zstandard:
+                case CompressionProtocol::CompressionType::Zstandard:
                 if(BaseServerMasterSendDatapack::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || BaseServerMasterSendDatapack::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;

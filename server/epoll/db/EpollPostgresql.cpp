@@ -20,8 +20,8 @@
 #include <thread>
 
 std::string EpollPostgresql::emptyString;
-CatchChallenger::DatabaseBase::CallBack EpollPostgresql::emptyCallback;
-CatchChallenger::DatabaseBase::CallBack EpollPostgresql::tempCallback;
+CatchChallenger::DatabaseBaseCallBack EpollPostgresql::emptyCallback;
+CatchChallenger::DatabaseBaseCallBack EpollPostgresql::tempCallback;
 bool EpollPostgresql::informationDisplayed=false;
 
 void EpollPostgresql::noticeReceiver(void *arg, const PGresult *res)
@@ -84,6 +84,11 @@ bool EpollPostgresql::setMaxDbQueries(const unsigned int &maxDbQueries)
         return false;
     this->maxDbQueries=maxDbQueries;
     return true;
+}
+
+BaseClassSwitch::EpollObjectType EpollPostgresql::getType() const
+{
+    return BaseClassSwitch::EpollObjectType::Database;
 }
 
 bool EpollPostgresql::isConnected() const
@@ -274,7 +279,7 @@ void EpollPostgresql::syncDisconnect()
 }
 
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncPreparedRead(
+CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncPreparedRead(
         const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     if(conn==NULL)
@@ -446,7 +451,7 @@ bool EpollPostgresql::queryPrepare(const char *stmtName,
 }
 #endif
 
-CatchChallenger::DatabaseBase::CallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
+CatchChallenger::DatabaseBaseCallBack * EpollPostgresql::asyncRead(const std::string &query,void * returnObject,CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -674,7 +679,7 @@ bool EpollPostgresql::epollEvent(const uint32_t &events)
                         ntuples=PQntuples(result);
                     if(!queue.empty())
                     {
-                        CallBack callback=queue.front();
+                        CatchChallenger::DatabaseBaseCallBack callback=queue.front();
                         if(callback.method!=NULL)
                             callback.method(callback.object);
                         queue.erase(queue.cbegin());

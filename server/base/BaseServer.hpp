@@ -13,7 +13,6 @@
 #include "../../general/hps/hps.h"
 #endif
 #include "ServerStructures.hpp"
-#include "ClientWithSocket.hpp"
 #include "MapServer.hpp"
 #include "BaseServerMasterLoadDictionary.hpp"
 #include "BaseServerMasterSendDatapack.hpp"
@@ -76,7 +75,7 @@ protected:
     virtual void parseJustLoadedMap(const Map_to_send &,const std::string &);
     void closeDB();
     //starting function
-    void loadAndFixSettings();
+    virtual void loadAndFixSettings();
 
     //stat
     enum ServerStat
@@ -103,6 +102,7 @@ protected:
         uint64_t price;
     };
 
+    virtual void setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start) = 0;
     void preload_randomBlock();
     void preload_other();
     void preload_the_data();
@@ -168,9 +168,9 @@ protected:
     void unload_the_datapack();
     void unload_the_gift();
     void unload_the_players();
-    void unload_the_visibility_algorithm();
+    virtual void unload_the_visibility_algorithm() = 0;
     void unload_the_ddos();
-    void unload_the_events();
+    virtual void unload_the_events() = 0;
     void unload_the_plant_on_map();
     void unload_shop();
     void unload_dictionary();

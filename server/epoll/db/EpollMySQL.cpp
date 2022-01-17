@@ -164,6 +164,11 @@ void EpollMySQL::syncReconnect()
         sendNextQuery();
 }
 
+BaseClassSwitch::EpollObjectType EpollPostgresql::getType() const
+{
+    return BaseClassSwitch::EpollObjectType::Database;
+}
+
 void EpollMySQL::syncDisconnect()
 {
     if(conn==NULL)

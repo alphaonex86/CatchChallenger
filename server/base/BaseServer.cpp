@@ -11,13 +11,10 @@
 
 using namespace CatchChallenger;
 
-//cleab this, it's done before the main epoll loop
+//clean this, it's done before the main epoll loop
 bool BaseServer::load_next_city_capture()
 {
-    /*GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
-    std::time_t result = std::time(nullptr);
-    const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-result;
-    GlobalServerData::serverPrivateVariables.timer_city_capture->start(static_cast<int>(time));*/
+    GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
     return true;
 }
 
@@ -89,9 +86,8 @@ bool BaseServer::initialize_the_database()
         default:
         std::cerr << "database type unknown" << std::endl;
         return false;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::Mysql:
-        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectMysql(
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                     GlobalServerData::serverSettings.database_login.host.c_str(),
                     GlobalServerData::serverSettings.database_login.db.c_str(),
                     GlobalServerData::serverSettings.database_login.login.c_str(),
@@ -109,7 +105,7 @@ bool BaseServer::initialize_the_database()
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectSqlite(GlobalServerData::serverSettings.database_login.file.c_str()))
+        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(GlobalServerData::serverSettings.database_login.file.c_str(),"","",""))
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
             return false;
@@ -118,24 +114,14 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_login.file << std::endl;
         break;
-        #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db_login->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database_login.host.c_str(),
-                    GlobalServerData::serverSettings.database_login.db.c_str(),
-                    GlobalServerData::serverSettings.database_login.login.c_str(),
-                    GlobalServerData::serverSettings.database_login.pass.c_str()
-                    ))
-        #else
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                     GlobalServerData::serverSettings.database_login.host.c_str(),
                     GlobalServerData::serverSettings.database_login.db.c_str(),
                     GlobalServerData::serverSettings.database_login.login.c_str(),
                     GlobalServerData::serverSettings.database_login.pass.c_str()
                     ))
-        #endif
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
             return false;
@@ -158,9 +144,8 @@ bool BaseServer::initialize_the_database()
         default:
         std::cerr << "database type unknown" << std::endl;
         return false;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::Mysql:
-        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectMysql(
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
                     GlobalServerData::serverSettings.database_base.host.c_str(),
                     GlobalServerData::serverSettings.database_base.db.c_str(),
                     GlobalServerData::serverSettings.database_base.login.c_str(),
@@ -178,7 +163,7 @@ bool BaseServer::initialize_the_database()
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectSqlite(GlobalServerData::serverSettings.database_base.file.c_str()))
+        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(GlobalServerData::serverSettings.database_base.file.c_str(),"","",""))
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
             return false;
@@ -187,24 +172,14 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_base.file << std::endl;
         break;
-        #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db_base->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database_base.host.c_str(),
-                    GlobalServerData::serverSettings.database_base.db.c_str(),
-                    GlobalServerData::serverSettings.database_base.login.c_str(),
-                    GlobalServerData::serverSettings.database_base.pass.c_str()
-                    ))
-        #else
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
                     GlobalServerData::serverSettings.database_base.host.c_str(),
                     GlobalServerData::serverSettings.database_base.db.c_str(),
                     GlobalServerData::serverSettings.database_base.login.c_str(),
                     GlobalServerData::serverSettings.database_base.pass.c_str()
                     ))
-        #endif
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
             return false;
@@ -228,9 +203,8 @@ bool BaseServer::initialize_the_database()
         default:
         std::cerr << "database type unknown" << std::endl;
         return false;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::Mysql:
-        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectMysql(
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
                     GlobalServerData::serverSettings.database_common.host.c_str(),
                     GlobalServerData::serverSettings.database_common.db.c_str(),
                     GlobalServerData::serverSettings.database_common.login.c_str(),
@@ -248,7 +222,7 @@ bool BaseServer::initialize_the_database()
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectSqlite(GlobalServerData::serverSettings.database_common.file.c_str()))
+        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(GlobalServerData::serverSettings.database_common.file.c_str(),"","",""))
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             return false;
@@ -257,24 +231,14 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_common.file << std::endl;
         break;
-        #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db_common->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database_common.host.c_str(),
-                    GlobalServerData::serverSettings.database_common.db.c_str(),
-                    GlobalServerData::serverSettings.database_common.login.c_str(),
-                    GlobalServerData::serverSettings.database_common.pass.c_str()
-                    ))
-        #else
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
                     GlobalServerData::serverSettings.database_common.host.c_str(),
                     GlobalServerData::serverSettings.database_common.db.c_str(),
                     GlobalServerData::serverSettings.database_common.login.c_str(),
                     GlobalServerData::serverSettings.database_common.pass.c_str()
                     ))
-        #endif
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
             return false;
@@ -296,9 +260,8 @@ bool BaseServer::initialize_the_database()
         default:
         std::cerr << "database type unknown" << std::endl;
         return false;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
         case DatabaseBase::DatabaseType::Mysql:
-        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectMysql(
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
                     GlobalServerData::serverSettings.database_server.host.c_str(),
                     GlobalServerData::serverSettings.database_server.db.c_str(),
                     GlobalServerData::serverSettings.database_server.login.c_str(),
@@ -316,7 +279,7 @@ bool BaseServer::initialize_the_database()
         break;
 
         case DatabaseBase::DatabaseType::SQLite:
-        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectSqlite(GlobalServerData::serverSettings.database_server.file.c_str()))
+        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(GlobalServerData::serverSettings.database_server.file.c_str(),"","",""))
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
             return false;
@@ -325,24 +288,14 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_server.file << std::endl;
         break;
-        #endif
 
         case DatabaseBase::DatabaseType::PostgreSQL:
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(!GlobalServerData::serverPrivateVariables.db_server->syncConnectPostgresql(
-                    GlobalServerData::serverSettings.database_server.host.c_str(),
-                    GlobalServerData::serverSettings.database_server.db.c_str(),
-                    GlobalServerData::serverSettings.database_server.login.c_str(),
-                    GlobalServerData::serverSettings.database_server.pass.c_str()
-                    ))
-        #else
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
                     GlobalServerData::serverSettings.database_server.host.c_str(),
                     GlobalServerData::serverSettings.database_server.db.c_str(),
                     GlobalServerData::serverSettings.database_server.login.c_str(),
                     GlobalServerData::serverSettings.database_server.pass.c_str()
                     ))
-        #endif
         {
             std::cerr << "Unable to connect to the database: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
             return false;

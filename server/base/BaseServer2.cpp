@@ -19,17 +19,14 @@ BaseServer::BaseServer() :
 
     dictionary_pointOnMap_maxId_item=0;
     dictionary_pointOnMap_maxId_plant=0;
-    ProtocolParsing::compressionTypeServer                                = ProtocolParsing::CompressionType::Zstandard;
+    CompressionProtocol::compressionTypeServer                                = CompressionProtocol::CompressionType::Zstandard;
 
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    GlobalServerData::serverPrivateVariables.timer_city_capture     = NULL;
-    #endif
+    GlobalServerData::serverPrivateVariables.time_city_capture      = 0;
 
     GlobalServerData::serverPrivateVariables.botSpawnIndex          = 0;
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= std::regex(DATAPACK_FILE_REGEX,std::regex_constants::optimize);
-    GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;
     GlobalServerData::serverSettings.max_players                            = 1;
@@ -44,7 +41,7 @@ BaseServer::BaseServer() :
         abort();
     }
     GlobalServerData::serverSettings.datapack_basePath                          = FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/";
-    GlobalServerData::serverSettings.compressionType                            = CompressionType_Zstandard;
+    GlobalServerData::serverSettings.compressionType                            = CompressionProtocol::CompressionType::Zstandard;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
     CommonSettingsServer::commonSettingsServer.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
@@ -334,7 +331,7 @@ void BaseServer::preload_finish()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_login)->setMaxDbQueries(100);
+            GlobalServerData::serverPrivateVariables.db_login->setMaxDbQueries(100);
         break;
         #endif
         default:
@@ -344,7 +341,7 @@ void BaseServer::preload_finish()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_base)->setMaxDbQueries(100);
+            GlobalServerData::serverPrivateVariables.db_base->setMaxDbQueries(100);
         break;
         #endif
         default:
@@ -355,7 +352,7 @@ void BaseServer::preload_finish()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_common)->setMaxDbQueries(100);
+            GlobalServerData::serverPrivateVariables.db_common->setMaxDbQueries(100);
         break;
         #endif
         default:
@@ -365,7 +362,7 @@ void BaseServer::preload_finish()
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
         case DatabaseBase::DatabaseType::PostgreSQL:
-            static_cast<EpollPostgresql *>(GlobalServerData::serverPrivateVariables.db_server)->setMaxDbQueries(100);
+            GlobalServerData::serverPrivateVariables.db_server->setMaxDbQueries(100);
         break;
         #endif
         default:

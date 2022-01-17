@@ -35,7 +35,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     stat=ClientStat::CharacterSelecting;
     //std::cout << "Client::selectCharacter(), Try select character " << characterId << " with account " << account_id << "..." << std::endl;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.asyncRead(this,&Client::selectCharacter_static,{std::to_string(characterId)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.asyncRead(this,&Client::selectCharacter_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;

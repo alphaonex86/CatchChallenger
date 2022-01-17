@@ -8,8 +8,11 @@
 #include <regex>
 
 #include "../../general/base/GeneralStructures.hpp"
-#include "PlayerUpdater.hpp"
-#include "TimeRangeEventScan.hpp"
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#include "../../general/base/CompressionProtocol.hpp"
+#endif
+#include "PlayerUpdaterBase.hpp"
+#include "TimeRangeEventScanBase.hpp"
 #include "StringWithReplacement.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "PlayerUpdaterToMaster.hpp"
@@ -18,30 +21,8 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../VariableServer.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../epoll/timer/TimerCityCapture.hpp"
-#include "../epoll/timer/TimerDdos.hpp"
-#include "../epoll/timer/TimerPositionSync.hpp"
-#include "../epoll/timer/TimerSendInsertMoveRemove.hpp"
-#include "../epoll/timer/TimerEvents.hpp"
-#include "../base/DatabaseBase.hpp"
-    #if defined(CATCHCHALLENGER_DB_POSTGRESQL)
-    #include "../epoll/db/EpollPostgresql.hpp"
-    #define EpollDatabaseAsync EpollPostgresql
-    #elif defined(CATCHCHALLENGER_DB_MYSQL)
-    #include "../epoll/db/EpollMySQL.hpp"
-    #else
-    #error Unknow database type
-    #endif
-#endif
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include <atomic>
-#endif
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
-#include "QtTimerEvents.hpp"
-#include "QtDatabase.hpp"
 #endif
 
 namespace CatchChallenger {
@@ -108,8 +89,9 @@ struct LoginServerSettings
 class GameServerSettings
 {
 public:
-    CompressionType compressionType;
-    uint8_t compressionLevel;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    CompressionProtocol::CompressionType compressionType;
+    #endif
     bool sendPlayerNumber;
     bool anonymous;
     //fight
@@ -293,7 +275,11 @@ public:
 template <class B>
 void serialize(B& buf) const {
     buf << (uint8_t)compressionType;
-    buf << compressionLevel;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    buf << (uint8_t)CompressionProtocol::compressionLevel;
+    #else
+    buf << (uint8_t)6;
+    #endif
     buf << sendPlayerNumber;
     buf << anonymous;
     //fight
@@ -344,8 +330,14 @@ template <class B>
 void parse(B& buf) {
     uint8_t smallTemp=0;
     buf >> smallTemp;
-    compressionType=(CompressionType)smallTemp;
-    buf >> compressionLevel;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    compressionType=(CompressionProtocol::CompressionType)smallTemp;
+    #endif
+    uint8_t tempcompressionLevel=0;
+    buf >> tempcompressionLevel;
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+    CompressionProtocol::compressionLevel=tempcompressionLevel;
+    #endif
     buf >> sendPlayerNumber;
     buf >> anonymous;
     //fight
@@ -470,21 +462,6 @@ struct ServerProfileInternal
 struct ServerPrivateVariables
 {
     //bd
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    CatchChallenger::DatabaseBase *db_login;
-    CatchChallenger::DatabaseBase *db_base;
-    #endif
-    CatchChallenger::DatabaseBase *db_common;
-    CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
-    std::vector<TimerEvents *> timerEvents;
-    #else
-    QtDatabase *db_login;
-    QtDatabase *db_base;
-    QtDatabase *db_common;
-    QtDatabase *db_server;
-    std::vector<QtTimerEvents *> timerEvents;
-    #endif
     #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
     #endif
@@ -496,6 +473,15 @@ struct ServerPrivateVariables
     PreparedDBQueryServer preparedDBQueryServer;
     #endif
 
+    PlayerUpdaterBase *player_updater;
+
+    //bd
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    CatchChallenger::DatabaseBase *db_login;
+    CatchChallenger::DatabaseBase *db_base;
+    #endif
+    CatchChallenger::DatabaseBase *db_common;
+    CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
 
     std::vector<ServerProfileInternal> serverProfileInternalList;
 
@@ -530,18 +516,6 @@ struct ServerPrivateVariables
     std::vector<MarketItem> marketItemList;
     std::vector<MarketPlayerMonster> marketPlayerMonsterList;
 
-    //timer and thread
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-        QTimer *timer_city_capture;//moved to epoll loop
-        QTimer *timer_to_send_insert_move_remove;
-        QTimer positionSync;
-        QTimer ddosTimer;
-    #else
-        TimerDdos ddosTimer;
-        TimerPositionSync positionSync;
-        TimerSendInsertMoveRemove *timer_to_send_insert_move_remove;
-    #endif
-
     //general data
     bool stopIt;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -559,8 +533,6 @@ struct ServerPrivateVariables
 
     //connection
     uint16_t connected_players;
-    PlayerUpdater player_updater;
-    TimeRangeEventScan timeRangeEventScan;
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     PlayerUpdaterToMaster player_updater_to_master;
     #endif

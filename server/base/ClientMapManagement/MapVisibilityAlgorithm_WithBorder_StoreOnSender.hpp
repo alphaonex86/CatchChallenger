@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 
-#include "../ClientWithSocket.hpp"
+#include "../Client.hpp"
 #include "Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../../../general/base/CommonMap.hpp"
 
@@ -10,7 +10,7 @@
 #include <vector>
 
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public ClientWithSocket
+class MapVisibilityAlgorithm_WithBorder_StoreOnSender : public Client
 {
 public:
     explicit MapVisibilityAlgorithm_WithBorder_StoreOnSender();
@@ -23,8 +23,8 @@ public:
     void dropAllBorderClients();
 protected:
     //add clients linked
-    void insertClient();
-    void moveClient(const uint8_t &previousMovedUnit,const Direction &direction);
+    void insertClient() override;
+    void moveClient(const uint8_t &previousMovedUnit,const Direction &direction) override;
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
@@ -52,7 +52,7 @@ private:
     void			unloadFromTheMap();
 
     //map move
-    bool singleMove(const Direction &direction);
+    bool singleMove(const Direction &direction) override;
 
     //temp variable for purge buffer
     static bool mapHaveChanged;
@@ -72,13 +72,13 @@ private:
     std::unordered_set<SIMPLIFIED_PLAYER_ID_TYPE>						to_send_remove;
     std::unordered_map<SIMPLIFIED_PLAYER_ID_TYPE, MapVisibilityAlgorithm_WithBorder_StoreOnSender *>			to_send_reinsert;
 public:
-    void purgeBuffer();
+    void purgeBuffer() override;
     //map, transmited by the current ClientNetworkRead
-    void put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
-    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
-    void teleportValidatedTo(CommonMap * const map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation);
+    void put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
+    void teleportValidatedTo(CommonMap * const map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation) override;
 private:
-    void extraStop();
+    void extraStop() override;
 };
 }
 

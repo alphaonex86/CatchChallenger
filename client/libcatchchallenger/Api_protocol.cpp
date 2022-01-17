@@ -873,10 +873,20 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
+    if(withdrawItems.size()>255)
+    {
+        std::cerr << "withdrawItems.size()>255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(depositeItems.size()>255)
+    {
+        std::cerr << "depositeItems.size()>255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
     char buffer[
             sizeof(uint64_t)+sizeof(uint64_t)+
-            sizeof(uint16_t)+withdrawItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
-            sizeof(uint16_t)+depositeItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
+            sizeof(uint8_t)+withdrawItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
+            sizeof(uint8_t)+depositeItems.size()*(sizeof(uint16_t)+sizeof(uint32_t))+
             sizeof(uint8_t)+withdrawMonsters.size()*(sizeof(uint8_t))+
             sizeof(uint8_t)+depositeMonsters.size()*(sizeof(uint8_t))
             ];
@@ -917,11 +927,31 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
             return false;
         }
     }
+    if(playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255)
+    {
+        std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535)
+    {
+        std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(playerInformations.playerMonster.size()+withdrawMonsters.size()-depositeMonsters.size()<=255)
+    {
+        std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    if(playerInformations.warehouse_playerMonster.size()-withdrawMonsters.size()+depositeMonsters.size()<=65535)
+    {
+        std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
 
     std::unordered_set<uint16_t> itemAlreadyMoved;
-    uint16_t index16=htole16(withdrawItems.size());
-    memcpy(buffer+pos,&index16,sizeof(index16));
-    pos+=sizeof(uint16_t);
+    uint8_t index8=withdrawItems.size();
+    memcpy(buffer+pos,&index8,sizeof(index8));
+    pos+=sizeof(uint8_t);
     unsigned int index=0;
     while(index<withdrawItems.size())
     {
@@ -951,9 +981,9 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
         pos+=sizeof(uint32_t);
         index++;
     }
-    index16=htole16(depositeItems.size());
-    memcpy(buffer+pos,&index16,sizeof(index16));
-    pos+=sizeof(uint16_t);
+    index8=depositeItems.size();
+    memcpy(buffer+pos,&index8,sizeof(index8));
+    pos+=sizeof(uint8_t);
     index=0;
     while(index<depositeItems.size())
     {
@@ -989,7 +1019,7 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
 
     std::unordered_set<uint8_t> alreadyMovedToWarehouse,alreadyMovedFromWarehouse;
     int count_change=0;
-    uint8_t index8=htole32(withdrawMonsters.size());
+    index8=withdrawMonsters.size();
     memcpy(buffer+pos,&index8,sizeof(index8));
     pos+=sizeof(uint8_t);
     index=0;
@@ -1012,7 +1042,7 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
         pos+=sizeof(uint8_t);
         index++;
     }
-    index8=htole32(depositeMonsters.size());
+    index8=depositeMonsters.size();
     memcpy(buffer+pos,&index8,sizeof(index8));
     pos+=sizeof(uint8_t);
     index=0;

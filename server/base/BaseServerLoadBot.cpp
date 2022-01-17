@@ -1,6 +1,9 @@
 #include "BaseServer.hpp"
 #include "../../general/base/tinyXML2/tinyxml2.hpp"
 #include "../../general/base/tinyXML2/customtinyxml2.hpp"
+#include "../general/base/CommonDatapack.hpp"
+#include "../general/base/CommonDatapackServerSpec.hpp"
+#include "../general/base/MoveOnTheMap.hpp"
 
 using namespace CatchChallenger;
 

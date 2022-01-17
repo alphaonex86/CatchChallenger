@@ -1,6 +1,6 @@
-#include "ProcessControler.h"
-#include "base/ServerStructures.h"
-#include "../general/base/CommonSettingsCommon.h"
+#include "ProcessControler.hpp"
+#include "base/ServerStructures.hpp"
+#include "../general/base/CommonSettingsCommon.hpp"
 
 using namespace CatchChallenger;
 

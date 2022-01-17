@@ -4,11 +4,11 @@
 #ifndef SERVERSSL
 
 #include "EpollGenericServer.hpp"
-#include "../base/BaseServer.hpp"
+#include "BaseServerEpoll.hpp"
 #include "../base/ServerStructures.hpp"
 
 namespace CatchChallenger {
-class EpollServer : public CatchChallenger::EpollGenericServer, public CatchChallenger::BaseServer
+class EpollServer : public CatchChallenger::EpollGenericServer, public BaseServerEpoll
 {
 public:
     EpollServer();

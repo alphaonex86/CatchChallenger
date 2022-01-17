@@ -5,6 +5,7 @@ using namespace CatchChallenger;
 
 #include "MapServer.hpp"
 #include "GlobalServerData.hpp"
+#include "../../general/base/FacilityLib.hpp"
 
 bool Client::captureCityInProgress()
 {
@@ -325,6 +326,7 @@ void Client::startTheCityCapture()
         ++i;
     }
     captureCity.clear();
+    GlobalServerData::serverPrivateVariables.time_city_capture=FacilityLib::nextCaptureTime(GlobalServerData::serverSettings.city);
 }
 
 void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated, const uint16_t &number_of_player, const uint16_t &number_of_clan)

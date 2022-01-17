@@ -228,16 +228,16 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 #endif
                 //normalOutput(std::string("Protocol reply send with token: ")+binarytoHexa(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                switch(ProtocolParsing::compressionTypeServer)
+                switch(CompressionProtocol::compressionTypeServer)
                 {
-                    case CompressionType::None:
+                    case CompressionProtocol::CompressionType::None:
                         *(Client::protocolReplyCompressionNone+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         #endif
                         internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyCompressionNone),sizeof(Client::protocolReplyCompressionNone));
                     break;
-                    case CompressionType::Zstandard:
+                    case CompressionProtocol::CompressionType::Zstandard:
                         *(Client::protocolReplyCompresssionZstandard+1)=queryNumber;
                         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                         memcpy(Client::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);

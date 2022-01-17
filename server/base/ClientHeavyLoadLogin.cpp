@@ -38,7 +38,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
-    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
+    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
         loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+PreparedDBQueryLogin::db_query_login.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_login->errorMessage());
@@ -237,7 +237,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
         }
     }
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         account_id=0;
@@ -281,7 +281,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
+    CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
         stat=ClientStat::ProtocolGood;

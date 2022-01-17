@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "DictionaryServer.hpp"
+#include "BaseServer.hpp"
 
 using namespace CatchChallenger;
 
@@ -34,6 +35,15 @@ void Client::characterIsRightFinalStep()
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
     posOutput+=Client::characterIsRightFinalStepHeaderSize;
+
+    //city capture
+    {
+        uint32_t remainingTimeSToCityCapture=0;
+        const uint64_t &timeactual=time(NULL);
+        if(timeactual<GlobalServerData::serverPrivateVariables.time_city_capture)
+            remainingTimeSToCityCapture=GlobalServerData::serverPrivateVariables.time_city_capture-timeactual;
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizeof(uint8_t)+sizeof(uint16_t),&remainingTimeSToCityCapture,remainingTimeSToCityCapture);
+    }
 
     /// \todo optimise and cache this block
     //send the event
@@ -186,10 +196,10 @@ void Client::characterIsRightFinalStep()
     /// \todo make the buffer overflow control here or above
     {
         char *buffer;
-        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
             buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
         else
-            buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
+            buffer=CompressionProtocol::tempBigBufferForCompressedOutput;
         uint32_t posOutputTemp=0;
         //recipes
         if(public_and_private_informations.recipes!=NULL)
@@ -258,7 +268,7 @@ void Client::characterIsRightFinalStep()
         buffer[posOutputTemp]=0;
         posOutputTemp++;
 
-        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
         {
             *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
             posOutput+=4;
@@ -267,7 +277,7 @@ void Client::characterIsRightFinalStep()
         else
         {
             //compress
-            const int32_t &compressedSize=computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,ProtocolParsingBase::compressionTypeServer);
+            const int32_t &compressedSize=CompressionProtocol::computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,CompressionProtocol::compressionTypeServer);
             if(compressedSize<0)
             {
                 errorOutput("Error to compress the data");
@@ -302,10 +312,10 @@ void Client::characterIsRightFinalStep()
 
     {
         char *buffer;
-        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
             buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
         else
-            buffer=ProtocolParsingBase::tempBigBufferForCompressedOutput;
+            buffer=CompressionProtocol::tempBigBufferForCompressedOutput;
         uint32_t posOutputTemp=0;
         //bot
         if(public_and_private_informations.bot_already_beaten!=NULL)
@@ -329,7 +339,7 @@ void Client::characterIsRightFinalStep()
             posOutputTemp+=2;
         }
 
-        if(ProtocolParsingBase::compressionTypeServer==CompressionType::None)
+        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
         {
             *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
             posOutput+=4;
@@ -338,7 +348,7 @@ void Client::characterIsRightFinalStep()
         else
         {
             //compress
-            const int32_t &compressedSize=computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,ProtocolParsingBase::compressionTypeServer);
+            const int32_t &compressedSize=CompressionProtocol::computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,CompressionProtocol::compressionTypeServer);
             if(compressedSize<0)
             {
                 errorOutput("Error to compress the data");
@@ -451,12 +461,9 @@ void Client::characterIsRightFinalStep()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("load the normal player id: "+std::to_string(character_id)+", simplified id: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    BroadCastWithoutSender::broadCastWithoutSender.emit_new_player_is_connected(public_and_private_informations);
-    #endif
     GlobalServerData::serverPrivateVariables.connected_players++;
     if(GlobalServerData::serverSettings.sendPlayerNumber)
-        GlobalServerData::serverPrivateVariables.player_updater.addConnectedPlayer();
+        GlobalServerData::serverPrivateVariables.player_updater->addConnectedPlayer();
     playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
     clientBroadCastList.push_back(this);
 

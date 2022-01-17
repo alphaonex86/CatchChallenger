@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "Client.hpp"
 
 using namespace CatchChallenger;
 
@@ -173,21 +174,7 @@ void BaseServer::preload_other()
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
         }
         posOutput+=2;
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(GlobalServerData::serverPrivateVariables.timer_city_capture==NULL)
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
-        else if(GlobalServerData::serverPrivateVariables.timer_city_capture->isActive())
-        {
-            std::time_t result = std::time(nullptr);
-            const int64_t &time=GlobalServerData::serverPrivateVariables.time_city_capture-result*1000;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(time/1000);
-        }
-        else
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
-        #else
-        std::cout << "WARNING: City capture disabled because disabled into epoll implementation (not coded)" << std::endl;
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
-        #endif
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0xffffffff;//-1 to disable, set at sending time
         posOutput+=4;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=GlobalServerData::serverSettings.city.capture.frenquency;
         posOutput+=1;

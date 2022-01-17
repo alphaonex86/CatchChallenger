@@ -1,6 +1,7 @@
 #include "BaseServer.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryServer.hpp"
+#include "Client.hpp"
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 
