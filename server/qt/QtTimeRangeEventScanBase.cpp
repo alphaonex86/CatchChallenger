@@ -6,8 +6,6 @@
 #include "BroadCastWithoutSender.hpp"
 #endif
 
-using namespace CatchChallenger;
-
 TimeRangeEventScanQt::TimeRangeEventScan()
       #ifndef EPOLLCATCHCHALLENGERSERVER
       :

@@ -17,8 +17,8 @@ struct QtServerPrivateVariables
     QTimer positionSync;
     QTimer ddosTimer;
 
-    CatchChallenger::QtPlayerUpdater player_updater;
-    CatchChallenger::QtTimeRangeEventScan timeRangeEventScan;
+    QtPlayerUpdater player_updater;
+    QtTimeRangeEventScan timeRangeEventScan;
 };
 
 #endif // STRUCTURES_SERVER_H
