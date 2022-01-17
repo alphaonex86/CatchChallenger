@@ -127,15 +127,15 @@ void ProtocolParsingCheck::registerOutputQuery(const uint8_t &queryNumber, const
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-ProtocolParsing::CompressionType ProtocolParsingCheck::getCompressType() const
+CompressionProtocol::CompressionType ProtocolParsingCheck::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(flags & 0x10)
-        return compressionTypeServer;
+        return CompressionProtocol::compressionTypeServer;
     else
-        return compressionTypeClient;
+        return CompressionProtocol::compressionTypeClient;
     #else
-        return compressionTypeServer;
+        return CompressionProtocol::compressionTypeServer;
     #endif
 }
 #endif

@@ -23,9 +23,6 @@
 #include <vector>
 #include <time.h>
 #include <iostream>
-#ifndef EPOLLCATCHCHALLENGERSERVER
-#include <QTimer>
-#endif
 
 using namespace CatchChallenger;
 
@@ -128,38 +125,11 @@ void BaseServer::unload_the_skin()
     GlobalServerData::serverPrivateVariables.skinList.clear();
 }
 
-void BaseServer::unload_the_visibility_algorithm()
-{
-    if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
-    {
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
-        #else
-        delete GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove;
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=NULL;
-        #endif
-    }
-}
-
 void BaseServer::unload_the_ddos()
 {
     Client::generalChatDrop.reset();
     Client::clanChatDrop.reset();
     Client::privateChatDrop.reset();
-}
-
-void BaseServer::unload_the_events()
-{
-    GlobalServerData::serverPrivateVariables.events.clear();
-    unsigned int index=0;
-    while(index<GlobalServerData::serverPrivateVariables.timerEvents.size())
-    {
-        delete GlobalServerData::serverPrivateVariables.timerEvents.at(index);
-        index++;
-    }
-    GlobalServerData::serverPrivateVariables.timerEvents.clear();
 }
 
 void BaseServer::unload_the_datapack()

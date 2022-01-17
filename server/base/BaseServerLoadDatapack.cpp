@@ -4,6 +4,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/xxhash/xxhash.h"
 #include "../../general/sha224/sha224.hpp"
+#include "Client.hpp"
 
 using namespace CatchChallenger;
 
@@ -140,7 +141,7 @@ void BaseServer::preload_the_datapack()
                         {
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
                                 {
                                     std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();
@@ -288,7 +289,7 @@ void BaseServer::preload_the_datapack()
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
                                 {
                                     std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();
@@ -377,7 +378,7 @@ void BaseServer::preload_the_datapack()
                             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                             if(BaseServerMasterSendDatapack::compressedExtension.find(FacilityLibGeneral::getSuffix(fileName))!=BaseServerMasterSendDatapack::compressedExtension.end())
                             {
-                                if(ProtocolParsing::compressionTypeServer==ProtocolParsing::CompressionType::None)
+                                if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
                                 {
                                     std::cerr << "The file " << GlobalServerData::serverSettings.datapack_basePath << fileName << " is over the maximum packet size, but can be compressed, try enable the compression" << std::endl;
                                     abort();

@@ -6,9 +6,6 @@
 #include <iostream>
 #include <cstring>
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#include "../../general/libzstd/lib/zstd.h"
-#endif
 
 using namespace CatchChallenger;
 
@@ -565,54 +562,6 @@ int8_t ProtocolParsingBase::parseData(const char * const commonBuffer, const uin
         return 0;
     }
 }
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-int32_t ProtocolParsing::computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(maxDecompressedSize<sourceSize)
-    {
-        std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
-        abort();
-    }
-    #endif
-    switch(compressionType)
-    {
-        case CompressionType::None:
-            std::cerr << "CompressionType::None in ProtocolParsingBase::computeDecompression, do direct mapping" << std::endl;
-            abort();
-            return -1;
-        break;
-        case CompressionType::Zstandard:
-        default:
-            return ProtocolParsing::decompressZstandard(source,sourceSize,dest,maxDecompressedSize);
-        break;
-    }
-}
-
-int32_t ProtocolParsing::computeCompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(maxDecompressedSize<sourceSize)
-    {
-        std::cerr << "maxDecompressedSize<compressedSize in ProtocolParsingBase::computeDecompression" << std::endl;
-        abort();
-    }
-    #endif
-    switch(compressionType)
-    {
-        case CompressionType::None:
-            std::cerr << "CompressionType::None in ProtocolParsingBase::computeDecompression, do direct mapping" << std::endl;
-            abort();
-            return -1;
-        break;
-        case CompressionType::Zstandard:
-        default:
-            return ProtocolParsing::compressZstandard(source,sourceSize,dest,maxDecompressedSize);
-        break;
-    }
-}
-#endif
 
 bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size)
 {

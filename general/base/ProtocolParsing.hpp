@@ -8,6 +8,9 @@
 #include <string>
 
 #include "GeneralVariable.hpp"
+#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
+#include "CompressionProtocol.hpp"
+#endif
 
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
@@ -54,13 +57,6 @@ public:
         PacketModeTransmission_Server=0x00,
         PacketModeTransmission_Client=0x01
     };
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    enum CompressionType
-    {
-        None=0x00,
-        Zstandard = 0x04
-    };
-    #endif
     enum InitialiseTheVariableType
     {
         AllInOne,
@@ -68,20 +64,6 @@ public:
         GameServer,
         MasterServer
     };
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-
-    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        #ifdef CATCHCHALLENGERSERVERDROPIFCLENT
-            #error Can t be CATCHCHALLENGER_CLASS_ONLYGAMESERVER and CATCHCHALLENGERSERVERDROPIFCLENT
-        #endif
-    #endif
-
-    static CompressionType compressionTypeClient;
-    #endif
-    static CompressionType compressionTypeServer;
-    static uint8_t compressionLevel;
-    #endif
     /// \warning can't be static where open multiple connexion to game server as:
     /// - login in proxy mode
     /// - gateway
@@ -102,11 +84,6 @@ public:
     #endif
     static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
     static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    int32_t computeDecompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxDecompressedSize, const CompressionType &compressionType);
-    int32_t computeCompression(const char* const source, char* const dest, const unsigned int &sourceSize, const unsigned int &maxCompressedSize, const CompressionType &compressionType);
-    #endif
 protected:
     virtual void errorParsingLayer(const std::string &error) = 0;
     virtual void messageParsingLayer(const std::string &message) const = 0;
@@ -180,10 +157,6 @@ public:
 
     static char tempBigBufferForOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
     static char tempBigBufferForInput[CATCHCHALLENGER_BIGBUFFERSIZE];//to store the input buffer on linux READ() interface or with Qt
-    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    static char tempBigBufferForCompressedOutput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    static char tempBigBufferForUncompressedInput[CATCHCHALLENGER_BIGBUFFERSIZE];
-    #endif
 private:
     bool internalPackOutcommingData(const char * const data,const int &size);
 
@@ -198,7 +171,7 @@ protected:
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     virtual bool disconnectClient() = 0;
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    virtual ProtocolParsing::CompressionType getCompressType() const = 0;
+    virtual CompressionProtocol::CompressionType getCompressType() const = 0;
     #endif
 };
 
@@ -229,7 +202,7 @@ protected:
     /*virtual for void LinkToGameServer::parseIncommingData()
     of gateway, readTheFirstSslHeader() */virtual void parseIncommingData();
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-    ProtocolParsing::CompressionType getCompressType() const override;
+    CompressionProtocol::CompressionType getCompressType() const override;
     #endif
     virtual ssize_t read(char * data, const size_t &size) override;
     virtual ssize_t write(const char * const data, const size_t &size) override;

@@ -1,7 +1,10 @@
 #include "BaseServer.hpp"
+#include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/tinyXML2/tinyxml2.hpp"
 #include "../../general/base/tinyXML2/customtinyxml2.hpp"
+#include "../general/base/CommonDatapack.hpp"
+#include "../general/base/CommonDatapackServerSpec.hpp"
 
 using namespace CatchChallenger;
 
@@ -57,18 +60,7 @@ void BaseServer::preload_the_events()
                             while(previousStart>time)
                                 previousStart-=(programmedEvent.cycle*60);
                             pastEventStart[previousStart]=static_cast<uint8_t>(sub_index);
-                            #ifdef EPOLLCATCHCHALLENGERSERVER
-                                TimerEvents * const timer=new TimerEvents(static_cast<uint8_t>(index),static_cast<uint8_t>(sub_index));
-                                GlobalServerData::serverPrivateVariables.timerEvents.push_back(timer);
-                                timer->start(static_cast<unsigned int>(programmedEvent.cycle*1000*60),static_cast<unsigned int>(time-nextStart-1000));
-                            #else
-                            GlobalServerData::serverPrivateVariables.timerEvents.push_back(
-                                        new QtTimerEvents(
-                                            programmedEvent.cycle*1000*60,static_cast<uint32_t>(time-nextStart-1000),
-                                            static_cast<uint8_t>(index),static_cast<uint8_t>(sub_index)
-                                            )
-                                        );
-                            #endif
+                            setEventTimer(static_cast<uint8_t>(index),static_cast<uint8_t>(sub_index),static_cast<unsigned int>(programmedEvent.cycle*1000*60),static_cast<unsigned int>(time-nextStart-1000));
                         }
                         else
                             GlobalServerData::serverSettings.programmedEventList[i->first].erase(i->first);
@@ -184,10 +176,6 @@ bool BaseServer::preload_zone_init()
 
 bool BaseServer::preload_the_city_capture()
 {
-/*    if(GlobalServerData::serverPrivateVariables.timer_city_capture!=NULL)
-        delete GlobalServerData::serverPrivateVariables.timer_city_capture;
-    GlobalServerData::serverPrivateVariables.timer_city_capture=new QTimer();
-    GlobalServerData::serverPrivateVariables.timer_city_capture->setSingleShot(true);*/
     return load_next_city_capture();
 }
 
@@ -230,31 +218,6 @@ void BaseServer::preload_the_players()
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        case MapVisibilityAlgorithmSelection_Simple:
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        if(GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove!=NULL)
-        {
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->stop();
-            GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->deleteLater();
-            #else
-            delete GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove;
-            #endif
-        }
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new QTimer();
-        #else
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove=new TimerSendInsertMoveRemove();
-        #endif
-        GlobalServerData::serverPrivateVariables.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        default:
-        break;
-    }
-
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case MapVisibilityAlgorithmSelection_Simple:

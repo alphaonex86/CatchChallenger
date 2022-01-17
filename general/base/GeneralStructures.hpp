@@ -60,12 +60,6 @@ enum Orientation : uint8_t
     Orientation_left = 4
 };
 
-enum CompressionType : uint8_t
-{
-    CompressionType_None = 0x00,
-    CompressionType_Zstandard = 0x04
-};
-
 enum ActionAllow : uint8_t
 {
     ActionAllow_Nothing=0x00,
@@ -179,7 +173,7 @@ struct PlayerBuff
 class PublicPlayerMonster
 {
     public:
-    uint16_t monster;
+    CATCHCHALLENGER_TYPE_MONSTER monster;
     uint8_t level;
     uint32_t hp;
     uint16_t catched_with;
@@ -193,7 +187,7 @@ class PlayerMonster : public PublicPlayerMonster
     class PlayerSkill
     {
     public:
-        uint16_t skill;
+        CATCHCHALLENGER_TYPE_SKILL skill;
         uint8_t level;//start at 1
         uint8_t endurance;
         #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -262,17 +256,17 @@ struct Player_private_and_public_informations
         //here to send at character login
         std::unordered_set<uint16_t> itemOnMap;
         std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-        std::unordered_map<uint16_t, PlayerQuest> quests;
+        std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
-        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
+        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
     #else
         std::set<ActionAllow> allow;
         //here to send at character login
         std::set<uint16_t> itemOnMap;
         std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-        std::map<uint16_t, PlayerQuest> quests;
+        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
-        std::map<CATCHCHALLENGER_TYPE_ITEM,uint32_t/*quantity*/> items,warehouse_items;
+        std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
     #endif
 };
 
@@ -591,7 +585,7 @@ public:
 class Plant
 {
 public:
-    uint16_t itemUsed;
+    CATCHCHALLENGER_TYPE_ITEM itemUsed;
     uint32_t fruits_seconds;
     //float quantity;//splited into 2 integer
     uint16_t fix_quantity;
@@ -878,7 +872,7 @@ public:
     MapConditionType type;
     union Data {
        uint16_t quest;
-       uint16_t item;
+       CATCHCHALLENGER_TYPE_ITEM item;
        uint16_t fightBot;
     } data;
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -898,7 +892,7 @@ public:
 class MapMonster
 {
 public:
-    uint16_t id;
+    CATCHCHALLENGER_TYPE_MONSTER id;
     uint8_t minLevel;
     uint8_t maxLevel;
     uint8_t luck;
@@ -1160,7 +1154,7 @@ public:
 class MonsterDrops
 {
 public:
-    uint16_t item;
+    CATCHCHALLENGER_TYPE_ITEM item;
     uint32_t quantity_min;
     uint32_t quantity_max;
     uint8_t luck;//seam be 0 to 100
@@ -1387,9 +1381,9 @@ public:
         EvolutionType type;
         union Data {
            int8_t level;
-           uint16_t item;
+           CATCHCHALLENGER_TYPE_ITEM item;
         } data;
-        uint16_t evolveTo;
+        CATCHCHALLENGER_TYPE_MONSTER evolveTo;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {

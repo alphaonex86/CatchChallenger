@@ -1,15 +1,6 @@
 include(../general/general.pri)
 include(catchchallenger-server-qt.pri)
 
-SOURCES += $$PWD/NormalServer.cpp \
-    QSslServer.cpp \
-    NormalServerGlobal.cpp
-
-HEADERS += $$PWD/NormalServer.h \
-    $$PWD/../client/qt/ClientStructures.h \
-    QSslServer.h \
-    NormalServerGlobal.h
-
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2 NOWEBSOCKET
 

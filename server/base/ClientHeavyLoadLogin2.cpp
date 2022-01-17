@@ -18,7 +18,7 @@ using namespace CatchChallenger;
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 bool Client::server_list()
 {
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&Client::server_list_static,{std::to_string(account_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&Client::server_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error, error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -270,7 +270,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     addCharacterParam->monsterGroupId=monsterGroupId;
     addCharacterParam->skinId=skinId;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&Client::addCharacter_static,{
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&Client::addCharacter_static,{
         #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
         pseudo
         #else
@@ -454,7 +454,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     removeCharacterParam->query_id=query_id;
     removeCharacterParam->characterId=characterId;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.asyncRead(this,&Client::removeCharacterLater_static,{std::to_string(characterId)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.asyncRead(this,&Client::removeCharacterLater_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;

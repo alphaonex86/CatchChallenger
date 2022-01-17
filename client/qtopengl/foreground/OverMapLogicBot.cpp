@@ -16,7 +16,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
         std::cerr << "OverMapLogic::botHaveQuest(), botId not found: " << std::to_string(botId) << std::endl;
         return false;
     }
-    const std::vector<uint16_t> &botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -203,6 +203,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         }
         bool ok;
         uint16_t shopId=stringtouint16(stepXml->Attribute("shop"),&ok);
+        (void)shopId;
         if(!ok)
         {
             showTip(tr("Shop called but wrong id").toStdString());
@@ -816,7 +817,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
     std::vector<std::pair<uint16_t,std::string> > entryList;
     std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    std::vector<uint16_t> botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {

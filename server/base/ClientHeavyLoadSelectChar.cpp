@@ -316,7 +316,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         {
             normalOutput("First client of the clan: "+std::to_string(public_and_private_informations.clan)+", get the info");
             //do the query
-            CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.asyncRead(this,&Client::selectClan_static,{std::to_string(public_and_private_informations.clan)});
+            CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.asyncRead(this,&Client::selectClan_static,{std::to_string(public_and_private_informations.clan)});
             if(callback==NULL)
             {
                 std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;

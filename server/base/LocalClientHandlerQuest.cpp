@@ -27,6 +27,7 @@ void Client::newQuestAction(const QuestAction &action,const uint16_t &questId)
             startQuest(quest);
         break;
         case QuestAction_Cancel:
+            cancelQuest(questId);
         break;
         case QuestAction_Finish:
         case QuestAction_NextStep:
@@ -372,4 +373,10 @@ bool Client::startQuest(const Quest &quest)
     addQuestStepDrop(quest.id,1);
     syncDatabaseQuest();
     return true;
+}
+
+void Client::cancelQuest(const uint16_t &questId)
+{
+    public_and_private_informations.quests.erase(questId);
+    syncDatabaseQuest();
 }
