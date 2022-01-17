@@ -47,7 +47,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanActionParam->action=action;
             clanActionParam->text=text;
 
-            CatchChallenger::DatabaseBase::CallBack *callback=
+            CatchChallenger::DatabaseBaseCallBack *callback=
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_clan_by_name
                     .asyncRead(this,&Client::addClan_static,{
                     #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT

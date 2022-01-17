@@ -215,15 +215,15 @@ public:
     };
     std::unordered_map<uint8_t,TypeExtra> typeExtra;
     std::unordered_map<uint16_t,MonsterExtra> monsterExtra;
-    std::unordered_map<uint8_t,MonsterExtra::Buff> monsterBuffsExtra;
-    std::unordered_map<uint16_t,MonsterExtra::Skill> monsterSkillsExtra;
-    std::unordered_map<uint16_t,ItemExtra> itemsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,MonsterExtra::Skill> monsterSkillsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,ItemExtra> itemsExtra;
     std::unordered_map<std::string,ReputationExtra> reputationExtra;
     std::unordered_map<std::string,uint8_t> reputationNameToId;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
-    std::unordered_map<uint16_t,uint8_t> itemToPlants;
-    std::unordered_map<uint16_t,QuestExtra> questsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> itemToPlants;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
     std::unordered_map<std::string,uint16_t> questsPathToId;
-    std::unordered_map<uint16_t,std::vector<uint16_t> > botToQuestStart;
+    std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > botToQuestStart;
     std::unordered_map<uint16_t,BotFightExtra> botFightsExtra;
     std::unordered_map<std::string,ZoneExtra> zonesExtra;
     std::unordered_map<std::string,std::string> audioAmbiance;
@@ -234,8 +234,8 @@ public:
     ///todo drop the full path and .tmx
     std::unordered_map<std::string,uint32_t> mapToId;
     std::unordered_map<std::string,uint32_t> fullMapPathToId;
-    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > itemOnMap;
-    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> > plantOnMap;
+    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > itemOnMap;
+    std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > plantOnMap;
     std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
     bool isParsingDatapack() const;
     std::string getDatapackPath() const;

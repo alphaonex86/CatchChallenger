@@ -1,4 +1,5 @@
 #include "BaseServer.hpp"
+#include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryServer.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -6,6 +7,7 @@
 #endif
 
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 
 using namespace CatchChallenger;
 

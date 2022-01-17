@@ -3,7 +3,7 @@
 using namespace CatchChallenger;
 
 MapVisibilityAlgorithm_None::MapVisibilityAlgorithm_None() :
-    ClientWithSocket()
+    Client()
 {
 }
 

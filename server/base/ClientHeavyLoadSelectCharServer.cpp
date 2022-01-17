@@ -19,7 +19,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.asyncRead(this,&Client::selectCharacterServer_static,{std::to_string(characterId)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.asyncRead(this,&Client::selectCharacterServer_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;

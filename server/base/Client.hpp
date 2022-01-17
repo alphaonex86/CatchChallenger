@@ -50,10 +50,8 @@ public:
     friend class BaseServer;
     explicit Client();
     virtual ~Client();
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    BaseClassSwitch::EpollObjectType getType() const;
-    #endif
     //to get some info
+    virtual bool isValid() = 0;
     std::string getPseudo() const;
     void savePosition();
     static bool characterConnected(const uint32_t &characterId);
@@ -150,7 +148,7 @@ protected:
     ClientStat stat;
     uint64_t lastdaillygift;//datalocallity with ClientStat stat
 
-    std::queue<CatchChallenger::DatabaseBase::CallBack *> callbackRegistred;
+    std::queue<CatchChallenger::DatabaseBaseCallBack *> callbackRegistred;
 
     struct ClanActionParam
     {
@@ -508,6 +506,7 @@ private:
     void addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
     void removeQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
     void syncDatabaseQuest();
+    void cancelQuest(const uint16_t &questId);
 
     bool checkCollision();
 

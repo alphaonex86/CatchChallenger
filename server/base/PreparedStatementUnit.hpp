@@ -8,9 +8,6 @@
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include <unordered_map>
 #endif
-#if defined(CATCHCHALLENGER_CLASS_QT) || !defined(EPOLLCATCHCHALLENGERSERVER)
-#include "QtDatabase.hpp"
-#endif
 
 namespace CatchChallenger {
 class PreparedStatementUnit
@@ -26,17 +23,13 @@ public:
     PreparedStatementUnit& operator=(PreparedStatementUnit&& other);// move assignment
 
     bool setQuery(const std::string &query);
-    virtual DatabaseBase::CallBack * asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
+    virtual DatabaseBaseCallBack * asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     virtual bool asyncWrite(const std::vector<std::string> &values);
     bool empty() const;
     std::string queryText() const;
 private:
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    CatchChallenger::DatabaseBase *database;
-    #else
-    QtDatabase *database;
-    #endif
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    CatchChallenger::DatabaseBase * database;
     //prepared statement
     char uniqueName[3];
     static std::string writeToPrepare(const std::string &query);

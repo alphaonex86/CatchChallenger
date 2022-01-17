@@ -22,6 +22,7 @@ INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/inclu
 TEMPLATE = app
 
 SOURCES += $$PWD/base/ProtocolParsingGeneral.cpp \
+    $$PWD/base/CompressionProtocol.cpp \
     $$PWD/base/ProtocolParsingInput.cpp \
     $$PWD/base/ProtocolParsingOutput.cpp \
     $$PWD/base/ProtocolParsingCheck.cpp \
@@ -63,6 +64,33 @@ SOURCES += $$PWD/base/ProtocolParsingGeneral.cpp \
     $$PWD/sha224/sha224.cpp \
     $$PWD/xxhash/xxhash.c
 
+HEADERS  += $$PWD/base/GeneralStructures.hpp \
+    $$PWD/base/ClientBase.hpp \
+    $$PWD/base/CompressionProtocol.hpp \
+    $$PWD/base/ProtocolParsing.hpp \
+    $$PWD/base/ProtocolParsingCheck.hpp \
+    $$PWD/base/MoveOnTheMap.hpp \
+    $$PWD/base/Map_loader.hpp \
+    $$PWD/base/CommonMap.hpp \
+    $$PWD/base/GeneralVariable.hpp \
+    $$PWD/base/FacilityLib.hpp \
+    $$PWD/base/FacilityLibGeneral.hpp \
+    $$PWD/base/DatapackGeneralLoader.hpp \
+    $$PWD/base/CommonDatapack.hpp \
+    $$PWD/base/CommonDatapackServerSpec.hpp \
+    $$PWD/base/CommonSettingsCommon.hpp \
+    $$PWD/base/CommonSettingsServer.hpp \
+    $$PWD/base/GeneralType.hpp \
+    $$PWD/base/cpp11addition.hpp \
+    $$PWD/base/GeneralStructuresXml.hpp \
+    $$PWD/base/PortableEndian.hpp \
+    $$PWD/fight/FightLoader.hpp \
+    $$PWD/fight/CommonFightEngine.hpp \
+    $$PWD/fight/CommonFightEngineBase.hpp \
+    $$PWD/sha224/sha224.hpp \
+    $$PWD/xxhash/xxhash.h
+
+!contains(DEFINES, EXTERNALLIBZSTD) {
 SOURCES += \
     $$PWD/libzstd/lib/common/pool.c \
     $$PWD/libzstd/lib/common/zstd_common.c \
@@ -92,31 +120,6 @@ SOURCES += \
     $$PWD/libzstd/lib/dictBuilder/divsufsort.c \
     $$PWD/libzstd/lib/dictBuilder/fastcover.c \
     $$PWD/libzstd/lib/dictBuilder/zdict.c \
-
-HEADERS  += $$PWD/base/GeneralStructures.hpp \
-    $$PWD/base/ClientBase.hpp \
-    $$PWD/base/ProtocolParsing.hpp \
-    $$PWD/base/ProtocolParsingCheck.hpp \
-    $$PWD/base/MoveOnTheMap.hpp \
-    $$PWD/base/Map_loader.hpp \
-    $$PWD/base/CommonMap.hpp \
-    $$PWD/base/GeneralVariable.hpp \
-    $$PWD/base/FacilityLib.hpp \
-    $$PWD/base/FacilityLibGeneral.hpp \
-    $$PWD/base/DatapackGeneralLoader.hpp \
-    $$PWD/base/CommonDatapack.hpp \
-    $$PWD/base/CommonDatapackServerSpec.hpp \
-    $$PWD/base/CommonSettingsCommon.hpp \
-    $$PWD/base/CommonSettingsServer.hpp \
-    $$PWD/base/GeneralType.hpp \
-    $$PWD/base/cpp11addition.hpp \
-    $$PWD/base/GeneralStructuresXml.hpp \
-    $$PWD/base/PortableEndian.hpp \
-    $$PWD/fight/FightLoader.hpp \
-    $$PWD/fight/CommonFightEngine.hpp \
-    $$PWD/fight/CommonFightEngineBase.hpp \
-    $$PWD/sha224/sha224.hpp \
-    $$PWD/xxhash/xxhash.h
 
 HEADERS += \
     $$PWD/libzstd/lib/zstd.h \
@@ -148,10 +151,13 @@ HEADERS += \
     $$PWD/libzstd/lib/decompress/zstd_decompress_internal.h \
     $$PWD/libzstd/lib/dictBuilder/cover.h \
     $$PWD/libzstd/lib/dictBuilder/zdict.h \
-    $$PWD/libzstd/lib/dictBuilder/divsufsort.h \
+    $$PWD/libzstd/lib/dictBuilder/divsufsort.h
 
-DEFINES += ZSTD_STATIC_LINKING_ONLY
-INCLUDEPATH += $$PWD/libzstd/lib/
+    DEFINES += ZSTD_STATIC_LINKING_ONLY
+    INCLUDEPATH += $$PWD/libzstd/lib/
+} else {
+    LIBS    += -lzstd
+}
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

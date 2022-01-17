@@ -276,9 +276,6 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         }
                         else if(command==StaticText::text_stop || command==StaticText::text_restart)
                         {
-                            #ifndef EPOLLCATCHCHALLENGERSERVER
-                            BroadCastWithoutSender::broadCastWithoutSender.emit_serverCommand(command,text);
-                            #endif
                             normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
                         #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
@@ -597,20 +594,20 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             const uint64_t &depositeCash=le64toh(tempVar);
             pos+=sizeof(uint64_t);
 
-            uint16_t size16;
-            if((size-pos)<((int)sizeof(uint16_t)))
+            uint16_t size8=0;
             {
-                errorOutput("wrong remaining size for warehouse item list");
-                return false;
-            }
-            {
-                size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint16_t);
+                if((size-pos)<((int)sizeof(uint8_t)))
+                {
+                    errorOutput("wrong remaining size for warehouse item list");
+                    return false;
+                }
+                size8=data[pos];
+                pos+=sizeof(uint8_t);
 
-                withdrawItems.reserve(size16);
+                withdrawItems.reserve(size8);
                 uint16_t id;
                 uint32_t index=0;
-                while(index<size16)
+                while(index<size8)
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
@@ -631,13 +628,18 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 }
             }
             {
-                size16=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+pos)));
-                pos+=sizeof(uint16_t);
+                if((size-pos)<((int)sizeof(uint8_t)))
+                {
+                    errorOutput("wrong remaining size for warehouse item list");
+                    return false;
+                }
+                size8=data[pos];
+                pos+=sizeof(uint8_t);
 
-                depositeItems.reserve(size16);
+                depositeItems.reserve(size8);
                 uint16_t id;
                 uint32_t index=0;
-                while(index<size16)
+                while(index<size8)
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
@@ -663,7 +665,6 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("wrong remaining size for warehouse monster list");
                 return false;
             }
-            uint8_t size8=0;
             size8=data[pos];
             pos+=sizeof(uint8_t);
             uint32_t index=0;

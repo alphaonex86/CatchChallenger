@@ -1,5 +1,7 @@
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 
+DEFINES += EXTERNALLIBZSTD
+
 include(../general/general.pri)
 include(catchchallenger-server.pri)
 include(../general/hps/hps.pri)
@@ -54,7 +56,12 @@ SOURCES += \
     $$PWD/all-in-one/TimeRangeEvent.cpp \
     $$PWD/NormalServerGlobal.cpp \
     $$PWD/main-epoll.cpp \
-    $$PWD/main-epoll2.cpp
+    $$PWD/main-epoll2.cpp \
+    epoll/BaseServerEpoll.cpp \
+    epoll/ClientMapManagementEpoll.cpp \
+    epoll/ServerPrivateVariablesEpoll.cpp \
+    epoll/timer/PlayerUpdaterEpoll.cpp \
+    epoll/timer/TimeRangeEventScan.cpp
 
 HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/EpollClient.h \
@@ -75,7 +82,11 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/EpollGenericSslServer.h \
     $$PWD/NormalServerGlobal.h \
     $$PWD/base/DdosBuffer.h \
-    $$PWD/all-in-one/TimeRangeEvent.h
+    $$PWD/all-in-one/TimeRangeEvent.h \
+    epoll/BaseServerEpoll.hpp \
+    epoll/ServerPrivateVariablesEpoll.hpp \
+    epoll/timer/PlayerUpdaterEpoll.hpp \
+    epoll/timer/TimeRangeEventScan.hpp
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2

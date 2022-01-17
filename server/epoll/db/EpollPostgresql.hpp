@@ -10,10 +10,11 @@
 
 #include "../../base/DatabaseBase.hpp"
 #include "../../VariableServer.hpp"
+#include "../BaseClassSwitch.hpp"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public CatchChallenger::DatabaseBase
+class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::DatabaseBase
 {
 public:
     EpollPostgresql();
@@ -25,11 +26,11 @@ public:
     bool setBlocking(const bool &val);
 
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-    CallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
+    CatchChallenger::DatabaseBaseCallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     bool asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values);
     bool queryPrepare(const char *stmtName,const char *query,const int &nParams,const bool &store=true);//return NULL if failed
     #endif
-    CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
+    CatchChallenger::DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
     static void noticeReceiver(void *arg, const PGresult *res);
     static void noticeProcessor(void *arg, const char *message);
@@ -45,6 +46,7 @@ public:
     bool stringtobool(const std::string &string,bool *ok=NULL);
     std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
     bool setMaxDbQueries(const unsigned int &maxDbQueries);
+    BaseClassSwitch::EpollObjectType getType() const;
 private:
     time_t startTime;
     PGconn *conn;
@@ -52,7 +54,7 @@ private:
     int ntuples;
     PGresult *result;
     //vector more fast on small data with less than 1024<entry
-    std::vector<CallBack> queue;
+    std::vector<CatchChallenger::DatabaseBaseCallBack> queue;
     struct PreparedStatement
     {
         std::string query;
@@ -67,8 +69,8 @@ private:
     std::vector<PreparedStatement> queriesList;
     bool started;
     static std::string emptyString;
-    static CallBack emptyCallback;
-    static CallBack tempCallback;
+    static CatchChallenger::DatabaseBaseCallBack emptyCallback;
+    static CatchChallenger::DatabaseBaseCallBack tempCallback;
     char strCoPG[255];
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     char simplifiedstrCoPG[255];

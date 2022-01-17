@@ -13,28 +13,6 @@ BroadCastWithoutSender::BroadCastWithoutSender()
 {
 }
 
-#ifndef EPOLLCATCHCHALLENGERSERVER
-void BroadCastWithoutSender::emit_serverCommand(const std::string &command,const std::string &extraText)
-{
-    /*emit */serverCommand(command,extraText);
-}
-
-void BroadCastWithoutSender::emit_new_player_is_connected(const Player_private_and_public_informations &newPlayer)
-{
-    /*emit */new_player_is_connected(newPlayer);
-}
-
-void BroadCastWithoutSender::emit_player_is_disconnected(const std::string &oldPlayer)
-{
-    /*emit */player_is_disconnected(oldPlayer);
-}
-
-void BroadCastWithoutSender::emit_new_chat_message(const std::string &pseudo,const Chat_type &type,const std::string &text)
-{
-    /*emit */new_chat_message(pseudo,type,text);
-}
-#endif
-
 void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connected_players)
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)

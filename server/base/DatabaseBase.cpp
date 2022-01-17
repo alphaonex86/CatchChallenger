@@ -42,13 +42,14 @@ DatabaseBase::DatabaseType DatabaseBase::databaseType() const
     return databaseTypeVar;
 }
 
-BaseClassSwitch::EpollObjectType DatabaseBase::getType() const
-{
-    return BaseClassSwitch::EpollObjectType::Database;
-}
-
 bool DatabaseBase::setBlocking(const bool &val)//return true if success
 {
     (void)val;
+    return true;
+}
+
+bool DatabaseBase::setMaxDbQueries(const unsigned int &maxDbQueries)
+{
+    (void)maxDbQueries;
     return true;
 }

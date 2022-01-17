@@ -103,7 +103,7 @@ void Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
         removeWarehouseCash(withdrawCash);
         addCash(withdrawCash);
     }
-    if(depositeCash<0)
+    else if(depositeCash>0)
     {
         removeCash(depositeCash);
         addWarehouseCash(depositeCash);

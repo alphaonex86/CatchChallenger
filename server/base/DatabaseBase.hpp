@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <string>
-#include "../epoll/BaseClassSwitch.hpp"
 #include "DatabaseFunction.hpp"
 
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
@@ -13,7 +12,25 @@
 typedef void (*CallBackDatabase)(void *object);
 
 namespace CatchChallenger {
-class DatabaseBase : public BaseClassSwitch, public CatchChallenger::DatabaseFunction
+class DatabaseBaseCallBack
+{
+    public:
+    void *object;
+    CallBackDatabase method;
+};
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+class DatabaseBaseWithPreparedQuery
+{
+    public:
+    virtual DatabaseBaseCallBack * asyncPreparedRead(const std::string &query,char * const id,void * returnObject,CallBackDatabase method,const std::vector<std::string> &values) = 0;
+    virtual bool asyncPreparedWrite(const std::string &query,char * const id,const std::vector<std::string> &values) = 0;
+    virtual bool queryPrepare(const char *stmtName,const char *query,const int &nParams,const bool &store=true) = 0;//return NULL if failed
+};
+#endif
+class DatabaseBase : public CatchChallenger::DatabaseFunction
+        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+        , public DatabaseBaseWithPreparedQuery
+        #endif
 {
     public:
         enum DatabaseType
@@ -23,17 +40,11 @@ class DatabaseBase : public BaseClassSwitch, public CatchChallenger::DatabaseFun
             SQLite=0x02,
             PostgreSQL=0x03
         };
-        struct CallBack
-        {
-            void *object;
-            CallBackDatabase method;
-        };
         DatabaseBase();
         virtual ~DatabaseBase();
-        BaseClassSwitch::EpollObjectType getType() const;
         virtual bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password) = 0;
         virtual void syncDisconnect() = 0;
-        virtual CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method) = 0;
+        virtual DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method) = 0;
         virtual bool asyncWrite(const std::string &query) = 0;
         virtual const std::string errorMessage() const = 0;
         virtual bool next() = 0;
@@ -47,6 +58,7 @@ class DatabaseBase : public BaseClassSwitch, public CatchChallenger::DatabaseFun
         virtual void clear();
         static const std::string databaseTypeToString(const DatabaseType &type);
         virtual bool setBlocking(const bool &val);//return true if success
+        virtual bool setMaxDbQueries(const unsigned int &maxDbQueries);
     protected:
         DatabaseType databaseTypeVar;
 };

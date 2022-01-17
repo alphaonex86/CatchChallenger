@@ -31,6 +31,7 @@ public:
     bool next();
     const std::string value(const int &value) const;
     bool isConnected() const;
+    BaseClassSwitch::EpollObjectType getType() const;
 private:
     MYSQL *conn;
     MYSQL_ROW row;

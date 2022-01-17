@@ -111,9 +111,6 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
     }
     if(!GlobalServerData::serverSettings.anonymous)
         normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(this->public_and_private_informations.public_informations.pseudo,Chat_type_pm,"to "+pseudo+": "+text);
-    #endif
     playerByPseudo.at(pseudo)->receiveChatText(Chat_type_pm,text,this);
     return false;
 }
@@ -210,9 +207,6 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 normalOutput("[chat] "+public_and_private_informations.public_informations.pseudo+
                              ": To the clan "+clan->name+": "+text
                             );
-            #ifndef EPOLLCATCHCHALLENGERSERVER
-            BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
-            #endif
             const std::vector<Client *> &playerWithSameClan = clan->players;
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
@@ -259,9 +253,6 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
         generalChatDrop.incrementLastValue();
         if(!GlobalServerData::serverSettings.anonymous)
             normalOutput("[chat all] "+public_and_private_informations.public_informations.pseudo+": "+text);
-        #ifndef EPOLLCATCHCHALLENGERSERVER
-        BroadCastWithoutSender::broadCastWithoutSender.emit_new_chat_message(public_and_private_informations.public_informations.pseudo,chatType,text);
-        #endif
 
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
         posOutput+=1;

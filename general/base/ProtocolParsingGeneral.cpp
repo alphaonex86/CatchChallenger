@@ -6,56 +6,18 @@
 #include <cstring>
 //#include <openssl/sha.h>
 
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#include "../../general/libzstd/lib/zstd.h"
-#endif
+
 
 using namespace CatchChallenger;
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-
-uint8_t ProtocolParsing::compressionLevel=6;
-
-int32_t ProtocolParsing::decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
-{
-    size_t const dSize = ZSTD_decompress(output, maxOutputSize, input, intputSize);
-    if (ZSTD_isError(dSize)) {
-        std::cerr << "error compressing" << ZSTD_getErrorName(dSize) << std::endl;
-        return -1;
-    }
-    return dSize;
-}
-
-int32_t ProtocolParsing::compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize)
-{
-    size_t const cSize = ZSTD_compress(output, maxOutputSize, input, intputSize, ProtocolParsing::compressionLevel);
-    if (ZSTD_isError(cSize)) {
-        std::cerr << "error compressing" << ZSTD_getErrorName(cSize) << std::endl;
-        return -1;
-    }
-    return cSize;
-}
-#endif
 
 #if ! defined (ONLYMAPRENDER)
 char ProtocolParsingBase::tempBigBufferForOutput[];
 char ProtocolParsingBase::tempBigBufferForInput[];//to store the input buffer on linux READ() interface or with Qt
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-char ProtocolParsingBase::tempBigBufferForUncompressedInput[];
-char ProtocolParsingBase::tempBigBufferForCompressedOutput[];
-#endif
 #ifndef DYNAMICPACKETFIXEDSIZE
 uint8_t ProtocolParsing::packetFixedSize[];
 #else
 uint8_t ProtocolParsing::packetFixedSize8[];
 uint8_t ProtocolParsing::packetFixedSize16[];
-#endif
-
-#ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-#ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeClient=CompressionType::None;
-#endif
-ProtocolParsing::CompressionType    ProtocolParsing::compressionTypeServer=CompressionType::None;
 #endif
 
 ProtocolParsing::ProtocolParsing()
@@ -98,11 +60,11 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
 
             memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
             #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-            memset(ProtocolParsingBase::tempBigBufferForCompressedOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForCompressedOutput));
-            memset(ProtocolParsingBase::tempBigBufferForUncompressedInput,0,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput));
-            ProtocolParsing::compressionTypeServer=CompressionType::Zstandard;
+            memset(CompressionProtocol::tempBigBufferForCompressedOutput,0,sizeof(CompressionProtocol::tempBigBufferForCompressedOutput));
+            memset(CompressionProtocol::tempBigBufferForUncompressedInput,0,sizeof(CompressionProtocol::tempBigBufferForUncompressedInput));
+            CompressionProtocol::compressionTypeServer=CompressionProtocol::CompressionType::Zstandard;
             #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
-            ProtocolParsing::compressionTypeClient=CompressionType::Zstandard;
+            CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;
             #endif
             #endif
 
@@ -442,14 +404,14 @@ ProtocolParsingInputOutput::~ProtocolParsingInputOutput()
 }
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-ProtocolParsing::CompressionType ProtocolParsingInputOutput::getCompressType() const
+CompressionProtocol::CompressionType ProtocolParsingInputOutput::getCompressType() const
 {
     #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
     if(flags & 0x10)
-        return compressionTypeClient;
+        return CompressionProtocol::compressionTypeClient;
     else
     #endif
-        return compressionTypeServer;
+        return CompressionProtocol::compressionTypeServer;
 }
 #endif
 #endif

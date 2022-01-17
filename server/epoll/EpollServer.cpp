@@ -3,6 +3,13 @@
 #include "EpollServer.hpp"
 #include "EpollSocket.hpp"
 #include "Epoll.hpp"
+#ifdef CATCHCHALLENGER_DB_POSTGRESQL
+#include "db/EpollPostgresql.hpp"
+#endif
+#ifdef CATCHCHALLENGER_DB_MYSQL
+#include "db/EpollMySQL.hpp"
+#endif
+
 
 #include "../base/ServerStructures.hpp"
 #include "../base/GlobalServerData.hpp"

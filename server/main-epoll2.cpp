@@ -61,21 +61,21 @@ void send_settings(
 
     if(!settings->contains("compressionLevel"))
         settings->setValue("compressionLevel","6");
-    formatedServerSettings.compressionLevel          = stringtouint8(settings->value("compressionLevel"),&ok);
+    CompressionProtocol::compressionLevel          = stringtouint8(settings->value("compressionLevel"),&ok);
     if(!ok)
     {
         std::cerr << "Compression level not a number fixed by 6" << std::endl;
-        formatedServerSettings.compressionLevel=6;
+        CompressionProtocol::compressionLevel=6;
     }
-    formatedServerSettings.compressionLevel                                     = stringtouint8(settings->value("compressionLevel"));
+    CompressionProtocol::compressionLevel                                     = stringtouint8(settings->value("compressionLevel"));
     if(settings->value("compression")=="none")
-        formatedServerSettings.compressionType                                = CompressionType_None;
+        formatedServerSettings.compressionType                                = CompressionProtocol::CompressionType::None;
     else if(settings->value("compression")=="zstd")
-        formatedServerSettings.compressionType                                = CompressionType_Zstandard;
+        formatedServerSettings.compressionType                                = CompressionProtocol::CompressionType::Zstandard;
     else
     {
         std::cerr << "compression not supported: " << settings->value("compression") << std::endl;
-        formatedServerSettings.compressionType                                = CompressionType_Zstandard;
+        formatedServerSettings.compressionType                                = CompressionProtocol::CompressionType::Zstandard;
     }
 
     //the listen
