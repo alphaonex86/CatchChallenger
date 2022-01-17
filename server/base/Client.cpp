@@ -135,26 +135,6 @@ Client::~Client()
     }
 }
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
-BaseClassSwitch::EpollObjectType Client::getType() const
-{
-    return BaseClassSwitch::EpollObjectType::Client;
-}
-#endif
-
-#ifndef EPOLLCATCHCHALLENGERSERVER
-/// \brief new error at connexion
-/*void Client::connectionError(QAbstractSocket::SocketError error)
-{
-    isConnected=false;
-    if(error!=QAbstractSocket::RemoteHostClosedError)
-    {
-        normalOutput("error detected for the client: "+std::to_string(error));
-        socket->disconnectFromHost();
-    }
-}*/
-#endif
-
 /// \warning called in one other thread!!!
 bool Client::disconnectClient()
 {
@@ -244,7 +224,7 @@ bool Client::disconnectClient()
         if(map!=NULL)
             removeClientOnMap(map);
         if(GlobalServerData::serverSettings.sendPlayerNumber)
-            GlobalServerData::serverPrivateVariables.player_updater.removeConnectedPlayer();
+            GlobalServerData::serverPrivateVariables.player_updater->removeConnectedPlayer();
         extraStop();
         tradeCanceled();
         battleCanceled();
@@ -315,9 +295,6 @@ bool Client::disconnectClient()
         stat=ClientStat::None;
     }
 
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    BroadCastWithoutSender::broadCastWithoutSender.emit_player_is_disconnected(public_and_private_informations.public_informations.pseudo);
-    #endif
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     if(character_id!=0)
         normalOutput("Disconnected client done");

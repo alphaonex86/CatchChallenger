@@ -4,7 +4,6 @@
 #include <string>
 
 #include "../ServerStructures.hpp"
-#include "../EventThreader.hpp"
 #include "../../VariableServer.hpp"
 #include "MapBasicMove.hpp"
 

@@ -6,20 +6,31 @@
 #include "base/ServerStructures.hpp"
 #include "base/TinyXMLSettings.hpp"
 #include "base/GlobalServerData.hpp"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
-#include "base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
 #include "../general/base/tinyXML2/tinyxml2.hpp"
 #include "../general/base/CommonSettingsCommon.hpp"
 #include "../general/base/FacilityLib.hpp"
 #include "epoll/EpollServer.hpp"
 #include "epoll/Epoll.hpp"
+#include "epoll/ClientMapManagementEpoll.hpp"
+#ifdef CATCHCHALLENGER_DB_POSTGRESQL
+#include "epoll/db/EpollPostgresql.hpp"
+#endif
+#ifdef CATCHCHALLENGER_DB_MYSQL
+#include "epoll/db/EpollMySQL.hpp"
+#endif
 #include "NormalServerGlobal.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.hpp"
 #include "epoll/EpollSocket.hpp"
 #include "epoll/timer/TimerPurgeTokenAuthList.hpp"
 #endif
+
+#include "epoll/timer/TimerCityCapture.hpp"
+#include "epoll/timer/TimerDdos.hpp"
+#include "epoll/timer/TimerPositionSync.hpp"
+#include "epoll/timer/TimerSendInsertMoveRemove.hpp"
+#include "epoll/timer/PlayerUpdaterEpoll.hpp"
+#include "epoll/timer/TimeRangeEventScan.hpp"
 
 #define MAXEVENTS 512
 
@@ -461,7 +472,7 @@ int main(int argc, char *argv[])
     {
         if(GlobalServerData::serverSettings.sendPlayerNumber)
         {
-            if(!GlobalServerData::serverPrivateVariables.player_updater.start())
+            if(!static_cast<PlayerUpdaterEpoll *>(GlobalServerData::serverPrivateVariables.player_updater)->start())
             {
                 std::cerr << "player_updater timer fail to set" << std::endl;
                 return EXIT_FAILURE;
@@ -610,22 +621,22 @@ int main(int argc, char *argv[])
                             std::cerr << "unable to make to socket non blocking" << std::endl;
                         else
                         {
-                            ClientWithSocket *client;
+                            Client *client;
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:
-                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSender();
-                                    client->reopen(infd);
+                                    client=new MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll(infd);
+                                    //client->reopen(infd);
 
                                 break;
                                 case MapVisibilityAlgorithmSelection_WithBorder:
-                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSender();
-                                    client->reopen(infd);
+                                    client=new MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll(infd);
+                                    //client->reopen(infd);
                                 break;
                                 default:
                                 case MapVisibilityAlgorithmSelection_None:
-                                    client=new MapVisibilityAlgorithm_None();
-                                    client->reopen(infd);
+                                    client=new MapVisibilityAlgorithm_NoneEpoll(infd);
+                                    //client->reopen(infd);
                                 break;
                             }
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -679,7 +690,7 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    ClientWithSocket * const client=static_cast<ClientWithSocket *>(events[i].data.ptr);
+                    Client * const client=static_cast<Client *>(events[i].data.ptr);
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -764,7 +775,7 @@ int main(int argc, char *argv[])
                         break;
                         #endif
                         default:
-                        std::cerr << "epoll database type return not supported" << std::endl;
+                        std::cerr << "epoll database type return not supported: " << static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType() << std::endl;
                         abort();
                     }
                 }

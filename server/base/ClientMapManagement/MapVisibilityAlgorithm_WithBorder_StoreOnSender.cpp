@@ -14,7 +14,7 @@ bool MapVisibilityAlgorithm_WithBorder_StoreOnSender::mapHaveChanged;
 map_management_movement MapVisibilityAlgorithm_WithBorder_StoreOnSender::moveClient_tempMov;
 
 MapVisibilityAlgorithm_WithBorder_StoreOnSender::MapVisibilityAlgorithm_WithBorder_StoreOnSender() :
-    ClientWithSocket(),
+    Client(),
     haveBufferToPurge(false)
 {
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE

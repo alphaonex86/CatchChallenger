@@ -53,8 +53,7 @@ void NormalServerGlobal::displayInfo()
     #endif
     std::cout << "Base client size without string/pointer content: " << sizeof(CatchChallenger::Client)
               << ": ("
-              << "Client: " << (sizeof(CatchChallenger::Client)-sizeof(BaseClassSwitch)-sizeof(CatchChallenger::ProtocolParsingInputOutput)-sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientMapManagement)) << " + "
-              << "BaseClassSwitch: " << sizeof(BaseClassSwitch) << " + "
+              << "Client: " << (sizeof(CatchChallenger::Client)-sizeof(CatchChallenger::ProtocolParsingInputOutput)-sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientMapManagement)) << " + "
               << "ProtocolParsingInputOutput: " << sizeof(CatchChallenger::ProtocolParsingInputOutput) << " + "
               << "CommonFightEngine: " << sizeof(CatchChallenger::CommonFightEngine) << " ("
                 << "CommonFightEngine: " << (sizeof(CatchChallenger::CommonFightEngine)-sizeof(CatchChallenger::ClientBase)-sizeof(CatchChallenger::CommonFightEngineBase)) << " + "

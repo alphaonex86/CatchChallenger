@@ -33,7 +33,7 @@ class ProtocolParsingCheck : public ProtocolParsingBase
         void breakNeedMoreData();
 
         #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-        ProtocolParsing::CompressionType getCompressType() const; /// if client get server because it's check then mirror
+        CompressionProtocol::CompressionType getCompressType() const; /// if client get server because it's check then mirror
         #endif
 
         bool disconnectClient();
