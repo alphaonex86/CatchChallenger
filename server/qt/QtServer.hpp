@@ -24,7 +24,7 @@ public:
     void preload_the_city_capture();
     void removeOneClient();
     void newConnection();
-    void connect_the_last_client(CatchChallenger::QtClient * client, QIODevice *socket);
+    void connect_the_last_client(CatchChallenger::Client * client, QIODevice *socket);
     void load_next_city_capture();
     void send_insert_move_remove();
     void positionSync();
@@ -35,8 +35,9 @@ public:
     void stop();
     bool check_if_now_stopped();//return true if can be stopped
     void stop_internal_server();
-    virtual void preload_finish();
-    void quitForCriticalDatabaseQueryFailed();
+    virtual void preload_finish() override;
+    void quitForCriticalDatabaseQueryFailed() override;
+    void loadAndFixSettings() override;
 signals:
     void try_initAll() const;
     void try_stop_server() const;
@@ -48,7 +49,7 @@ signals:
 
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
-    std::unordered_set<CatchChallenger::QtClient *> client_list;
+    std::unordered_set<CatchChallenger::Client *> client_list;
 private:
     void stop_internal_server_slot();
 };

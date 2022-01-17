@@ -15,7 +15,6 @@ SOURCES += $$PWD/qt/QtServer.cpp \
     $$PWD/qt/EventThreader.cpp \
     $$PWD/qt/QFakeServer.cpp \
     $$PWD/qt/QFakeSocket.cpp \
-    $$PWD/qt/QtBroadCastWithoutSender.cpp \
     $$PWD/qt/QtClient.cpp \
     $$PWD/qt/QtClientMapManagement.cpp \
     $$PWD/qt/QtPlayerUpdater.cpp \
@@ -29,7 +28,6 @@ HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/EventThreader.hpp \
     $$PWD/qt/QFakeServer.hpp \
     $$PWD/qt/QFakeSocket.hpp \
-    $$PWD/qt/QtBroadCastWithoutSender.hpp \
     $$PWD/qt/QtClient.hpp \
     $$PWD/qt/QtClientMapManagement.hpp \
     $$PWD/qt/QtPlayerUpdater.hpp \

@@ -64,7 +64,7 @@ public:
     #endif
     void breakNeedMoreData() override;
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
-    void parseIncommingData() override;
+    virtual void parseIncommingData() override;
     static void startTheCityCapture();
     static void setEvent(const uint8_t &event, const uint8_t &new_value);
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

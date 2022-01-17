@@ -1,7 +1,7 @@
 #include "QtClientMapManagement.hpp"
 
-QtMapVisibilityAlgorithm_None::QtMapVisibilityAlgorithm_NoneEpoll(const int &infd) :
-    CatchChallenger::::CatchChallenger::QtClient()
+QtMapVisibilityAlgorithm_None::QtMapVisibilityAlgorithm_NoneEpoll(QIODevice *qtSocket) :
+    CatchChallenger::QtClient(qtSocket)
 {
 }
 
@@ -25,8 +25,8 @@ ssize_t QtMapVisibilityAlgorithm_None::write(const char * const data, const size
     return CatchChallenger::EpollClient::write(data,size);
 }
 
-QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::QtMapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll(const int &infd) :
-    CatchChallenger::::CatchChallenger::QtClient()
+QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::QtMapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll(QIODevice *qtSocket) :
+    CatchChallenger::QtClient(qtSocket)
 {
 }
 
@@ -50,8 +50,8 @@ ssize_t QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::write(const char * co
     return CatchChallenger::EpollClient::write(data,size);
 }
 
-QtMapVisibilityAlgorithm_Simple_StoreOnSender::QtMapVisibilityAlgorithm_Simple_StoreOnSenderEpoll(const int &infd) :
-    CatchChallenger::::CatchChallenger::QtClient()
+QtMapVisibilityAlgorithm_Simple_StoreOnSender::QtMapVisibilityAlgorithm_Simple_StoreOnSenderEpoll(QIODevice *qtSocket) :
+    CatchChallenger::QtClient(qtSocket)
 {
 }
 
