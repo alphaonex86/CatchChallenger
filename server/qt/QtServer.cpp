@@ -232,6 +232,7 @@ void QtServer::removeOneClient()
 
 void QtServer::newConnection()
 {
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     while(CatchChallenger::QFakeServer::server.hasPendingConnections())
     {
         CatchChallenger::QFakeSocket *socket = CatchChallenger::QFakeServer::server.nextPendingConnection();
@@ -262,6 +263,7 @@ void QtServer::newConnection()
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
     }
+    #endif
 }
 
 void QtServer::connect_the_last_client(CatchChallenger::Client *client, QIODevice *socket)
@@ -446,4 +448,20 @@ void QtServer::loadAndFixSettings()
         QtServer::qtServerPrivateVariables.positionSync.stop();
     }
     BaseServer::loadAndFixSettings();
+}
+
+void QtServer::setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start)
+{
+}
+
+void QtServer::preload_the_visibility_algorithm()
+{
+}
+
+void QtServer::unload_the_visibility_algorithm()
+{
+}
+
+void QtServer::unload_the_events()
+{
 }

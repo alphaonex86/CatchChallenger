@@ -4,12 +4,7 @@
 
 TimeRangeEventScan::TimeRangeEventScan()
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(this,&TimeRangeEventScan::try_initAll,                  this,&TimeRangeEventScan::initAll,              Qt::QueuedConnection);
-    /*emit */try_initAll();
-    #else
     initAll();
-    #endif
 }
 
 void TimeRangeEventScan::initAll()

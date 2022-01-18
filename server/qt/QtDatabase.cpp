@@ -222,14 +222,14 @@ void QtDatabase::syncDisconnect()
     databaseTypeVar=DatabaseBase::DatabaseType::Unknown;
 }
 
-DatabaseBase::CallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
+DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
         return NULL;
     }
-    CallBack tempCallback;
+    DatabaseBaseCallBack tempCallback;
     tempCallback.object=returnObject;
     tempCallback.method=method;
     if(queue.size()>0)
@@ -260,7 +260,7 @@ void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
     sqlQuery=new QSqlQuery(queryReturn);
     if(!queue.empty())
     {
-        CallBack callback=queue.front();
+        DatabaseBaseCallBack callback=queue.front();
         if(callback.method!=NULL)
             callback.method(callback.object);
         queue.erase(queue.begin());

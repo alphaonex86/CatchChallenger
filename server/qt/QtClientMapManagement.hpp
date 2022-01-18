@@ -15,6 +15,7 @@ public:
     bool isValid() override;
     ssize_t read(char * data, const size_t &size) override;
     ssize_t write(const char * const data, const size_t &size) override;
+    virtual void parseIncommingData() override;
 };
 class QtMapVisibilityAlgorithm_WithBorder_StoreOnSender : public QObject, public CatchChallenger::QtClient, public CatchChallenger::MapVisibilityAlgorithm_WithBorder_StoreOnSender
 {
@@ -25,6 +26,7 @@ public:
     bool isValid() override;
     ssize_t read(char * data, const size_t &size) override;
     ssize_t write(const char * const data, const size_t &size) override;
+    virtual void parseIncommingData() override;
 };
 class QtMapVisibilityAlgorithm_Simple_StoreOnSender : public QObject, public CatchChallenger::QtClient, public CatchChallenger::MapVisibilityAlgorithm_Simple_StoreOnSender
 {
@@ -35,6 +37,7 @@ public:
     bool isValid() override;
     ssize_t read(char * data, const size_t &size) override;
     ssize_t write(const char * const data, const size_t &size) override;
+    virtual void parseIncommingData() override;
 };
 
 #endif // CLIENTMAPMANAGEMENT_H

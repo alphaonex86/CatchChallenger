@@ -1,50 +1,34 @@
 #include "QtTimeRangeEventScanBase.hpp"
-#include "GlobalServerData.hpp"
-#include "Client.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../base/BroadCastWithoutSender.hpp"
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "BroadCastWithoutSender.hpp"
-#endif
-
-TimeRangeEventScanQt::TimeRangeEventScan()
-      #ifndef EPOLLCATCHCHALLENGERSERVER
+QtTimeRangeEventScan::QtTimeRangeEventScan()
       :
         next_send_timer(NULL)
-      #endif
 {
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    connect(this,&TimeRangeEventScanQt::try_initAll,                  this,&TimeRangeEventScanQt::initAll,              Qt::QueuedConnection);
+    if(!connect(this,&QtTimeRangeEventScan::try_initAll,                  this,&QtTimeRangeEventScan::initAll,              Qt::QueuedConnection))
+        abort();
     /*emit */try_initAll();
-    #else
-    initAll();
-    #endif
 }
 
-void TimeRangeEventScanQt::initAll()
+void QtTimeRangeEventScan::initAll()
 {
     //10 clients per 15s = 40 clients per min = 57600 clients per 24h
     //1ms time used each 15000ms
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     if(next_send_timer==NULL)
     {
         next_send_timer=new QTimer();
         next_send_timer->setInterval(1000*15);
 
-        connect(next_send_timer,&QTimer::timeout,this,&TimeRangeEventScanQt::exec,Qt::QueuedConnection);
+        connect(next_send_timer,&QTimer::timeout,this,&QtTimeRangeEventScan::exec,Qt::QueuedConnection);
     }
-    #else
-    setInterval(1000*15);
-    #endif
 }
 
 
-void TimeRangeEventScanQt::exec()
+void QtTimeRangeEventScan::exec()
 {
-    if(GlobalServerData::serverPrivateVariables.gift_list.size()==0)
+    if(CatchChallenger::GlobalServerData::serverPrivateVariables.gift_list.size()==0)
         return;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
     /*emit */timeRangeEventTrigger();
-    #else
-    BroadCastWithoutSender::broadCastWithoutSender.timeRangeEventTrigger();
-    #endif
+    CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender.timeRangeEventTrigger();
 }
