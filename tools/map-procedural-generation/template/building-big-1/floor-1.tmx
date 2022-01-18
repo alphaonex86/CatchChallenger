@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="11" height="12" tilewidth="16" tileheight="16" nextobjectid="8">
+ <properties>
+  <property name="type" value="indoor"/>
+ </properties>
+ <tileset firstgid="1" source="../../dest/map/tileset/inside-terra.tsx"/>
+ <tileset firstgid="1025" source="../../dest/map/tileset/invisible.tsx"/>
+ <tileset firstgid="1041" source="../../dest/map/tileset/inside-decoration.tsx"/>
+ <tileset firstgid="2065" source="../../dest/map/tileset/inside-mobilier.tsx"/>
+ <layer name="Walkable" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxbzMDAsBiI2YnAi6FYnQj8ZBQPGkwKAAAHwFxX
+  </data>
+ </layer>
+ <layer name="Other" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYCAf8EExMUAPigcjmMJBvNotJKilN5ClghkAHEIB7g==
+  </data>
+ </layer>
+ <layer name="Collisions" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxbzMDAsJhMzIcHo6s9zcPAcBiI9RgwMbpaGPjKwcDwDYhFORkYxDghYuj24APo9qCDSUCzJ3NA2HZA2p4Dt1mbgHKb8cjjAlYcDA245CyA5llyIOgoPGopAaTEKQBisSGa
+  </data>
+ </layer>
+ <layer name="Other" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFowABAAIQAAE=
+  </data>
+ </layer>
+ <layer name="WalkBehind" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAvEOVgYBDjQND4gClQ3owDQZMK5IB65MnQRwhIcTA04JKbAbRvJgeCxgd2AOV3ciDowQAAgcIH4A==
+  </data>
+ </layer>
+ <layer name="other" width="11" height="12">
+  <data encoding="base64" compression="zlib">
+   eJxjYKAcCLMwMIiwEKfWGKjOhEi1g8U+UoAEBwODJAeCHmoAACpmAb8=
+  </data>
+ </layer>
+ <objectgroup name="Moving">
+  <object id="5" type="teleport on push" gid="1027" x="80" y="192" width="16" height="16">
+   <properties>
+    <property name="map" value="building-big-1"/>
+    <property name="x" type="int" value="4"/>
+    <property name="y" type="int" value="7"/>
+   </properties>
+  </object>
+  <object id="6" type="teleport on it" gid="1027" x="80" y="48" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-0"/>
+    <property name="x" type="int" value="5"/>
+    <property name="y" type="int" value="3"/>
+   </properties>
+  </object>
+  <object id="7" type="teleport on it" gid="1027" x="64" y="48" width="16" height="16">
+   <properties>
+    <property name="map" value="floor-2"/>
+    <property name="x" type="int" value="4"/>
+    <property name="y" type="int" value="3"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>
