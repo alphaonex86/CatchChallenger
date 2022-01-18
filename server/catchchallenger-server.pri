@@ -103,7 +103,6 @@ HEADERS += \
     $$PWD/base/BaseServerMasterSendDatapack.hpp \
     $$PWD/base/LocalClientHandlerWithoutSender.hpp \
     $$PWD/base/ServerStructures.hpp \
-    $$PWD/base/EventThreader.hpp \
     $$PWD/base/Client.hpp \
     $$PWD/base/ClientNetworkReadWithoutSender.hpp \
     $$PWD/base/BroadCastWithoutSender.hpp \

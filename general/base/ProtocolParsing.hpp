@@ -184,7 +184,7 @@ public:
         #endif
        );
     virtual ~ProtocolParsingInputOutput();
-    friend class Client;
+    //friend class Client;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     uint64_t getTXSize() const;
     uint64_t getRXSize() const;
@@ -219,14 +219,6 @@ protected:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     int parseIncommingDataCount;//by object
     #endif
-};
-#else
-class ProtocolParsing
-{
-public:
-    static uint8_t compressionLevel;
-    static int32_t decompressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
-    static int32_t compressZstandard(const char * const input, const uint32_t &intputSize, char * const output, const uint32_t &maxOutputSize);
 };
 #endif
 
