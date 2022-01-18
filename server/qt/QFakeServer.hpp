@@ -1,3 +1,4 @@
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
 #ifndef CATCHCHALLENGER_QFAKESERVER_H
 #define CATCHCHALLENGER_QFAKESERVER_H
 
@@ -41,3 +42,4 @@ public slots:
 }
 
 #endif // QFAKESERVER_H
+#endif

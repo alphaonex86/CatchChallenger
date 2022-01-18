@@ -1,14 +1,13 @@
 #include "NormalServerGlobal.hpp"
 #include "VariableServer.hpp"
-#include "base/Client.hpp"
 #include "../general/base/FacilityLibGeneral.hpp"
 #include "../general/base/Version.hpp"
 #include "../general/base/ProtocolVersion.hpp"
-
-#include <regex>
-
-#include <random>
+#include "base/Client.hpp"
 #include <iostream>
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include <QtGlobal>
+#endif
 
 NormalServerGlobal::NormalServerGlobal()
 {

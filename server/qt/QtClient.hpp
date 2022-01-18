@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_QTCLIENT_H
 
 #include <QIODevice>
-#include "../base/Client.hpp"
 
 namespace CatchChallenger {
 class QtClient
@@ -13,6 +12,8 @@ public:
     ssize_t write(const char * const data, const size_t &size);
     bool disconnectClientTimer();
     bool disconnectClient();
+    void closeSocket();
+    bool isValid();
 public:
     QIODevice *socket;
 };

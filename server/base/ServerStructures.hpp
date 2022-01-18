@@ -26,13 +26,7 @@
 #endif
 
 namespace CatchChallenger {
-class EventThreader;
-class Map_custom;
 class CommonMap;
-class ClientMapManagement;
-class PlayerUpdater;
-class TimeRangeEventScan;
-class Map_server_MapVisibility_Simple_StoreOnReceiver;
 class Client;
 class MapServer;
 

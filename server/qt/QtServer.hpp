@@ -38,6 +38,11 @@ public:
     virtual void preload_finish() override;
     void quitForCriticalDatabaseQueryFailed() override;
     void loadAndFixSettings() override;
+
+    void setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start) override;
+    void preload_the_visibility_algorithm() override;
+    void unload_the_visibility_algorithm() override;
+    void unload_the_events() override;
 signals:
     void try_initAll() const;
     void try_stop_server() const;

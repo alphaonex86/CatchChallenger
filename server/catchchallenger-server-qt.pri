@@ -15,19 +15,21 @@ SOURCES += $$PWD/qt/QtServer.cpp \
     $$PWD/qt/EventThreader.cpp \
     $$PWD/qt/QFakeServer.cpp \
     $$PWD/qt/QFakeSocket.cpp \
+    $$PWD/qt/QSslServer.cpp \
     $$PWD/qt/QtClient.cpp \
     $$PWD/qt/QtClientMapManagement.cpp \
     $$PWD/qt/QtPlayerUpdater.cpp \
     $$PWD/qt/QtTimeRangeEventScanBase.cpp \
     $$PWD/qt/QtTimerEvents.cpp \
     $$PWD/qt/QtDatabase.cpp \
-    $$PWD/../client/qt/solo/InternalServer.cpp \
-    $$PWD/NormalServer.cpp \
+    $$PWD/qt/InternalServer.cpp \
+    $$PWD/qt/NormalServer.cpp \
     $$PWD/NormalServerGlobal.cpp
 HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/EventThreader.hpp \
     $$PWD/qt/QFakeServer.hpp \
     $$PWD/qt/QFakeSocket.hpp \
+    $$PWD/qt/QSslServer.hpp \
     $$PWD/qt/QtClient.hpp \
     $$PWD/qt/QtClientMapManagement.hpp \
     $$PWD/qt/QtPlayerUpdater.hpp \
@@ -35,6 +37,6 @@ HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/QtTimeRangeEventScanBase.hpp \
     $$PWD/qt/QtTimerEvents.hpp \
     $$PWD/qt/QtDatabase.hpp \
-    $$PWD/../client/qt/solo/InternalServer.hpp \
-    $$PWD/NormalServer.hpp \
+    $$PWD/qt/InternalServer.hpp \
+    $$PWD/qt/NormalServer.hpp \
     $$PWD/NormalServerGlobal.hpp
