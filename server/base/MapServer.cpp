@@ -1,6 +1,6 @@
 #include "MapServer.hpp"
 #include "GlobalServerData.hpp"
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 #include "Client.hpp"
 
 using namespace CatchChallenger;

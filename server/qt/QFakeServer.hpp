@@ -9,7 +9,6 @@
 #include <QMutexLocker>
 #include <vector>
 
-namespace CatchChallenger {
 class QFakeSocket;
 
 class QFakeServer : public QObject
@@ -39,7 +38,6 @@ protected:
 public slots:
     void disconnectedSocket();
 };
-}
 
 #endif // QFAKESERVER_H
 #endif

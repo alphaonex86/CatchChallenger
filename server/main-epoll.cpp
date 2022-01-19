@@ -6,7 +6,7 @@
 #include "base/ServerStructures.hpp"
 #include "base/TinyXMLSettings.hpp"
 #include "base/GlobalServerData.hpp"
-#include "../general/base/tinyXML2/tinyxml2.hpp"
+#include "../general/tinyXML2/tinyxml2.hpp"
 #include "../general/base/CommonSettingsCommon.hpp"
 #include "../general/base/FacilityLib.hpp"
 #include "epoll/EpollServer.hpp"
@@ -18,7 +18,7 @@
 #ifdef CATCHCHALLENGER_DB_MYSQL
 #include "epoll/db/EpollMySQL.hpp"
 #endif
-#include "NormalServerGlobal.hpp"
+#include "base/NormalServerGlobal.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "game-server-alone/LinkToMaster.hpp"
 #include "epoll/EpollSocket.hpp"

@@ -7,11 +7,14 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "cc/Api_protocol_Qt.hpp"
 #include "cc/Api_client_real.hpp"
-#ifdef CATCHCHALLENGER_SOLO
-#include "../qt/QFakeSocket.hpp"
-#endif
 
 class LoadingScreen;
+
+namespace CatchChallenger {
+#ifdef CATCHCHALLENGER_SOLO
+class QFakeSocket;
+#endif
+}
 
 class ConnexionManager : public QObject
 {

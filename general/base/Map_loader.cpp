@@ -1,5 +1,5 @@
 #include "Map_loader.hpp"
-#include "tinyXML2/customtinyxml2.hpp"
+#include "../tinyXML2/customtinyxml2.hpp"
 #include "CommonDatapack.hpp"
 #include "CommonDatapackServerSpec.hpp"
 

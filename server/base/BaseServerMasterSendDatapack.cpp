@@ -3,7 +3,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include "../../general/xxhash/xxhash.h"

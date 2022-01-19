@@ -5,7 +5,7 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/hps/hps.h"
 #include "../crafting/MapServerCrafting.hpp"
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 #include "GlobalServerData.hpp"
 
 #include <vector>

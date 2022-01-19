@@ -222,8 +222,8 @@ void BaseServer::preload_pointOnMap_plant_return()
     nullvalue.map=nullptr;
     nullvalue.x=0;
     nullvalue.y=0;
-    #endif
     uint16_t datapack_index_temp_for_plant=0;
+    #endif
 
     unsigned int plantCount=0;
     unsigned int plantValidatedCount=0;

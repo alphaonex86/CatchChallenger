@@ -5,7 +5,6 @@
 #include "../../base/BroadCastWithoutSender.hpp"
 #include "../../base/ClientNetworkReadWithoutSender.hpp"
 #include "../../base/GlobalServerData.hpp"
-#include "../../VariableServer.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 
 #include <iostream>

@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
 
 class TinyXMLSettings
 {

@@ -1,19 +1,10 @@
+DEFINES += CATCHCHALLENGER_SOLO
 include(lib.pri)
-include(../../general/general.pri)
-
-#DEFINES += CATCHCHALLENGER_SOLO
-#define CATCHCHALLENGER_SOLO
-contains(DEFINES, CATCHCHALLENGER_SOLO) {
-}
-else
-{
-include(../../server/catchchallenger-server.pri)
-}
-
+include(libheader.pri)
 QT       -= core gui
 LIBS -= -lpthread
-
-DEFINES += CATCHCHALLENGERLIB
-
 TARGET = catchchallengerclient
 TEMPLATE = lib
+linux:QMAKE_LFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CXXFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"

@@ -605,16 +605,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         return false;
     }
     uint32_t decompressedSize=0;
-    if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
+    if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None)
     {
         decompressedSize=sub_size32;
-        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+        memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
     }
     else
-        decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,
-            sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+        decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,
+            sub_size32,sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
     {
-        const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+        const char * const data2=CompressionProtocol::tempBigBufferForUncompressedInput;
         int pos2=0;
         int size2=decompressedSize;
 
@@ -684,9 +684,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.craftingRecipesMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1)
-                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+                        memcpy(player_informations.recipes,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
                     else
-                        memcpy(player_informations.recipes,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
+                        memcpy(player_informations.recipes,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
                 pos2+=sub_size16;
             }
@@ -711,9 +711,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.monstersMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+                        memcpy(player_informations.encyclopedia_monster,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.monstersMaxId/8+1);
                     else
-                        memcpy(player_informations.encyclopedia_monster,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
+                        memcpy(player_informations.encyclopedia_monster,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
                 pos2+=sub_size16;
             }
@@ -738,9 +738,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 if(CommonDatapack::commonDatapack.items.itemMaxId>0)
                 {
                     if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
                     else
-                        memcpy(player_informations.encyclopedia_item,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
+                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
                 pos2+=sub_size16;
             }
@@ -824,16 +824,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         return false;
     }
     decompressedSize=0;
-    if(ProtocolParsingBase::compressionTypeClient==CompressionType::None)
+    if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None)
     {
         decompressedSize=sub_size32;
-        memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+        memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
     }
     else
-        decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,
-            sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+        decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,
+            sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
     {
-        const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+        const char * const data2=CompressionProtocol::tempBigBufferForUncompressedInput;
         int pos2=0;
         int size2=decompressedSize;
 
@@ -865,9 +865,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     return false;
                 }
                 if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1)
-                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
                 else
-                    memcpy(player_informations.bot_already_beaten,ProtocolParsingBase::tempBigBufferForUncompressedInput+pos2,sub_size16);
+                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 pos2+=sub_size16;
             }
         }

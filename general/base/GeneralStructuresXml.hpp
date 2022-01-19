@@ -5,7 +5,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "tinyXML2/tinyxml2.hpp"
+#include "../tinyXML2/tinyxml2.hpp"
 #include "GeneralType.hpp"
 #include "GeneralStructures.hpp"
 #include "GeneralVariable.hpp"

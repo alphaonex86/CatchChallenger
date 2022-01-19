@@ -24,7 +24,7 @@ SOURCES += $$PWD/qt/QtServer.cpp \
     $$PWD/qt/QtDatabase.cpp \
     $$PWD/qt/InternalServer.cpp \
     $$PWD/qt/NormalServer.cpp \
-    $$PWD/NormalServerGlobal.cpp
+    $$PWD/base/NormalServerGlobal.cpp
 HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/EventThreader.hpp \
     $$PWD/qt/QFakeServer.hpp \
@@ -39,4 +39,4 @@ HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/QtDatabase.hpp \
     $$PWD/qt/InternalServer.hpp \
     $$PWD/qt/NormalServer.hpp \
-    $$PWD/NormalServerGlobal.hpp
+    $$PWD/base/NormalServerGlobal.hpp

@@ -9,7 +9,7 @@
 #include "../base/ClientNetworkReadWithoutSender.hpp"
 #include "../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
 #ifdef CATCHCHALLENGER_SOLO
-#include "../../client/qt/QFakeServer.hpp"
+#include "QFakeServer.hpp"
 #endif
 #include <QCoreApplication>
 #include <QSqlDatabase>
@@ -233,9 +233,9 @@ void QtServer::removeOneClient()
 void QtServer::newConnection()
 {
     #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
-    while(CatchChallenger::QFakeServer::server.hasPendingConnections())
+    while(QFakeServer::server.hasPendingConnections())
     {
-        CatchChallenger::QFakeSocket *socket = CatchChallenger::QFakeServer::server.nextPendingConnection();
+        QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
             qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by fake socket");
@@ -313,27 +313,27 @@ bool QtServer::check_if_now_stopped()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     #ifdef CATCHCHALLENGER_SOLO
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server!=NULL && CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->isConnected())
-        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType()!=CatchChallenger::DatabaseBase::DatabaseType::SQLite)
         {
-            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType()) << std::endl;
+            std::cerr << "Disconnected to incorrect database type for solo: " << CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_server->databaseType()) << std::endl;
             abort();
         }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common!=NULL && CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->isConnected())
-        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType()!=CatchChallenger::DatabaseBase::DatabaseType::SQLite)
         {
-            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType()) << std::endl;
+            std::cerr << "Disconnected to incorrect database type for solo: " << CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_common->databaseType()) << std::endl;
             abort();
         }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login!=NULL && CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->isConnected())
-        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType()!=CatchChallenger::DatabaseBase::DatabaseType::SQLite)
         {
-            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType()) << std::endl;
+            std::cerr << "Disconnected to incorrect database type for solo: " << CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_login->databaseType()) << std::endl;
             abort();
         }
     if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base!=NULL && CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->isConnected())
-        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType()!=DatabaseBase::DatabaseType::SQLite)
+        if(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType()!=CatchChallenger::DatabaseBase::DatabaseType::SQLite)
         {
-            std::cerr << "Disconnected to incorrect database type for solo: " << DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType()) << std::endl;
+            std::cerr << "Disconnected to incorrect database type for solo: " << CatchChallenger::DatabaseBase::databaseTypeToString(CatchChallenger::GlobalServerData::serverPrivateVariables.db_base->databaseType()) << std::endl;
             abort();
         }
     #endif

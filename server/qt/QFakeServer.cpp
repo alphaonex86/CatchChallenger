@@ -4,8 +4,6 @@
 
 #include <QHostAddress>
 
-using namespace CatchChallenger;
-
 QFakeServer QFakeServer::server;
 
 QFakeServer::QFakeServer()
