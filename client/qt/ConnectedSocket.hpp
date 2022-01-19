@@ -8,7 +8,6 @@
 #ifndef NOTCPSOCKET
     #include <QSslSocket>
     #include <QAbstractSocket>
-    #include "QFakeSocket.hpp"
 #endif
 #ifndef NOWEBSOCKET
     #include <QtWebSockets/QWebSocket>
@@ -17,6 +16,10 @@
 #include <QByteArray>
 
 namespace CatchChallenger {
+
+#ifdef CATCHCHALLENGER_SOLO
+class QFakeSocket;
+#endif
 
 class ConnectedSocket : public QIODevice
 {

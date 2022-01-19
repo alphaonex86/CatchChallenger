@@ -1,4 +1,4 @@
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/MapServer.hpp"
 #include "../base/Client.hpp"

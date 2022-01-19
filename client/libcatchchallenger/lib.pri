@@ -7,10 +7,15 @@ SOURCES += \
     $$PWD/Api_protocol_query.cpp \
     $$PWD/Api_protocol_reply.cpp \
     $$PWD/DatapackClientLoader.cpp \
-    $$PWD/DatapackChecksum.cpp
+    $$PWD/DatapackChecksum.cpp \
+    $$PWD/ZstdDecode.cpp \
+    $$PWD/TarDecode.cpp
 
-HEADERS  += \
-    $$PWD/Api_protocol.hpp \
-    $$PWD/ClientStructures.hpp \
-    $$PWD/DatapackClientLoader.hpp \
-    $$PWD/DatapackChecksum.hpp
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
+    $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
+    $$PWD/../../general/tinyXML2/tinyxml2c.cpp
+
+include(../../general/general.pri)
+
+DEFINES += CATCHCHALLENGERLIB

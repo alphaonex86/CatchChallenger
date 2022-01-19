@@ -1,5 +1,6 @@
 #include <QCoreApplication>
 #include "qt/ProcessControler.hpp"
+#include "base/NormalServerGlobal.hpp"
 
 int main(int argc, char *argv[])
 {

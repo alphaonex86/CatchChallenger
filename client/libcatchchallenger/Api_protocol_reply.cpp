@@ -62,10 +62,10 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 switch(returnCode)
                 {
                     case 0x04:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                        CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::None;
                     break;
                     case 0x08:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
+                        CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;
                     break;
                     default:
                         newError("Procotol wrong or corrupted","compression type wrong with main ident: "+std::to_string(packetCode)+

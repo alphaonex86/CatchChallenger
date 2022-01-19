@@ -7,7 +7,6 @@
 #include <QByteArray>
 #include <QIODevice>
 
-namespace CatchChallenger {
 class QFakeSocket : public QIODevice
 {
     Q_OBJECT
@@ -48,7 +47,6 @@ private:
     quint64 RX_size;
     qint64	bytesAvailableWithMutex();
 };
-}
 
 #endif // QFAKESOCKET_H
 #endif
