@@ -1,10 +1,8 @@
 #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
 #include "QFakeSocket.hpp"
 #include "QFakeServer.hpp"
-#include "ClientVariable.hpp"
 
 #include <QMutexLocker>
-using namespace CatchChallenger;
 
 QFakeSocket::QFakeSocket()
 {

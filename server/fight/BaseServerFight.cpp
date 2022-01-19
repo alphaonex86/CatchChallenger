@@ -3,9 +3,9 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/fight/FightLoader.hpp"
-#include "../../general/base/tinyXML2/tinyxml2.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../base/GlobalServerData.hpp"
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../base/DatabaseFunction.hpp"
 
 #include <string>

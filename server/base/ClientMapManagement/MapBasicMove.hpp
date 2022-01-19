@@ -6,7 +6,7 @@
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
 #include "../ServerStructures.hpp"
-#include "../../VariableServer.hpp"
+#include "../VariableServer.hpp"
 
 /** \warning No static variable due to thread access to this class!!! */
 

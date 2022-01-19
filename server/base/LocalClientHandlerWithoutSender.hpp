@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_LOCALCLIENBTHANDLERWITHOUTSENDER_H
 
 #include <vector>
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 
 namespace CatchChallenger {
 class LocalClientHandlerWithoutSender

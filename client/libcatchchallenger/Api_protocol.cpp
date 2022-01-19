@@ -1,7 +1,7 @@
 #include "Api_protocol.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
-#include "../../general/base/tinyXML2/tinyxml2.hpp"
-#include "../../general/base/tinyXML2/customtinyxml2.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
 
 using namespace CatchChallenger;
 

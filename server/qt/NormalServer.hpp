@@ -13,17 +13,16 @@
 #include <QSslKey>
 #include <QSslCertificate>
 
-#include "base/ServerStructures.hpp"
-#include "base/Client.hpp"
-#include "../general/base/Map_loader.hpp"
-#include "../general/base/ProtocolParsing.hpp"
-#include "base/MapServer.hpp"
-#include "qt/QtServer.hpp"
+#include "../base/ServerStructures.hpp"
+#include "../base/Client.hpp"
+#include "../../general/base/Map_loader.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
+#include "../base/MapServer.hpp"
+#include "QtServer.hpp"
 #include "QSslServer.hpp"
-#include "NormalServerGlobal.hpp"
 
 namespace CatchChallenger {
-class NormalServer : public QtServer, public NormalServerGlobal
+class NormalServer : public QtServer
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Q_OBJECT
