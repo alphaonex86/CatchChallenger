@@ -928,16 +928,16 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
-            if(ProtocolParsingBase::compressionTypeClient==CompressionType::None || packetCode==0x76)
+            if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || packetCode==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
             }
             else
-                decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,
-                    sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+                decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,
+                    sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
 
-            const char * const data2=ProtocolParsingBase::tempBigBufferForUncompressedInput;
+            const char * const data2=CompressionProtocol::tempBigBufferForUncompressedInput;
             int pos2=0;
             int size2=decompressedSize;
 

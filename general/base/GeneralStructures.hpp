@@ -7,11 +7,7 @@
 #include <unordered_set>
 
 #include "cpp11addition.hpp"
-
 #include "GeneralType.hpp"
-#if defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
-#include "../../server/VariableServer.hpp"
-#endif
 
 #if defined(CATCHCHALLENGER_CLIENT)
 //client
@@ -25,11 +21,6 @@
 #include <map>
 #include <set>
 #endif
-
-#define COORD_TYPE uint8_t
-#define SIMPLIFIED_PLAYER_ID_TYPE uint16_t
-#define CLAN_ID_TYPE uint32_t
-#define SPEED_TYPE uint8_t
 
 namespace CatchChallenger {
 

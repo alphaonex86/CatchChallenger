@@ -4,7 +4,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 
 #include <regex>
 #include <iostream>

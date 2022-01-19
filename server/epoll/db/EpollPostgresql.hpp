@@ -9,7 +9,6 @@
 #include <chrono>
 
 #include "../../base/DatabaseBase.hpp"
-#include "../../VariableServer.hpp"
 #include "../BaseClassSwitch.hpp"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024

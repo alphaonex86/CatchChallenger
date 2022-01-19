@@ -3,7 +3,7 @@
 
 #include <string>
 #include "DatabaseBase.hpp"
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 
 namespace CatchChallenger {
 class SqlFunction

@@ -13,5 +13,9 @@
 #define CATCHCHALLENGER_TYPE_SKILL uint16_t
 #define CATCHCHALLENGER_TYPE_BUFF uint8_t
 #define CATCHCHALLENGER_TYPE_QUEST uint8_t
+#define COORD_TYPE uint8_t
+#define SIMPLIFIED_PLAYER_ID_TYPE uint16_t
+#define CLAN_ID_TYPE uint32_t
+#define SPEED_TYPE uint8_t
 
 #endif // GENERALTYPE_H

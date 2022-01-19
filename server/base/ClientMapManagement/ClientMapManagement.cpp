@@ -1,5 +1,5 @@
 #include "ClientMapManagement.hpp"
-#include "../../VariableServer.hpp"
+#include "../VariableServer.hpp"
 #include <iostream>
 #include <string>
 

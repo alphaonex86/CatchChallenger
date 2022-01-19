@@ -1,5 +1,6 @@
 #include "ProcessControler.hpp"
 #include "base/ServerStructures.hpp"
+#include "base/NormalServerGlobal.hpp"
 #include "../general/base/CommonSettingsCommon.hpp"
 
 using namespace CatchChallenger;
@@ -17,7 +18,7 @@ ProcessControler::ProcessControler()
     need_be_closed=false;
 
     settings=new TinyXMLSettings((QCoreApplication::applicationDirPath()+QStringLiteral("/server-properties.xml")).toStdString());
-    NormalServer::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
+    NormalServerGlobal::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
     send_settings();
     server.start_server();
 }

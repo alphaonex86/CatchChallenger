@@ -4,6 +4,7 @@ DEFINES += EXTERNALLIBZSTD
 
 include(../general/general.pri)
 include(catchchallenger-server.pri)
+include(catchchallenger-serverheader.pri)
 include(../general/hps/hps.pri)
 
 QT       -= gui widgets network sql
@@ -54,14 +55,14 @@ SOURCES += \
     $$PWD/epoll/EpollGenericServer.cpp \
     $$PWD/epoll/EpollGenericSslServer.cpp \
     $$PWD/all-in-one/TimeRangeEvent.cpp \
-    $$PWD/NormalServerGlobal.cpp \
+    $$PWD/base/NormalServerGlobal.cpp \
     $$PWD/main-epoll.cpp \
     $$PWD/main-epoll2.cpp \
-    epoll/BaseServerEpoll.cpp \
-    epoll/ClientMapManagementEpoll.cpp \
-    epoll/ServerPrivateVariablesEpoll.cpp \
-    epoll/timer/PlayerUpdaterEpoll.cpp \
-    epoll/timer/TimeRangeEventScan.cpp
+    $$PWD/epoll/BaseServerEpoll.cpp \
+    $$PWD/epoll/ClientMapManagementEpoll.cpp \
+    $$PWD/epoll/ServerPrivateVariablesEpoll.cpp \
+    $$PWD/epoll/timer/PlayerUpdaterEpoll.cpp \
+    $$PWD/epoll/timer/TimeRangeEventScan.cpp
 
 HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/epoll/EpollClient.h \
@@ -83,15 +84,15 @@ HEADERS += $$PWD/epoll/EpollSocket.h \
     $$PWD/NormalServerGlobal.h \
     $$PWD/base/DdosBuffer.h \
     $$PWD/all-in-one/TimeRangeEvent.h \
-    epoll/BaseServerEpoll.hpp \
-    epoll/ServerPrivateVariablesEpoll.hpp \
-    epoll/timer/PlayerUpdaterEpoll.hpp \
-    epoll/timer/TimeRangeEventScan.hpp
+    $$PWD/epoll/base/BaseServerEpoll.hpp \
+    $$PWD/epoll/ServerPrivateVariablesEpoll.hpp \
+    $$PWD/epoll/timer/PlayerUpdaterEpoll.hpp \
+    $$PWD/epoll/timer/TimeRangeEventScan.hpp
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../general/base/tinyXML2/tinyxml2.cpp \
-$$PWD/../general/base/tinyXML2/tinyxml2b.cpp \
-$$PWD/../general/base/tinyXML2/tinyxml2c.cpp
+HEADERS += $$PWD/../general/tinyXML2/tinyxml2.h
+SOURCES += $$PWD/../general/tinyXML2/tinyxml2.cpp \
+$$PWD/../general/tinyXML2/tinyxml2b.cpp \
+$$PWD/../general/tinyXML2/tinyxml2c.cpp

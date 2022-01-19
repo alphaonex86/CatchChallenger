@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_CLIENTNETWORKREADWITHOUTSENDER_H
 #define CATCHCHALLENGER_CLIENTNETWORKREADWITHOUTSENDER_H
 
-#include "../VariableServer.hpp"
+#include "VariableServer.hpp"
 
 namespace CatchChallenger {
 class ClientNetworkRead;
