@@ -1392,6 +1392,7 @@ void DatapackClientLoader::parseZoneExtra()
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
     const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    sort(returnList);
     unsigned int index=0;
     std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
     while(index<returnList.size())
@@ -1476,6 +1477,7 @@ void DatapackClientLoader::parseZoneExtra()
                 name = name->NextSiblingElement("name");
             }
         }
+        zone.id=zonesExtra.size();
         if(haveName)
             zonesExtra[zoneCodeName]=zone;
 

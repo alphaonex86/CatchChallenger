@@ -32,7 +32,7 @@ void BaseServer::preload_zone_return()
         {
             if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
             {
-                const uint16_t &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
+                const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
                 GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
                 GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
             }

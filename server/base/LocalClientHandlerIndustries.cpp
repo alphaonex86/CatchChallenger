@@ -6,7 +6,7 @@
 
 using namespace CatchChallenger;
 
-void Client::saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
+void Client::saveIndustryStatus(const FACTORY_TYPE &factoryId,const IndustryStatus &industryStatus,const Industry &industry)
 {
     std::vector<std::string> resourcesStringList,productsStringList;
     unsigned int index;

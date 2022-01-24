@@ -1,5 +1,6 @@
 #ifndef CATCHCHALLENGER_API_CLIENT_REAL_H
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
+#if ! defined (ONLYMAPRENDER)
 
 #include "../../../general/base/GeneralVariable.hpp"
 #include "QtDatapackChecksum.hpp"
@@ -170,4 +171,5 @@ signals:
 };
 }
 
+#endif
 #endif // Protocol_and_data_H
