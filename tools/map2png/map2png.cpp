@@ -38,6 +38,8 @@
 #include <QFileDialog>
 
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../client/qtmaprender/MapVisualiserOrder.hpp"
+#include "../../client/qtmaprender/MapVisualiserThread.hpp"
 
 QString Map2Png::text_slash=QStringLiteral("/");
 QString Map2Png::text_dottmx=QStringLiteral(".tmx");
@@ -184,7 +186,7 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
     }
 }
 
-void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
+/*void MapItem::setMapPosition(Tiled::Map *map,qint16 x,qint16 y)
 {
     QList<QGraphicsItem *> values = displayed_layer.values(map);
     int index=0;
@@ -202,7 +204,7 @@ QRectF MapItem::boundingRect() const
 
 void MapItem::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *)
 {
-}
+}*/
 
 QStringList Map2Png::listFolder(const QString& folder,const QString& suffix)
 {

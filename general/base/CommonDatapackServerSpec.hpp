@@ -19,12 +19,12 @@ public:
 public:
     std::unordered_map<uint16_t,BotFight> botFights;
     uint16_t botFightsMaxId;
-    std::unordered_map<uint16_t,Quest> quests;
-    std::unordered_map<uint16_t,Shop> shops;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
+    std::unordered_map<SHOP_TYPE,Shop> shops;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     static CommonDatapackServerSpec commonDatapackServerSpec;
-    std::unordered_map<std::string,uint16_t> zoneToId;//tempory var to load zone
+    std::unordered_map<std::string,ZONE_TYPE> zoneToId;//tempory var to load zone
     std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>

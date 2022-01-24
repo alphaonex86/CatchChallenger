@@ -1,5 +1,6 @@
 #ifndef CATCHCHALLENGER_PROTOCOL_H
 #define CATCHCHALLENGER_PROTOCOL_H
+#if ! defined (ONLYMAPRENDER)
 
 #include <vector>
 #include <map>
@@ -7,7 +8,9 @@
 #include "ClientStructures.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#if ! defined (ONLYMAPRENDER)
 #include "../../general/base/ProtocolParsing.hpp"
+#endif
 #include "../../general/base/MoveOnTheMap.hpp"
 
 namespace CatchChallenger {
@@ -466,4 +469,5 @@ public:
 };
 }
 
+#endif
 #endif // CATCHCHALLENGER_PROTOCOL_H

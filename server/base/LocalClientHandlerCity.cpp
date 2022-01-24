@@ -126,7 +126,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             }
         }
         //send the zone capture
-        const uint16_t &zoneId=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
+        const ZONE_TYPE &zoneId=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
         if(!public_and_private_informations.clan_leader)
         {
             if(clan->captureCityInProgress==65535)

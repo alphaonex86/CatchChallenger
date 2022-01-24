@@ -13,7 +13,7 @@
 #include "../../server/base/TinyXMLSettings.hpp"
 #include "../../server/epoll/Epoll.hpp"
 #include "../../server/epoll/EpollSocket.hpp"
-#include "../../server/VariableServer.hpp"
+#include "../../server/base/VariableServer.hpp"
 #include "LinkToLogin.h"
 #include "EpollServerStats.h"
 

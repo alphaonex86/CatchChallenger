@@ -2,10 +2,14 @@
 #define CATCHCHALLENGER_DISPLAY_STRUCTURES_H
 
 #include <unordered_map>
+#include <vector>
 
-#include "../qt/tiled/tiled_mapobject.hpp"
-#include "../qt/tiled/tiled_tileset.hpp"
-#include "../qt/render/TemporaryTile.hpp"
+namespace Tiled {
+class MapObject;
+class Tileset;
+}
+
+class TemporaryTile;
 
 namespace CatchChallenger {
 

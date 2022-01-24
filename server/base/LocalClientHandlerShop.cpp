@@ -6,7 +6,7 @@
 
 using namespace CatchChallenger;
 
-void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
+void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
@@ -164,7 +164,7 @@ void Client::getShopList(const uint8_t &query_id,const uint16_t &shopId)
     }
 }
 
-void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("buyObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
@@ -358,7 +358,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &shopId,const uint
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("sellObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");

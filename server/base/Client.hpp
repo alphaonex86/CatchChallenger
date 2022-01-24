@@ -421,14 +421,14 @@ private:
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
-    void getShopList(const uint8_t &query_id, const uint16_t &shopId);
-    void buyObject(const uint8_t &query_id, const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);
-    void sellObject(const uint8_t &query_id,const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void getShopList(const uint8_t &query_id, const SHOP_TYPE &shopId);
+    void buyObject(const uint8_t &query_id, const SHOP_TYPE &shopId, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price);
+    void sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
     //factory
-    void saveIndustryStatus(const uint32_t &factoryId,const IndustryStatus &industryStatus,const Industry &industry);
-    void getFactoryList(const uint8_t &query_id, const uint16_t &factoryId);
-    void buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void sellFactoryResource(const uint8_t &query_id,const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
+    void saveIndustryStatus(const FACTORY_TYPE &factoryId, const IndustryStatus &industryStatus, const Industry &industry);
+    void getFactoryList(const uint8_t &query_id, const FACTORY_TYPE &factoryId);
+    void buyFactoryProduct(const uint8_t &query_id,const FACTORY_TYPE &factoryId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
+    void sellFactoryResource(const uint8_t &query_id,const FACTORY_TYPE &factoryId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();

@@ -1,11 +1,12 @@
 #ifndef API_PROTOCOL_QT_H
 #define API_PROTOCOL_QT_H
+#if ! defined (ONLYMAPRENDER)
 
 #include <QObject>
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/fight/CommonFightEngine.hpp"
-#include "../../libcatchchallenger/Api_protocol.hpp"
+#include "../libcatchchallenger/Api_protocol.hpp"
 #include "ConnectedSocket.hpp"
 
 namespace CatchChallenger {
@@ -396,4 +397,5 @@ private:
 };
 }
 
+#endif
 #endif // API_PROTOCOL_QT_H
