@@ -43,7 +43,7 @@ public:
 
 private:
     std::string error;
-    std::unordered_map<std::string,uint8_t> zoneNumber;
+    std::unordered_map<std::string,uint16_t> zoneNumber;//sub zone part into same map, NOT linked with zone/
 };
 }
 
