@@ -12,7 +12,7 @@
 #include <QtGui/QColor>
 
 #include "../../general/base/CommonMap.hpp"
-#include "../../client/qt/Api_protocol_Qt.hpp"
+#include "../../client/libqtcatchchallenger/Api_protocol_Qt.hpp"
 
 class MapServerMini : public CatchChallenger::CommonMap
 {

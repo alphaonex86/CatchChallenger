@@ -38,6 +38,7 @@
 #include <QDir>
 #include <QTime>
 #include <QDebug>
+#include <QElapsedTimer>
 
 int main(int argc, char *argv[])
 {

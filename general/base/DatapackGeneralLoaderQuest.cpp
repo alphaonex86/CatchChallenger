@@ -6,10 +6,10 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::unordered_map<uint16_t, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder)
+std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder)
 {
     bool ok;
-    std::unordered_map<uint16_t, Quest> quests;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> quests;
     //open and quick check the file
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Dirs);
     unsigned int index=0;

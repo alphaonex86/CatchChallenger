@@ -82,7 +82,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
             getShopList(queryNumber,shopId);
             return true;
         }
@@ -97,7 +97,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
             const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
             const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
             const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
@@ -115,7 +115,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                 return false;
             }
             #endif
-            const uint16_t &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
             const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
             const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
             const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));

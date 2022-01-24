@@ -2,7 +2,6 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../client/qt/FacilityLibClient.hpp"
 #include "MultipleBotConnection.h"
 
 #include <QNetworkProxy>

@@ -152,9 +152,9 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
 //return true if now have wild monter to fight
 bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y,
                                                      #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                                                     const std::unordered_map<uint16_t, uint32_t> &items
+                                                     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items
                                                      #else
-                                                     const std::map<uint16_t, uint32_t> &items
+                                                     const std::map<CATCHCHALLENGER_TYPE_ITEM, CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items
                                                      #endif
                                                      , const std::vector<uint8_t> &events)
 {

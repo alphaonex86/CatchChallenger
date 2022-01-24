@@ -16,8 +16,8 @@
 #include <QColor>
 #include <utility>
 
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../libcatchchallenger/DatapackClientLoader.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../tiled/tiled_tileset.hpp"
 
 class QtDatapackClientLoaderThread;
