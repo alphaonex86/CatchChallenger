@@ -78,6 +78,11 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(datapackPath)).toString().toUtf8());
         hash=std::string(data.constData(),data.size());
     }
+    if(hash.size()!=28)
+    {
+        Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(datapackPath));
+        hash.empty();
+    }
     #ifdef CATCHCHALLENGER_CACHE_HPS
     this->language=Language::language.getLanguage().toStdString();
     std::string cachepath;
@@ -270,11 +275,21 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashMain-"+QString::fromStdString(datapackPathMain)).toString().toUtf8());
         hashMain=std::string(data.constData(),data.size());
     }
+    if(hashMain.size()!=28)
+    {
+        Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(datapackPathMain));
+        hashMain.empty();
+    }
     std::string hashSub;
     if(Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(datapackPathSub)))
     {
         const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashSub-"+QString::fromStdString(datapackPathSub)).toString().toUtf8());
         hashSub=std::string(data.constData(),data.size());
+    }
+    if(hashSub.size()!=28)
+    {
+        Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(datapackPathSub));
+        hashSub.empty();
     }
     DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode,hashMain,hashSub);
     if(mDefaultInventoryImage==NULL)

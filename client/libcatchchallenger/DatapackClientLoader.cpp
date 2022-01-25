@@ -61,7 +61,11 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
     {
         std::vector<char> hash;
         if(!cacheHash.empty())
+        {
             hash=std::vector<char>(cacheHash.begin(),cacheHash.end());
+            if(hash.size()!=28)
+                hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
+        }
         else
             hash=CatchChallenger::DatapackChecksum::doChecksumBase(datapackPath);
         if(hash.empty())
@@ -69,6 +73,25 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
             std::cerr << "DatapackClientLoader::parseDatapack(): hash is empty" << std::endl;
             emitdatapackChecksumError();
             inProgress=false;
+            return;
+        }
+
+        if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
+        {
+            std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase size is not 28: "
+                      << binarytoHexa(CommonSettingsCommon::commonSettingsCommon.datapackHashBase) << std::endl;
+            emitdatapackChecksumError();
+            inProgress=false;
+            abort();
+            return;
+        }
+        if(hash.size()!=28)
+        {
+            std::cerr << "hash size is not 28: "
+                      << binarytoHexa(hash) << std::endl;
+            emitdatapackChecksumError();
+            inProgress=false;
+            abort();
             return;
         }
 

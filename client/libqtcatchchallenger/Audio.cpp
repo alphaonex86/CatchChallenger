@@ -38,12 +38,12 @@ QAudioFormat Audio::format() const
 void Audio::setVolume(const int &volume)
 {
     std::cout << "Audio volume set to: " << volume << std::endl;
-    unsigned int index=0;
+    /*unsigned int index=0;
     while(index<playerList.size())
     {
         playerList.at(index)->setVolume((qreal)volume/100);
         index++;
-    }
+    }*/
     this->volume=volume;
 }
 

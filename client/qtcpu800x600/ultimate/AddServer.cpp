@@ -26,7 +26,7 @@ AddOrEditServer::~AddOrEditServer()
 int AddOrEditServer::type() const
 {
 #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
-return ui->type->currentIndex();
+return -1;
 #else
     #if defined(NOTCPSOCKET)
     return 1;
@@ -34,7 +34,7 @@ return ui->type->currentIndex();
         #if defined(NOWEBSOCKET)
         return 0;
         #else
-        return -1;
+        return ui->type->currentIndex();
         #endif
     #endif
 #endif
