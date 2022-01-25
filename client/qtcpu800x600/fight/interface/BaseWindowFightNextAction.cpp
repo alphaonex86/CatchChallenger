@@ -1,6 +1,6 @@
-#include "../../interface/BaseWindow.hpp"
+#include "../../base/interface/BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "ClientFightEngine.hpp"
+#include "ClientFightEngine.h"
 
 /* show only the plant into the inventory */
 
@@ -482,16 +482,15 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
                     QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
             {
                 item->setToolTip(tr("Unknown buff"));
-                item->setIcon(QIcon(":/CC/images/interface/buff.png"));
+                item->setIcon(QIcon(":/images/interface/buff.png"));
             }
             else
             {
-                const QtDatapackClientLoader::MonsterExtra::Buff &buffExtra=QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff);
-                const QtDatapackClientLoader::QtMonsterExtra::QtBuff &QtbuffExtra=QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra.at(addBuffEffectMonster.buff);
-                if(!QtbuffExtra.icon.isNull())
-                    item->setIcon(QtbuffExtra.icon);
+                const DatapackClientLoader::MonsterExtra::Buff &buffExtra=QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(addBuffEffectMonster.buff);
+                if(!buffExtra.icon.isNull())
+                    item->setIcon(buffExtra.icon);
                 else
-                    item->setIcon(QIcon(":/CC/images/interface/buff.png"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
                 if(addBuffEffectMonster.level<=1)
                     item->setToolTip(QString::fromStdString(buffExtra.name));
                 else

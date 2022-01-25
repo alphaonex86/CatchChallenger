@@ -11,6 +11,8 @@
 
 #include <iostream>
 
+#if ! defined (ONLYMAPRENDER)
+
 using namespace CatchChallenger;
 
 bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
@@ -959,3 +961,4 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     haveCharacter();
     return true;
 }
+#endif
