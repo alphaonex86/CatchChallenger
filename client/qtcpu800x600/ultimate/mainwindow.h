@@ -21,19 +21,20 @@
 #include "../base/QInfiniteBuffer.h"
 #endif
 
-#include "../../general/base/ChatParsing.h"
-#include "../../general/base/GeneralStructures.h"
-#include "../../general/base/ConnectedSocket.h"
+#include "../../libcatchchallenger/ChatParsing.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/base/ConnectedSocket.hpp"
 #include "../base/FeedNews.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../base/Audio.h"
 #endif
-#include "../base/Api_client_real.h"
-#include "../base/render/MapController.h"
+#include "../../libqtcatchchallenger/Api_client_real.hpp"
+#include "../../qtmaprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #ifndef NOSINGLEPLAYER
 #include "../base/solo/SoloWindow.h"
+#include "../../../server/qt/InternalServer.hpp"
 #endif
 #include "../base/LanguagesSelect.h"
 

@@ -311,7 +311,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             {
                 ui->labelFightEnter->setText(tr("Go %1")
                                              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(playerMonster->monster).name)));
-                ui->labelFightMonsterBottom->setPixmap(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(playerMonster->monster).back).scaled(160,160));
+                ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->getMonsterExtra(playerMonster->monster).back.scaled(160,160));
             }
             else
             {
@@ -389,7 +389,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(tradeCurrentMonsters.back().monster).name));
             item->setToolTip(tr("Level: %1").arg(tradeCurrentMonsters.back().level));
-            item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(tradeCurrentMonsters.back().monster).front));
+            item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(tradeCurrentMonsters.back().monster).front);
             ui->tradePlayerMonsters->addItem(item);
         }
         break;

@@ -213,8 +213,8 @@ void BaseWindow::load_crafting_inventory()
                 if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId)!=
                         QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
-                            .doItemId].image);
+                    item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
+                            .doItemId].image));
                     item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
                             .doItemId].name));
                 }
@@ -311,16 +311,17 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         return;
     }
     QListWidgetItem *item=items.first();
-    const DatapackClientLoader::PlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->plantExtra[plants_items_graphical[item]];
-    const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
+    const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->getPlantExtra(plants_items_graphical.at(item));
+    const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants.at(plants_items_graphical.at(item));
 
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(plant.itemUsed)!=
             QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
         const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(plant.itemUsed);
-        ui->labelPlantImage->setPixmap(itemExtra.image);
+        const QtDatapackClientLoader::ImageItemExtra &ImageitemExtra=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(plant.itemUsed);
+        ui->labelPlantImage->setPixmap(QPixmap::fromImage(ImageitemExtra.image));
         ui->labelPlantName->setText(QString::fromStdString(itemExtra.name));
-        ui->labelPlantFruitImage->setPixmap(itemExtra.image);
+        ui->labelPlantFruitImage->setPixmap(QPixmap::fromImage(ImageitemExtra.image));
         ui->labelPlantDescription->setText(QString::fromStdString(itemExtra.description));
         //requirements and rewards
         {
@@ -486,8 +487,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.doItemId)!=
             QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].name);
-        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].image);
+        name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(content.doItemId).name);
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->getItemExtra(content.doItemId).image);
     }
     else
     {
@@ -509,8 +510,8 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
         if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(content.materials.at(index).item)!=
                 QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         {
-            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].name);
-            item->setIcon(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].image);
+            nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(content.materials.at(index).item).name);
+            item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(content.materials.at(index).item).image);
         }
         else
         {

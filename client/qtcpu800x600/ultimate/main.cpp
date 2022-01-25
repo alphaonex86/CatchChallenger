@@ -2,7 +2,7 @@
 #include "mainwindow.h"
 #include "../base/LanguagesSelect.h"
 #include "../base/LocalListener.h"
-#include "../../general/base/FacilityLibGeneral.h"
+#include "../../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
 #include <QFontDatabase>
 

@@ -61,20 +61,18 @@ public:
         QPixmap back;
         QPixmap thumb;
     };
-
-    //not heavy, not optimised for now
     struct QtPlantExtra
     {
         Tiled::Tileset * tileset;
     };
-    std::unordered_map<uint8_t,QtPlantExtra> QtplantExtra;
-    struct QtBuff
+    struct QtBuffExtra
     {
         QPixmap icon;
     };
-    std::unordered_map<uint8_t,QtBuff> QtmonsterBuffsExtra;
     const QtMonsterExtra &getMonsterExtra(const uint16_t &id);
-    const QtItemExtra &getImageExtra(const uint16_t &id);
+    const QtItemExtra &getItemExtra(const uint16_t &id);
+    const QtBuffExtra &getMonsterBuffExtra(const uint8_t &id);
+    const QtPlantExtra &getPlantExtra(const uint8_t &id);
 
     QPixmap defaultInventoryImage();
     void resetAll();
@@ -106,6 +104,8 @@ private:
 
     std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
     std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
+    std::unordered_map<uint8_t,QtBuffExtra> QtmonsterBuffsExtra;
+    std::unordered_map<uint8_t,QtPlantExtra> QtplantExtra;
     std::unordered_set<QtDatapackClientLoaderThread *> threads;
     QtItemExtra emptyItem;
     QtMonsterExtra emptyMonster;

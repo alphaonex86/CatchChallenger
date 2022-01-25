@@ -10,9 +10,9 @@
 #include <QSpacerItem>
 #include <QSqlDatabase>
 
-#include "../../../general/base/QFakeSocket.hpp"
-#include "../../../general/base/ChatParsing.hpp"
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../../general/base/QFakeSocket.hpp"
+#include "../../../libcatchchallenger/ChatParsing.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../../libqtcatchchallenger/Api_client_virtual.hpp"
 #include "../../../qtmaprender/MapController.hpp"

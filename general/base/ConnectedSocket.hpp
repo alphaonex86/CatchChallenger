@@ -8,7 +8,7 @@
 #ifndef NOTCPSOCKET
     #include <QSslSocket>
     #include <QAbstractSocket>
-    #include "QFakeSocket.h"
+    #include "../../server/qt/QFakeSocket.hpp"
 #endif
 #ifndef NOWEBSOCKET
     #include <QtWebSockets/QWebSocket>

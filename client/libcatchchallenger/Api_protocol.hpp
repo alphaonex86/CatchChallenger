@@ -430,7 +430,7 @@ public:
     void sellFactoryResource(const uint16_t &factoryId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);
 
     //fight
-    void tryEscape();
+    void sendTryEscape();
     void useSkill(const uint16_t &skill);
     void heal();
     void requestFight(const uint16_t &fightId);

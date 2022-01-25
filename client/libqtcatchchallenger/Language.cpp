@@ -20,7 +20,7 @@ void Language::setLanguage(const QString &l)
     emit newLanguage(m_lang);
 }
 
-const QString &Language::getLanguage()
+const QString &Language::getLanguage() const
 {
     return m_lang;
 }
