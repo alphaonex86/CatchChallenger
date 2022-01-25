@@ -16,18 +16,16 @@
 #include <QDateTime>
 #include <QSet>
 #include <QCompleter>
-#include "../base/ClientVariableAudio.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
+#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
 #include "../base/QInfiniteBuffer.h"
+#include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 #include "../../libcatchchallenger/ChatParsing.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/base/ConnectedSocket.hpp"
 #include "../base/FeedNews.h"
-#ifndef CATCHCHALLENGER_NOAUDIO
-#include "../base/Audio.h"
-#endif
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../qtmaprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"

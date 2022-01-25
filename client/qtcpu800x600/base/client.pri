@@ -69,7 +69,6 @@ HEADERS  += \
     $$PWD/LocalListener.h \
     $$PWD/Options.h \
     $$PWD/FacilityLibClient.h \
-    $$PWD/ClientVariableAudio.h \
     $$PWD/Ultimate.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \

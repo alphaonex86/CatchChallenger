@@ -1,7 +1,7 @@
 //to have winsock2 include before Windows.h, prevent mingw warn
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 
-#include "../ClientVariableAudio.h"
+#include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
 #include "../QInfiniteBuffer.h"
