@@ -163,14 +163,14 @@ MainWindow::MainWindow(QWidget *parent) :
         struct stat sb;
         if(stat(soundFile.c_str(),&sb)==0)
         {
-            player = new QAudioOutput(Audio::audio.format(), this);
+            player = new QAudioOutput(Audio::audio->format(), this);
             if(Audio::decodeOpus(soundFile,data))
             {
                 buffer.open(QBuffer::ReadOnly);
                 buffer.seek(0);
                 player->start(&buffer);
 
-                Audio::audio.addPlayer(player);
+                Audio::audio->addPlayer(player);
             }
             else
             {
@@ -203,7 +203,7 @@ MainWindow::~MainWindow()
     {
         player->stop();
         buffer.close();
-        Audio::audio.removePlayer(player);
+        Audio::audio->removePlayer(player);
         delete player;
         player=NULL;
     }

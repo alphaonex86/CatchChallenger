@@ -56,7 +56,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
                     data.push_back(typeExtra.color.g);
                     data.push_back(typeExtra.color.b);
                     //if(typeExtra.color.isValid())
-                        typeList.push_back("<span style=\"background-color:"+QString::fromStdString(binarytoHexa(data))+";\">"+QString::fromStdString(typeExtra.name)+"</span>");
+                        typeList.push_back("<span style=\"background-color:#"+QString::fromStdString(binarytoHexa(data))+";\">"+QString::fromStdString(typeExtra.name)+"</span>");
                     /*else
                         typeList.push_back(QString::fromStdString(typeExtra.name));*/
                 }
