@@ -3,8 +3,9 @@
 #include "ui_mainwindow.h"
 #include "../base/InternetUpdater.h"
 #include "../base/BlacklistPassword.h"
-#include "../../general/base/CommonSettingsCommon.h"
-#include "../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../general/base/CompressionProtocol.hpp"
 #include "../base/Ultimate.h"
 #include <QStandardPaths>
 #include <QNetworkProxy>
@@ -17,10 +18,10 @@
 #include <iostream>
 #include "AskKey.h"
 
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/Version.h"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/Version.hpp"
 #include "../base/PlatformMacro.h"
-#include "../base/ClientVariable.h"
+#include "../../libcatchchallenger/ClientVariable.hpp"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -36,13 +37,13 @@
 #include <netinet/tcp.h>
 #endif
 
-#include "../base/render/MapVisualiserPlayer.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../general/base/FacilityLibGeneral.h"
-#include "../../general/base/CommonSettingsCommon.h"
+#include "../../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../base/LanguagesSelect.h"
-#include "../base/Api_client_real.h"
-#include "../base/Api_client_virtual.h"
+#include "../../libqtcatchchallenger/Api_client_real.hpp"
+#include "../../libqtcatchchallenger/Api_client_virtual.hpp"
 #include "../base/SslCert.h"
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -178,9 +179,9 @@ MainWindow::MainWindow(QWidget *parent) :
     if(!connect(baseWindow,&CatchChallenger::BaseWindow::gameIsLoaded,this,&MainWindow::gameIsLoaded))
         abort();
     #ifdef CATCHCHALLENGER_GITCOMMIT
-    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
+    ui->version->setText(QString::fromStdString(CatchChallenger::Version::str)+QStringLiteral(" - ")+QStringLiteral(CATCHCHALLENGER_GITCOMMIT));
     #else
-    ui->version->setText(QStringLiteral(CATCHCHALLENGER_VERSION));
+    ui->version->setText(QString::fromStdString(CatchChallenger::Version::str));
     #endif
 
     QSettings keySettings;
@@ -1087,7 +1088,7 @@ void MainWindow::resetAll()
     if(client!=NULL)
     {
         client->resetAll();
-        client->deleteLater();
+        static_cast<CatchChallenger::Api_protocol_Qt *>(client)->deleteLater();
         client=NULL;
     }
     if(completer!=NULL)
@@ -1811,15 +1812,15 @@ void MainWindow::downloadFile()
     #ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+    catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
     #else
         #ifdef CATCHCHALLENGER_VERSION_SINGLESERVER
-        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion=QStringLiteral("CatchChallenger SingleServer/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
         #else
             #ifdef CATCHCHALLENGER_VERSION_SOLO
-            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(CATCHCHALLENGER_VERSION);
+            catchChallengerVersion=QStringLiteral("CatchChallenger Solo/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
             #else
-            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+            catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
             #endif
         #endif
     #endif
@@ -1952,15 +1953,15 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
         socket=NULL;
         realSslSocket=NULL;
     }
-    socket=new CatchChallenger::ConnectedSocket(new CatchChallenger::QFakeSocket());
+    socket=new CatchChallenger::ConnectedSocket(new QFakeSocket());
     CatchChallenger::Api_client_virtual *client=new CatchChallenger::Api_client_virtual(socket);//QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/")
     this->client=client;
 
-    if(!connect(client,               &CatchChallenger::Api_protocol::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good))
+    if(!connect(client,               &CatchChallenger::Api_protocol_Qt::Qtprotocol_is_good,   this,&MainWindow::protocol_is_good))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::Qtdisconnected,       this,&MainWindow::disconnected))
+    if(!connect(client,               &CatchChallenger::Api_protocol_Qt::Qtdisconnected,       this,&MainWindow::disconnected))
         abort();
-    if(!connect(client,               &CatchChallenger::Api_protocol::Qtmessage,            this,&MainWindow::message))
+    if(!connect(client,               &CatchChallenger::Api_protocol_Qt::Qtmessage,            this,&MainWindow::message))
         abort();
     if(!connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged))
         abort();
@@ -1982,7 +1983,8 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     pass=metaData.value(QStringLiteral("pass")).toString();
     if(internalServer!=NULL)
         delete internalServer;
-    internalServer=new CatchChallenger::InternalServer(metaData);
+    //internalServer=new CatchChallenger::InternalServer(metaData);
+    internalServer=new CatchChallenger::InternalServer();
     if(!sendSettings(internalServer,QString::fromStdString(savegamesPath)))
         return;
     if(!connect(internalServer,&CatchChallenger::InternalServer::is_started,this,&MainWindow::is_started,Qt::QueuedConnection))
@@ -2019,7 +2021,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=1;
     formatedServerSettings.sendPlayerNumber = false;
-    formatedServerSettings.compressionType=CatchChallenger::CompressionType_None;
+    formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
     formatedServerSettings.everyBodyIsRoot                                      = true;
     formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = true;
 
