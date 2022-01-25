@@ -13,10 +13,11 @@ DEFINES += ONLYMAPRENDER NOWEBSOCKET
 include(../../general/general.pri)
 include(../../client/qtmaprender/render.pri)
 include(../../client/qtmaprender/renderheader.pri)
-include(../../client/libcatchchallenger/lib.pri)
-include(../../client/libcatchchallenger/libheader.pri)
-include(../../client/libqtcatchchallenger/libqt.pri)
-include(../../client/libqtcatchchallenger/libqtheader.pri)
+#only include partially
+#include(../../client/libcatchchallenger/lib.pri)
+#include(../../client/libcatchchallenger/libheader.pri)
+#include(../../client/libqtcatchchallenger/libqt.pri)
+#include(../../client/libqtcatchchallenger/libqtheader.pri)
 
 win32:RC_FILE += resources-windows.rc
 
@@ -25,9 +26,21 @@ greaterThan(QT_MAJOR_VERSION, 4) {
 }
 
 SOURCES += main.cpp \
+    ../../client/libcatchchallenger/DatapackChecksum.cpp \
+    ../../client/libcatchchallenger/DatapackClientLoader.cpp \
+    ../../client/libqtcatchchallenger/Language.cpp \
+    ../../client/libqtcatchchallenger/QtDatapackClientLoader.cpp \
+    ../../client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp \
+    ../../client/libqtcatchchallenger/Settings.cpp \
     map2png.cpp
 
-HEADERS += map2png.h
+HEADERS += map2png.h \
+    ../../client/libcatchchallenger/DatapackChecksum.hpp \
+    ../../client/libcatchchallenger/DatapackClientLoader.hpp \
+    ../../client/libqtcatchchallenger/Language.hpp \
+    ../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp \
+    ../../client/libqtcatchchallenger/QtDatapackClientLoaderThread.hpp \
+    ../../client/libqtcatchchallenger/Settings.hpp
 
 RESOURCES += \
     resources.qrc

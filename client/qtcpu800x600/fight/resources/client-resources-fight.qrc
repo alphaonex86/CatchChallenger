@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="/CC">
+    <qresource prefix="/">
         <file>images/monsters/egg.png</file>
         <file>images/monsters/egg-big.png</file>
         <file>images/monsters/default/small.png</file>
@@ -11,6 +11,7 @@
         <file>images/interface/fight/labelBottom.png</file>
         <file>images/interface/fight/labelTop.png</file>
         <file>images/interface/buff.png</file>
+        <file>qml/evolution-animation.qml</file>
         <file>images/interface/fight/background.png</file>
         <file>images/interface/fight/foreground.png</file>
     </qresource>

@@ -1,4 +1,4 @@
-#include "QmlMonsterGeneralInformations.hpp"
+#include "QmlMonsterGeneralInformations.h"
 #include <QUrl>
 
 QmlMonsterGeneralInformations::QmlMonsterGeneralInformations(const CatchChallenger::Monster &monsterInformations,

@@ -3,11 +3,6 @@
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 
-using namespace CatchChallenger;
-
-const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
-const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
-
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
 #include <utime.h>
@@ -25,6 +20,12 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 #include "../../general/base/GeneralType.hpp"
 
 //need host + port here to have datapack base
+
+#if ! defined (ONLYMAPRENDER)
+using namespace CatchChallenger;
+
+const unsigned char protocolHeaderToMatchLogin[] = PROTOCOL_HEADER_LOGIN;
+const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERVER;
 
 std::unordered_set<std::string> Api_protocol::extensionAllowed;
 
@@ -2896,3 +2897,4 @@ void Api_protocol::addBeatenBotFight(const uint16_t &botFightId)
         abort();
     player_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
 }
+#endif
