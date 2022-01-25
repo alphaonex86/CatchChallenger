@@ -1,15 +1,14 @@
-#include "../../interface/BaseWindow.hpp"
-#include "../../QtDatapackClientLoader.hpp"
-#include "../../ClientVariable.hpp"
-#include "../../../../general/base/FacilityLib.hpp"
-#include "../../../../general/base/GeneralStructures.hpp"
-#include "ClientFightEngine.hpp"
+#include "../../base/interface/BaseWindow.h"
+#include "../../base/DatapackClientLoader.h"
+#include "../../base/ClientVariable.h"
+#include "../../../general/base/FacilityLib.h"
+#include "../../../general/base/GeneralStructures.h"
+#include "ClientFightEngine.h"
 #include "ui_BaseWindow.h"
-#include "../../../../general/base/CommonDatapack.hpp"
-#include "../../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../../general/base/CommonSettingsServer.hpp"
-#include "../../../../general/base/CommonSettingsCommon.hpp"
-#include "../../Ultimate.hpp"
+#include "../../../general/base/CommonDatapack.h"
+#include "../../../general/base/CommonDatapackServerSpec.h"
+#include "../../../general/base/CommonSettingsServer.h"
+#include "../../../general/base/CommonSettingsCommon.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -35,8 +34,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     const std::vector<PlayerMonster> &playerMonster=fightEngine.getPlayerMonster();
     unsigned int index=monsterPosition;
     const PlayerMonster &monster=playerMonster.at(index);
-    const QtDatapackClientLoader::MonsterExtra &monsterExtraInfo=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster);
-    const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtraInfo=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster);
+    const DatapackClientLoader::MonsterExtra &monsterExtraInfo=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster);
     const Monster &monsterGeneralInfo=CommonDatapack::commonDatapack.monsters.at(monster.monster);
     const Monster::Stat &stat=CommonFightEngine::getStat(monsterGeneralInfo,monster.level);
     if(monsterGeneralInfo.type.empty())
@@ -50,12 +48,12 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             const auto &typeSub=monsterGeneralInfo.type.at(sub_index);
             if(QtDatapackClientLoader::datapackLoader->typeExtra.find(typeSub)!=QtDatapackClientLoader::datapackLoader->typeExtra.cend())
             {
-                const QtDatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->typeExtra.at(typeSub);
+                const DatapackClientLoader::TypeExtra &typeExtra=QtDatapackClientLoader::datapackLoader->typeExtra.at(typeSub);
                 if(!typeExtra.name.empty())
                 {
-                    /*if(typeExtra.color.isValid())
+                    if(typeExtra.color.isValid())
                         typeList.push_back("<span style=\"background-color:"+typeExtra.color.name()+";\">"+QString::fromStdString(typeExtra.name)+"</span>");
-                    else*/
+                    else
                         typeList.push_back(QString::fromStdString(typeExtra.name));
                 }
             }
@@ -64,19 +62,18 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         QStringList extraInfo;
         if(!typeList.isEmpty())
             extraInfo << tr("Type: %1").arg(typeList.join(QStringLiteral(", ")));
-        if(Ultimate::ultimate.isUltimate())
-        {
-            if(!monsterExtraInfo.kind.empty())
-                extraInfo << tr("Kind: %1").arg(QString::fromStdString(monsterExtraInfo.kind));
-            if(!monsterExtraInfo.habitat.empty())
-                extraInfo << tr("Habitat: %1").arg(QString::fromStdString(monsterExtraInfo.habitat));
-        }
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+        if(!monsterExtraInfo.kind.empty())
+            extraInfo << tr("Kind: %1").arg(QString::fromStdString(monsterExtraInfo.kind));
+        if(!monsterExtraInfo.habitat.empty())
+            extraInfo << tr("Habitat: %1").arg(QString::fromStdString(monsterExtraInfo.habitat));
+        #endif
         ui->monsterDetailsType->setText(extraInfo.join(QStringLiteral("<br />")));
     }
     ui->monsterDetailsName->setText(QString::fromStdString(monsterExtraInfo.name));
     ui->monsterDetailsDescription->setText(QString::fromStdString(monsterExtraInfo.description));
     {
-        QPixmap front=QtmonsterExtraInfo.front;
+        QPixmap front=monsterExtraInfo.front;
         front=front.scaled(160,160);
         ui->monsterDetailsImage->setPixmap(front);
     }
@@ -85,7 +82,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
         if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(monster.catched_with)!=
                 QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         {
-            catchPixmap=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(monster.catched_with).image;
+            catchPixmap=QtDatapackClientLoader::datapackLoader->itemsExtra.at(monster.catched_with).image;
             ui->monsterDetailsCatched->setToolTip(tr("catched with %1")
                                                   .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra
                                                                               .at(monster.catched_with).name)));
@@ -100,12 +97,12 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     }
     if(monster.gender==Gender_Male)
     {
-        ui->monsterDetailsGender->setPixmap(QPixmap(":/CC/images/interface/male.png").scaled(48,48));
+        ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/male.png").scaled(48,48));
         ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Male")));
     }
     else if(monster.gender==Gender_Female)
     {
-        ui->monsterDetailsGender->setPixmap(QPixmap(":/CC/images/interface/female.png").scaled(48,48));
+        ui->monsterDetailsGender->setPixmap(QPixmap(":/images/interface/female.png").scaled(48,48));
         ui->monsterDetailsGender->setToolTip(tr("Gender: %1").arg(tr("Female")));
     }
     else
@@ -115,17 +112,16 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     }
     const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
     ui->monsterDetailsLevel->setText(tr("Level %1").arg(monster.level));
-    if(Ultimate::ultimate.isUltimate())
-    {
-        if(monster.hp>(stat.hp/2))
-            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#1A8307\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
-        else if(monster.hp>(stat.hp/4))
-            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#B99C09\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
-        else
-            ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#BF0303\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
-    }
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    if(monster.hp>(stat.hp/2))
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#1A8307\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    else if(monster.hp>(stat.hp/4))
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#B99C09\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
     else
-        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("%1/%2").arg(monster.hp).arg(stat.hp));
+        ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("<span style=\"color:#BF0303\">%1/%2</span>").arg(monster.hp).arg(stat.hp));
+    #else
+    ui->monsterDetailsStatHeal->setText(tr("Heal: ")+QString("%1/%2").arg(monster.hp).arg(stat.hp));
+    #endif
     ui->monsterDetailsStatSpeed->setText(tr("Speed: %1").arg(stat.speed));
     ui->monsterDetailsStatXp->setText(tr("Xp: %1/%2").arg(monster.remaining_xp).arg(maxXp));
     ui->monsterDetailsStatAttack->setText(tr("Attack: %1").arg(stat.attack));
@@ -193,11 +189,11 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
             if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(buffEffect.buff)==QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
             {
                 item->setToolTip(tr("Unknown buff"));
-                item->setIcon(QIcon(":/CC/images/interface/buff.png"));
+                item->setIcon(QIcon(":/images/interface/buff.png"));
             }
             else
             {
-                item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra.at(buffEffect.buff).icon);
+                item->setIcon(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).icon);
                 if(buffEffect.level<=1)
                     item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).name));
                 else
@@ -358,10 +354,10 @@ void BaseWindow::load_monsters()
 
             QListWidgetItem *item=new QListWidgetItem();
             item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).description));
-            if(!QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).thumb.isNull())
-                item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).thumb);
+            if(!QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).thumb.isNull())
+                item->setIcon(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).thumb);
             else
-                item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).front);
+                item->setIcon(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).front);
 
             if(waitedObjectType==ObjectType_MonsterToLearn && inSelection)
             {
@@ -537,7 +533,7 @@ void BaseWindow::botFightFullDiffered()
     if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         botImage=getFrontSkin(actualBot.properties.at("skin"));
     else
-        botImage=QPixmap(QStringLiteral(":/CC/images/player_default/front.png"));
+        botImage=QPixmap(QStringLiteral(":/images/player_default/front.png"));
     ui->labelFightMonsterTop->setPixmap(botImage.scaled(160,160));
     qDebug() << QStringLiteral("The bot %1 is a front of you").arg(fightId);
     battleStep=BattleStep_Presentation;
@@ -576,26 +572,23 @@ void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, co
     //map not located
     if(map==NULL)
     {
-        ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-        ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-        ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-        ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
+        ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+        ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
+        ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+        ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
         return;
     }
     const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*map,x,y);
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
-        const CatchChallenger::MonstersCollision &monstersCollision=
-                CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
-        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
-                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || playerInformations.items.find(monstersCollision.item)!=playerInformations.items.cend())
         {
-            if(!monstersCollisionTemp.background.empty())
+            if(!monstersCollision.background.empty())
             {
                 const QString &baseSearch=QString::fromStdString(client->datapackPathBase())+DATAPACK_BASE_PATH_MAPBASE+
-                        QString::fromStdString(monstersCollisionTemp.background);
+                        QString::fromStdString(monstersCollision.background);
                 if(QFile(baseSearch+"/background.png").exists())
                     ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/background.jpg").exists() &&
@@ -603,44 +596,44 @@ void BaseWindow::init_environement_display(Map_client *map, const uint8_t &x, co
                                                                          supportedImageFormats.find("jpg")!=supportedImageFormats.cend()))
                     ui->labelFightBackground->setPixmap(QPixmap(baseSearch+QStringLiteral("/background.jpg")).scaled(800,440));
                 else
-                    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
+                    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
 
                 if(QFile(baseSearch+"/foreground.png").exists())
                     ui->labelFightForeground->setPixmap(QPixmap(baseSearch+QStringLiteral("/foreground.png")).scaled(800,440));
                 else if(QFile(baseSearch+"/foreground.gif").exists())
                     ui->labelFightForeground->setPixmap(QPixmap(baseSearch+QStringLiteral("/foreground.gif")).scaled(800,440));
                 else
-                    ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
+                    ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
 
                 if(QFile(baseSearch+"/plateform-front.png").exists())
                     ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-front.png")).scaled(260,90));
                 else if(QFile(baseSearch+"/plateform-front.gif").exists())
                     ui->labelFightPlateformTop->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-front.gif")).scaled(260,90));
                 else
-                    ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
+                    ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
 
                 if(QFile(baseSearch+"/plateform-background.png").exists())
                     ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-background.png")).scaled(230,90));
                 else if(QFile(baseSearch+"/plateform-background.gif").exists())
                     ui->labelFightPlateformBottom->setPixmap(QPixmap(baseSearch+QStringLiteral("/plateform-background.gif")).scaled(230,90));
                 else
-                    ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
+                    ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
             }
             else
             {
-                ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-                ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-                ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-                ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
+                ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+                ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
+                ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+                ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
             }
             return;
         }
         index++;
     }
-    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png")).scaled(800,440));
-    ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png")).scaled(800,440));
-    ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-front.png")).scaled(260,90));
-    ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
+    ui->labelFightBackground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/background.png")).scaled(800,440));
+    ui->labelFightForeground->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/foreground.png")).scaled(800,440));
+    ui->labelFightPlateformTop->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-front.png")).scaled(260,90));
+    ui->labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/images/interface/fight/plateform-background.png")).scaled(230,90));
 }
 
 void BaseWindow::init_other_monster_display()
@@ -684,11 +677,11 @@ void BaseWindow::init_current_monster_display(PlayerMonster *fightMonster)
                         QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
                 {
                     item->setToolTip(tr("Unknown buff"));
-                    item->setIcon(QIcon(":/CC/images/interface/buff.png"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
                 }
                 else
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra.at(buffEffect.buff).icon);
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).icon);
                     if(buffEffect.level<=1)
                         item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).name));
                     else
@@ -883,7 +876,7 @@ void BaseWindow::updateCurrentMonsterInformation()
     p.setX(60);
     p.setY(280);
     ui->labelFightMonsterBottom->move(p);
-    ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster->monster).back.scaled(160,160));
+    ui->labelFightMonsterBottom->setPixmap(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster).back.scaled(160,160));
     ui->frameFightBottom->setVisible(true);
     ui->frameFightBottom->show();
     currentMonsterLevel=monster->level;
@@ -1168,7 +1161,7 @@ void BaseWindow::updateOtherMonsterInformation()
     PublicPlayerMonster *otherMonster=fightEngine.getOtherMonster();
     if(otherMonster!=NULL)
     {
-        ui->labelFightMonsterTop->setPixmap(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(otherMonster->monster).front.scaled(160,160));
+        ui->labelFightMonsterTop->setPixmap(QtDatapackClientLoader::datapackLoader->monsterExtra.at(otherMonster->monster).front.scaled(160,160));
         //other monster
         ui->frameFightTop->setVisible(true);
         ui->frameFightTop->show();
@@ -1191,11 +1184,11 @@ void BaseWindow::updateOtherMonsterInformation()
                         QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
                 {
                     item->setToolTip(tr("Unknown buff"));
-                    item->setIcon(QIcon(":/CC/images/interface/buff.png"));
+                    item->setIcon(QIcon(":/images/interface/buff.png"));
                 }
                 else
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterBuffsExtra.at(buffEffect.buff).icon);
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).icon);
                     if(buffEffect.level<=1)
                         item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.at(buffEffect.buff).name));
                     else
@@ -1319,7 +1312,7 @@ void BaseWindow::checkEvolution()
     if(monster!=NULL)
     {
         const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
-        const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster);
+        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster);
         unsigned int index=0;
         while(index<monsterInformations.evolutions.size())
         {
@@ -1328,7 +1321,7 @@ void BaseWindow::checkEvolution()
             {
                 monsterEvolutionPostion=fightEngine.getPlayerMonsterPosition(monster);
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
-                const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(
                             evolution.evolveTo);
                 //create animation widget
                 if(animationWidget!=NULL)
@@ -1337,8 +1330,8 @@ void BaseWindow::checkEvolution()
                     delete qQuickViewContainer;
                 animationWidget=new QQuickView();
                 qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-                qQuickViewContainer->setMinimumSize(QSize(width(),height()));
-                qQuickViewContainer->setMaximumSize(QSize(width(),height()));
+                qQuickViewContainer->setMinimumSize(QSize(800,600));
+                qQuickViewContainer->setMaximumSize(QSize(800,600));
                 qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
                 ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
                 //show the animation
@@ -1381,7 +1374,7 @@ void BaseWindow::checkEvolution()
             continue;
         }
         const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(playerMonster->monster);
-        const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(playerMonster->monster);
+        const DatapackClientLoader::MonsterExtra &monsterInformationsExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(playerMonster->monster);
         unsigned int index=0;
         while(index<monsterInformations.evolutions.size())
         {
@@ -1390,7 +1383,7 @@ void BaseWindow::checkEvolution()
             {
                 monsterEvolutionPostion=monsterPosition;
                 const Monster &monsterInformationsEvolution=CommonDatapack::commonDatapack.monsters.at(evolution.evolveTo);
-                const QtDatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->monsterExtra
+                const DatapackClientLoader::MonsterExtra &monsterInformationsEvolutionExtra=QtDatapackClientLoader::datapackLoader->monsterExtra
                         .at(evolution.evolveTo);
                 //create animation widget
                 if(animationWidget!=NULL)
@@ -2011,13 +2004,13 @@ void BaseWindow::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &mons
     if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(monster.monster)!=
             QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
     {
-        item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).front);
+        item->setIcon(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).front);
         item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).name));
         item->setToolTip(QStringLiteral("Level: %1, Gender: %2").arg(monster.level).arg(genderString));
     }
     else
     {
-        item->setIcon(QIcon(":/CC/images/monsters/default/front.png"));
+        item->setIcon(QIcon(":/images/monsters/default/front.png"));
         item->setText(tr("Unknown"));
         item->setToolTip(QStringLiteral("Level: %1, Gender: %2").arg(monster.level).arg(genderString));
     }
@@ -2086,7 +2079,7 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
     QHash<uint16_t,uint8_t> skillToDisplay;
     unsigned int index=monsterPosition;
     PlayerMonster monster=playerMonster.at(index);
-    ui->learnMonster->setPixmap(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).front.scaled(160,160));
+    ui->learnMonster->setPixmap(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).front.scaled(160,160));
     if(CommonSettingsServer::commonSettingsServer.useSP)
     {
         ui->learnSP->setVisible(true);
@@ -2094,10 +2087,11 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
     }
     else
         ui->learnSP->setVisible(false);
-    if(Ultimate::ultimate.isUltimate())
-        ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
+    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+    ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
                                QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).name))
                            .arg(monster.level));
+    #endif
     unsigned int sub_index=0;
     while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
     {
