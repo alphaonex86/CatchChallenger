@@ -30,5 +30,6 @@ include(tiled/tiledheader.pri)
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
 
-DEFINES += OPENGL CATCHCHALLENGER_CACHE_HPS
+DEFINES += OPENGL
+# CATCHCHALLENGER_CACHE_HPS -> include hps.pri
 TARGET = catchchallenger
