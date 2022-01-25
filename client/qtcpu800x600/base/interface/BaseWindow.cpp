@@ -15,7 +15,8 @@
 #include "../LanguagesSelect.h"
 #include "../Options.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 #include <QListWidgetItem>
@@ -100,6 +101,11 @@ BaseWindow::BaseWindow() :
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 
     socketState=QAbstractSocket::UnconnectedState;
+    if(QtDatapackClientLoader::datapackLoader!=nullptr)
+    {
+        delete QtDatapackClientLoader::datapackLoader;
+        QtDatapackClientLoader::datapackLoader=nullptr;
+    }
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
 
     mapController=new MapController(true,false,true);
@@ -297,7 +303,9 @@ BaseWindow::BaseWindow() :
     }
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    Audio::audio.setVolume(Options::options.getAudioVolume());
+    if(Audio::audio==nullptr)
+        Audio::audio=new Audio();
+    Audio::audio->setVolume(Options::options.getAudioVolume());
     #endif
     #ifdef CATCHCHALLENGER_NOAUDIO
     qDebug() << "CATCHCHALLENGER_NOAUDIO def, audio disabled";
@@ -694,10 +702,7 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
                 name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name;
             else
                 name="id: %1"+std::to_string(item);
-            if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                image=QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
-            else
-                image=QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
+            image=QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
 
             image=image.scaled(24,24);
             QByteArray byteArray;
@@ -845,11 +850,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
         name=QString::fromStdString(content.name);
         description=QString::fromStdString(content.description);
     }
-    if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(items_graphical.at(item))!=
-            QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-        image=QtDatapackClientLoader::datapackLoader->getItemExtra(items_graphical.at(item)).image;
-    else
-        image=QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
+    image=QtDatapackClientLoader::datapackLoader->getItemExtra(items_graphical.at(item)).image;
     ui->inventory_image->setPixmap(image);
     ui->inventory_name->setText(name);
     ui->inventory_description->setText(description);
@@ -1851,8 +1852,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
                 else
                     item->setText("???");
                 item->setData(99,itemId);
-                if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                    item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
+                item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
                 /*else
                     item->setIcon(QIcon(":/images/monsters/default/small.png"));*/
                 firstFound=true;
@@ -1941,8 +1941,7 @@ void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(QString::fromStdString(itemsExtra.name));
             item->setData(99,itemId);
-            if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
+            item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
             /*else
                 item->setIcon(QIcon(":/images/monsters/default/small.png"));*/
             ui->listAllItem->addItem(item);

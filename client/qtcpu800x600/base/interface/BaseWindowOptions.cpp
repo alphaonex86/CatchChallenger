@@ -2,7 +2,8 @@
 #include "ui_BaseWindow.h"
 #include "../Options.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 using namespace CatchChallenger;
@@ -52,7 +53,7 @@ void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
     Options::options.setAudioVolume(static_cast<uint8_t>(value));
     #ifndef CATCHCHALLENGER_NOAUDIO
-    Audio::audio.setVolume(value);
+    Audio::audio->setVolume(value);
     #endif
 }
 
