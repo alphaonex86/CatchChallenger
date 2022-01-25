@@ -377,7 +377,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemId).image));
+        item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
         if(item->data(97).toUInt()==0)
             item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
                 QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()));
@@ -412,7 +412,7 @@ void BaseWindow::factoryToProductItem(QListWidgetItem *item)
     const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemId).image));
+        item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
         if(item->data(97).toUInt()==0)
             item->setToolTip(tr("%1\nPrice: %2$").arg(QString::fromStdString(
                 QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)).arg(item->data(98).toUInt()));

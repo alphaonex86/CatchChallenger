@@ -1,4 +1,5 @@
 HEADERS  += \
+    $$PWD/ChatParsing.hpp \
     $$PWD/Api_protocol.hpp \
     $$PWD/ClientStructures.hpp \
     $$PWD/ClientVariable.hpp \

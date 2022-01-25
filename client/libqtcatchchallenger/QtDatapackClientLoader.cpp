@@ -166,7 +166,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
     for( const auto& n : QtDatapackClientLoader::datapackLoader->monsterBuffsExtra )
     {
         const uint8_t &id=n.first;
-        QtBuff QtmonsterBuffExtraEntry;
+        QtBuffExtra QtmonsterBuffExtraEntry;
         const std::string basePath=datapackPath+DATAPACK_BASE_PATH_BUFFICON+std::to_string(id);
         const std::string pngFile=basePath+".png";
         const std::string gifFile=basePath+".gif";
@@ -861,7 +861,7 @@ void QtDatapackClientLoader::parseBuffExtra()
         {
             qDebug() << (QStringLiteral("Strange, have entry into monster list, but not into monster buffer extra for id: %1").arg(i->first));
             QtDatapackClientLoader::MonsterExtra::Buff monsterBuffExtraEntry;
-            QtDatapackClientLoader::QtBuff QtmonsterBuffExtraEntry;
+            QtDatapackClientLoader::QtBuffExtra QtmonsterBuffExtraEntry;
             monsterBuffExtraEntry.name=tr("Unknown").toStdString();
             monsterBuffExtraEntry.description=tr("Unknown").toStdString();
             QtmonsterBuffExtraEntry.icon=QPixmap(":/CC/images/interface/buff.png");
@@ -951,7 +951,7 @@ const QtDatapackClientLoader::QtMonsterExtra &QtDatapackClientLoader::getMonster
     return QtmonsterExtra.at(id);
 }
 
-const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getImageExtra(const uint16_t &id)
+const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getItemExtra(const uint16_t &id)
 {
     if(QtitemsExtra.find(id)!=QtitemsExtra.cend())
         return QtitemsExtra.at(id);
@@ -976,4 +976,44 @@ const QtDatapackClientLoader::QtItemExtra &QtDatapackClientLoader::getImageExtra
     QtitemsExtra[id]=n;
     ImageitemsExtra.erase(id);
     return QtitemsExtra.at(id);
+}
+
+
+const QtDatapackClientLoader::QtBuffExtra &QtDatapackClientLoader::getMonsterBuffExtra(const uint8_t &id)
+{
+    if(QtmonsterBuffsExtra.find(id)!=QtmonsterBuffsExtra.cend())
+        return QtmonsterBuffsExtra.at(id);
+    else
+    {
+        if(monsterBuffsExtra.find(id)!=monsterBuffsExtra.cend())
+        {
+            const MonsterExtra::Buff &i=monsterBuffsExtra.at(id);
+            QtBuffExtra n;
+            n.icon=QPixmap(QString::fromStdString(getDatapackPath())+"/monsters/buff/"+QString::number(id)+".png");
+            QtmonsterBuffsExtra[id]=n;
+            return QtmonsterBuffsExtra.at(id);
+        }
+    }
+    //not loaded, force load as blocking call
+    QtBuffExtra n;
+
+    n.icon=QPixmap(QString::fromStdString(getDatapackPath())+"/monsters/buff/"+QString::number(id)+".png");
+    QtmonsterBuffsExtra[id]=n;
+    return QtmonsterBuffsExtra.at(id);
+}
+
+const QtDatapackClientLoader::QtPlantExtra &QtDatapackClientLoader::getPlantExtra(const uint8_t &id)
+{
+    if(QtplantExtra.find(id)!=QtplantExtra.cend())
+        return QtplantExtra.at(id);
+    else
+    {
+    }
+    //not loaded, force load as blocking call
+    QtPlantExtra n;
+
+    n.tileset=new Tiled::Tileset(QString::number(id),16,32);
+    n.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png"));
+    QtplantExtra[id]=n;
+    return QtplantExtra.at(id);
 }

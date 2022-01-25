@@ -86,7 +86,7 @@ void BaseWindow::on_shopItemList_itemSelectionChanged()
     }
     const DatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->itemsExtra.at(shop_items_graphical.at(item));
 
-    ui->shopImage->setPixmap(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(shop_items_graphical.at(item)).image));
+    ui->shopImage->setPixmap(QtDatapackClientLoader::datapackLoader->getItemExtra(shop_items_graphical.at(item)).image);
     ui->shopName->setText(QString::fromStdString(content.name));
     ui->shopDescription->setText(QString::fromStdString(content.description));
 }
@@ -124,7 +124,7 @@ void BaseWindow::haveShopList(const std::vector<ItemToSellOrBuy> &items)
         if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(items.at(index).object)!=
                 QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         {
-            item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(items.at(index).object).image));
+            item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(items.at(index).object).image);
             if(items.at(index).quantity==0)
                 item->setText(tr("%1\nPrice: %2$")
                               .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(items.at(index).object).name))
@@ -174,7 +174,7 @@ void BaseWindow::displaySellList()
             QListWidgetItem *item=new QListWidgetItem();
             shop_items_to_graphical[i->first]=item;
             shop_items_graphical[item]=i->first;
-            item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(i->first).image));
+            item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(i->first).image);
             if(i->second>1)
                 item->setText(tr("%1\nPrice: %2$, quantity: %3")
                         .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(i->first).name))

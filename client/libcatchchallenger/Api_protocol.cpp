@@ -1212,7 +1212,7 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
     packOutcommingQuery(0x8C,queryNumber(),buffer,sizeof(buffer));
 }
 
-void Api_protocol::tryEscape()
+void Api_protocol::sendTryEscape()
 {
     if(!is_logged)
     {

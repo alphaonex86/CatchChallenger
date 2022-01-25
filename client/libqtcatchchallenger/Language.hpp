@@ -12,7 +12,7 @@ public:
     Language();
     static Language language;
     void setLanguage(const QString &l);
-    const QString &getLanguage();
+    const QString &getLanguage() const;
 signals:
     void newLanguage(const QString &l);
 private:

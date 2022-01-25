@@ -1,5 +1,5 @@
 QT       += gui network core widgets
-QT       += qml quick
+QT       += qml quick opengl
 
 DEFINES += CATCHCHALLENGER_CLIENT
 

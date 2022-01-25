@@ -1,10 +1,10 @@
 #ifndef __EMSCRIPTEN__
 #include "InternetUpdater.h"
 #include "PlatformMacro.h"
-#include "../../general/base/GeneralVariable.h"
-#include "../../general/base/Version.h"
-#include "../../general/base/cpp11addition.h"
-#include "ClientVariable.h"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/Version.hpp"
+#include "../../../general/base/cpp11addition.hpp"
+#include "../../libcatchchallenger/ClientVariable.hpp"
 #include "Ultimate.h"
 
 #include <QNetworkRequest>
@@ -48,9 +48,9 @@ void InternetUpdater::downloadFile()
 {
     QString catchChallengerVersion;
     if(Ultimate::ultimate.isUltimate())
-        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
     else
-        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(CATCHCHALLENGER_VERSION);
+        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
     #if defined(_WIN32) || defined(Q_OS_MAC)
     catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(GetOSDisplayString()));
     #endif
@@ -98,7 +98,7 @@ void InternetUpdater::httpFinished()
         reply->deleteLater();
         return;
     }
-    if(newVersion==CATCHCHALLENGER_VERSION)
+    if(newVersion==CatchChallenger::Version::str)
     {
         reply->deleteLater();
         return;
@@ -116,7 +116,7 @@ void InternetUpdater::httpFinished()
 bool InternetUpdater::versionIsNewer(const std::string &version)
 {
     std::vector<std::string> versionANumber=stringsplit(version,'.');
-    std::vector<std::string> versionBNumber=stringsplit(std::string(CATCHCHALLENGER_VERSION),'.');
+    std::vector<std::string> versionBNumber=stringsplit(CatchChallenger::Version::str,'.');
     unsigned int index=0;
     int defaultReturnValue=true;
     while(index<versionANumber.size() && index<versionBNumber.size())

@@ -10,6 +10,9 @@
 #include <QRegularExpression>
 #include "../libcatchchallenger/ClientVariable.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#if ! defined (CATCHCHALLENGER_BOT) && ! defined (ONLYMAPRENDER)
+#include "../libqtcatchchallenger/Language.hpp"
+#endif
 #include <QDebug>
 #include <QTime>
 #include <iostream>
@@ -22,7 +25,7 @@ MapVisualiserThread::MapVisualiserThread()
     #endif
     hideTheDoors=false;
     #if ! defined (CATCHCHALLENGER_BOT) && ! defined (ONLYMAPRENDER)
-    language=LanguagesSelect::languagesSelect->getCurrentLanguages();
+    language=Language::language.getLanguage().toStdString();
     #else
     language="en";
     #endif
