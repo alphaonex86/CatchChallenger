@@ -100,6 +100,7 @@ BaseWindow::BaseWindow() :
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
 
     socketState=QAbstractSocket::UnconnectedState;
+    QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
 
     mapController=new MapController(true,false,true);
     chat=new Chat(mapController);

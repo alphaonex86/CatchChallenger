@@ -167,7 +167,8 @@ void BaseWindow::resetAll()
         newProfile=NULL;
     }
 
-    client->resetAll();
+    if(client!=nullptr)
+        client->resetAll();
 }
 
 void BaseWindow::serverIsLoading()
@@ -199,11 +200,11 @@ void BaseWindow::setMultiPlayer(bool multiplayer, CatchChallenger::Api_client_re
     //frame_main_display_right->setVisible(multiplayer);
     //ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have)
 
-    if(!connect(client,&Api_protocol_Qt::newError,  this,&BaseWindow::newError))
+    if(!connect(static_cast<Api_protocol_Qt *>(client),&Api_protocol_Qt::QtnewError,  this,&BaseWindow::newError))
         abort();
-    if(!connect(client,&Api_protocol_Qt::error,     this,&BaseWindow::error))
-        abort();
-    if(!connect(client,&Api_protocol_Qt::message,     this,&BaseWindow::message))
+    /*if(!connect(static_cast<Api_protocol_Qt *>(client),&Api_protocol_Qt::Qterror,     this,&BaseWindow::error))
+        abort();*/
+    if(!connect(static_cast<Api_protocol_Qt *>(client),&Api_protocol_Qt::Qtmessage,     this,&BaseWindow::message))
         abort();
     /*if(!connect(client,&ClientFightEngine::errorFightEngine,     this,&BaseWindow::stderror))
         abort();*/
@@ -234,7 +235,11 @@ void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &charact
 {
     this->characterListForSelection=characterEntryList;
     if(settings.contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
-        client->sendDatapackContentBase(settings.value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toStdString());
+    {
+        const QString str=settings.value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString();
+        const QByteArray &data=QByteArray::fromHex(str.toUtf8());
+        client->sendDatapackContentBase(std::string(data.constData(),data.size()));
+    }
     else
         if(client==NULL)
         {
@@ -299,8 +304,16 @@ void BaseWindow::sendDatapackContentMainSub()
     }
     if(settings.contains("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())) &&
             settings.contains("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())))
-        client->sendDatapackContentMainSub(settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString().toStdString(),
-                settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString().toStdString());
+    {
+        const QString strmain=settings.value("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain())).toString();
+        const QByteArray &datamain=QByteArray::fromHex(strmain.toUtf8());
+
+        const QString strsub=settings.value("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub())).toString();
+        const QByteArray &datasub=QByteArray::fromHex(strsub.toUtf8());
+
+        client->sendDatapackContentMainSub(std::string(datamain.constData(),datamain.size()),
+                std::string(datasub.constData(),datasub.size()));
+    }
     else
         client->sendDatapackContentMainSub();
 }
@@ -410,10 +423,10 @@ void BaseWindow::haveTheDatapack()
         return;
     haveDatapack=true;
     settings.setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
                           static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
-                                  )
+                                  ).toHex())
                       );
 
     if(client!=NULL)
@@ -440,16 +453,16 @@ void BaseWindow::haveTheDatapackMainSub()
         return;
     haveDatapackMainSub=true;
     settings.setValue("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerMain.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size())
-                                  )
+                                  ).toHex())
                       );
     settings.setValue("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()),
-                      QByteArray(
+                      QString(QByteArray(
                           CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),
                           static_cast<int>(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size())
-                                  )
+                                  ).toHex())
                       );
 
     if(client!=NULL)
@@ -569,6 +582,13 @@ void BaseWindow::datapackParsed()
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::datapackParsed()";
     #endif
+    if(client==nullptr)
+    {
+        std::cerr << "client==nullptr into BaseWindow::datapackParsed() (abort)" << std::endl;
+        //just ignore because caused by:
+        //Datapack on mirror is corrupted: The checksum sended by the server is not the same than have on the mirror
+        return;
+    }
     datapackIsParsed=true;
     updateConnectingStatus();
     loadSettingsWithDatapack();
