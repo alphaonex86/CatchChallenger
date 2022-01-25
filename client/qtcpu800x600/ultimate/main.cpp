@@ -9,7 +9,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    a.setApplicationName("client-ultimate");
+    a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");
 
     if(argc<1)

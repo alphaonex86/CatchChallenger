@@ -1,4 +1,6 @@
 <RCC>
     <qresource prefix="/">
     </qresource>
+        <qresource prefix="/CC/">
+    </qresource>
 </RCC>

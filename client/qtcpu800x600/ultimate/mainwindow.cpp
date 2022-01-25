@@ -22,6 +22,7 @@
 #include "../../../general/base/Version.hpp"
 #include "../base/PlatformMacro.h"
 #include "../../libcatchchallenger/ClientVariable.hpp"
+#include "../../libqtcatchchallenger/Settings.hpp"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -67,6 +68,9 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Direction>("CatchChallenger::Direction");
     qRegisterMetaType<QList<FeedNews::FeedEntry> >("QList<FeedNews::FeedEntry>");
+    qRegisterMetaType<std::vector<std::vector<CatchChallenger::CharacterEntry> > >("std::vector<std::vector<CatchChallenger::CharacterEntry> >");
+
+    Settings::settings=new QSettings();
 
     socket=NULL;
     #ifndef NOTCPSOCKET
