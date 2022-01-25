@@ -1391,8 +1391,8 @@ void DatapackClientLoader::parseZoneExtra()
             DATAPACK_BASE_PATH_ZONE2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
-    sort(returnList);
+    std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    std::sort(returnList.begin(),returnList.end());
     unsigned int index=0;
     std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
     while(index<returnList.size())

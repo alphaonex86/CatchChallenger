@@ -16,7 +16,7 @@ public:
     void addBeatenBotFight(const uint16_t &botFightId);
     bool haveBeatBot(const uint16_t &botFightId) const;
     void addRepelStep(const uint32_t &repel_step);
-    CatchChallenger::ClientFightEngine *fightEngine;
+    CatchChallenger::CommonFightEngine *fightEngine;
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();

@@ -1,14 +1,13 @@
-#include "../../interface/BaseWindow.hpp"
-#include "../../QtDatapackClientLoader.hpp"
-#include "../../Api_client_real.hpp"
-#include "../../../../general/base/FacilityLib.hpp"
-#include "../../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../../general/base/GeneralStructures.hpp"
-#include "../../../../general/base/CommonDatapack.hpp"
-#include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../base/interface/BaseWindow.h"
+#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libqtcatchchallenger/Api_client_real.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/CommonSettingsServer.hpp"
 #include "ui_BaseWindow.h"
-#include "../../FacilityLibClient.hpp"
-#include "../../Ultimate.hpp"
+#include "../../base/FacilityLibClient.h"
 
 #include <QListWidgetItem>
 #include <QBuffer>
@@ -117,7 +116,7 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
             showTip(tr("Plant collected").toStdString());//the item is send by another message with the protocol
         break;
-        /*case Plant_collect_empty_dirt:
+/*        case Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt").toStdString());
         break;
         case Plant_collect_owned_by_another_player:
@@ -136,6 +135,8 @@ void BaseWindow::plant_collected(const CatchChallenger::Plant_collect &stat)
             qDebug() << "BaseWindow::plant_collected(): unknown return";
         break;
     }
+    /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
+        plant_collect_in_waiting.erase(plant_collect_in_waiting.cbegin());*/
 }
 
 void BaseWindow::load_plant_inventory()
@@ -163,7 +164,7 @@ void BaseWindow::load_plant_inventory()
             if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(i->first)!=
                     QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[i->first].image);
+                item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra[i->first].image));
                 item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[i->first].name)+
                         "\n"+tr("Quantity: %1").arg(i->second));
             }
@@ -212,7 +213,7 @@ void BaseWindow::load_crafting_inventory()
                 if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId)!=
                         QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
                 {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
                             .doItemId].image);
                     item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
                             .doItemId].name));
@@ -250,7 +251,7 @@ std::string BaseWindow::reputationRequirementsToText(const ReputationRequirement
         std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
         return tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name);
+    const DatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())
@@ -302,24 +303,24 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantFruitText->setText(QString());
         ui->labelPlantDescription->setText(QString());
         ui->labelPlantRequirementsAndRewards->setText(QString());
-        if(Ultimate::ultimate.isUltimate())
-            ui->labelPlantByDay->setText(QString());
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+        ui->labelPlantByDay->setText(QString());
+        #endif
 
         ui->plantUse->setVisible(false);
         return;
     }
     QListWidgetItem *item=items.first();
-    const QtDatapackClientLoader::QtPlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->QtplantExtra[plants_items_graphical[item]];
+    const DatapackClientLoader::PlantExtra &contentExtra=QtDatapackClientLoader::datapackLoader->plantExtra[plants_items_graphical[item]];
     const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants[plants_items_graphical[item]];
 
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(plant.itemUsed)!=
             QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        const QtDatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(plant.itemUsed);
-        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(plant.itemUsed);
-        ui->labelPlantImage->setPixmap(QtitemExtra.image);
+        const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(plant.itemUsed);
+        ui->labelPlantImage->setPixmap(itemExtra.image);
         ui->labelPlantName->setText(QString::fromStdString(itemExtra.name));
-        ui->labelPlantFruitImage->setPixmap(QtitemExtra.image);
+        ui->labelPlantFruitImage->setPixmap(itemExtra.image);
         ui->labelPlantDescription->setText(QString::fromStdString(itemExtra.description));
         //requirements and rewards
         {
@@ -337,51 +338,51 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
                 ui->labelPlantRequirementsAndRewards->setText(QString());
             else
                 ui->labelPlantRequirementsAndRewards->setText(tr("Requirements: ")+requirements.join(QStringLiteral(", ")));
-            if(Ultimate::ultimate.isUltimate())
+            #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+            QStringList rewards_less_reputation,rewards_more_reputation;
             {
-                QStringList rewards_less_reputation,rewards_more_reputation;
+                unsigned int index=0;
+                while(index<plant.rewards.reputation.size())
                 {
-                    unsigned int index=0;
-                    while(index<plant.rewards.reputation.size())
+                    QString name=QStringLiteral("???");
+                    const ReputationRewards &reputationRewards=plant.rewards.reputation.at(index);
+                    if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
                     {
-                        QString name=QStringLiteral("???");
-                        const ReputationRewards &reputationRewards=plant.rewards.reputation.at(index);
-                        if(reputationRewards.reputationId<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
-                        {
-                            const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
-                            if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)!=
-                                    QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
-                                name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name).name);
-                        }
-                        if(reputationRewards.point<0)
-                            rewards_less_reputation.push_back(name);
-                        else if(reputationRewards.point>0)
-                            rewards_more_reputation.push_back(name);
-                        index++;
+                        const Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId);
+                        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)!=
+                                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+                            name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name).name);
                     }
-                }
-                if(!rewards_less_reputation.empty() || !rewards_more_reputation.empty())
-                {
-                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
-                    if(!rewards_less_reputation.empty())
-                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
-                    if(!rewards_less_reputation.empty() && !rewards_more_reputation.empty())
-                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
-                    if(!rewards_more_reputation.empty())
-                        ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
+                    if(reputationRewards.point<0)
+                        rewards_less_reputation.push_back(name);
+                    else if(reputationRewards.point>0)
+                        rewards_more_reputation.push_back(name);
+                    index++;
                 }
             }
-        }
-        if(Ultimate::ultimate.isUltimate())
-            if(plant.fruits_seconds>0)
+            if(!rewards_less_reputation.empty() || !rewards_more_reputation.empty())
             {
-                double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
-                double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-                if(CommonDatapack::commonDatapack.items.item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.items.item.cend())
-                    ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
-                else
-                    ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+                ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral("<br />"));
+                if(!rewards_less_reputation.empty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("Less reputation in: ")+rewards_less_reputation.join(QStringLiteral(", ")));
+                if(!rewards_less_reputation.empty() && !rewards_more_reputation.empty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+QStringLiteral(", "));
+                if(!rewards_more_reputation.empty())
+                    ui->labelPlantRequirementsAndRewards->setText(ui->labelPlantRequirementsAndRewards->text()+tr("More reputation in: ")+rewards_more_reputation.join(QStringLiteral(", ")));
             }
+            #endif
+        }
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+        if(plant.fruits_seconds>0)
+        {
+            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+            if(CommonDatapack::commonDatapack.items.item.find(plant.itemUsed)!=CommonDatapack::commonDatapack.items.item.cend())
+                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0))+", "+tr("income by day: %1").arg(QString::number(quantityByDay*CommonDatapack::commonDatapack.items.item[plant.itemUsed].price,'f',0)));
+            else
+                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+        }
+        #endif
     }
     else
     {
@@ -390,13 +391,14 @@ void BaseWindow::on_listPlantList_itemSelectionChanged()
         ui->labelPlantFruitImage->setPixmap(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
         ui->labelPlantDescription->setText(tr("This plant and these effects are unknown"));
         ui->labelPlantRequirementsAndRewards->setText(QString());
-        if(Ultimate::ultimate.isUltimate())
-            if(plant.fruits_seconds>0)
-            {
-                double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
-                double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
-                ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
-            }
+        #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
+        if(plant.fruits_seconds>0)
+        {
+            double quantity=(double)plant.fix_quantity+(double)plant.random_quantity/(double)RANDOM_FLOAT_PART_DIVIDER-1;
+            double quantityByDay=quantity*(double)86400/(double)plant.fruits_seconds;
+            ui->labelPlantByDay->setText(tr("Plant by day: %1").arg(QString::number(quantityByDay,'f',0)));
+        }
+        #endif
     }
 
     ui->labelPlantedImage->setPixmap(contentExtra.tileset->tileAt(0)->image().scaled(32,64));
@@ -485,7 +487,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
             QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
         name=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].name);
-        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.doItemId].image);
+        ui->labelCraftingImage->setPixmap(QtDatapackClientLoader::datapackLoader->itemsExtra[content.doItemId].image);
     }
     else
     {
@@ -508,7 +510,7 @@ void BaseWindow::on_listCraftingList_itemSelectionChanged()
                 QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
         {
             nameMaterials=QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].name);
-            item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[content.materials.at(index).item].image);
+            item->setIcon(QtDatapackClientLoader::datapackLoader->itemsExtra[content.materials.at(index).item].image);
         }
         else
         {

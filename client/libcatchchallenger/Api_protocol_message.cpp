@@ -1,7 +1,5 @@
 #include "Api_protocol.hpp"
 
-using namespace CatchChallenger;
-
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
 #include <utime.h>
@@ -23,6 +21,10 @@ using namespace CatchChallenger;
 #include <fstream>
 #include <unistd.h>
 #endif
+
+#if ! defined (ONLYMAPRENDER)
+
+using namespace CatchChallenger;
 
 //have message without reply
 bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const data, const unsigned int &size)
@@ -2489,3 +2491,4 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
     return true;
 }
 
+#endif
