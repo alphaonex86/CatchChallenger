@@ -258,7 +258,7 @@ std::vector<uint8_t> ClientFightEngine::addPlayerMonster(const std::vector<Playe
 bool ClientFightEngine::internalTryEscape()
 {
     emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");
-    client->Api_protocol::tryEscape();
+    client->sendTryEscape();
     return CommonFightEngine::internalTryEscape();
 }
 

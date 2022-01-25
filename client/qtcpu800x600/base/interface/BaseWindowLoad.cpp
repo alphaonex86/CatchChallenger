@@ -381,7 +381,7 @@ void BaseWindow::updatePlayerType()
             QListWidgetItem *item=new QListWidgetItem();
             item->setText(QString::fromStdString(itemsExtra.name));
             item->setData(99,itemId);
-            item->setIcon(QIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemId).image)));
+            item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
             ui->listAllItem->addItem(item);
         }
     }
@@ -545,7 +545,7 @@ void BaseWindow::load_inventory()
             items_graphical[item]=i->first;
             if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(i->first)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(i->first).image));
+                item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(i->first).image);
                 if(i->second>1)
                     item->setText(QString::number(i->second));
                 item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(i->first).name));
@@ -1203,7 +1203,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             std::string name;
             if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(items.at(index).item)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(items.at(index).item).image);
+                image=QtDatapackClientLoader::datapackLoader->getItemExtra(items.at(index).item).image;
                 name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(items.at(index).item).name;
             }
             else
@@ -1249,7 +1249,7 @@ void BaseWindow::on_questsList_itemSelectionChanged()
                 if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(items.at(index).item)!=
                         QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
                 {
-                    image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(items.at(index).item).image);
+                    image=QtDatapackClientLoader::datapackLoader->getItemExtra(items.at(index).item).image;
                     name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(items.at(index).item).name;
                 }
                 else
@@ -1340,7 +1340,7 @@ QListWidgetItem * BaseWindow::itemToGraphic(const uint16_t &itemid, const uint32
     if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemid)!=
             QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
     {
-        item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemid).image));
+        item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemid).image);
         if(quantity>1)
             item->setText(QString::number(quantity));
         item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemid).name));
@@ -1425,7 +1425,7 @@ void BaseWindow::updateTheWareHouseContent()
                         .arg(monster.level)
                         );
                 item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).description));
-                item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(monster.monster).front));
+                item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
                 //item->setData(99,monster.id);
                 if(!vectorcontainsAtLeastOne(monster_to_deposit,(uint8_t)index) || vectorcontainsAtLeastOne(monster_to_withdraw,(uint8_t)index))
                     ui->warehousePlayerMonster->addItem(item);
@@ -1450,7 +1450,7 @@ void BaseWindow::updateTheWareHouseContent()
                         .arg(monster.level)
                         );
                 item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).description));
-                item->setIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(monster.monster).front));
+                item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
                 //item->setData(99,monster.id);
                 if(!vectorcontainsAtLeastOne(monster_to_withdraw,(uint8_t)index) || vectorcontainsAtLeastOne(monster_to_deposit,(uint8_t)index))
                     ui->warehousePlayerStoredMonster->addItem(item);
@@ -1631,7 +1631,7 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
     ui->labelEncyclopediaMonster->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
-    QPixmap image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(static_cast<uint16_t>(item->data(99).toUInt())).front);
+    QPixmap image=QtDatapackClientLoader::datapackLoader->getMonsterExtra(static_cast<uint16_t>(item->data(99).toUInt())).front;
     image.scaled(image.width()*3,image.height()*3).save(&buffer, "PNG");
     ui->labelEncyclopediaMonster->setText(
                 QStringLiteral("<center><img src=\"data:image/png;base64,%1\" /></center><br />").arg(QString(byteArray.toBase64()))+
@@ -1699,7 +1699,7 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaItem_itemActivated(QL
     ui->labelEncyclopediaItem->setText("");
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
-    QPixmap image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(static_cast<uint16_t>(item->data(99).toUInt())).image);
+    QPixmap image=QtDatapackClientLoader::datapackLoader->getItemExtra(static_cast<uint16_t>(item->data(99).toUInt())).image;
     image.scaled(image.width()*3,image.height()*3).save(&buffer, "PNG");
     image.save(&buffer, "PNG");
     ui->labelEncyclopediaItem->setText(

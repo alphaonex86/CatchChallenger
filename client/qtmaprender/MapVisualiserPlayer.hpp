@@ -127,7 +127,7 @@ protected:
 
     std::vector<uint8_t> *events;
     std::unordered_map<uint16_t,uint32_t> *items;
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> *quests;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests;
     std::unordered_set<uint16_t> *itemOnMap;
     std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
 protected:

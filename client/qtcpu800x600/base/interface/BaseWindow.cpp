@@ -694,7 +694,7 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
             else
                 name="id: %1"+std::to_string(item);
             if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(item).image);
+                image=QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
             else
                 image=QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
 
@@ -846,7 +846,7 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     }
     if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(items_graphical.at(item))!=
             QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-        image=QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(items_graphical.at(item)).image);
+        image=QtDatapackClientLoader::datapackLoader->getItemExtra(items_graphical.at(item)).image;
     else
         image=QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
     ui->inventory_image->setPixmap(image);
@@ -1800,7 +1800,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
                     item->setText("???");
                 item->setData(99,monsterId);
                 if(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.cend())
-                    item->setIcon(QIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.at(monsterId).thumb)));
+                    item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).thumb));
                 else
                     item->setIcon(QIcon(":/images/monsters/default/small.png"));
                 firstFound=true;
@@ -1851,7 +1851,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
                     item->setText("???");
                 item->setData(99,itemId);
                 if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                    item->setIcon(QIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemId).image)));
+                    item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
                 /*else
                     item->setIcon(QIcon(":/images/monsters/default/small.png"));*/
                 firstFound=true;
@@ -1941,7 +1941,7 @@ void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
             item->setText(QString::fromStdString(itemsExtra.name));
             item->setData(99,itemId);
             if(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->ImageitemsExtra.cend())
-                item->setIcon(QIcon(QPixmap::fromImage(QtDatapackClientLoader::datapackLoader->ImageitemsExtra.at(itemId).image)));
+                item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image));
             /*else
                 item->setIcon(QIcon(":/images/monsters/default/small.png"));*/
             ui->listAllItem->addItem(item);

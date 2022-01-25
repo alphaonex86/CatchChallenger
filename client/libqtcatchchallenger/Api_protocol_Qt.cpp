@@ -1118,7 +1118,7 @@ std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const std::vector<PlayerM
 bool Api_protocol_Qt::internalTryEscape()
 {
     emit message("BaseWindow::on_toolButtonFightQuit_clicked(): emit tryEscape()");
-    Api_protocol::tryEscape();
+    Api_protocol::sendTryEscape();
     return CommonFightEngine::internalTryEscape();
 }
 
