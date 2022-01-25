@@ -25,7 +25,7 @@ public:
     //if already playing ambiance then call stopCurrentAmbiance
     virtual std::string startAmbiance(const std::string &soundPath);
     virtual void stopCurrentAmbiance();
-protected:
+public:
     void addPlayer(QAudioOutput * const player);
     void removePlayer(QAudioOutput * const player);
 private:

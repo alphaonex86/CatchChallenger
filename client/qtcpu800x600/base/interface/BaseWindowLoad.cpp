@@ -9,7 +9,8 @@
 #include "../Ultimate.h"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 #include <QBuffer>
@@ -146,7 +147,7 @@ void BaseWindow::resetAll()
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(currentAmbiance.player!=NULL)
     {
-        Audio::audio.removePlayer(currentAmbiance.player);
+        Audio::audio->removePlayer(currentAmbiance.player);
         currentAmbiance.player->stop();
         currentAmbiance.buffer->close();
         currentAmbiance.player->deleteLater();
@@ -645,7 +646,7 @@ void BaseWindow::datapackChecksumError()
 void BaseWindow::loadSoundSettings()
 {
     #ifndef CATCHCHALLENGER_NOAUDIO
-    const QStringList &outputDeviceNames=Audio::audio.output_list();
+    const QStringList &outputDeviceNames=Audio::audio->output_list();
     #else
     const QStringList outputDeviceNames;
     #endif
@@ -1693,7 +1694,7 @@ void CatchChallenger::BaseWindow::on_listWidgetEncyclopediaMonster_itemActivated
                         data.push_back(typeExtra.color.g);
                         data.push_back(typeExtra.color.b);
                         //if(typeExtra.color.isValid())
-                            typeList.push_back("<span style=\"background-color:"+binarytoHexa(data)+";\">"+typeExtra.name+"</span>");
+                            typeList.push_back("<span style=\"background-color:#"+binarytoHexa(data)+";\">"+typeExtra.name+"</span>");
                         /*else
                             typeList.push_back(typeExtra.name);*/
                     }

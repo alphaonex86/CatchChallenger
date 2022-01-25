@@ -3,7 +3,7 @@
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../Audio.h"
+#include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 using namespace CatchChallenger;
@@ -376,7 +376,7 @@ void BaseWindow::currentMapLoaded()
             // reset the audio ambiance
             if(currentAmbiance.player!=NULL)
             {
-                Audio::audio.removePlayer(currentAmbiance.player);
+                Audio::audio->removePlayer(currentAmbiance.player);
                 currentAmbiance.player->stop();
                 currentAmbiance.buffer->close();
                 delete currentAmbiance.player;
@@ -389,7 +389,7 @@ void BaseWindow::currentMapLoaded()
             }
 
             Ambiance ambiance;
-            ambiance.player = new QAudioOutput(Audio::audio.format());
+            ambiance.player = new QAudioOutput(Audio::audio->format());
             // Create a new Media
             if(ambiance.player!=NULL)
             {
@@ -405,7 +405,7 @@ void BaseWindow::currentMapLoaded()
                     ambiance.file=finalSound;
                     currentAmbiance=ambiance;
 
-                    Audio::audio.addPlayer(ambiance.player);
+                    Audio::audio->addPlayer(ambiance.player);
                 }
                 else
                 {
