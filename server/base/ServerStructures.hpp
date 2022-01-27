@@ -15,7 +15,7 @@
 #include "TimeRangeEventScanBase.hpp"
 #include "StringWithReplacement.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "PlayerUpdaterToMaster.hpp"
+#include "../game-server-alone/timer/PlayerUpdaterToMaster.hpp"
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/GeneralVariable.hpp"

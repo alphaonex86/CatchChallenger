@@ -3,7 +3,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../../general/fight/CommonFightEngineBase.hpp"
 
 using namespace CatchChallenger;

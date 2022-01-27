@@ -185,21 +185,21 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(!settings.contains("compression"))
         settings.setValue("compression","zstd");
     if(settings.value("compression")=="none")
-        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::None;
+        CompressionProtocol::compressionTypeServer          = CompressionProtocol::CompressionType::None;
     else if(settings.value("compression")=="zstd")
-        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zstandard;
+        CompressionProtocol::compressionTypeServer          = CompressionProtocol::CompressionType::Zstandard;
     else
     {
         std::cerr << "compression not supported: " << settings.value("compression") << std::endl;
-        ProtocolParsing::compressionTypeServer          = ProtocolParsing::CompressionType::Zstandard;
+        CompressionProtocol::compressionTypeServer          = CompressionProtocol::CompressionType::Zstandard;
     }
     if(!settings.contains("compressionLevel"))
         settings.setValue("compressionLevel","6");
-    ProtocolParsing::compressionLevel          = stringtouint8(settings.value("compressionLevel"),&ok);
+    CompressionProtocol::compressionLevel          = stringtouint8(settings.value("compressionLevel"),&ok);
     if(!ok)
     {
         std::cerr << "Compression level not a number fixed by 6" << std::endl;
-        ProtocolParsing::compressionLevel=6;
+        CompressionProtocol::compressionLevel=6;
     }
     #endif
 

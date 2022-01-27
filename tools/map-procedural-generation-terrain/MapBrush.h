@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../client/qt/tiled/tiled_map.hpp"
+#include "../../client/tiled/tiled_map.hpp"
 
 class MapBrush
 {

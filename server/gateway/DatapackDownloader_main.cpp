@@ -14,7 +14,7 @@ using namespace CatchChallenger;
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/libzstd/lib/zstd.h"
-#include "../../client/tarcompressed/TarDecode.hpp"
+#include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "FacilityLibGateway.hpp"
