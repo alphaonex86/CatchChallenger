@@ -36,9 +36,15 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
         enum DatabaseType
         {
             Unknown=0x00,
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
             Mysql=0x01,
+            #endif
+            #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
             SQLite=0x02,
-            PostgreSQL=0x03
+            #endif
+            #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+            PostgreSQL=0x03,
+            #endif
         };
         DatabaseBase();
         virtual ~DatabaseBase();
@@ -60,7 +66,7 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
         virtual bool setBlocking(const bool &val);//return true if success
         virtual bool setMaxDbQueries(const unsigned int &maxDbQueries);
     protected:
-        DatabaseType databaseTypeVar;
+        DatabaseType databaseTypeVar;//to def at runtime the value, used mostly for Qt database
 };
 }
 

@@ -201,25 +201,63 @@ void send_settings(
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("db-login");
     if(settings->value("type")=="mysql")
+    {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        #else
+        std::cerr << "mysql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="sqlite")
+    {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        #else
+        std::cerr << "SQLite support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="postgresql")
+    {
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        #else
+        std::cerr << "postgresql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else
-        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+    {
+        std::cerr << "unsupported database type" << std::endl;
+        abort();
+        formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+    }
     switch(formatedServerSettings.database_login.tryOpenType)
     {
-        default:
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+            formatedServerSettings.database_login.host				= settings->value("host");
+            formatedServerSettings.database_login.db				= settings->value("db");
+            formatedServerSettings.database_login.login				= settings->value("login");
+            formatedServerSettings.database_login.pass				= settings->value("pass");
+        break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_login.host				= settings->value("host");
             formatedServerSettings.database_login.db				= settings->value("db");
             formatedServerSettings.database_login.login				= settings->value("login");
             formatedServerSettings.database_login.pass				= settings->value("pass");
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_login.file				= settings->value("file");
+        break;
+        #endif
+    default:
+        abort();
         break;
     }
     formatedServerSettings.database_login.tryInterval       = stringtouint32(settings->value("tryInterval"));
@@ -228,26 +266,64 @@ void send_settings(
 
     settings->beginGroup("db-base");
     if(settings->value("type")=="mysql")
+    {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
+        #else
+        std::cerr << "mysql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="sqlite")
+    {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::SQLite;
+        #else
+        std::cerr << "SQLite support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="postgresql")
+    {
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::PostgreSQL;
+        #else
+        std::cerr << "postgresql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else
-        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
+    {
+        std::cerr << "unsupported database type" << std::endl;
+                abort();
+        formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Unknown;
+    }
     switch(formatedServerSettings.database_base.tryOpenType)
     {
-        default:
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+            formatedServerSettings.database_base.host              = settings->value("host");
+            formatedServerSettings.database_base.db                = settings->value("db");
+            formatedServerSettings.database_base.login             = settings->value("login");
+            formatedServerSettings.database_base.pass              = settings->value("pass");
+        break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             formatedServerSettings.database_base.host              = settings->value("host");
             formatedServerSettings.database_base.db                = settings->value("db");
             formatedServerSettings.database_base.login             = settings->value("login");
             formatedServerSettings.database_base.pass              = settings->value("pass");
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_base.file              = settings->value("file");
         break;
+        #endif
+        default:
+            abort();
+            break;
     }
     formatedServerSettings.database_base.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_base.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
@@ -256,24 +332,55 @@ void send_settings(
 
     settings->beginGroup("db-common");
     if(settings->value("type")=="mysql")
+    {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        #else
+        std::cerr << "mysql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="sqlite")
+    {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        #else
+        std::cerr << "sqlite support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="postgresql")
+    {
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        #else
+        std::cerr << "postgresql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else
-        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+    {
+        std::cerr << "unsupported database type" << std::endl;
+        abort();
+        formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+    }
     switch(formatedServerSettings.database_common.tryOpenType)
     {
         default:
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
             formatedServerSettings.database_common.host				= settings->value("host");
             formatedServerSettings.database_common.db				= settings->value("db");
             formatedServerSettings.database_common.login				= settings->value("login");
             formatedServerSettings.database_common.pass				= settings->value("pass");
         break;
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
+        #endif
             formatedServerSettings.database_common.file				= settings->value("file");
         break;
     }
@@ -283,26 +390,60 @@ void send_settings(
 
     settings->beginGroup("db-server");
     if(settings->value("type")=="mysql")
+    {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+        #else
+        std::cerr << "mysql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="sqlite")
+    {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
+        #else
+        std::cerr << "sqlite support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else if(settings->value("type")=="postgresql")
+    {
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
+        #else
+        std::cerr << "postgresql support disabled" << std::endl;
+        abort();
+        #endif
+    }
     else
-        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
+    {
+        std::cerr << "unsupported database type" << std::endl;
+        abort();
+        formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+    }
     switch(formatedServerSettings.database_server.tryOpenType)
     {
         default:
+        std::cerr << "unsupported database type" << std::endl;
+        abort();
+        break;
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
             formatedServerSettings.database_server.host				= settings->value("host");
             formatedServerSettings.database_server.db				= settings->value("db");
-            formatedServerSettings.database_server.login				= settings->value("login");
+            formatedServerSettings.database_server.login			= settings->value("login");
             formatedServerSettings.database_server.pass				= settings->value("pass");
         break;
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             formatedServerSettings.database_server.file				= settings->value("file");
         break;
+        #endif
     }
     formatedServerSettings.database_server.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_server.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));

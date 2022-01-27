@@ -221,6 +221,10 @@ void EpollServer::setNormalSettings(const NormalServerSettings &settings)
     normalServerSettings=settings;
     BaseServer::setNormalSettings(settings);
     loadAndFixSettings();
+    if(normalServerSettings.server_port<=0)
+        normalServerSettings.server_port=42489;
+    if(normalServerSettings.proxy_port<=0)
+        normalServerSettings.proxy.clear();
 }
 
 NormalServerSettings EpollServer::getNormalSettings() const
@@ -230,9 +234,6 @@ NormalServerSettings EpollServer::getNormalSettings() const
 
 void EpollServer::loadAndFixSettings()
 {
-    if(normalServerSettings.server_port<=0)
-        normalServerSettings.server_port=42489;
-    if(normalServerSettings.proxy_port<=0)
-        normalServerSettings.proxy.clear();
+    BaseServer::loadAndFixSettings();
 }
 #endif

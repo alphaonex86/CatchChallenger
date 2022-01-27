@@ -360,47 +360,75 @@ void BaseServer::loadAndFixSettings()
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
         default:
             std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
-            GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
+            GlobalServerData::serverSettings.database_login.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Unknown;
+            abort();
         break;
     }
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
         default:
             std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
-            GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
+            GlobalServerData::serverSettings.database_base.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Unknown;
+            abort();
         break;
     }
     #endif
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
     {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
         default:
             std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
-            GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
+            GlobalServerData::serverSettings.database_common.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Unknown;
+            abort();
         break;
     }
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case CatchChallenger::DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
         default:
             std::cerr << "Wrong db type, line: " << __LINE__ << std::endl;
-            GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Mysql;
+            GlobalServerData::serverSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::Unknown;
+            abort();
         break;
     }
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
