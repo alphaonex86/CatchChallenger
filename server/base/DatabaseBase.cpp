@@ -23,17 +23,23 @@ const std::string DatabaseBase::databaseTypeToString(const DatabaseBase::Databas
     switch(type)
     {
         default:
-            return "Unknown";
+            return "Unknown ("+std::to_string((int)type)+")";
         break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             return "Mysql";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             return "SQLite";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
             return "PostgreSQL";
         break;
+        #endif
     }
 }
 
