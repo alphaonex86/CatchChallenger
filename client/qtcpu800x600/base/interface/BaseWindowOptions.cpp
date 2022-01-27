@@ -53,7 +53,8 @@ void CatchChallenger::BaseWindow::on_audioVolume_valueChanged(int value)
 {
     Options::options.setAudioVolume(static_cast<uint8_t>(value));
     #ifndef CATCHCHALLENGER_NOAUDIO
-    Audio::audio->setVolume(value);
+    if(Audio::audio!=nullptr)
+        Audio::audio->setVolume(value);
     #endif
 }
 

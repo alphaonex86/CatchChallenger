@@ -266,7 +266,7 @@ void BaseServer::preload_profile()
                 }
                 switch(databaseType)
                 {
-                    default:
+                    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
                     case DatabaseBase::DatabaseType::Mysql:
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO `character`("
                                 "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
@@ -284,6 +284,8 @@ void BaseServer::preload_profile()
                                 ",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
                                 "'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database);
                     break;
+                    #endif
+                    #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
                     case DatabaseBase::DatabaseType::SQLite:
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
                                 "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
@@ -301,6 +303,8 @@ void BaseServer::preload_profile()
                                 "','"+reputations+"','"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+"','"+encyclopedia_item+"',"+
                                 std::to_string(common_blobversion_datapack)+");"),database);
                     break;
+                    #endif
+                    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
                     case DatabaseBase::DatabaseType::PostgreSQL:
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(
                                     std::string("INSERT INTO character("
@@ -319,6 +323,10 @@ void BaseServer::preload_profile()
                                 ",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
                                 "','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");")
                                                                                                         ,database);
+                    break;
+                    #endif
+                    default:
+                    abort();
                     break;
                 }
 
@@ -354,18 +362,26 @@ void BaseServer::preload_profile()
         switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
         {
             default:
+            abort();
+            break;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::Mysql:
                 serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`blob_version`,`quest`) VALUES("
                 "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
             break;
+            #endif
+            #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::SQLite:
                 serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
                 "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
+            #endif
+            #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::PostgreSQL:
                 serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
                 "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
+            #endif
         }
         #endif
         serverProfileInternal.valid=true;

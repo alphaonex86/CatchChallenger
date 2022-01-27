@@ -430,6 +430,7 @@ int main(int argc, char *argv[])
     }
     server->initialize_the_database_prepared_query();
 
+    GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEpoll();
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
     TimerPositionSync timerPositionSync;
@@ -724,60 +725,25 @@ int main(int argc, char *argv[])
                 break;
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
-                    switch(static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType())
+                    EpollDatabase * const db=static_cast<EpollDatabase *>(events[i].data.ptr);
+                    db->epollEvent(events[i].events);
+                    if(!datapack_loaded)
                     {
-                        #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-                        case DatabaseBase::DatabaseType::PostgreSQL:
+                        if(db->isConnected())
                         {
-                            EpollPostgresql * const db=static_cast<EpollPostgresql *>(events[i].data.ptr);
-                            db->epollEvent(events[i].events);
-                            if(!datapack_loaded)
-                            {
-                                if(db->isConnected())
-                                {
-                                    std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
-                                    server->preload_the_data();
-                                    datapack_loaded=true;
-                                }
-                                else
-                                    std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
-                            }
-                            if(!db->isConnected())
-                            {
-                                std::cerr << "database disconnect, quit now" << std::endl;
-                                return EXIT_FAILURE;
-                            }
+                            std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
+                            server->preload_the_data();
+                            datapack_loaded=true;
                         }
-                        break;
-                        #endif
-                        #ifdef CATCHCHALLENGER_DB_MYSQL
-                        case DatabaseBase::DatabaseType::Mysql:
-                        {
-                            EpollMySQL * const db=static_cast<EpollMySQL *>(events[i].data.ptr);
-                            db->epollEvent(events[i].events);
-                            if(!datapack_loaded)
-                            {
-                                if(db->isConnected())
-                                {
-                                    std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
-                                    server->preload_the_data();
-                                    datapack_loaded=true;
-                                }
-                                else
-                                    std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
-                            }
-                            if(!db->isConnected())
-                            {
-                                std::cerr << "database disconnect, quit now" << std::endl;
-                                return EXIT_FAILURE;
-                            }
-                        }
-                        break;
-                        #endif
-                        default:
-                        std::cerr << "epoll database type return not supported: " << static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType() << std::endl;
-                        abort();
+                        else
+                            std::cerr << "datapack_loaded not loaded: but database seam don't be connected" << std::endl;
                     }
+                    if(!db->isConnected())
+                    {
+                        std::cerr << "database disconnect, quit now" << std::endl;
+                        return EXIT_FAILURE;
+                    }
+                    //std::cerr << "epoll database type return not supported: " << CatchChallenger::DatabaseBase::databaseTypeToString(static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType()) << " for " << events[i].data.ptr << std::endl;
                 }
                 break;
                 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -805,9 +771,6 @@ int main(int argc, char *argv[])
                 }
                 break;
                 #endif
-                default:
-                    std::cerr << "unknown event" << std::endl;
-                break;
             }
         }
         #ifdef SERVERBENCHMARK

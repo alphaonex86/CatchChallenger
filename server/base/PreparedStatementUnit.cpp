@@ -30,6 +30,8 @@ PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChal
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
+    #else
+    (void)database;
     #endif
     if(!query.empty())
         setQuery(query);
@@ -110,6 +112,10 @@ DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallB
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(database==NULL)
         return NULL;
+    #else
+    (void)returnObject;
+    (void)method;
+    (void)values;
     #endif
     if(query.empty())
         return NULL;
@@ -134,6 +140,8 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(database==NULL)
         return false;
+    #else
+    (void)values;
     #endif
     if(query.empty())
         return false;
@@ -162,9 +170,15 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
             std::cerr << "out of range or wrong type" << std::endl;
             abort();
         break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
     }
     #endif
@@ -179,6 +193,8 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
     }
     this->database=other.database;
     query=other.query;
+    #else
+    (void)other;
     #endif
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
@@ -198,17 +214,23 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
             std::cerr << "out of range or wrong type" << std::endl;
             abort();
         break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
     }
     #endif
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     other.database = nullptr;
-    #endif
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     strcpy(this->uniqueName,other.uniqueName);
+    #else
+    (void)other;
     #endif
 }
 
@@ -232,15 +254,23 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
             std::cerr << "out of range or wrong type" << std::endl;
             abort();
         break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
     }
     #endif
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
+    #else
+    (void)other;
     #endif
     return *this;
 }
@@ -254,9 +284,15 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& 
             std::cerr << "out of range or wrong type" << std::endl;
             abort();
         break;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
+        #endif
         break;
     }
     #endif
@@ -266,9 +302,9 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& 
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
-    #endif
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     other.database = nullptr;
+    #else
+    (void)other;
     #endif
     return *this;
 }

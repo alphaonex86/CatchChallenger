@@ -8,12 +8,11 @@
 #include <string>
 #include <chrono>
 
-#include "../../base/DatabaseBase.hpp"
-#include "../BaseClassSwitch.hpp"
+#include "EpollDatabase.hpp"
 
 #define CATCHCHALLENGER_MAXBDQUERIES 1024
 
-class EpollPostgresql : public BaseClassSwitch, public CatchChallenger::DatabaseBase
+class EpollPostgresql : public EpollDatabase
 {
 public:
     EpollPostgresql();

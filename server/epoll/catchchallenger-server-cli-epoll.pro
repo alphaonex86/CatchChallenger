@@ -26,9 +26,13 @@ DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 # postgresql 9+
 DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
 LIBS    += -lpq
+SOURCES += $$PWD/db/EpollPostgresql.cpp
+HEADERS += $$PWD/db/EpollPostgresql.hpp
 # mysql 5.7+
 #LIBS    += -lmysqlclient
 #DEFINES += CATCHCHALLENGER_DB_MYSQL
+#SOURCES += $$PWD/db/EpollMySQL.cpp
+#HEADERS += $$PWD/db/EpollMySQL.hpp
 
 CONFIG += c++11
 
@@ -45,8 +49,6 @@ SOURCES += \
     $$PWD/EpollSslServer.cpp \
     $$PWD/Epoll.cpp \
     $$PWD/EpollTimer.cpp \
-    $$PWD/db/EpollPostgresql.cpp \
-    $$PWD/db/EpollMySQL.cpp \
     $$PWD/timer/TimerCityCapture.cpp \
     $$PWD/timer/TimerSendInsertMoveRemove.cpp \
     $$PWD/timer/TimerPositionSync.cpp \
@@ -72,8 +74,6 @@ HEADERS += $$PWD/EpollSocket.h \
     $$PWD/Epoll.h \
     $$PWD/BaseClassSwitch.h \
     $$PWD/EpollTimer.h \
-    $$PWD/db/EpollPostgresql.h \
-    $$PWD/db/EpollMySQL.h \
     $$PWD/timer/TimerCityCapture.h \
     $$PWD/timer/TimerPositionSync.h \
     $$PWD/timer/TimerSendInsertMoveRemove.h \

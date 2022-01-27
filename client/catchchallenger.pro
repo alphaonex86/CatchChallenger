@@ -3,6 +3,7 @@ wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
 }
 
+DEFINES += CATCHCHALLENGER_CLASS_QT
 !contains(DEFINES, NOSINGLEPLAYER) {
 include(qtcpu800x600/base/solo.pri)
     INCLUDEPATH += -I/usr/include/

@@ -45,15 +45,23 @@ void CharactersGroup::load_clan_max_id()
     std::string queryText;
     switch(databaseBaseCommon->databaseType())
     {
-        default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `clan` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM clan ORDER BY id DESC LIMIT 1;";
+        break;
+        #endif
+        default:
+        abort();
         break;
     }
     if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_clan_max_id_static)==NULL)
@@ -90,15 +98,23 @@ void CharactersGroup::load_character_max_id()
     std::string queryText;
     switch(databaseBaseCommon->databaseType())
     {
-        default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `character` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM character ORDER BY id DESC LIMIT 1;";
+        break;
+        #endif
+    default:
+        abort();
         break;
     }
     if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_character_max_id_static)==NULL)
@@ -136,15 +152,23 @@ void CharactersGroup::load_monsters_max_id()
     std::string queryText;
     switch(databaseBaseCommon->databaseType())
     {
-        default:
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
             queryText="SELECT `id` FROM `monster` ORDER BY `id` DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 0,1;";
         break;
+        #endif
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
             queryText="SELECT id FROM monster ORDER BY id DESC LIMIT 1;";
+        break;
+        #endif
+    default:
+        abort();
         break;
     }
     if(databaseBaseCommon->asyncRead(queryText,this,&CharactersGroup::load_monsters_max_id_static)==NULL)

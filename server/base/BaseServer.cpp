@@ -26,6 +26,9 @@ bool BaseServer::initialize_the_database()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     #ifdef CATCHCHALLENGER_SOLO
+    #if ! defined(CATCHCHALLENGER_DB_SQLITE) && ! defined(CATCHCHALLENGER_CLASS_QT)
+    #error should CATCHCHALLENGER_DB_SQLITE or CATCHCHALLENGER_CLASS_QT enabled if CATCHCHALLENGER_SOLO enabled
+    #endif
     if(GlobalServerData::serverPrivateVariables.db_server!=NULL && GlobalServerData::serverPrivateVariables.db_server->isConnected())
         if(GlobalServerData::serverPrivateVariables.db_server->databaseType()!=DatabaseBase::DatabaseType::SQLite)
         {
@@ -85,7 +88,9 @@ bool BaseServer::initialize_the_database()
     {
         default:
         std::cerr << "database type unknown" << std::endl;
+        abort();
         return false;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                     GlobalServerData::serverSettings.database_login.host.c_str(),
@@ -103,7 +108,9 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_login.db << ")"
                       << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(GlobalServerData::serverSettings.database_login.file.c_str(),"","",""))
         {
@@ -114,7 +121,9 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_login.file << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                     GlobalServerData::serverSettings.database_login.host.c_str(),
@@ -132,6 +141,7 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_login.db << ")"
                       << std::endl;
         break;
+        #endif
     }
     if(!GlobalServerData::serverPrivateVariables.db_login->asyncWrite("SELECT * FROM account"))
     {
@@ -143,7 +153,9 @@ bool BaseServer::initialize_the_database()
     {
         default:
         std::cerr << "database type unknown" << std::endl;
+        abort();
         return false;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
                     GlobalServerData::serverSettings.database_base.host.c_str(),
@@ -161,7 +173,9 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_base.db << ")"
                       << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(GlobalServerData::serverSettings.database_base.file.c_str(),"","",""))
         {
@@ -172,7 +186,9 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_base.file << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         if(!GlobalServerData::serverPrivateVariables.db_base->syncConnect(
                     GlobalServerData::serverSettings.database_base.host.c_str(),
@@ -190,6 +206,7 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_base.db << ")"
                       << std::endl;
         break;
+        #endif
     }
     if(!GlobalServerData::serverPrivateVariables.db_base->asyncWrite("SELECT * FROM dictionary_reputation"))
     {
@@ -202,7 +219,9 @@ bool BaseServer::initialize_the_database()
     {
         default:
         std::cerr << "database type unknown" << std::endl;
+        abort();
         return false;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
                     GlobalServerData::serverSettings.database_common.host.c_str(),
@@ -220,7 +239,9 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_common.db << ")"
                       << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(GlobalServerData::serverSettings.database_common.file.c_str(),"","",""))
         {
@@ -231,7 +252,9 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_common.file << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         if(!GlobalServerData::serverPrivateVariables.db_common->syncConnect(
                     GlobalServerData::serverSettings.database_common.host.c_str(),
@@ -249,6 +272,7 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_common.db << ")"
                       << std::endl;
         break;
+        #endif
     }
     if(!GlobalServerData::serverPrivateVariables.db_common->asyncWrite("SELECT * FROM character"))
     {
@@ -260,6 +284,7 @@ bool BaseServer::initialize_the_database()
         default:
         std::cerr << "database type unknown" << std::endl;
         return false;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
                     GlobalServerData::serverSettings.database_server.host.c_str(),
@@ -277,7 +302,9 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_server.db << ")"
                       << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::SQLite:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(GlobalServerData::serverSettings.database_server.file.c_str(),"","",""))
         {
@@ -288,7 +315,9 @@ bool BaseServer::initialize_the_database()
             std::cout << "Connected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                       << " at " << GlobalServerData::serverSettings.database_server.file << std::endl;
         break;
+        #endif
 
+        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
         if(!GlobalServerData::serverPrivateVariables.db_server->syncConnect(
                     GlobalServerData::serverSettings.database_server.host.c_str(),
@@ -306,6 +335,7 @@ bool BaseServer::initialize_the_database()
                       << " (" << GlobalServerData::serverSettings.database_server.db << ")"
                       << std::endl;
         break;
+        #endif
     }
     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite("SELECT * FROM character_forserver"))
     {

@@ -43,6 +43,7 @@ EpollPostgresql::EpollPostgresql() :
     result(NULL),
     started(false)
 {
+    std::cerr << "new database object: " << this << std::endl;
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
     databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;

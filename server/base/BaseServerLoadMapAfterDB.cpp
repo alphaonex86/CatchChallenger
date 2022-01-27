@@ -65,7 +65,7 @@ void BaseServer::preload_map_semi_after_db_id()
                                     ;
                         break;
                         #endif
-                        #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
+                        #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
                         case DatabaseBase::DatabaseType::PostgreSQL:
                             queryText="INSERT INTO dictionary_pointonmap_plant(id,map,x,y) VALUES("+
                                     std::to_string(dictionary_pointOnMap_maxId_plant)+","+

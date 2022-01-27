@@ -1002,7 +1002,7 @@ const QtDatapackClientLoader::QtBuffExtra &QtDatapackClientLoader::getMonsterBuf
     {
         if(monsterBuffsExtra.find(id)!=monsterBuffsExtra.cend())
         {
-            const MonsterExtra::Buff &i=monsterBuffsExtra.at(id);
+            //const MonsterExtra::Buff &i=monsterBuffsExtra.at(id);
             QtBuffExtra n;
             n.icon=QPixmap(QString::fromStdString(getDatapackPath())+"/monsters/buff/"+QString::number(id)+".png");
             QtmonsterBuffsExtra[id]=n;
