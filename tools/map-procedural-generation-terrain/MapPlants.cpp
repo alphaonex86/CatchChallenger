@@ -8,8 +8,8 @@
 #include <QCoreApplication>
 
 #include "LoadMap.h"
-#include "../../client/qt/tiled/tiled_tilelayer.hpp"
-#include "../../client/qt/tiled/tiled_tile.hpp"
+#include "../../client/tiled/tiled_tilelayer.hpp"
+#include "../../client/tiled/tiled_tile.hpp"
 
 MapPlants::MapPlantsOptions MapPlants::mapPlantsOptions[5][6];
 

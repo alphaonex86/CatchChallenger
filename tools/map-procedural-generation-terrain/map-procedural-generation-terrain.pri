@@ -1,4 +1,4 @@
-include(../../client/qt/tiled/tiled.pri)
+include(../../client/tiled/tiled.pri)
 
 TEMPLATE = app
 TARGET = map-procedural-generation-terrain
@@ -65,7 +65,7 @@ LIBS += -lboost_system
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
-$$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
-$$PWD/../../general/base/tinyXML2/tinyxml2c.cpp
+HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
+SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
+$$PWD/../../general/tinyXML2/tinyxml2b.cpp \
+$$PWD/../../general/tinyXML2/tinyxml2c.cpp

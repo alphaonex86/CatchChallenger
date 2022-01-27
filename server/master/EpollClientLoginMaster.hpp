@@ -3,7 +3,7 @@
 
 #include "../../general/base/ProtocolParsing.hpp"
 #include "CharactersGroup.hpp"
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../epoll/EpollClient.hpp"
 
 #include <random>

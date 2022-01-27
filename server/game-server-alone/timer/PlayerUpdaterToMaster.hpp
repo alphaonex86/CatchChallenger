@@ -3,6 +3,8 @@
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
 
+#include "../epoll/EpollTimer.hpp"
+
 namespace CatchChallenger {
 class PlayerUpdaterToMaster
         : public EpollTimer

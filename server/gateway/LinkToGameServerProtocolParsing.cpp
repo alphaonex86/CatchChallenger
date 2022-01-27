@@ -5,6 +5,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CompressionProtocol.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 #include "../epoll/Epoll.hpp"
@@ -39,10 +40,10 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         switch(returnCode)
                         {
                             case 0x04:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                                CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::None;
                             break;
                             case 0x08:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
+                                CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -53,21 +54,21 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     }
                     else
                     {
-                        ProtocolParsing::CompressionType tempCompression;
+                        CompressionProtocol::CompressionType tempCompression;
                         switch(returnCode)
                         {
                             case 0x04:
-                                tempCompression=ProtocolParsing::CompressionType::None;
+                                tempCompression=CompressionProtocol::CompressionType::None;
                             break;
                             case 0x08:
-                                tempCompression=ProtocolParsing::CompressionType::Zstandard;
+                                tempCompression=CompressionProtocol::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
                                                       " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
                             return false;
                         }
-                        if(tempCompression!=ProtocolParsing::compressionTypeClient)
+                        if(tempCompression!=CompressionProtocol::compressionTypeClient)
                         {
                             parseNetworkReadError("compression change main ident: "+std::to_string(mainCodeType)+
                                                   " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
@@ -161,10 +162,10 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         switch(returnCode)
                         {
                             case 0x04:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                                CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::None;
                             break;
                             case 0x08:
-                                ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
+                                CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
@@ -174,21 +175,21 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                     }
                     else
                     {
-                        ProtocolParsing::CompressionType tempCompression;
+                        CompressionProtocol::CompressionType tempCompression;
                         switch(returnCode)
                         {
                             case 0x04:
-                                tempCompression=ProtocolParsing::CompressionType::None;
+                                tempCompression=CompressionProtocol::CompressionType::None;
                             break;
                             case 0x08:
-                                tempCompression=ProtocolParsing::CompressionType::Zstandard;
+                                tempCompression=CompressionProtocol::CompressionType::Zstandard;
                             break;
                             default:
                                 parseNetworkReadError("compression type wrong with main ident: "+std::to_string(mainCodeType)+
                                                       " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
                             return false;
                         }
-                        if(tempCompression!=ProtocolParsing::compressionTypeClient)
+                        if(tempCompression!=CompressionProtocol::compressionTypeClient)
                         {
                             parseNetworkReadError("compression change main ident: "+std::to_string(mainCodeType)+
                                                   " and queryNumber: "+std::to_string(queryNumber)+", type: query_type_protocol");
@@ -210,12 +211,12 @@ bool LinkToGameServer::parseInputBeforeLogin(const uint8_t &mainCodeType, const 
                         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);//set the dynamic size
 
                         //the gateway can different compression than server connected
-                        switch(ProtocolParsing::compressionTypeServer)
+                        switch(CompressionProtocol::compressionTypeServer)
                         {
-                            case ProtocolParsing::CompressionType::None:
+                            case CompressionProtocol::CompressionType::None:
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x04;
                             break;
-                            case ProtocolParsing::CompressionType::Zstandard:
+                            case CompressionProtocol::CompressionType::Zstandard:
                                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x08;
                             break;
                             default:
@@ -431,13 +432,13 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
 
             uint32_t sub_size32=size-pos;
             uint32_t decompressedSize=0;
-            if(ProtocolParsingBase::compressionTypeClient==CompressionType::None || mainCodeType==0x76)
+            if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None || mainCodeType==0x76)
             {
                 decompressedSize=sub_size32;
-                memcpy(ProtocolParsingBase::tempBigBufferForUncompressedInput,data+pos,sub_size32);
+                memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
             }
             else
-                decompressedSize=computeDecompression(data+pos,ProtocolParsingBase::tempBigBufferForUncompressedInput,sub_size32,sizeof(ProtocolParsingBase::tempBigBufferForUncompressedInput),ProtocolParsingBase::compressionTypeClient);
+                decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
 
             unsigned int decompressedDataPos=0;
             uint8_t index=0;
@@ -449,7 +450,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     return false;
                 }
                 std::string fileName;
-                uint8_t fileNameSize=ProtocolParsingBase::tempBigBufferForUncompressedInput[decompressedDataPos];
+                uint8_t fileNameSize=CompressionProtocol::tempBigBufferForUncompressedInput[decompressedDataPos];
                 decompressedDataPos+=1;
                 if(fileNameSize>0)
                 {
@@ -458,12 +459,12 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                         parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                         return false;
                     }
-                    fileName=std::string(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,fileNameSize);
+                    fileName=std::string(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,fileNameSize);
                     decompressedDataPos+=fileNameSize;
                 }
                 if(DatapackDownloaderBase::extensionAllowed.find(CatchChallenger::FacilityLibGeneral::getSuffix(fileName))==DatapackDownloaderBase::extensionAllowed.cend())
                 {
-                    std::cerr << "datadump: " << binarytoHexa(ProtocolParsingBase::tempBigBufferForUncompressedInput,decompressedDataPos) << " " << binarytoHexa(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,decompressedSize-decompressedDataPos) << std::endl;
+                    std::cerr << "datadump: " << binarytoHexa(CompressionProtocol::tempBigBufferForUncompressedInput,decompressedDataPos) << " " << binarytoHexa(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,decompressedSize-decompressedDataPos) << std::endl;
                     parseNetworkReadError("main code: "+std::to_string(mainCodeType)+" extension not allowed: \""+CatchChallenger::FacilityLibGeneral::getSuffix(fileName)+"\" for file \""+fileName+"\" with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
@@ -472,7 +473,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                     parseNetworkReadError("wrong size with main ident: "+std::to_string(mainCodeType)+", file: "+__FILE__+":"+std::to_string(__LINE__));
                     return false;
                 }
-                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos)));
+                const uint32_t &fileSize=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos)));
                 decompressedDataPos+=4;
                 if((decompressedSize-decompressedDataPos)<fileSize)
                 {
@@ -481,7 +482,7 @@ bool LinkToGameServer::parseMessage(const uint8_t &mainCodeType,const char * con
                 }
                 std::vector<char> dataFile;
                 dataFile.resize(fileSize);
-                memcpy(dataFile.data(),ProtocolParsingBase::tempBigBufferForUncompressedInput+decompressedDataPos,fileSize);
+                memcpy(dataFile.data(),CompressionProtocol::tempBigBufferForUncompressedInput+decompressedDataPos,fileSize);
                 decompressedDataPos+=fileSize;
                 if(mainCodeType==0x76)
                     std::cout << "Raw file to create: " << fileName << std::endl;

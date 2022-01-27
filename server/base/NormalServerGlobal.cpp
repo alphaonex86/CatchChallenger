@@ -8,6 +8,7 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include <QtGlobal>
 #endif
+#include <random>
 
 NormalServerGlobal::NormalServerGlobal()
 {

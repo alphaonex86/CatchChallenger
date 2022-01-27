@@ -1,6 +1,6 @@
 #include "PlayerUpdaterToMaster.hpp"
-#include "PlayerUpdater.hpp"
-#include "../game-server-alone/LinkToMaster.hpp"
+#include "../base/PlayerUpdaterBase.hpp"
+#include "LinkToMaster.hpp"
 
 using namespace CatchChallenger;
 PlayerUpdaterToMaster::PlayerUpdaterToMaster() :
@@ -12,44 +12,44 @@ PlayerUpdaterToMaster::PlayerUpdaterToMaster() :
 
 void PlayerUpdaterToMaster::exec()
 {
-    if(sended_connected_players!=PlayerUpdater::connected_players)
+    if(sended_connected_players!=PlayerUpdaterBase::connected_players)
     {
-        sended_connected_players=PlayerUpdater::connected_players;
-        LinkToMaster::linkToMaster->currentPlayerChange(PlayerUpdater::connected_players);
+        sended_connected_players=PlayerUpdaterBase::connected_players;
+        LinkToMaster::linkToMaster->currentPlayerChange(PlayerUpdaterBase::connected_players);
         //update frequencyUpdate if needed
         switch(frequencyUpdate)
         {
             case FrequencyUpdate_fast:
-            if(PlayerUpdater::connected_players>1000)
+            if(PlayerUpdaterBase::connected_players>1000)
             {
                 frequencyUpdate=FrequencyUpdate_slow;
                 setInterval(60*1000);
             }
-            else if(PlayerUpdater::connected_players>30)
+            else if(PlayerUpdaterBase::connected_players>30)
             {
                 frequencyUpdate=FrequencyUpdate_medium;
                 setInterval(15*1000);
             }
             break;
             case FrequencyUpdate_medium:
-            if(PlayerUpdater::connected_players>1000)
+            if(PlayerUpdaterBase::connected_players>1000)
             {
                 frequencyUpdate=FrequencyUpdate_slow;
                 setInterval(60*1000);
             }
-            else if(PlayerUpdater::connected_players<30)
+            else if(PlayerUpdaterBase::connected_players<30)
             {
                 frequencyUpdate=FrequencyUpdate_fast;
                 setInterval(500);
             }
             break;
             case FrequencyUpdate_slow:
-            if(PlayerUpdater::connected_players<30)
+            if(PlayerUpdaterBase::connected_players<30)
             {
                 frequencyUpdate=FrequencyUpdate_fast;
                 setInterval(500);
             }
-            else if(PlayerUpdater::connected_players<1000)
+            else if(PlayerUpdaterBase::connected_players<1000)
             {
                 frequencyUpdate=FrequencyUpdate_medium;
                 setInterval(15*1000);

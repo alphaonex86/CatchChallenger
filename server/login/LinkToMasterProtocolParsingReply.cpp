@@ -51,10 +51,10 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                 switch(returnCode)
                 {
                     case 0x04:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::None;
+                        CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::None;
                     break;
                     case 0x08:
-                        ProtocolParsing::compressionTypeClient=ProtocolParsing::CompressionType::Zstandard;
+                        CompressionProtocol::compressionTypeClient=CompressionProtocol::CompressionType::Zstandard;
                     break;
                     default:
                         std::cerr << "compression type wrong with main ident: 1 and queryNumber: %2, type: query_type_protocol" << queryNumber << std::endl;

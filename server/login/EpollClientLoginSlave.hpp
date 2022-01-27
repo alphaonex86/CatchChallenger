@@ -4,7 +4,7 @@
 #include "../epoll/EpollClient.hpp"
 #include "../epoll/EpollSslClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
 #include "../base/DdosBuffer.hpp"
 #include "LinkToMaster.hpp"
@@ -180,7 +180,7 @@ public:
 
     static unsigned char loginIsWrongBufferReply[1+1+4+1];
 private:
-    std::queue<DatabaseBase::CallBack *> callbackRegistred;
+    std::queue<DatabaseBaseCallBack *> callbackRegistred;
     std::queue<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::queue<std::string> paramToPassToCallBackType;
