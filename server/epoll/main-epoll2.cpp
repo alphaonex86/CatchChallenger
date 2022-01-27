@@ -1,11 +1,11 @@
 #include <string>
-#include "base/ServerStructures.hpp"
-#include "base/TinyXMLSettings.hpp"
-#include "base/GlobalServerData.hpp"
-#include "../general/base/CommonSettingsCommon.hpp"
-#include "epoll/EpollServer.hpp"
+#include "../base/ServerStructures.hpp"
+#include "../base/TinyXMLSettings.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "EpollServer.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "game-server-alone/LinkToMaster.hpp"
+#include "../game-server-alone/LinkToMaster.hpp"
 #endif
 
 using namespace CatchChallenger;
