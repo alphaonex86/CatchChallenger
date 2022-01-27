@@ -4,10 +4,10 @@
 #include <QCoreApplication>
 #include <iostream>
 
-#include "../../client/qt/tiled/tiled_mapreader.hpp"
-#include "../../client/qt/tiled/tiled_tileset.hpp"
-#include "../../client/qt/tiled/tiled_objectgroup.hpp"
-#include "../../client/qt/tiled/tiled_mapobject.hpp"
+#include "../../client/tiled/tiled_mapreader.hpp"
+#include "../../client/tiled/tiled_tileset.hpp"
+#include "../../client/tiled/tiled_objectgroup.hpp"
+#include "../../client/tiled/tiled_mapobject.hpp"
 
 #include "../../general/base/cpp11addition.hpp"
 

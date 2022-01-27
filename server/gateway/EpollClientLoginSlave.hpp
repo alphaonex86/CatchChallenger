@@ -4,7 +4,7 @@
 #include "../epoll/EpollClient.hpp"
 #include "../epoll/EpollSslClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../VariableServer.hpp"
+#include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/DdosBuffer.hpp"

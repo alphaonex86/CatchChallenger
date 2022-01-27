@@ -1,9 +1,9 @@
 #include "MapBrush.h"
-#include "../../client/qt/tiled/tiled_tileset.hpp"
-#include "../../client/qt/tiled/tiled_tilelayer.hpp"
-#include "../../client/qt/tiled/tiled_objectgroup.hpp"
-#include "../../client/qt/tiled/tiled_mapobject.hpp"
-#include "../../client/qt/tiled/tiled_tile.hpp"
+#include "../../client/tiled/tiled_tileset.hpp"
+#include "../../client/tiled/tiled_tilelayer.hpp"
+#include "../../client/tiled/tiled_objectgroup.hpp"
+#include "../../client/tiled/tiled_mapobject.hpp"
+#include "../../client/tiled/tiled_tile.hpp"
 #include "LoadMap.h"
 
 #include <unordered_set>

@@ -91,14 +91,14 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     }
                 }
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
-                switch(ProtocolParsing::compressionTypeServer)
+                switch(CompressionProtocol::compressionTypeServer)
                 {
-                    case ProtocolParsing::CompressionType::None:
+                    case CompressionProtocol::CompressionType::None:
                         *(EpollClientLoginSlave::protocolReplyCompressionNone+1)=queryNumber;
                         memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                     break;
-                    case ProtocolParsing::CompressionType::Zstandard:
+                    case CompressionProtocol::CompressionType::Zstandard:
                         *(EpollClientLoginSlave::protocolReplyCompresssionZstandard+1)=queryNumber;
                         memcpy(EpollClientLoginSlave::protocolReplyCompresssionZstandard+7,token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompresssionZstandard),sizeof(EpollClientLoginSlave::protocolReplyCompresssionZstandard));

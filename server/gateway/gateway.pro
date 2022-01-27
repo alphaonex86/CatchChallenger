@@ -25,6 +25,7 @@ CONFIG   += console
 TEMPLATE = app
 
 SOURCES += \
+    ../../general/base/CompressionProtocol.cpp \
     ../../general/libzstd/lib/common/debug.c \
     ../../general/libzstd/lib/common/entropy_common.c \
     ../../general/libzstd/lib/common/error_private.c \
@@ -77,7 +78,7 @@ SOURCES += \
     ../epoll/EpollSslClientToServer.cpp \
     ../epoll/EpollTimer.cpp \
     ../../client/libcatchchallenger/DatapackChecksum.cpp \
-    ../../client/tarcompressed/TarDecode.cpp \
+    ../../client/libcatchchallenger/TarDecode.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/ProtocolParsingCheck.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
@@ -91,6 +92,7 @@ SOURCES += \
     ../base/TinyXMLSettings.cpp
 
 HEADERS += \
+    ../../general/base/CompressionProtocol.hpp \
     ../../general/libzstd/lib/common/bitstream.h \
     ../../general/libzstd/lib/common/compiler.h \
     ../../general/libzstd/lib/common/cpu.h \
@@ -145,14 +147,14 @@ HEADERS += \
     ../../general/base/ProtocolParsingCheck.h \
     ../../general/base/GeneralVariable.h \
     ../../client/libcatchchallenger/DatapackChecksum.h \
-    ../../client/tarcompressed/TarDecode.h \
+    ../../client/libcatchchallenger/TarDecode.h \
     ../base/TinyXMLSettings.h \
     ../VariableServer.h
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../../general/base/tinyXML2/tinyxml2.h
-SOURCES += $$PWD/../../general/base/tinyXML2/tinyxml2.cpp \
-    $$PWD/../../general/base/tinyXML2/tinyxml2b.cpp \
-    $$PWD/../../general/base/tinyXML2/tinyxml2c.cpp
+HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
+SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
+    $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
+    $$PWD/../../general/tinyXML2/tinyxml2c.cpp

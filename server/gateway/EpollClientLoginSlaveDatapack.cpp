@@ -464,7 +464,7 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
 
         const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
         if(EpollClientLoginSlave::compressedExtension.find(suffix)!=EpollClientLoginSlave::compressedExtension.cend() &&
-                ProtocolParsing::compressionTypeServer!=ProtocolParsing::CompressionType::None &&
+                CompressionProtocol::compressionTypeServer!=CompressionProtocol::CompressionType::None &&
                 (
                     contentsize<CATCHCHALLENGER_SERVER_DATAPACK_DONT_COMPRESS_GREATER_THAN_KB*1024
                     ||
@@ -486,10 +486,10 @@ bool EpollClientLoginSlave::sendFile(const std::string &datapackPath,const std::
             binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             binaryAppend(EpollClientLoginSlave::compressedFilesBuffer,content);
             EpollClientLoginSlave::compressedFilesBufferCount++;
-            switch(ProtocolParsing::compressionTypeServer)
+            switch(CompressionProtocol::compressionTypeServer)
             {
                 default:
-                case ProtocolParsing::CompressionType::Zstandard:
+                case CompressionProtocol::CompressionType::Zstandard:
                 if(EpollClientLoginSlave::compressedFilesBuffer.size()>CATCHCHALLENGER_SERVER_DATAPACK_ZLIB_COMPRESSEDFILEPURGE_KB*1024 || EpollClientLoginSlave::compressedFilesBufferCount>=255)
                     sendCompressedFileContent();
                 break;

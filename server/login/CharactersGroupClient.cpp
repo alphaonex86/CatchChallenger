@@ -16,7 +16,7 @@ const std::string CharactersGroupForLogin::gender_female("2");
 
 void CharactersGroupForLogin::character_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    CatchChallenger::DatabaseBase::CallBack *callback=preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&CharactersGroupForLogin::character_list_static,{std::to_string(account_id)});
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&CharactersGroupForLogin::character_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << preparedDBQueryCommonForLogin.db_query_characters.queryText() << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
@@ -167,7 +167,7 @@ void CharactersGroupForLogin::character_list_object()
 
 void CharactersGroupForLogin::server_list(EpollClientLoginSlave * const client,const uint32_t &account_id)
 {
-    CatchChallenger::DatabaseBase::CallBack *callback=preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&CharactersGroupForLogin::server_list_static,{std::to_string(account_id)});
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&CharactersGroupForLogin::server_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << preparedDBQueryCommonForLogin.db_query_select_server_time.queryText() << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
@@ -455,7 +455,7 @@ int8_t CharactersGroupForLogin::addCharacter(void * const client,const uint8_t &
     addCharacterParam.skinId=skinId;
     addCharacterParam.client=client;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.asyncRead(this,&CharactersGroupForLogin::addCharacterStep1_static,{std::to_string(static_cast<EpollClientLoginSlave *>(client)->account_id)});
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.asyncRead(this,&CharactersGroupForLogin::addCharacterStep1_static,{std::to_string(static_cast<EpollClientLoginSlave *>(client)->account_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << preparedDBQueryCommonForLogin.db_query_get_character_count_by_account.queryText() << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
@@ -505,7 +505,7 @@ void CharactersGroupForLogin::addCharacterStep1_return(EpollClientLoginSlave * c
         return;
     }
 
-    CatchChallenger::DatabaseBase::CallBack *callback=preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&CharactersGroupForLogin::addCharacterStep2_static,{
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.asyncRead(this,&CharactersGroupForLogin::addCharacterStep2_static,{
                                                                                                                                       #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
                                                                                                                                       pseudo
                                                                                                                                       #else
@@ -769,7 +769,7 @@ bool CharactersGroupForLogin::removeCharacterLater(void * const client,const uin
     removeCharacterParam.characterId=characterId;
     removeCharacterParam.client=client;
 
-    CatchChallenger::DatabaseBase::CallBack *callback=preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.asyncRead(this,&CharactersGroupForLogin::removeCharacterLater_static,{std::to_string(characterId)});
+    DatabaseBaseCallBack *callback=preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.asyncRead(this,&CharactersGroupForLogin::removeCharacterLater_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.queryText() << ", error: " << databaseBaseCommon->errorMessage() << std::endl;
