@@ -3,34 +3,34 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include "base/ServerStructures.hpp"
-#include "base/TinyXMLSettings.hpp"
-#include "base/GlobalServerData.hpp"
-#include "../general/tinyXML2/tinyxml2.hpp"
-#include "../general/base/CommonSettingsCommon.hpp"
-#include "../general/base/FacilityLib.hpp"
-#include "epoll/EpollServer.hpp"
-#include "epoll/Epoll.hpp"
-#include "epoll/ClientMapManagementEpoll.hpp"
+#include "../base/ServerStructures.hpp"
+#include "../base/TinyXMLSettings.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "EpollServer.hpp"
+#include "Epoll.hpp"
+#include "ClientMapManagementEpoll.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
-#include "epoll/db/EpollPostgresql.hpp"
+#include "db/EpollPostgresql.hpp"
 #endif
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#include "epoll/db/EpollMySQL.hpp"
+#include "db/EpollMySQL.hpp"
 #endif
-#include "base/NormalServerGlobal.hpp"
+#include "../base/NormalServerGlobal.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "game-server-alone/LinkToMaster.hpp"
-#include "epoll/EpollSocket.hpp"
-#include "epoll/timer/TimerPurgeTokenAuthList.hpp"
+#include "../game-server-alone/LinkToMaster.hpp"
+#include "EpollSocket.hpp"
+#include "timer/TimerPurgeTokenAuthList.hpp"
 #endif
 
-#include "epoll/timer/TimerCityCapture.hpp"
-#include "epoll/timer/TimerDdos.hpp"
-#include "epoll/timer/TimerPositionSync.hpp"
-#include "epoll/timer/TimerSendInsertMoveRemove.hpp"
-#include "epoll/timer/PlayerUpdaterEpoll.hpp"
-#include "epoll/timer/TimeRangeEventScan.hpp"
+#include "timer/TimerCityCapture.hpp"
+#include "timer/TimerDdos.hpp"
+#include "timer/TimerPositionSync.hpp"
+#include "timer/TimerSendInsertMoveRemove.hpp"
+#include "timer/PlayerUpdaterEpoll.hpp"
+#include "timer/TimeRangeEventScan.hpp"
 
 #define MAXEVENTS 512
 
@@ -478,7 +478,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-            if(!GlobalServerData::serverPrivateVariables.player_updater_to_master.start())
+            if(!PlayerUpdaterToMaster::player_updater_to_master.start())
             {
                 std::cerr << "player_updater_to_master timer fail to set" << std::endl;
                 return EXIT_FAILURE;

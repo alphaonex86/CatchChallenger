@@ -527,9 +527,6 @@ struct ServerPrivateVariables
 
     //connection
     uint16_t connected_players;
-    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    PlayerUpdaterToMaster player_updater_to_master;
-    #endif
     std::unordered_set<uint32_t> connected_players_id_list;
     std::vector<std::string> server_message;
     struct GiftEntry
