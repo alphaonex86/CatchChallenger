@@ -3,6 +3,9 @@
 #include "LinkToMaster.hpp"
 
 using namespace CatchChallenger;
+
+PlayerUpdaterToMaster PlayerUpdaterToMaster::player_updater_to_master;
+
 PlayerUpdaterToMaster::PlayerUpdaterToMaster() :
     sended_connected_players(0)
 {

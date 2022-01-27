@@ -10,6 +10,8 @@ class PlayerUpdaterToMaster
         : public EpollTimer
 {
 public:
+    static PlayerUpdaterToMaster player_updater_to_master;
+public:
     explicit PlayerUpdaterToMaster();
 private:
     void exec();
