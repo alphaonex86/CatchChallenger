@@ -7,6 +7,7 @@ using namespace CatchChallenger;
 
 ProcessControler::ProcessControler()
 {
+    GlobalServerData::serverPrivateVariables.player_updater=new QtPlayerUpdater();
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<std::string>("std::string");
     connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessControler::server_is_started);

@@ -2,7 +2,7 @@
 
 QtPlayerUpdater::QtPlayerUpdater()
 {
-
+    setInterval(1000);
 }
 
 void QtPlayerUpdater::setInterval(int ms)

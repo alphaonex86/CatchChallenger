@@ -126,6 +126,8 @@ BaseWindow::BaseWindow() :
     datapackFileSize=0;
     craftingAnimationObject=NULL;
     #ifndef CATCHCHALLENGER_NOAUDIO
+    if(Audio::audio==nullptr)
+        Audio::audio=new Audio();
     currentAmbiance.player=NULL;
     #endif
 
@@ -303,9 +305,8 @@ BaseWindow::BaseWindow() :
     }
 
     #ifndef CATCHCHALLENGER_NOAUDIO
-    if(Audio::audio==nullptr)
-        Audio::audio=new Audio();
-    Audio::audio->setVolume(Options::options.getAudioVolume());
+    if(Audio::audio!=nullptr)
+        Audio::audio->setVolume(Options::options.getAudioVolume());
     #endif
     #ifdef CATCHCHALLENGER_NOAUDIO
     qDebug() << "CATCHCHALLENGER_NOAUDIO def, audio disabled";
@@ -1782,7 +1783,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto n : QtDatapackClientLoader::datapackLoader->monsterExtra)
+        for(const auto &n : QtDatapackClientLoader::datapackLoader->monsterExtra)
             keys.push_back(n.first);
         qSort(keys.begin(),keys.end());
         uint16_t max=keys.back();
@@ -1833,7 +1834,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto n : QtDatapackClientLoader::datapackLoader->itemsExtra)
+        for(const auto &n : QtDatapackClientLoader::datapackLoader->itemsExtra)
             keys.push_back(n.first);
         qSort(keys.begin(),keys.end());
         uint16_t max=keys.back();

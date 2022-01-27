@@ -365,15 +365,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             std::string queryText;
             switch(databaseBaseBase->databaseType())
             {
-                default:
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
                 case DatabaseBase::DatabaseType::Mysql:
                     queryText="INSERT INTO `dictionary_starter`(`id`,`starter`) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
                 break;
+                #endif
+                #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
                 case DatabaseBase::DatabaseType::SQLite:
                     queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
                 break;
+                #endif
+                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
                 case DatabaseBase::DatabaseType::PostgreSQL:
                     queryText="INSERT INTO dictionary_starter(id,starter) VALUES("+std::to_string(lastId)+",'"+profile.databaseId+"');";
+                break;
+                #endif
+            default:
+                abort();
                 break;
             }
             if(!databaseBaseBase->asyncWrite(queryText))

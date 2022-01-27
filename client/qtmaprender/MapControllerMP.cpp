@@ -663,8 +663,8 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                     const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
                     if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
                     {
-                        const CatchChallenger::MonstersCollision &monstersCollision=
-                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                        /*const CatchChallenger::MonstersCollision &monstersCollision=
+                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);*/
                         const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
                         const bool needBeVisible=(monstersCollisionTemp.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
@@ -687,8 +687,8 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
             const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
             if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
             {
-                const CatchChallenger::MonstersCollision &monstersCollision=
-                        CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);
+                /*const CatchChallenger::MonstersCollision &monstersCollision=
+                        CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);*/
                 const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
                 //change tile if needed (water to walk transition)
