@@ -2,10 +2,10 @@
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
-#include "../../client/qt/tiled/tiled_tileset.hpp"
-#include "../../client/qt/tiled/tiled_tile.hpp"
-#include "../../client/qt/tiled/tiled_objectgroup.hpp"
-#include "../../client/qt/tiled/tiled_mapwriter.hpp"
+#include "../../client/tiled/tiled_tileset.hpp"
+#include "../../client/tiled/tiled_tile.hpp"
+#include "../../client/tiled/tiled_objectgroup.hpp"
+#include "../../client/tiled/tiled_mapwriter.hpp"
 
 #include <iostream>
 #include <algorithm>
