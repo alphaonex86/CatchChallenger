@@ -1,4 +1,4 @@
-include(../catchchallenger-server-cli-epoll.pro)
+include(../epoll/catchchallenger-server-cli-epoll.pro)
 
 TARGET = catchchallenger-game-server-alone
 
@@ -6,6 +6,7 @@ DEFINES -= CATCHCHALLENGER_CLASS_ALLINONESERVER
 DEFINES += CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 DEFINES -= CATCHCHALLENGERSERVERDROPIFCLENT
 DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+DEFINES += EPOLLCATCHCHALLENGERSERVER
 
 HEADERS += \
     $$PWD/LinkToMaster.h \

@@ -1,0 +1,98 @@
+DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
+
+DEFINES += EXTERNALLIBZSTD
+
+include(../../general/general.pri)
+include(../catchchallenger-server.pri)
+include(../catchchallenger-serverheader.pri)
+include(../../general/hps/hps.pri)
+
+QT       -= gui widgets network sql
+QT       -= core xml
+
+#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations  -fno-rtti"
+#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x  -fno-rtti"
+
+linux:QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
+linux:QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+
+#DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+#DEFINES += SERVERSSL
+#DEFINES += SERVERBENCHMARK
+
+DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
+#DEFINES += CATCHCHALLENGERSERVERDROPIFCLENT
+
+# postgresql 9+
+DEFINES += CATCHCHALLENGER_DB_POSTGRESQL
+LIBS    += -lpq
+# mysql 5.7+
+#LIBS    += -lmysqlclient
+#DEFINES += CATCHCHALLENGER_DB_MYSQL
+
+CONFIG += c++11
+
+TARGET = catchchallenger-server-cli-epoll
+CONFIG   += console
+
+TEMPLATE = app
+
+SOURCES += \
+    $$PWD/EpollSocket.cpp \
+    $$PWD/EpollClient.cpp \
+    $$PWD/EpollServer.cpp \
+    $$PWD/EpollSslClient.cpp \
+    $$PWD/EpollSslServer.cpp \
+    $$PWD/Epoll.cpp \
+    $$PWD/EpollTimer.cpp \
+    $$PWD/db/EpollPostgresql.cpp \
+    $$PWD/db/EpollMySQL.cpp \
+    $$PWD/timer/TimerCityCapture.cpp \
+    $$PWD/timer/TimerSendInsertMoveRemove.cpp \
+    $$PWD/timer/TimerPositionSync.cpp \
+    $$PWD/timer/TimerDdos.cpp \
+    $$PWD/timer/TimerEvents.cpp \
+    $$PWD/EpollGenericServer.cpp \
+    $$PWD/EpollGenericSslServer.cpp \
+    $$PWD/timer/TimeRangeEvent.cpp \
+    $$PWD/../base/NormalServerGlobal.cpp \
+    $$PWD/main-epoll.cpp \
+    $$PWD/main-epoll2.cpp \
+    $$PWD/BaseServerEpoll.cpp \
+    $$PWD/ClientMapManagementEpoll.cpp \
+    $$PWD/ServerPrivateVariablesEpoll.cpp \
+    $$PWD/timer/PlayerUpdaterEpoll.cpp \
+    $$PWD/timer/TimeRangeEventScan.cpp
+
+HEADERS += $$PWD/EpollSocket.h \
+    $$PWD/EpollClient.h \
+    $$PWD/EpollServer.h \
+    $$PWD/EpollSslClient.h \
+    $$PWD/EpollSslServer.h \
+    $$PWD/Epoll.h \
+    $$PWD/BaseClassSwitch.h \
+    $$PWD/EpollTimer.h \
+    $$PWD/db/EpollPostgresql.h \
+    $$PWD/db/EpollMySQL.h \
+    $$PWD/timer/TimerCityCapture.h \
+    $$PWD/timer/TimerPositionSync.h \
+    $$PWD/timer/TimerSendInsertMoveRemove.h \
+    $$PWD/timer/TimerDdos.h \
+    $$PWD/timer/TimerEvents.h \
+    $$PWD/EpollGenericServer.h \
+    $$PWD/EpollGenericSslServer.h \
+    $$PWD/../NormalServerGlobal.h \
+    $$PWD/timer/base/DdosBuffer.h \
+    $$PWD/timer/TimeRangeEvent.h \
+    $$PWD/base/BaseServerEpoll.hpp \
+    $$PWD/ServerPrivateVariablesEpoll.hpp \
+    $$PWD/timer/PlayerUpdaterEpoll.hpp \
+    $$PWD/timer/TimeRangeEventScan.hpp
+
+#choose one of:
+DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
+
+HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
+SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
+$$PWD/../../general/tinyXML2/tinyxml2b.cpp \
+$$PWD/../../general/tinyXML2/tinyxml2c.cpp
