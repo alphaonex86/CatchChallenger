@@ -112,7 +112,7 @@ int LinkToMaster::tryConnect(const char * const host, const uint16_t &port,const
         {
             std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 1" << std::endl;
             unsigned int index=0;
-            while((considerDownAfterNumberOfTry>1 || index<considerDownAfterNumberOfTry) && connStatusType<0)
+            while((considerDownAfterNumberOfTry==0 || (considerDownAfterNumberOfTry>1 && index<considerDownAfterNumberOfTry)) && connStatusType<0)
             {
                 std::cout << "Try connect to master server host: " << host << ", port: " << std::to_string(port) << " ... 2" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(tryInterval));
