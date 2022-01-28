@@ -71,7 +71,7 @@ bool EpollClient::socketIsClosed()
 
 ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
 {
-    std::cerr << "EpollClient::read infd: " << infd << std::endl;
+    //std::cerr << "EpollClient::read infd: " << infd << std::endl;
     if(infd==-1)
         return -1;
     const auto &bytesAvailableVar=bytesAvailable();
@@ -110,7 +110,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
             return -1;
         }
     }
-    std::cerr << "EpollClient::read infd: " << infd << ", count: " << count << std::endl;
+    //std::cerr << "EpollClient::read infd: " << infd << ", count: " << count << std::endl;
     return count;
 }
 
