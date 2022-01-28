@@ -272,7 +272,7 @@ void BaseWindow::stateChanged(QAbstractSocket::SocketState socketState)
         if(socketState==QAbstractSocket::ConnectedState)
         {
             haveShowDisconnectionReason=false;
-            ui->label_connecting_status->setText(tr("Try initialise the protocol..."));
+            ui->label_connecting_status->setText(tr("Start the protocol..."));
         }
         else
             ui->label_connecting_status->setText(tr("Connecting to the server..."));

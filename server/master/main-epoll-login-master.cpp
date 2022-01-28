@@ -221,6 +221,13 @@ int main(int argc, char *argv[])
                                                ,server->getCtx()
                                                #endif
                                 );
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            {
+                                std::cerr << "Wrong post check type (abort)" << std::endl;
+                                abort();
+                            }
+                            #endif
                             //just for informations
                             {
                                 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];

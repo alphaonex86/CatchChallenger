@@ -545,6 +545,9 @@ int main(int argc, char *argv[])
         #endif
         for(i = 0; i < number_of_events; i++)
         {
+            #ifdef PROTOCOLPARSINGDEBUG
+            //std::cout << "new event: " << events[i].data.ptr << " event: " << events[i].events << std::endl;
+            #endif
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
             {
                 case BaseClassSwitch::EpollObjectType::Server:
@@ -565,6 +568,9 @@ int main(int argc, char *argv[])
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
                         const int &infd = server->accept(&in_addr, &in_len);
+                        #ifdef PROTOCOLPARSINGDEBUG
+                        std::cout << "new client infd: " << infd << std::endl;
+                        #endif
                         if(!server->isReady())
                         {
                             /// \todo dont clean error on client into this case
@@ -595,7 +601,7 @@ int main(int argc, char *argv[])
                                 if(!acceptSocketWarningShow)
                                 {
                                     acceptSocketWarningShow=true;
-                                    std::cerr << "::accept() return -1 and errno: " << std::to_string(errno) << " event or socket ignored" << std::endl;
+                                    std::cerr << "::accept() return -1 and errno: " << std::to_string(errno) << " event or socket ignored: " << strerror(errno) << std::endl;
                                 }
                                 break;
                             }
@@ -608,6 +614,9 @@ int main(int argc, char *argv[])
                         // do at the protocol negociation to send the reason
                         if(numberOfConnectedClient>=GlobalServerData::serverSettings.max_players)
                         {
+                            #ifdef PROTOCOLPARSINGDEBUG
+                            std::cout << "numberOfConnectedClient>=GlobalServerData::serverSettings.max_players: " << infd << std::endl;
+                            #endif
                             ::close(infd);
                             break;
                         }
@@ -642,6 +651,14 @@ int main(int argc, char *argv[])
                             }
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             ++clientnumberToDebug;
+                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            {
+                                std::cerr << "Wrong post check type (abort)" << std::endl;
+                                abort();
+                            }
+                            #endif
+                            #ifdef PROTOCOLPARSINGDEBUG
+                            std::cout << "new MapVisibilityAlgorithm: " << infd << " " << client << std::endl;
                             #endif
                             //just for informations
                             {
@@ -668,6 +685,7 @@ int main(int argc, char *argv[])
                                     std::cout << "Accepted connection on descriptor " << infd << ", client: " << client << std::endl;*/
                             }
                             epoll_event event;
+                            memset(&event,0,sizeof(event));
                             event.data.ptr = client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLET | EPOLLOUT;
                             const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
@@ -684,7 +702,9 @@ int main(int argc, char *argv[])
                                     delete client;
                                 }
                             }
-
+                            #ifdef PROTOCOLPARSINGDEBUG
+                            std::cout << "first write: " << infd << std::endl;
+                            #endif
                         }
                     }
                 }
@@ -692,6 +712,9 @@ int main(int argc, char *argv[])
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
                     Client * const client=static_cast<Client *>(events[i].data.ptr);
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
+                    #endif
                     if((events[i].events & EPOLLERR) ||
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
@@ -708,7 +731,12 @@ int main(int argc, char *argv[])
                     }
                     //ready to read
                     if(events[i].events & EPOLLIN)
+                    {
+                        #ifdef PROTOCOLPARSINGDEBUG
+                        std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
+                        #endif
                         client->parseIncommingData();
+                    }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
                     {
                         // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
@@ -771,6 +799,11 @@ int main(int argc, char *argv[])
                 }
                 break;
                 #endif
+            default:
+                #ifdef PROTOCOLPARSINGDEBUG
+                std::cout << "unknown type: " << events[i].data.ptr << " event: " << events[i].events << std::endl;
+                #endif
+                break;
             }
         }
         #ifdef SERVERBENCHMARK
