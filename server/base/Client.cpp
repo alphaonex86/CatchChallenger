@@ -408,6 +408,7 @@ void Client::dropAllBorderClients()
 
 void Client::parseIncommingData()
 {
+    std::cerr << "void Client::parseIncommingData()" << std::endl;
     ProtocolParsingInputOutput::parseIncommingData();
 }
 

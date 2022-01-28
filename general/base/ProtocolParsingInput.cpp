@@ -11,6 +11,9 @@ using namespace CatchChallenger;
 
 ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
 {
+    #ifdef PROTOCOLPARSINGDEBUG
+    std::cout << "ProtocolParsingInputOutput::read()" << std::endl;
+    #endif
     (void)data;
     (void)size;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -84,6 +87,9 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
 
 void ProtocolParsingInputOutput::parseIncommingData()
 {
+    #ifdef PROTOCOLPARSINGDEBUG
+    std::cout << "client " << this << " ProtocolParsingInputOutput::parseIncommingData() start" << std::endl;
+    #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(parseIncommingDataCount>0)
     {
@@ -110,6 +116,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-static_cast<unsigned int>(header_cut.size());
             memcpy(ProtocolParsingInputOutput::tempBigBufferForInput,header_cut.data(),header_cut.size());
             size=read(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cout << "ProtocolParsingInputOutput::parseIncommingData() read()" << std::endl;
+            #endif
             if(size<0)
             {
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -135,9 +144,18 @@ void ProtocolParsingInputOutput::parseIncommingData()
         }
         else
         {
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() pre read" << std::endl;
+            #endif
             size=read(ProtocolParsingInputOutput::tempBigBufferForInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+            #ifdef PROTOCOLPARSINGDEBUG
+            std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() post read" << std::endl;
+            #endif
             if(size<0)
             {
+                #ifdef PROTOCOLPARSINGDEBUG
+                std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() size<0" << std::endl;
+                #endif
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK
                 parseIncommingDataCount--;
                 #endif
