@@ -5,10 +5,6 @@
 #include <string>
 #include "DatabaseFunction.hpp"
 
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
-#define CATCHCHALLENGER_DB_PREPAREDSTATEMENT
-#endif
-
 typedef void (*CallBackDatabase)(void *object);
 
 namespace CatchChallenger {
@@ -33,7 +29,7 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
         #endif
 {
     public:
-        enum DatabaseType
+        enum DatabaseType : uint8_t
         {
             Unknown=0x00,
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
