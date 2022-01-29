@@ -42,7 +42,7 @@ void Client::characterIsRightFinalStep()
         const uint64_t &timeactual=time(NULL);
         if(timeactual<GlobalServerData::serverPrivateVariables.time_city_capture)
             remainingTimeSToCityCapture=GlobalServerData::serverPrivateVariables.time_city_capture-timeactual;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizeof(uint8_t)+sizeof(uint16_t),&remainingTimeSToCityCapture,remainingTimeSToCityCapture);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizeof(uint8_t)+sizeof(uint16_t),&remainingTimeSToCityCapture,sizeof(remainingTimeSToCityCapture));
     }
 
     /// \todo optimise and cache this block
