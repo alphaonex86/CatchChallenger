@@ -247,9 +247,9 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         }
         settings.sync();
         EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry=stringtouint32(settings.value("considerDownAfterNumberOfTry"),&ok);
-        if(EpollClientLoginSlave::databaseBaseLogin.considerDownAfterNumberOfTry==0 || !ok)
+        if(!ok)
         {
-            std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+            std::cerr << "considerDownAfterNumberOfTry not number" << std::endl;
             abort();
         }
         db=settings.value("db");
@@ -326,7 +326,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             if(CharactersGroupForLogin::hash.find(charactersGroup)==CharactersGroupForLogin::hash.cend())
             {
                 const uint8_t &considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"),&ok);
-                if(considerDownAfterNumberOfTry==0 || !ok)
+                if(!ok)
                 {
                     std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
                     abort();
@@ -412,12 +412,11 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             abort();
         }
         const uint8_t &considerDownAfterNumberOfTry=stringtouint8(settings.value("considerDownAfterNumberOfTry"),&ok);
-        //considerDownAfterNumberOfTry == 0 is infinity
-        /*if(considerDownAfterNumberOfTry==0 || !ok)
+        if(!ok)
         {
-            std::cerr << "considerDownAfterNumberOfTry==0 (abort)" << std::endl;
+            std::cerr << "considerDownAfterNumberOfTry not number (abort)" << std::endl;
             abort();
-        }*/
+        }
 
         {
             const int &linkfd=LinkToMaster::tryConnect(host.c_str(),port,tryInterval,considerDownAfterNumberOfTry);

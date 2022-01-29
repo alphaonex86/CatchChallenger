@@ -163,6 +163,7 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
 
 PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other) // copy constructor
 {
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(other.database->databaseType())
     {
@@ -182,7 +183,6 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
         break;
     }
     #endif
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(other.database==nullptr)
     {
         database=nullptr;
@@ -207,6 +207,7 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
       #endif
       query(other.query)
 {
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(other.database->databaseType())
     {
@@ -226,7 +227,6 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
         break;
     }
     #endif
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     other.database = nullptr;
     strcpy(this->uniqueName,other.uniqueName);
     #else
@@ -246,7 +246,6 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
         return *this;
     }
     this->database=other.database;
-    #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(other.database->databaseType())
     {
@@ -265,6 +264,7 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
         #endif
         break;
     }
+    #endif
     #endif
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -277,6 +277,7 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
 
 PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& other) // move assignment
 {
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(other.database->databaseType())
     {
@@ -296,7 +297,6 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& 
         break;
     }
     #endif
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     this->database=other.database;
     #endif
     query=other.query;

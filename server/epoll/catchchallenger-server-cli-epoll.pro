@@ -34,6 +34,8 @@ HEADERS += $$PWD/db/EpollPostgresql.hpp
 #SOURCES += $$PWD/db/EpollMySQL.cpp
 #HEADERS += $$PWD/db/EpollMySQL.hpp
 
+DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+
 CONFIG += c++11
 
 TARGET = catchchallenger-server-cli-epoll

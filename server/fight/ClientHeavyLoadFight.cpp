@@ -21,7 +21,7 @@ void Client::loadMonsters()
     }
     #endif
     //don't filter by place, dispatched in internal, market volume should be low
-    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(this,&Client::loadMonsters_static,{std::to_string(character_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(static_cast<Client *>(this),&Client::loadMonsters_static,{std::to_string(character_id)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -35,7 +35,10 @@ void Client::loadMonsters()
 void Client::loadMonsters_static(void *object)
 {
     if(object!=NULL)
+    {
+        std::cerr << "EpollPostgresql callback call: " << static_cast<Client *>(object) << std::endl;
         static_cast<Client *>(object)->loadMonsters_return();
+    }
 }
 
 void Client::loadMonsters_return()
