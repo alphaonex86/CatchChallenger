@@ -1,6 +1,6 @@
 #include "QtTimeRangeEventScanBase.hpp"
-#include "../base/GlobalServerData.hpp"
-#include "../base/BroadCastWithoutSender.hpp"
+#include "../../base/GlobalServerData.hpp"
+#include "../../base/BroadCastWithoutSender.hpp"
 
 QtTimeRangeEventScan::QtTimeRangeEventScan()
       :

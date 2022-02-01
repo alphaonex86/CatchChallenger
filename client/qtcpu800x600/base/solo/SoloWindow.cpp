@@ -260,7 +260,7 @@ void SoloWindow::updateSavegameList()
 {
     if(!datapackPathExists)
     {
-        ui->savegameEmpty->setText(QStringLiteral("<html><head/><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("No datapack!")));
+        ui->savegameEmpty->setText(QStringLiteral("<html><head/><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p><p align=\"center\"><small style=\"font-size:10pt;color:#a0a0a0;\">%2</small></p></body></html>").arg(tr("No datapack!")).arg(tr("Into %1 near the app").arg("datapack/internal/")));
         return;
     }
     std::string lastSelectedPath;

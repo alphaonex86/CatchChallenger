@@ -1,8 +1,11 @@
 #include "QtServer.hpp"
 #include "QFakeServer.hpp"
 #include "QFakeSocket.hpp"
-#include "QtPlayerUpdater.hpp"
-#include "QtTimeRangeEventScanBase.hpp"
+#include "timer/QtPlayerUpdater.hpp"
+#include "timer/QtTimeRangeEventScanBase.hpp"
+#include "db/QtDatabaseMySQL.hpp"
+#include "db/QtDatabasePostgreSQL.hpp"
+#include "db/QtDatabaseSQLite.hpp"
 #include "QtClientMapManagement.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/LocalClientHandlerWithoutSender.hpp"
@@ -46,22 +49,22 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
-    CatchChallenger::QtDatabase *Qtdb_login=new CatchChallenger::QtDatabase();
+    CatchChallenger::QtDatabaseSQLite *Qtdb_login=new CatchChallenger::QtDatabaseSQLite();
     Qtdb_login->setObjectName("db_login");
     Qtdb_login->dbThread.setObjectName("db_login");
     CatchChallenger::GlobalServerData::serverPrivateVariables.db_login=Qtdb_login;
 
-    CatchChallenger::QtDatabase *Qtdb_base=new CatchChallenger::QtDatabase();
+    CatchChallenger::QtDatabaseSQLite *Qtdb_base=new CatchChallenger::QtDatabaseSQLite();
     Qtdb_base->setObjectName("db_base");
     Qtdb_base->dbThread.setObjectName("db_base");
     CatchChallenger::GlobalServerData::serverPrivateVariables.db_base=Qtdb_base;
 
-    CatchChallenger::QtDatabase *Qtdb_common=new CatchChallenger::QtDatabase();
+    CatchChallenger::QtDatabaseSQLite *Qtdb_common=new CatchChallenger::QtDatabaseSQLite();
     Qtdb_common->setObjectName("db_common");
     Qtdb_common->dbThread.setObjectName("db_common");
     CatchChallenger::GlobalServerData::serverPrivateVariables.db_common=Qtdb_common;
 
-    CatchChallenger::QtDatabase *Qtdb_server=new CatchChallenger::QtDatabase();
+    CatchChallenger::QtDatabaseSQLite *Qtdb_server=new CatchChallenger::QtDatabaseSQLite();
     Qtdb_server->setObjectName("db_server");
     Qtdb_server->dbThread.setObjectName("db_server");
     CatchChallenger::GlobalServerData::serverPrivateVariables.db_server=Qtdb_server;
@@ -82,7 +85,8 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }*/
-    connect(this,&QtServer::stop_internal_server_signal,this,&QtServer::stop_internal_server_slot,Qt::QueuedConnection);
+    if(!connect(this,&QtServer::stop_internal_server_signal,this,&QtServer::stop_internal_server_slot,Qt::QueuedConnection))
+        abort();
 }
 
 QtServer::~QtServer()
