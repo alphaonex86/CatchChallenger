@@ -10,6 +10,7 @@
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/sha224/sha224.hpp"
+#include "SqlFunction.hpp"
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -416,7 +417,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(account_id),
-                #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
+                #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                 pseudo,
                 #else
                 SqlFunction::quoteSqlVariable(pseudo),

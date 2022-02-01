@@ -17,9 +17,11 @@ ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
     (void)data;
     (void)size;
     #ifndef EPOLLCATCHCHALLENGERSERVER
+    //return -1, to simulate ok, take care of read real value
     RXSize+=size;
     return size;
     #endif
+    //return -1, to simulate ok, take care of read real value
     return size;
 }
 
@@ -104,7 +106,8 @@ void ProtocolParsingInputOutput::parseIncommingData()
                 #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
                 std::to_string(flags & 0x10)+
                 #endif
-                std::string(" parseIncommingData(): socket->bytesAvailable(): ")+std::to_string(socket->bytesAvailable())+(", header_cut: ")+std::to_string(header_cut.size()));
+                //std::string(" parseIncommingData(): socket->bytesAvailable(): ")+std::to_string(socket->bytesAvailable())+(", header_cut: ")+std::to_string(header_cut.size()));
+                std::string(" parseIncommingData(): socket->bytesAvailable(): ?, header_cut: ")+std::to_string(header_cut.size()));
     #endif
     #endif
 
