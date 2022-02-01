@@ -3,7 +3,7 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
 #include <regex>
 #include <string>

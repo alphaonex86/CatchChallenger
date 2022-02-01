@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
-#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "MapBrowse.h"
 
@@ -148,7 +148,7 @@ void BotTargetList::updatePlayerInformation()
             QListWidgetItem *item=new QListWidgetItem();
             if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
             {
-                item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(itemId).image);
+                item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image);
                 if(quantity>1)
                     item->setText(QString::number(quantity));
                 item->setText(item->text()+" "+QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name));
@@ -184,12 +184,12 @@ void BotTargetList::updateFightStats()
     const ActionsBotInterface::Player &player=actionsAction->clientList.at(client->api);
 
     {
-        const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();
+        const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.api->getPlayerMonster();
         ui->monsterList->clear();
         if(playerMonsters.empty())
             return;
         unsigned int index=0;
-        const uint8_t &selectedMonster=player.fightEngine->getCurrentSelectedMonsterNumber();
+        const uint8_t &selectedMonster=player.api->getCurrentSelectedMonsterNumber();
         while(index<playerMonsters.size())
         {
             const CatchChallenger::PlayerMonster &monster=playerMonsters.at(index);
@@ -199,10 +199,10 @@ void BotTargetList::updateFightStats()
 
                 QListWidgetItem *item=new QListWidgetItem();
                 item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.monster).description));
-                if(!QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).thumb.isNull())
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).thumb);
+                if(!QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).thumb.isNull())
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).thumb);
                 else
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.monster).front);
+                    item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
 
                 QString lastSkill;
                 QHash<uint32_t,uint8_t> skillToDisplay;
@@ -266,7 +266,7 @@ void BotTargetList::updateFightStats()
                     item->setBackgroundColor(QColor(255,220,220,255));
                 else if(index==selectedMonster)
                 {
-                    if(player.fightEngine->isInFight())
+                    if(player.api->isInFight())
                         item->setBackgroundColor(QColor(200,255,200,255));
                     else
                         item->setBackgroundColor(QColor(200,255,255,255));
@@ -277,9 +277,9 @@ void BotTargetList::updateFightStats()
         }
     }
 
-    if(player.fightEngine->isInFight())
+    if(player.api->isInFight())
     {
-        CatchChallenger::PublicPlayerMonster *othermonster=player.fightEngine->getOtherMonster();
+        CatchChallenger::PublicPlayerMonster *othermonster=player.api->getOtherMonster();
         if(othermonster==NULL)
             ui->groupBoxFight->setVisible(false);
         else
@@ -290,7 +290,7 @@ void BotTargetList::updateFightStats()
             ui->fightOtherHp->setValue(othermonster->hp);
             ui->fightOtherHp->setFormat(QString("%1/%2").arg(othermonster->hp).arg(wildMonsterStat.hp));
             const DatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(othermonster->monster);
-            const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(othermonster->monster);
+            const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(othermonster->monster);
             ui->monsterFightName->setText(QString("%1 level %2").arg(QString::fromStdString(monsterExtra.name)).arg(othermonster->level));
             ui->monsterFightImage->setPixmap(QtmonsterExtra.front);
         }

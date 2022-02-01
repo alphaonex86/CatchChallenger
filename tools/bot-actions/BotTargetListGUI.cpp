@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
-#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "MapBrowse.h"
 #include <chrono>
 #include <math.h>
@@ -286,7 +286,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         const uint8_t &plantId=playerMonster.plant;
                                         const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.plants.at(plantId);
                                         const uint16_t &itemId=plant.itemUsed;
-                                        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(itemId);
+                                        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(itemId);
                                         const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId);
                                         //const CatchChallenger::Plant::Rewards &rewards=plant.rewards;
                                         QListWidgetItem * newItem=new QListWidgetItem();
@@ -482,7 +482,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 {
                     const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.items.item.at(itemOnMap.item);
                     const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemOnMap.item);
-                    const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(itemOnMap.item);
+                    const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(itemOnMap.item);
                     QListWidgetItem * newItem=new QListWidgetItem();
                     if(itemOnMap.infinite)
                         newItem->setText(QString("Item on map %1 %2$ (infinite)").arg(QString::fromStdString(itemExtra.name)).arg(item.price));
@@ -679,7 +679,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 {
                                     const CatchChallenger::BotFight::Item &item=fight.items.at(sub_index);
                                     const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item.id);
-                                    const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(item.id);
+                                    const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(item.id);
                                     const uint32_t &quantity=item.quantity;
                                     {
                                         QListWidgetItem * newItem=new QListWidgetItem();
@@ -722,7 +722,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                 {
                                     const CatchChallenger::BotFight::BotFightMonster &monster=fight.monsters.at(sub_index);
                                     const DatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster.id);
-                                    const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(monster.id);
+                                    const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.id);
                                     {
                                         QListWidgetItem * newItem=new QListWidgetItem();
                                         newItem->setText(QString("Fight %1: %2 level %3")
@@ -787,7 +787,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     {
                         const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
                         const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item);
-                        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->QtitemsExtra.at(item);
+                        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(item);
                         const uint32_t &price=shop.prices.at(sub_index);
                         {
                             const bool tooHard=price>player_private_and_public_informations.cash;
@@ -1032,7 +1032,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 {
                     const CatchChallenger::MapMonster &mapMonster=monsterCollisionContent.defaultMonsters.at(sub_index);
                     const DatapackClientLoader::MonsterExtra &monsterExtra=QtDatapackClientLoader::datapackLoader->monsterExtra.at(mapMonster.id);
-                    const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->QtmonsterExtra.at(mapMonster.id);
+                    const QtDatapackClientLoader::QtMonsterExtra &QtmonsterExtra=QtDatapackClientLoader::datapackLoader->getMonsterExtra(mapMonster.id);
                     {
                         QListWidgetItem * newItem=new QListWidgetItem();
                         newItem->setText(QString("Wild %2 level %3-%4, luck: %5")

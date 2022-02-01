@@ -4,8 +4,8 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
-#include "../../client/qt/Api_client_real.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 #include "../bot-actions/BotTargetList.h"
 #include <iostream>
 
@@ -78,7 +78,7 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
     //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
     if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
     {
-        botplayer.fightEngine->addPlayerMonster(player_private_and_public_informations.playerMonster);
+        botplayer.api->addPlayerMonster(player_private_and_public_informations.playerMonster);
         ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
             abort();
@@ -169,7 +169,7 @@ void ActionsAction::newRandomNumber_slot(const std::string &data)
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    botplayer.fightEngine->newRandomNumber(data);
+    botplayer.api->newRandomNumber(data);
 }
 
 void ActionsAction::setEvents_slot(const std::vector<std::pair<uint8_t,uint8_t> > &events)
@@ -528,7 +528,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
             {
                 if(!haveBeatBot(api,botFightList.at(index)))
                 {
-                    if(!botplayer.fightEngine->getAbleToFight())
+                    if(!botplayer.api->getAbleToFight())
                     {
                         if(debug)
                             std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -551,16 +551,16 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
-                    if(!botplayer.fightEngine->getAbleToFight())
+                    if(!botplayer.api->getAbleToFight())
                     {
                         if(debug)
                             std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
-                    if(!botplayer.fightEngine->canDoRandomFight(*new_map,x,y))
+                    if(!botplayer.api->canDoRandomFight(*new_map,x,y))
                     {
-                        std::cerr << "!botplayer.fightEngine->canDoRandomFight(*new_map,x,y)" << std::endl;
+                        std::cerr << "!botplayer.api->canDoRandomFight(*new_map,x,y)" << std::endl;
                         abort();
                         //emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;
@@ -719,7 +719,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                                 );
                     index++;
                 }
-                player.fightEngine->setBotMonster(botFightMonstersTransformed,fightId);
+                player.api->setBotMonster(botFightMonstersTransformed,fightId);
                 player.lastFightAction.restart();
                 return true;
             }
@@ -738,7 +738,7 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
 
             const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
             const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-            if(player.fightEngine->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
+            if(player.api->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
             {
                 player.canMoveOnMap=false;
                 player.api->stopMove();
@@ -764,7 +764,7 @@ void ActionsAction::doMove()
         const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
         const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
         //DebugClass::debugConsole(QStringLiteral("MainWindow::doStep(), do_step: %1, socket->isValid():%2, map!=NULL: %3").arg(do_step).arg(socket->isValid()).arg(map!=NULL));
-        if(api->getCaracterSelected() && player.canMoveOnMap && !player.fightEngine->isInFight())
+        if(api->getCaracterSelected() && player.canMoveOnMap && !player.api->isInFight())
         {
             CatchChallenger::Player_private_and_public_informations &player_private_and_public_informations=api->get_player_informations();
             //get item if in front of
@@ -849,18 +849,16 @@ void ActionsAction::doMove()
                         if(player.target.bestPath.size()>1)
                         {
                             std::cerr << "Something is wrong to go to the destination, path finding buggy? block not walkable?" << std::endl;
-                            std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
-                            std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
-                            std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                            std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
+                            std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                             abort();
                         }
                         if(player.target.localStep.size()>1)
                         {
                             std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
-                            std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
-                            std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
-                            std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                            std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
+                            std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                             canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                             abort();
                         }
@@ -868,9 +866,8 @@ void ActionsAction::doMove()
                             if(player.target.localStep.at(0).second>1)
                             {
                                 std::cerr << "Something is wrong  to go to the destination, path finding buggy? block not walkable?" << std::endl;
-                                std::cerr << "player.fightEngine->getAbleToFight(): " << player.fightEngine->getAbleToFight() << std::endl;
-                                std::cerr << "player.fightEngine->canDoRandomFight(*new_map,x,y): " << player.fightEngine->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
-                                std::cerr << "player.fightEngine->randomSeedsSize(): " << player.fightEngine->randomSeedsSize() << std::endl;
+                                std::cerr << "player.api->getAbleToFight(): " << player.api->getAbleToFight() << std::endl;
+                                std::cerr << "player.api->canDoRandomFight(*new_map,x,y): " << player.api->canDoRandomFight(*playerMap,player.x,player.y) << std::endl;
                                 canGoTo(api,direction,*playerMap,player.x,player.y,true,true,true);
                                 abort();
                             }
@@ -1153,21 +1150,21 @@ void ActionsAction::monsterCatch(const bool &success)
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    if(player.fightEngine->playerMonster_catchInProgress.empty())
+    if(player.api->playerMonster_catchInProgress.empty())
     {
         std::cerr << "Internal bug: cupture monster list is emtpy" << std::endl;
         return;
     }
     if(!success)
     {
-        const CatchChallenger::Skill::AttackReturn &attackReturn=player.fightEngine->generateOtherAttack();
+        const CatchChallenger::Skill::AttackReturn &attackReturn=player.api->generateOtherAttack();
         std::cout << "Start this: Try capture failed, do monster attack: " << std::to_string(attackReturn.attack) << std::endl;
     }
     else
     {
         std::cout << "Start this: Try capture success" << std::endl;
         player.canMoveOnMap=true;
-        if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+        if(player.api->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
             CatchChallenger::Player_private_and_public_informations &playerInformations=player.api->get_player_informations();
             if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
@@ -1175,13 +1172,13 @@ void ActionsAction::monsterCatch(const bool &success)
                 std::cerr << "You have already the maximum number of monster into you warehouse" << std::endl;
                 abort();
             }
-            playerInformations.warehouse_playerMonster.push_back(player.fightEngine->playerMonster_catchInProgress.front());
+            playerInformations.warehouse_playerMonster.push_back(player.api->playerMonster_catchInProgress.front());
         }
         else
-            player.fightEngine->addPlayerMonster(player.fightEngine->playerMonster_catchInProgress.front());
+            player.api->addPlayerMonster(player.api->playerMonster_catchInProgress.front());
     }
-    player.fightEngine->playerMonster_catchInProgress.erase(player.fightEngine->playerMonster_catchInProgress.cbegin());
-    player.fightEngine->fightFinished();
+    player.api->playerMonster_catchInProgress.erase(player.api->playerMonster_catchInProgress.cbegin());
+    player.api->fightFinished();
 }
 
 void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
@@ -1200,14 +1197,14 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
     player.y=y;
     api->teleportDone();
     ActionsAction::resetTarget(player.target);
-    if(player.fightEngine->currentMonsterIsKO() && !player.fightEngine->haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
+    if(player.api->currentMonsterIsKO() && !player.api->haveAnotherMonsterOnThePlayerToFight())//then is dead, is teleported to the last rescue point
     {
         std::cout << "tp after loose" << std::endl;
         player.canMoveOnMap=true;
-        player.fightEngine->healAllMonsters();
-        player.fightEngine->fightFinished();
+        player.api->healAllMonsters();
+        player.api->fightFinished();
 
-        CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+        CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
         if(monster!=NULL)
         {
             const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
@@ -1217,8 +1214,8 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
                 const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
                 if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                 {
-                    const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
-                    player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                    const uint8_t &monsterEvolutionPostion=player.api->getPlayerMonsterPosition(monster);
+                    player.api->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
                     return;
                 }
                 index++;

@@ -1,6 +1,7 @@
 #include "ActionsAction.h"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/tinyXML2/customtinyxml2.hpp"
+#include "../../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include <iostream>
 
 void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
@@ -278,23 +279,26 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                               << std::endl;
                             else
                             {
-                                #ifdef DEBUG_MESSAGE_MAP_LOAD
-                                    std::cerr << "zonecapture point put at: for bot id: "
-                                              << bot_Semi.id
-                                              << " ("
-                                              << bot_Semi.file
-                                              << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
-                                              << " ("
-                                              << std::to_string(bot_Semi.point.x)
-                                              << ","
-                                              << std::to_string(bot_Semi.point.y)
-                                              << "), for step: "
-                                              << std::to_string(i->first)
-                                              << std::endl;
-                                #endif
-                                mapServer->zonecapture[pairpoint]=std::string(step->Attribute("zone"));
-                                zonecapturepoint_number++;
+                                if(step->Attribute("zone")!=nullptr)
+                                {
+                                    #ifdef DEBUG_MESSAGE_MAP_LOAD
+                                        std::cerr << "zonecapture point put at: for bot id: "
+                                                  << bot_Semi.id
+                                                  << " ("
+                                                  << bot_Semi.file
+                                                  << "), spawn at: "
+                                                  << semi_loaded_map.at(index).map->map_file
+                                                  << " ("
+                                                  << std::to_string(bot_Semi.point.x)
+                                                  << ","
+                                                  << std::to_string(bot_Semi.point.y)
+                                                  << "), for step: "
+                                                  << std::to_string(i->first)
+                                                  << std::endl;
+                                    #endif
+                                    mapServer->zonecapture[pairpoint]=QtDatapackClientLoader::datapackLoader->zonesExtra.at(step->Attribute("zone")).id;
+                                    zonecapturepoint_number++;
+                                }
                             }
                         }
                         else if(step_type=="fight")
