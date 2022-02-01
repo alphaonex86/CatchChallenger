@@ -53,7 +53,7 @@ class BaseWindow : public QWidget
 public:
     explicit BaseWindow();
     ~BaseWindow();
-    void setMultiPlayer(bool multiplayer, Api_client_real *client);
+    void setMultiPlayer(bool multiplayer, Api_protocol_Qt *client);
     void resetAll();
     void serverIsLoading();
     void serverIsReady();
