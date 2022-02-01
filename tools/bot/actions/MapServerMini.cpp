@@ -1,5 +1,5 @@
 #include "MapServerMini.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 
 QList<QColor> MapServerMini::colorsList;

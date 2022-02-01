@@ -1,6 +1,6 @@
 #include "MapServerMini.h"
 #include <iostream>
-#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "ActionsAction.h"

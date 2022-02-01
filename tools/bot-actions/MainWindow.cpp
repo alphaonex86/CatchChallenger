@@ -3,10 +3,9 @@
 
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../../client/qt/FacilityLibClient.hpp"
 #include "../bot/actions/ActionsAction.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
-#include "../../client/qt/LanguagesSelect.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 
 #include <QNetworkProxy>
 #include <QMessageBox>
@@ -202,10 +201,8 @@ void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
         newPlayer.target.linkPoint.type=MapServerMini::BlockObject::LinkType::SourceNone;
         newPlayer.target.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::None;
         newPlayer.target.wildCycle=0;
-        newPlayer.fightEngine=new CatchChallenger::ClientFightEngine();
         newPlayer.api=api;
         ActionsAction::clientList[api]=newPlayer;
-        newPlayer.fightEngine->setClient(api);
 
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qthave_inventory,     actionsAction,&ActionsAction::have_inventory_slot,Qt::QueuedConnection))
             abort();
@@ -457,7 +454,7 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
         }
     }
     {
-        qSort(logicialGroup.servers);
+        //qSort(logicialGroup.servers);-> problem to linker, fix it
         //list the server
         unsigned int index=0;
         while(index<logicialGroup.servers.size())
@@ -477,11 +474,9 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
                 if(server.playedTime>0)
                 {
                     if(!server.description.empty())
-                        text+=" "+tr("%1 played").arg(QString::fromStdString(
-                                                          CatchChallenger::FacilityLibClient::timeToString(server.playedTime))).toStdString();
+                        text+=" "+tr("%1s played").arg(server.playedTime).toStdString();
                     else
-                        text+="\n"+tr("%1 played").arg(QString::fromStdString(
-                                                           CatchChallenger::FacilityLibClient::timeToString(server.playedTime))).toStdString();
+                        text+="\n"+tr("%1s played").arg(server.playedTime).toStdString();
                 }
                 if(!server.description.empty())
                     text+="\n"+server.description;

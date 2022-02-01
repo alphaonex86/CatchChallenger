@@ -556,7 +556,7 @@ void send_settings(
         if(master_tryInterval>=60)
             std::cerr << "Take care: master_tryInterval>=60" << std::endl;
         master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
-        if(master_considerDownAfterNumberOfTry<=0 || !ok)
+        if(!ok)
         {
             std::cerr << "considerDownAfterNumberOfTry==0 || !ok (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();

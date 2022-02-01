@@ -1,12 +1,12 @@
 #include "ActionsAction.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLib.hpp"
 
 bool ActionsAction::nextStepQuest(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "drop quest step requirement for: " << quest.id;
     #endif
@@ -118,12 +118,12 @@ void ActionsAction::appendReputationPoint(CatchChallenger::Api_protocol_Qt *api,
 bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol_Qt *api,const uint16_t &botId)
 {
     const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check bot quest for: " << botId;
     #endif
     //do the not started quest here
-    std::vector<uint16_t> botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+    std::vector<CATCHCHALLENGER_TYPE_QUEST> botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -195,7 +195,7 @@ bool ActionsAction::botHaveQuest(const CatchChallenger::Api_protocol_Qt *api,con
 bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol_Qt *api, const uint16_t &questId, const uint16_t &botId, bool silent)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
     {
         if(!silent)
@@ -272,7 +272,7 @@ bool ActionsAction::tryValidateQuestStep(CatchChallenger::Api_protocol_Qt *api, 
 bool ActionsAction::haveNextStepQuestRequirements(const CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {
     const CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations_ro();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << QStringLiteral("haveNextStepQuestRequirements for quest: %1").arg(questId);
     #endif
@@ -323,7 +323,7 @@ bool ActionsAction::haveNextStepQuestRequirements(const CatchChallenger::Api_pro
 bool ActionsAction::haveStartQuestRequirement(const CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {
     const CatchChallenger::Player_private_and_public_informations &informations=api->get_player_informations_ro();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=informations.quests;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=informations.quests;
     #ifdef DEBUG_CLIENT_QUEST
     qDebug() << "check quest requirement for: " << quest.id;
     #endif
@@ -374,7 +374,7 @@ bool ActionsAction::haveStartQuestRequirement(const CatchChallenger::Api_protoco
 bool ActionsAction::startQuest(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Quest &quest)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
-    std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     if(quests.find(quest.id)==quests.cend())
     {
         quests[quest.id].step=1;
@@ -388,11 +388,11 @@ bool ActionsAction::startQuest(CatchChallenger::Api_protocol_Qt *api,const Catch
 std::vector<std::pair<uint16_t, std::string> > ActionsAction::getQuestList(CatchChallenger::Api_protocol_Qt *api,const uint16_t &botId)
 {
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
-    const std::unordered_map<uint16_t, CatchChallenger::PlayerQuest> &quests=player.quests;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> &quests=player.quests;
     std::vector<std::pair<uint16_t,std::string> > entryList;
-    std::pair<uint16_t,std::string> oneEntry;
+    std::pair<CATCHCHALLENGER_TYPE_QUEST,std::string> oneEntry;
     //do the not started quest here
-    std::vector<uint16_t> botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+    std::vector<CATCHCHALLENGER_TYPE_QUEST> botQuests=QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
     unsigned int index=0;
     while(index<botQuests.size())
     {
