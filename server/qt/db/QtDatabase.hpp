@@ -9,7 +9,7 @@
 
 #define CATCHCHALLENGER_MAXBDQUERIES 255
 
-#include "../base/DatabaseBase.hpp"
+#include "../../base/DatabaseBase.hpp"
 
 namespace CatchChallenger {
 
@@ -30,10 +30,6 @@ class QtDatabase : public QObject, public CatchChallenger::DatabaseBase
 public:
     QtDatabase();
     ~QtDatabase();
-    bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
-    bool syncConnectMysql(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
-    bool syncConnectSqlite(const std::string &file);
-    bool syncConnectPostgresql(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password);
     void syncDisconnect();
     DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
@@ -63,7 +59,7 @@ public:
     static unsigned int findConnexionToClose(const QSqlDatabase * const conn);
 signals:
     void sendQuery(const std::string &query, const QSqlDatabase &db);
-private:
+protected:
     QSqlDatabase *conn;
     QSqlQuery *sqlQuery;
     static char emptyString[1];

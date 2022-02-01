@@ -207,7 +207,8 @@ void NormalServer::start_internal_server()
         if(sslServer==NULL)
             sslServer=new QSslServer();
     }
-    connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection);
+    if(!connect(sslServer,&QTcpServer::newConnection,this,&NormalServer::newConnection,Qt::QueuedConnection))
+        abort();
     if(sslServer->isListening())
     {
         const std::string &listenAddressAndPort=listenIpAndPort(sslServer->serverAddress().toString().toStdString(),sslServer->serverPort());
