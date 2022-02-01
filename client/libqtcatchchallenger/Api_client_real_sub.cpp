@@ -105,6 +105,11 @@ bool Api_client_real::getHttpFileSub(const std::string &url, const std::string &
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListSub[reply]=urlInWaiting;
+    if(urlInWaitingListSub.size()>MAXFILETODOWNLOAD)
+    {
+        std::cerr << "urlInWaitingListSub.size()>MAXFILETODOWNLOAD" << std::endl;
+        abort();
+    }
     if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedSub))
         abort();
     return true;

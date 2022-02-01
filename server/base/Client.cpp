@@ -140,9 +140,15 @@ bool Client::disconnectClient()
 {
     //closeSocket();-> done into above layer
     if(stat==ClientStat::None)
+    {
+        closeSocket();
         return false;
+    }
     if(account_id==0)
+    {
+        closeSocket();
         return false;
+    }
     account_id=0;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     if(character_id!=0)
@@ -322,8 +328,11 @@ void Client::errorOutput(const std::string &errorString)
 {
     if(stat==ClientStat::None)
     {
-        //std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
-        disconnectClient();
+        #ifndef NOSINGLEPLAYER
+        std::cerr << headerOutput() << "Kicked when stat==ClientStat::None by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
+        #endif
+        disconnectClient();//include closeSocket();, but do it again:
+        closeSocket();
         return;
     }
     if(stat==ClientStat::CharacterSelected)

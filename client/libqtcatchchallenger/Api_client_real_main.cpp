@@ -117,6 +117,11 @@ bool Api_client_real::getHttpFileMain(const std::string &url, const std::string 
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListMain[reply]=urlInWaiting;
+    if(urlInWaitingListMain.size()>MAXFILETODOWNLOAD)
+    {
+        std::cerr << "urlInWaitingListMain.size()>MAXFILETODOWNLOAD" << std::endl;
+        abort();
+    }
     if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedMain))
         abort();
     return true;

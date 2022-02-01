@@ -183,7 +183,7 @@ void BaseWindow::serverIsReady()
     ui->label_connecting_status->setText(tr("Game data is ready"));
 }
 
-void BaseWindow::setMultiPlayer(bool multiplayer, CatchChallenger::Api_client_real *client)
+void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
 {
     this->multiplayer=multiplayer;
     this->client=client;
