@@ -28,8 +28,9 @@ public:
     bool empty() const;
     std::string queryText() const;
 private:
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
+    //convert asyncPrepared to async, then need database
     CatchChallenger::DatabaseBase * database;
+    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     //prepared statement
     char uniqueName[3];
     static std::string writeToPrepare(const std::string &query);

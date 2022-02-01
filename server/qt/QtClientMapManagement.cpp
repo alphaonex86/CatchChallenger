@@ -22,12 +22,12 @@ bool QtMapVisibilityAlgorithm_None::isValid()
 
 ssize_t QtMapVisibilityAlgorithm_None::read(char * data, const size_t &size)
 {
-    return CatchChallenger::Client::read(data,size);
+    return CatchChallenger::QtClient::read(data,size);
 }
 
 ssize_t QtMapVisibilityAlgorithm_None::write(const char * const data, const size_t &size)
 {
-    return CatchChallenger::Client::write(data,size);
+    return CatchChallenger::QtClient::write(data,size);
 }
 
 QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(QIODevice *qtSocket) :
@@ -52,12 +52,12 @@ bool QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::isValid()
 
 ssize_t QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::read(char * data, const size_t &size)
 {
-    return CatchChallenger::Client::read(data,size);
+    return CatchChallenger::QtClient::read(data,size);
 }
 
 ssize_t QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::write(const char * const data, const size_t &size)
 {
-    return CatchChallenger::Client::write(data,size);
+    return CatchChallenger::QtClient::write(data,size);
 }
 
 QtMapVisibilityAlgorithm_Simple_StoreOnSender::QtMapVisibilityAlgorithm_Simple_StoreOnSender(QIODevice *qtSocket) :
@@ -82,10 +82,10 @@ bool QtMapVisibilityAlgorithm_Simple_StoreOnSender::isValid()
 
 ssize_t QtMapVisibilityAlgorithm_Simple_StoreOnSender::read(char * data, const size_t &size)
 {
-    return CatchChallenger::Client::read(data,size);
+    return CatchChallenger::QtClient::read(data,size);
 }
 
 ssize_t QtMapVisibilityAlgorithm_Simple_StoreOnSender::write(const char * const data, const size_t &size)
 {
-    return CatchChallenger::Client::write(data,size);
+    return CatchChallenger::QtClient::write(data,size);
 }

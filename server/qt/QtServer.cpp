@@ -38,7 +38,7 @@ QtServer::QtServer()
         abort();
     }
     #ifdef CATCHCHALLENGER_SOLO
-    if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection))
+    if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
