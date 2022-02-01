@@ -11,10 +11,10 @@
 #include <QDebug>
 
 #include "InternalServer.hpp"
-#include "../../../server/base/GlobalServerData.hpp"
-#include "../../../server/qt/QFakeServer.hpp"
-#include "../../../server/qt/QFakeSocket.hpp"
-#include "../../../general/base/FacilityLib.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "QFakeServer.hpp"
+#include "QFakeSocket.hpp"
+#include "../../general/base/FacilityLib.hpp"
 
 using namespace CatchChallenger;
 

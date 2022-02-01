@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
-#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "MapBrowse.h"
 
 #include <chrono>

@@ -1,7 +1,7 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
-#include "../../client/qt/QtDatapackClientLoader.hpp"
-#include "../../client/qt/fight/interface/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLib.hpp"
@@ -571,7 +571,7 @@ void BotTargetList::updatePlayerStep()
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Heal:
                             api->heal();
-                            player.fightEngine->healAllMonsters();
+                            player.api->healAllMonsters();
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt:
                         {
@@ -642,7 +642,7 @@ void BotTargetList::updatePlayerStep()
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
                         {
                             const uint32_t &fightId=player.target.extra;
-                            if(!ActionsAction::haveBeatBot(api,fightId) && player.fightEngine->getAbleToFight())
+                            if(!ActionsAction::haveBeatBot(api,fightId) && player.api->getAbleToFight())
                             {
                                 qDebug() <<  "is now in fight by target with: " << fightId;
                                 player.canMoveOnMap=false;
@@ -658,7 +658,7 @@ void BotTargetList::updatePlayerStep()
                                               CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level)));
                                     index++;
                                 }
-                                player.fightEngine->setBotMonster(botFightMonstersTransformed,fightId);
+                                player.api->setBotMonster(botFightMonstersTransformed,fightId);
                                 player.lastFightAction.restart();
                             }
                             else
@@ -697,21 +697,21 @@ void BotTargetList::updatePlayerStep()
                           << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
                           << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
                 //can't move: can be in fight
-                if(player.fightEngine->isInFight())
+                if(player.api->isInFight())
                 {
                     if(apiSelectedClient==api && !ui->groupBoxFight->isVisible())
                         updateFightStats();
-                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && !player.fightEngine->catchInProgress())
+                    if((player.lastFightAction.elapsed()/1000)>(5/*5s*/) && !player.api->catchInProgress())
                     {
                         player.lastFightAction.restart();
                         //do the code here
-                        CatchChallenger::PlayerMonster *monster=player.fightEngine->getCurrentMonster();
+                        CatchChallenger::PlayerMonster *monster=player.api->getCurrentMonster();
                         if(monster==NULL)
                         {
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
                             continue;
                         }
-                        CatchChallenger::PublicPlayerMonster *othermonster=player.fightEngine->getOtherMonster();
+                        CatchChallenger::PublicPlayerMonster *othermonster=player.api->getOtherMonster();
                         if(othermonster==NULL)
                         {
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
@@ -723,7 +723,7 @@ void BotTargetList::updatePlayerStep()
                         bool tryCaptureWithItem=false;
                         uint16_t itemToCapture=0;
                         uint32_t currentDiff=2000000;
-                        if(player.fightEngine->isInFightWithWild())
+                        if(player.api->isInFightWithWild())
                         {
                             if(playerInformations.encyclopedia_monster!=NULL)
                                 if(!(playerInformations.encyclopedia_monster[othermonster->monster/8] & (1<<(7-othermonster->monster%8))))
@@ -793,17 +793,17 @@ void BotTargetList::updatePlayerStep()
                                     }
                                 }
                         }
-                        if(player.fightEngine->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
+                        if(player.api->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
                             if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
                                 tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
                         {
-                            //api->useObject(itemToCapture);-> do into player.fightEngine->tryCatchClient(
+                            //api->useObject(itemToCapture);-> do into player.api->tryCatchClient(
                             ActionsAction::remove_to_inventory(api,itemToCapture);
                             std::cout << "Start this: Try capture with: " << std::to_string(itemToCapture) << ", now have only quantity: " << std::to_string(ActionsAction::itemQuantity(api,itemToCapture)) << std::endl;
-                            if(!player.fightEngine->tryCatchClient(itemToCapture))//api->useObject(item); call into it
+                            if(!player.api->tryCatchClient(itemToCapture))//api->useObject(item); call into it
                             {
-                                std::cerr << "!player.fightEngine->tryCatchClient(itemToCapture)" << std::endl;
+                                std::cerr << "!player.api->tryCatchClient(itemToCapture)" << std::endl;
                                 abort();
                             }
                             ui->label_action->setText("Start this: Try capture with: "+QString::number(itemToCapture)+" for the monster "+QString::number(othermonster->monster));
@@ -854,7 +854,7 @@ void BotTargetList::updatePlayerStep()
                             if(useTheRescueSkill)
                             {
                                 if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(0)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
-                                    player.fightEngine->useSkill(0);
+                                    player.api->useSkill(0);
                                 else
                                 {
                                     std::cerr << "No skill found and no rescue skill" << std::endl;
@@ -862,23 +862,23 @@ void BotTargetList::updatePlayerStep()
                                 }
                             }
                             else
-                                player.fightEngine->useSkill(skillUsed);
+                                player.api->useSkill(skillUsed);
                             std::cout << "Start this: Try skill: " << std::to_string(skillUsed) << std::endl;
                         }
 
-                        if(player.fightEngine->otherMonsterIsKO())
-                            player.fightEngine->dropKOOtherMonster();
-                        if(player.fightEngine->currentMonsterIsKO())
+                        if(player.api->otherMonsterIsKO())
+                            player.api->dropKOOtherMonster();
+                        if(player.api->currentMonsterIsKO())
                         {
-                            player.fightEngine->dropKOCurrentMonster();
+                            player.api->dropKOCurrentMonster();
 
-                            if(player.fightEngine->haveAnotherMonsterOnThePlayerToFight())
+                            if(player.api->haveAnotherMonsterOnThePlayerToFight())
                             {
-                                if(player.fightEngine->isInFight())
+                                if(player.api->isInFight())
                                 {
                                     uint8_t maxLevel=0;
                                     uint8_t currentPos=0;
-                                    const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.fightEngine->getPlayerMonster();
+                                    const std::vector<CatchChallenger::PlayerMonster> &playerMonsters=player.api->getPlayerMonster();
                                     uint8_t index=0;
                                     while(index<playerMonsters.size())
                                     {
@@ -895,12 +895,12 @@ void BotTargetList::updatePlayerStep()
                                     }
                                     if(maxLevel==0)
                                     {
-                                        std::cerr << "player.fightEngine->haveAnotherMonsterOnThePlayerToFight() && player.fightEngine->isInFight(), unable to select other monster" << std::endl;
+                                        std::cerr << "player.api->haveAnotherMonsterOnThePlayerToFight() && player.api->isInFight(), unable to select other monster" << std::endl;
                                         abort();
                                     }
-                                    if(!player.fightEngine->changeOfMonsterInFight(currentPos))
+                                    if(!player.api->changeOfMonsterInFight(currentPos))
                                     {
-                                        std::cerr << "!player.fightEngine->changeOfMonsterInFight" << std::endl;
+                                        std::cerr << "!player.api->changeOfMonsterInFight" << std::endl;
                                         continue;
                                     }
                                     player.api->changeOfMonsterInFightByPosition(currentPos);
@@ -909,8 +909,8 @@ void BotTargetList::updatePlayerStep()
                                 {
                                     //win
                                     player.canMoveOnMap=true;
-                                    player.fightEngine->fightFinished();
-                                    CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+                                    player.api->fightFinished();
+                                    CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
                                     if(monster!=NULL)
                                     {
                                         const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
@@ -920,8 +920,8 @@ void BotTargetList::updatePlayerStep()
                                             const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
                                             if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                                             {
-                                                const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
-                                                player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                                                const uint8_t &monsterEvolutionPostion=player.api->getPlayerMonsterPosition(monster);
+                                                player.api->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
                                                 break;
                                             }
                                             index++;
@@ -943,12 +943,12 @@ void BotTargetList::updatePlayerStep()
                                   << " from " << actionsAction->id_map_to_map.at(player.mapId) << " " << std::to_string(player.x) << "," << std::to_string(player.y)
                                   << ", " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;*/
 
-                        if(!player.canMoveOnMap && !player.fightEngine->isInFight())
+                        if(!player.canMoveOnMap && !player.api->isInFight())
                         {
                             //win
                             player.canMoveOnMap=true;
-                            player.fightEngine->fightFinished();
-                            CatchChallenger::PlayerMonster *monster=player.fightEngine->evolutionByLevelUp();
+                            player.api->fightFinished();
+                            CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
                             if(monster!=NULL)
                             {
                                 const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
@@ -958,8 +958,8 @@ void BotTargetList::updatePlayerStep()
                                     const CatchChallenger::Monster::Evolution &evolution=monsterInformations.evolutions.at(index);
                                     if(evolution.type==CatchChallenger::Monster::EvolutionType_Level && evolution.data.level==monster->level)
                                     {
-                                        const uint8_t &monsterEvolutionPostion=player.fightEngine->getPlayerMonsterPosition(monster);
-                                        player.fightEngine->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
+                                        const uint8_t &monsterEvolutionPostion=player.api->getPlayerMonsterPosition(monster);
+                                        player.api->confirmEvolutionByPosition(monsterEvolutionPostion);//api call into it
                                         break;
                                     }
                                     index++;

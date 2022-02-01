@@ -160,8 +160,7 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         player=NULL;
         const std::string &soundFile=QCoreApplication::applicationDirPath().toStdString()+CATCHCHALLENGER_CLIENT_MUSIC_LOADING;
-        struct stat sb;
-        if(stat(soundFile.c_str(),&sb)==0)
+        if(QFile(soundFile.c_str()).exists())
         {
             player = new QAudioOutput(Audio::audio->format(), this);
             if(Audio::decodeOpus(soundFile,data))
