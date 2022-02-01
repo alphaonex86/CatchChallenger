@@ -1446,7 +1446,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
         #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
         if(realSslSocket==NULL && realWebSocket==NULL)
-            client->sendProtocol();
+        {}//client->sendProtocol();
         else
             qDebug() << "Tcp/Web socket found, skip sendProtocol()";
         #elif !defined(NOTCPSOCKET)
@@ -1486,7 +1486,10 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
             return;
         }
         if(client!=NULL)
-            static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
+        {
+            if(serverMode==ServerMode_Remote)
+                static_cast<CatchChallenger::Api_client_real *>(this->client)->closeDownload();
+        }
         if(client!=NULL && client->protocolWrong())
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
         #ifndef NOSINGLEPLAYER
@@ -1968,7 +1971,7 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
         abort();
     if(!connect(socket,                                                 &CatchChallenger::ConnectedSocket::stateChanged,    this,&MainWindow::stateChanged))
         abort();
-    baseWindow->setMultiPlayer(false,static_cast<CatchChallenger::Api_client_real *>(this->client));
+    baseWindow->setMultiPlayer(false,this->client);
     baseWindow->connectAllSignals();//need always be after setMultiPlayer()
     client->setDatapackPath(QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/");
     baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
