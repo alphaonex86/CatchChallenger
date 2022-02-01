@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_QTPLAYERUPDATER_H
 
 #include <QTimer>
-#include "../base/PlayerUpdaterBase.hpp"
+#include "../../base/PlayerUpdaterBase.hpp"
 #include <stdint.h>
 
 class QtPlayerUpdater : public QTimer, public CatchChallenger::PlayerUpdaterBase
