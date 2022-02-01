@@ -78,7 +78,6 @@ public:
         //CatchChallenger::Direction direction;
         GlobalTarget target;
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
-        CatchChallenger::ClientFightEngine *fightEngine;
         QTime lastFightAction;
         CatchChallenger::Api_protocol_Qt  *api;
         std::map<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;

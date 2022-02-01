@@ -1,17 +1,23 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
 include(../../general/general.pri)
-include(../../client/qt/client.pri)
-#include(../../client/qt/multi.pri)
+include(../../general/tinyXML2/tinyXML2.pri)
+include(../../general/tinyXML2/tinyXML2header.pri)
+include(../../client/libcatchchallenger/lib.pri)
+include(../../client/libcatchchallenger/libheader.pri)
+include(../../client/libqtcatchchallenger/libqt.pri)
+include(../../client/libqtcatchchallenger/libqtheader.pri)
+include(../../client/tiled/tiled.pri)
+include(../../client/tiled/tiledheader.pri)
 include(../bot/actions/Actions.pri)
 
 QT       += core gui xml network sql
-QT += widgets
+QT += widgets websockets
 
 TARGET = bot-actions
 TEMPLATE = app
 
-DEFINES += BOTACTIONS CATCHCHALLENGER_BOT
+DEFINES += BOTACTIONS CATCHCHALLENGER_BOT MAXIMIZEPERFORMANCEOVERDATABASESIZE
 
 SOURCES += main.cpp\
     GenerateMapZone.cpp \
