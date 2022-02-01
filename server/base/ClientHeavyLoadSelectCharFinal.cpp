@@ -31,6 +31,7 @@ void Client::characterIsRightFinalStep()
     //send the network reply
     removeFromQueryReceived(query_id);
 
+
     uint32_t posOutput=0;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
@@ -42,7 +43,7 @@ void Client::characterIsRightFinalStep()
         const uint64_t &timeactual=time(NULL);
         if(timeactual<GlobalServerData::serverPrivateVariables.time_city_capture)
             remainingTimeSToCityCapture=GlobalServerData::serverPrivateVariables.time_city_capture-timeactual;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizeof(uint8_t)+sizeof(uint16_t),&remainingTimeSToCityCapture,sizeof(remainingTimeSToCityCapture));
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint16_t),&remainingTimeSToCityCapture,sizeof(remainingTimeSToCityCapture));
     }
 
     /// \todo optimise and cache this block
@@ -137,7 +138,6 @@ void Client::characterIsRightFinalStep()
         posOutput+=8;
     }
 
-
     //temporary variable
     uint32_t index;
     uint8_t size;
@@ -176,13 +176,13 @@ void Client::characterIsRightFinalStep()
         index++;
     }
 
-    /// \todo force to 255 max
     //send reputation
     {
+        unsigned int index=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.reputation.size());
         posOutput+=1;
         auto i=public_and_private_informations.reputation.begin();
-        while(i!=public_and_private_informations.reputation.cend())
+        while(index<=255 && i!=public_and_private_informations.reputation.cend())
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=i->first;
             posOutput+=1;
@@ -191,6 +191,7 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second.point);
             posOutput+=4;
             ++i;
+            index++;
         }
     }
     /// \todo make the buffer overflow control here or above
@@ -201,6 +202,7 @@ void Client::characterIsRightFinalStep()
         else
             buffer=CompressionProtocol::tempBigBufferForCompressedOutput;
         uint32_t posOutputTemp=0;
+
         //recipes
         if(public_and_private_informations.recipes!=NULL)
         {
@@ -222,6 +224,7 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+
         //encyclopedia_monster
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
@@ -243,6 +246,7 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+
         //encyclopedia_item
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
@@ -264,6 +268,7 @@ void Client::characterIsRightFinalStep()
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
             posOutputTemp+=2;
         }
+
         //achievements
         buffer[posOutputTemp]=0;
         posOutputTemp++;
@@ -292,13 +297,13 @@ void Client::characterIsRightFinalStep()
 
     //------------------------------------------- End of common part, start of server specific part ----------------------------------
 
-    /// \todo force to 255 max
     //send quest
     {
+        unsigned int index=0;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.quests.size());
         posOutput+=2;
         auto j=public_and_private_informations.quests.begin();
-        while(j!=public_and_private_informations.quests.cend())
+        while(index<=255 && j!=public_and_private_informations.quests.cend())
         {
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
             posOutput+=2;
@@ -307,6 +312,7 @@ void Client::characterIsRightFinalStep()
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=j->second.finish_one_time;
             posOutput+=1;
             ++j;
+            index++;
         }
     }
 
@@ -428,6 +434,7 @@ void Client::characterIsRightFinalStep()
         mapToDebug+=this->map->map_file;
     }
     #endif
+
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))

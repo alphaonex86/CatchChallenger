@@ -35,10 +35,7 @@ void Client::loadMonsters()
 void Client::loadMonsters_static(void *object)
 {
     if(object!=NULL)
-    {
-        std::cerr << "EpollPostgresql callback call: " << static_cast<Client *>(object) << std::endl;
         static_cast<Client *>(object)->loadMonsters_return();
-    }
 }
 
 void Client::loadMonsters_return()

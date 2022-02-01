@@ -125,7 +125,7 @@ private slots:
     void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
-    bool sendSettings(CatchChallenger::InternalServer * internalServer,const QString &savegamesPath);
+    bool sendSettings(CatchChallenger::InternalServer * internalServer, const QString &savegamesPath, const QString &datapackPathBase);
     void saveTime();
     #endif
     void is_started(bool started);

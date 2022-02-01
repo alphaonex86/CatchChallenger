@@ -1,6 +1,8 @@
 #include "PreparedStatementUnit.hpp"
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
 #include <postgresql/libpq-fe.h>
+#endif
+#if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include <cstring>
@@ -14,9 +16,7 @@ std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> PreparedStatementUn
 #endif
 
 PreparedStatementUnit::PreparedStatementUnit()
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     : database(NULL)
-    #endif
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
@@ -24,9 +24,7 @@ PreparedStatementUnit::PreparedStatementUnit()
 }
 
 PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChallenger::DatabaseBase * const database)
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     : database(database)
-    #endif
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
@@ -39,19 +37,15 @@ PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChal
 
 PreparedStatementUnit::~PreparedStatementUnit()
 {
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     database=NULL;
-    #endif
 }
 
 bool PreparedStatementUnit::setQuery(const std::string &query)
 {
     if(query.empty())
         return false;
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(database==NULL)
         return false;
-    #endif
     this->query=query;
     if(this->query.empty())
         return false;
@@ -109,10 +103,9 @@ std::string PreparedStatementUnit::queryText() const
 
 DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(database==NULL)
         return NULL;
-    #else
+    #if ! defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     (void)returnObject;
     (void)method;
     (void)values;
@@ -126,12 +119,7 @@ DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallB
             return database->asyncPreparedRead("",uniqueName,returnObject,method,values);
         #endif
     #else
-        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         return database->asyncRead(query.compose(values),returnObject,method);
-        #else
-        std::cerr << "PreparedStatementUnit::asyncRead call when disabled" << std::endl;
-        abort();
-        #endif
     #endif
 }
 
@@ -152,12 +140,7 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
             return database->asyncPreparedWrite("",uniqueName,values);
         #endif
     #else
-        #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
-            return database->asyncWrite(query.compose(values));
-        #else
-            std::cerr << "PreparedStatementUnit::asyncWrite call when disabled" << std::endl;
-            abort();
-        #endif
+        return database->asyncWrite(query.compose(values));
     #endif
 }
 
@@ -191,7 +174,6 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
         #endif
         return;
     }
-    this->database=other.database;
     query=other.query;
     #else
     (void)other;
@@ -199,12 +181,11 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
     #endif
+    this->database=other.database;
 }
 
 PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : // move constructor
-    #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     database(other.database),
-      #endif
       query(other.query)
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -227,11 +208,11 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
         break;
     }
     #endif
-    other.database = nullptr;
     strcpy(this->uniqueName,other.uniqueName);
     #else
     (void)other;
     #endif
+    this->database=other.database;
 }
 
 PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementUnit& other) // copy assignment
@@ -245,7 +226,6 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
         #endif
         return *this;
     }
-    this->database=other.database;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(other.database->databaseType())
     {
@@ -272,6 +252,7 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
     #else
     (void)other;
     #endif
+    this->database=other.database;
     return *this;
 }
 
@@ -297,14 +278,12 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& 
         break;
     }
     #endif
-    this->database=other.database;
     #endif
     query=other.query;
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
-    other.database = nullptr;
     #else
-    (void)other;
     #endif
+    this->database=other.database;
     return *this;
 }
