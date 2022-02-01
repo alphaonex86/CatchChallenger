@@ -123,6 +123,11 @@ bool Api_client_real::getHttpFileBase(const std::string &url, const std::string 
     UrlInWaiting urlInWaiting;
     urlInWaiting.fileName=fileName;
     urlInWaitingListBase[reply]=urlInWaiting;
+    if(urlInWaitingListBase.size()>MAXFILETODOWNLOAD)
+    {
+        std::cerr << "urlInWaitingListBase.size()>MAXFILETODOWNLOAD" << std::endl;
+        abort();
+    }
     if(!connect(reply, &QNetworkReply::finished, this, &Api_client_real::httpFinishedBase))
         abort();
     return true;

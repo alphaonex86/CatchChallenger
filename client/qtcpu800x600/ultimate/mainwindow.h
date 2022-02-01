@@ -200,7 +200,7 @@ private:
     QHash<QString,bool> lastServerIsKick;
     QTimer updateTheOkButtonTimer;
     CatchChallenger::BaseWindow *baseWindow;
-    CatchChallenger::Api_protocol *client;
+    CatchChallenger::Api_protocol_Qt *client;
     QCompleter *completer;
     QString lastServer;
     #ifndef CATCHCHALLENGER_NOAUDIO
