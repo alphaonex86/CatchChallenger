@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_QtTimeRangeEventScan_H
 
 #include <QTimer>
-#include "../base/TimeRangeEventScanBase.hpp"
+#include "../../base/TimeRangeEventScanBase.hpp"
 
 #include <stdint.h>
 

@@ -2,10 +2,10 @@
 #define QTCATCHCHALLENGER_SERVER_STRUCTURES_H
 
 #include <QTimer>
-#include "QtTimerEvents.hpp"
-#include "QtDatabase.hpp"
-#include "QtPlayerUpdater.hpp"
-#include "QtTimeRangeEventScanBase.hpp"
+#include "timer/QtTimerEvents.hpp"
+#include "db/QtDatabase.hpp"
+#include "timer/QtPlayerUpdater.hpp"
+#include "timer/QtTimeRangeEventScanBase.hpp"
 
 struct QtServerPrivateVariables
 {
