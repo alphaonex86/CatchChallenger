@@ -1,0 +1,2 @@
+QT       += sql core
+DEFINES += CATCHCHALLENGER_SOLO
