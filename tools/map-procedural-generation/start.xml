@@ -1,0 +1,9 @@
+<!--
+/!\ warning, directly put this information into db
+/!\ not check if x,y is into the range of the map
+-->
+<profile>
+ <start id="normal">
+  <map y="26" x="20" file="arter/arter"/>
+ </start>
+</profile>

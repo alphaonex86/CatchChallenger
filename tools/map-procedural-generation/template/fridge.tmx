@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="1" height="3" tilewidth="16" tileheight="16" infinite="0" nextobjectid="2">
+ <tileset firstgid="11" source="../dest/map/tileset/inside-mobilier.tsx"/>
+ <tileset firstgid="1035" source="../dest/map/tileset/inside-terra.tsx"/>
+ <tileset firstgid="2059" source="../dest/map/tileset/invisible.tsx"/>
+ <layer name="Collisions" width="1" height="3">
+  <data encoding="base64" compression="zstd">
+   KLUv/SAMYQAAEQAAADEAAAAAAAAA
+  </data>
+ </layer>
+ <objectgroup name="Object">
+  <object id="1" type="bot" gid="2059" x="0" y="48" width="16" height="16">
+   <properties>
+    <property name="chance" type="float" value="0.5"/>
+   </properties>
+  </object>
+ </objectgroup>
+</map>

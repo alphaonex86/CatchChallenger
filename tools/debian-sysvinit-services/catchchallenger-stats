@@ -1,0 +1,49 @@
+#!/bin/sh
+# Start/stop the cron daemon.
+#
+### BEGIN INIT INFO
+# Provides:          catchchallenger-stats
+# Required-Start:    
+# Required-Stop:     
+# Should-Start:      
+# Should-Stop:       
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: CatchChallenger stats
+# Description:       CatchCahllenger stats for front auth
+### END INIT INFO
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+DESC="catchchallenger daemon"
+NAME=catchchallenger-stats
+DAEMON=/home/catchchallenger/catchchallenger-server-stats
+PIDFILE=/var/run/catchchallenger-stats.pid
+SCRIPTNAME=/etc/init.d/"$NAME"
+
+test -f $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+case "$1" in
+start)  log_daemon_msg "Starting catchchallenger stats"
+        /usr/sbin/start-stop-daemon --start -m -p $PIDFILE --exec $DAEMON -c catchchallenger -g catchchallenger --background --no-close --chdir /home/catchchallenger/ >> /var/log/catchchallenger-stats.log 2>&1
+        log_end_msg $?
+        ;;
+stop)   log_daemon_msg "Stopping catchchallenger stats"
+        kill `cat $PIDFILE`
+        RETVAL=$?
+        [ $RETVAL -eq 0 ] && [ -e "$PIDFILE" ] && rm -f $PIDFILE
+        log_end_msg $RETVAL
+        ;;
+restart) log_daemon_msg "Restarting catchchallenger stats"
+        $0 stop
+        $0 start
+        ;;
+status)
+        status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+        ;;
+*)      log_action_msg "Usage: /etc/init.d/$NAME {start|stop|status|restart}"
+        exit 2
+        ;;
+esac
+exit 0
