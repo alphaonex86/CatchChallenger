@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>1.png</file>
+        <file>2.png</file>
+        <file>3.png</file>
+        <file>4.png</file>
+        <file>5.png</file>
+        <file>6.png</file>
+        <file>7.png</file>
+        <file>8.png</file>
+        <file>9.png</file>
+        <file>playerloc.png</file>
+        <file>dirt.png</file>
+        <file>playerlocb.png</file>
+        <file>playerlocl.png</file>
+        <file>playerlocr.png</file>
+        <file>playerloct.png</file>
+        <file>playerlocbm.png</file>
+        <file>playerloclm.png</file>
+        <file>playerlocrm.png</file>
+        <file>playerloctm.png</file>
+        <file>config.db</file>
+    </qresource>
+</RCC>
