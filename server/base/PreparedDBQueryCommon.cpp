@@ -143,12 +143,12 @@ void PreparedDBQueryCommon::initDatabaseQueryCommonWithoutSP(const DatabaseBase:
         PreparedDBQueryCommon::db_query_update_character_recipe=PreparedStatementUnit("UPDATE character SET recipes=decode('%1','hex') WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_update_character_allow=PreparedStatementUnit("UPDATE character SET allow=decode('%1','hex') WHERE id=%2",database);
         PreparedDBQueryCommon::db_query_update_character_reputations=PreparedStatementUnit("UPDATE character SET reputations=decode('%1','hex') WHERE id=%2",database);
-        PreparedDBQueryCommon::db_query_select_clan_by_name=PreparedStatementUnit("SELECT id FROM clan WHERE name='%1'",database);
-
         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         PreparedDBQueryCommon::db_query_insert_clan=PreparedStatementUnit("INSERT INTO clan(id,name,cash,date) VALUES(%1,%2,0,%3);",database);
+        PreparedDBQueryCommon::db_query_select_clan_by_name=PreparedStatementUnit("SELECT id FROM clan WHERE name=%1",database);
         #else
         PreparedDBQueryCommon::db_query_insert_clan=PreparedStatementUnit("INSERT INTO clan(id,name,cash,date) VALUES(%1,'%2',0,%3);",database);
+        PreparedDBQueryCommon::db_query_select_clan_by_name=PreparedStatementUnit("SELECT id FROM clan WHERE name='%1'",database);
         #endif
         PreparedDBQueryCommon::db_query_update_character_clan_to_reset=PreparedStatementUnit("UPDATE character SET clan=0 WHERE id=%1",database);
         PreparedDBQueryCommon::db_query_update_character_clan_and_leader=PreparedStatementUnit("UPDATE character SET clan=%1,clan_leader=%2 WHERE id=%3;",database);
