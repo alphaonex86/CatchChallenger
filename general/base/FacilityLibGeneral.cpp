@@ -388,6 +388,23 @@ bool FacilityLibGeneral::rmpath(const std::string &dirPath)
     }
 }
 
+std::vector<std::string> FacilityLibGeneral::listFolderNotRecursive(const std::string& folder,const std::string& suffix, const ListFolder &type)
+{
+    std::vector<std::string> returnList;
+    std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix, type);//possible wait time here
+    for (unsigned int index=0;index<entryList.size();++index)
+    {
+        const FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::Dir)
+        {
+            returnList.push_back(suffix+fileInfo.name + text_slash);
+        }
+        else if(fileInfo.type==FacilityLibGeneral::InodeDescriptor::Type::File)
+            returnList.push_back(suffix+fileInfo.name);
+    }
+    return returnList;
+}
+
 /*std::string FacilityLibGeneral::timeToString(const uint32_t &time)
 {
     if(time>=3600*24*10)

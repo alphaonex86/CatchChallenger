@@ -1,15 +1,15 @@
 // Copyright 2021 CatchChallenger
 #ifndef CATCHCHALLENGER_NOAUDIO
-  #include "AudioPlayer.hpp"
+#include "AudioPlayer.hpp"
 
-  #include <QAudioDeviceInfo>
-  #include <QCoreApplication>
-  #include <iostream>
+#include <QAudioDeviceInfo>
+#include <QCoreApplication>
+#include <iostream>
 
-  #include "../../../general/base/GeneralVariable.hpp"
-  #include "../../../general/base/cpp11addition.hpp"
-  #include "../entities/PlatformMacro.hpp"
-  #include "AssetsLoader.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/cpp11addition.hpp"
+#include "../../libqtcatchchallenger/PlatformMacro.hpp"
+#include "AssetsLoader.hpp"
 
 AudioPlayer *AudioPlayer::instance_ = nullptr;
 

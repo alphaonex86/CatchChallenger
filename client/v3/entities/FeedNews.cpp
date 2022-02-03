@@ -1,47 +1,49 @@
 #include "FeedNews.hpp"
-#include "PlatformMacro.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/Version.hpp"
-#include "ClientVariable.hpp"
-#include "InternetUpdater.hpp"
-#include "../Ultimate.hpp"
 
+#include <QDebug>
 #include <QNetworkRequest>
-#include <QUrl>
 #include <QRegularExpression>
 #include <QStandardPaths>
-#include <QDebug>
+#include <QUrl>
 #include <fstream>
 
-FeedNews *FeedNews::feedNews=nullptr;
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/Version.hpp"
+#include "../../libcatchchallenger/ClientVariable.hpp"
+#include "../../libqtcatchchallenger/PlatformMacro.hpp"
+#include "../Ultimate.hpp"
+#include "InternetUpdater.hpp"
 
-FeedNews::FeedNews()
-{
-    qRegisterMetaType<std::vector<FeedNews::FeedEntry> >("std::vector<FeedNews::FeedEntry>");
+FeedNews *FeedNews::feedNews = nullptr;
+
+FeedNews::FeedNews() {
+    qRegisterMetaType<std::vector<FeedNews::FeedEntry> >(
+        "std::vector<FeedNews::FeedEntry>");
     setObjectName("FeedNews");
-    qnam=NULL;
-    if(!connect(&newUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile))
+    qnam = NULL;
+    if (!connect(&newUpdateTimer, &QTimer::timeout, this,
+                 &FeedNews::downloadFile))
         abort();
-    if(!connect(&firstUpdateTimer,&QTimer::timeout,this,&FeedNews::downloadFile))
+    if (!connect(&firstUpdateTimer, &QTimer::timeout, this,
+                 &FeedNews::downloadFile))
         abort();
-    newUpdateTimer.start(60*60*1000);
+    newUpdateTimer.start(60 * 60 * 1000);
     firstUpdateTimer.setSingleShot(true);
     firstUpdateTimer.start(5);
 }
 
-void FeedNews::checkCache()
-{
-    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
-    if(!l.empty())
-    {
-        const QString &p=l.first();
-        std::ifstream file(p.toStdString()+"/news.xml",std::ios::in|std::ios::binary|std::ios::ate);
-        if(file.is_open())
-        {
+void FeedNews::checkCache() {
+    QStringList l =
+        QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    if (!l.empty()) {
+        const QString &p = l.first();
+        std::ifstream file(p.toStdString() + "/news.xml",
+                           std::ios::in | std::ios::binary | std::ios::ate);
+        if (file.is_open()) {
             QByteArray data;
             size_t size = file.tellg();
             data.resize(size);
-            file.seekg(0,std::ios::beg);
+            file.seekg(0, std::ios::beg);
             file.read(data.data(), size);
             file.close();
             loadFeeds(data);
@@ -49,72 +51,73 @@ void FeedNews::checkCache()
     }
 }
 
-FeedNews::~FeedNews()
-{
-    if(qnam!=NULL)
-        delete qnam;
+FeedNews::~FeedNews() {
+    if (qnam != NULL) delete qnam;
 }
 
-FeedNews* FeedNews::GetInstance() {
-    if(feedNews==nullptr)
-        feedNews=new FeedNews();
+FeedNews *FeedNews::GetInstance() {
+    if (feedNews == nullptr) feedNews = new FeedNews();
     return feedNews;
 }
 
-void FeedNews::downloadFile()
-{
-    #ifndef __EMSCRIPTEN__
+void FeedNews::downloadFile() {
+#ifndef __EMSCRIPTEN__
     QString catchChallengerVersion;
-    if(Ultimate::ultimate.isUltimate())
-        catchChallengerVersion=QStringLiteral("CatchChallenger Ultimate/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
+    if (Ultimate::ultimate.isUltimate())
+        catchChallengerVersion =
+            QStringLiteral("CatchChallenger Ultimate/%1")
+                .arg(QString::fromStdString(CatchChallenger::Version::str));
     else
-        catchChallengerVersion=QStringLiteral("CatchChallenger/%1").arg(QString::fromStdString(CatchChallenger::Version::str));
-    #if defined(_WIN32) || defined(Q_OS_MAC)
-    catchChallengerVersion+=QStringLiteral(" (OS: %1)").arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
-    #endif
-    #endif
-    if(qnam==NULL)
-        qnam=new QNetworkAccessManager(this);
+        catchChallengerVersion =
+            QStringLiteral("CatchChallenger/%1")
+                .arg(QString::fromStdString(CatchChallenger::Version::str));
+#if defined(_WIN32) || defined(Q_OS_MAC)
+    catchChallengerVersion +=
+        QStringLiteral(" (OS: %1)")
+            .arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
+#endif
+#endif
+    if (qnam == NULL) qnam = new QNetworkAccessManager(this);
     QNetworkRequest networkRequest(QStringLiteral(CATCHCHALLENGER_RSS_URL));
-    #ifndef __EMSCRIPTEN__
-    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,catchChallengerVersion);
-    #endif
+#ifndef __EMSCRIPTEN__
+    networkRequest.setHeader(QNetworkRequest::UserAgentHeader,
+                             catchChallengerVersion);
+#endif
     reply = qnam->get(networkRequest);
     connect(reply, &QNetworkReply::finished, this, &FeedNews::httpFinished);
 }
 
-void FeedNews::httpFinished()
-{
-    QVariant redirectionTarget = reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
-    if (!reply->isFinished())
-    {
+void FeedNews::httpFinished() {
+    QVariant redirectionTarget =
+        reply->attribute(QNetworkRequest::RedirectionTargetAttribute);
+    if (!reply->isFinished()) {
         qDebug() << (QStringLiteral("get the new update failed: not finished"));
         reply->deleteLater();
         return;
-    }
-    else if (reply->error())
-    {
-        emit feedEntryList(std::vector<FeedEntry>(),reply->errorString().toStdString());
-        qDebug() << (QStringLiteral("get the new update failed: %1").arg(reply->errorString()));
+    } else if (reply->error()) {
+        emit feedEntryList(std::vector<FeedEntry>(),
+                           reply->errorString().toStdString());
+        qDebug() << (QStringLiteral("get the new update failed: %1")
+                         .arg(reply->errorString()));
+        reply->deleteLater();
+        return;
+    } else if (!redirectionTarget.isNull()) {
+        emit feedEntryList(std::vector<FeedEntry>(),
+                           tr("Redirection denied to").toStdString());
+        qDebug() << (QStringLiteral("redirection denied to: %1")
+                         .arg(redirectionTarget.toUrl().toString()));
         reply->deleteLater();
         return;
     }
-    else if (!redirectionTarget.isNull())
-    {
-        emit feedEntryList(std::vector<FeedEntry>(),tr("Redirection denied to").toStdString());
-        qDebug() << (QStringLiteral("redirection denied to: %1").arg(redirectionTarget.toUrl().toString()));
-        reply->deleteLater();
-        return;
-    }
-    const QByteArray &data=reply->readAll();
+    const QByteArray &data = reply->readAll();
 
-    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
-    if(!l.empty())
-    {
-        const QString &p=l.first();
-        std::ofstream file(p.toStdString()+"/news.xml",std::ios::out|std::ios::binary|std::ios::trunc);
-        if(file.is_open())
-        {
+    QStringList l =
+        QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    if (!l.empty()) {
+        const QString &p = l.first();
+        std::ofstream file(p.toStdString() + "/news.xml",
+                           std::ios::out | std::ios::binary | std::ios::trunc);
+        if (file.is_open()) {
             file.write(data.data(), data.size());
             file.close();
         }
@@ -123,68 +126,70 @@ void FeedNews::httpFinished()
     loadFeeds(data);
 }
 
-void FeedNews::loadFeeds(const QByteArray &data)
-{
-    //open and quick check the file
+void FeedNews::loadFeeds(const QByteArray &data) {
+    // open and quick check the file
     tinyxml2::XMLDocument domDocument;
-    if(domDocument.Parse(data.data(),data.size())!=0)
-        return;
+    if (domDocument.Parse(data.data(), data.size()) != 0) return;
     const tinyxml2::XMLElement *root = domDocument.RootElement();
-    if(root==NULL)
-        return;
+    if (root == NULL) return;
 
-    if(root->Name()==NULL)
-        emit feedEntryList(std::vector<FeedEntry>(),tr("Not Rss or Atom feed").toStdString());
-    else if(strcmp(root->Name(),"rss")==0)
+    if (root->Name() == NULL)
+        emit feedEntryList(std::vector<FeedEntry>(),
+                           tr("Not Rss or Atom feed").toStdString());
+    else if (strcmp(root->Name(), "rss") == 0)
         loadRss(root);
-    else if(strcmp(root->Name(),"feed")==0)
+    else if (strcmp(root->Name(), "feed") == 0)
         loadAtom(root);
     else
-        emit feedEntryList(std::vector<FeedEntry>(),tr("Not Rss or Atom feed").toStdString());
+        emit feedEntryList(std::vector<FeedEntry>(),
+                           tr("Not Rss or Atom feed").toStdString());
 }
 
-void FeedNews::loadRss(const tinyxml2::XMLElement *root)
-{
+void FeedNews::loadRss(const tinyxml2::XMLElement *root) {
     std::vector<FeedEntry> entryList;
-    //load the content
-    const tinyxml2::XMLElement *channelItem = root->FirstChildElement("channel");
-    if(channelItem!=NULL)
-    {
-        const tinyxml2::XMLElement *item = channelItem->FirstChildElement("item");
-        while(item!=NULL)
-        {
-            std::string description,title,link;
+    // load the content
+    const tinyxml2::XMLElement *channelItem =
+        root->FirstChildElement("channel");
+    if (channelItem != NULL) {
+        const tinyxml2::XMLElement *item =
+            channelItem->FirstChildElement("item");
+        while (item != NULL) {
+            std::string description, title, link;
             QString pubDate;
             {
-                const tinyxml2::XMLElement *descriptionItem = item->FirstChildElement("description");
-                if(descriptionItem!=NULL)
-                    description=descriptionItem->GetText();
+                const tinyxml2::XMLElement *descriptionItem =
+                    item->FirstChildElement("description");
+                if (descriptionItem != NULL)
+                    description = descriptionItem->GetText();
             }
             {
-                const tinyxml2::XMLElement *titleItem = item->FirstChildElement("title");
-                if(titleItem!=NULL)
-                    title=titleItem->GetText();
+                const tinyxml2::XMLElement *titleItem =
+                    item->FirstChildElement("title");
+                if (titleItem != NULL) title = titleItem->GetText();
             }
             {
-                const tinyxml2::XMLElement *linkItem = item->FirstChildElement("link");
-                if(linkItem!=NULL)
-                    link=linkItem->GetText();
+                const tinyxml2::XMLElement *linkItem =
+                    item->FirstChildElement("link");
+                if (linkItem != NULL) link = linkItem->GetText();
             }
             {
-                const tinyxml2::XMLElement *pubDateItem = item->FirstChildElement("pubDate");
-                if(pubDateItem!=NULL)
-                    pubDate=QString::fromStdString(pubDateItem->GetText());
+                const tinyxml2::XMLElement *pubDateItem =
+                    item->FirstChildElement("pubDate");
+                if (pubDateItem != NULL)
+                    pubDate = QString::fromStdString(pubDateItem->GetText());
             }
-            pubDate = pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
-            pubDate = pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
-            QDateTime date=QDateTime::fromString(pubDate,"ddd, dd MMM yyyy hh:mm:ss");
-            if(!date.isValid())
-                pubDate.clear();
+            pubDate =
+                pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
+            pubDate = pubDate.remove(
+                QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
+            QDateTime date =
+                QDateTime::fromString(pubDate, "ddd, dd MMM yyyy hh:mm:ss");
+            if (!date.isValid()) pubDate.clear();
             FeedEntry rssEntry;
-            rssEntry.description=QString::fromStdString(description);
-            rssEntry.title=QString::fromStdString(title);
-            rssEntry.pubDate=date;
-            rssEntry.link=QString::fromStdString(link);
+            rssEntry.description = QString::fromStdString(description);
+            rssEntry.title = QString::fromStdString(title);
+            rssEntry.pubDate = date;
+            rssEntry.link = QString::fromStdString(link);
             entryList.push_back(rssEntry);
             item = item->NextSiblingElement("item");
         }
@@ -192,45 +197,46 @@ void FeedNews::loadRss(const tinyxml2::XMLElement *root)
     emit feedEntryList(entryList);
 }
 
-void FeedNews::loadAtom(const tinyxml2::XMLElement *root)
-{
+void FeedNews::loadAtom(const tinyxml2::XMLElement *root) {
     std::vector<FeedEntry> entryList;
-    //load the content
+    // load the content
     const tinyxml2::XMLElement *item = root->FirstChildElement("entry");
-    while(item!=NULL)
-    {
-        std::string description,title,link;
+    while (item != NULL) {
+        std::string description, title, link;
         QString pubDate;
         {
-            const tinyxml2::XMLElement *descriptionItem = item->FirstChildElement("content");
-            if(descriptionItem!=NULL)
-                description=descriptionItem->GetText();
+            const tinyxml2::XMLElement *descriptionItem =
+                item->FirstChildElement("content");
+            if (descriptionItem != NULL)
+                description = descriptionItem->GetText();
         }
         {
-            const tinyxml2::XMLElement *titleItem = item->FirstChildElement("title");
-            if(titleItem!=NULL)
-                title=titleItem->GetText();
+            const tinyxml2::XMLElement *titleItem =
+                item->FirstChildElement("title");
+            if (titleItem != NULL) title = titleItem->GetText();
         }
         {
-            const tinyxml2::XMLElement *linkItem = item->FirstChildElement("link");
-            if(linkItem!=NULL && linkItem->Attribute("href")!=NULL)
-                link=linkItem->Attribute("href");
+            const tinyxml2::XMLElement *linkItem =
+                item->FirstChildElement("link");
+            if (linkItem != NULL && linkItem->Attribute("href") != NULL)
+                link = linkItem->Attribute("href");
         }
         {
-            const tinyxml2::XMLElement *pubDateItem = item->FirstChildElement("published");
-            if(pubDateItem!=NULL)
-                pubDate=QString::fromStdString(pubDateItem->GetText());
+            const tinyxml2::XMLElement *pubDateItem =
+                item->FirstChildElement("published");
+            if (pubDateItem != NULL)
+                pubDate = QString::fromStdString(pubDateItem->GetText());
         }
         pubDate = pubDate.remove(QStringLiteral(" GMT"), Qt::CaseInsensitive);
-        pubDate = pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
-        QDateTime date=QDateTime::fromString(pubDate,"yyyy-MMM-ddThh:mm:ss");
-        if(!date.isValid())
-            pubDate.clear();
+        pubDate =
+            pubDate.remove(QRegularExpression(QStringLiteral("\\+0[0-9]{4}$")));
+        QDateTime date = QDateTime::fromString(pubDate, "yyyy-MMM-ddThh:mm:ss");
+        if (!date.isValid()) pubDate.clear();
         FeedEntry rssEntry;
-        rssEntry.description=QString::fromStdString(description);
-        rssEntry.title=QString::fromStdString(title);
-        rssEntry.pubDate=date;
-        rssEntry.link=QString::fromStdString(link);
+        rssEntry.description = QString::fromStdString(description);
+        rssEntry.title = QString::fromStdString(title);
+        rssEntry.pubDate = date;
+        rssEntry.link = QString::fromStdString(link);
         entryList.push_back(rssEntry);
         item = item->NextSiblingElement("entry");
     }

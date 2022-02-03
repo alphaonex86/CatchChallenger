@@ -1,47 +1,42 @@
 #ifndef MapVisualiserOrder_H
 #define MapVisualiserOrder_H
 
-#include <QSet>
-#include <QString>
 #include <QHash>
 #include <QRegularExpression>
+#include <QSet>
+#include <QString>
 
+#include "../../../general/base/CommonMap.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/Map_loader.hpp"
+#include "../../../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../../libraries/tiled/tiled_isometricrenderer.hpp"
 #include "../../libraries/tiled/tiled_map.hpp"
 #include "../../libraries/tiled/tiled_mapobject.hpp"
 #include "../../libraries/tiled/tiled_mapreader.hpp"
 #include "../../libraries/tiled/tiled_objectgroup.hpp"
 #include "../../libraries/tiled/tiled_orthogonalrenderer.hpp"
+#include "../../libraries/tiled/tiled_tile.hpp"
 #include "../../libraries/tiled/tiled_tilelayer.hpp"
 #include "../../libraries/tiled/tiled_tileset.hpp"
-#include "../../libraries/tiled/tiled_tile.hpp"
-
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../../general/base/CommonMap.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
 #include "../Map_client.hpp"
-#include "../DisplayStructures.hpp"
-#include "../../../general/base/Map_loader.hpp"
 #include "MapDoor.hpp"
 #include "TriggerAnimation.hpp"
 
 class Map_full;
 
-class MapVisualiserOrder
-{
-public:
-    struct Map_animation_object
-    {
-        Tiled::MapObject * animatedObject;
+class MapVisualiserOrder {
+   public:
+    struct Map_animation_object {
+        Tiled::MapObject* animatedObject;
     };
-    struct Map_animation
-    {
+    struct Map_animation {
         int minId;
         int maxId;
         std::vector<Map_animation_object> animatedObjectList;
     };
-    struct TriggerAnimationContent
-    {
+    struct TriggerAnimationContent {
         Tiled::Tile* objectTile;
         Tiled::Tile* objectTileOver;
         uint8_t framesCountEnter;
@@ -52,11 +47,13 @@ public:
         uint16_t msAgain;
         bool over;
     };
-    std::unordered_map<Tiled::Tile *,TriggerAnimationContent> tileToTriggerAnimationContent;
+    std::unordered_map<Tiled::Tile*, TriggerAnimationContent>
+        tileToTriggerAnimationContent;
 
     explicit MapVisualiserOrder();
     ~MapVisualiserOrder();
-    static void layerChangeLevelAndTagsChange(Map_full *tempMapObject, bool hideTheDoors=false);
+    static void layerChangeLevelAndTagsChange(Map_full* tempMapObject,
+                                              bool hideTheDoors = false);
 
     static std::string text_blockedtext;
     static std::string text_en;
@@ -103,32 +100,37 @@ public:
     static std::string text_true;
     static std::string text_false;
     static std::string text_trigger;
-protected:
+
+   protected:
     static QRegularExpression regexMs;
     static QRegularExpression regexFrames;
     static QRegularExpression regexTrigger;
     static QRegularExpression regexTriggerAgain;
 };
 
-class Map_full
-{
-public:
+class Map_full {
+   public:
     Map_full();
-public:
+
+   public:
     CatchChallenger::Map_client logicalMap;
-    Tiled::Map * tiledMap;
-    Tiled::MapRenderer * tiledRender;
-    Tiled::ObjectGroup * objectGroup;
-    std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,MapVisualiserOrder::Map_animation> > animatedObject;
+    Tiled::Map* tiledMap;
+    Tiled::MapRenderer* tiledRender;
+    Tiled::ObjectGroup* objectGroup;
+    std::unordered_map<
+        uint16_t /*ms*/,
+        std::unordered_map<int /*minId*/, MapVisualiserOrder::Map_animation> >
+        animatedObject;
     int objectGroupIndex;
-    int relative_x,relative_y;//needed for the async load
-    int relative_x_pixel,relative_y_pixel;
+    int relative_x, relative_y;  // needed for the async load
+    int relative_x_pixel, relative_y_pixel;
     bool displayed;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> doors;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,TriggerAnimation*,pairhash> triggerAnimations;
+    std::unordered_map<std::pair<uint8_t, uint8_t>, MapDoor*, pairhash> doors;
+    std::unordered_map<std::pair<uint8_t, uint8_t>, TriggerAnimation*, pairhash>
+        triggerAnimations;
     std::string visualType;
     std::string name;
     std::string zone;
 };
 
-#endif // MapVisualiserOrder_H
+#endif  // MapVisualiserOrder_H

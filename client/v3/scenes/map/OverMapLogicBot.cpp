@@ -3,9 +3,12 @@
 #include <iostream>
 
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../Globals.hpp"
 #include "../../base/ConnectionManager.hpp"
+#include "../../entities/PlayerInfo.hpp"
 #include "OverMapLogic.hpp"
 
 using Scenes::OverMapLogic;
@@ -685,16 +688,24 @@ void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink) {
         continue;
       }
     } else if (link == "clan_create") {
-      /*bool ok;
-      std::string text = QInputDialog::getText(this,tr("Give the clan
-      name"),tr("Clan name:"),QLineEdit::Normal,QString(), &ok).toStdString();
-      if(ok && !text.empty())
-      {
-          actionClan.push_back(ActionClan_Create);
-          connexionManager->client->createClan(text);
+      bool is_allow = PlayerInfo::GetInstance()->IsAllowed(
+          CatchChallenger::ActionAllow::ActionAllow_Clan);
+
+      if (is_allow) {
+        Globals::GetInputDialog()->ShowInputText(
+            tr("CLAN"), tr("Give the clan name"),
+            [&](QString text) {
+              if (!text.isEmpty()) {
+                actionClan.push_back(ActionClan_Create);
+                connexionManager->client->createClan(text.toStdString());
+              }
+            },
+            QString());
+      } else {
+        showTip(tr("You are not allowed to create a clan").toStdString());
       }
       index++;
-      continue;*/
+      continue;
       abort();
     } else if (link == "close")
       return;

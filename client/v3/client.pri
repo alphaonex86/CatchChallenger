@@ -256,8 +256,6 @@ HEADERS  += \
     $$PWD/entities/render/TemporaryTile.hpp \
     $$PWD/entities/render/TileLayerItem.hpp \
     $$PWD/entities/render/TriggerAnimation.hpp \
-    $$PWD/entities/ClientStructures.hpp \
-    $$PWD/entities/DisplayStructures.hpp \
     $$PWD/entities/Map_client.hpp \
     $$PWD/entities/PlayerInfo.hpp \
     $$PWD/entities/Utils.hpp

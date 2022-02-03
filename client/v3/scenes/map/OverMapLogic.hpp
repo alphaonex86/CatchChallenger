@@ -2,8 +2,8 @@
 #ifndef CLIENT_V3_SCENES_MAP_OVERMAPLOGIC_HPP_
 #define CLIENT_V3_SCENES_MAP_OVERMAPLOGIC_HPP_
 
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../entities/DisplayStructures.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
+#include "../../../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../../entities/Map_client.hpp"
 #include "../../entities/render/MapVisualiserPlayer.hpp"
 #include "../../ui/LinkedDialog.hpp"
@@ -12,9 +12,9 @@
 #include "../shared/warehouse/Warehouse.hpp"
 #include "OverMap.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-  #include <QAudioOutput>
+#include <QAudioOutput>
 
-  #include "../../../libqtcatchchallenger/QInfiniteBuffer.hpp"
+#include "../../../libqtcatchchallenger/QInfiniteBuffer.hpp"
 #endif
 #include <vector>
 

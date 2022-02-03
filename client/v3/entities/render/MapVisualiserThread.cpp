@@ -12,10 +12,10 @@
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../../../general/tinyXML2/tinyxml2.hpp"
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libraries/tiled/tiled_mapobject.hpp"
-#include "../ClientVariable.hpp"
 #include "MapItem.hpp"
 
 MapVisualiserThread::MapVisualiserThread() {

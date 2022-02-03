@@ -41,6 +41,7 @@ public:
         }
     };
 
+    static std::vector<std::string> listFolderNotRecursive(const std::string& folder,const std::string& suffix,const ListFolder &type=ListFolder::FilesAndDirs);
     static std::vector<InodeDescriptor> listFolderNotRecursive(const std::string& folder,const ListFolder &type=ListFolder::FilesAndDirs);
     static bool isFile(const std::string& file);
     static bool isDir(const std::string& folder);

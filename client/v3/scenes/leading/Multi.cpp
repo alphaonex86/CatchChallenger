@@ -19,20 +19,20 @@
 #include "../../../../general/base/Version.hpp"
 #include "../../../../general/base/cpp11addition.hpp"
 #include "../../../../general/tinyXML2/tinyxml2.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
+#include "../../../libqtcatchchallenger/PlatformMacro.hpp"
 #include "../../../libqtcatchchallenger/Settings.hpp"
 #include "../../Ultimate.hpp"
 #include "../../base/ConnectionManager.hpp"
 #include "../../core/Sprite.hpp"
 #include "../../core/StackedScene.hpp"
-#include "../../entities/ClientVariable.hpp"
-#include "../../entities/PlatformMacro.hpp"
 #include "../../ui/Button.hpp"
 #include "../../ui/Label.hpp"
 #include "../../ui/ListView.hpp"
 #include "MultiItem.hpp"
 #if defined(_WIN32) || defined(Q_OS_MAC)
-  #include "../../../entities/InternetUpdater.hpp"
+#include "../../../entities/InternetUpdater.hpp"
 #endif
 
 using Scenes::Multi;
@@ -106,7 +106,7 @@ Multi *Multi::Create() { return new (std::nothrow) Multi(); }
 void Multi::displayServerList() {
   serverEmpty->SetVisible(mergedConnexionInfoList.empty());
 #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
-  #error Web socket and tcp socket are both not supported
+#error Web socket and tcp socket are both not supported
   return;
 #endif
   if (selectedServer.unique_code.isEmpty()) {
@@ -221,16 +221,16 @@ void Multi::server_edit_clicked() {
         addServer->setServer(connexionInfo.ws);
       }
 #else
-  #if defined(NOTCPSOCKET)
+#if defined(NOTCPSOCKET)
       addServer->setType(1);
       addServer->setServer(connexionInfo.ws);
-  #else
-    #if defined(NOWEBSOCKET)
+#else
+#if defined(NOWEBSOCKET)
       addServer->setType(0);
       addServer->setServer(connexionInfo.host);
       addServer->setPort(connexionInfo.port);
-    #endif
-  #endif
+#endif
+#endif
 #endif
       addServer->setName(connexionInfo.name);
       addServer->setProxyServer(connexionInfo.proxyHost);
@@ -364,7 +364,7 @@ void Multi::httpFinished() {
         return;
       }
 #else
-  #error "Not supported on this platform"
+#error "Not supported on this platform"
 #endif
     }
     cache.close();
@@ -777,11 +777,11 @@ void Multi::downloadFile() {
         QStringLiteral("CatchChallenger/%1")
             .arg(QString::fromStdString(CatchChallenger::Version::str));
 
-  #if defined(_WIN32) || defined(Q_OS_MAC)
+#if defined(_WIN32) || defined(Q_OS_MAC)
   catchChallengerVersion +=
       QStringLiteral(" (OS: %1)")
           .arg(QString::fromStdString(InternetUpdater::GetOSDisplayString()));
-  #endif
+#endif
   catchChallengerVersion += QStringLiteral(" ") + CATCHCHALLENGER_PLATFORM_CODE;
 #endif
 

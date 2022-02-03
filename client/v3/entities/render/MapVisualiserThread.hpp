@@ -2,9 +2,9 @@
 #define MAPVISUALISERTHREAD_H
 
 #ifndef NOTHREADS
-  #include <QThread>
+#include <QThread>
 #else
-  #include <QObject>
+#include <QObject>
 #endif
 #include <QHash>
 #include <QRegularExpression>
@@ -15,6 +15,7 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../../general/base/GeneralVariable.hpp"
 #include "../../../../general/base/Map_loader.hpp"
+#include "../../../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../../libraries/tiled/tiled_isometricrenderer.hpp"
 #include "../../libraries/tiled/tiled_map.hpp"
 #include "../../libraries/tiled/tiled_mapobject.hpp"
@@ -24,7 +25,6 @@
 #include "../../libraries/tiled/tiled_tile.hpp"
 #include "../../libraries/tiled/tiled_tilelayer.hpp"
 #include "../../libraries/tiled/tiled_tileset.hpp"
-#include "../DisplayStructures.hpp"
 #include "../Map_client.hpp"
 #include "MapDoor.hpp"
 #include "MapVisualiserOrder.hpp"

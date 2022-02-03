@@ -11,8 +11,8 @@
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/base/GeneralStructuresXml.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
-#include "ClientStructures.hpp"
-#include "DisplayStructures.hpp"
+#include "../../libcatchchallenger/ClientStructures.hpp"
+#include "../../libqtcatchchallenger/DisplayStructures.hpp"
 
 namespace CatchChallenger {
 class ClientPlantWithTimer : public QTimer {

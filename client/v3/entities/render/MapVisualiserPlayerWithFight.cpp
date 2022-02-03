@@ -9,6 +9,7 @@
 #include "../../../../general/base/MoveOnTheMap.hpp"
 #include "../../../libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../../libqtcatchchallenger/Api_protocol_Qt.hpp"
+#include "TemporaryTile.hpp"
 
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(
     const bool &debugTags)

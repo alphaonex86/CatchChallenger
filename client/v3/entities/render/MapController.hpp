@@ -10,6 +10,7 @@
 
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 #include "MapControllerMP.hpp"
+#include "TemporaryTile.hpp"
 
 class MapController : public MapControllerMP {
   Q_OBJECT

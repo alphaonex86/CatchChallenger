@@ -8,7 +8,7 @@
 #include <QPixmap>
 #include <iostream>
 
-#include "../ClientVariable.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "PreparedLayer.hpp"
 
 MapItem::MapItem(Node *parent) : Node(parent) {

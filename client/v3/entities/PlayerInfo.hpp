@@ -27,6 +27,7 @@ class PlayerInfo : public QObject {
   void RemoveInventory(uint16_t item_id, uint32_t quantity);
   void AddCash(int32_t value);
   void UpdateMonsters(std::vector<CatchChallenger::PlayerMonster> monsters);
+  bool IsAllowed(CatchChallenger::ActionAllow action);
 
  signals:
   void OnUpdateInfo(PlayerInfo* info);

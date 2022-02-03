@@ -83,3 +83,23 @@ void InputDialog::ShowInputNumber(const QString &title, const QString &message,
   message_->SetText(message);
   SceneManager::GetInstance()->ShowOverlay(this);
 }
+
+void InputDialog::ShowInputText(const QString &message,
+                                std::function<void(QString)> callback,
+                                const QString &default_value) {
+  ShowInputText(QString(), message, callback, default_value);
+}
+
+void InputDialog::ShowInputText(const QString &title, const QString &message,
+                                std::function<void(QString)> callback,
+                                const QString &default_value) {
+  if (!title.isEmpty()) {
+    SetTitle(title);
+  }
+  type_ = 2;
+  input_->SetValidator(nullptr);
+  input_->SetValue(default_value);
+  callback_ = callback;
+  message_->SetText(message);
+  SceneManager::GetInstance()->ShowOverlay(this);
+}

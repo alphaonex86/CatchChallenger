@@ -8,7 +8,7 @@
 #include <QTime>
 
 #include "../../core/Node.hpp"
-#include "../ClientStructures.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "MapVisualiserThread.hpp"
 
 class PreparedLayer : public QObject, public Node {

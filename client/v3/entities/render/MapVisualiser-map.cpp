@@ -14,7 +14,8 @@
 #include "../../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../../general/base/GeneralVariable.hpp"
 #include "../../../../general/base/MoveOnTheMap.hpp"
-#include "../ClientVariable.hpp"
+#include "../../../libcatchchallenger/ClientStructures.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../../FacilityLibClient.hpp"
 #include "../../libraries/tiled/tiled_tile.hpp"
 #include "MapVisualiser.hpp"
@@ -584,7 +585,7 @@ void MapVisualiser::hideNotloadedMap() {
     if (n.second->logicalMap.map_file != current_map) {
       if (!n.second->displayed) {
         mapItem->removeMap(n.second->tiledMap);
-      } 
+      }
     }
   }
   for (const auto &n : old_all_map) {

@@ -24,6 +24,12 @@ class InputDialog : public Dialog {
   void ShowInputNumber(const QString &message,
                        std::function<void(QString)> callback, int min, int max,
                        const QString &default_value);
+  void ShowInputText(const QString &title, const QString &message,
+                     std::function<void(QString)> callback,
+                     const QString &default_value);
+  void ShowInputText(const QString &message,
+                     std::function<void(QString)> callback,
+                     const QString &default_value);
 
  private:
   UI::Label *message_;

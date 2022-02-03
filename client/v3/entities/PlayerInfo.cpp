@@ -85,3 +85,8 @@ void PlayerInfo::UpdateMonsters(
   auto &info = GetInformation();
   info.playerMonster = monsters;
 }
+
+bool PlayerInfo::IsAllowed(CatchChallenger::ActionAllow action) {
+  auto const &info = GetInformationRO();
+  return info.allow.find(action) != info.allow.cend();
+}
