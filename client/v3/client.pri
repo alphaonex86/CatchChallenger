@@ -81,6 +81,7 @@ SOURCES += \
     $$PWD/scenes/map/MonsterThumb.cpp \
     #$$PWD/scenes/inventory/Crafting.cpp \
     $$PWD/scenes/shared/player/Player.cpp \
+    $$PWD/scenes/shared/player/Clan.cpp \
     $$PWD/scenes/shared/player/FinishedQuests.cpp \
     $$PWD/scenes/shared/player/Quests.cpp \
     $$PWD/scenes/shared/player/QuestItem.cpp \
@@ -177,6 +178,7 @@ HEADERS  += \
     $$PWD/scenes/map/Tip.hpp \
     #$$PWD/scenes/inventory/Crafting.hpp \
     $$PWD/scenes/shared/player/Player.hpp \
+    $$PWD/scenes/shared/player/Clan.hpp \
     $$PWD/scenes/shared/player/FinishedQuests.hpp \
     $$PWD/scenes/shared/player/Quests.hpp \
     $$PWD/scenes/shared/player/QuestItem.hpp \

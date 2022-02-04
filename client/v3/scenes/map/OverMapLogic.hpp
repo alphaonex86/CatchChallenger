@@ -116,12 +116,12 @@ class OverMapLogic : public OverMap {
                                      uint8_t x, uint8_t y);
 
   // clan
-  void clanActionSuccess(const uint32_t &clanId);
-  void clanActionFailed();
-  void clanDissolved();
-  void updateClanDisplay();
-  void clanInformations(const std::string &name);
-  void clanInvite(const uint32_t &clanId, const std::string &name);
+  void ClanActionSuccessSlot(const uint32_t &clan_id);
+  void ClanActionFailedSlot();
+  void ClanDissolvedSlot();
+  void ClanInformationSlot(const std::string &name);
+  void ClanInviteSlot(const uint32_t &clan_id, const std::string &name);
+
   // city
   void cityCapture(const uint32_t &remainingTime, const uint8_t &type);
   void cityCaptureUpdateTime();
@@ -286,10 +286,9 @@ class OverMapLogic : public OverMap {
   std::string lastPlaceDisplayed;
   std::string currentAmbianceFile;
   std::string visualCategory;
-  std::vector<ActionClan> actionClan;
 
-  std::string clanName;
-  bool haveClanInformations;
+  // Clan
+  std::vector<ActionClan> actionClan;
 
   // industry
   uint16_t factoryId;

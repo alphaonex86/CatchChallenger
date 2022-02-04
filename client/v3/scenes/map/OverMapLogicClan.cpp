@@ -1,5 +1,4 @@
 // Copyright 2021 CatchChallenger
-#include <QDesktopServices>
 #include <iostream>
 
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
@@ -10,22 +9,20 @@
 
 using Scenes::OverMapLogic;
 
-void OverMapLogic::clanActionSuccess(const uint32_t &clanId) {
-  CatchChallenger::Player_private_and_public_informations &playerInformations =
-      connexionManager->client->get_player_informations();
+void OverMapLogic::ClanActionSuccessSlot(const uint32_t &clan_id) {
+  CatchChallenger::Player_private_and_public_informations &info =
+      PlayerInfo::GetInstance()->GetInformation();
   switch (actionClan.front()) {
     case ActionClan_Create:
-      if (playerInformations.clan == 0) {
-        playerInformations.clan = clanId;
-        playerInformations.clan_leader = true;
+      if (info.clan == 0) {
+        info.clan = clan_id;
+        info.clan_leader = true;
       }
-      updateClanDisplay();
       showTip(tr("The clan is created").toStdString());
       break;
     case ActionClan_Leave:
     case ActionClan_Dissolve:
-      playerInformations.clan = 0;
-      updateClanDisplay();
+      info.clan = 0;
       showTip(tr("You are leaved the clan").toStdString());
       break;
     case ActionClan_Invite:
@@ -43,10 +40,10 @@ void OverMapLogic::clanActionSuccess(const uint32_t &clanId) {
   actionClan.erase(actionClan.cbegin());
 }
 
-void OverMapLogic::clanActionFailed() {
+void OverMapLogic::ClanActionFailedSlot() {
   switch (actionClan.front()) {
     case ActionClan_Create:
-      updateClanDisplay();
+      showTip(tr("The clan is not created").toStdString());
       break;
     case ActionClan_Leave:
     case ActionClan_Dissolve:
@@ -66,37 +63,22 @@ void OverMapLogic::clanActionFailed() {
   actionClan.erase(actionClan.cbegin());
 }
 
-void OverMapLogic::clanDissolved() {
-  CatchChallenger::Player_private_and_public_informations &playerInformations =
-      connexionManager->client->get_player_informations();
-  haveClanInformations = false;
-  auto info = PlayerInfo::GetInstance();
-  info->HaveClanInformation = false;
-  info->ClanName = "";
-  clanName.clear();
-  playerInformations.clan = 0;
-  updateClanDisplay();
+void OverMapLogic::ClanDissolvedSlot() {
+  CatchChallenger::Player_private_and_public_informations &info =
+      PlayerInfo::GetInstance()->GetInformation();
+  auto player_info = PlayerInfo::GetInstance();
+  player_info->HaveClanInformation = false;
+  player_info->ClanName = "";
+  info.clan = 0;
 }
 
-void OverMapLogic::updateClanDisplay() {
-  const CatchChallenger::Player_private_and_public_informations
-      &playerInformations =
-          connexionManager->client
-              ->get_player_informations_ro();  // do a crash due to reference
-  // const CatchChallenger::Player_private_and_public_informations
-  // playerInformations=client->get_player_informations_ro(); nothing to do
-}
-
-void OverMapLogic::clanInformations(const std::string &name) {
-  haveClanInformations = true;
+void OverMapLogic::ClanInformationSlot(const std::string &name) {
   auto info = PlayerInfo::GetInstance();
   info->HaveClanInformation = true;
   info->ClanName = name;
-  clanName = name;
-  updateClanDisplay();
 }
 
-void OverMapLogic::clanInvite(const uint32_t &clanId, const std::string &name) {
+void OverMapLogic::ClanInviteSlot(const uint32_t &clan_id, const std::string &name) {
   /*todoQMessageBox::StandardButton
   button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to
   become a member. Do you accept?")

@@ -19,6 +19,7 @@
 #include "../shared/player/Quests.hpp"
 #include "../shared/player/Player.hpp"
 #include "../shared/player/Reputations.hpp"
+#include "../shared/player/Clan.hpp"
 /*
 #include "../above/inventory/Crafting.hpp"
 */
@@ -229,24 +230,25 @@ void OverMapLogic::connectAllSignals() {
   // for bug into solo player: Api_client_real -> Api_protocol
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtclanActionFailed, this,
-               &OverMapLogic::clanActionFailed, Qt::UniqueConnection))
+               &OverMapLogic::ClanActionFailedSlot, Qt::UniqueConnection))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtclanActionSuccess, this,
-               &OverMapLogic::clanActionSuccess, Qt::UniqueConnection))
+               &OverMapLogic::ClanActionSuccessSlot, Qt::UniqueConnection))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtclanDissolved, this,
-               &OverMapLogic::clanDissolved, Qt::UniqueConnection))
+               &OverMapLogic::ClanDissolvedSlot, Qt::UniqueConnection))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtclanInformations, this,
-               &OverMapLogic::clanInformations, Qt::UniqueConnection))
+               &OverMapLogic::ClanInformationSlot, Qt::UniqueConnection))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtclanInvite, this,
-               &OverMapLogic::clanInvite, Qt::UniqueConnection))
+               &OverMapLogic::ClanInviteSlot, Qt::UniqueConnection))
     abort();
+
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtcityCapture, this,
                &OverMapLogic::cityCapture, Qt::UniqueConnection))
@@ -2601,10 +2603,7 @@ void OverMapLogic::CreatePlayerTabs() {
   player_tabs_->AddItem(Reputations::Create(), "reputations");
   player_tabs_->AddItem(Quests::Create(), "quests");
   player_tabs_->AddItem(FinishedQuests::Create(), "finished_quests");
-  // player_tabs_->SetOnBack(
-  // std::bind(&OverMapLogic::OnInventoryNav, this, _1));
-  // player_tabs_->SetOnNext(
-  // std::bind(&OverMapLogic::OnInventoryNav, this, _1));
+  player_tabs_->AddItem(Clan::Create(), "clan");
 }
 
 void OverMapLogic::OnUseItem(Inventory::ObjectType type,
