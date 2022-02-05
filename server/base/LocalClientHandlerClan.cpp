@@ -157,20 +157,23 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
             #endif
-            delete clan;
             index=0;
             while(index<players.size())
             {
                 if(players.at(index)==this)
                 {
                     public_and_private_informations.clan=0;
-                    clan=NULL;
                     clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
                 }
                 else
                     players.at(index)->dissolvedClan();
                 index++;
             }
+
+            //after all
+            /*delete clan;
+            clan=NULL;
+            done into clanChangeWithoutDb() at last player removing*/
         }
         break;
         //invite

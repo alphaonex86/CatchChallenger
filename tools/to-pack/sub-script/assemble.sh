@@ -26,10 +26,10 @@ function assemble {
     if [ ! -e ${FINAL_ARCHIVE} ]; then
         echo "creating the archive ${TARGET}..."
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.a" -exec rm {} \; > /dev/null 2>&1
-        rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/${TARGET}/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
-        rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/base/resources/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
-        rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/en/
-        rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/base/resources/music/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/music/
+#         rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/${TARGET}/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
+#         rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/base/resources/languages/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/
+#         rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/languages/en/
+        rsync -art ${CATCHCHALLENGERSOURCESPATH}/client/resources/music/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/music/
 #       cp -Rf ${CATCHCHALLENGERSOURCESPATH}/README ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/README.txt
 #       cp -Rf ${CATCHCHALLENGERSOURCESPATH}/COPYING ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/COPYING.txt
 #        upx --lzma -9 ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/catchchallenger*.exe > /dev/null 2>&1
@@ -99,10 +99,12 @@ function assemble {
         cd ${TEMP_PATH}/CatchChallenger-installer-windows-${ARCHITECTURE}/
         sed -i -r "s/X.X.X.X/${CATCHCHALLENGER_VERSION}/g" *.nsi > /dev/null 2>&1
         sed -i -r "s/CATCHCHALLENGER_SUBVERSION/${TARGET}/g" *.nsi > /dev/null 2>&1
-        DISPLAY="na" WINEPREFIX="${WINEBASEPATH}/ultracopier-general/" /usr/bin/nice -n 15 /usr/bin/ionice -c 3 wine "${WINEBASEPATH}/ultracopier-general/drive_c/Program Files (x86)/NSIS/makensis.exe" *.nsi > /tmp/nsi.log 2>&1
+        #DISPLAY="na" WINEPREFIX="${WINEBASEPATH}/ultracopier-general/" /usr/bin/nice -n 15 /usr/bin/ionice -c 3 wine "${WINEBASEPATH}/ultracopier-general/drive_c/Program Files (x86)/NSIS/makensis.exe" *.nsi > /tmp/nsi.log 2>&1
+        /usr/bin/nice -n 15 /usr/bin/ionice -c 3 wine "/home/user/.wine/drive_c/Program Files/NSIS/makensis.exe" *.nsi > /dev/null 2>&1
         if [ ! -e *setup.exe ]; then
             echo "${TEMP_PATH}/${FINAL_ARCHIVE} not exists!";
             pwd
+            echo /usr/bin/nice -n 15 /usr/bin/ionice -c 3 wine "/home/user/.wine/drive_c/Program Files/NSIS/makensis.exe" "*.nsi"
             exit;
         fi
         minimumsize=13000000
@@ -115,14 +117,7 @@ function assemble {
             exit
         fi
         mv *setup.exe ${TEMP_PATH}/${FINAL_ARCHIVE}
-                cd ${TEMP_PATH}/
-        if [ `cat /tmp/nsi.log | grep -F Qt5Core.dll | wc -l` -ne 1 ]
-        then
-            cat /tmp/nsi.log
-            echo ${TEMP_PATH}/CatchChallenger-installer-windows-${ARCHITECTURE}/
-            echo *setup.exe have not the Qt dll
-            exit
-        fi
+        cd ${TEMP_PATH}/
         echo "creating the installer ${TARGET}... done"
     fi
     rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/
