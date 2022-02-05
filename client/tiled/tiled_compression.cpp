@@ -41,9 +41,9 @@
 #endif
 #ifndef __EMSCRIPTEN__
 //#include <zstd.h>      // presumes zstd library is installed
-#include "../../libzstd/lib/zstd.h"
+#include "../../general/libzstd/lib/zstd.h"
 #else
-#include "../../libzstd/lib/zstd.h"
+#include "../../general/libzstd/lib/zstd.h"
 #endif
 
 #include <QByteArray>
