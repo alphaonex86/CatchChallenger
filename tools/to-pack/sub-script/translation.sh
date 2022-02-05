@@ -46,30 +46,8 @@ done
 
 PWD_BASE2=`pwd`
 
-rsync -art ${CATCHCHALLENGERSOURCESPATH}/ ${TEMP_PATH}/${TARGET}/
-cd ${TEMP_PATH}/${TARGET}/
-for project in `find ${TEMP_PATH}/${TARGET}/client/ultimate/languages/ -maxdepth 1 -mindepth 1 -type d`
-do
-        if [ -f ${project}/specific.ts ]
-        then
-                mv ${project}/specific.ts ${project}/ultimate-specific.ts
-        fi
-done
-for project in `find ${TEMP_PATH}/${TARGET}/client/single-player/languages/ -maxdepth 1 -mindepth 1 -type d`
-do
-        if [ -f ${project}/specific.ts ]
-        then
-                mv ${project}/specific.ts ${project}/single-player-specific.ts
-        fi
-done
-for project in `find ${TEMP_PATH}/${TARGET}/client/single-server/languages/ -maxdepth 1 -mindepth 1 -type d`
-do
-        if [ -f ${project}/specific.ts ]
-        then
-                mv ${project}/specific.ts ${project}/single-server-specific.ts
-        fi
-done
-rsync -art ${TEMP_PATH}/${TARGET}/client/*/languages/ ${TEMP_PATH}/${TARGET}/languages/
+if [ 2 -eq 3 ]
+then
 find ${TEMP_PATH}/${TARGET}/ ! -name "*.ts" -exec rm {} \; > /dev/null 2>&1
 find ${TEMP_PATH}/${TARGET}/ -maxdepth 1 -mindepth 1 -type d ! -name "languages" -exec rm -Rf {} \; > /dev/null 2>&1
 find ${TEMP_PATH}/${TARGET}/ -type d -empty -delete > /dev/null 2>&1
@@ -81,8 +59,11 @@ find ${TEMP_PATH}/${TARGET}/ -type d -empty -delete > /dev/null 2>&1
 
 cd ${TEMP_PATH}/
 tar cjf ${TARGET}.tar.bz2 ${TARGET}/ --owner=0 --group=0 --mtime='2010-01-01' -H ustar
+echo toto ${TEMP_PATH}/
+exit
 if [ ! -e ${TARGET}.tar.bz2 ]; then
 	echo "${TARGET}.tar.bz2 not exists!";
 	exit;
 fi
 rm -Rf ${TARGET}/
+fi
