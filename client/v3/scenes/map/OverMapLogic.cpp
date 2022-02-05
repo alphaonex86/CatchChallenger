@@ -20,9 +20,6 @@
 #include "../shared/player/Player.hpp"
 #include "../shared/player/Reputations.hpp"
 #include "../shared/player/Clan.hpp"
-/*
-#include "../above/inventory/Crafting.hpp"
-*/
 #include "CCMap.hpp"
 
 using Scenes::Inventory;
@@ -34,13 +31,6 @@ using std::placeholders::_3;
 OverMapLogic::OverMapLogic() : OverMap() {
   CreatePlayerTabs();
   CreateInventoryTabs();
-  /*
-crafting = nullptr;
-*/
-
-  /*
-  reputations = nullptr;
-  */
 
   multiplayer = true;
   worseQueryTime = 0;
@@ -53,6 +43,7 @@ crafting = nullptr;
 
   shop_ = nullptr;
   warehouse_ = nullptr;
+  crafting_ = nullptr;
 
   npc_talk_->SetOnItemClick(
       std::bind(&OverMapLogic::IG_dialog_text_linkActivated, this, _1));
@@ -115,6 +106,7 @@ void OverMapLogic::setVar(CCMap *ccmap) {
   OverMap::setVar(ccmap);
 
   bag->SetOnClick(std::bind(&OverMapLogic::bag_open, this));
+  crafting_btn_->SetOnClick(std::bind(&OverMapLogic::OpenCrafting, this));
   player_portrait_->SetOnClick(std::bind(&OverMapLogic::player_open, this));
 }
 
@@ -561,6 +553,13 @@ void OverMapLogic::bag_open() {
   item->SetVar(Inventory::ObjectFilter_All, false);
   inventory_tabs_->SetCurrentItem(id);
   AddChild(inventory_tabs_);
+}
+
+void OverMapLogic::OpenCrafting() {
+  if (crafting_ == nullptr) {
+    crafting_ = Scenes::Crafting::Create();
+  }
+  AddChild(crafting_);
 }
 
 void OverMapLogic::OnInventoryNav(std::string id) {
@@ -2572,11 +2571,13 @@ void OverMapLogic::OnEnter() {
   OverMap::OnEnter();
   player_portrait_->RegisterEvents();
   bag->RegisterEvents();
+  crafting_btn_->RegisterEvents();
 }
 
 void OverMapLogic::OnExit() {
   player_portrait_->UnRegisterEvents();
   bag->UnRegisterEvents();
+  crafting_btn_->UnRegisterEvents();
   OverMap::OnExit();
 }
 

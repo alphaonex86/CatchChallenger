@@ -10,6 +10,7 @@
 #include "../shared/inventory/Inventory.hpp"
 #include "../shared/shop/Shop.hpp"
 #include "../shared/warehouse/Warehouse.hpp"
+#include "../shared/crafting/Crafting.hpp"
 #include "OverMap.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
@@ -184,7 +185,10 @@ class OverMapLogic : public OverMap {
                                               // them self will failed all reset
   void seed_planted(const bool &ok);
   void plant_collected(const CatchChallenger::Plant_collect &stat);
+
   // crafting -> go to inventory
+  void OpenCrafting();
+
   // void recipeUsed(const CatchChallenger::RecipeUsage &recipeUsage);
   // bot
   void goToBotStep(const uint8_t &step);
@@ -258,12 +262,9 @@ class OverMapLogic : public OverMap {
   CCMap *ccmap;
   bool multiplayer;
   UI::LinkedDialog *inventory_tabs_;
-  // Crafting *crafting;
-  // int inventoryIndex;
+  Crafting *crafting_;
 
   UI::LinkedDialog *player_tabs_;
-  // Reputations *reputations;
-  // Quests *quests;
   int playerIndex;
 
   QTimer tip_timeout;
@@ -282,7 +283,6 @@ class OverMapLogic : public OverMap {
   std::vector<std::string> add_to_inventoryGainExtraList;
   std::vector<QTime> add_to_inventoryGainExtraTime;
 
- private:
   std::string lastPlaceDisplayed;
   std::string currentAmbianceFile;
   std::string visualCategory;

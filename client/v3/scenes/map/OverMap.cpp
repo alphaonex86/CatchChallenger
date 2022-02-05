@@ -36,6 +36,8 @@ OverMap::OverMap() {
     buyOver = UI::Label::Create(gradient1, gradient2, this);
   }
 
+  crafting_btn_ = UI::Button::Create(":/CC/images/interface/gift.png", this);
+
   toast_ = Toast::Create(this);
   toast_->SetVisible(false);
 
@@ -154,9 +156,11 @@ void OverMap::OnScreenResize() {
     if (bounding_rect_.width() < 800 || bounding_rect_.height() < 600) {
       bag->SetSize(84 / 2, 93 / 2);
       bagOver->SetVisible(false);
+      crafting_btn_->SetSize(84 / 2, 93 / 2);
     } else {
       bag->SetSize(84, 93);
       bagOver->SetVisible(physicalDpiX < 200);
+      crafting_btn_->SetSize(84, 93);
     }
     unsigned int bagX = xRight - bag->Width();
     bag->SetPos(bagX, bounding_rect_.height() - space - bag->Height());
@@ -166,6 +170,9 @@ void OverMap::OnScreenResize() {
       bagOver->SetPos(bagX + bag->Width() / 2 - bagOver->Width() / 2,
                       bounding_rect_.height() - space - bagOver->Height());
     }
+
+    crafting_btn_->SetPos(xRight - crafting_btn_->Width(),
+                      bounding_rect_.height() - space - crafting_btn_->Height());
   }
   Q_UNUSED(xRight);
 

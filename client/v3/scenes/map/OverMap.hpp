@@ -77,6 +77,7 @@ class OverMap : public QObject, public Scene {
   UI::Label *bagOver;
   UI::Button *buy;
   UI::Label *buyOver;
+  UI::Button *crafting_btn_;
   Chat *chat_;
 
   Toast *toast_;

@@ -170,30 +170,42 @@ void Plant::Draw(QPainter *painter) {
     y_offset += text->Height() + 20;
 
     if (contentExtra.tileset != nullptr) {
-      icon->SetPixmap(
-          SetCanvas(contentExtra.tileset->tileAt(0)->image(), icon_size));
-      icon->SetPos(x_offset, y_offset);
-      icon->Render(painter);
+      uint8_t index = 0;
 
-      icon->SetPixmap(
-          SetCanvas(contentExtra.tileset->tileAt(1)->image(), icon_size));
-      icon->SetPos(x_offset + icon_size, y_offset);
-      icon->Render(painter);
+      while (index < 6) {
+        if (contentExtra.tileset->tileAt(index) != nullptr) {
+          icon->SetPixmap(SetCanvas(
+              contentExtra.tileset->tileAt(index)->image(), icon_size));
+          icon->SetPos(x_offset + icon_size * index, y_offset);
+          icon->Render(painter);
+        }
 
-      icon->SetPixmap(
-          SetCanvas(contentExtra.tileset->tileAt(2)->image(), icon_size));
-      icon->SetPos(x_offset + icon_size * 2, y_offset);
-      icon->Render(painter);
+        index++;
+      }
+      // icon->SetPixmap(
+      // SetCanvas(contentExtra.tileset->tileAt(0)->image(), icon_size));
+      // icon->SetPos(x_offset, y_offset);
+      // icon->Render(painter);
 
-      icon->SetPixmap(
-          SetCanvas(contentExtra.tileset->tileAt(3)->image(), icon_size));
-      icon->SetPos(x_offset + icon_size * 3, y_offset);
-      icon->Render(painter);
+      // icon->SetPixmap(
+      // SetCanvas(contentExtra.tileset->tileAt(1)->image(), icon_size));
+      // icon->SetPos(x_offset + icon_size, y_offset);
+      // icon->Render(painter);
 
-      icon->SetPixmap(
-          SetCanvas(contentExtra.tileset->tileAt(4)->image(), icon_size));
-      icon->SetPos(x_offset + icon_size * 4, y_offset);
-      icon->Render(painter);
+      // icon->SetPixmap(
+      // SetCanvas(contentExtra.tileset->tileAt(2)->image(), icon_size));
+      // icon->SetPos(x_offset + icon_size * 2, y_offset);
+      // icon->Render(painter);
+
+      // icon->SetPixmap(
+      // SetCanvas(contentExtra.tileset->tileAt(3)->image(), icon_size));
+      // icon->SetPos(x_offset + icon_size * 3, y_offset);
+      // icon->Render(painter);
+
+      // icon->SetPixmap(
+      // SetCanvas(contentExtra.tileset->tileAt(4)->image(), icon_size));
+      // icon->SetPos(x_offset + icon_size * 4, y_offset);
+      // icon->Render(painter);
 
       // icon->SetPixmap(SetCanvas(contentExtra.tileset->tileAt(5)->image(),
       // 32)); icon->SetPos(240, 10); icon->Paint(painter, nullptr, nullptr);
