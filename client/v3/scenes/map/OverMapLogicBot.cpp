@@ -692,15 +692,19 @@ void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink) {
           CatchChallenger::ActionAllow::ActionAllow_Clan);
 
       if (is_allow) {
-        Globals::GetInputDialog()->ShowInputText(
-            tr("CLAN"), tr("Give the clan name"),
-            [&](QString text) {
-              if (!text.isEmpty()) {
-                actionClan.push_back(ActionClan_Create);
-                connexionManager->client->createClan(text.toStdString());
-              }
-            },
-            QString());
+        if (PlayerInfo::GetInstance()->GetInformationRO().clan == 0) {
+          Globals::GetInputDialog()->ShowInputText(
+              tr("CLAN"), tr("Give the clan name"),
+              [&](QString text) {
+                if (!text.isEmpty()) {
+                  actionClan.push_back(ActionClan_Create);
+                  connexionManager->client->createClan(text.toStdString());
+                }
+              },
+              QString());
+        } else {
+          showTip(tr("You are already in a clan").toStdString());
+        }
       } else {
         showTip(tr("You are not allowed to create a clan").toStdString());
       }
