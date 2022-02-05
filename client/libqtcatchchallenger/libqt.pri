@@ -5,10 +5,6 @@ wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 #DEFINES += CATCHCHALLENGER_NOAUDIO
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 QT += multimedia
-linux:LIBS += -lopus
-macx:LIBS += -lopus
-win32:LIBS += -lopus
-wasm:LIBS += -Lopus
 }
 
 SOURCES += \
