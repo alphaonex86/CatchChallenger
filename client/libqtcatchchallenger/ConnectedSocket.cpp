@@ -196,8 +196,12 @@ void ConnectedSocket::binaryMessageReceived(const QByteArray &message)
 QList<QSslError> ConnectedSocket::sslErrors() const
 {
     #ifndef NOTCPSOCKET
+    #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
     if(sslSocket!=nullptr)
         return sslSocket->sslHandshakeErrors();
+    #else
+        #warning need be compiled with Qt 5.15+
+    #endif
     #endif
     #ifndef NOWEBSOCKET
     return m_sslErrors;

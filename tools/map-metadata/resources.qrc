@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>map.png</file>
-        <file>changes.db</file>
-    </qresource>
-</RCC>

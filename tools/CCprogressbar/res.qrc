@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Pbarforeground.png</file>
-        <file>Pbarbackground.png</file>
-        <file>back.png</file>
-    </qresource>
-</RCC>
