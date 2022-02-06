@@ -1029,22 +1029,23 @@ void DatapackClientLoader::parseQuestsExtra()
             CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    const std::vector<std::string> &returnList=listFolderNotRecursive(temp, std::string());
     unsigned int index=0;
     while(index<returnList.size())
     {
         bool showRewards=false;
         bool autostep=false;
-        if(!CatchChallenger::FacilityLibGeneral::isDir(returnList.at(index)))
+        std::string folder_path = temp + returnList.at(index);
+        if(!CatchChallenger::FacilityLibGeneral::isDir(folder_path))
         {
             index++;
             continue;
         }
         bool ok;
-        std::string inode=returnList.at(index);
-        if(stringEndsWith(inode,"/") && stringEndsWith(inode,"\\"))
+        std::string inode=folder_path.substr(temp.size());
+        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\"))
             inode=inode.substr(0,inode.size()-1);
-        inode=inode.substr(temp.size());
+        //inode=inode.substr(temp.size());
         const uint32_t &tempid=stringtouint32(inode,&ok);
         if(!ok)
         {
@@ -1061,7 +1062,7 @@ void DatapackClientLoader::parseQuestsExtra()
         const uint16_t &id=static_cast<uint16_t>(tempid);
 
         tinyxml2::XMLDocument domDocument;
-        const std::string &file=returnList.at(index)+"/definition.xml";
+        const std::string &file=folder_path+"definition.xml";
         const auto loadOkay = domDocument.LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -1234,16 +1235,18 @@ void DatapackClientLoader::parseQuestsText()
             DATAPACK_BASE_PATH_QUESTS2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    //const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    const std::vector<std::string> &returnList=listFolderNotRecursive(temp, std::string());
     unsigned int index=0;
     while(index<(unsigned int)returnList.size())
     {
-        if(!CatchChallenger::FacilityLibGeneral::isDir(returnList.at(index)))
+        std::string folder_path= temp + returnList.at(index);
+        if(!CatchChallenger::FacilityLibGeneral::isDir(folder_path))
         {
             index++;
             continue;
         }
-        const std::string &file=CatchChallenger::FacilityLibGeneral::getFolderFromFile(returnList.at(index))+"/text.xml";
+        const std::string &file=folder_path+"text.xml";
 
         tinyxml2::XMLDocument domDocument;
         const auto loadOkay = domDocument.LoadFile(file.c_str());
@@ -1263,10 +1266,12 @@ void DatapackClientLoader::parseQuestsText()
         }
 
         //load the content
-        const std::string &path=returnList.at(index);
-        if(questsPathToId.find(path)!=questsPathToId.cend())
+        std::string inode=returnList.at(index);
+        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\"))
+            inode=inode.substr(0,inode.size()-1);
+        if(questsPathToId.find(inode)!=questsPathToId.cend())
         {
-            const uint16_t questId=questsPathToId.at(path);
+            const uint16_t questId=questsPathToId.at(inode);
             bool ok;
             //load text
             const tinyxml2::XMLElement *client_logic = root->FirstChildElement("client_logic");
@@ -1338,7 +1343,7 @@ void DatapackClientLoader::parseQuestsText()
             }
         }
         else
-            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): " << file <<path << std::endl;
+            std::cerr << "!questsPathToId find(): %1, have not id attribute: child.Name(): " << file << inode << std::endl;
         #ifdef DEBUG_CLIENT_QUEST
         std::cerr << "%1 quest(s) text loaded for quest %2").arg(client_logic_texts.size()).arg(questsPathToId.value(entryList.at(index).absoluteFilePath()));
         #endif
@@ -1937,4 +1942,17 @@ void DatapackClientLoader::parseBotFightsExtra()
     }
 
     std::cerr << std::to_string(botFightsExtra.size()) << " fight extra(s) loaded" << std::endl;
+}
+
+std::vector<std::string> DatapackClientLoader::listFolderNotRecursive(const std::string& folder,const std::string& suffix)
+{
+    std::vector<std::string> returnList;
+    std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> entryList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder+suffix, CatchChallenger::FacilityLibGeneral::Dirs);//possible wait time here
+    for (unsigned int index=0;index<entryList.size();++index)
+    {
+        const CatchChallenger::FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==CatchChallenger::FacilityLibGeneral::InodeDescriptor::Type::Dir)
+            returnList.push_back(suffix+fileInfo.name + "/");
+    }
+    return returnList;
 }
