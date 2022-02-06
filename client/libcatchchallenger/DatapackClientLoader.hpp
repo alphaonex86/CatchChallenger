@@ -246,6 +246,7 @@ public:
     void parseDatapack(const std::string &datapackPath, const std::string &cacheHash=std::string(), const std::string &language="en");
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
+    static std::vector<std::string> listFolderNotRecursive(const std::string& folder,const std::string& suffix);
 protected:
     bool inProgress;
     std::string datapackPath;
