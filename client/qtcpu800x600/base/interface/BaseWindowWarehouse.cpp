@@ -1,9 +1,9 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
 
 #include <QInputDialog>
 

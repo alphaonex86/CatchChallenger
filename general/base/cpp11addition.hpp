@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "lib.h"
+
 #if ! defined(Q_LIKELY)
     #if defined(__GNUC__)
     #  define Q_LIKELY(expr)    __builtin_expect(!!(expr), true)
@@ -23,31 +25,31 @@ public:
   std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const;
 };
 
-std::string str_tolower(std::string s);
-bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
-uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to);
-std::vector<std::string> stringregexsplit(const std::string& input, const std::regex& regex);
-std::vector<std::string> stringsplit(const std::string &s, char delim);
-bool stringEndsWith(std::string const &fullString, std::string const &ending);
-bool stringEndsWith(std::string const &fullString, char const &ending);
-bool stringStartWith(std::string const &fullString, std::string const &starting);
-bool stringStartWith(std::string const &fullString, char const &starting);
-std::string& stringimplode(const std::vector<std::string>& elems, char delim, std::string& s);
-std::string stringimplode(const std::vector<std::string>& elems, char delim);
-std::string stringimplode(const std::queue<std::string>& elems, char delim);
-std::string stringimplode(const std::vector<std::string>& elems, const std::string &delim);
+DLL_PUBLIC std::string str_tolower(std::string s);
+DLL_PUBLIC bool stringreplaceOne(std::string& str, const std::string& from, const std::string& to);
+DLL_PUBLIC uint8_t stringreplaceAll(std::string& str, const std::string& from, const std::string& to);
+DLL_PUBLIC std::vector<std::string> stringregexsplit(const std::string& input, const std::regex& regex);
+DLL_PUBLIC std::vector<std::string> stringsplit(const std::string &s, char delim);
+DLL_PUBLIC bool stringEndsWith(std::string const &fullString, std::string const &ending);
+DLL_PUBLIC bool stringEndsWith(std::string const &fullString, char const &ending);
+DLL_PUBLIC bool stringStartWith(std::string const &fullString, std::string const &starting);
+DLL_PUBLIC bool stringStartWith(std::string const &fullString, char const &starting);
+DLL_PUBLIC std::string& stringimplode(const std::vector<std::string>& elems, char delim, std::string& s);
+DLL_PUBLIC std::string stringimplode(const std::vector<std::string>& elems, char delim);
+DLL_PUBLIC std::string stringimplode(const std::queue<std::string>& elems, char delim);
+DLL_PUBLIC std::string stringimplode(const std::vector<std::string>& elems, const std::string &delim);
 
-uint8_t stringtouint8(const std::string &string,bool *ok=NULL);
-uint16_t stringtouint16(const std::string &string,bool *ok=NULL);
-uint32_t stringtouint32(const std::string &string,bool *ok=NULL);
-bool stringtobool(const std::string &string,bool *ok=NULL);
-uint64_t stringtouint64(const std::string &string,bool *ok=NULL);
-int8_t stringtoint8(const std::string &string,bool *ok=NULL);
-int16_t stringtoint16(const std::string &string,bool *ok=NULL);
-int32_t stringtoint32(const std::string &string,bool *ok=NULL);
-int64_t stringtoint64(const std::string &string,bool *ok=NULL);
-float stringtofloat(const std::string &string,bool *ok=NULL);
-double stringtodouble(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC uint8_t stringtouint8(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC uint16_t stringtouint16(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC uint32_t stringtouint32(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC bool stringtobool(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC uint64_t stringtouint64(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC int8_t stringtoint8(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC int16_t stringtoint16(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC int32_t stringtoint32(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC int64_t stringtoint64(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC float stringtofloat(const std::string &string,bool *ok=NULL);
+DLL_PUBLIC double stringtodouble(const std::string &string,bool *ok=NULL);
 /*
 uint8_t stringtouint8(const char * const string,bool *ok=NULL);
 uint16_t stringtouint16(const char * const string,bool *ok=NULL);
@@ -61,18 +63,18 @@ int64_t stringtoint64(const char * const string,bool *ok=NULL);
 float stringtofloat(const char * const string,bool *ok=NULL);
 double stringtodouble(const char * const string,bool *ok=NULL);*/
 
-std::string binarytoHexa(const std::vector<char> &data,bool *ok=NULL);
-std::string binarytoHexa(const char * const data,const uint32_t &size,bool *ok=NULL);
-std::string binarytoHexa(const void * const data, const uint32_t &size, bool *ok=NULL);
-uint8_t hexToDecUnit(const std::string& data,bool *ok=NULL);
-std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
-void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
-void binaryAppend(std::vector<char> &data, const char * const add, const uint32_t &addSize);
-std::vector<char> base64toBinary(const std::string &string);
-std::string FSabsoluteFilePath(const std::string &string);
-std::string FSabsolutePath(const std::string &string);
-uint64_t msFrom1970();
-uint64_t sFrom1970();
+DLL_PUBLIC std::string binarytoHexa(const std::vector<char> &data,bool *ok=NULL);
+DLL_PUBLIC std::string binarytoHexa(const char * const data,const uint32_t &size,bool *ok=NULL);
+DLL_PUBLIC std::string binarytoHexa(const void * const data, const uint32_t &size, bool *ok=NULL);
+DLL_PUBLIC uint8_t hexToDecUnit(const std::string& data,bool *ok=NULL);
+DLL_PUBLIC std::vector<char> hexatoBinary(const std::string &data,bool *ok=NULL);
+DLL_PUBLIC void binaryAppend(std::vector<char> &data,const std::vector<char> &add);
+DLL_PUBLIC void binaryAppend(std::vector<char> &data, const char * const add, const uint32_t &addSize);
+DLL_PUBLIC std::vector<char> base64toBinary(const std::string &string);
+DLL_PUBLIC std::string FSabsoluteFilePath(const std::string &string);
+DLL_PUBLIC std::string FSabsolutePath(const std::string &string);
+DLL_PUBLIC uint64_t msFrom1970();
+DLL_PUBLIC uint64_t sFrom1970();
 
 template <class T>
 int vectorindexOf(const std::vector<T> &list,const T &item)
