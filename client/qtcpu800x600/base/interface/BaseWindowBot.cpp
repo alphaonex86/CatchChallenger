@@ -1,8 +1,8 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../LanguagesSelect.h"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
 #include <QDesktopServices>
 #include <QInputDialog>

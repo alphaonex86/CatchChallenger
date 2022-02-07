@@ -6,11 +6,11 @@
 #include <QMessageBox>
 #include <QDebug>
 
-#include "../../../general/tinyXML2/tinyxml2.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/DatapackGeneralLoader.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/tinyXML2/tinyxml2.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/DatapackGeneralLoader.hpp"
+#include "../../../../general/base/GeneralVariable.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../base/LanguagesSelect.h"
 
 NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :

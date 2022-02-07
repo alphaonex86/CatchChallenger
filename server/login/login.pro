@@ -1,6 +1,6 @@
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x -fno-rtti"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x -fno-rtti"
-
+TEMPLATE = app
 QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
 QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
 

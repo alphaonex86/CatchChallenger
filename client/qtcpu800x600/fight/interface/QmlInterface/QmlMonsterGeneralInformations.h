@@ -2,8 +2,8 @@
 #define QmlMonsterGeneralInformations_H
 
 #include <QObject>
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../libcatchchallenger/DatapackClientLoader.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../libcatchchallenger/DatapackClientLoader.hpp"
 
 class QmlMonsterGeneralInformations : public QObject
 {

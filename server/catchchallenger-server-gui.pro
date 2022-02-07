@@ -12,6 +12,6 @@ SOURCES += MainWindow.cpp \
 HEADERS  += MainWindow.h
 
 FORMS    += MainWindow.ui
-
+TEMPLATE = app
 RESOURCES += \
     ../client/resources/client-resources-multi.qrc

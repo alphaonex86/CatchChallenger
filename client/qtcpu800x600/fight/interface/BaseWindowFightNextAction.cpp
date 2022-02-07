@@ -1,5 +1,5 @@
 #include "../../base/interface/BaseWindow.h"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "ui_BaseWindow.h"
 
 /* show only the plant into the inventory */
