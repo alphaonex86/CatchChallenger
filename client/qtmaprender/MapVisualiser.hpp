@@ -6,10 +6,10 @@
 #include "ObjectGroupItem.hpp"
 #include "MapMark.hpp"
 
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../../general/base/CommonMap.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/CommonMap.hpp"
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
-#include "../../../general/base/Map_loader.hpp"
+#include "../../general/base/Map_loader.hpp"
 
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>

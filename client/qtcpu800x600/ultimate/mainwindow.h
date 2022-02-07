@@ -30,7 +30,7 @@
 #include "../../qtmaprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
-#ifndef NOSINGLEPLAYER
+#if defined(CATCHCHALLENGER_SOLO)
 #include "../base/solo/SoloWindow.h"
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -121,7 +121,7 @@ private slots:
     void httpFinished();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
@@ -183,14 +183,14 @@ private:
     ListEntryEnvolued * selectedServer;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     SoloWindow *solowindow;
     #endif
     QString pass;
     uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     CatchChallenger::InternalServer * internalServer;
     #endif
     QSet<QString> customServerName;

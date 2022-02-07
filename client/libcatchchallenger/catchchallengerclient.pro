@@ -1,5 +1,5 @@
 TEMPLATE = lib
-DEFINES += CATCHCHALLENGER_SOLO CATCHCHALLENGERLIB
+DEFINES += CATCHCHALLENGER_SOLO CATCHCHALLENGERLIB TINYXML2_EXPORT
 include(lib.pri)
 include(libheader.pri)
 include(../../general/general.pri)

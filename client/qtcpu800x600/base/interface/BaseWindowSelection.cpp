@@ -1,9 +1,9 @@
 #include "BaseWindow.h"
 #include "GetPrice.h"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
 #include <QQmlContext>
 #include <QInputDialog>

@@ -1,13 +1,13 @@
 #include "../../base/interface/BaseWindow.h"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../libcatchchallenger/ClientVariable.hpp"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
 
 #include <QListWidgetItem>
 #include <QBuffer>

@@ -27,7 +27,7 @@ include(../qtmaprender/render.pri)
 include(../qtmaprender/renderheader.pri)
 include(../tiled/tiled.pri)
 include(../tiled/tiledheader.pri)
-
+TEMPLATE = app
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
 

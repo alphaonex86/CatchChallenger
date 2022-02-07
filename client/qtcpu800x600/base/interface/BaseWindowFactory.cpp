@@ -1,8 +1,8 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../Ultimate.h"
 
 #include <QInputDialog>

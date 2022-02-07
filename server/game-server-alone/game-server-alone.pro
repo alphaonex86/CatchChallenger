@@ -1,5 +1,5 @@
 include(../epoll/catchchallenger-server-cli-epoll.pro)
-
+TEMPLATE = app
 TARGET = catchchallenger-game-server-alone
 
 DEFINES -= CATCHCHALLENGER_CLASS_ALLINONESERVER

@@ -1,7 +1,7 @@
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT
 
 DEFINES += EXTERNALLIBZSTD
-
+TEMPLATE = app
 include(../../general/general.pri)
 include(../catchchallenger-server.pri)
 include(../catchchallenger-serverheader.pri)

@@ -8,7 +8,7 @@
 #QMAKE_CXXFLAGS+="-fstack-protector-all -g -fno-rtti"
 
 QT       -= gui widgets sql xml network core
-
+TEMPLATE = app
 #DEFINES += SERVERSSL
 
 DEFINES += EPOLLCATCHCHALLENGERSERVER QT_NO_EMIT

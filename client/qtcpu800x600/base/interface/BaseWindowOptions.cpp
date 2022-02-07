@@ -2,8 +2,8 @@
 #include "ui_BaseWindow.h"
 #include "../Options.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
-#include "../../libqtcatchchallenger/Audio.hpp"
+#include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 using namespace CatchChallenger;

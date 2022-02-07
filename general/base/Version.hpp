@@ -2,12 +2,13 @@
 #define CATCHCHALLENGER_CATCHCHALLENGER_VERSION_H
 
 #include <string>
+#include "lib.h"
 
 namespace CatchChallenger {
 class Version
 {
 public:
-    const static std::string str;
+    DLL_PUBLIC const static std::string str;
 };
 }
 

@@ -1,7 +1,7 @@
 #include "NewGame.h"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/GeneralVariable.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "ui_NewGame.h"
 
 #include <QDir>

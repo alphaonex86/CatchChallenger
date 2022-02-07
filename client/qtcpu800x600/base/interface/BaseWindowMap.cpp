@@ -1,9 +1,9 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../../libqtcatchchallenger/Audio.hpp"
+#include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 using namespace CatchChallenger;
