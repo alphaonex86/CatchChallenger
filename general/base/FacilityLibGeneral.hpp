@@ -3,9 +3,10 @@
 
 #include <string>
 #include <vector>
+#include "lib.h"
 
 namespace CatchChallenger {
-class FacilityLibGeneral
+class DLL_PUBLIC FacilityLibGeneral
 {
 public:
     static unsigned int toUTF8WithHeader(const std::string &text,char * const data);

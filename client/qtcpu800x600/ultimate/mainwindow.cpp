@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     #ifndef NOWEBSOCKET
     realWebSocket=NULL;
     #endif
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     internalServer=NULL;
     #endif
     client=NULL;
@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FeedNews::feedNews=new FeedNews();
     if(!connect(FeedNews::feedNews,&FeedNews::feedEntryList,this,&MainWindow::feedEntryList))
         qDebug() << "connect(RssNews::rssNews,&RssNews::rssEntryList,this,&MainWindow::rssEntryList) failed";
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",
                               QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
@@ -119,8 +119,10 @@ MainWindow::MainWindow(QWidget *parent) :
     #ifdef NOSINGLEPLAYER
     ui->solo->hide();
     #else
+    #if defined(CATCHCHALLENGER_SOLO)
     //work around QSS crash
     solowindow->setBuggyStyle();
+    #endif
     #endif
     ui->stackedWidget->setCurrentWidget(ui->mode);
     ui->warning->setVisible(false);
@@ -277,12 +279,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
     event->ignore();
     hide();
     if(socket!=NULL
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
             || internalServer!=NULL
     #endif
             )
     {
-        #ifndef NOSINGLEPLAYER
+        #if defined(CATCHCHALLENGER_SOLO)
         if(internalServer!=NULL)
         {
             if(internalServer->isListen())
@@ -1105,7 +1107,7 @@ void MainWindow::resetAll()
     switch(serverMode)
     {
         case ServerMode_Internal:
-        #ifndef NOSINGLEPLAYER
+        #if defined(CATCHCHALLENGER_SOLO)
             ui->stackedWidget->setCurrentWidget(solowindow);
             /* do just at game starting
              *if(internalServer!=NULL)
@@ -1477,7 +1479,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         std::cout << "MainWindow::stateChanged(" << std::to_string((int)socketState) << ") mostly quit" << std::endl;
         if(!isVisible()
-                #ifndef NOSINGLEPLAYER
+                #if defined(CATCHCHALLENGER_SOLO)
                 && internalServer==NULL
                 #endif
                 )
@@ -1492,7 +1494,7 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
         }
         if(client!=NULL && client->protocolWrong())
             QMessageBox::about(this,tr("Quit"),tr("The server have closed the connexion"));
-        #ifndef NOSINGLEPLAYER
+        #if defined(CATCHCHALLENGER_SOLO)
         if(internalServer!=NULL)
             internalServer->stop();
         #endif
@@ -1947,7 +1949,7 @@ void MainWindow::on_server_back_clicked()
     ui->stackedWidget->setCurrentWidget(ui->mode);
 }
 
-#ifndef NOSINGLEPLAYER
+#if defined(CATCHCHALLENGER_SOLO)
 void MainWindow::gameSolo_play(const std::string &savegamesPath)
 {
     resetAll();
@@ -2186,7 +2188,7 @@ void MainWindow::is_started(bool started)
 {
     if(!started)
     {
-        #ifndef NOSINGLEPLAYER
+        #if defined(CATCHCHALLENGER_SOLO)
         if(internalServer!=NULL)
         {
             delete internalServer;

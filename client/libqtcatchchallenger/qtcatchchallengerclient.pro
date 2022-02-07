@@ -1,14 +1,25 @@
-DEFINES += CATCHCHALLENGER_SOLO
+DEFINES += CATCHCHALLENGER_SOLO TINYXML2_EXPORT
 TEMPLATE = lib
-include(qtlib.pri)
-include(qtlibheader.pri)
+CONFIG   += precompile_header
+include(libqt.pri)
+include(libqtheader.pri)
 include(../libcatchchallenger/lib.pri)
 include(../tiled/tiled.pri)
 include(../tiled/tiledheader.pri)
+include(../qtmaprender/render.pri)
+include(../qtmaprender/renderheader.pri)
 contains(DEFINES, CATCHCHALLENGER_SOLO) {
 include(../../server/catchchallenger-server.pri)
+include(../../server/catchchallenger-serverheader.pri)
 include(../../server/qt/catchchallenger-server-qt.pri)
 include(../../server/qt/catchchallenger-server-qtheader.pri)
 }
-QT       += network
+include(../../general/general.pri)
+include(../../general/tinyXML2/tinyXML2.pri)
+include(../../general/tinyXML2/tinyXML2header.pri)
+QT       += network widgets opengl
 TARGET = qtcatchchallengerclient
+
+#linux:QMAKE_LFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+#linux:QMAKE_CFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+#linux:QMAKE_CXXFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"

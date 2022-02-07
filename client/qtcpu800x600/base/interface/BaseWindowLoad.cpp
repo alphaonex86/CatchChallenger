@@ -2,15 +2,15 @@
 #include "ui_BaseWindow.h"
 #include "../Options.h"
 #include "../FacilityLibClient.h"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../Ultimate.h"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
-#include "../../libqtcatchchallenger/Audio.hpp"
+#include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 #include <QBuffer>

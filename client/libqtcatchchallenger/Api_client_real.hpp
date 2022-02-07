@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
 #if ! defined (ONLYMAPRENDER)
 
-#include "../../../general/base/GeneralVariable.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 #include "QtDatapackChecksum.hpp"
 
 #include <QObject>
@@ -21,7 +21,7 @@
 #include <QRegularExpression>
 #include <QDataStream>
 
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralStructures.hpp"
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "Api_protocol_Qt.hpp"
 #include "QZstdDecodeThread.hpp"

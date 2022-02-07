@@ -7,7 +7,7 @@
 #include <QObject>
 #endif
 #include <QMutex>
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralStructures.hpp"
 #include "MapVisualiserThread.hpp"
 
 class PathFinding
