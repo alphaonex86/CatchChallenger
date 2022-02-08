@@ -1938,6 +1938,7 @@ void MainWindow::httpFinished()
         cache.close();
     }
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
+    serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
@@ -1984,6 +1985,7 @@ void MainWindow::newLanServer()
             index++;
         }
     }
+    serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
