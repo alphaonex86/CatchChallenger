@@ -826,7 +826,7 @@ void MainWindow::displayServerList()
     if(tempSelectedServer!=NULL && selectedServer==NULL)
     {
         qDebug() << "tempSelectedServer!=NULL && selectedServer==NULL, fix it!";
-        abort();
+        //abort();
     }
 }
 
