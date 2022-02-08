@@ -11,7 +11,9 @@ export CATCHCHALLENGER_VERSION=`grep -F "CATCHCHALLENGER_VERSION" ${CATCHCHALLEN
 echo ${CATCHCHALLENGER_VERSION}
 
 echo "Compil windows version..."
+rm *.json
 source sub-script/compil-windows32.sh
+rm *.json
 cd ${BASE_PWD}
 echo "Compil windows version... done"
 

@@ -4,6 +4,7 @@ CONFIG   += precompile_header
 precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 DEFINES += USING_PCH
 }
+DEFINES += LIBEXPORT
 include(libqt.pri)
 include(libqtheader.pri)
 include(../libcatchchallenger/lib.pri)
