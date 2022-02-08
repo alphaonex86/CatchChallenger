@@ -6,6 +6,11 @@
 #else
 #include <QObject>
 #endif
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#include <QTcpServer>
+#include <QUdpSocket>
+#include <QTimer>
+#endif
 #include "../base/BaseServer.hpp"
 #include "QtServerStructures.hpp"
 #include "QtClient.hpp"
@@ -43,7 +48,13 @@ public:
     void preload_the_visibility_algorithm() override;
     void unload_the_visibility_algorithm() override;
     void unload_the_events() override;
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    bool openToLan(QString name,bool allowInternet=true);//for now internet filter not implemented
+    #endif
 signals:
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    void emitLanPort(uint16_t port);
+    #endif
     void try_initAll() const;
     void try_stop_server() const;
     void need_be_started() const;
@@ -55,6 +66,13 @@ signals:
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
     std::unordered_set<CatchChallenger::Client *> client_list;
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    QTcpServer server;
+    QUdpSocket broadcastLan;
+    QTimer broadcastLanTimer;
+    QByteArray dataToSend;
+    void sendBroadcastServer();
+    #endif
 private:
     void stop_internal_server_slot();
 };
