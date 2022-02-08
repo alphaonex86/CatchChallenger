@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>3</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -2494,6 +2494,13 @@ padding-bottom:3px;
                 </property>
                 <property name="checked">
                  <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="openToLan">
+                <property name="text">
+                 <string>Open to Lan</string>
                 </property>
                </widget>
               </item>

@@ -1,6 +1,9 @@
 DEFINES += CATCHCHALLENGER_SOLO TINYXML2_EXPORT
 TEMPLATE = lib
 CONFIG   += precompile_header
+precompile_header:!isEmpty(PRECOMPILED_HEADER) {
+DEFINES += USING_PCH
+}
 include(libqt.pri)
 include(libqtheader.pri)
 include(../libcatchchallenger/lib.pri)

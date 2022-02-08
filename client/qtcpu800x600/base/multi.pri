@@ -1,9 +1,11 @@
 SOURCES += $$PWD/FeedNews.cpp \
     $$PWD/BlacklistPassword.cpp \
+    $$PWD/LanBroadcastWatcher.cpp \
     $$PWD/SslCert.cpp
 
 HEADERS  += $$PWD/FeedNews.h \
     $$PWD/BlacklistPassword.h \
+    $$PWD/LanBroadcastWatcher.h \
     $$PWD/SslCert.h
 
 RESOURCES += $$PWD/resources/client-resources-multi.qrc
