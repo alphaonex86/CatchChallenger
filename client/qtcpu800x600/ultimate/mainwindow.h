@@ -64,6 +64,8 @@ public:
     QString proxyHost;
     uint16_t proxyPort;
 
+    bool lan;
+
     bool operator<(const ConnexionInfo &connexionInfo) const;
 };
 
@@ -119,6 +121,7 @@ private slots:
     void downloadFile();
     void metaDataChanged();
     void httpFinished();
+    void newLanServer();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
     #if defined(CATCHCHALLENGER_SOLO)
@@ -152,7 +155,7 @@ private:
         ServerMode_None
     };
     ServerMode serverMode;
-    std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
+    std::vector<ConnexionInfo> temp_lanConnexionInfoList,temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
     AddOrEditServer *addServer;

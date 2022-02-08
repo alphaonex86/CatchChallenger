@@ -546,6 +546,15 @@ void BaseWindow::connectAllSignals()
        abort();
 }
 
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+void BaseWindow::receiveLanPort(uint16_t port)
+{
+   chat->new_system_text(CatchChallenger::Chat_type::Chat_type_system_important,tr("Open to port %1").arg(port).toStdString());
+   ui->openToLan->setToolTip(tr("Open to port %1").arg(port));
+   QMessageBox::information(this,tr("Server ready"),tr("Server open with TCP port: %1").arg(port));
+}
+#endif
+
 void BaseWindow::tradeRequested(const std::string &pseudo,const uint8_t &skinInt)
 {
     WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
@@ -1802,10 +1811,8 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
                 else
                     item->setText("???");
                 item->setData(99,monsterId);
-                if(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.cend())
-                    item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).thumb));
-                else
-                    item->setIcon(QIcon(":/images/monsters/default/small.png"));
+                //if(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.cend())
+                item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).thumb));
                 firstFound=true;
             }
             else
@@ -1974,3 +1981,11 @@ void CatchChallenger::BaseWindow::on_listAllItem_itemActivated(QListWidgetItem *
     item->setSelected(true);
     on_playerGiveAdmin_clicked();
 }
+
+void BaseWindow::on_openToLan_clicked()
+{
+    ui->openToLan->setEnabled(false);
+    const Player_private_and_public_informations &informations=client->get_player_informations_ro();
+    emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
+}
+

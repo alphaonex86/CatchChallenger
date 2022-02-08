@@ -136,6 +136,9 @@ public slots:
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void connectAllSignals();
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    void receiveLanPort(uint16_t port);
+    #endif
 private slots:
     void message(std::string message) const;
     void stdmessage(std::string message) const;
@@ -481,6 +484,7 @@ private slots:
     void on_playerGiveAdmin_clicked();
     void on_listNearPlayer_itemActivated(QListWidgetItem *item);
     void on_listAllItem_itemActivated(QListWidgetItem *item);
+    void on_openToLan_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -745,6 +749,9 @@ signals:
     void gameIsLoaded();
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
+    #endif
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    void emitOpenToLan(QString name, bool allowInternet);
     #endif
 };
 }
