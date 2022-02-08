@@ -46,6 +46,7 @@
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../libqtcatchchallenger/Api_client_virtual.hpp"
 #include "../base/SslCert.h"
+#include "../base/LanBroadcastWatcher.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -133,6 +134,9 @@ MainWindow::MainWindow(QWidget *parent) :
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     selectedServer=NULL;
+    LanBroadcastWatcher::lanBroadcastWatcher=new LanBroadcastWatcher();
+    if(!connect(LanBroadcastWatcher::lanBroadcastWatcher,&LanBroadcastWatcher::newServer,this,&MainWindow::newLanServer))
+        abort();
     displayServerList();
     baseWindow=new CatchChallenger::BaseWindow();
     ui->stackedWidget->addWidget(baseWindow);
@@ -377,6 +381,7 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
             if(ok)
             {
                 ConnexionInfo connexionInfo;
+                connexionInfo.lan=false;
                 if(connexion.startsWith("ws://") || connexion.startsWith("wss://"))
                 {
                     #ifndef NOWEBSOCKET
@@ -480,6 +485,7 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray
         if(server->Attribute("unique_code")!=NULL)
         {
             ConnexionInfo connexionInfo;
+            connexionInfo.lan=false;
             connexionInfo.unique_code=server->Attribute("unique_code");
 
             if(server->Attribute("host")!=NULL)
@@ -678,6 +684,7 @@ void MainWindow::displayServerList()
         index++;
     }
     serverConnexion.clear();
+
     if(mergedConnexionInfoList.empty())
         ui->serverEmpty->setText(QStringLiteral("<html><body><p align=\"center\"><span style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>").arg(tr("Empty")));
     #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
@@ -891,6 +898,7 @@ void MainWindow::server_add_finished()
     std::cerr << "AddOrEditServer returned" <<  std::endl;
     #endif
     ConnexionInfo connexionInfo;
+    connexionInfo.lan=false;
     connexionInfo.connexionCounter=0;
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
@@ -1932,11 +1940,55 @@ void MainWindow::httpFinished()
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::cout << "mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
+
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
     displayServerList();
     reply->deleteLater();
     reply=NULL;
+}
+
+void MainWindow::newLanServer()
+{
+    const QList<LanBroadcastWatcher::ServerEntry> &listLan=LanBroadcastWatcher::lanBroadcastWatcher->getLastServerList();
+    temp_lanConnexionInfoList.clear();
+    {
+        int index=0;
+        while(index<listLan.size())
+        {
+            ConnexionInfo e;
+            const LanBroadcastWatcher::ServerEntry &l=listLan.at(index);
+            e.unique_code=l.uniqueKey;
+            e.name=l.name;
+
+            //hightest priority
+            e.host=l.server.toString();
+            e.port=l.port;
+            //lower priority
+            e.ws=QString();
+
+            e.connexionCounter=0;
+            e.lastConnexion=0;
+
+            e.register_page=QString();
+            e.lost_passwd_page=QString();
+            e.site_page=QString();
+
+            e.proxyHost=QString();
+            e.proxyPort=0;
+
+            e.lan=true;
+
+            temp_lanConnexionInfoList.push_back(e);
+            index++;
+        }
+    }
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
+    displayServerList();
 }
 
 void MainWindow::on_multiplayer_clicked()
@@ -2007,6 +2059,12 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     if(!connect(internalServer,&CatchChallenger::InternalServer::error,this,&MainWindow::serverErrorStd,Qt::QueuedConnection))
         abort();
     internalServer->start();
+    if(baseWindow==nullptr)
+        abort();
+    if(!connect(baseWindow,&CatchChallenger::BaseWindow::emitOpenToLan,internalServer,&CatchChallenger::InternalServer::openToLan,Qt::QueuedConnection))
+        abort();
+    if(!connect(internalServer,&CatchChallenger::InternalServer::emitLanPort,baseWindow,&CatchChallenger::BaseWindow::receiveLanPort,Qt::QueuedConnection))
+        abort();
 }
 
 void MainWindow::gameSolo_back()
@@ -2032,9 +2090,10 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     CommonSettingsCommon::commonSettingsCommon.min_character=1;
 
     formatedServerSettings.automatic_account_creation=true;
-    formatedServerSettings.max_players=1;
+    formatedServerSettings.max_players=99;//> 1 to allow open to lan
     formatedServerSettings.sendPlayerNumber = false;
-    formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
+    //formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
+    formatedServerSettings.compressionType=CompressionProtocol::CompressionType::Zstandard;// to allow open to lan
     formatedServerSettings.everyBodyIsRoot                                      = true;
     formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = true;
 
@@ -2046,7 +2105,8 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
-    formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
+    //formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
+    formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_Simple;// to allow open to lan
     formatedServerSettings.datapack_basePath=datapackPathBase.toStdString();
 
     {

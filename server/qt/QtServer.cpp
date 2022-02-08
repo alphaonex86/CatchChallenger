@@ -17,6 +17,10 @@
 #include <QCoreApplication>
 #include <QSqlDatabase>
 #include <QDebug>
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#include <QDataStream>
+#include <QTcpSocket>
+#endif
 
 QtServerPrivateVariables QtServer::qtServerPrivateVariables;
 
@@ -39,6 +43,11 @@ QtServer::QtServer()
     }
     #ifdef CATCHCHALLENGER_SOLO
     if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(&server,&QTcpServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
@@ -267,6 +276,36 @@ void QtServer::newConnection()
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
     }
+    while(server.hasPendingConnections())
+    {
+        QTcpSocket *socket = server.nextPendingConnection();
+        if(socket!=NULL)
+        {
+            qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by TCP socket");
+            CatchChallenger::Client *client=nullptr;
+            switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+            {
+                case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
+                break;
+                case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
+                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
+                break;
+                default:
+                case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+                    client=new QtMapVisibilityAlgorithm_None(socket);
+                break;
+            }
+            connect_the_last_client(client,socket);
+
+            QByteArray data;
+            data.resize(1);
+            data[0x00]=0x00;
+            socket->write(data.constData(),data.size());
+        }
+        else
+            qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection() TCP socket");
+    }
     #endif
 }
 
@@ -469,3 +508,32 @@ void QtServer::unload_the_visibility_algorithm()
 void QtServer::unload_the_events()
 {
 }
+
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+bool QtServer::openToLan(QString name, bool allowInternet)
+{
+    server.listen();
+    //broadcastLan.bind(QHostAddress::Any, 42489);
+    if(!connect(&broadcastLanTimer,&QTimer::timeout,this,&QtServer::sendBroadcastServer))
+        abort();
+    QDataStream stream(&dataToSend,QIODevice::WriteOnly);
+    stream.setVersion(QDataStream::Qt_4_4);
+    stream << name;
+    stream << server.serverPort();
+    if(dataToSend.isEmpty())
+        abort();
+    emit emitLanPort(server.serverPort());
+    broadcastLanTimer.start(500);
+
+    CatchChallenger::GameServerSettings formatedServerSettings=getSettings();
+    formatedServerSettings.max_players=99;//> 1 to allow open to lan
+    formatedServerSettings.sendPlayerNumber = true;
+    formatedServerSettings.everyBodyIsRoot                                      = false;
+    setSettings(formatedServerSettings);
+}
+
+void QtServer::sendBroadcastServer()
+{
+    broadcastLan.writeDatagram(dataToSend,QHostAddress::Broadcast,42490);
+}
+#endif
