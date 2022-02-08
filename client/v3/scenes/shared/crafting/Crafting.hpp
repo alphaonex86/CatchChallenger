@@ -9,8 +9,8 @@
 #include "../../../core/Sprite.hpp"
 #include "../../../ui/Combo.hpp"
 #include "../../../ui/Dialog.hpp"
-#include "../../../ui/ListView.hpp"
 #include "../../../ui/Label.hpp"
+#include "../../../ui/ListView.hpp"
 #include "../../../ui/ThemedButton.hpp"
 
 namespace Scenes {
@@ -32,6 +32,9 @@ class Crafting : public UI::Dialog {
   UI::ListView *craft_content_;
   UI::ListView *materials_content_;
   Node *selected_;
+  std::vector<std::vector<std::pair<uint16_t, uint32_t>>>
+      materialOfRecipeInUsing;
+  std::vector<std::pair<uint16_t, uint32_t>> productOfRecipeInUsing;
 
   Crafting();
   void OnItemClick(Node *node);
@@ -39,6 +42,7 @@ class Crafting : public UI::Dialog {
   void LoadMaterials();
   void LoadRecipes();
   void NewLanguage();
+  void OnRecipeUsedSlot(const CatchChallenger::RecipeUsage &recipeUsage);
 };
 }  // namespace Scenes
 #endif  // CLIENT_V3_SCENES_SHARED_CRAFTING_CRAFTING_HPP_

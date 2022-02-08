@@ -143,7 +143,15 @@ void Inventory::UpdateInventory(uint8_t targetSize, bool force) {
 void Inventory::inventoryUse_slot() {
   if (lastItemSelected < 0) return;
   if (on_use_item_) {
-    on_use_item_(ObjectType::kSeed, lastItemSelected, 1);
+    bool isRecipe = CatchChallenger::CommonDatapack::commonDatapack
+                        .itemToCraftingRecipes.find(lastItemSelected) !=
+                    CatchChallenger::CommonDatapack::commonDatapack
+                        .itemToCraftingRecipes.cend();
+    if (isRecipe) {
+      on_use_item_(ObjectType::kRecipe, lastItemSelected, 1);
+    } else {
+      on_use_item_(ObjectType::kSeed, lastItemSelected, 1);
+    }
   }
 }
 

@@ -28,9 +28,12 @@ class PlayerInfo : public QObject {
   void AddCash(int32_t value);
   void UpdateMonsters(std::vector<CatchChallenger::PlayerMonster> monsters);
   bool IsAllowed(CatchChallenger::ActionAllow action);
+  void AppendReputationPoints(const std::string &type, const uint32_t &points);
+  void AppendReputationPoints(const std::vector<CatchChallenger::ReputationRewards> &rewards);
 
  signals:
   void OnUpdateInfo(PlayerInfo* info);
+  void OnTipShowed(std::string tip, bool isOnlyText);
 
  private:
   static PlayerInfo* instance_;

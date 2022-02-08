@@ -89,6 +89,7 @@ SOURCES += \
     $$PWD/scenes/shared/inventory/MonsterBag.cpp \
     $$PWD/scenes/shared/npctalk/NpcTalk.cpp \
     $$PWD/scenes/shared/crafting/Crafting.cpp \
+    $$PWD/scenes/shared/crafting/CraftingItem.cpp \
     $$PWD/scenes/shared/inventory/Inventory.cpp \
     $$PWD/scenes/shared/inventory/InventoryItem.cpp \
     $$PWD/scenes/shared/toast/Toast.cpp \
@@ -177,6 +178,7 @@ HEADERS  += \
     $$PWD/scenes/map/MonsterThumb.hpp \
     $$PWD/scenes/map/Tip.hpp \
     $$PWD/scenes/shared/crafting/Crafting.hpp \
+    $$PWD/scenes/shared/crafting/CraftingItem.hpp \
     $$PWD/scenes/shared/player/Player.hpp \
     $$PWD/scenes/shared/player/Clan.hpp \
     $$PWD/scenes/shared/player/FinishedQuests.hpp \

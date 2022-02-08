@@ -3,6 +3,10 @@
 
 #include <iostream>
 
+#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/FacilityLib.hpp"
+#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+
 PlayerInfo *PlayerInfo::instance_ = nullptr;
 
 PlayerInfo::PlayerInfo() {
@@ -89,4 +93,89 @@ void PlayerInfo::UpdateMonsters(
 bool PlayerInfo::IsAllowed(CatchChallenger::ActionAllow action) {
   auto const &info = GetInformationRO();
   return info.allow.find(action) != info.allow.cend();
+}
+
+void PlayerInfo::AppendReputationPoints(
+    const std::vector<CatchChallenger::ReputationRewards> &rewards) {
+  unsigned int index = 0;
+  while (index < rewards.size()) {
+    const CatchChallenger::ReputationRewards &reputationRewards =
+        rewards.at(index);
+    AppendReputationPoints(
+        CatchChallenger::CommonDatapack::commonDatapack.reputation
+            .at(reputationRewards.reputationId)
+            .name,
+        reputationRewards.point);
+    index++;
+  }
+}
+
+void PlayerInfo::AppendReputationPoints(const std::string &type,
+                                        const uint32_t &point) {
+  if (point == 0) return;
+  if (QtDatapackClientLoader::datapackLoader->reputationNameToId.find(type) ==
+      QtDatapackClientLoader::datapackLoader->reputationNameToId.cend()) {
+    emit OnTipShowed("Unknow reputation: " + type, true);
+    return;
+  }
+  const uint8_t &reputationId =
+      QtDatapackClientLoader::datapackLoader->reputationNameToId.at(type);
+  CatchChallenger::PlayerReputation playerReputation;
+
+  auto &info = GetInformation();
+  if (info.reputation.find(reputationId) != info.reputation.cend()) {
+    playerReputation = info.reputation.at(reputationId);
+  } else {
+    playerReputation.point = 0;
+    playerReputation.level = 0;
+  }
+  CatchChallenger::PlayerReputation oldPlayerReputation = playerReputation;
+  int32_t old_level = playerReputation.level;
+  CatchChallenger::FacilityLib::appendReputationPoint(
+      &playerReputation, point,
+      CatchChallenger::CommonDatapack::commonDatapack.reputation.at(
+          reputationId));
+  if (oldPlayerReputation.level == playerReputation.level &&
+      oldPlayerReputation.point == playerReputation.point)
+    return;
+  if (info.reputation.find(reputationId) != info.reputation.cend()) {
+    info.reputation[reputationId] = playerReputation;
+  } else {
+    info.reputation[reputationId] = playerReputation;
+  }
+  const std::string &reputationCodeName =
+      CatchChallenger::CommonDatapack::commonDatapack.reputation
+          .at(reputationId)
+          .name;
+
+  std::string tip;
+  if (old_level < playerReputation.level) {
+    if (QtDatapackClientLoader::datapackLoader->reputationExtra.find(
+            reputationCodeName) !=
+        QtDatapackClientLoader::datapackLoader->reputationExtra.cend()) {
+      tip = tr("You have better reputation into %1")
+                .arg(QString::fromStdString(
+                    QtDatapackClientLoader::datapackLoader->reputationExtra
+                        .at(reputationCodeName)
+                        .name))
+                .toStdString();
+    } else {
+      tip = tr("You have better reputation into %1").arg("???").toStdString();
+    }
+  } else if (old_level > playerReputation.level) {
+    if (QtDatapackClientLoader::datapackLoader->reputationExtra.find(
+            reputationCodeName) !=
+        QtDatapackClientLoader::datapackLoader->reputationExtra.cend()) {
+      tip = tr("You have worse reputation into %1")
+                .arg(QString::fromStdString(
+                    QtDatapackClientLoader::datapackLoader->reputationExtra
+                        .at(reputationCodeName)
+                        .name))
+                .toStdString();
+    } else {
+      tip = tr("You have worse reputation into %1").arg("???").toStdString();
+    }
+  }
+
+  emit OnTipShowed(tip, true);
 }

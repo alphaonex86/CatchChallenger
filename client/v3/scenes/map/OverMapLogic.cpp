@@ -5,9 +5,9 @@
 
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/FacilityLib.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../Globals.hpp"
 #include "../../base/ConnectionManager.hpp"
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../core/AudioPlayer.hpp"
 #include "../../core/Logger.hpp"
 #include "../../core/SceneManager.hpp"
@@ -15,11 +15,11 @@
 #include "../shared/inventory/Inventory.hpp"
 #include "../shared/inventory/MonsterBag.hpp"
 #include "../shared/inventory/Plant.hpp"
-#include "../shared/player/FinishedQuests.hpp"
-#include "../shared/player/Quests.hpp"
-#include "../shared/player/Player.hpp"
-#include "../shared/player/Reputations.hpp"
 #include "../shared/player/Clan.hpp"
+#include "../shared/player/FinishedQuests.hpp"
+#include "../shared/player/Player.hpp"
+#include "../shared/player/Quests.hpp"
+#include "../shared/player/Reputations.hpp"
 #include "CCMap.hpp"
 
 using Scenes::Inventory;
@@ -1522,60 +1522,7 @@ requirements")); item->setFont(disableIntoListFont);
         ++i;
     }
 }
-
-void OverMapLogic::load_crafting_inventory()
-{
-    #ifdef DEBUG_BASEWINDOWS
-    qDebug() << "OverMapLogic::load_crafting_inventory()";
-    #endif
-    ui->listCraftingList->clear();
-    crafting_recipes_items_to_graphical.clear();
-    crafting_recipes_items_graphical.clear();
-    Player_private_and_public_informations
-informations=connexionManager->client->get_player_informations();
-    if(informations.recipes==NULL)
-    {
-        qDebug() << "OverMapLogic::load_crafting_inventory(), crafting null";
-        return;
-    }
-    uint16_t index=0;
-    while(index<=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipesMaxId)
-    {
-        uint16_t recipe=index;
-        if(informations.recipes[recipe/8] & (1<<(7-recipe%8)))
-        {
-            //load the material item
-            if(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.find(recipe)
-                    !=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.cend())
-            {
-                QListWidgetItem *item=new QListWidgetItem();
-                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId)!=
-                        QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
-                {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->QtitemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
-                            .doItemId].image);
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra[CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe]
-                            .doItemId].name));
-                }
-                else
-                {
-                    item->setIcon(QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
-                    item->setText(tr("Unknow item:
-%1").arg(CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes[recipe].doItemId));
-                }
-                crafting_recipes_items_to_graphical[recipe]=item;
-                crafting_recipes_items_graphical[item]=recipe;
-                ui->listCraftingList->addItem(item);
-            }
-            else
-                qDebug() <<
-QStringLiteral("OverMapLogic::load_crafting_inventory(), crafting id not found
-into crafting recipe").arg(recipe);
-        }
-        ++index;
-    }
-    on_listCraftingList_itemSelectionChanged();
-}*/
+*/
 
 void OverMapLogic::botFight(const uint16_t &fightId) {
   // todo
@@ -2010,12 +1957,6 @@ void OverMapLogic::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)
         qDebug() << "recipeUsed() unknow code";
         return;
     }
-}*/
-
-/*void OverMapLogic::on_listCraftingList_itemActivated(QListWidgetItem *)
-{
-    if(ui->craftingUse->isVisible())
-        on_craftingUse_clicked();
 }*/
 
 void OverMapLogic::appendReputationRewards(
@@ -2614,7 +2555,7 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
       connexionManager->client->get_player_informations();
   auto info = PlayerInfo::GetInstance();
   switch (type) {
-    case Inventory::kSeed:
+    case Inventory::kSeed: {
       if (QtDatapackClientLoader::datapackLoader->itemToPlants.find(item_id) ==
           QtDatapackClientLoader::datapackLoader->itemToPlants.cend()) {
         Logger::Log(QString("Item is not a plant"));
@@ -2676,6 +2617,12 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
               CatchChallenger::CommonDatapack::commonDatapack.plants
                   .at(plant_id)
                   .fruits_seconds));
+    } break;
+    case Inventory::kRecipe:
+      connexionManager->client->useObject(item_id);
+      connexionManager->client->addRecipe(
+          CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes
+              .at(item_id));
       break;
       // case Inventory::ObjectType_ItemEvolutionOnMonster:
       // case Inventory::ObjectType_ItemLearnOnMonster:

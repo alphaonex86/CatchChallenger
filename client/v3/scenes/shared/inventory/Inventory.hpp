@@ -36,7 +36,8 @@ class Inventory : public Node {
 
   enum ObjectType {
     kSeed,
-    kMonsterEvolution
+    kMonsterEvolution,
+    kRecipe
   };
 
   void SetVar(const ObjectFilter &filter, const bool inSelection,
