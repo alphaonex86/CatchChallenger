@@ -197,7 +197,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
     ui->openToLan->setVisible(!multiplayer);
     chat->show();
     chat->raise();
-    client->setClient(client);
+    //client->setClient(client);
     /*if(!multiplayer)
         mapController->setOpenGl(true);*/
     //frame_main_display_right->setVisible(multiplayer);
