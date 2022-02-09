@@ -44,6 +44,7 @@ OverMapLogic::OverMapLogic() : OverMap() {
   shop_ = nullptr;
   warehouse_ = nullptr;
   crafting_ = nullptr;
+  learn_ = nullptr;
 
   npc_talk_->SetOnItemClick(
       std::bind(&OverMapLogic::IG_dialog_text_linkActivated, this, _1));

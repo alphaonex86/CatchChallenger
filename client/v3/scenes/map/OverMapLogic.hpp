@@ -9,6 +9,7 @@
 #include "../../ui/LinkedDialog.hpp"
 #include "../shared/inventory/Inventory.hpp"
 #include "../shared/shop/Shop.hpp"
+#include "../shared/learn/Learn.hpp"
 #include "../shared/warehouse/Warehouse.hpp"
 #include "../shared/crafting/Crafting.hpp"
 #include "OverMap.hpp"
@@ -308,6 +309,9 @@ class OverMapLogic : public OverMap {
   bool zonecatch;
   // shop
   Shop *shop_;
+
+  // learn
+  Learn *learn_;
   uint32_t tempQuantityForSell;
   bool waitToSell;
   std::vector<CatchChallenger::ItemToSellOrBuy> itemsToSell, itemsToBuy;

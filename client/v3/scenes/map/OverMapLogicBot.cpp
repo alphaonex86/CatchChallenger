@@ -192,7 +192,10 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
     AddChild(shop_);
     return;
   } else if (strcmp(stepXml->Attribute("type"), "learn") == 0) {
-    selectObject(ObjectType_MonsterToLearn);
+    if (learn_ == nullptr) {
+      learn_ = Learn::Create();
+    }
+    AddChild(learn_);
     return;
   } else if (strcmp(stepXml->Attribute("type"), "heal") == 0) {
     connexionManager->client->healAllMonsters();
