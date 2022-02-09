@@ -5,7 +5,8 @@ QtTimerEvents::QtTimerEvents(const int &ms, const int &offset, const unsigned ch
     event(event),
     value(value)
 {
-    connect(&this->timer,&QTimer::timeout,this,&QtTimerEvents::timerFinish);
+    if(!connect(&this->timer,&QTimer::timeout,this,&QtTimerEvents::timerFinish))
+        abort();
     if(ms==0)
         this->timer.start(offset);
     else
