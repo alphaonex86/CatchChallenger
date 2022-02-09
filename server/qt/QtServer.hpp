@@ -24,7 +24,7 @@ class QtServer : public QObject, public CatchChallenger::BaseServer
     Q_OBJECT
 public:
     QtServer();
-    static QtServerPrivateVariables qtServerPrivateVariables;
+    static QtServerPrivateVariables *qtServerPrivateVariables;
     virtual ~QtServer();
     void preload_the_city_capture();
     void removeOneClient();
@@ -49,7 +49,7 @@ public:
     void unload_the_visibility_algorithm() override;
     void unload_the_events() override;
     #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
-    bool openToLan(QString name,bool allowInternet=true);//for now internet filter not implemented
+    void openToLan(QString name,bool allowInternet=true);//for now internet filter not implemented
     #endif
 signals:
     #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
