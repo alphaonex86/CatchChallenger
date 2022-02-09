@@ -43,7 +43,7 @@ void SubServerItem::DrawContent(QPainter *painter) {
   }
 
   auto text = UI::Label::Create(QColor(255, 255, 255), QColor(30, 25, 17));
-  text->SetWidth(bounding_rect_.width());
+  text->SetWidth(bounding.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(title_);
   text->SetY(5);

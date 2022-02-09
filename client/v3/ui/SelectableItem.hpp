@@ -10,6 +10,7 @@ class SelectableItem : public Node {
   ~SelectableItem();
   void SetSelected(bool is_selected);
   void SetDisabled(bool is_disabled);
+  void SetDanger(bool is_danger);
   void ReDrawContent();
   virtual void DrawContent(QPainter *painter) = 0;
 
@@ -23,12 +24,14 @@ class SelectableItem : public Node {
   QString bg_unselected_;
   QString bg_selected_;
   QString bg_disabled_;
+  QString bg_danger_;
 
   SelectableItem();
 
  private:
   bool is_selected_;
   bool is_disabled_;
+  bool is_danger_;
   QPixmap *content_cache_;
   uint16_t strech_x_;
   uint16_t strech_y_;

@@ -229,7 +229,7 @@ void Crafting::LoadMaterials() {
                       .arg(quantity)
                       .arg(nameMaterials));
     if (quantity < content.materials.at(index).quantity) {
-      item->SetDisabled(true);
+      item->SetDanger(true);
     }
 
     if (quantity < content.materials.at(index).quantity) haveMaterials = false;

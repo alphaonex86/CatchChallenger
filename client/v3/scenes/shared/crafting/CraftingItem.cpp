@@ -11,7 +11,10 @@
 
 using Scenes::CraftingItem;
 
-CraftingItem::CraftingItem() : UI::SelectableItem() { SetSize(60, 60); }
+CraftingItem::CraftingItem() : UI::SelectableItem() {
+  SetSize(60, 60);
+  bg_disabled_ = QString(":/CC/images/interface/b1-red.png");
+}
 
 CraftingItem::~CraftingItem() {}
 

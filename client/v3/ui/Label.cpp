@@ -62,23 +62,27 @@ void Label::Draw(QPainter *painter) {
   if (text_.isEmpty()) {
     return;
   }
-  const unsigned int h = bounding_rect_.height();
-  const unsigned int w = bounding_rect_.width();
+  const unsigned int h = BoundingRect().height();
+  const unsigned int w = BoundingRect().width();
 
   QImage image(w, h, QImage::Format_ARGB32);
   image.fill(Qt::transparent);
   QPainter paint;
-  if (image.isNull()) abort();
+  if (image.isNull()) {
+    abort();
+  }
   paint.begin(&image);
 
   if (text_path_ != nullptr && paint.isActive()) {
     paint.setRenderHint(QPainter::Antialiasing);
     pen_gradient_.setFinalStop(0, h);
-    QPen pen(pen_gradient_, GetPenWidth(), Qt::SolidLine, Qt::RoundCap,
-             Qt::RoundJoin);
+    auto pen_width = GetPenWidth();
+    //TODO(lanstat): investigate why this abort the app
+    //QPen pen(pen_gradient_, pen_width, Qt::SolidLine, Qt::RoundCap,
+             //Qt::RoundJoin);
+    //paint.setPen(pen);
+    //paint.drawPath(*text_path_);
     QBrush brush(brush_gradient_);
-    paint.setPen(pen);
-    paint.drawPath(*text_path_);
     paint.setBrush(brush);
     paint.setPen(
         QPen(Qt::transparent, 0, Qt::NoPen, Qt::RoundCap, Qt::RoundJoin));
