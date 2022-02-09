@@ -3,6 +3,9 @@
 QtPlayerUpdater::QtPlayerUpdater()
 {
     setInterval(1000);
+    if(!connect(this,&QTimer::timeout,this,&QtPlayerUpdater::exec,Qt::QueuedConnection))
+        abort();
+    start();
 }
 
 void QtPlayerUpdater::setInterval(int ms)
