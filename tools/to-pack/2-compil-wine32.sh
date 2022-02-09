@@ -3,6 +3,7 @@
 export WINEBASEPATH="/mnt/data/perso/progs/wine/"
 export TEMP_PATH="/mnt/data/perso/tmp/catchchallenger-temp/"
 export CATCHCHALLENGERSOURCESPATH="/home/user/Desktop/CatchChallenger/git/"
+#export CATCHCHALLENGERSOURCESPATH="/home/user/Desktop/CatchChallenger/lanstat/CatchChallenger-responsive-opengl/"
 export BASE_PWD=`pwd`
 
 cd ${BASE_PWD}
