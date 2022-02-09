@@ -78,10 +78,10 @@ void Label::Draw(QPainter *painter) {
     pen_gradient_.setFinalStop(0, h);
     auto pen_width = GetPenWidth();
     //TODO(lanstat): investigate why this abort the app
-    //QPen pen(pen_gradient_, pen_width, Qt::SolidLine, Qt::RoundCap,
-             //Qt::RoundJoin);
-    //paint.setPen(pen);
-    //paint.drawPath(*text_path_);
+    QPen pen(pen_gradient_, pen_width, Qt::SolidLine, Qt::RoundCap,
+             Qt::RoundJoin);
+    paint.setPen(pen);
+    paint.drawPath(*text_path_);
     QBrush brush(brush_gradient_);
     paint.setBrush(brush);
     paint.setPen(

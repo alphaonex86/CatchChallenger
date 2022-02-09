@@ -248,9 +248,10 @@ void SubServer::addToServerList(CatchChallenger::LogicialGroup &logicialGroup,
         << "SubServer::addToServerList(): client->serverOrdenedList.empty()"
         << std::endl;
   if (level > 0) {
+    //TODO(lanstat): investigate why this abort the app
     auto header = UI::Label::Create();
     header->SetPixelSize(18 - (level - 1) * 4);
-    header->SetText(logicialGroup.name);
+    //header->SetText(logicialGroup.name);
     serverList->AddItem(header);
   }
   {
