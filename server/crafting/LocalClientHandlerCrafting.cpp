@@ -9,20 +9,20 @@ using namespace CatchChallenger;
 
 void Client::useSeed(const uint8_t &plant_id)
 {
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.plants.at(plant_id).requirements.reputation))
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_plants().at(plant_id).requirements.reputation))
     {
-        errorOutput("Don't have the requirement: "+std::to_string(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)+" to plant as seed");
+        errorOutput("Don't have the requirement: "+std::to_string(CommonDatapack::commonDatapack.get_plants().at(plant_id).itemUsed)+" to plant as seed");
         return;
     }
-    else if(objectQuantity(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)==0)
+    else if(objectQuantity(CommonDatapack::commonDatapack.get_plants().at(plant_id).itemUsed)==0)
     {
-        errorOutput("Don't have the item id: "+std::to_string(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed)+" to plant as seed");
+        errorOutput("Don't have the item id: "+std::to_string(CommonDatapack::commonDatapack.get_plants().at(plant_id).itemUsed)+" to plant as seed");
         return;
     }
     else
     {
-        appendReputationRewards(CommonDatapack::commonDatapack.plants.at(plant_id).rewards.reputation);
-        removeObject(CommonDatapack::commonDatapack.plants.at(plant_id).itemUsed);
+        appendReputationRewards(CommonDatapack::commonDatapack.get_plants().at(plant_id).rewards.reputation);
+        removeObject(CommonDatapack::commonDatapack.get_plants().at(plant_id).itemUsed);
         seedValidated();
     }
 }
@@ -35,7 +35,7 @@ void Client::useRecipe(const uint8_t &query_id,const uint16_t &recipe_id)
         errorOutput("The player have not this recipe registred: "+std::to_string(recipe_id));
         return;
     }
-    const CraftingRecipe &recipe=CommonDatapack::commonDatapack.craftingRecipes.at(recipe_id);
+    const CraftingRecipe &recipe=CommonDatapack::commonDatapack.get_craftingRecipes().at(recipe_id);
     //check if have material
     unsigned int index=0;
     while(index<recipe.materials.size())

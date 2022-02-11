@@ -46,8 +46,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
             errorFightEngine("Unable to locate the other monster");
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -92,8 +92,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -134,8 +134,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -181,8 +181,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
             errorFightEngine("Unable to locate the other monster");
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -225,8 +225,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -263,8 +263,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -300,8 +300,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
             errorFightEngine("Unable to locate the other monster");
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -344,8 +344,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -381,8 +381,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
                 errorFightEngine("Unable to locate the other monster");
                 return;
             }
-            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+            Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+            Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
             if(currentMonster->hp>currentMonsterStat.hp)
             {
                 errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -429,8 +429,8 @@ void CommonFightEngine::doTheTurn(const uint16_t &skill,const uint8_t &skillLeve
             errorFightEngine("Unable to locate the other monster");
             return;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -472,7 +472,7 @@ Skill::AttackReturn CommonFightEngine::generateOtherAttack()
     }
     if(otherMonster->skills.empty())
     {
-        if(CommonDatapack::commonDatapack.monsterSkills.find(0)!=CommonDatapack::commonDatapack.monsterSkills.cend())
+        if(CommonDatapack::commonDatapack.get_monsterSkills().find(0)!=CommonDatapack::commonDatapack.get_monsterSkills().cend())
         {
             messageFightEngine("Generated bot/wild default attack");
             attackReturn=genericMonsterAttack(otherMonster,getCurrentMonster(),0,1);
@@ -537,8 +537,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
             errorFightEngine("Can't attack with KO monster");
             return attackReturn;
         }
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -559,7 +559,7 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
         }
     }
     #endif
-    const Skill &skillDef=CommonDatapack::commonDatapack.monsterSkills.at(skill);
+    const Skill &skillDef=CommonDatapack::commonDatapack.get_monsterSkills().at(skill);
     const Skill::SkillList &skillList=skillDef.level.at(skillLevel-1);
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     messageFightEngine("You use skill "+std::to_string(skill)+" at level "+std::to_string(skillLevel));
@@ -620,8 +620,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         //both can be KO here
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -685,8 +685,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         //both can be KO here
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -720,8 +720,8 @@ Skill::AttackReturn CommonFightEngine::genericMonsterAttack(PublicPlayerMonster 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
         //both can be KO here
-        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+        Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+        Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         if(currentMonster->hp>currentMonsterStat.hp)
         {
             errorFightEngine("The hp "+std::to_string(currentMonster->hp)+
@@ -776,8 +776,8 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
 {
     Skill::LifeEffectReturn effect_to_return;
     int32_t quantity;
-    const Monster &commonMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster);
-    const Monster &commonOtherMonster=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster);
+    const Monster &commonMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster);
+    const Monster &commonOtherMonster=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster);
     Monster::Stat stat=getStat(commonMonster,currentMonster->level);
     Monster::Stat otherStat=getStat(commonOtherMonster,otherMonster->level);
     switch(effect.on)
@@ -802,9 +802,9 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             quantity=effect.quantity;
         else
         {
-            if(type<CatchChallenger::CommonDatapack::commonDatapack.types.size())
+            if(type<CatchChallenger::CommonDatapack::commonDatapack.get_types().size())
             {
-                const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.types.at(type);
+                const Type &typeDefinition=CatchChallenger::CommonDatapack::commonDatapack.get_types().at(type);
                 float OtherMulti=1.0;
                 if(vectorcontainsAtLeastOne(commonMonster.type,type))
                 {
@@ -812,7 +812,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                     OtherMulti*=1.45;
                 }
                 effect_to_return.effective=1.0;
-                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
+                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster).type;
                 if(type!=255 && !typeList.empty())
                 {
                     unsigned int index=0;
@@ -882,7 +882,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
                     quantity=-((-effect.quantity*stat.attack)/(otherStat.defense*4));
                 else if(effect.quantity>0)//ignore the def for heal
                     quantity=effect.quantity*otherMonster->level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster).type;
+                const std::vector<uint8_t> &typeList=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster).type;
                 if(type!=255 && !typeList.empty())
                 {
                     unsigned int index=0;
@@ -903,7 +903,7 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
             }
             else
             {
-                std::cerr << "type (" << std::to_string(type) << ") of of range for CatchChallenger::CommonDatapack::commonDatapack.types (size: " << std::to_string(CatchChallenger::CommonDatapack::commonDatapack.types.size()) << ")" << std::endl;
+                std::cerr << "type (" << std::to_string(type) << ") of of range for CatchChallenger::CommonDatapack::commonDatapack.types (size: " << std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_types().size()) << ")" << std::endl;
             }
         }
     }
@@ -959,10 +959,10 @@ Skill::LifeEffectReturn CommonFightEngine::applyLifeEffect(const uint8_t &type,c
 
 void CommonFightEngine::confirmEvolutionTo(PlayerMonster * playerMonster,const uint16_t &monster)
 {
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(playerMonster->monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster);
     const Monster::Stat oldStat=getStat(monsterInformations,playerMonster->level);
     playerMonster->monster=monster;
-    const Monster::Stat stat=getStat(CommonDatapack::commonDatapack.monsters.at(playerMonster->monster),playerMonster->level);
+    const Monster::Stat stat=getStat(CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster),playerMonster->level);
     if(oldStat.hp>stat.hp)
     {
         if(playerMonster->hp>stat.hp)

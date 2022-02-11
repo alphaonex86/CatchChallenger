@@ -15,9 +15,9 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_monsters_drops()
 {
-    GlobalServerData::serverPrivateVariables.monsterDrops=DatapackGeneralLoader::loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS,CommonDatapack::commonDatapack.items.item,CommonDatapack::commonDatapack.monsters);
+    GlobalServerData::serverPrivateVariables.monsterDrops=DatapackGeneralLoader::loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS,CommonDatapack::commonDatapack.get_items().item,CommonDatapack::commonDatapack.get_monsters());
 
-    std::cout << CommonDatapack::commonDatapack.monsters.size() << " monster drop(s) loaded" << std::endl;
+    std::cout << CommonDatapack::commonDatapack.get_monsters().size() << " monster drop(s) loaded" << std::endl;
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

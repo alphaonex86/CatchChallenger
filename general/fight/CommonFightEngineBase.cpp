@@ -25,7 +25,7 @@ std::vector<PlayerMonster::PlayerSkill> CommonFightEngineBase::generateWildSkill
                 PlayerMonster::PlayerSkill temp;
                 temp.level=attackToLearn.learnSkillLevel;
                 temp.skill=attackToLearn.learnSkill;
-                temp.endurance=CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.at(temp.level-1).endurance;
+                temp.endurance=CommonDatapack::commonDatapack.get_monsterSkills().at(temp.skill).level.at(temp.level-1).endurance;
                 learnedSkill.push_back(attackToLearn.learnSkill);
                 skills.push_back(temp);
             }
@@ -86,13 +86,13 @@ Monster::Stat CommonFightEngineBase::getStat(const Monster &monster, const uint8
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 bool CommonFightEngineBase::buffIsValid(const Skill::BuffEffect &buffEffect)
 {
-    if(CommonDatapack::commonDatapack.monsterBuffs.find(buffEffect.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+    if(CommonDatapack::commonDatapack.get_monsterBuffs().find(buffEffect.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
         return false;
     if(buffEffect.level<=0)
         return false;
     if(buffEffect.level<=0)
         return false;
-    if(buffEffect.level>CommonDatapack::commonDatapack.monsterBuffs.at(buffEffect.buff).level.size())
+    if(buffEffect.level>CommonDatapack::commonDatapack.get_monsterBuffs().at(buffEffect.buff).level.size())
         return false;
     switch(buffEffect.on)
     {

@@ -538,17 +538,17 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(skinId>=CommonDatapack::commonDatapack.skins.size())
+    if(skinId>=CommonDatapack::commonDatapack.get_skins().size())
     {
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return false;
     }
-    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
     {
         newError(std::string("Internal problem"),std::to_string(profileIndex)+">=CommonDatapack::commonDatapack.profileList.size()");
         return false;
     }
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");

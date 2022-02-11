@@ -393,7 +393,7 @@ void GlobalControler::datapackIsReady()
 
             if(!CatchChallenger::CommonDatapack::commonDatapack.isParsedContent())
                 std::cerr << "CatchChallenger::CommonDatapack::commonDatapack.isParsedContent() then unable to create character" << std::endl;
-            else if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+            else if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
                 std::cerr << "Profile list is empty" << std::endl;
             else
             {
@@ -408,10 +408,10 @@ void GlobalControler::datapackIsReady()
                 }
 
                 qDebug() << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
                 QString pseudo="bot"+QString::fromStdString(CatchChallenger::FacilityLibGeneral::randomPassword("abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",CommonSettingsCommon::commonSettingsCommon.max_pseudo_size-3));
                 uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
                 if(!profile.forcedskin.empty())
                     skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
                 else

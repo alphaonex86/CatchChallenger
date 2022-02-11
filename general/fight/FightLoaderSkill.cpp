@@ -40,11 +40,11 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         else
         {
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif

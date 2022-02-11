@@ -143,9 +143,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #ifndef EPOLLCATCHCHALLENGERSERVER
             {
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.size()>clan->capturedCity)
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().size()>clan->capturedCity)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
-                            CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.at(clan->capturedCity)
+                            CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->capturedCity)
                             });
                 else
                     errorOutput("clan->capturedCity not found into CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId");

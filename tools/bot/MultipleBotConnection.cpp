@@ -216,15 +216,15 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         qDebug() << client->login << "have not character";
         if((autoCreateCharacter() || multipleConnexion()) && serverIsSelected)
         {
-            if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
                 qDebug() << "Profile list is empty for initial creation";
             else
             {
                 qDebug() << client->login << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
                 QString pseudo=QString::fromStdString(getNewPseudo());
                 uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
                 if(!profile.forcedskin.empty())
                     skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
                 else
@@ -293,16 +293,16 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
             qDebug() << client->login << "have not character";
             if(autoCreateCharacter() || multipleConnexion())
             {
-                if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+                if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
                 {
                     qDebug() << "Profile list is empty";
                     return;
                 }
                 qDebug() << client->login << "create new character";
-                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.profileList.size();
+                quint8 profileIndex=rand()%CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size();
                 QString pseudo=QString::fromStdString(getNewPseudo());
                 uint8_t skinId;
-                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+                const CatchChallenger::Profile &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
                 if(!profile.forcedskin.empty())
                     skinId=profile.forcedskin.at(rand()%profile.forcedskin.size());
                 else

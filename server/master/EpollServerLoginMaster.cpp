@@ -1037,10 +1037,10 @@ void EpollServerLoginMaster::loadTheProfile()
     }
 
     //send skin
-    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.skins.size();
+    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.get_skins().size();
     rawServerListForC211Size+=1;
     unsigned int skinId=0;
-    while(skinId<CommonDatapack::commonDatapack.skins.size())
+    while(skinId<CommonDatapack::commonDatapack.get_skins().size())
     {
         *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(skinId));
         rawServerListForC211Size+=2;
@@ -1048,12 +1048,12 @@ void EpollServerLoginMaster::loadTheProfile()
     }
 
     //profile list size
-    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.profileList.size();
+    rawServerListForC211[rawServerListForC211Size]=CommonDatapack::commonDatapack.get_profileList().size();
     rawServerListForC211Size+=1;
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.profileList.size())
+    while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
-        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+        const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
         {
             //database id
             *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(dictionary_starter_internal_to_database.at(index));
@@ -1102,12 +1102,12 @@ void EpollServerLoginMaster::loadTheProfile()
                         *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(playerMonster.captured_with);
                         rawServerListForC211Size+=sizeof(uint16_t);
 
-                        if(CommonDatapack::commonDatapack.monsters.find(playerMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
+                        if(CommonDatapack::commonDatapack.get_monsters().find(playerMonster.id)==CommonDatapack::commonDatapack.get_monsters().cend())
                         {
                             std::cerr << "For profile the monster " << playerMonster.id << " is not found (abort)" << std::endl;
                             abort();
                         }
-                        const Monster &monster=CommonDatapack::commonDatapack.monsters.at(playerMonster.id);
+                        const Monster &monster=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.id);
                         const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monster,playerMonster.level);
                         const std::vector<CatchChallenger::PlayerMonster::PlayerSkill> &skills=CommonFightEngineBase::generateWildSkill(monster,playerMonster.level);
 
@@ -1125,7 +1125,7 @@ void EpollServerLoginMaster::loadTheProfile()
                         while(skillListIndex<skills.size())
                         {
                             const CatchChallenger::PlayerMonster::PlayerSkill &skill=skills.at(skillListIndex);
-                            if(CommonDatapack::commonDatapack.monsterSkills.find(skill.skill)==CommonDatapack::commonDatapack.monsterSkills.cend())
+                            if(CommonDatapack::commonDatapack.get_monsterSkills().find(skill.skill)==CommonDatapack::commonDatapack.get_monsterSkills().cend())
                             {
                                 std::cerr << "For profile the monster skill " << skill.skill << " is not found (abort)" << std::endl;
                                 abort();
@@ -1157,13 +1157,13 @@ void EpollServerLoginMaster::loadTheProfile()
                 while(reputationIndex<profile.reputations.size())
                 {
                     const Profile::Reputation &reputation=profile.reputations.at(reputationIndex);
-                    if(reputation.internalIndex>=CommonDatapack::commonDatapack.reputation.size())
+                    if(reputation.internalIndex>=CommonDatapack::commonDatapack.get_reputation().size())
                     {
                         std::cerr << "For profile the reputation " << reputation.internalIndex << " is not found (abort)" << std::endl;
                         abort();
                     }
                     //type
-                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.reputation.at(reputation.internalIndex).reverse_database_id);
+                    *reinterpret_cast<uint16_t *>(rawServerListForC211+rawServerListForC211Size)=htole16(CommonDatapack::commonDatapack.get_reputation().at(reputation.internalIndex).reverse_database_id);
                     rawServerListForC211Size+=sizeof(uint16_t);
                     //level
                     rawServerListForC211[rawServerListForC211Size]=reputation.level;
@@ -1250,22 +1250,22 @@ void EpollServerLoginMaster::loadTheDictionary()
         posOutput+=2;
     }
     //send reputation
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.reputation.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.get_reputation().size();
     posOutput+=1;
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.reputation.size())
+    while(index<CommonDatapack::commonDatapack.get_reputation().size())
     {
-        const Reputation &reputation=CommonDatapack::commonDatapack.reputation.at(index);
+        const Reputation &reputation=CommonDatapack::commonDatapack.get_reputation().at(index);
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
                 htole16(reputation.reverse_database_id);
         posOutput+=2;
         index++;
     }
     //send skin
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.skins.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.get_skins().size();
     posOutput+=1;
     index=0;
-    while(index<CommonDatapack::commonDatapack.skins.size())
+    while(index<CommonDatapack::commonDatapack.get_skins().size())
     {
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
                 htole16(BaseServerMasterLoadDictionary::dictionary_skin_internal_to_database.at(index));
@@ -1273,10 +1273,10 @@ void EpollServerLoginMaster::loadTheDictionary()
         index++;
     }
     //send starter
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.profileList.size();
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonDatapack::commonDatapack.get_profileList().size();
     posOutput+=1;
     index=0;
-    while(index<CommonDatapack::commonDatapack.profileList.size())
+    while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=
                 htole16(BaseServerMasterLoadDictionary::dictionary_starter_internal_to_database.at(index));

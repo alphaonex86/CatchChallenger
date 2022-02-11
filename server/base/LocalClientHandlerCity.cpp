@@ -523,7 +523,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
                         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
-                        CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.at(clan->capturedCity)
+                        CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->capturedCity)
                         });
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan->captureCityInProgress)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
@@ -536,7 +536,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                         else
                             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_city.asyncWrite({
                                         std::to_string(clan->clanId),
-                                        CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.at(clan->captureCityInProgress)
+                                        CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->captureCityInProgress)
                                         });
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;

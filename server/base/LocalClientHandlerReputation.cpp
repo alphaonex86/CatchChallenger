@@ -25,7 +25,7 @@ void Client::appendReputationPoint(const uint8_t &reputationId, const int32_t &p
 {
     if(point==0)
         return;
-    const Reputation &reputation=CommonDatapack::commonDatapack.reputation.at(reputationId);
+    const Reputation &reputation=CommonDatapack::commonDatapack.get_reputation().at(reputationId);
     //bool isNewReputation=false;
     PlayerReputation *playerReputation=NULL;
     //search
@@ -98,7 +98,7 @@ bool Client::haveReputationRequirements(const std::vector<ReputationRequirements
             if(!reputationRequierement.positif)//default level is 0, but required level is negative
             {
                 normalOutput("reputation.level("+std::to_string(reputationRequierement.level)+
-                             ")<0 and no reputation.type="+CommonDatapack::commonDatapack.reputation.at(reputationRequierement.reputationId).name);
+                             ")<0 and no reputation.type="+CommonDatapack::commonDatapack.get_reputation().at(reputationRequierement.reputationId).name);
                 return false;
             }
         index++;

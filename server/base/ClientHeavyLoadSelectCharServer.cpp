@@ -208,10 +208,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             delete public_and_private_informations.bot_already_beaten;
             public_and_private_informations.bot_already_beaten=NULL;
         }
-        public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1))
-            memcpy(public_and_private_informations.bot_already_beaten,data_raw,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        if(data.size()>(uint16_t)(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1))
+            memcpy(public_and_private_informations.bot_already_beaten,data_raw,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
         else
             memcpy(public_and_private_informations.bot_already_beaten,data_raw,data.size());
     }
@@ -344,7 +344,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                             [pos];
                     ++pos;
 
-                    if(CommonDatapack::commonDatapack.plants.find(plant.plant)==CommonDatapack::commonDatapack.plants.cend())
+                    if(CommonDatapack::commonDatapack.get_plants().find(plant.plant)==CommonDatapack::commonDatapack.get_plants().cend())
                     {
                         normalOutput("wrong value type for plant dirt on map, skip: "+std::to_string(plant.plant));
                         pos+=8;
@@ -355,7 +355,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     memcpy(&mature_at,
                             raw_plants
                             +pos,sizeof(uint64_t));
-                    plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.plants.at(plant.plant).fruits_seconds;
+                    plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.get_plants().at(plant.plant).fruits_seconds;
                     pos+=8;
 
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -428,15 +428,15 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                             [pos];
                     ++pos;
 
-                    if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(questId)==
-                            CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+                    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==
+                            CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
                     {
                         normalOutput("wrong value type for quest on map, skip: "+std::to_string(questId));
                         pos+=2;
                         continue;
                     }
 
-                    const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.quests.at(questId);
+                    const Quest &datapackQuest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
                     if(playerQuest.step>datapackQuest.steps.size())
                     {
                         normalOutput("step out of quest range "+std::to_string(playerQuest.step)+", fix for quest: "+std::to_string(questId));
@@ -485,7 +485,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     CommonMap * map=NULL;
     uint8_t x,y;
     //all is rights
-    if(!GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap || profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(!GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap || profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
     {
         const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
         if(!ok)

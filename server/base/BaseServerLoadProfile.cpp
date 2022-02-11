@@ -18,7 +18,7 @@ void BaseServer::preload_profile()
     #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+    if(CommonDatapack::commonDatapack.get_profileList().size()!=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().size())
     {
         std::cout << "preload_profile() profile common and server don't match, maybe the main code ou sub code don't have start.xml valid" << std::endl;
         abort();
@@ -28,15 +28,16 @@ void BaseServer::preload_profile()
     {
         unsigned int emptyMap=0;
         unsigned int index=0;
-        while(index<CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+        std::vector<ServerSpecProfile> &l=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList_rw();
+        while(index<l.size())
         {
-            ServerSpecProfile &serverSpecProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList[index];
+            ServerSpecProfile &serverSpecProfile=l[index];
             stringreplaceOne(serverSpecProfile.mapString,".tmx","");
             if(serverSpecProfile.mapString.empty())
                 emptyMap++;
             index++;
         }
-        if(emptyMap>=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+        if(emptyMap>=l.size())
         {
             std::cerr << "serverProfileList have no map, maybe the main code ou sub code don't have start.xml valid" << std::endl;
             abort();
@@ -44,7 +45,7 @@ void BaseServer::preload_profile()
     }
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
 
-    GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.profileList.size());
+    GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.get_profileList().size());
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const DatabaseBase::DatabaseType &databaseType=GlobalServerData::serverPrivateVariables.db_common->databaseType();
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
@@ -52,9 +53,9 @@ void BaseServer::preload_profile()
     #endif
 
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.profileList.size())
+    while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
-        const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.at(index);
+        const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().at(index);
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
         if(GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)==GlobalServerData::serverPrivateVariables.map_list.cend())
         {
@@ -73,7 +74,7 @@ void BaseServer::preload_profile()
         serverProfileInternal.orientation=serverProfile.orientation;
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+        const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
 
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
@@ -132,7 +133,7 @@ void BaseServer::preload_profile()
                     const Profile::Reputation &source=profile.reputations.at(index);
                     temp.level=source.level;
                     temp.point=source.point;
-                    if(source.internalIndex>=CommonDatapack::commonDatapack.reputation.size())
+                    if(source.internalIndex>=CommonDatapack::commonDatapack.get_reputation().size())
                     {
                         std::cerr << "profile index out of range for profile preparation. internal error" << std::endl;
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -141,7 +142,7 @@ void BaseServer::preload_profile()
                         break;
                         #endif
                     }
-                    temp.reputationDatabaseId=static_cast<uint8_t>(CommonDatapack::commonDatapack.reputation.at(source.internalIndex).reverse_database_id);
+                    temp.reputationDatabaseId=static_cast<uint8_t>(CommonDatapack::commonDatapack.get_reputation().at(source.internalIndex).reverse_database_id);
                     reputationList.push_back(temp);
                     index++;
                 }
@@ -185,7 +186,7 @@ void BaseServer::preload_profile()
                 while(monsterIndex<monsters.size())
                 {
                     const auto &monster=monsters.at(monsterIndex);
-                    const auto &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
+                    const auto &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
                     const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
                     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills_list=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                     if(skills_list.empty())
