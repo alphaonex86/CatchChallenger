@@ -105,18 +105,20 @@ void CommonDatapackServerSpec::applyMonstersRate()
     }
     for(const auto& n : CommonDatapack::commonDatapack.get_monsters()) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
+        const uint32_t &oldXP=monster.give_xp;
         monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
-        monster.give_xp/=1000;
+        //monster.give_xp/=1000;//why?
         if(monster.give_xp==0)
         {
-            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() monster.give_sp==0" << std::endl;
+            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() monster.give_sp==0: " << oldXP << "*" << CommonSettingsServer::commonSettingsServer.rates_xp << "/1000" << std::endl;
             abort();
         }
+        const uint32_t &oldSP=monster.give_sp;
         monster.give_sp*=CommonSettingsServer::commonSettingsServer.rates_xp;
-        monster.give_sp/=1000;
+        //monster.give_sp/=1000;//why?
         if(monster.give_sp==0)
         {
-            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() monster.give_sp==0" << std::endl;
+            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() monster.give_sp==0" << oldSP << "*" << CommonSettingsServer::commonSettingsServer.rates_xp << "/1000" << std::endl;
             abort();
         }
         monster.powerVar*=static_cast<double>(CommonSettingsServer::commonSettingsServer.rates_xp_pow)/1000;
