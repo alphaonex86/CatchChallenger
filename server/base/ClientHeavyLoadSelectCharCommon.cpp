@@ -224,11 +224,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+    if(CommonDatapack::commonDatapack.get_profileList().size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
         character_id=characterId;
         characterSelectionIsWrong(query_id,0x04,"selectCharacter_return() profile common and server don't match: "+
-                                  std::to_string(CommonDatapack::commonDatapack.profileList.size())+
+                                  std::to_string(CommonDatapack::commonDatapack.get_profileList().size())+
                                   "!="+
                                   std::to_string(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
                                   );
@@ -243,10 +243,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
     profileIndex=DictionaryLogin::dictionary_starter_database_to_internal.at(starter);
-    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
     {
         errorOutput("profile index: "+std::to_string(profileIndex)+
-                    " out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.profileList.size())+")");
+                    " out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.get_profileList().size())+")");
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(characterId);
         #endif
@@ -312,10 +312,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             delete public_and_private_informations.encyclopedia_monster;
             public_and_private_informations.encyclopedia_monster=NULL;
         }
-        public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.monstersMaxId/8+1))
-            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+        public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+        memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1))
+            memcpy(public_and_private_informations.encyclopedia_monster,data_raw,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
         else
             memcpy(public_and_private_informations.encyclopedia_monster,data_raw,data.size());
     }
@@ -334,10 +334,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             delete public_and_private_informations.encyclopedia_item;
             public_and_private_informations.encyclopedia_item=NULL;
         }
-        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.items.itemMaxId/8+1))
-            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+        public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+        memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1))
+            memcpy(public_and_private_informations.encyclopedia_item,data_raw,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
         else
             memcpy(public_and_private_informations.encyclopedia_item,data_raw,data.size());
     }
@@ -366,7 +366,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
             pos+=2;
-            if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==CommonDatapack::commonDatapack.items.item.cend())
+            if(CommonDatapack::commonDatapack.get_items().item.find(static_cast<uint16_t>(item))==CommonDatapack::commonDatapack.get_items().item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             else
             {
@@ -411,8 +411,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 item-=65536;
             lastItemId=static_cast<uint16_t>(item);
             pos+=2;
-            if(CommonDatapack::commonDatapack.items.item.find(static_cast<uint16_t>(item))==
-                    CommonDatapack::commonDatapack.items.item.cend())
+            if(CommonDatapack::commonDatapack.get_items().item.find(static_cast<uint16_t>(item))==
+                    CommonDatapack::commonDatapack.get_items().item.cend())
                 normalOutput("Take care load unknown item: "+std::to_string(item));
             else
             {
@@ -449,10 +449,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             delete public_and_private_informations.recipes;
             public_and_private_informations.recipes=NULL;
         }
-        public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
-        memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
-        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1))
-            memcpy(public_and_private_informations.recipes,data_raw,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+        public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+        memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+        if(data.size()>(uint16_t)(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1))
+            memcpy(public_and_private_informations.recipes,data_raw,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
         else
             memcpy(public_and_private_informations.recipes,data_raw,data.size());
     }
@@ -507,51 +507,51 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             {
                 if(playerReputation.level>=0)
                 {
-                    if((uint32_t)playerReputation.level>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())
+                    if((uint32_t)playerReputation.level>=CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_positive.size())
                     {
                         normalOutput("The reputation level "+std::to_string(typeReputation)+
                                      " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
                                      " > max level: "+
-                                     std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size())+
+                                     std::to_string(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_positive.size())+
                                      ")");
                         continue;
                     }
                 }
                 else
                 {
-                    if((uint32_t)(-playerReputation.level)>CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())
+                    if((uint32_t)(-playerReputation.level)>CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_negative.size())
                     {
                         normalOutput("The reputation level "+std::to_string(typeReputation)+
                                      " is wrong because is out of range (reputation level: "+std::to_string(playerReputation.level)+
-                                     " < max level: "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size())+")");
+                                     " < max level: "+std::to_string(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_negative.size())+")");
                         continue;
                     }
                 }
                 if(playerReputation.point>0)
                 {
-                    if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.size()==(uint32_t)(playerReputation.level+1))//start at level 0 in positive
+                    if(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_positive.size()==(uint32_t)(playerReputation.level+1))//start at level 0 in positive
                     {
                         normalOutput("The reputation level is already at max, drop point");
                         playerReputation.point=0;
                     }
-                    if(playerReputation.point>=CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level+1))//start at level 0 in positive
+                    if(playerReputation.point>=CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_positive.at(playerReputation.level+1))//start at level 0 in positive
                     {
                         normalOutput("The reputation point "+std::to_string(playerReputation.point)+
-                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_positive.at(playerReputation.level)));
+                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_positive.at(playerReputation.level)));
                         continue;
                     }
                 }
                 else if(playerReputation.point<0)
                 {
-                    if(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.size()==(uint32_t)-playerReputation.level)//start at level -1 in negative
+                    if(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_negative.size()==(uint32_t)-playerReputation.level)//start at level -1 in negative
                     {
                         normalOutput("The reputation level is already at min, drop point");
                         playerReputation.point=0;
                     }
-                    if(playerReputation.point<CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(-playerReputation.level))//start at level -1 in negative
+                    if(playerReputation.point<CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_negative.at(-playerReputation.level))//start at level -1 in negative
                     {
                         normalOutput("The reputation point "+std::to_string(playerReputation.point)+
-                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.reputation.at(reputationInternalId).reputation_negative.at(playerReputation.level)));
+                                     " is greater than max "+std::to_string(CommonDatapack::commonDatapack.get_reputation().at(reputationInternalId).reputation_negative.at(playerReputation.level)));
                         continue;
                     }
                 }

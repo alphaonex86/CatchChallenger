@@ -30,9 +30,9 @@ void BaseServer::preload_zone_return()
         const uint32_t &clanId=stringtouint32(tempString,&ok);
         if(ok)
         {
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
             {
-                const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
+                const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(zoneCodeName);
                 GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
                 GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
             }
@@ -60,12 +60,14 @@ void BaseServer::preload_zone_sql()
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
             std::string queryText;
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
             {
-                CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId[zoneCodeName]=indexZone;
-                while(CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.size()<=indexZone)
-                    CommonDatapackServerSpec::commonDatapackServerSpec.idToZone.push_back(std::string());
-                CommonDatapackServerSpec::commonDatapackServerSpec.idToZone[indexZone]=zoneCodeName;
+                std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
+                zoneToId[zoneCodeName]=indexZone;
+                std::vector<std::string> &idToZone=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone_rw();
+                while(idToZone.size()<=indexZone)
+                    idToZone.push_back(std::string());
+                idToZone[indexZone]=zoneCodeName;
                 if(indexZone>60000)
                 {
                     std::cerr << "Error, zone count can't be > 60000" << std::endl;

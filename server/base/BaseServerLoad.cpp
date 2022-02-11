@@ -24,7 +24,7 @@ void BaseServer::preload_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.events.size())
+    while(index<CommonDatapack::commonDatapack.get_events().size())
     {
         GlobalServerData::serverPrivateVariables.events.push_back(0);
         index++;
@@ -35,9 +35,9 @@ void BaseServer::preload_the_events()
         while(i!=GlobalServerData::serverSettings.programmedEventList.end())
         {
             unsigned int index=0;
-            while(index<CommonDatapack::commonDatapack.events.size())
+            while(index<CommonDatapack::commonDatapack.get_events().size())
             {
-                const Event &event=CommonDatapack::commonDatapack.events.at(index);
+                const Event &event=CommonDatapack::commonDatapack.get_events().at(index);
                 if(event.name==i->first)
                 {
                     #ifdef CATCHCHALLENGER_GAMESERVER_EVENTSTARTONLOCALTIME
@@ -77,7 +77,7 @@ void BaseServer::preload_the_events()
                 }
                 index++;
             }
-            if(index==CommonDatapack::commonDatapack.events.size())
+            if(index==CommonDatapack::commonDatapack.get_events().size())
                 GlobalServerData::serverSettings.programmedEventList.erase(i->first);
             ++i;
         }
@@ -142,7 +142,8 @@ bool BaseServer::preload_zone_init()
                     const uint16_t &fightId=stringtouint16(fightIdStringList.at(sub_index),&ok);
                     if(ok)
                     {
-                        if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightId)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
+                        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightId)==
+                                CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().end())
                             std::cerr << "bot fightId " << fightId << " not found for capture zone " << zoneCodeName << std::endl;
                         else
                             fightIdList.push_back(fightId);
@@ -151,7 +152,7 @@ bool BaseServer::preload_zone_init()
                 }
                 if(sub_index==fightIdStringList.size() && !fightIdList.empty())
                 {
-                    const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(zoneCodeName);
+                    const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(zoneCodeName);
                     while(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size()<zoneId)
                     {
                         std::vector<uint16_t> t;
