@@ -11,7 +11,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
     {
         errorOutput("shopId not found: "+std::to_string(shopId));
         return;
@@ -120,7 +120,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
         }
     }
     //send the shop items (no taxes from now)
-    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId);
 
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -169,7 +169,7 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("buyObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
     {
         errorOutput("shopId not found: "+std::to_string(shopId));
         return;
@@ -284,7 +284,7 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
         }
     }
     //send the shop items (no taxes from now)
-    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
+    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId);
     const int &priceIndex=vectorindexOf(shop.items,objectId);
 
     removeFromQueryReceived(query_id);
@@ -308,7 +308,7 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
-    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId).prices.at(priceIndex);
+    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId).prices.at(priceIndex);
     if(realprice==0)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
@@ -363,7 +363,7 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("sellObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.cend())
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
     {
         errorOutput("shopId not found: "+std::to_string(shopId));
         return;
@@ -486,7 +486,7 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
     posOutput+=1;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
-    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
+    if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
     {
         errorOutput("this item don't exists");
         return;
@@ -496,7 +496,7 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
         errorOutput("you have not this quantity to sell");
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item.at(objectId).price==0)
+    if(CommonDatapack::commonDatapack.get_items().item.at(objectId).price==0)
     {
         errorOutput("Can't sold %1"+std::to_string(objectId));
         return;
@@ -509,7 +509,7 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
     else
         realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;*/
 
-    const uint32_t &realPrice=CommonDatapack::commonDatapack.items.item.at(objectId).price/2;
+    const uint32_t &realPrice=CommonDatapack::commonDatapack.get_items().item.at(objectId).price/2;
 
     if(realPrice<price)
     {

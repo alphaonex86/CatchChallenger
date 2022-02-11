@@ -42,10 +42,10 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
         delete[] this->botAlreadyBeaten;
         this->botAlreadyBeaten=NULL;
     }
-    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId)
+    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId())
     {
-        this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        this->botAlreadyBeaten=(char *)malloc(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        memset(this->botAlreadyBeaten,0,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
     }
     else
     {
@@ -53,7 +53,7 @@ void MapVisualiserPlayerWithFight::setBotsAlreadyBeaten(const char * const botAl
         this->botAlreadyBeaten=NULL;
     }
     if(botAlreadyBeaten!=NULL)
-        memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+        memcpy(this->botAlreadyBeaten,botAlreadyBeaten,CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
 }
 
 void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
@@ -296,7 +296,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())

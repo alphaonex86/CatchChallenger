@@ -129,7 +129,7 @@ PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error me
     if(selectedMonster<playerMonsterSize)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(CommonDatapack::commonDatapack.monsters.find(get_public_and_private_informations().playerMonster.at(selectedMonster).monster)==CommonDatapack::commonDatapack.monsters.cend())
+        if(CommonDatapack::commonDatapack.get_monsters().find(get_public_and_private_informations().playerMonster.at(selectedMonster).monster)==CommonDatapack::commonDatapack.get_monsters().cend())
         {
             errorFightEngine("Current monster don't exists: "+std::to_string(get_public_and_private_informations().playerMonster.at(selectedMonster).monster));
             return NULL;
@@ -206,28 +206,28 @@ bool CommonFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
         errorFightEngine("can't be applyied on KO monster: "+std::to_string(object));
         return false;
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(object)!=CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(object)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend())
     {
         if(isInFight())
         {
             errorFightEngine("this item "+std::to_string(object)+" can't be used in fight");
             return false;
         }
-        if(CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(object).find(playerMonster->monster)==CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(object).cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(object).find(playerMonster->monster)==CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(object).cend())
         {
             errorFightEngine("this item "+std::to_string(object)+" can't be applied on this monster "+std::to_string(playerMonster->monster));
             return false;
         }
-        confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.at(object).at(playerMonster->monster));
+        confirmEvolutionTo(playerMonster,CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(object).at(playerMonster->monster));
         return true;
     }
-    else if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend()
-            || CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.cend())
+    else if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()
+            || CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend())
     {
-        if(CommonDatapack::commonDatapack.items.monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.items.monsterItemEffect.cend())
+        if(CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend())
         {
-            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(playerMonster->monster),playerMonster->level);
-            const std::vector<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.items.monsterItemEffect.at(object);
+            const Monster::Stat &playerMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster),playerMonster->level);
+            const std::vector<MonsterItemEffect> monsterItemEffect = CommonDatapack::commonDatapack.get_items().monsterItemEffect.at(object);
             unsigned int index=0;
             while(index<monsterItemEffect.size())
             {
@@ -257,14 +257,14 @@ bool CommonFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
             if(isInFight())
                 doTheOtherMonsterTurn();
         }
-        else if(CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.cend())
+        else if(CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(object)!=CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend())
         {
             if(isInFight())
             {
                 errorFightEngine("this item "+std::to_string(object)+" can't be used in fight");
                 return false;
             }
-            const std::vector<MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight = CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.at(object);
+            const std::vector<MonsterItemEffectOutOfFight> monsterItemEffectOutOfFight = CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.at(object);
             unsigned int index=0;
             while(index<monsterItemEffectOutOfFight.size())
             {
@@ -287,14 +287,15 @@ bool CommonFightEngine::useObjectOnMonsterByPosition(const uint16_t &object, con
             }
         }
     }
-    else if(CommonDatapack::commonDatapack.items.itemToLearn.find(object)!=CommonDatapack::commonDatapack.items.itemToLearn.cend())
+    else if(CommonDatapack::commonDatapack.get_items().itemToLearn.find(object)!=CommonDatapack::commonDatapack.get_items().itemToLearn.cend())
     {
         if(isInFight())
         {
             errorFightEngine("this item "+std::to_string(object)+" can't be used in fight");
             return false;
         }
-        if(CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(object).find(playerMonster->monster)==CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.at(object).cend())
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.at(object).find(playerMonster->monster)==
+                CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.at(object).cend())
         {
             errorFightEngine("this item "+std::to_string(object)+" can't be applied on this monster "+std::to_string(playerMonster->monster));
             return false;
@@ -480,8 +481,8 @@ bool CommonFightEngine::haveMoreEndurance()
 
 bool CommonFightEngine::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
 {
-    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(currentMonster->monster),currentMonster->level);
-    Monster::Stat otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(otherMonster->monster),otherMonster->level);
+    const Monster::Stat &currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(currentMonster->monster),currentMonster->level);
+    const Monster::Stat &otherMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
     bool currentMonsterStatIsFirstToAttack=false;
     if(currentMonsterStat.speed>=otherMonsterStat.speed)
         currentMonsterStatIsFirstToAttack=true;

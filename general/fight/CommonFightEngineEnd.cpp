@@ -85,7 +85,7 @@ bool CommonFightEngine::dropKOOtherMonster()
 
 void CommonFightEngine::healAllMonsters()
 {
-    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.empty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
         return;
     unsigned int index=0;
     while(index<get_public_and_private_informations().playerMonster.size())
@@ -93,7 +93,7 @@ void CommonFightEngine::healAllMonsters()
         PlayerMonster &playerMonster=get_public_and_private_informations().playerMonster[index];
         if(playerMonster.egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(playerMonster.monster),playerMonster.level);
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster),playerMonster.level);
             playerMonster.hp=stat.hp;
             playerMonster.buffs.clear();
             unsigned int sub_index=0;
@@ -102,14 +102,14 @@ void CommonFightEngine::healAllMonsters()
                 const PlayerMonster::PlayerSkill &playerSkill=playerMonster.skills.at(sub_index);
                 const uint16_t &skill=playerSkill.skill;
                 const uint8_t &skillIndex=playerSkill.level-1;
-                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(skill)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(skill)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
                 {
-                    const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skill);
+                    const Skill &fullSkill=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(skill);
                     playerMonster.skills[sub_index].endurance=
                             fullSkill.level.at(skillIndex).endurance;
                 }
                 else
-                    errorFightEngine("Try heal an unknown skill: "+std::to_string(skill)+" into list "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.size()));
+                    errorFightEngine("Try heal an unknown skill: "+std::to_string(skill)+" into list "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().size()));
                 sub_index++;
             }
         }
@@ -163,10 +163,11 @@ void CommonFightEngine::fightFinished()
         unsigned int sub_index=0;
         while(sub_index<get_public_and_private_informations().playerMonster.at(index).buffs.size())
         {
-            if(CommonDatapack::commonDatapack.monsterBuffs.find(get_public_and_private_informations().playerMonster.at(index).buffs.at(sub_index).buff)!=CommonDatapack::commonDatapack.monsterBuffs.cend())
+            if(CommonDatapack::commonDatapack.get_monsterBuffs().find(get_public_and_private_informations().playerMonster.at(index).buffs.at(sub_index).buff)!=
+                    CommonDatapack::commonDatapack.get_monsterBuffs().cend())
             {
                 const PlayerBuff &playerBuff=get_public_and_private_informations().playerMonster.at(index).buffs.at(sub_index);
-                if(CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff).level.at(playerBuff.level-1).duration!=Buff::Duration_Always)
+                if(CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff).level.at(playerBuff.level-1).duration!=Buff::Duration_Always)
                     get_public_and_private_informations().playerMonster[index].buffs.erase(get_public_and_private_informations().playerMonster[index].buffs.begin()+sub_index);
                 else
                     sub_index++;
@@ -198,7 +199,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             wildDrop(wildMonster.monster);
             //give xp/sp here
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.monsters.find(wildMonster.monster)==CommonDatapack::commonDatapack.monsters.cend())
+            if(CommonDatapack::commonDatapack.get_monsters().find(wildMonster.monster)==CommonDatapack::commonDatapack.get_monsters().cend())
             {
                 std::cerr << "Error, monster into list not found: " << std::to_string(wildMonster.monster) << std::endl;
                 abort();
@@ -209,7 +210,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
                 abort();
             }
             #endif
-            const Monster &wildMonsterInfo=CommonDatapack::commonDatapack.monsters.at(wildMonster.monster);
+            const Monster &wildMonsterInfo=CommonDatapack::commonDatapack.get_monsters().at(wildMonster.monster);
             //multiplicator do at datapack loading
             int sp=wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -242,7 +243,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             #endif
             //don't drop item because it's not a wild fight
             //give xp/sp here
-            const Monster &botmonster=CommonDatapack::commonDatapack.monsters.at(botFightMonsters.front().monster);
+            const Monster &botmonster=CommonDatapack::commonDatapack.get_monsters().at(botFightMonsters.front().monster);
             //multiplicator do at datapack loading
             int sp=botmonster.give_sp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=botmonster.give_xp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
@@ -272,7 +273,7 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=false;
     PlayerMonster * monster=getCurrentMonster();
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
     uint32_t remaining_xp=monster->remaining_xp;
     uint8_t level=monster->level;
     if(level>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
@@ -336,7 +337,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
         errorFightEngine("Monster index not for to add level");
         return false;
     }
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.monsters.at(monster->monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
     const uint8_t &level=get_public_and_private_informations().playerMonster.at(monsterIndex).level;
     const uint32_t &old_max_hp=getStat(monsterInformations,level).hp;
     const uint32_t &new_max_hp=getStat(monsterInformations,level+1).hp;

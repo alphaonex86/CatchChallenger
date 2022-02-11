@@ -212,7 +212,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_and_encyclopedia.asyncWrite({
         item,
         binarytoHexa(public_and_private_informations.encyclopedia_item,
-        static_cast<uint32_t>(CommonDatapack::commonDatapack.items.item.size())/8+1),
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_items().item.size())/8+1),
         std::to_string(character_id)
         });
 }
@@ -221,7 +221,7 @@ void Client::updateMonsterInDatabaseEncyclopedia()
 {
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_encyclopedia.asyncWrite({
         binarytoHexa(public_and_private_informations.encyclopedia_monster,
-        static_cast<uint32_t>(CommonDatapack::commonDatapack.monsters.size())/8+1),
+        static_cast<uint32_t>(CommonDatapack::commonDatapack.get_monsters().size())/8+1),
         std::to_string(character_id)
         });
 }
@@ -257,13 +257,13 @@ void Client::syncDatabaseReputation()
     while(i!=public_and_private_informations.reputation.cend())
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(i->first>=CommonDatapack::commonDatapack.reputation.size())
+        if(i->first>=CommonDatapack::commonDatapack.get_reputation().size())
         {
             std::cerr << "public_and_private_informations.reputation internal id is out of range to save: " << i->first << std::endl;
             abort();
         }
         #endif
-        const uint8_t &databaseType=static_cast<uint8_t>(CommonDatapack::commonDatapack.reputation.at(i->first).reverse_database_id);
+        const uint8_t &databaseType=static_cast<uint8_t>(CommonDatapack::commonDatapack.get_reputation().at(i->first).reverse_database_id);
         #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         //not ordened
         uint8_t type;
@@ -308,7 +308,7 @@ void Client::syncBotAlreadyBeaten()
         return;
     }
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
-                binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1),
+                binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1),
                 std::to_string(character_id)
                 });
 }

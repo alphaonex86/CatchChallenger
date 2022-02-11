@@ -33,7 +33,7 @@ void Client::addObjectAndSend(const uint16_t &item,const uint32_t &quantity)
 
 void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool databaseSync)
 {
-    if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+    if(CommonDatapack::commonDatapack.get_items().item.find(item)==CommonDatapack::commonDatapack.get_items().item.cend())
     {
         errorOutput("Object "+std::to_string(item)+" is not found into the item list");
         return;
@@ -190,7 +190,7 @@ bool Client::useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t 
     }
     if(CommonFightEngine::useObjectOnMonsterByPosition(object,monsterPosition))
     {
-        if(CommonDatapack::commonDatapack.items.item.at(object).consumeAtUse)
+        if(CommonDatapack::commonDatapack.get_items().item.at(object).consumeAtUse)
             removeObject(object);
     }
     return true;
@@ -211,18 +211,18 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         errorOutput("have not quantity to use this object: "+std::to_string(itemId)+" because recipe already registred");
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item.at(itemId).consumeAtUse)
+    if(CommonDatapack::commonDatapack.get_items().item.at(itemId).consumeAtUse)
         removeObject(itemId);
     //if is crafting recipe
-    if(CommonDatapack::commonDatapack.itemToCraftingRecipes.find(itemId)!=CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
+    if(CommonDatapack::commonDatapack.get_itemToCraftingRecipes().find(itemId)!=CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend())
     {
-        const uint16_t &recipeId=CommonDatapack::commonDatapack.itemToCraftingRecipes.at(itemId);
+        const uint16_t &recipeId=CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(itemId);
         if(public_and_private_informations.recipes[recipeId/8] & (1<<(7-recipeId%8)))
         {
             errorOutput("Can't use the object: "+std::to_string(itemId)+", recipe already registred");
             return;
         }
-        if(!haveReputationRequirements(CommonDatapack::commonDatapack.craftingRecipes.at(recipeId).requirements.reputation))
+        if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_craftingRecipes().at(recipeId).requirements.reputation))
         {
             errorOutput("The player have not the requirement: "+std::to_string(recipeId)+" to to learn crafting recipe");
             return;
@@ -249,13 +249,13 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         //add into db, bit to save
         {
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_recipe.asyncWrite({
-                        binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1),
+                        binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1),
                         std::to_string(character_id)
                         });
         }
     }
     //use trap into fight
-    else if(CommonDatapack::commonDatapack.items.trap.find(itemId)!=CommonDatapack::commonDatapack.items.trap.cend())
+    else if(CommonDatapack::commonDatapack.get_items().trap.find(itemId)!=CommonDatapack::commonDatapack.get_items().trap.cend())
     {
         if(!isInFight())
         {
@@ -291,9 +291,9 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     }
     //use repel into fight
-    else if(CommonDatapack::commonDatapack.items.repel.find(itemId)!=CommonDatapack::commonDatapack.items.repel.cend())
+    else if(CommonDatapack::commonDatapack.get_items().repel.find(itemId)!=CommonDatapack::commonDatapack.get_items().repel.cend())
     {
-        public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.items.repel.at(itemId);
+        public_and_private_informations.repel_step+=CommonDatapack::commonDatapack.get_items().repel.at(itemId);
 
         removeFromQueryReceived(query_id);
         //send the network reply

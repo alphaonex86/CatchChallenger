@@ -214,6 +214,33 @@ public:
         std::string map;
         uint8_t x,y;
     };
+public:
+    const std::unordered_map<uint8_t,TypeExtra> &get_typeExtra() const;
+    const std::unordered_map<uint16_t,MonsterExtra> &get_monsterExtra() const;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> &get_monsterBuffsExtra() const;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,MonsterExtra::Skill> &get_monsterSkillsExtra() const;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,ItemExtra> &get_itemsExtra() const;
+    const std::unordered_map<std::string,ReputationExtra> &get_reputationExtra() const;
+    const std::unordered_map<std::string,uint8_t> &get_reputationNameToId() const;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> &get_itemToPlants() const;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> &get_questsExtra() const;
+    const std::unordered_map<std::string,uint16_t> &get_questsPathToId() const;
+    const std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > &get_botToQuestStart() const;
+    const std::unordered_map<uint16_t,BotFightExtra> &get_botFightsExtra() const;
+    const std::unordered_map<std::string,ZoneExtra> &get_zonesExtra() const;
+    const std::unordered_map<std::string,std::string> &get_audioAmbiance() const;
+    const std::unordered_map<uint32_t,ProfileText> &get_profileTextList() const;
+    const std::unordered_map<std::string,VisualCategory> &get_visualCategories() const;
+    const std::string &get_language() const;
+    const std::vector<std::string> &get_maps() const;
+    const std::vector<std::string> &get_skins() const;
+    ///todo drop the full path and .tmx
+    const std::unordered_map<std::string,uint32_t> &get_mapToId() const;
+    const std::unordered_map<std::string,uint32_t> &get_fullMapPathToId() const;
+    const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &get_itemOnMap() const;
+    const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &get_plantOnMap() const;
+    const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;
+protected:
     std::unordered_map<uint8_t,TypeExtra> typeExtra;
     std::unordered_map<uint16_t,MonsterExtra> monsterExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
@@ -238,11 +265,11 @@ public:
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > itemOnMap;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > plantOnMap;
     std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
+public:
     bool isParsingDatapack() const;
     std::string getDatapackPath() const;
     std::string getMainDatapackPath() const;
     std::string getSubDatapackPath() const;
-public:
     void parseDatapack(const std::string &datapackPath, const std::string &cacheHash=std::string(), const std::string &language="en");
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);

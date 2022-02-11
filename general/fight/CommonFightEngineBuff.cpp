@@ -28,12 +28,12 @@ int CommonFightEngine::addCurrentBuffEffect(const Skill::BuffEffect &effect)
  * */
 int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, PublicPlayerMonster *currentMonster, PublicPlayerMonster *otherMonster)
 {
-    if(CommonDatapack::commonDatapack.monsterBuffs.find(effect.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+    if(CommonDatapack::commonDatapack.get_monsterBuffs().find(effect.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
     {
         errorFightEngine("apply a unknown buff");
         return -4;
     }
-    if(effect.level>CommonDatapack::commonDatapack.monsterBuffs.at(effect.buff).level.size())
+    if(effect.level>CommonDatapack::commonDatapack.get_monsterBuffs().at(effect.buff).level.size())
     {
         errorFightEngine("apply buff level out of range");
         return -4;
@@ -41,7 +41,7 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
     PlayerBuff tempBuff;
     tempBuff.buff=effect.buff;
     tempBuff.level=effect.level;
-    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.monsterBuffs.at(effect.buff).level.at(effect.level-1).durationNumberOfTurn;
+    tempBuff.remainingNumberOfTurn=CommonDatapack::commonDatapack.get_monsterBuffs().at(effect.buff).level.at(effect.level-1).durationNumberOfTurn;
     unsigned int index=0;
     switch(effect.on)
     {
@@ -91,12 +91,12 @@ int CommonFightEngine::addBuffEffectFull(const Skill::BuffEffect &effect, Public
 
 void CommonFightEngine::removeBuffEffectFull(const Skill::BuffEffect &effect)
 {
-    if(CommonDatapack::commonDatapack.monsterBuffs.find(effect.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+    if(CommonDatapack::commonDatapack.get_monsterBuffs().find(effect.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
     {
         errorFightEngine("apply a unknown buff");
         return;
     }
-    if(effect.level>CommonDatapack::commonDatapack.monsterBuffs.at(effect.buff).level.size())
+    if(effect.level>CommonDatapack::commonDatapack.get_monsterBuffs().at(effect.buff).level.size())
     {
         errorFightEngine("apply buff level out of range");
         return;
@@ -188,11 +188,11 @@ std::vector<Skill::BuffEffect> CommonFightEngine::removeOldBuff(PublicPlayerMons
     while(index<playerMonster->buffs.size())
     {
         const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
-        if(CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+        if(CommonDatapack::commonDatapack.get_monsterBuffs().find(playerBuff.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
             playerMonster->buffs.erase(playerMonster->buffs.begin()+index);
         else
         {
-            const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+            const Buff &buff=CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff);
             if(buff.level.at(playerBuff.level-1).duration==Buff::Duration_NumberOfTurn)
             {
                 if(playerMonster->buffs.at(index).remainingNumberOfTurn>0)
@@ -221,11 +221,11 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
     while(index<playerMonster->buffs.size())
     {
         const PlayerBuff &playerBuff=playerMonster->buffs.at(index);
-        if(CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)==CommonDatapack::commonDatapack.monsterBuffs.cend())
+        if(CommonDatapack::commonDatapack.get_monsterBuffs().find(playerBuff.buff)==CommonDatapack::commonDatapack.get_monsterBuffs().cend())
             playerMonster->buffs.erase(playerMonster->buffs.begin()+index);
         else
         {
-            const Buff &buff=CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+            const Buff &buff=CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff);
             const std::vector<Buff::Effect> &effects=buff.level.at(playerBuff.level-1).fight;
             unsigned int sub_index=0;
             while(sub_index<effects.size())
@@ -237,7 +237,7 @@ std::vector<Skill::LifeEffectReturn> CommonFightEngine::applyBuffLifeEffect(Publ
                 if(effect.on==Buff::Effect::EffectOn_HP)
                 {
                     int32_t quantity=0;
-                    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(playerMonster->monster),playerMonster->level);
+                    Monster::Stat currentMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster),playerMonster->level);
                     if(effect.type==QuantityType_Quantity)
                     {
                         quantity=effect.quantity;

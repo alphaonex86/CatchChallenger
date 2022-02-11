@@ -38,7 +38,7 @@ void BaseWindow::newProfileFinished()
 {
     const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     const std::string &datapackPath=client->datapackPathBase();
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()>1)
         if(!newProfile->ok())
         {
             if(characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).empty() &&
@@ -47,11 +47,11 @@ void BaseWindow::newProfileFinished()
             return;
         }
     unsigned int profileIndex=0;
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()>1)
         profileIndex=newProfile->getProfileIndex();
-    if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size())
         return;
-    Profile profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    Profile profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     newProfile->deleteLater();
     newProfile=NULL;
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin,this);
@@ -154,11 +154,11 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(QString::fromStdString(text));
-        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader->skins.size())
+        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader->get_skins().size())
             item->setIcon(QIcon(
                               QString::fromStdString(client->datapackPathBase())+
                               DATAPACK_BASE_PATH_SKIN+
-                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(characterEntry.skinId))+
+                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_skins().at(characterEntry.skinId))+
                               "/front.png"
                               ));
         else

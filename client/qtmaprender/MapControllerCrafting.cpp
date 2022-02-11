@@ -7,13 +7,13 @@
 
 std::string MapController::mapIdToString(const uint32_t &mapId) const
 {
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->get_maps().size()";
         return std::string();
     }
     return QFileInfo(QString::fromStdString(datapackMapPathSpec+
-                                            QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
+                                            QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
                      .absoluteFilePath().toStdString();
 }
 
@@ -31,13 +31,13 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
         delayedPlantInsert.push_back(tempItem);
         return;
     }
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->get_maps().size()";
         return;
     }
     const std::string &map=QFileInfo(QString::fromStdString(datapackMapPathSpec+
-                   QtDatapackClientLoader::datapackLoader->maps.at(mapId))).absoluteFilePath().toStdString();
+                   QtDatapackClientLoader::datapackLoader->get_maps().at(mapId))).absoluteFilePath().toStdString();
     if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap))
     {
         qDebug() << QString("map (%1) not show or not loaded, delay it").arg(QString::fromStdString(map));
@@ -55,7 +55,7 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
 
 void MapController::insert_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
-    if(CatchChallenger::CommonDatapack::commonDatapack.plants.find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.plants.cend())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_plants().find(plant_id)==CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend())
     {
         qDebug() << "plant_id don't exists";
         return;
@@ -119,9 +119,9 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
         return false;
     }
     int seconds_to_mature=static_cast<uint32_t>(plant->mature_at-currentTime);
-    int floweringDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].flowering_seconds;
-    int tallerDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].taller_seconds;
-    int sproutedDiff=CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.plants[plant->plant_id].sprouted_seconds;
+    int floweringDiff=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).flowering_seconds;
+    int tallerDiff=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).taller_seconds;
+    int sproutedDiff=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).fruits_seconds-CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant->plant_id).sprouted_seconds;
     if(seconds_to_mature<floweringDiff)
     {
         plant->start(seconds_to_mature*1000);
@@ -163,13 +163,13 @@ void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x, const 
         qDebug() << "MapController::remove_plant() remove item not found into the insert";
         return;
     }
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
-        qDebug() << "MapController::remove_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        qDebug() << "MapController::remove_plant() mapId greater than QtDatapackClientLoader::datapackLoader->get_maps().size()";
         return;
     }
     remove_plant_full(QFileInfo(QString::fromStdString(
-                                    datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
+                                    datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
                       .absoluteFilePath().toStdString(),x,y);
 }
 

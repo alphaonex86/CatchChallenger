@@ -260,3 +260,128 @@ void CommonDatapack::unload()
     parsing=false;
     isParsed=false;
 }
+
+#ifndef CATCHCHALLENGER_CLASS_MASTER
+const std::unordered_map<uint8_t,Plant> &CommonDatapack::get_plants() const
+{
+    return plants;
+}
+
+const std::unordered_map<uint16_t,CraftingRecipe> &CommonDatapack::get_craftingRecipes() const
+{
+    return craftingRecipes;
+}
+
+const std::unordered_map<uint16_t,uint16_t> &CommonDatapack::get_itemToCraftingRecipes() const
+{
+    return itemToCraftingRecipes;
+}
+
+const uint16_t &CommonDatapack::get_craftingRecipesMaxId() const
+{
+    return craftingRecipesMaxId;
+}
+
+const std::unordered_map<uint8_t,Buff> &CommonDatapack::get_monsterBuffs() const
+{
+    return monsterBuffs;
+}
+
+const ItemFull &CommonDatapack::get_items() const
+{
+    return items;
+}
+
+const std::unordered_map<uint16_t,Industry> &CommonDatapack::get_industries() const
+{
+    return industries;
+}
+
+const std::unordered_map<uint16_t,IndustryLink> &CommonDatapack::get_industriesLink() const
+{
+    return industriesLink;
+}
+
+const LayersOptions &CommonDatapack::get_layersOptions() const
+{
+    return layersOptions;
+}
+
+const std::vector<Event> &CommonDatapack::get_events() const
+{
+    return events;
+}
+
+
+const bool &CommonDatapack::get_monsterRateApplied() const
+{
+    return monsterRateApplied;
+}
+
+void CommonDatapack::set_monsterRateApplied(const bool &v)
+{
+    monsterRateApplied=v;
+}
+
+//temp
+const std::vector<MonstersCollision> &CommonDatapack::get_monstersCollision() const
+{
+    return monstersCollision;
+}
+//never more than 255
+const std::vector<MonstersCollisionTemp> &CommonDatapack::get_monstersCollisionTemp() const
+{
+    return monstersCollisionTemp;
+}
+//never more than 255
+const std::vector<Type> &CommonDatapack::get_types() const
+{
+    return types;
+}
+
+#endif
+const std::vector<Reputation> &CommonDatapack::get_reputation() const
+{
+    return reputation;
+}
+
+std::vector<Reputation> &CommonDatapack::get_reputation_rw()
+{
+    return reputation;
+}
+
+const std::unordered_map<uint16_t,Monster> &CommonDatapack::get_monsters() const
+{
+    return monsters;
+}
+
+const uint16_t &CommonDatapack::get_monstersMaxId() const
+{
+    return monstersMaxId;
+}
+
+const std::unordered_map<uint16_t,Skill> &CommonDatapack::get_monsterSkills() const
+{
+    return monsterSkills;
+}
+
+const std::vector<Profile> &CommonDatapack::get_profileList() const
+{
+    return profileList;
+}
+
+
+const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile() const
+{
+    return xmlLoadedFile;
+}
+
+std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile_rw()
+{
+    return xmlLoadedFile;
+}
+
+const std::vector<std::string > &CommonDatapack::get_skins() const
+{
+    return skins;
+}
