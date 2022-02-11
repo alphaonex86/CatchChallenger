@@ -67,9 +67,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     std::unordered_map<std::string,uint8_t> reputationResolution;
     {
         uint8_t index=0;
-        while(index<CommonDatapack::commonDatapack.reputation.size())
+        while(index<CommonDatapack::commonDatapack.get_reputation().size())
         {
-            reputationResolution[CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            reputationResolution[CommonDatapack::commonDatapack.get_reputation().at(index).name]=index;
             index++;
         }
     }
@@ -96,14 +96,14 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             const uint8_t &internalId=reputationResolution.at(reputation);
             dictionary_reputation_database_to_internal[tempId]=internalId;
             foundReputation.insert(reputation);
-            CommonDatapack::commonDatapack.reputation[internalId].reverse_database_id=tempId;
+            CommonDatapack::commonDatapack.get_reputation_rw()[internalId].reverse_database_id=tempId;
         }
     }
     databaseBaseBase->clear();
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.reputation.size())
+    while(index<CommonDatapack::commonDatapack.get_reputation().size())
     {
-        const std::string &reputation=CommonDatapack::commonDatapack.reputation.at(index).name;
+        const std::string &reputation=CommonDatapack::commonDatapack.get_reputation().at(index).name;
         if(foundReputation.find(reputation)==foundReputation.end())
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -138,7 +138,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             while(dictionary_reputation_database_to_internal.size()<=lastId)
                 dictionary_reputation_database_to_internal.push_back(-1);
             dictionary_reputation_database_to_internal[lastId]=index;
-            CommonDatapack::commonDatapack.reputation[index].reverse_database_id=lastId;
+            CommonDatapack::commonDatapack.get_reputation_rw()[index].reverse_database_id=lastId;
             #else
             std::cerr << "Dictionary reputation mismatch (abort)" << std::endl;
             abort();
@@ -312,16 +312,16 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     std::unordered_map<std::string,uint8_t> profileNameToId;
     {
         uint8_t index=0;
-        while(index<CommonDatapack::commonDatapack.profileList.size())
+        while(index<CommonDatapack::commonDatapack.get_profileList().size())
         {
-            const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+            const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
             profileNameToId[profile.databaseId]=index;
             index++;
         }
     }
     {
         unsigned int index=0;
-        while(index<CommonDatapack::commonDatapack.profileList.size())
+        while(index<CommonDatapack::commonDatapack.get_profileList().size())
         {
             dictionary_starter_internal_to_database.push_back(0);
             index++;
@@ -350,14 +350,14 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             const uint8_t &internalValue=profileNameToId.at(starter);
             dictionary_starter_database_to_internal[tempId]=internalValue;
             dictionary_starter_internal_to_database[internalValue]=tempId;
-            foundstarter.insert(CommonDatapack::commonDatapack.profileList.at(internalValue).databaseId);
+            foundstarter.insert(CommonDatapack::commonDatapack.get_profileList().at(internalValue).databaseId);
         }
     }
     databaseBaseBase->clear();
     unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.profileList.size())
+    while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
-        const Profile &profile=CommonDatapack::commonDatapack.profileList.at(index);
+        const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
         if(foundstarter.find(profile.databaseId)==foundstarter.end())
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

@@ -206,20 +206,20 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CommonDatapack::commonDatapack.profileList.size()!=CommonDatapackServerSpec::commonDatapackServerSpec.serverProfileList.size())
+    if(CommonDatapack::commonDatapack.get_profileList().size()!=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().size())
     {
         errorOutput("Client::addCharacter() profile common and server don't match");
         return;
     }
-    if(CommonDatapack::commonDatapack.profileList.size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+    if(CommonDatapack::commonDatapack.get_profileList().size()!=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
     {
         errorOutput("profile common and server internal don't match");
         return;
     }
     #endif
-    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
     {
-        errorOutput("profile index: "+std::to_string(profileIndex)+" out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.profileList.size())+")");
+        errorOutput("profile index: "+std::to_string(profileIndex)+" out of range (profileList size: "+std::to_string(CommonDatapack::commonDatapack.get_profileList().size())+")");
         return;
     }
     if(!GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
@@ -253,7 +253,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return;
     }
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
         errorOutput("skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
@@ -371,7 +371,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
 
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
@@ -388,7 +388,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         while(index<monsters.size())
         {
             const auto &monster=monsterGroup.at(index);
-            const Monster &monsterDatapack=CommonDatapack::commonDatapack.monsters.at(monster.id);
+            const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
             PreparedStatementUnit &monsterQuery=monsters.at(index);
 
             GlobalServerData::serverPrivateVariables.maxMonsterId++;

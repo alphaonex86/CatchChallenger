@@ -329,7 +329,7 @@ uint32_t FacilityLib::getFactoryResourcePrice(const uint32_t &quantityInStock,co
         price_temp_change=0;
     else
         price_temp_change=static_cast<uint8_t>(((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items);
-    return CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.get_items().item.at(resource.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, const Industry::Product &product, const Industry &industry)
@@ -340,7 +340,7 @@ uint32_t FacilityLib::getFactoryProductPrice(const uint32_t &quantityInStock, co
         price_temp_change=0;
     else
         price_temp_change=static_cast<uint8_t>(((max_items-quantityInStock)*CommonSettingsServer::commonSettingsServer.factoryPriceChange*2)/max_items);
-    return CommonDatapack::commonDatapack.items.item.at(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
+    return CommonDatapack::commonDatapack.get_items().item.at(product.item).price*(100-CommonSettingsServer::commonSettingsServer.factoryPriceChange+price_temp_change)/100;
 }
 
 //reputation

@@ -382,7 +382,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
 
         //load events
         this->events.clear();
-        while((uint32_t)this->events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        while((uint32_t)this->events.size()<CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
             this->events.push_back(0);
 
         int index=0;
@@ -402,7 +402,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
             value=data[pos];
             pos+=sizeof(uint8_t);
-            if(event>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
+            if(event>=CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
             {
                 parseError("Procotol wrong or corrupted",std::string("event index > than max, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
@@ -636,30 +636,30 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             delete[] player_informations.encyclopedia_item;
             player_informations.encyclopedia_item=NULL;
         }
-        if(CommonDatapack::commonDatapack.craftingRecipesMaxId>1)
+        if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()>1)
         {
-            player_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
-            memset(player_informations.recipes,0x00,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+            player_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+            memset(player_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
         }
         else
         {
             player_informations.recipes=NULL;
             std::cerr << "player_informations.recipes=NULL;" << std::endl;
         }
-        if(CommonDatapack::commonDatapack.monstersMaxId>1)
+        if(CommonDatapack::commonDatapack.get_monstersMaxId()>1)
         {
-            player_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.monstersMaxId/8+1);
-            memset(player_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+            player_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+            memset(player_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
         }
         else
         {
             player_informations.encyclopedia_monster=NULL;
             std::cerr << "CommonDatapack::commonDatapack.monstersMaxId=NULL;" << std::endl;
         }
-        if(CommonDatapack::commonDatapack.items.itemMaxId>1)
+        if(CommonDatapack::commonDatapack.get_items().itemMaxId>1)
         {
-            player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.itemMaxId/8+1);
-            memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+            player_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+            memset(player_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
         }
         else
         {
@@ -683,10 +683,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(CommonDatapack::commonDatapack.craftingRecipesMaxId>0)
+                if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()>0)
                 {
-                    if(sub_size16>CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1)
-                        memcpy(player_informations.recipes,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1);
+                    if(sub_size16>CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1)
+                        memcpy(player_informations.recipes,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
                     else
                         memcpy(player_informations.recipes,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
@@ -710,10 +710,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(CommonDatapack::commonDatapack.monstersMaxId>0)
+                if(CommonDatapack::commonDatapack.get_monstersMaxId()>0)
                 {
-                    if(sub_size16>CommonDatapack::commonDatapack.monstersMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_monster,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.monstersMaxId/8+1);
+                    if(sub_size16>CommonDatapack::commonDatapack.get_monstersMaxId()/8+1)
+                        memcpy(player_informations.encyclopedia_monster,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
                     else
                         memcpy(player_informations.encyclopedia_monster,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
@@ -737,10 +737,10 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(CommonDatapack::commonDatapack.items.itemMaxId>0)
+                if(CommonDatapack::commonDatapack.get_items().itemMaxId>0)
                 {
-                    if(sub_size16>CommonDatapack::commonDatapack.items.itemMaxId/8+1)
-                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.items.itemMaxId/8+1);
+                    if(sub_size16>CommonDatapack::commonDatapack.get_items().itemMaxId/8+1)
+                        memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
                     else
                         memcpy(player_informations.encyclopedia_item,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 }
@@ -845,9 +845,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             delete[] player_informations.bot_already_beaten;
             player_informations.bot_already_beaten=NULL;
         }
-        player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        memset(player_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
-        if(CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId<=0)
+        player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        memset(player_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
              std::cerr << "CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId == 0, take care" << std::endl;
 
         //bot
@@ -866,8 +866,8 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1)
-                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1);
+                if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1)
+                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
                 else
                     memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
                 pos2+=sub_size16;

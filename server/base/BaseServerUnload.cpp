@@ -182,6 +182,6 @@ void BaseServer::unload_other()
         Client::characterIsRightFinalStepHeader=NULL;
     }
 
-    CommonDatapack::commonDatapack.xmlLoadedFile.clear();
+    CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
     Map_loader::teleportConditionsUnparsed.clear();
 }

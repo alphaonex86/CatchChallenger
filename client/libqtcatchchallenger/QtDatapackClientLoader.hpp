@@ -32,6 +32,7 @@ class QtDatapackClientLoader
 {
     Q_OBJECT
 public:
+    friend class QtDatapackClientLoaderThread;
     static QtDatapackClientLoader *datapackLoader;//pointer to control the init
     explicit QtDatapackClientLoader();
     ~QtDatapackClientLoader();
@@ -45,10 +46,6 @@ public:
         QImage back;
         QImage thumb;
     };
-    std::unordered_map<uint16_t,ImageItemExtra> ImageitemsExtra;
-    std::unordered_map<uint16_t,ImageMonsterExtra> ImagemonsterExtra;
-    std::vector<uint16_t> ImageitemsToLoad;
-    std::vector<uint16_t> ImagemonsterToLoad;
     QMutex mutex;
 
     struct QtItemExtra
@@ -109,6 +106,11 @@ private:
     std::unordered_set<QtDatapackClientLoaderThread *> threads;
     QtItemExtra emptyItem;
     QtMonsterExtra emptyMonster;
+protected:
+    std::unordered_map<uint16_t,ImageItemExtra> ImageitemsExtra;
+    std::unordered_map<uint16_t,ImageMonsterExtra> ImagemonsterExtra;
+    std::vector<uint16_t> ImageitemsToLoad;
+    std::vector<uint16_t> ImagemonsterToLoad;
 private slots:
     void parsePlantsExtra();
     void parseItemsExtra() override;

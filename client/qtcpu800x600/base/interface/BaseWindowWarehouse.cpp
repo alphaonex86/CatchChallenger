@@ -125,7 +125,7 @@ void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item
         i = 1;
     else
         i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:")
-              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)),
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)),
                                  0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
@@ -158,7 +158,7 @@ void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem
         i = 1;
     else
         i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:")
-                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name)),
+                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)),
                                  0, 0, quantity, 1, &ok);
     if(!ok || i<=0)
         return;
@@ -225,8 +225,8 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<playerMonster.size())
         {
             const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() &&
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend() &&
                     !vectorcontainsAtLeastOne(monster_to_deposit,(uint8_t)index))
                 warehouseMonsterOnPlayerList.push_back(monster);
             index++;
@@ -237,8 +237,8 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
         while(index<playerInformations.warehouse_playerMonster.size())
         {
             const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(monster.monster)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() &&
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend() &&
                     vectorcontainsAtLeastOne(monster_to_withdraw,(uint8_t)index))
                 warehouseMonsterOnPlayerList.push_back(monster);
             index++;

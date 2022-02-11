@@ -26,16 +26,16 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
         sub_index2++;
     }
     unsigned int sub_index=0;
-    while(sub_index<CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.size())
+    while(sub_index<CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size())
     {
-        const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.monsters.at(monster.monster).learn.at(sub_index);
+        const Monster::AttackToLearn &learn=CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.at(sub_index);
         if(learn.learnAtLevel<=monster.level && learn.learnSkill==skill)
         {
             if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
             {
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                 {
-                    const Skill &skillStructure=CommonDatapack::commonDatapack.monsterSkills.at(learn.learnSkill);
+                    const Skill &skillStructure=CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill);
                     const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
                     if(sp>monster.sp)
                     {
@@ -53,7 +53,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                     PlayerMonster::PlayerSkill temp;
                     temp.skill=skill;
                     temp.level=1;
-                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(temp.skill).level.front().endurance;
+                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(temp.skill).level.front().endurance;
                     public_and_private_informations.playerMonster[index].skills.push_back(temp);
                     /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_skill;
                     stringreplaceOne(queryText,"%1",std::to_string(monsterId));

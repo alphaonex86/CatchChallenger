@@ -207,13 +207,13 @@ void Client::characterIsRightFinalStep()
         if(public_and_private_informations.recipes!=NULL)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.craftingRecipesMaxId==0)
+            if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.crafingRecipesMaxId==0");
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.craftingRecipesMaxId/8+1;
+            const auto &binarySize=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.recipes,binarySize);
@@ -229,13 +229,13 @@ void Client::characterIsRightFinalStep()
         if(public_and_private_informations.encyclopedia_monster!=NULL)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.monstersMaxId==0)
+            if(CommonDatapack::commonDatapack.get_monstersMaxId()==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.monstersMaxId==0");
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.monstersMaxId/8+1;
+            const auto &binarySize=CommonDatapack::commonDatapack.get_monstersMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_monster,binarySize);
@@ -251,13 +251,13 @@ void Client::characterIsRightFinalStep()
         if(public_and_private_informations.encyclopedia_item!=NULL)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(CommonDatapack::commonDatapack.items.itemMaxId==0)
+            if(CommonDatapack::commonDatapack.get_items().itemMaxId==0)
             {
                 errorOutput("CommonDatapack::commonDatapack.items.itemMaxId==0");
                 return;
             }
             #endif
-            const auto &binarySize=CommonDatapack::commonDatapack.items.itemMaxId/8+1;
+            const auto &binarySize=CommonDatapack::commonDatapack.get_items().itemMaxId/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.encyclopedia_item,binarySize);
@@ -333,7 +333,7 @@ void Client::characterIsRightFinalStep()
                 return;
             }
             #endif*/
-            const auto &binarySize=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1;
+            const auto &binarySize=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1;
             *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
             posOutputTemp+=2;
             memcpy(buffer+posOutputTemp,public_and_private_informations.bot_already_beaten,binarySize);

@@ -26,14 +26,14 @@ NewGame::NewGame(const std::string &skinPath, const std::string &monsterPath, st
         currentMonsterGroup=static_cast<uint8_t>(rand()%monstergroup.size());
     this->skinPath=skinPath;
     uint8_t index=0;
-    while(index<CatchChallenger::CommonDatapack::commonDatapack.skins.size())
+    while(index<CatchChallenger::CommonDatapack::commonDatapack.get_skins().size())
     {
         if(forcedSkin.empty() || vectorcontainsAtLeastOne(forcedSkin,(uint8_t)index))
         {
-            const std::string &currentPath=skinPath+CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+            const std::string &currentPath=skinPath+CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(index);
             if(QFile::exists(QString::fromStdString(currentPath+"/back.png")) && QFile::exists(QString::fromStdString(currentPath+"/front.png")) && QFile::exists(QString::fromStdString(currentPath+"/trainer.png")))
             {
-                skinList.push_back(CatchChallenger::CommonDatapack::commonDatapack.skins.at(index));
+                skinList.push_back(CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(index));
                 skinListId.push_back(index);
             }
         }

@@ -152,11 +152,11 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<s
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().cend())
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -193,11 +193,11 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<s
     std::vector<std::string> caveName;
     {
         unsigned int index=0;
-        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
+        while(index<CommonDatapack::commonDatapack.get_monstersCollision().size())
         {
-            if(CommonDatapack::commonDatapack.monstersCollisionTemp.at(index).layer.empty())
+            if(CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(index).layer.empty())
             {
-                caveName=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index).monsterTypeList;
+                caveName=CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(index).monsterTypeList;
                 break;
             }
             index++;
@@ -241,10 +241,10 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<s
     uint8_t zoneNumberIndex=1;
     {
         unsigned int index=0;
-        while(index<CommonDatapack::commonDatapack.monstersCollision.size())
+        while(index<CommonDatapack::commonDatapack.get_monstersCollision().size())
         {
             //const MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(index);
-            const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index);
+            const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(index);
             const std::vector<std::string> &searchList=monstersCollisionTemp.defautMonsterTypeList;
             unsigned int index_search=0;
             while(index_search<searchList.size())
@@ -274,7 +274,7 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<s
                 }
                 {
                     MonstersCollisionValue *monstersCollisionValue=&this->map_to_send.parsed_layer.monstersCollisionList[tempZoneNumberIndex];
-                    if(CommonDatapack::commonDatapack.monstersCollision.at(index).type==MonstersCollisionType_ActionOn)
+                    if(CommonDatapack::commonDatapack.get_monstersCollision().at(index).type==MonstersCollisionType_ActionOn)
                     {
                         monstersCollisionValue->actionOn.push_back(index);
                         monstersCollisionValue->actionOnMonsters.push_back(monsterTypeList.at(searchList.at(index_search)));
@@ -341,7 +341,7 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                 if(!ok)
                     std::cerr << "id is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
                 if(ok)
-                    if(CommonDatapack::commonDatapack.monsters.find(mapMonster.id)==CommonDatapack::commonDatapack.monsters.cend())
+                    if(CommonDatapack::commonDatapack.get_monsters().find(mapMonster.id)==CommonDatapack::commonDatapack.get_monsters().cend())
                     {
                         std::cerr << "monster " << mapMonster.id << " not found into the monster list: " << monsters->Name() << ", file: " << fileName << std::endl;
                         ok=false;
@@ -487,11 +487,11 @@ tinyxml2::XMLElement *Map_loader::getXmlCondition(const std::string &fileName,co
     tinyxml2::XMLDocument *domDocument;
 
     //open and quick check the file
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().cend())
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -569,7 +569,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             if(!ok)
                 std::cerr << "\"condition\" balise have type=quest but quest attribute is not a number, item, clan or fightBot ("
                           << conditionFile << ")" << std::endl;
-            else if(CommonDatapackServerSpec::commonDatapackServerSpec.quests.find(quest)==CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+            else if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(quest)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
                 std::cerr << "\"condition\" balise have type=quest but quest id is not found, item, clan or fightBot ("
                           << conditionFile << ")" << std::endl;
             else
@@ -588,7 +588,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             const uint16_t &item=stringtouint16(conditionContent->Attribute("item"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=item but item attribute is not a number, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
-            else if(CommonDatapack::commonDatapack.items.item.find(item)==CommonDatapack::commonDatapack.items.item.cend())
+            else if(CommonDatapack::commonDatapack.get_items().item.find(item)==CommonDatapack::commonDatapack.get_items().item.cend())
                 std::cerr << "\"condition\" balise have type=item but item id is not found, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
             else
             {
@@ -606,7 +606,7 @@ MapCondition Map_loader::xmlConditionToMapCondition(const std::string &condition
             const uint16_t &fightBot=stringtouint16(conditionContent->Attribute("fightBot"),&ok);
             if(!ok)
                 std::cerr << "\"condition\" balise have type=fightBot but fightBot attribute is not a number, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
-            else if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+            else if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightBot)==CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
                 std::cerr << "\"condition\" balise have type=fightBot but fightBot id is not found, item, clan or fightBot (" << conditionFile <<  ")" << std::endl;
             else
             {

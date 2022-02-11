@@ -58,11 +58,11 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
         tinyxml2::XMLDocument *domDocument;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         //open and quick check the file
-        if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         else
         {
-            domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
             #else
             domDocument=new tinyxml2::XMLDocument();
             #endif
@@ -299,7 +299,6 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", speed is not number: child->Name(): " << item->Name() << std::endl;
                     }
-                    #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
                     if(CommonSettingsServer::commonSettingsServer.rates_xp<=0)
                     {
                         std::cerr << "CommonSettingsServer::commonSettingsServer.rates_xp can't be null" << std::endl;
@@ -317,10 +316,6 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child->Name(): " << item->Name() << std::endl;
                     }
-                    #else
-                    monster.give_xp=0;
-                    monster.give_sp=0;
-                    #endif
                     #endif
                     if(ok)
                     {

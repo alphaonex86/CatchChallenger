@@ -287,17 +287,17 @@ void BaseServer::SQL_common_load_finish()
 void BaseServer::preload_finish()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(CommonDatapack::commonDatapack.craftingRecipesMaxId==0)
+    if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.crafingRecipesMaxId==0" << std::endl;
         abort();
     }
-    if(CommonDatapack::commonDatapack.monstersMaxId==0)
+    if(CommonDatapack::commonDatapack.get_monstersMaxId()==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.monstersMaxId==0" << std::endl;
         abort();
     }
-    if(CommonDatapack::commonDatapack.items.itemMaxId==0)
+    if(CommonDatapack::commonDatapack.get_items().itemMaxId==0)
     {
         std::cerr << "CommonDatapack::commonDatapack.items.itemMaxId==0" << std::endl;
         abort();
@@ -312,7 +312,7 @@ void BaseServer::preload_finish()
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
 
     //delete content of Map_loader::getXmlCondition()
-    CommonDatapack::commonDatapack.xmlLoadedFile.clear();
+    CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
 
     Map_loader::teleportConditionsUnparsed.clear();
     #endif

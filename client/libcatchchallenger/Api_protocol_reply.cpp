@@ -733,7 +733,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
             }
             uint8_t returnCode=data[pos];
             pos+=sizeof(uint8_t);
-            if(CommonDatapack::commonDatapack.items.trap.find(item)!=CommonDatapack::commonDatapack.items.trap.cend())
+            if(CommonDatapack::commonDatapack.get_items().trap.find(item)!=CommonDatapack::commonDatapack.get_items().trap.cend())
                 monsterCatch(returnCode==0x01);
             else
             {
