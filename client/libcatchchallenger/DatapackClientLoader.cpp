@@ -1379,7 +1379,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         {
             const std::string &type=item->Attribute("type");
             if(audioAmbiance.find(type)==audioAmbiance.cend() && item->GetText()!=NULL)
-                audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
+                audioAmbiance[type]=/*datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+*/item->GetText();
             else
                 std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2" << file << " " << item->Name() << file << std::endl;
         }
@@ -1432,16 +1432,15 @@ void DatapackClientLoader::parseZoneExtra()
             continue;
         }
         std::smatch m;
-        if(!std::regex_match(stringPath, m, xmlFilter))
+        if(!std::regex_match(returnList.at(index), m, xmlFilter))
         {
             std::cerr << "%1 the zone file name not match" << stringPath << std::endl;
             index++;
             continue;
         }
-        std::string zoneCodeName=stringPath;
-        const auto &pos=stringPath.find_last_of('/');
-        if(pos!=std::string::npos)
-            zoneCodeName=stringPath.substr(pos);
+        std::string zoneCodeName=returnList.at(index);
+        stringreplaceAll(zoneCodeName,"/","");
+        stringreplaceAll(zoneCodeName,"\\","");
         const std::string &file=stringPath;
         if(stringEndsWith(zoneCodeName,".xml"))
             zoneCodeName.resize(zoneCodeName.size()-4);

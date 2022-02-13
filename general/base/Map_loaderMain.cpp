@@ -525,7 +525,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             const std::string name=child->Attribute("name");
             if(data==nullptr)
             {
-                error=std::string("Is Element for layer is null: ")+data->Name()+" and name: "+name+", file: "+file;
+                error=std::string("Is Element for layer is null: data==nullptr and name: ")+name+", file: "+file;
                 return false;
             }
             else if(data->Attribute("encoding")==nullptr)

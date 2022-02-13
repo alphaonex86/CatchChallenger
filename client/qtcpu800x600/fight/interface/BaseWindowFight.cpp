@@ -2224,6 +2224,11 @@ void BaseWindow::useTrap(const uint16_t &itemId)
 
 void BaseWindow::monsterCatch(const bool &success)
 {
+    if(client==nullptr)
+    {
+        emit error("client==nullptr BaseWindow::monsterCatch()");
+        return;
+    }
     if(client->playerMonster_catchInProgress.empty())
     {
         emit error("Internal bug: cupture monster list is emtpy");
