@@ -29,6 +29,7 @@ namespace CatchChallenger {
 class CommonMap;
 class Client;
 class MapServer;
+class PlayerUpdaterBase;
 
 struct Map_player_info
 {

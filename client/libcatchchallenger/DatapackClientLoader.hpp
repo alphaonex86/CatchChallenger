@@ -82,7 +82,7 @@ public:
     {
         ZONE_TYPE id;
         std::string name;
-        std::unordered_map<std::string,std::string> audioAmbiance;
+        std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
     };
     struct BotFightExtra
     {
@@ -254,7 +254,7 @@ protected:
     std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > botToQuestStart;
     std::unordered_map<uint16_t,BotFightExtra> botFightsExtra;
     std::unordered_map<std::string,ZoneExtra> zonesExtra;
-    std::unordered_map<std::string,std::string> audioAmbiance;
+    std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
     std::unordered_map<uint32_t,ProfileText> profileTextList;
     std::unordered_map<std::string,VisualCategory> visualCategories;
     std::string language;

@@ -1089,6 +1089,12 @@ bool Api_protocol_Qt::isInFight() const
 
 std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const PlayerMonster &playerMonster)
 {
+    if(client==nullptr)
+    {
+        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster()");
+        return std::vector<uint8_t>();
+    }
+
     std::vector<PlayerMonster> monsterList;
     monsterList.push_back(playerMonster);
 
@@ -1097,6 +1103,11 @@ std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const PlayerMonster &play
 
 std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
+    if(client==nullptr)
+    {
+        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster()");
+        return std::vector<uint8_t>();
+    }
     std::vector<uint8_t> positionList;
     const uint8_t basePosition=static_cast<uint8_t>(player_informations.playerMonster.size());
     Player_private_and_public_informations &informations=client->get_player_informations();
