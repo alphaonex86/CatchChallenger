@@ -2,7 +2,6 @@ HEADERS  += \
     $$PWD/Api_client_real.hpp \
     $$PWD/Api_client_virtual.hpp \
     $$PWD/Api_protocol_Qt.hpp \
-    $$PWD/ClientFightEngine.hpp \
     $$PWD/QtDatapackClientLoader.hpp \
     $$PWD/QtDatapackClientLoaderThread.hpp \
     $$PWD/QtDatapackChecksum.hpp \

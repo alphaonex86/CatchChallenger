@@ -3,7 +3,6 @@
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../Ultimate.h"
-#include "../../../libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
@@ -99,6 +98,101 @@ BaseWindow::BaseWindow() :
 
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
+
+
+    mapController=nullptr;
+
+    renderFrame=nullptr;
+    shopId=0;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    temp_warehouse_cash=0;
+    //selection of quantity
+    tempQuantityForSell=0;
+    waitToSell=false;
+    haveClanInformations=false;
+    factoryId=0;
+    factoryInProduction=false;
+    datapackDownloadedCount=0;
+    datapackDownloadedSize=0;
+    progressingDatapackFileSize=0;
+    protocolIsGood=false;
+
+    newProfile=nullptr;
+    datapackFileNumber=0;
+    datapackFileSize=1;
+    evolutionControl=nullptr;
+    previousAnimationWidget=nullptr;
+    animationWidget=nullptr;
+    craftingAnimationObject=nullptr;
+    qQuickViewContainer=nullptr;
+    baseMonsterEvolution=nullptr;
+    targetMonsterEvolution=nullptr;
+    monsterEvolutionPostion=0;
+    mLastGivenXP=0;
+    currentMonsterLevel=0;
+
+    //for server/character selection
+    isLogged=false;
+    averagePlayedTime=0;
+    averageLastConnect=0;
+    serverSelected=-1;
+
+    previousRXSize=0;
+    previousTXSize=0;
+    haveShowDisconnectionReason=false;
+    haveDatapack=false;
+    haveDatapackMainSub=false;
+    haveCharacterPosition=false;
+    haveCharacterInformation=false;
+    haveInventory=false;
+    datapackIsParsed=false;
+    mainSubDatapackIsParsed=false;
+    characterSelected=false;
+    fightId=0;
+
+    //market buy
+    marketBuyCashInSuspend=0;
+    marketBuyInSuspend=false;
+    //market put
+    marketPutCashInSuspend=0;
+    marketPutInSuspend=false;
+    //market withdraw
+    marketWithdrawInSuspend=false;
+
+    //player items
+    inSelection=false;
+
+    //fight
+    fightTimerFinish=false;
+    displayAttackProgression=-1;
+    lastStepUsed=0;
+    escape=false;
+    escapeSuccess=false;
+    haveDisplayCurrentAttackSuccess=false;
+    haveDisplayOtherAttackSuccess=false;
+    movie=nullptr;
+    trapItemId=false;
+    displayTrapProgression=0;
+    trapSuccess=false;
+    attack_quantity_changed=0;
+    useTheRescueSkill=false;
+
+    //city
+    zonecatch=false;
+
+    //learn
+    monsterPositionToLearn=0;
+
+    //quest
+    isInQuest=false;
+    questId=0;
+
+    monsterBeforeMoveForChangeInWaiting=false;
+    lastReplyTimeValue=0;
+    worseQueryTime=0;
+    multiplayer=false;
+
+    client=nullptr;
+    chat=nullptr;
 
     socketState=QAbstractSocket::UnconnectedState;
     if(QtDatapackClientLoader::datapackLoader!=nullptr)
