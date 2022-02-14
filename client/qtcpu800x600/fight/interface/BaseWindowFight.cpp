@@ -234,7 +234,7 @@ bool BaseWindow::check_monsters()
             error(QStringLiteral("the level %1 is greater than max level").arg(monster.level).toStdString());
             return false;
         }
-        Monster::Stat stat=ClientFightEngine::getStat(monsterDef,monster.level);
+        Monster::Stat stat=CommonFightEngine::getStat(monsterDef,monster.level);
         if(monster.hp>stat.hp)
         {
             error(QStringLiteral("the hp %1 is greater than max hp for the level %2").arg(stat.hp).arg(monster.level).toStdString());
@@ -355,7 +355,7 @@ void BaseWindow::load_monsters()
         if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
                 CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
         {
-            Monster::Stat stat=CatchChallenger::ClientFightEngine::getStat(
+            Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
                         CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster),monster.level);
 
             QListWidgetItem *item=new QListWidgetItem();
@@ -522,7 +522,7 @@ void BaseWindow::botFightFullDiffered()
         const BotFight::BotFightMonster &botFightMonster=monsters.at(index);
         botFightMonstersTransformed.push_back(FacilityLib::botFightMonsterToPlayerMonster(
                                            monsters.at(index),
-                                           ClientFightEngine::getStat(
+                                           CommonFightEngine::getStat(
                                                CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(botFightMonster.id),
                                                monsters.at(index).level
                                                )
@@ -660,7 +660,7 @@ void BaseWindow::init_current_monster_display(PlayerMonster *fightMonster)
         ui->frameFightBottom->setVisible(false);
         ui->labelFightBottomName->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(fightMonster->monster).name));
         ui->labelFightBottomLevel->setText(tr("Level %1").arg(fightMonster->level));
-        Monster::Stat fightStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(fightMonster->monster),fightMonster->level);
+        Monster::Stat fightStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(fightMonster->monster),fightMonster->level);
         ui->progressBarFightBottomHP->setMaximum(fightStat.hp);
         ui->progressBarFightBottomHP->setValue(fightMonster->hp);
         ui->progressBarFightBottomHP->repaint();
@@ -1173,7 +1173,7 @@ void BaseWindow::updateOtherMonsterInformation()
         ui->frameFightTop->show();
         ui->labelFightTopName->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(otherMonster->monster).name));
         ui->labelFightTopLevel->setText(tr("Level %1").arg(otherMonster->level));
-        Monster::Stat otherStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+        Monster::Stat otherStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
         ui->progressBarFightTopHP->setMaximum(otherStat.hp);
         ui->progressBarFightTopHP->setValue(otherMonster->hp);
         ui->progressBarFightTopHP->repaint();
@@ -2257,11 +2257,17 @@ void BaseWindow::monsterCatch(const bool &success)
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
                 return;
             }
-            playerInformations.warehouse_playerMonster.push_back(client->playerMonster_catchInProgress.front());
+            if(client->playerMonster_catchInProgress.empty())
+                abort();
+            const PlayerMonster &p=client->playerMonster_catchInProgress.front();
+            playerInformations.warehouse_playerMonster.push_back(p);
         }
         else
         {
-            client->addPlayerMonster(client->playerMonster_catchInProgress.front());
+            if(client->playerMonster_catchInProgress.empty())
+                abort();
+            const PlayerMonster &p=client->playerMonster_catchInProgress.front();
+            client->addPlayerMonster(p);
             load_monsters();
         }
     }

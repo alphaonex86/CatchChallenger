@@ -33,6 +33,9 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
         #endif
     #endif
 
+    mLastGivenXP=0;
+    fightId=0;
+
     this->socket=socket;
     if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol_Qt::QtsocketDestroyed))
         abort();
@@ -92,6 +95,7 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     if(!connect(this,&Api_protocol_Qt::Qtrandom_seeds,this,&Api_protocol_Qt::newRandomNumber))
            abort();
     socketDisconnectedForReconnectFirstTry=false;
+    resetAll();//->needed for     mLastGivenXP=0; and other stuff
 }
 
 Api_protocol_Qt::~Api_protocol_Qt()
@@ -1148,6 +1152,7 @@ bool Api_protocol_Qt::tryCatchClient(const uint16_t &item)
     emit message("Api_protocol_Qt::tryCapture(): emit tryCapture()");
     Api_protocol::useObject(item);
     PlayerMonster newMonster;
+    newMonster.character_origin=0;
     newMonster.buffs=wildMonsters.front().buffs;
     newMonster.catched_with=item;
     newMonster.egg_step=0;

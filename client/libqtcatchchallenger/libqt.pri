@@ -14,7 +14,6 @@ SOURCES += \
     $$PWD/Api_client_real_sub.cpp \
     $$PWD/Api_client_virtual.cpp \
     $$PWD/Api_protocol_Qt.cpp \
-    $$PWD/ClientFightEngine.cpp \
     $$PWD/QtDatapackClientLoader.cpp \
     $$PWD/QtDatapackClientLoaderThread.cpp \
     $$PWD/QtDatapackChecksum.cpp \
