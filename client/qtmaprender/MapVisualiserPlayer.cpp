@@ -898,25 +898,37 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             {
                 const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
                         CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,monster_x,monster_y);
-                monsterMapObject->setVisible(false);
-                unsigned int index=0;
-                while(index<monstersCollisionValue.walkOn.size())
+                const CatchChallenger::ParsedLayerLedges &ledge=CatchChallenger::MoveOnTheMap::getLedge(current_monster_map_pointer->logicalMap,monster_x,monster_y);
+                if(ledge!=CatchChallenger::ParsedLayerLedges_NoLedges)
+                    monsterMapObject->setVisible(true);
+                else
                 {
-                    const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
-                    if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().size())
+                    if(monstersCollisionValue.walkOn.empty())
+                        monsterMapObject->setVisible(false);
+                    else
                     {
-                        const CatchChallenger::MonstersCollision &monstersCollision=
-                                CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(newIndex);
-                        const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
-                                CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
-                        if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                        bool visible=false;
+                        unsigned int index=0;
+                        while(index<monstersCollisionValue.walkOn.size())
                         {
-                            monsterMapObject->setVisible((monstersCollisionTemp.tile.empty() && pendingMonsterMoves.size()>=1) ||
-                                                         (pendingMonsterMoves.size()==1 && !inMove)
-                                                         );
+                            const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
+                            if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().size())
+                            {
+                                const CatchChallenger::MonstersCollision &monstersCollision=
+                                        CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(newIndex);
+                                const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
+                                        CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
+                                if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                                {
+                                    visible=(monstersCollisionTemp.tile.empty() && pendingMonsterMoves.size()>=1) ||
+                                                                 (pendingMonsterMoves.size()==1 && !inMove)
+                                                                 ;
+                                }
+                            }
+                            index++;
                         }
+                        monsterMapObject->setVisible(visible);
                     }
-                    index++;
                 }
             }
         }
