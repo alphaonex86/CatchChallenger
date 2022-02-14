@@ -171,6 +171,13 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
         return false;
     }
     uint8_t zoneCode=map->parsed_layer.simplifiedMap[x+y*map->width];
+    /* No wild monster into:
+     * 253 ParsedLayerLedges_LedgesBottom
+     * 252 ParsedLayerLedges_LedgesTop
+     * 251 ParsedLayerLedges_LedgesRight
+     * 250 ParsedLayerLedges_LedgesLeft */
+    if(zoneCode==250 || zoneCode==251 || zoneCode==252 || zoneCode==253)
+        return false;
     if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
     {
         errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range");
