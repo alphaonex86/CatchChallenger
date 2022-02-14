@@ -1425,23 +1425,24 @@ void DatapackClientLoader::parseZoneExtra()
     std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
     while(index<returnList.size())
     {
-        const std::string &stringPath=temp+returnList.at(index);
-        if(!CatchChallenger::FacilityLibGeneral::isFile(stringPath))
+        const std::string &fileWithoutPath=returnList.at(index);
+        const std::string &fullPath=temp+fileWithoutPath;
+        if(!CatchChallenger::FacilityLibGeneral::isFile(fullPath))
         {
             index++;
             continue;
         }
         std::smatch m;
-        if(!std::regex_match(returnList.at(index), m, xmlFilter))
+        if(!std::regex_match(fileWithoutPath, m, xmlFilter))
         {
-            std::cerr << "%1 the zone file name not match" << stringPath << std::endl;
+            std::cerr << "%1 the zone file name not match" << fullPath << std::endl;
             index++;
             continue;
         }
-        std::string zoneCodeName=returnList.at(index);
+        std::string zoneCodeName=fileWithoutPath;
         stringreplaceAll(zoneCodeName,"/","");
         stringreplaceAll(zoneCodeName,"\\","");
-        const std::string &file=stringPath;
+        const std::string &file=fullPath;
         if(stringEndsWith(zoneCodeName,".xml"))
             zoneCodeName.resize(zoneCodeName.size()-4);
 

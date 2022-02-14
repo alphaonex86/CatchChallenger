@@ -214,7 +214,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             if(x>0)
             {
                 if(checkCollision)
-                    if(!isWalkable(map,x-1,y))
+                    if(!isWalkableWithDirection(map,x-1,y,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(map,x-1,y))
@@ -228,7 +228,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             else
             {
                 if(checkCollision)
-                    if(!isWalkable(*map.border.left.map,map.border.left.map->width-1,y+static_cast<int8_t>(map.border.left.y_offset)))
+                    if(!isWalkableWithDirection(*map.border.left.map,map.border.left.map->width-1,y+static_cast<int8_t>(map.border.left.y_offset),direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.left.map,map.border.left.map->width-1,y+static_cast<int8_t>(map.border.left.y_offset)))
@@ -240,7 +240,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             if(x<(map.width-1))
             {
                 if(checkCollision)
-                    if(!isWalkable(map,x+1,y))
+                    if(!isWalkableWithDirection(map,x+1,y,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(map,x+1,y))
@@ -254,7 +254,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             else
             {
                 if(checkCollision)
-                    if(!isWalkable(*map.border.right.map,0,y+static_cast<int8_t>(map.border.right.y_offset)))
+                    if(!isWalkableWithDirection(*map.border.right.map,0,y+static_cast<int8_t>(map.border.right.y_offset),direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.right.map,0,y+static_cast<int8_t>(map.border.right.y_offset)))
@@ -266,7 +266,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             if(y>0)
             {
                 if(checkCollision)
-                    if(!isWalkable(map,x,y-1))
+                    if(!isWalkableWithDirection(map,x,y-1,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(map,x,y-1))
@@ -280,7 +280,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             else
             {
                 if(checkCollision)
-                    if(!isWalkable(*map.border.top.map,x+static_cast<uint8_t>(map.border.top.x_offset),map.border.top.map->height-1))
+                    if(!isWalkableWithDirection(*map.border.top.map,x+static_cast<uint8_t>(map.border.top.x_offset),map.border.top.map->height-1,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.top.map,x+static_cast<uint8_t>(map.border.top.x_offset),map.border.top.map->height-1))
@@ -292,7 +292,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             if(y<(map.height-1))
             {
                 if(checkCollision)
-                    if(!isWalkable(map,x,y+1))
+                    if(!isWalkableWithDirection(map,x,y+1,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(map,x,y+1))
@@ -306,7 +306,7 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
             else
             {
                 if(checkCollision)
-                    if(!isWalkable(*map.border.bottom.map,x+static_cast<uint8_t>(map.border.bottom.x_offset),0))
+                    if(!isWalkableWithDirection(*map.border.bottom.map,x+static_cast<uint8_t>(map.border.bottom.x_offset),0,direction))
                         return false;
                 if(!allowTeleport)
                     if(needBeTeleported(*map.border.bottom.map,x+static_cast<uint8_t>(map.border.bottom.x_offset),0))
@@ -377,10 +377,47 @@ bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, c
 
 bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
+    //exclude here ParsedLayerLedges, because don't have info about direction
     if(map.parsed_layer.simplifiedMap==NULL)
         return false;
     const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
     return val<200;
+}
+
+bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction)
+{
+    //exclude here ParsedLayerLedges, because don't have info about direction
+    if(map.parsed_layer.simplifiedMap==NULL)
+        return false;
+    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    if(val<200)
+        return true;
+    switch(direction)
+    {
+        case Direction_look_at_left:
+        case Direction_move_at_left:
+            if(val==250)
+                return true;
+        break;
+        case Direction_look_at_right:
+        case Direction_move_at_right:
+            if(val==251)
+                return true;
+        break;
+        case Direction_look_at_top:
+        case Direction_move_at_top:
+            if(val==252)
+                return true;
+        break;
+        case Direction_look_at_bottom:
+        case Direction_move_at_bottom:
+            if(val==253)
+                return true;
+        break;
+        default:
+        return false;
+    }
+    return false;
 }
 
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
