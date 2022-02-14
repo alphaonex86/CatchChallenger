@@ -528,6 +528,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     while(index<monster_list_size)
     {
         PlayerMonster monster;
+        monster.catched_with=0;
+        monster.character_origin=0;
+        monster.egg_step=0;
+        monster.gender=Gender_Unknown;
+        monster.hp=0;
+        monster.id=0;
+        monster.level=0;
+        monster.monster=0;
+        monster.remaining_xp=0;
+        monster.sp=0;
         const int returnVar=dataToPlayerMonster(data+pos,size-pos,monster);
         if(returnVar<0)
             return false;

@@ -10,7 +10,6 @@
 #include "ConnectedSocket.hpp"
 
 namespace CatchChallenger {
-class ClientFightEngine;
 class Api_protocol_Qt : public QObject, public Api_protocol, public CommonFightEngine
 {
     Q_OBJECT

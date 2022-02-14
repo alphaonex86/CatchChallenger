@@ -2,7 +2,7 @@
 #define MAP_VISUALISER_PLAYER_WITH_FIGHT_H
 
 #include "MapVisualiserPlayer.hpp"
-#include "../libqtcatchchallenger/ClientFightEngine.hpp"
+#include "../../general/fight/CommonFightEngine.hpp"
 
 #include <QObject>
 
