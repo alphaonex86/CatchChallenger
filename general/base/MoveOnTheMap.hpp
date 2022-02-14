@@ -35,6 +35,7 @@ public:
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
     static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static bool isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction);
     static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     Direction getDirection() const;
