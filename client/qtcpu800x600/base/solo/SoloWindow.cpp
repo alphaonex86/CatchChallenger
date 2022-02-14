@@ -13,7 +13,6 @@
 #include "../../../../general/base/Version.hpp"
 #include "../../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../LanguagesSelect.h"
-#include "../../../libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/Version.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
