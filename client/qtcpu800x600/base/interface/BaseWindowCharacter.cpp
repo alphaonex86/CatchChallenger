@@ -351,7 +351,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
         std::vector<std::string> keys;
         for(const auto &n : logicialGroup.logicialGroupList)
             keys.push_back(n.first);
-        qSort(keys);
+        std::sort(keys.begin(),keys.end());
         //list the group
         unsigned int index=0;
         while(index<keys.size())
@@ -362,7 +362,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
         }
     }
     {
-        qSort(logicialGroup.servers);
+        std::sort(logicialGroup.servers.begin(),logicialGroup.servers.end());
         //list the server
         unsigned int index=0;
         while(index<logicialGroup.servers.size())
