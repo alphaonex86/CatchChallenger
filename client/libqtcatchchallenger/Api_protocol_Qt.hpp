@@ -375,7 +375,6 @@ public:
     bool giveXPSP(int xp,int sp) override;
     uint32_t lastGivenXP();
     void newRandomNumber(const std::string &data);
-    void setClient(Api_protocol_Qt * client);
 private:
     uint32_t randomSeedsSize() const override;
 private:
@@ -385,7 +384,6 @@ private:
     std::vector<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     std::string randomSeeds;
-    Api_protocol_Qt * client;
     uint16_t fightId;
     Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel) override;
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
