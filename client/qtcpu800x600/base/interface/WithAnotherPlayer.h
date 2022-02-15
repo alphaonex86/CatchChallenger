@@ -3,7 +3,7 @@
 
 #include <QDialog>
 #include <QPixmap>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QTimer>
 
 namespace Ui {
@@ -30,7 +30,7 @@ private slots:
 private:
     Ui::WithAnotherPlayer *ui;
     bool actionAccepted;
-    QTime time;
+    QElapsedTimer time;
     QTimer timer;
 };
 

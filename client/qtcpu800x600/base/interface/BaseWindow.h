@@ -544,9 +544,9 @@ private:
     std::string visualCategory;
     QTimer botFightTimer;
     std::vector<std::string> add_to_inventoryGainList;
-    std::vector<QTime> add_to_inventoryGainTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainTime;
     std::vector<std::string> add_to_inventoryGainExtraList;
-    std::vector<QTime> add_to_inventoryGainExtraTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainExtraTime;
 
     //cache
     QFont disableIntoListFont;
@@ -578,7 +578,7 @@ private:
     std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
     //bool seedWait,collectWait;
 
-    QTime updateRXTXTime;
+    QElapsedTimer updateRXTXTime;
     QTimer updateRXTXTimer;
     uint64_t previousRXSize,previousTXSize;
     std::string toHtmlEntities(std::string text);
@@ -638,8 +638,8 @@ private:
     QTimer displayAttackTimer;
     QTimer displayExpTimer;
     QTimer doNextActionTimer;
-    QTime updateAttackTime;
-    QTime updateTrapTime;
+    QElapsedTimer updateAttackTime;
+    QElapsedTimer updateTrapTime;
     MoveType moveType;
     bool fightTimerFinish;
     int displayAttackProgression;
@@ -725,7 +725,7 @@ private:
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
     int lastReplyTimeValue;
-    QTime lastReplyTimeSince;
+    QElapsedTimer lastReplyTimeSince;
     uint32_t worseQueryTime;
     bool multiplayer;
 
