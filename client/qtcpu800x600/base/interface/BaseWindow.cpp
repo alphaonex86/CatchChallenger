@@ -824,7 +824,8 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
         if(objects.size()>=16)
             objects.push_back("...");
         add_to_inventoryGainList.push_back(stringimplode(objects,", "));
-        add_to_inventoryGainTime.push_back(QTime::currentTime());
+        add_to_inventoryGainTime.push_back(QElapsedTimer());
+        add_to_inventoryGainTime.back().restart();
         BaseWindow::showGain();
     }
     else
@@ -1066,7 +1067,8 @@ void BaseWindow::showTip(const std::string &tip)
 void BaseWindow::showPlace(const std::string &place)
 {
     add_to_inventoryGainExtraList.push_back(place);
-    add_to_inventoryGainExtraTime.push_back(QTime::currentTime());
+    add_to_inventoryGainExtraTime.push_back(QElapsedTimer());
+    add_to_inventoryGainExtraTime.back().restart();
     ui->gain->setVisible(true);
     composeAndDisplayGain();
     gain_timeout.start();
@@ -1888,7 +1890,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
         std::vector<uint16_t> keys;
         for(const auto &n : QtDatapackClientLoader::datapackLoader->get_monsterExtra())
             keys.push_back(n.first);
-        qSort(keys.begin(),keys.end());
+        std::sort(keys.begin(),keys.end());
         uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_monster[max/8] & (1<<(7-max%8))))
             max--;
@@ -1911,7 +1913,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
             }
             else
             {
-                item->setTextColor(QColor(100,100,100));
+                item->setForeground(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
                 item->setIcon(QIcon(":/images/monsters/default/small.png"));
@@ -1937,7 +1939,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
         std::vector<uint16_t> keys;
         for(const auto &n : QtDatapackClientLoader::datapackLoader->get_itemsExtra())
             keys.push_back(n.first);
-        qSort(keys.begin(),keys.end());
+        std::sort(keys.begin(),keys.end());
         uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
             max--;
@@ -1961,7 +1963,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
             }
             else
             {
-                item->setTextColor(QColor(100,100,100));
+                item->setForeground(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
                 //item->setIcon(QIcon(":/images/monsters/default/small.png"));

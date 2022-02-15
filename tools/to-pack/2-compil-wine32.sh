@@ -12,9 +12,9 @@ export CATCHCHALLENGER_VERSION=`grep -F "CATCHCHALLENGER_VERSION" ${CATCHCHALLEN
 echo ${CATCHCHALLENGER_VERSION}
 
 echo "Compil windows version..."
-rm *.json
+rm *.json > /dev/null 2>&1
 source sub-script/compil-windows32.sh
-rm *.json
+rm *.json > /dev/null 2>&1
 cd ${BASE_PWD}
 echo "Compil windows version... done"
 

@@ -428,11 +428,11 @@ void BaseWindow::load_monsters()
                         );
             }
             if(monster.hp==0)
-                item->setBackgroundColor(QColor(255,220,220,255));
+                item->setBackground(QColor(255,220,220,255));
             else if(index==currentMonsterPosition)
             {
                 if(!client->isInFight())
-                    item->setBackgroundColor(QColor(200,255,255,255));
+                    item->setBackground(QColor(200,255,255,255));
             }
             ui->monsterList->addItem(item);
             monsterspos_items_graphical[item]=static_cast<uint8_t>(index);

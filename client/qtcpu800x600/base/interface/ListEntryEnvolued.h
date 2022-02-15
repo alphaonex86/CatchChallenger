@@ -2,7 +2,7 @@
 #define LISTENTRYENVOLUED_H
 
 #include <QLabel>
-#include <QTime>
+#include <QElapsedTimer>
 
 class ListEntryEnvolued : public QLabel
 {
@@ -16,7 +16,7 @@ signals:
     void clicked();
     void doubleClicked();
 private:
-    QTime lastClick;
+    QElapsedTimer lastClick;
     bool haveFirstClick;
 };
 

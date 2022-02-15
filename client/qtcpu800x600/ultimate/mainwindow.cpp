@@ -1362,7 +1362,7 @@ void MainWindow::on_pushButtonTryLogin_clicked()
             abort();
         if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&MainWindow::stateChanged,Qt::DirectConnection))
             abort();
-        if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&MainWindow::error,Qt::QueuedConnection))
+        if(!connect(realSslSocket,&QSslSocket::errorOccurred,           this,&MainWindow::error,Qt::QueuedConnection))
             abort();
 
         lastServer=selectedServerConnexion->host+":"+QString::number(selectedServerConnexion->port);
