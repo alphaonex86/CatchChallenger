@@ -7,6 +7,7 @@ import logging
 
 iterator = -1
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s',)
+has_success = True
 
 class Requester(threading.Thread):
     def __init__(self):
@@ -129,6 +130,9 @@ main_thread = threading.currentThread()
 for t in threading.enumerate():
     if t is not main_thread:
         t.join()
+
+if not has_success:
+	sys.exit(123)
 
 os.system("clang++ -ccc-gcc-name g++ -o catchchallenger-server-login CompressionProtocol.o debug.o entropy_common.o error_private.o fse_decompress.o pool.o threading.o xxbhash.o zstd_common.o fse_compress.o hist.o huf_compress.o zstd_compress.o zstd_compress_literals.o zstd_compress_sequences.o zstd_compress_superblock.o zstd_double_fast.o zstd_fast.o zstd_lazy.o zstd_ldm.o zstd_opt.o zstdmt_compress.o huf_decompress.o zstd_ddict.o zstd_decompress.o zstd_decompress_block.o sha224.o main-epoll-login-slave.o EpollClientLoginSlave.o EpollServerLoginSlave.o EpollClientLoginSlaveStaticVar.o EpollClientLoginSlaveHeavyLoad.o LinkToMaster.o LinkToMasterStaticVar.o LinkToMasterProtocolParsing.o LinkToMasterProtocolParsingMessage.o LinkToMasterProtocolParsingReply.o EpollClientLoginSlaveProtocolParsing.o EpollClientLoginSlaveWrite.o CharactersGroupForLogin.o CharactersGroupClient.o LinkToGameServerStaticVar.o LinkToGameServerProtocolParsing.o LinkToGameServer.o TimerDdos.o Epoll.o EpollGenericSslServer.o EpollGenericServer.o EpollClient.o EpollSocket.o EpollSslClient.o EpollPostgresql.o EpollClientToServer.o EpollSslClientToServer.o EpollTimer.o ProtocolParsingCheck.o ProtocolParsingGeneral.o ProtocolParsingInput.o ProtocolParsingOutput.o FacilityLibGeneral.o CommonSettingsCommon.o cpp11addition.o cpp11additionstringtointc.o cpp11additionstringtointcpp.o DatabaseBase.o PreparedDBQueryLogin.o PreparedDBQueryCommon.o PreparedDBQueryServer.o PreparedStatementUnit.o BaseServerLogin.o SqlFunction.o DictionaryLogin.o TinyXMLSettings.o DatabaseFunction.o StringWithReplacement.o TimerDetectTimeout.o Version.o tinyxml2.o tinyxml2b.o tinyxml2c.o   -lpq")
 print('Finished')

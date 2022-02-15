@@ -333,8 +333,13 @@ void BaseWindow::on_warehouseValidate_clicked()
         {
             const std::vector<PlayerMonster> &playerMonster=client->getPlayerMonster();
             const uint8_t &monsterPosition=static_cast<uint8_t>(monster_to_deposit.at(index));
-            playerInformations.warehouse_playerMonster.push_back(playerMonster.at(monsterPosition));
-            client->removeMonsterByPosition(monsterPosition);
+            if(monsterPosition<playerMonster.size())
+            {
+                playerInformations.warehouse_playerMonster.push_back(playerMonster.at(monsterPosition));
+                client->removeMonsterByPosition(monsterPosition);
+            }
+            else
+                emit error(tr("bug into list monster to deposit").toStdString());
             index++;
         }
     }
