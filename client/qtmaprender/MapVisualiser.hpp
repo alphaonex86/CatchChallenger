@@ -10,6 +10,7 @@
 #include "../../general/base/CommonMap.hpp"
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../../general/base/Map_loader.hpp"
+#include "../../general/base/lib.h"
 
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
@@ -31,7 +32,7 @@
 
 #include "MapVisualiserThread.hpp"
 
-class MapVisualiser : public QGraphicsView
+class DLL_PUBLIC MapVisualiser : public QGraphicsView
 {
     Q_OBJECT
 

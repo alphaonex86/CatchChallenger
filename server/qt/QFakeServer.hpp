@@ -9,9 +9,11 @@
 #include <QMutexLocker>
 #include <vector>
 
+#include "../../general/base/lib.h"
+
 class QFakeSocket;
 
-class QFakeServer : public QObject
+class DLL_PUBLIC QFakeServer : public QObject
 {
     Q_OBJECT
 private:

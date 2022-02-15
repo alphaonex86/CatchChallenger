@@ -7,9 +7,10 @@
 #include "GeneralStructures.hpp"
 #include "GeneralVariable.hpp"
 #include "../tinyXML2/tinyxml2.hpp"
+#include "lib.h"
 
 namespace CatchChallenger {
-class CommonDatapack
+class DLL_PUBLIC CommonDatapack
 {
 public:
     friend class DatapackGeneralLoader;

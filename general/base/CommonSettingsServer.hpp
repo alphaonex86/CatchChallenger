@@ -3,8 +3,9 @@
 
 #include <vector>
 #include <string>
+#include "lib.h"
 
-class CommonSettingsServer
+class DLL_PUBLIC CommonSettingsServer
 {
 public:
     CommonSettingsServer();

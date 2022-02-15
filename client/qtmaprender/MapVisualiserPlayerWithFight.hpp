@@ -3,10 +3,11 @@
 
 #include "MapVisualiserPlayer.hpp"
 #include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/lib.h"
 
 #include <QObject>
 
-class MapVisualiserPlayerWithFight : public MapVisualiserPlayer
+class DLL_PUBLIC MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 {
     Q_OBJECT
 public:

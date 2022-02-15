@@ -5,9 +5,10 @@
 
 #include "ConnectedSocket.hpp"
 #include "Api_protocol_Qt.hpp"
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class Api_client_virtual : public Api_protocol_Qt
+class DLL_PUBLIC Api_client_virtual : public Api_protocol_Qt
 {
 public:
     explicit Api_client_virtual(ConnectedSocket *socket);

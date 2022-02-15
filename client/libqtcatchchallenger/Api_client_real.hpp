@@ -23,6 +23,7 @@
 #include <QNetworkReply>
 
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "Api_protocol_Qt.hpp"
 #include "QZstdDecodeThread.hpp"
@@ -30,7 +31,7 @@
 #define MAXFILETODOWNLOAD 100000
 
 namespace CatchChallenger {
-class Api_client_real : public Api_protocol_Qt
+class DLL_PUBLIC Api_client_real : public Api_protocol_Qt
 {
     Q_OBJECT
 public:

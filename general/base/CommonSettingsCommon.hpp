@@ -3,8 +3,9 @@
 
 #include <string>
 #include <vector>
+#include "lib.h"
 
-class CommonSettingsCommon
+class DLL_PUBLIC CommonSettingsCommon
 {
 public:
     bool automatic_account_creation;
