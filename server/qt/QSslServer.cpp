@@ -1,5 +1,6 @@
 #include "QSslServer.hpp"
 #include <QSslSocket>
+#include <QSslConfiguration>
 #include <unistd.h>
 #include <iostream>
 
@@ -26,7 +27,11 @@ void QSslServer::incomingConnection(qintptr socketDescriptor)
         socket->setLocalCertificate(sslCertificate);
         QList<QSslCertificate> certificates;
         certificates << sslCertificate;
-        socket->setCaCertificates(certificates);
+        //socket->sslConfiguration().setCaCertificates(certificates);->wrong
+        QSslConfiguration configuration = QSslConfiguration::defaultConfiguration();
+        configuration.addCaCertificates(certificates);
+        QSslConfiguration::setDefaultConfiguration(configuration);
+        //socket->setCaCertificates(certificates);
         socket->setPeerVerifyMode(QSslSocket::VerifyNone);
         socket->ignoreSslErrors();
         socket->startServerEncryption();
