@@ -63,7 +63,7 @@ QList<LanBroadcastWatcher::ServerEntry> LanBroadcastWatcher::getLastServerList()
     int index=0;
     while(index<list.size())
     {
-        if(list.at(index).lastseen<(QDateTime::currentSecsSinceEpoch()-3))
+        if(list.at(index).lastseen<((uint64_t)QDateTime::currentSecsSinceEpoch()-3))
             list.removeAt(index);
         else
             index++;
@@ -77,7 +77,7 @@ void LanBroadcastWatcher::clean()
     int index=0;
     while(index<list.size())
     {
-        if(list.at(index).lastseen<(QDateTime::currentSecsSinceEpoch()-3))
+        if(list.at(index).lastseen<((uint64_t)QDateTime::currentSecsSinceEpoch()-3))
         {
             change=true;
             list.removeAt(index);

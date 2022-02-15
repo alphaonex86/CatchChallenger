@@ -602,6 +602,14 @@ bool Client::doTheOtherMonsterTurn()
 Skill::AttackReturn Client::generateOtherAttack()
 {
     Skill::AttackReturn attackReturnTemp;
+    attackReturnTemp.item=0;
+    attackReturnTemp.monsterPlace=0;
+    attackReturnTemp.on_current_monster=true;
+    attackReturnTemp.publicPlayerMonster.catched_with=0;
+    attackReturnTemp.publicPlayerMonster.gender=Gender_Unknown;
+    attackReturnTemp.publicPlayerMonster.hp=0;
+    attackReturnTemp.publicPlayerMonster.level=0;
+    attackReturnTemp.publicPlayerMonster.monster=0;
     attackReturnTemp.attack=0;
     attackReturnTemp.doByTheCurrentMonster=false;
     attackReturnTemp.attackReturnCase=Skill::AttackReturnCase_NormalAttack;

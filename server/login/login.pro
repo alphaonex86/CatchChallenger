@@ -3,6 +3,8 @@
 TEMPLATE = app
 QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
 QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
+linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
 
 QT       -= gui widgets network sql xml
 QT       -= xml core
