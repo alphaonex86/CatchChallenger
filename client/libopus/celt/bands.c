@@ -904,6 +904,7 @@ static void compute_theta(struct band_ctx *ctx, struct split_ctx *sctx,
 static unsigned quant_band_n1(struct band_ctx *ctx, celt_norm *X, celt_norm *Y, int b,
       celt_norm *lowband_out)
 {
+    (void)b;
    int c;
    int stereo;
    celt_norm *x = X;
