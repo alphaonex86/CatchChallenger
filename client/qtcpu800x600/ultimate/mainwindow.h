@@ -76,6 +76,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool toQuit;
+    bool errorInProgress;
 protected:
     void changeEvent(QEvent *e);
 private slots:

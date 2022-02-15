@@ -419,7 +419,6 @@ void Api_protocol_Qt::resetAll()
 
     battleCurrentMonster.clear();
     battleStat.clear();
-    client=NULL;
 
     CommonFightEngine::resetAll();
 }
@@ -1093,11 +1092,11 @@ bool Api_protocol_Qt::isInFight() const
 
 std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const PlayerMonster &playerMonster)
 {
-    if(client==nullptr)
+    /*if(client==nullptr)
     {
-        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster()");
+        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster() single");
         return std::vector<uint8_t>();
-    }
+    }*/
 
     std::vector<PlayerMonster> monsterList;
     monsterList.push_back(playerMonster);
@@ -1107,14 +1106,14 @@ std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const PlayerMonster &play
 
 std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const std::vector<PlayerMonster> &playerMonster)
 {
-    if(client==nullptr)
+    /*if(client==nullptr)
     {
-        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster()");
+        emit error("client==nullptr Api_protocol_Qt::addPlayerMonster() multiple");
         return std::vector<uint8_t>();
-    }
+    }*/
     std::vector<uint8_t> positionList;
     const uint8_t basePosition=static_cast<uint8_t>(player_informations.playerMonster.size());
-    Player_private_and_public_informations &informations=client->get_player_informations();
+    Player_private_and_public_informations &informations=get_player_informations();
     unsigned int index=0;
     while(index<playerMonster.size())
     {
@@ -1605,11 +1604,6 @@ uint8_t Api_protocol_Qt::getOneSeed(const uint8_t &max)
 void Api_protocol_Qt::newRandomNumber(const std::string &data)
 {
     randomSeeds.append(data);
-}
-
-void Api_protocol_Qt::setClient(Api_protocol_Qt * client)
-{
-    this->client=client;
 }
 
 //duplicate to have a return

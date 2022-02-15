@@ -51,6 +51,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     toQuit(false),
+    errorInProgress(false),
     ui(new Ui::MainWindow)
     #ifndef CATCHCHALLENGER_NOAUDIO
     ,buffer(&data)
@@ -1600,7 +1601,12 @@ void MainWindow::newError(std::string error,std::string detailedError)
     std::cout << "MainWindow::newError(): " << error << ": " << detailedError << std::endl;
     if(client!=NULL)
         client->tryDisconnect();
-    QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
+    if(!errorInProgress)
+    {
+        errorInProgress=true;
+        QMessageBox::critical(this,tr("Error"),QString::fromStdString(error));
+        errorInProgress=false;
+    }
 }
 
 void MainWindow::haveNewError()
