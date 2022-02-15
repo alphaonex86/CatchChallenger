@@ -90,7 +90,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 
     //load the map
     {
-        QTime time;
+        QElapsedTimer time;
         time.restart();
         tempMapObject->tiledMap = reader.readMap(QString::fromStdString(resolvedFileName));
         qDebug() << QStringLiteral("%1 loaded into %2ms").arg(QString::fromStdString(resolvedFileName)).arg(time.elapsed());
@@ -822,17 +822,12 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                 }
                                             }
                                             else
-                                                qDebug() << (QStringLiteral("No file %1: properties->Name(): %2, name: %3")
-                                                             .arg(QString::fromStdString(botFile))
-                                                             .arg(property->Name())
-                                                             .arg(property->Attribute("name")));
+                                                qDebug() << (QStringLiteral("No file %1: properties->Name()")
+                                                             .arg(QString::fromStdString(botFile)));
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Is not a number: properties->Name(): %1, name: %2")
-                                                     .arg(property->Name())
-                                                     .arg(property->Attribute("name"))
-                                                        );
+                                        qDebug() << QStringLiteral("Is not a number: properties->Name(): NULL");
                                 }
                                 properties = properties->NextSiblingElement("properties");
                             }

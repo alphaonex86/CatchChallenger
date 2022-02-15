@@ -1,9 +1,6 @@
 CONFIG += c++11
 QMAKE_CXXFLAGS+="-std=c++0x"
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
-# not supported everywhere: -Wno-delete-non-abstract-non-virtual-dtor
-linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
-linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
 
 QT       -= core
 

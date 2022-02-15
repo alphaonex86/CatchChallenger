@@ -12,6 +12,8 @@ TARGET = catchchallengerclient
 linux:QMAKE_LFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
 linux:QMAKE_CFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
 linux:QMAKE_CXXFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
+linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
 
 #define CATCHCHALLENGER_SOLO
 contains(DEFINES, CATCHCHALLENGER_SOLO) {

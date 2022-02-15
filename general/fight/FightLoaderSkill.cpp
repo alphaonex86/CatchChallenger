@@ -141,6 +141,10 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                             while(life!=NULL)
                                             {
                                                 Skill::Life effect;
+                                                effect.effect.on=ApplyOn_Nobody;
+                                                effect.effect.quantity=0;
+                                                effect.effect.type=QuantityType_Quantity;
+                                                effect.success=0;
                                                 if(life->Attribute("applyOn")!=NULL)
                                                 {
                                                     const std::string &applyOn=life->Attribute("applyOn");
@@ -206,6 +210,10 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                                                     if(ok)
                                                     {
                                                         Skill::Buff effect;
+                                                        effect.effect.buff=0;
+                                                        effect.effect.level=0;
+                                                        effect.effect.on=ApplyOn_Nobody;
+                                                        effect.success=0;
                                                         if(buff->Attribute("applyOn")!=NULL)
                                                         {
                                                             const std::string &applyOn=buff->Attribute("applyOn");

@@ -60,10 +60,10 @@ protected:
 
     uint8_t waitRenderTime;
     QTimer timerRender;
-    QTime timeRender;
+    QElapsedTimer timeRender;
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
-    QTime timeUpdateFPS;
+    QElapsedTimer timeUpdateFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
