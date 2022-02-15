@@ -8,6 +8,7 @@ DEFINES += LIBEXPORT
 include(libqt.pri)
 include(libqtheader.pri)
 include(../libcatchchallenger/lib.pri)
+include(../libcatchchallenger/libheader.pri)
 include(../tiled/tiled.pri)
 include(../tiled/tiledheader.pri)
 include(../qtmaprender/render.pri)

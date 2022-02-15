@@ -6,9 +6,10 @@
 
 #include "GeneralStructures.hpp"
 #include "CommonDatapack.hpp"
+#include "lib.h"
 
 namespace CatchChallenger {
-class CommonDatapackServerSpec
+class DLL_PUBLIC CommonDatapackServerSpec
 {
 public:
     explicit CommonDatapackServerSpec();

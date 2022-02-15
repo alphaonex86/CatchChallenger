@@ -12,9 +12,10 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #endif
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
+class DLL_PUBLIC Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
 {
 public:
     explicit Api_protocol();

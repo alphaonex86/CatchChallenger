@@ -3,6 +3,7 @@
 
 #include "MapControllerMP.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
+#include "../../general/base/lib.h"
 
 #include <string>
 #include <vector>
@@ -11,7 +12,7 @@
 #include <QGraphicsPixmapItem>
 #include <QColor>
 
-class MapController : public MapControllerMP
+class DLL_PUBLIC MapController : public MapControllerMP
 {
     Q_OBJECT
 public:

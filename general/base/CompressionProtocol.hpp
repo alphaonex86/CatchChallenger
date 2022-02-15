@@ -3,11 +3,12 @@
 #define COMPRESSIONPROTOCOL_H
 
 #include "GeneralStructures.hpp"
+#include "lib.h"
 
 #include <cstdint>
 #define CATCHCHALLENGER_COMPRESSBUFFERSIZE 16*1024*1024
 
-class CompressionProtocol
+class DLL_PUBLIC CompressionProtocol
 {
 public:
     CompressionProtocol();

@@ -19,7 +19,7 @@
     #endif
 #endif
 
-struct pairhash {
+class DLL_PUBLIC pairhash {
 public:
   std::size_t operator()(const std::pair<uint8_t, uint8_t> &x) const;
   std::size_t operator()(const std::pair<uint16_t, uint16_t> &x) const;
