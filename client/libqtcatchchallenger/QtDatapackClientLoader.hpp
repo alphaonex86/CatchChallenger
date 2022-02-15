@@ -17,12 +17,13 @@
 #include <utility>
 
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 #include "../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../tiled/tiled_tileset.hpp"
 
 class QtDatapackClientLoaderThread;
 
-class QtDatapackClientLoader
+class DLL_PUBLIC QtDatapackClientLoader
         #ifndef NOTHREADS
         : public QThread
         #else

@@ -2,8 +2,9 @@
 #define SETTINGS_H
 
 #include <QSettings>
+#include "../../general/base/lib.h"
 
-class Settings
+class DLL_PUBLIC Settings
 {
 public:
     Settings();

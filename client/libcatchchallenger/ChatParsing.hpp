@@ -4,9 +4,10 @@
 #include <string>
 
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class ChatParsing
+class DLL_PUBLIC ChatParsing
 {
 public:
     static std::string new_chat_message(const std::string &pseudo,const Player_type &player_type,const Chat_type &chat_type,const std::string &text,const bool withLink=false);

@@ -6,11 +6,12 @@
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/fight/CommonFightEngine.hpp"
+#include "../../general/base/lib.h"
 #include "../libcatchchallenger/Api_protocol.hpp"
 #include "ConnectedSocket.hpp"
 
 namespace CatchChallenger {
-class Api_protocol_Qt : public QObject, public Api_protocol, public CommonFightEngine
+class DLL_PUBLIC Api_protocol_Qt : public QObject, public Api_protocol, public CommonFightEngine
 {
     Q_OBJECT
 public:

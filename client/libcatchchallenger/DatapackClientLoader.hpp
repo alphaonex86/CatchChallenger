@@ -7,8 +7,9 @@
 #include <utility>
 
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 
-class DatapackClientLoader
+class DLL_PUBLIC DatapackClientLoader
 {
 public:
     explicit DatapackClientLoader();

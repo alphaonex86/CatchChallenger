@@ -9,10 +9,11 @@
 #include "../base/ClientBase.hpp"
 #include "../../general/base/CommonMap.hpp"
 #include "CommonFightEngineBase.hpp"
+#include "../base/lib.h"
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngine : public CommonFightEngineBase
+class DLL_PUBLIC CommonFightEngine : public CommonFightEngineBase
 {
 public:
     CommonFightEngine();

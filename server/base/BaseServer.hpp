@@ -9,6 +9,7 @@
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/lib.h"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
 #endif
@@ -28,14 +29,14 @@ class BaseServer :
 public:
     explicit BaseServer();
     virtual ~BaseServer();
-    void setSettings(const GameServerSettings &settings);
+    DLL_PUBLIC void setSettings(const GameServerSettings &settings);
     #ifdef CATCHCHALLENGER_CACHE_HPS
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void setMaster(const std::string &master_host, const uint16_t &master_port,
                    const uint8_t &master_tryInterval, const uint8_t &master_considerDownAfterNumberOfTry);
     #endif
     #endif
-    GameServerSettings getSettings() const;
+    DLL_PUBLIC GameServerSettings getSettings() const;
     static void initialize_the_database_prepared_query();
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void setSave(const std::string &file);

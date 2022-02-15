@@ -4,9 +4,10 @@
 #include <vector>
 #include <string>
 #include "GeneralStructures.hpp"
+#include "lib.h"
 
 namespace CatchChallenger {
-class FacilityLib
+class DLL_PUBLIC FacilityLib
 {
 public:
     static PublicPlayerMonster playerMonsterToPublicPlayerMonster(const PlayerMonster &playerMonster);
