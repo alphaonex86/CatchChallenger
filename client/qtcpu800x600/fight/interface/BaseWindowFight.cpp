@@ -1807,6 +1807,8 @@ void BaseWindow::displayExperienceGain()
 
 void BaseWindow::displayTrap()
 {
+    if(client==nullptr)
+        return;
     PublicPlayerMonster * otherMonster=client->getOtherMonster();
     PublicPlayerMonster * currentMonster=client->getCurrentMonster();
     if(otherMonster==NULL)
