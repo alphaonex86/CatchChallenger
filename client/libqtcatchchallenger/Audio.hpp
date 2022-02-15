@@ -3,6 +3,7 @@
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../opusfile/opusfile.h"
+#include "../../general/base/lib.h"
 #include "QInfiniteBuffer.hpp"
 
 #include <QString>
@@ -10,7 +11,7 @@
 #include <QList>
 #include <QBuffer>
 
-class Audio
+class DLL_PUBLIC Audio
 {
 public:
     Audio();

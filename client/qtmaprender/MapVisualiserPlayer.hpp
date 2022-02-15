@@ -3,13 +3,14 @@
 
 #include "MapVisualiser.hpp"
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 
 #include <QSet>
 #include <QString>
 #include <QTimer>
 #include <QTime>
 
-class MapVisualiserPlayer : public MapVisualiser
+class DLL_PUBLIC MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT
     friend class MapVisualiserPlayerWithFight;

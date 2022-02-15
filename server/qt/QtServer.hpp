@@ -12,13 +12,14 @@
 #include <QTimer>
 #endif
 #include "../base/BaseServer.hpp"
+#include "../../general/base/lib.h"
 #include "QtServerStructures.hpp"
 #include "QtClient.hpp"
 
 #ifndef NOTHREADS
-class QtServer : public QThread, public CatchChallenger::BaseServer
+class DLL_PUBLIC QtServer : public QThread, public CatchChallenger::BaseServer
 #else
-class QtServer : public QObject, public CatchChallenger::BaseServer
+class DLL_PUBLIC QtServer : public QObject, public CatchChallenger::BaseServer
 #endif
 {
     Q_OBJECT

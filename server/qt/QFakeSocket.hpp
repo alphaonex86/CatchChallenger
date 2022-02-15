@@ -2,12 +2,13 @@
 #ifndef CATCHCHALLENGER_QFAKESOCKET_H
 #define CATCHCHALLENGER_QFAKESOCKET_H
 
+#include "../../general/base/lib.h"
 #include <QAbstractSocket>
 #include <QMutex>
 #include <QByteArray>
 #include <QIODevice>
 
-class QFakeSocket : public QIODevice
+class DLL_PUBLIC QFakeSocket : public QIODevice
 {
     Q_OBJECT
 public:

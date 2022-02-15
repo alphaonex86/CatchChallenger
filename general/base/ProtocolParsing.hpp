@@ -11,6 +11,7 @@
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include "CompressionProtocol.hpp"
 #endif
+#include "lib.h"
 
 #define CATCHCHALLENGER_COMMONBUFFERSIZE 4096
 
@@ -48,7 +49,7 @@ namespace CatchChallenger {
 #if ! defined (ONLYMAPRENDER)
 class ProtocolParsingCheck;
 
-class ProtocolParsing
+class DLL_PUBLIC ProtocolParsing
 {
 public:
     /// \brief Define the mode of transmission: client or server
@@ -91,7 +92,7 @@ private:
     virtual void reset() = 0;
 };
 
-class ProtocolParsingBase : public ProtocolParsing
+class DLL_PUBLIC ProtocolParsingBase : public ProtocolParsing
 {
 public:
     ProtocolParsingBase(
@@ -175,7 +176,7 @@ protected:
     #endif
 };
 
-class ProtocolParsingInputOutput : public ProtocolParsingBase
+class DLL_PUBLIC ProtocolParsingInputOutput : public ProtocolParsingBase
 {
 public:
     ProtocolParsingInputOutput(

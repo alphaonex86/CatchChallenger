@@ -4,6 +4,7 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
+#include "lib.h"
 
 //to group the step by step move into line move
 /* template <typename TMap = Map>
@@ -14,7 +15,7 @@ namespace CatchChallenger {
 
 class CommonMap;
 
-class MoveOnTheMap
+class DLL_PUBLIC MoveOnTheMap
 {
 public:
     MoveOnTheMap();

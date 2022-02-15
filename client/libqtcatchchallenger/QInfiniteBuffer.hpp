@@ -3,7 +3,9 @@
 
 #include <QBuffer>
 
-class QInfiniteBuffer : public QBuffer
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC QInfiniteBuffer : public QBuffer
 {
 public:
     QInfiniteBuffer(QByteArray *buf, QObject *parent = nullptr);

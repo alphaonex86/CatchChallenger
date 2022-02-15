@@ -7,9 +7,10 @@
 #include <utility>
 
 #include "GeneralStructures.hpp"
+#include "lib.h"
 
 namespace CatchChallenger {
-class CommonMap
+class DLL_PUBLIC CommonMap
 {
 public:
     struct Map_Border

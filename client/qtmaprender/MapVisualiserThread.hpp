@@ -29,8 +29,9 @@
 #include "MapDoor.hpp"
 #include "TriggerAnimation.hpp"
 #include "MapVisualiserOrder.hpp"
+#include "../../general/base/lib.h"
 
-class MapVisualiserThread
+class DLL_PUBLIC MapVisualiserThread
         #ifndef NOTHREADS
         : public QThread
         #else
