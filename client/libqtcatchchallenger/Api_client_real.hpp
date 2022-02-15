@@ -20,6 +20,7 @@
 #include <QNetworkProxy>
 #include <QRegularExpression>
 #include <QDataStream>
+#include <QNetworkReply>
 
 #include "../../general/base/GeneralStructures.hpp"
 #include "../libcatchchallenger/ClientStructures.hpp"
@@ -53,9 +54,9 @@ public:
     void test_mirror_base();
     void test_mirror_main();
     void test_mirror_sub();
-    void httpErrorEventBase();
-    void httpErrorEventMain();
-    void httpErrorEventSub();
+    void httpErrorEventBase(QNetworkReply::NetworkError code);
+    void httpErrorEventMain(QNetworkReply::NetworkError code);
+    void httpErrorEventSub(QNetworkReply::NetworkError code);
     void decodedIsFinishBase();
     void decodedIsFinishMain();
     void decodedIsFinishSub();

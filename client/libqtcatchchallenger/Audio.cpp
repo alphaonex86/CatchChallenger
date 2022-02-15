@@ -94,8 +94,7 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
         return false;
     }
     ogg_int64_t pcm_offset;
-    ogg_int64_t nsamples;
-    nsamples=0;
+    //ogg_int64_t nsamples=0;
     pcm_offset=op_pcm_tell(of);
     if(pcm_offset!=0)
         fprintf(stderr,"Non-zero starting PCM offset: %li\n",(long)pcm_offset);
@@ -125,7 +124,7 @@ bool Audio::decodeOpus(const std::string &filePath,QByteArray &data)
             out[2*si+1]=(unsigned char)(pcm[si]>>8&0xFF);
         }
         buffer.write(reinterpret_cast<char *>(out),sizeof(*out)*4*ret);
-        nsamples+=ret;
+        //nsamples+=ret;
     }
     op_free(of);
 
