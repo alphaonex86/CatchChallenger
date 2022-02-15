@@ -7,6 +7,7 @@ import logging
 
 iterator = -1
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s',)
+has_success = True
 
 class Requester(threading.Thread):
     def __init__(self):
@@ -118,5 +119,12 @@ for t in threading.enumerate():
     if t is not main_thread:
         t.join()
 
+if not has_success:
+	sys.exit(123)
+
 os.system("clang++ -ccc-gcc-name g++ -o catchchallenger-gateway CompressionProtocol.o debug.o entropy_common.o error_private.o fse_decompress.o pool.o threading.o xxbhash.o zstd_common.o huf_decompress.o zstd_ddict.o zstd_decompress.o zstd_decompress_block.o fse_compress.o hist.o huf_compress.o zstd_compress.o zstd_compress_literals.o zstd_compress_sequences.o zstd_compress_superblock.o zstd_double_fast.o zstd_fast.o zstd_lazy.o zstd_ldm.o zstd_opt.o zstdmt_compress.o sha224.o EpollClientLoginSlave.o EpollServerLoginSlave.o EpollClientLoginSlaveStaticVar.o EpollClientLoginSlaveProtocolParsing.o EpollClientLoginSlaveWrite.o LinkToGameServerStaticVar.o LinkToGameServerProtocolParsing.o LinkToGameServer.o TimerDdos.o DatapackDownloaderBase.o DatapackDownloader_sub.o DatapackDownloader_main.o DatapackDownloaderMainSub.o EpollClientLoginSlaveDatapack.o FacilityLibGateway.o main-epoll-gateway.o Epoll.o EpollGenericSslServer.o EpollGenericServer.o EpollClient.o EpollSocket.o EpollSslClient.o EpollClientToServer.o EpollSslClientToServer.o EpollTimer.o DatapackChecksum.o TarDecode.o FacilityLibGeneral.o ProtocolParsingCheck.o ProtocolParsingGeneral.o ProtocolParsingInput.o ProtocolParsingOutput.o CommonSettingsCommon.o CommonSettingsServer.o cpp11addition.o cpp11additionstringtointc.o cpp11additionstringtointcpp.o TinyXMLSettings.o tinyxml2.o tinyxml2b.o tinyxml2c.o   -lcurl")
 print('Finished')
+if not has_success:
+	sys.exit(123)
+else:
+	sys.exit(0)

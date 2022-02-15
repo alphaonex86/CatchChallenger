@@ -7,6 +7,7 @@ import logging
 
 iterator = -1
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s',)
+has_success = True
 
 class Requester(threading.Thread):
     def __init__(self):
@@ -105,5 +106,12 @@ for t in threading.enumerate():
     if t is not main_thread:
         t.join()
 
+if not has_success:
+	sys.exit(123)
+
 os.system("clang++ -ccc-gcc-name g++ -o catchchallenger-server-master sha224.o main-epoll-login-master.o EpollClientLoginMaster.o EpollServerLoginMaster.o EpollClientLoginMasterStaticVar.o EpollClientLoginMasterProtocolParsing.o CharactersGroup.o PlayerUpdaterToLogin.o PurgeTheLockedAccount.o CheckTimeoutGameServer.o AutomaticPingSend.o TimeRangeEvent.o EpollTimer.o Epoll.o EpollGenericSslServer.o EpollGenericServer.o EpollClient.o EpollSocket.o EpollSslClient.o EpollPostgresql.o ProtocolParsingCheck.o ProtocolParsingGeneral.o ProtocolParsingInput.o ProtocolParsingOutput.o FacilityLibGeneral.o CommonDatapack.o DatapackGeneralLoader.o DatapackGeneralLoaderCrafting.o DatapackGeneralLoaderIndustry.o DatapackGeneralLoaderItem.o DatapackGeneralLoaderMap.o DatapackGeneralLoaderMonsterDrop.o DatapackGeneralLoaderPlant.o DatapackGeneralLoaderQuest.o DatapackGeneralLoaderReputation.o CommonFightEngineBase.o FightLoader.o FightLoaderBuff.o FightLoaderFight.o FightLoaderMonster.o FightLoaderSkill.o CommonSettingsCommon.o cpp11addition.o cpp11additionstringtointc.o cpp11additionstringtointcpp.o BaseServerMasterLoadDictionary.o DatabaseBase.o BaseServerMasterSendDatapack.o DatabaseFunction.o SqlFunction.o TinyXMLSettings.o Version.o tinyxml2.o tinyxml2b.o tinyxml2c.o   -lpq")
 print('Finished')
+if not has_success:
+	sys.exit(123)
+else:
+	sys.exit(0)

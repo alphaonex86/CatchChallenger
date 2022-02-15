@@ -7,6 +7,7 @@ import logging
 
 iterator = -1
 logging.basicConfig(level=logging.DEBUG, format='(%(threadName)-9s) %(message)s',)
+has_success = True
 
 class Requester(threading.Thread):
     def __init__(self):
@@ -207,5 +208,12 @@ for t in threading.enumerate():
     if t is not main_thread:
         t.join()
 
+if not has_success:
+	sys.exit(123)
+
 os.system("clang++ -ccc-gcc-name g++ -o catchchallenger-server-cli-epoll ProtocolParsingGeneral.o CompressionProtocol.o ProtocolParsingInput.o ProtocolParsingOutput.o ProtocolParsingCheck.o MoveOnTheMap.o Map_loader.o Map_loaderMain.o FacilityLib.o FacilityLibGeneral.o DatapackGeneralLoader.o DatapackGeneralLoaderCrafting.o DatapackGeneralLoaderIndustry.o DatapackGeneralLoaderItem.o DatapackGeneralLoaderMap.o DatapackGeneralLoaderMonsterDrop.o DatapackGeneralLoaderPlant.o DatapackGeneralLoaderQuest.o DatapackGeneralLoaderReputation.o cpp11addition.o cpp11additionstringtointcpp.o cpp11additionstringtointc.o FightLoader.o FightLoaderBuff.o FightLoaderFight.o FightLoaderMonster.o FightLoaderSkill.o CommonMap.o CommonDatapack.o CommonDatapackServerSpec.o CommonSettingsCommon.o CommonSettingsServer.o CommonFightEngine.o CommonFightEngineEnd.o CommonFightEngineTurn.o CommonFightEngineBuff.o CommonFightEngineSkill.o CommonFightEngineWild.o CommonFightEngineBase.o Version.o sha224.o xxhash.o GlobalServerData.o PlayerUpdaterBase.o SqlFunction.o BaseServer.o BaseServer2.o BaseServer3.o BaseServerSettings.o BaseServerLoad.o BaseServerLoadProfile.o BaseServerLoadDatapack.o BaseServerLoadOther.o BaseServerLoadMap.o BaseServerLoadMapAfterDB.o BaseServerLoadBot.o BaseServerLoadSQL.o BaseServerLoadSQLNotEpoll.o BaseServerLoadSQLPointAndMarket.o BaseServerUnload.o BaseServerMasterLoadDictionary.o BaseServerMasterSendDatapack.o LocalClientHandler.o LocalClientHandlerMove.o LocalClientHandlerReputation.o LocalClientHandlerFightManage.o LocalClientHandlerObject.o LocalClientHandlerWarehouse.o LocalClientHandlerCommand.o LocalClientHandlerDatabaseSync.o LocalClientHandlerIndustries.o LocalClientHandlerShop.o LocalClientHandlerClan.o LocalClientHandlerMarket.o LocalClientHandlerCity.o LocalClientHandlerWithoutSender.o LocalClientHandlerQuest.o LocalClientHandlerTrade.o ClientLocalBroadcast.o Client.o ClientStaticVar.o ClientHeavyLoad.o ClientHeavyLoadLogin.o ClientHeavyLoadLogin2.o ClientHeavyLoadMirror.o ClientHeavyLoadSelectChar.o ClientHeavyLoadSelectCharCommon.o ClientHeavyLoadSelectCharServer.o ClientHeavyLoadSelectCharFinal.o ClientNetworkWrite.o ClientNetworkRead.o ClientNetworkReadMessage.o ClientNetworkReadQuery.o ClientNetworkReadWithoutSender.o ClientBroadCast.o MapServer.o BroadCastWithoutSender.o ClientMapManagement.o MapVisibilityAlgorithm_WithoutSender.o MapVisibilityAlgorithm_None.o MapVisibilityAlgorithm_Simple_StoreOnSender.o MapVisibilityAlgorithm_WithBorder_StoreOnSender.o Map_server_MapVisibility_Simple_StoreOnSender.o Map_server_MapVisibility_WithBorder_StoreOnSender.o MapBasicMove.o DictionaryLogin.o DictionaryServer.o PreparedDBQueryLogin.o PreparedDBQueryCommon.o PreparedDBQueryServer.o DatabaseBase.o BaseServerLogin.o TimeRangeEventScanBase.o TinyXMLSettings.o DatabaseFunction.o StringWithReplacement.o StaticText.o PreparedStatementUnit.o BaseServerCrafting.o ClientLocalBroadcastCrafting.o LocalClientHandlerCrafting.o ClientHeavyLoadCrafting.o LocalClientHandlerFight.o LocalClientHandlerFightSkill.o LocalClientHandlerFightBuff.o LocalClientHandlerFightWild.o LocalClientHandlerFightDatabase.o LocalClientHandlerFightBattle.o BaseServerFight.o ClientHeavyLoadFight.o EpollPostgresql.o EpollSocket.o EpollClient.o EpollServer.o EpollSslClient.o EpollSslServer.o Epoll.o EpollTimer.o TimerCityCapture.o TimerSendInsertMoveRemove.o TimerPositionSync.o TimerDdos.o TimerEvents.o EpollGenericServer.o EpollGenericSslServer.o TimeRangeEvent.o NormalServerGlobal.o main-epoll.o main-epoll2.o BaseServerEpoll.o ClientMapManagementEpoll.o ServerPrivateVariablesEpoll.o PlayerUpdaterEpoll.o TimeRangeEventScan.o tinyxml2.o tinyxml2b.o tinyxml2c.o   -lzstd -lz -lpq")
 print('Finished')
+if not has_success:
+	sys.exit(123)
+else:
+	sys.exit(0)
