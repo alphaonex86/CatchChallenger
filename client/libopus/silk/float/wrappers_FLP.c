@@ -189,6 +189,7 @@ void silk_quant_LTP_gains_FLP(
     opus_int16 B_Q14[ MAX_NB_SUBFR * LTP_ORDER ];
     opus_int32 XX_Q17[ MAX_NB_SUBFR * LTP_ORDER * LTP_ORDER ];
     opus_int32 xX_Q17[ MAX_NB_SUBFR * LTP_ORDER ];
+    memset(xX_Q17,0x00,sizeof(xX_Q17));
 
     for( i = 0; i < nb_subfr * LTP_ORDER * LTP_ORDER; i++ ) {
         XX_Q17[ i ] = (opus_int32)silk_float2int( XX[ i ] * 131072.0f );

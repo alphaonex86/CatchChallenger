@@ -185,7 +185,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
 {
     Q_UNUSED(items);
 
-    QTime time;
+    QElapsedTimer time;
     time.restart();
 
     std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;

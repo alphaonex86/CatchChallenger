@@ -24,7 +24,7 @@ public:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 private:
     Map_full * tempMapObject;
-    QTime clickDuration;
+    QElapsedTimer clickDuration;
 signals:
     void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
 };

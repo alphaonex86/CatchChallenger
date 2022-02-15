@@ -409,17 +409,25 @@ static size_t ZSTD_seqDecompressedSize(seqStore_t const* seqStore, const seqDef*
     const seqDef* const send = sequences + nbSeq;
     const seqDef* sp = sstart;
     size_t matchLengthSum = 0;
+    #if (DEBUGLEVEL>=1)
     size_t litLengthSum = 0;
+    #else
+    (void)lastSequence;
+    #endif
     while (send-sp > 0) {
         ZSTD_sequenceLength const seqLen = ZSTD_getSequenceLength(seqStore, sp);
+        #if (DEBUGLEVEL>=1)
         litLengthSum += seqLen.litLength;
+        #endif
         matchLengthSum += seqLen.matchLength;
         sp++;
     }
+    #if (DEBUGLEVEL>=1)
     assert(litLengthSum <= litSize);
     if (!lastSequence) {
         assert(litLengthSum == litSize);
     }
+    #endif
     return matchLengthSum + litSize;
 }
 
@@ -809,7 +817,7 @@ static size_t ZSTD_compressSubBlock_multi(const seqStore_t* seqStorePtr,
         if (sp < send) {
             seqDef const* seq;
             repcodes_t rep;
-            memcpy(&rep, prevCBlock->rep, sizeof(rep)); 
+            memcpy(&rep, prevCBlock->rep, sizeof(rep));
             for (seq = sstart; seq < sp; ++seq) {
                 rep = ZSTD_updateRep(rep.rep, seq->offset - 1, ZSTD_getSequenceLength(seqStorePtr, seq).litLength == 0);
             }

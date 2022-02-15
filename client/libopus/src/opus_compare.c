@@ -35,23 +35,23 @@
 #define OPUS_COSF(_x)        ((float)cos(_x))
 #define OPUS_SINF(_x)        ((float)sin(_x))
 
-static void *check_alloc(void *_ptr){
+/*static void *check_alloc(void *_ptr){
   if(_ptr==NULL){
     fprintf(stderr,"Out of memory.\n");
     exit(EXIT_FAILURE);
   }
   return _ptr;
-}
+}*/
 
-static void *opus_malloc(size_t _size){
+/*static void *opus_malloc(size_t _size){
   return check_alloc(malloc(_size));
-}
+}*/
 
-static void *opus_realloc(void *_ptr,size_t _size){
+/*static void *opus_realloc(void *_ptr,size_t _size){
   return check_alloc(realloc(_ptr,_size));
-}
+}*/
 
-static size_t read_pcm16(float **_samples,FILE *_fin,int _nchannels){
+/*static size_t read_pcm16(float **_samples,FILE *_fin,int _nchannels){
   unsigned char  buf[1024];
   float         *samples;
   size_t         nsamples;
@@ -148,16 +148,16 @@ static void band_energy(float *_out,float *_ps,const int *_bands,int _nbands,
     }
   }
   free(window);
-}
+}*/
 
 #define NBANDS (21)
 #define NFREQS (240)
 
 /*Bands on which we compute the pseudo-NMR (Bark-derived
   CELT bands).*/
-static const int BANDS[NBANDS+1]={
+/*static const int BANDS[NBANDS+1]={
   0,2,4,6,8,10,12,14,16,20,24,28,32,40,48,56,68,80,96,120,156,200
-};
+};*/
 
 #define TEST_WIN_SIZE (480)
 #define TEST_WIN_STEP (120)
