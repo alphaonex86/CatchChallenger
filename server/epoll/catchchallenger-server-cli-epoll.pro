@@ -15,6 +15,8 @@ QT       -= core xml
 
 linux:QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
 linux:QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
+linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
 
 #DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #DEFINES += SERVERSSL

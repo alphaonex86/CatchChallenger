@@ -109,7 +109,7 @@ protected:
     QTimer lookToMove;
     QTimer moveAnimationTimer;
     //QTime
-    QTime lastAction;//to prevent flood
+    QElapsedTimer lastAction;//to prevent flood
 
     //control
     std::unordered_set<int> keyPressed;

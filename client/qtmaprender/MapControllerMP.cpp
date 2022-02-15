@@ -383,7 +383,12 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
 
 bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
-    #if ! defined (ONLYMAPRENDER)
+    #if defined (ONLYMAPRENDER)
+    (void)mapId;
+    (void)x;
+    (void)y;
+    (void)direction;
+    #else
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedTeleportTo tempItem;

@@ -24,6 +24,8 @@ include(../../general/tinyXML2/tinyXML2header.pri)
 QT       += network widgets opengl
 TARGET = qtcatchchallengerclient
 
-#linux:QMAKE_LFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
-#linux:QMAKE_CFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
-#linux:QMAKE_CXXFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_LFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CXXFLAGS+="-fvisibility=hidden -fvisibility-inlines-hidden"
+linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
+linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
