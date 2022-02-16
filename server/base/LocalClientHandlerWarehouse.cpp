@@ -71,29 +71,29 @@ void Client::removeWarehouseCash(const uint64_t &cash)
                 });
 }
 
-void Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
+bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
                             const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
                             const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
 {
     if(!wareHouseStoreCheck(withdrawCash,depositeCash,withdrawItems,depositeItems,withdrawMonsters,depositeMonsters))
-        return;
+        return false;
     {
         unsigned int index=0;
         while(index<withdrawItems.size())
         {
             const std::pair<uint16_t, uint32_t> &item=withdrawItems.at(index);
-            removeWarehouseObject(item.first,item.second);
-            addObject(item.first,item.second);
+            removeWarehouseObject(item.first,item.second,false);
+            addObject(item.first,item.second,false);
             index++;
         }
     }
     {
         unsigned int index=0;
-        while(index<withdrawItems.size())
+        while(index<depositeItems.size())
         {
-            const std::pair<uint16_t, uint32_t> &item=withdrawItems.at(index);
-            removeObject(item.first,-item.second);
-            addWarehouseObject(item.first,-item.second);
+            const std::pair<uint16_t, uint32_t> &item=depositeItems.at(index);
+            removeObject(item.first,item.second,false);
+            addWarehouseObject(item.first,item.second,false);
             index++;
         }
     }
@@ -163,9 +163,10 @@ void Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
     }
     if(!withdrawItems.empty() || !depositeItems.empty())
     {
-        updateObjectInDatabase();//do above in bad way, improve this
-        updateObjectInWarehouseDatabase();//do above in bad way, improve this
+        updateObjectInDatabase();
+        updateObjectInWarehouseDatabase();
     }
+    return true;
 }
 
 bool Client::wareHouseStoreCheck(const uint64_t &withdrawCash, const uint64_t &depositeCash, const std::vector<std::pair<uint16_t, uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t, uint32_t> > &depositeItems, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
