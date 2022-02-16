@@ -273,7 +273,11 @@ void BaseWindow::on_warehouseValidate_clicked()
             withdrawCash=temp_warehouse_cash;
         else
             depositeCash=-temp_warehouse_cash;
-        client->wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,monster_to_withdraw,monster_to_deposit);
+        if(!client->wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,monster_to_withdraw,monster_to_deposit))
+        {
+            emit error("Bug on warehouse API call");
+            return;
+        }
     }
     //validate the change here
     if(temp_warehouse_cash>0)

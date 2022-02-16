@@ -11,8 +11,9 @@ QT += xml network opengl
 DEFINES += ONLYMAPRENDER NOWEBSOCKET
 
 include(../../general/general.pri)
-include(../../client/qtmaprender/render.pri)
-include(../../client/qtmaprender/renderheader.pri)
+# NO! include their own render
+#include(../../client/qtmaprender/render.pri)
+#include(../../client/qtmaprender/renderheader.pri)
 #only include partially
 #include(../../client/libcatchchallenger/lib.pri)
 #include(../../client/libcatchchallenger/libheader.pri)
@@ -32,6 +33,9 @@ SOURCES += main.cpp \
     ../../client/libqtcatchchallenger/QtDatapackClientLoader.cpp \
     ../../client/libqtcatchchallenger/QtDatapackClientLoaderThread.cpp \
     ../../client/libqtcatchchallenger/Settings.cpp \
+    MapDoor.cpp \
+    Map_client.cpp \
+    TriggerAnimation.cpp \
     map2png.cpp
 
 HEADERS += map2png.h \
@@ -40,7 +44,10 @@ HEADERS += map2png.h \
     ../../client/libqtcatchchallenger/Language.hpp \
     ../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp \
     ../../client/libqtcatchchallenger/QtDatapackClientLoaderThread.hpp \
-    ../../client/libqtcatchchallenger/Settings.hpp
+    ../../client/libqtcatchchallenger/Settings.hpp \
+    MapDoor.hpp \
+    Map_client.hpp \
+    TriggerAnimation.hpp
 
 RESOURCES += \
     resources.qrc

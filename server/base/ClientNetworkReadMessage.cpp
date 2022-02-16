@@ -607,7 +607,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 withdrawItems.reserve(size8);
                 uint16_t id;
                 uint32_t index=0;
-                while(index<size8)
+                while(index<size8)//can store/widraw only by 255, because local inventiry is limited to 255
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
@@ -639,7 +639,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 depositeItems.reserve(size8);
                 uint16_t id;
                 uint32_t index=0;
-                while(index<size8)
+                while(index<size8)//can store/widraw only by 255, because local inventiry is limited to 255
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
@@ -668,7 +668,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             size8=data[pos];
             pos+=sizeof(uint8_t);
             uint32_t index=0;
-            while(index<size8)
+            while(index<size8)//can store/widraw only by 255, because local inventiry is limited to 255
             {
                 if((size-pos)<((int)sizeof(uint8_t)))
                 {
@@ -688,7 +688,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
             size8=data[pos];
             pos+=sizeof(uint8_t);
             index=0;
-            while(index<size8)
+            while(index<size8)//can store/widraw only by 255, because local inventiry is limited to 255
             {
                 if((size-pos)<((int)sizeof(uint8_t)))
                 {
@@ -700,7 +700,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 depositeMonsters.push_back(monsterPos);
                 index++;
             }
-            wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,withdrawMonsters,depositeMonsters);
+            if(!wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,withdrawMonsters,depositeMonsters))
+            {
+                errorOutput("fail to change for warehouse");
+                return false;
+            }
             if(pos>(size+1))
             {
                 errorOutput("remaining data: parsenormalOutput("+
