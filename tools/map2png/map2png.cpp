@@ -153,6 +153,8 @@ public:
 MapItem::MapItem(QGraphicsItem *parent)
     : QGraphicsItem(parent)
 {
+    if(displayed_layer.size()>10000000)
+        abort();
     setFlag(QGraphicsItem::ItemHasNoContents);
 }
 
@@ -182,6 +184,8 @@ void MapItem::addMap(Map *map, MapRenderer *renderer)
             item->setZValue(index);
             displayed_layer.insert(map,item);
         }
+        if(displayed_layer.size()>10000000)
+            abort();
         index++;
     }
 }
@@ -278,6 +282,18 @@ Tiled::Tileset * Map2Png::getTileset(Tiled::Map * map,const QString &file)
 QString Map2Png::loadOtherMap(const QString &fileName)
 {
     Map_full_map2png *tempMapObject=new Map_full_map2png();
+    tempMapObject->logicalMap.group=0;
+    tempMapObject->logicalMap.height=0;
+    tempMapObject->logicalMap.id=0;
+    tempMapObject->logicalMap.width=0;
+    tempMapObject->logicalMap.teleporter=nullptr;
+    tempMapObject->logicalMap.teleporter_list_size=0;
+    tempMapObject->logicalMap.xmlRoot=nullptr;
+    tempMapObject->objectGroup=nullptr;
+    tempMapObject->tiledMap=nullptr;
+    tempMapObject->tiledRender=nullptr;
+    tempMapObject->x=0;
+    tempMapObject->y=0;
     QFileInfo fileInformations(fileName);
     QString resolvedFileName=fileInformations.absoluteFilePath();
     if(other_map.contains(resolvedFileName))
@@ -420,13 +436,17 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     switch (tempMapObject->tiledMap->orientation()) {
     case Map::Isometric:
         tempMapObject->tiledRender = new IsometricRenderer(tempMapObject->tiledMap);
+        qDebug() << QStringLiteral("render Map::Isometric");
         break;
     case Map::Orthogonal:
     default:
         tempMapObject->tiledRender = new OrthogonalRenderer(tempMapObject->tiledMap);
+        qDebug() << QStringLiteral("render Map::Orthogonal");
         break;
     }
 
+    if(tempMapObject->tiledRender->mapSize().isEmpty())
+        qDebug() << QStringLiteral("displayMap(): empty map");
     other_map[resolvedFileName]=tempMapObject;
 
     return resolvedFileName;
@@ -593,9 +613,17 @@ void Map2Png::displayMap()
 
     QHash<QString,Map_full_map2png *>::const_iterator i = other_map.constBegin();
      while (i != other_map.constEnd()) {
-         //qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
-         mapItem->addMap(i.value()->tiledMap,i.value()->tiledRender);
-         mapItem->setMapPosition(i.value()->tiledMap,i.value()->x,i.value()->y);
+         Map_full_map2png *m=i.value();
+         if(m==nullptr)
+             qDebug() << QStringLiteral("displayMap(): buggy map");
+         else
+         {
+             if(m->tiledRender->mapSize().isEmpty())
+                 qDebug() << QStringLiteral("displayMap(): empty map");
+             qDebug() << QStringLiteral("displayMap(): %1 at %2,%3").arg(i.key()).arg(i.value()->x).arg(i.value()->y);
+             mapItem->addMap(i.value()->tiledMap,i.value()->tiledRender);
+             mapItem->setMapPosition(i.value()->tiledMap,i.value()->x,i.value()->y);
+         }
          ++i;
      }
 }
