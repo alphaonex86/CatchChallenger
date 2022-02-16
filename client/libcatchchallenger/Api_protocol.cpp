@@ -928,22 +928,22 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
             return false;
         }
     }
-    if(playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255)
+    if(playerInformations.items.size()+withdrawItems.size()-depositeItems.size()>=255)
     {
         std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535)
+    if(playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()>=65535)
     {
         std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.playerMonster.size()+withdrawMonsters.size()-depositeMonsters.size()<=255)
+    if(playerInformations.playerMonster.size()+withdrawMonsters.size()-depositeMonsters.size()>=255)
     {
         std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.warehouse_playerMonster.size()-withdrawMonsters.size()+depositeMonsters.size()<=65535)
+    if(playerInformations.warehouse_playerMonster.size()-withdrawMonsters.size()+depositeMonsters.size()>=65535)
     {
         std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;

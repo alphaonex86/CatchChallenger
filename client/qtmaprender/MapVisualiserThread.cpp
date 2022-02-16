@@ -305,7 +305,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             tagTilesetIndex=0;
     }
     else
-        MapVisualiserThread::layerChangeLevelAndTagsChange(tempMapObject,hideTheDoors);
+        MapVisualiserOrder::layerChangeLevelAndTagsChange(tempMapObject,hideTheDoors);
 
     //load the animation into tile layer
     {
