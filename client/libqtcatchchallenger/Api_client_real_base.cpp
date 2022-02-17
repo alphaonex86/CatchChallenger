@@ -135,6 +135,7 @@ bool Api_client_real::getHttpFileBase(const std::string &url, const std::string 
 
 void Api_client_real::datapackDownloadFinishedBase()
 {
+    std::cerr << "Api_client_real::datapackDownloadFinishedBase()" << std::endl;
     haveTheDatapack();
     datapackStatus=DatapackStatus::Main;
 }
