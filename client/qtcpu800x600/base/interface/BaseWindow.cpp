@@ -1697,7 +1697,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
     if(!client->moveUpMonster(currentRow))
         return;
     const bool updateMonsterTile=(currentRow==1);
-    client->monsterMoveUp(currentRow+1);
+    client->monsterMoveUp(currentRow);
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow-1,item);
     ui->monsterList->item(currentRow)->setSelected(false);
@@ -1721,7 +1721,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
     if(!client->moveDownMonster(static_cast<uint8_t>(currentRow)))
         return;
     const bool updateMonsterTile=(currentRow==0);
-    client->monsterMoveDown(static_cast<uint8_t>(currentRow+1));
+    client->monsterMoveDown(static_cast<uint8_t>(currentRow));
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow+1,item);
     ui->monsterList->item(currentRow)->setSelected(false);
