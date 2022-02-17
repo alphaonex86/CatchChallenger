@@ -700,6 +700,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 depositeMonsters.push_back(monsterPos);
                 index++;
             }
+            std::sort(withdrawMonsters.rbegin(),withdrawMonsters.rend());
+            std::sort(depositeMonsters.rbegin(),depositeMonsters.rend());
             if(!wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,withdrawMonsters,depositeMonsters))
             {
                 errorOutput("fail to change for warehouse");

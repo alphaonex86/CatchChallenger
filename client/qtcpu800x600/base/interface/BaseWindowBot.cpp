@@ -315,8 +315,6 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"warehouse")==0)
     {
-        monster_to_withdraw.clear();
-        monster_to_deposit.clear();
         change_warehouse_items.clear();
         temp_warehouse_cash=0;
         QPixmap pixmap;
