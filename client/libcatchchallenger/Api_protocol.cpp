@@ -1061,13 +1061,19 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
             return false;
         }
         alreadyMovedToWarehouse.insert(index8);
+        count_change--;
         memcpy(buffer+pos,&index8,sizeof(index8));
         pos+=sizeof(uint8_t);
         index++;
     }
     if((player_informations.playerMonster.size()+count_change)>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        std::cerr << "have more monster to withdraw than the allowed" << std::endl;
+        std::cerr << "have more monster to withdraw than the allowed: " << CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters << std::endl;
+        return false;
+    }
+    if((player_informations.warehouse_playerMonster.size()-count_change)>CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+    {
+        std::cerr << "have more monster to deposite than the allowed: " << CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters << std::endl;
         return false;
     }
 
@@ -2896,5 +2902,18 @@ void Api_protocol::addBeatenBotFight(const uint16_t &botFightId)
     if(player_informations.bot_already_beaten==NULL)
         abort();
     player_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
+}
+
+void Api_protocol::addPlayerMonsterWarehouse(const PlayerMonster &playerMonster)
+{
+    player_informations.warehouse_playerMonster.push_back(playerMonster);
+}
+
+bool Api_protocol::removeMonsterWarehouseByPosition(const uint8_t &monsterPosition)
+{
+    if(monsterPosition>=player_informations.warehouse_playerMonster.size())
+        return false;
+    player_informations.warehouse_playerMonster.erase(player_informations.warehouse_playerMonster.cbegin()+monsterPosition);
+    return true;
 }
 #endif

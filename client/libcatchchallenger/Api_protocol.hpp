@@ -467,6 +467,10 @@ public:
     void recoverMarketCash();
     void withdrawMarketObject(const uint16_t &objectPosition, const uint32_t &quantity=1);
     void withdrawMarketMonster(const uint32_t &monsterMarketId);
+
+    //warehouse
+    void addPlayerMonsterWarehouse(const PlayerMonster &playerMonster);
+    bool removeMonsterWarehouseByPosition(const uint8_t &monsterPosition);
 };
 }
 
