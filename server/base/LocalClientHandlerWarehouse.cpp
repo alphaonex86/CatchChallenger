@@ -123,9 +123,7 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
             playerMonster.push_back(monster);
             index++;
         }
-    }
-    {
-        unsigned int index=0;
+        index=0;
         while(index<depositeMonsters.size())
         {
             const uint8_t &monsterPos=depositeMonsters.at(index);
@@ -133,6 +131,23 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
                 lowerMonsterPos=monsterPos;
             const PlayerMonster &monster=public_and_private_informations.playerMonster.at(monsterPos);
             warehouse_playerMonster.push_back(monster);
+            index++;
+        }
+    }
+    //previously reverse sorted
+    {
+        unsigned int index=0;
+        while(index<withdrawMonsters.size())
+        {
+            const uint8_t &monsterPos=withdrawMonsters.at(index);
+            warehouse_playerMonster.erase(warehouse_playerMonster.cbegin()+monsterPos);
+            index++;
+        }
+        index=0;
+        while(index<depositeMonsters.size())
+        {
+            const uint8_t &monsterPos=depositeMonsters.at(index);
+            playerMonster.erase(playerMonster.cbegin()+monsterPos);
             index++;
         }
     }
@@ -147,7 +162,10 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite({std::to_string(playerMonster.size()),"1",std::to_string(monster.id)});
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite(
+                            // position, place, id for the WHERE
+                            {std::to_string(index+1),"1",std::to_string(monster.id)}
+                            );
                 index++;
             }
         }
@@ -156,7 +174,10 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
             while(index<public_and_private_informations.warehouse_playerMonster.size())
             {
                 const PlayerMonster &monster=public_and_private_informations.warehouse_playerMonster.at(index);
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite({std::to_string(warehouse_playerMonster.size()),"2",std::to_string(monster.id)});
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position_and_place.asyncWrite(
+                            // position, place, id for the WHERE
+                            {std::to_string(index+1),"2",std::to_string(monster.id)}
+                            );
                 index++;
             }
         }
@@ -171,6 +192,7 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
 
 bool Client::wareHouseStoreCheck(const uint64_t &withdrawCash, const uint64_t &depositeCash, const std::vector<std::pair<uint16_t, uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t, uint32_t> > &depositeItems, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters)
 {
+    /// \todo check CommonSettingsCommon::commonSettingsCommon.maxItem
     //check all
     if((withdrawCash>0 && public_and_private_informations.warehouse_cash<withdrawCash))
     {
@@ -256,13 +278,18 @@ bool Client::wareHouseStoreCheck(const uint64_t &withdrawCash, const uint64_t &d
                 return false;
             }
             alreadyMovedToWarehouse.insert(monsterPos);
-            count_change++;
+            count_change--;
             index++;
         }
     }
     if((public_and_private_informations.playerMonster.size()+count_change)>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        errorOutput("have more monster to withdraw than the allowed");
+        errorOutput("have more monster to withdraw than the allowed: "+std::to_string(CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters));
+        return false;
+    }
+    if((public_and_private_informations.warehouse_playerMonster.size()-count_change)>CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+    {
+        errorOutput("have more monster to deposite than the allowed: "+std::to_string(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters));
         return false;
     }
     return true;
