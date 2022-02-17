@@ -65,6 +65,7 @@ void QtDatapackClientLoader::run()
 
 void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
+    qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack()");
     if(inProgress)
     {
         qDebug() << QStringLiteral("already in progress");
