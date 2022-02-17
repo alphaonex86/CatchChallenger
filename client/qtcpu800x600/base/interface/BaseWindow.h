@@ -622,7 +622,6 @@ private:
     std::unordered_map<QListWidgetItem *,uint16_t> quests_to_id_graphical;
     bool inSelection;
     std::vector<uint16_t> objectInUsing;
-    std::vector<uint8_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting
     std::vector<std::vector<std::pair<uint16_t,uint32_t> > > materialOfRecipeInUsing;

@@ -504,9 +504,7 @@ void BaseWindow::progressingDatapackFile(const uint32_t &size)
 
 void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
-    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    playerInformations.items=items;
-    playerInformations.warehouse_items=warehouse_items;
+    //const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
     #endif
@@ -1377,120 +1375,6 @@ QListWidgetItem * BaseWindow::itemToGraphic(const uint16_t &itemid, const uint32
             item->setText(QStringLiteral("id: %1").arg(itemid));
     }
     return item;
-}
-
-void BaseWindow::updateTheWareHouseContent()
-{
-    if(!haveInventory || !datapackIsParsed)
-        return;
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-
-    //inventory
-    {
-        ui->warehousePlayerInventory->clear();
-        auto i=playerInformations.items.begin();
-        while(i!=playerInformations.items.cend())
-        {
-            int32_t quantity=i->second;
-            if(change_warehouse_items.find(i->first)!=change_warehouse_items.cend())
-                quantity+=change_warehouse_items.at(i->first);
-            if(quantity>0)
-                ui->warehousePlayerInventory->addItem(itemToGraphic(i->first,quantity));
-            ++i;
-        }
-        for (const auto &j : change_warehouse_items) {
-            if(playerInformations.items.find(j.first)==playerInformations.items.cend() && j.second>0)
-                ui->warehousePlayerInventory->addItem(itemToGraphic(j.first,j.second));
-        }
-    }
-
-    qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size: %1x%2").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
-
-    //inventory warehouse
-    {
-        ui->warehousePlayerStoredInventory->clear();
-        auto i=playerInformations.warehouse_items.begin();
-        while(i!=playerInformations.warehouse_items.cend())
-        {
-            int32_t quantity=i->second;
-            if(change_warehouse_items.find(i->first)!=change_warehouse_items.cend())
-                quantity-=change_warehouse_items.at(i->first);
-            if(quantity>0)
-                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i->first,quantity));
-            ++i;
-        }
-        for (const auto &j : change_warehouse_items) {
-            if(playerInformations.warehouse_items.find(j.first)==playerInformations.warehouse_items.cend() && j.second<0)
-                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(j.first,-j.second));
-        }
-    }
-
-    //cash
-    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(playerInformations.cash+temp_warehouse_cash));
-    ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(playerInformations.warehouse_cash-temp_warehouse_cash));
-
-    //do before because the dispatch put into random of it
-    ui->warehousePlayerStoredMonster->clear();
-    ui->warehousePlayerMonster->clear();
-
-    //monster
-    {
-        const std::vector<PlayerMonster> &playerMonster=client->getPlayerMonster();
-        unsigned int index=0;
-        while(index<playerMonster.size())
-        {
-            const PlayerMonster &monster=playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
-            {
-                QListWidgetItem *item=new QListWidgetItem();
-                item->setText(tr("%1, level: %2")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                        .arg(monster.level)
-                        );
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).description));
-                item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
-                //item->setData(99,monster.id);
-                if(!vectorcontainsAtLeastOne(monster_to_deposit,(uint8_t)index) || vectorcontainsAtLeastOne(monster_to_withdraw,(uint8_t)index))
-                    ui->warehousePlayerMonster->addItem(item);
-                else
-                    ui->warehousePlayerStoredMonster->addItem(item);
-            }
-            index++;
-        }
-    }
-
-    //monster warehouse
-    {
-        unsigned int index=0;
-        while(index<playerInformations.warehouse_playerMonster.size())
-        {
-            const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
-            {
-                QListWidgetItem *item=new QListWidgetItem();
-                item->setText(tr("%1, level: %2")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                        .arg(monster.level)
-                        );
-                item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).description));
-                item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
-                //item->setData(99,monster.id);
-                if(!vectorcontainsAtLeastOne(monster_to_withdraw,(uint8_t)index) || vectorcontainsAtLeastOne(monster_to_deposit,(uint8_t)index))
-                    ui->warehousePlayerStoredMonster->addItem(item);
-                else
-                    ui->warehousePlayerMonster->addItem(item);
-            }
-            index++;
-        }
-    }
-
-    //set the button enabled
-    ui->warehouseWithdrawCash->setEnabled((playerInformations.warehouse_cash-temp_warehouse_cash)>0);
-    ui->warehouseDepositCash->setEnabled((playerInformations.cash+temp_warehouse_cash)>0);
-    ui->warehouseDepositItem->setEnabled(ui->warehousePlayerInventory->count()>0);
-    ui->warehouseWithdrawItem->setEnabled(ui->warehousePlayerStoredInventory->count()>0);
-    ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
-    ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
 }
 
 void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
