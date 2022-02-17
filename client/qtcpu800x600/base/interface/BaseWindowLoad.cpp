@@ -237,7 +237,11 @@ void BaseWindow::notLogged(std::string reason)
 void BaseWindow::logged(const std::vector<std::vector<CharacterEntry> > &characterEntryList)
 {
     this->characterListForSelection=characterEntryList;
-    if(settings.contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
+
+    QDir finalDatapackFolder(QString::fromStdString(client->datapackPathBase()));
+    QFileInfoList entryList=finalDatapackFolder.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Hidden|QDir::System,QDir::DirsFirst);//possible wait time here
+
+    if(!entryList.empty() && settings.contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
     {
         const QString str=settings.value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString();
         const QByteArray &data=QByteArray::fromHex(str.toUtf8());
@@ -504,6 +508,8 @@ void BaseWindow::progressingDatapackFile(const uint32_t &size)
 
 void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
+    (void)items;
+    (void)warehouse_items;
     //const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
