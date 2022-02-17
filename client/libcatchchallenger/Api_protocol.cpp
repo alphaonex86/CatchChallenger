@@ -713,17 +713,12 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number<1)
-    {
-        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
-    }
-    if(number>player_informations.playerMonster.size())
+    if(number>=player_informations.playerMonster.size())
     {
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number==1)
+    if(number==0)
     {
         std::cerr << "can't move up the top monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
@@ -768,17 +763,12 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number<1)
-    {
-        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
-    }
-    if(number>player_informations.playerMonster.size())
+    if(number>=player_informations.playerMonster.size())
     {
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number==player_informations.playerMonster.size())
+    if((number-1)==player_informations.playerMonster.size())
     {
         std::cerr << "can't move down the bottom monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
