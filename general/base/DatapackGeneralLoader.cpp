@@ -194,7 +194,10 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
                 }
                 if(monsters_list.empty())
                 {
-                    std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->Name(): " << monstersElement->Name() << std::endl;
+                    if(monstersElement==nullptr)
+                        std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->Name(): monstersElement==nullptr" << std::endl;
+                    else
+                        std::cerr << "Unable to open the xml file: " << file << ", no monster to load: child->Name(): " << monstersElement->Name() << std::endl;
                     startItem = startItem->NextSiblingElement("start");
                     continue;
                 }

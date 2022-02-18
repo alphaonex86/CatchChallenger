@@ -12,9 +12,10 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #endif
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
+class DLL_PUBLIC Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap
 {
 public:
     explicit Api_protocol();
@@ -466,6 +467,10 @@ public:
     void recoverMarketCash();
     void withdrawMarketObject(const uint16_t &objectPosition, const uint32_t &quantity=1);
     void withdrawMarketMonster(const uint32_t &monsterMarketId);
+
+    //warehouse
+    void addPlayerMonsterWarehouse(const PlayerMonster &playerMonster);
+    bool removeMonsterWarehouseByPosition(const uint8_t &monsterPosition);
 };
 }
 

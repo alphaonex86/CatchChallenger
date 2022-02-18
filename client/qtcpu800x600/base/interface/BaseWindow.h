@@ -136,6 +136,9 @@ public slots:
     void selectObject(const ObjectType &objectType);
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void connectAllSignals();
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    void receiveLanPort(uint16_t port);
+    #endif
 private slots:
     void message(std::string message) const;
     void stdmessage(std::string message) const;
@@ -481,6 +484,7 @@ private slots:
     void on_playerGiveAdmin_clicked();
     void on_listNearPlayer_itemActivated(QListWidgetItem *item);
     void on_listAllItem_itemActivated(QListWidgetItem *item);
+    void on_openToLan_clicked();
 protected slots:
     //datapack
     void datapackParsed();
@@ -540,9 +544,9 @@ private:
     std::string visualCategory;
     QTimer botFightTimer;
     std::vector<std::string> add_to_inventoryGainList;
-    std::vector<QTime> add_to_inventoryGainTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainTime;
     std::vector<std::string> add_to_inventoryGainExtraList;
-    std::vector<QTime> add_to_inventoryGainExtraTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainExtraTime;
 
     //cache
     QFont disableIntoListFont;
@@ -574,7 +578,7 @@ private:
     std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
     //bool seedWait,collectWait;
 
-    QTime updateRXTXTime;
+    QElapsedTimer updateRXTXTime;
     QTimer updateRXTXTimer;
     uint64_t previousRXSize,previousTXSize;
     std::string toHtmlEntities(std::string text);
@@ -618,7 +622,6 @@ private:
     std::unordered_map<QListWidgetItem *,uint16_t> quests_to_id_graphical;
     bool inSelection;
     std::vector<uint16_t> objectInUsing;
-    std::vector<uint8_t> monster_to_deposit,monster_to_withdraw;
 
     //crafting
     std::vector<std::vector<std::pair<uint16_t,uint32_t> > > materialOfRecipeInUsing;
@@ -634,8 +637,8 @@ private:
     QTimer displayAttackTimer;
     QTimer displayExpTimer;
     QTimer doNextActionTimer;
-    QTime updateAttackTime;
-    QTime updateTrapTime;
+    QElapsedTimer updateAttackTime;
+    QElapsedTimer updateTrapTime;
     MoveType moveType;
     bool fightTimerFinish;
     int displayAttackProgression;
@@ -721,7 +724,7 @@ private:
     bool monsterBeforeMoveForChangeInWaiting;
     QTimer checkQueryTime;
     int lastReplyTimeValue;
-    QTime lastReplyTimeSince;
+    QElapsedTimer lastReplyTimeSince;
     uint32_t worseQueryTime;
     bool multiplayer;
 
@@ -745,6 +748,9 @@ signals:
     void gameIsLoaded();
     #ifndef CATCHCHALLENGER_NOAUDIO
     void audioLoopRestart(void *vlcPlayer);
+    #endif
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    void emitOpenToLan(QString name, bool allowInternet);
     #endif
 };
 }

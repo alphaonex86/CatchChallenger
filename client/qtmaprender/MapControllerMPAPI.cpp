@@ -51,6 +51,28 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             tempItem.direction=direction;
 
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.insert=tempItem;
             multiplex.type=DelayedType_Insert;
             delayedActions.push_back(multiplex);
@@ -60,11 +82,11 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         #endif
         return false;
     }
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->maps.size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         /// \bug here pass after delete a party, create a new
         emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
-                   std::to_string(QtDatapackClientLoader::datapackLoader->maps.size()));
+                   std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -117,7 +139,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         otherPlayer.pendingMonsterMoves.clear();
         otherPlayer.stepAlternance=false;
 
-        const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
+        const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
                 .absoluteFilePath().toStdString();
         if(all_map.find(mapPath)==all_map.cend())
         {
@@ -135,6 +157,28 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                 tempItem.direction=direction;
 
                 DelayedMultiplex multiplex;
+                multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.insert.mapId=0;
+                multiplex.insert.player.monsterId=0;
+                multiplex.insert.player.simplifiedId=0;
+                multiplex.insert.player.skinId=0;
+                multiplex.insert.player.speed=0;
+                multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+                multiplex.insert.x=0;
+                multiplex.insert.y=0;
+                multiplex.move.id=0;
+                multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.reinsert_full.id=0;
+                multiplex.reinsert_full.mapId=0;
+                multiplex.reinsert_full.x=0;
+                multiplex.reinsert_full.y=0;
+                multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.reinsert_single.id=0;
+                multiplex.reinsert_single.x=0;
+                multiplex.reinsert_single.y=0;
+                multiplex.remove=0;
+                multiplex.type=DelayedType_Insert;
+
                 multiplex.insert=tempItem;
                 multiplex.type=DelayedType_Insert;
                 delayedActions.push_back(multiplex);
@@ -399,6 +443,28 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
             tempItem.movement=movement;
 
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.move=tempItem;
             multiplex.type=DelayedType_Move;
             delayedActions.push_back(multiplex);
@@ -452,6 +518,28 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                 tempItem.movement=movement;
 
                 DelayedMultiplex multiplex;
+                multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.insert.mapId=0;
+                multiplex.insert.player.monsterId=0;
+                multiplex.insert.player.simplifiedId=0;
+                multiplex.insert.player.skinId=0;
+                multiplex.insert.player.speed=0;
+                multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+                multiplex.insert.x=0;
+                multiplex.insert.y=0;
+                multiplex.move.id=0;
+                multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.reinsert_full.id=0;
+                multiplex.reinsert_full.mapId=0;
+                multiplex.reinsert_full.x=0;
+                multiplex.reinsert_full.y=0;
+                multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+                multiplex.reinsert_single.id=0;
+                multiplex.reinsert_single.x=0;
+                multiplex.reinsert_single.y=0;
+                multiplex.remove=0;
+                multiplex.type=DelayedType_Insert;
+
                 multiplex.move=tempItem;
                 multiplex.type=DelayedType_Move;
                 delayedActions.push_back(multiplex);
@@ -643,6 +731,28 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
         if(!inReplayMode)
         {
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.remove=id;
             multiplex.type=DelayedType_Remove;
             delayedActions.push_back(multiplex);
@@ -727,7 +837,13 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
 bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,const uint8_t &y,
                                             const CatchChallenger::Direction &direction,bool inReplayMode)
 {
-    #if ! defined (ONLYMAPRENDER)
+    #if defined (ONLYMAPRENDER)
+    (void)id;
+    (void)x;
+    (void)y;
+    (void)direction;
+    (void)inReplayMode;
+    #else
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         #ifdef DEBUG_CLIENT_LOAD_ORDER
@@ -742,6 +858,28 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
             tempItem.direction=direction;
 
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.reinsert_single=tempItem;
             multiplex.type=DelayedType_Reinsert_single;
             delayedActions.push_back(multiplex);
@@ -784,7 +922,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
     if(all_map.find(tempCurrentMap)==all_map.cend())
     {
         qDebug() << "internal problem, revert map (" << QString::fromStdString(otherPlayerList.at(id).current_map)
-                 << ") index is wrong (" << QString::fromStdString(stringimplode(QtDatapackClientLoader::datapackLoader->maps,";")) << ")";
+                 << ") index is wrong (" << QString::fromStdString(stringimplode(QtDatapackClientLoader::datapackLoader->get_maps(),";")) << ")";
         if(!inReplayMode)
         {
             DelayedReinsertSingle tempItem;
@@ -794,6 +932,28 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
             tempItem.direction=direction;
 
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.reinsert_single=tempItem;
             multiplex.type=DelayedType_Reinsert_single;
             delayedActions.push_back(multiplex);
@@ -1086,6 +1246,28 @@ bool MapControllerMP::full_reinsert_player_final(const uint16_t &id,const uint32
             tempItem.direction=direction;
 
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.reinsert_full=tempItem;
             multiplex.type=DelayedType_Reinsert_full;
             delayedActions.push_back(multiplex);
@@ -1122,6 +1304,28 @@ bool MapControllerMP::dropAllPlayerOnTheMap_final(bool inReplayMode)
         if(!inReplayMode)
         {
             DelayedMultiplex multiplex;
+            multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.insert.mapId=0;
+            multiplex.insert.player.monsterId=0;
+            multiplex.insert.player.simplifiedId=0;
+            multiplex.insert.player.skinId=0;
+            multiplex.insert.player.speed=0;
+            multiplex.insert.player.type=CatchChallenger::Player_type_normal;
+            multiplex.insert.x=0;
+            multiplex.insert.y=0;
+            multiplex.move.id=0;
+            multiplex.reinsert_full.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_full.id=0;
+            multiplex.reinsert_full.mapId=0;
+            multiplex.reinsert_full.x=0;
+            multiplex.reinsert_full.y=0;
+            multiplex.reinsert_single.direction=CatchChallenger::Direction_look_at_top;
+            multiplex.reinsert_single.id=0;
+            multiplex.reinsert_single.x=0;
+            multiplex.reinsert_single.y=0;
+            multiplex.remove=0;
+            multiplex.type=DelayedType_Insert;
+
             multiplex.type=DelayedType_Drop_all;
             delayedActions.push_back(multiplex);
         }

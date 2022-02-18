@@ -6,10 +6,11 @@
 #include "ObjectGroupItem.hpp"
 #include "MapMark.hpp"
 
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../../general/base/CommonMap.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/CommonMap.hpp"
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
-#include "../../../general/base/Map_loader.hpp"
+#include "../../general/base/Map_loader.hpp"
+#include "../../general/base/lib.h"
 
 #include <QGraphicsView>
 #include <QGraphicsSimpleTextItem>
@@ -31,7 +32,7 @@
 
 #include "MapVisualiserThread.hpp"
 
-class MapVisualiser : public QGraphicsView
+class DLL_PUBLIC MapVisualiser : public QGraphicsView
 {
     Q_OBJECT
 
@@ -60,10 +61,10 @@ protected:
 
     uint8_t waitRenderTime;
     QTimer timerRender;
-    QTime timeRender;
+    QElapsedTimer timeRender;
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
-    QTime timeUpdateFPS;
+    QElapsedTimer timeUpdateFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;

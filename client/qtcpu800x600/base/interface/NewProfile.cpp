@@ -6,11 +6,11 @@
 #include <QMessageBox>
 #include <QDebug>
 
-#include "../../../general/tinyXML2/tinyxml2.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/DatapackGeneralLoader.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/tinyXML2/tinyxml2.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/DatapackGeneralLoader.hpp"
+#include "../../../../general/base/GeneralVariable.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../base/LanguagesSelect.h"
 
 NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
@@ -24,7 +24,7 @@ NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
     this->mOk=false;
     ui->description->setText(tr("Profile loading..."));
 
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.empty())
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
     {
         QMessageBox::critical(this,tr("Error"),tr("No profile selected to start a new game"));
         close();
@@ -57,9 +57,9 @@ void NewProfile::loadProfileText()
     const std::string &xmlFile=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
     std::vector<const tinyxml2::XMLElement *> xmlList=CatchChallenger::DatapackGeneralLoader::loadProfileList(
                 datapackPath,xmlFile,
-                CatchChallenger::CommonDatapack::commonDatapack.items.item,
-                CatchChallenger::CommonDatapack::commonDatapack.monsters,
-                CatchChallenger::CommonDatapack::commonDatapack.reputation
+                CatchChallenger::CommonDatapack::commonDatapack.get_items().item,
+                CatchChallenger::CommonDatapack::commonDatapack.get_monsters(),
+                CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                 ).first;
     unsigned int index=0;
     while(index<xmlList.size())
@@ -189,7 +189,7 @@ void NewProfile::datapackParsed()
         isParsingDatapack=false;
         emit parseDatapack(datapackPath);
     }
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()==1)//do into the next screen:  && CatchChallenger::CommonDatapack::commonDatapack.profileList.first().forcedskin.size()==1
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()==1)//do into the next screen:  && CatchChallenger::CommonDatapack::commonDatapack.profileList.first().forcedskin.size()==1
     {
         emit finished(0);
         qDebug() << ("Default profile selected");

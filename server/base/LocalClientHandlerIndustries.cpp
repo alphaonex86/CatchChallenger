@@ -65,18 +65,18 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
         return;
     }
     #endif
-    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
+    if(CommonDatapack::commonDatapack.get_industriesLink().find(factoryId)==CommonDatapack::commonDatapack.get_industriesLink().cend())
     {
         errorOutput("factory link id not found");
         return;
     }
-    const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(factoryId);
-    if(CommonDatapack::commonDatapack.industries.find(industryLink.industry)==CommonDatapack::commonDatapack.industries.cend())
+    const IndustryLink &industryLink=CommonDatapack::commonDatapack.get_industriesLink().at(factoryId);
+    if(CommonDatapack::commonDatapack.get_industries().find(industryLink.industry)==CommonDatapack::commonDatapack.get_industries().cend())
     {
         errorOutput("factory id not found");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
+    const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(industryLink.industry);
     //send the shop items (no taxes from now)
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -100,7 +100,7 @@ void Client::getFactoryList(const uint8_t &query_id, const uint16_t &factoryId)
             const Industry::Resource &resource=industry.resources.at(index);
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(resource.item);
             posOutput+=2;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonDatapack::commonDatapack.items.item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100);
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(CommonDatapack::commonDatapack.get_items().item.at(resource.item).price*(100+CATCHCHALLENGER_SERVER_FACTORY_PRICE_CHANGE)/100);
             posOutput+=4;
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(resource.quantity*industry.cycletobefull);
             posOutput+=4;
@@ -210,13 +210,13 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         return;
     }
     #endif
-    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
+    if(CommonDatapack::commonDatapack.get_industriesLink().find(factoryId)==CommonDatapack::commonDatapack.get_industriesLink().cend())
     {
         errorOutput("factory id not found");
         return;
     }
-    const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(factoryId);
-    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
+    const IndustryLink &industryLink=CommonDatapack::commonDatapack.get_industriesLink().at(factoryId);
+    if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
     {
         errorOutput("object id not found into the factory product list");
         return;
@@ -231,7 +231,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
         errorOutput("The player have not the requirement: "+std::to_string(factoryId)+" to use the factory");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
+    const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(industryLink.industry);
     IndustryStatus industryStatus=FacilityLib::industryStatusWithCurrentTime(GlobalServerData::serverPrivateVariables.industriesStatus.at(factoryId),industry);
     uint32_t quantityInStock=0;
     uint32_t actualPrice=0;
@@ -320,7 +320,7 @@ void Client::buyFactoryProduct(const uint8_t &query_id,const uint16_t &factoryId
     removeCash(actualPrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
     addObject(objectId,quantity);
-    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
+    appendReputationRewards(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).rewards.reputation);
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -339,12 +339,12 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
         return;
     }
     #endif
-    if(CommonDatapack::commonDatapack.industriesLink.find(factoryId)==CommonDatapack::commonDatapack.industriesLink.cend())
+    if(CommonDatapack::commonDatapack.get_industriesLink().find(factoryId)==CommonDatapack::commonDatapack.get_industriesLink().cend())
     {
         errorOutput("factory id not found");
         return;
     }
-    if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
+    if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
     {
         errorOutput("object id not found");
         return;
@@ -354,12 +354,12 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
         errorOutput("you have not the object quantity to sell at this factory");
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.industriesLink.at(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).requirements.reputation))
     {
         errorOutput("The player have not the requirement: "+std::to_string(factoryId)+" to use the factory");
         return;
     }
-    const Industry &industry=CommonDatapack::commonDatapack.industries.at(CommonDatapack::commonDatapack.industriesLink.at(factoryId).industry);
+    const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
     IndustryStatus industryStatus;
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
@@ -452,7 +452,7 @@ void Client::sellFactoryResource(const uint8_t &query_id,const uint16_t &factory
     removeObject(objectId,quantity);
     addCash(resourcePrice*quantity);
     saveIndustryStatus(factoryId,industryStatus,industry);
-    appendReputationRewards(CommonDatapack::commonDatapack.industriesLink.at(factoryId).rewards.reputation);
+    appendReputationRewards(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).rewards.reputation);
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

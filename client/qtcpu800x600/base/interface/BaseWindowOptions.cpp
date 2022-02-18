@@ -2,8 +2,8 @@
 #include "ui_BaseWindow.h"
 #include "../Options.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
-#include "../../libqtcatchchallenger/Audio.hpp"
+#include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 using namespace CatchChallenger;
@@ -23,8 +23,8 @@ void CatchChallenger::BaseWindow::on_forceZoom_toggled(bool checked)
     {
         ui->zoom->setEnabled(false);
         ui->forceZoom->setChecked(false);
-        ui->zoom->setValue(CommonDatapack::commonDatapack.layersOptions.zoom);
-        mapController->setScale(CommonDatapack::commonDatapack.layersOptions.zoom);
+        ui->zoom->setValue(CommonDatapack::commonDatapack.get_layersOptions().zoom);
+        mapController->setScale(CommonDatapack::commonDatapack.get_layersOptions().zoom);
         Options::options.setForcedZoom(0);
     }
 }
@@ -73,8 +73,8 @@ void BaseWindow::loadSettingsWithDatapack()
     {
         ui->zoom->setEnabled(false);
         ui->forceZoom->setChecked(false);
-        ui->zoom->setValue(CommonDatapack::commonDatapack.layersOptions.zoom);
-        mapController->setScale(CommonDatapack::commonDatapack.layersOptions.zoom);
+        ui->zoom->setValue(CommonDatapack::commonDatapack.get_layersOptions().zoom);
+        mapController->setScale(CommonDatapack::commonDatapack.get_layersOptions().zoom);
     }
     else
     {

@@ -83,7 +83,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
                 playerMonster.level=getOneSeed(monsterList.front().maxLevel-monsterList.front().minLevel+1)+monsterList.front().minLevel;
         }
     }
-    Monster monsterDef=CommonDatapack::commonDatapack.monsters.at(playerMonster.monster);
+    Monster monsterDef=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
     if(monsterDef.ratio_gender>0 && monsterDef.ratio_gender<100)
     {
         int8_t temp_ratio=getOneSeed(101);
@@ -171,6 +171,13 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
         return false;
     }
     uint8_t zoneCode=map->parsed_layer.simplifiedMap[x+y*map->width];
+    /* No wild monster into:
+     * 253 ParsedLayerLedges_LedgesBottom
+     * 252 ParsedLayerLedges_LedgesTop
+     * 251 ParsedLayerLedges_LedgesRight
+     * 250 ParsedLayerLedges_LedgesLeft */
+    if(zoneCode==250 || zoneCode==251 || zoneCode==252 || zoneCode==253)
+        return false;
     if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
     {
         errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range");
@@ -181,7 +188,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
-        const CatchChallenger::MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+        const CatchChallenger::MonstersCollision &monstersCollision=CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
         if(monstersCollision.item==0 || items.find(monstersCollision.item)!=items.cend())
         {
             if(monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
@@ -267,7 +274,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
 uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
 {
     doTurnIfChangeOfMonster=true;
-    if(internalTryCapture(CommonDatapack::commonDatapack.items.trap.at(item)))
+    if(internalTryCapture(CommonDatapack::commonDatapack.get_items().trap.at(item)))
     {
         #ifdef CATCHCHALLENGER_DEBUG_FIGHT
         messageFightEngine("capture is successful");
@@ -334,7 +341,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         errorFightEngine("Not againts wild monster");
         return false;
     }
-    const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(wildMonsters.front().monster),wildMonsters.front().level);
+    const Monster::Stat &wildMonsterStat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(wildMonsters.front().monster),wildMonsters.front().level);
 
     float bonusStat=1.0;
     if(wildMonsters.front().buffs.size())
@@ -344,9 +351,9 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
         while(index<wildMonsters.front().buffs.size())
         {
             const PlayerBuff &playerBuff=wildMonsters.front().buffs.at(index);
-            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
             {
-                const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+                const Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff);
                 if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
                     bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                 else
@@ -367,7 +374,7 @@ bool CommonFightEngine::internalTryCapture(const Trap &trap)
     const uint32_t maxTempRate=12;
     const uint32_t minTempRate=5;
     const uint32_t tryCapture=4;
-    const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(wildMonsters.front().monster).catch_rate;
+    const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(wildMonsters.front().monster).catch_rate;
     uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-wildMonsters.front().hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
     if(tempRate>255)
         return true;

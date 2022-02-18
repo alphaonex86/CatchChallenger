@@ -6,10 +6,11 @@
 #include "../base/GeneralStructures.hpp"
 #include "../base/ClientBase.hpp"
 #include "../../general/base/CommonMap.hpp"
+#include "../base/lib.h"
 
 namespace CatchChallenger {
 //only the logique here, store nothing
-class CommonFightEngineBase
+class DLL_PUBLIC CommonFightEngineBase
 {
 public:
     static std::vector<PlayerMonster::PlayerSkill> generateWildSkill(const Monster &monster, const uint8_t &level);

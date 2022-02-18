@@ -38,7 +38,7 @@ void BaseServer::preload_the_data()
         {
             const auto &now = msFrom1970();
             *serialBuffer >> CommonDatapack::commonDatapack;
-            if(CommonDatapack::commonDatapack.monstersCollision.empty())
+            if(CommonDatapack::commonDatapack.get_monstersCollision().empty())
             {
                 std::cerr << "CommonDatapack::commonDatapack.monstersCollision.empty() (abort)" << std::endl;
                 abort();
@@ -123,7 +123,7 @@ void BaseServer::preload_the_data()
                 //std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << " item.infinite: " << std::to_string(item.infinite) << std::endl;
                 /*if(!item.infinite)
                     std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << std::endl;*/
-                if(CommonDatapack::commonDatapack.items.item.find(item.item)==CommonDatapack::commonDatapack.items.item.cend())
+                if(CommonDatapack::commonDatapack.get_items().item.find(item.item)==CommonDatapack::commonDatapack.get_items().item.cend())
                 {
                     std::cerr << "Object " << std::to_string(item.item) << " is not found into the item list" << std::endl;
                     abort();

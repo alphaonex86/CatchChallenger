@@ -216,7 +216,7 @@ void BaseServer::preload_industries_return()
             std::cerr << "preload_industries: id is not a number" << std::endl;
         if(ok)
         {
-            if(CommonDatapack::commonDatapack.industriesLink.find(id)==CommonDatapack::commonDatapack.industriesLink.end())
+            if(CommonDatapack::commonDatapack.get_industriesLink().find(id)==CommonDatapack::commonDatapack.get_industriesLink().end())
             {
                 ok=false;
                 std::cerr << "preload_industries: industries link not found" << std::endl;
@@ -253,8 +253,8 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(id);
-                const Industry &industry=CommonDatapack::commonDatapack.industries.at(
+                const IndustryLink &industryLink=CommonDatapack::commonDatapack.get_industriesLink().at(id);
+                const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(
                             industryLink.industry
                             );
                 unsigned int indexItem=0;
@@ -307,8 +307,8 @@ void BaseServer::preload_industries_return()
                     ok=false;
                     break;
                 }
-                const IndustryLink &industryLink=CommonDatapack::commonDatapack.industriesLink.at(id);
-                const Industry &industry=CommonDatapack::commonDatapack.industries.at(industryLink.industry);
+                const IndustryLink &industryLink=CommonDatapack::commonDatapack.get_industriesLink().at(id);
+                const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(industryLink.industry);
                 unsigned int indexItem=0;
                 while(indexItem<industry.products.size())
                 {

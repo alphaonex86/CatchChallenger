@@ -1,10 +1,10 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../FacilityLibClient.h"
 #include "NewGame.h"
 #include <iostream>
@@ -38,7 +38,7 @@ void BaseWindow::newProfileFinished()
 {
     const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
     const std::string &datapackPath=client->datapackPathBase();
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()>1)
         if(!newProfile->ok())
         {
             if(characterListForSelection.at(serverOrdenedList.at(serverSelected).charactersGroupIndex).empty() &&
@@ -47,11 +47,11 @@ void BaseWindow::newProfileFinished()
             return;
         }
     unsigned int profileIndex=0;
-    if(CatchChallenger::CommonDatapack::commonDatapack.profileList.size()>1)
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()>1)
         profileIndex=newProfile->getProfileIndex();
-    if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size())
         return;
-    Profile profile=CatchChallenger::CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    Profile profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     newProfile->deleteLater();
     newProfile=NULL;
     NewGame nameGame(datapackPath+DATAPACK_BASE_PATH_SKIN,datapackPath+DATAPACK_BASE_PATH_MONSTERS,profile.monstergroup,profile.forcedskin,this);
@@ -154,11 +154,11 @@ void BaseWindow::updateCharacterList()
         /*if(characterEntry.mapId==-1)
             text+="\n"+tr("Map missing, can't play");*/
         item->setText(QString::fromStdString(text));
-        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader->skins.size())
+        if(characterEntry.skinId<QtDatapackClientLoader::datapackLoader->get_skins().size())
             item->setIcon(QIcon(
                               QString::fromStdString(client->datapackPathBase())+
                               DATAPACK_BASE_PATH_SKIN+
-                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(characterEntry.skinId))+
+                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_skins().at(characterEntry.skinId))+
                               "/front.png"
                               ));
         else
@@ -351,7 +351,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
         std::vector<std::string> keys;
         for(const auto &n : logicialGroup.logicialGroupList)
             keys.push_back(n.first);
-        qSort(keys);
+        std::sort(keys.begin(),keys.end());
         //list the group
         unsigned int index=0;
         while(index<keys.size())
@@ -362,7 +362,7 @@ void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *
         }
     }
     {
-        qSort(logicialGroup.servers);
+        std::sort(logicialGroup.servers.begin(),logicialGroup.servers.end());
         //list the server
         unsigned int index=0;
         while(index<logicialGroup.servers.size())

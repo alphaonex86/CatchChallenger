@@ -1,8 +1,8 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
 
 #include <QInputDialog>
 
@@ -39,14 +39,14 @@ void BaseWindow::marketList(const uint64_t &price,const std::vector<MarketObject
             price=tr("Price: %1$").arg(marketMonster.price).toStdString();
         else
             price=tr("Price: Free").toStdString();
-        if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(marketMonster.monster)!=QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(marketMonster.monster)!=QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
         {
             item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(marketMonster.monster).thumb);
             item->setText(QStringLiteral("%1 level %2\n%3").arg(
-                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(marketMonster.monster).name)
+                              QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(marketMonster.monster).name)
                               )
                           .arg(marketMonster.level).arg(QString::fromStdString(price)));
-            item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(marketMonster.monster).description));
+            item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(marketMonster.monster).description));
         }
         else
         {
@@ -88,14 +88,14 @@ void BaseWindow::addOwnMonster(const MarketMonster &marketMonster)
         price=tr("Price: %1$").arg(marketMonster.price).toStdString();
     else
         price=tr("Price: Free").toStdString();
-    if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(marketMonster.monster)!=QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(marketMonster.monster)!=QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
     {
         item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(marketMonster.monster).thumb);
         item->setText(QStringLiteral("%1 level %2\n%3")
-                      .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(marketMonster.monster).name))
+                      .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(marketMonster.monster).name))
                       .arg(marketMonster.level)
                       .arg(QString::fromStdString(price)));
-        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(marketMonster.monster).description));
+        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(marketMonster.monster).description));
     }
     else
     {
@@ -247,12 +247,12 @@ void BaseWindow::updateMarketObject(QListWidgetItem *item,const MarketObject &ma
     std::string quantity;
     if(marketObject.quantity>1)
         quantity=", "+tr("quantity: %1").arg(marketObject.quantity).toStdString();
-    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(marketObject.item)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(marketObject.item)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
     {
         item->setIcon(QtDatapackClientLoader::datapackLoader->getItemExtra(marketObject.item).image);
-        item->setText(QStringLiteral("%1%2\n%3").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(marketObject.item).name))
+        item->setText(QStringLiteral("%1%2\n%3").arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(marketObject.item).name))
                       .arg(QString::fromStdString(quantity)).arg(QString::fromStdString(price)));
-        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(marketObject.item).description));
+        item->setToolTip(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(marketObject.item).description));
     }
     else
     {

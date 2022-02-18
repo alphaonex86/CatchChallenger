@@ -19,9 +19,11 @@
 class QFakeSocket;
 #endif
 
+#include "../../general/base/lib.h"
+
 namespace CatchChallenger {
 
-class ConnectedSocket : public QIODevice
+class DLL_PUBLIC ConnectedSocket : public QIODevice
 {
     Q_OBJECT
 public:

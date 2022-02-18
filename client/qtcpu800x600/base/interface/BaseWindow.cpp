@@ -1,22 +1,21 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../libcatchchallenger/ClientVariable.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../Ultimate.h"
-#include "../../libqtcatchchallenger/ClientFightEngine.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../qtmaprender/MapController.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../qtmaprender/MapController.hpp"
 #include "Chat.h"
 #include "WithAnotherPlayer.h"
 #include "../LanguagesSelect.h"
 #include "../Options.h"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../../libqtcatchchallenger/ClientVariableAudio.hpp"
-#include "../../libqtcatchchallenger/Audio.hpp"
+#include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
+#include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
 
 #include <QListWidgetItem>
@@ -99,6 +98,101 @@ BaseWindow::BaseWindow() :
 
     qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
     qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
+
+
+    mapController=nullptr;
+
+    renderFrame=nullptr;
+    shopId=0;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    temp_warehouse_cash=0;
+    //selection of quantity
+    tempQuantityForSell=0;
+    waitToSell=false;
+    haveClanInformations=false;
+    factoryId=0;
+    factoryInProduction=false;
+    datapackDownloadedCount=0;
+    datapackDownloadedSize=0;
+    progressingDatapackFileSize=0;
+    protocolIsGood=false;
+
+    newProfile=nullptr;
+    datapackFileNumber=0;
+    datapackFileSize=1;
+    evolutionControl=nullptr;
+    previousAnimationWidget=nullptr;
+    animationWidget=nullptr;
+    craftingAnimationObject=nullptr;
+    qQuickViewContainer=nullptr;
+    baseMonsterEvolution=nullptr;
+    targetMonsterEvolution=nullptr;
+    monsterEvolutionPostion=0;
+    mLastGivenXP=0;
+    currentMonsterLevel=0;
+
+    //for server/character selection
+    isLogged=false;
+    averagePlayedTime=0;
+    averageLastConnect=0;
+    serverSelected=-1;
+
+    previousRXSize=0;
+    previousTXSize=0;
+    haveShowDisconnectionReason=false;
+    haveDatapack=false;
+    haveDatapackMainSub=false;
+    haveCharacterPosition=false;
+    haveCharacterInformation=false;
+    haveInventory=false;
+    datapackIsParsed=false;
+    mainSubDatapackIsParsed=false;
+    characterSelected=false;
+    fightId=0;
+
+    //market buy
+    marketBuyCashInSuspend=0;
+    marketBuyInSuspend=false;
+    //market put
+    marketPutCashInSuspend=0;
+    marketPutInSuspend=false;
+    //market withdraw
+    marketWithdrawInSuspend=false;
+
+    //player items
+    inSelection=false;
+
+    //fight
+    fightTimerFinish=false;
+    displayAttackProgression=-1;
+    lastStepUsed=0;
+    escape=false;
+    escapeSuccess=false;
+    haveDisplayCurrentAttackSuccess=false;
+    haveDisplayOtherAttackSuccess=false;
+    movie=nullptr;
+    trapItemId=false;
+    displayTrapProgression=0;
+    trapSuccess=false;
+    attack_quantity_changed=0;
+    useTheRescueSkill=false;
+
+    //city
+    zonecatch=false;
+
+    //learn
+    monsterPositionToLearn=0;
+
+    //quest
+    isInQuest=false;
+    questId=0;
+
+    monsterBeforeMoveForChangeInWaiting=false;
+    lastReplyTimeValue=0;
+    worseQueryTime=0;
+    multiplayer=false;
+
+    client=nullptr;
+    chat=nullptr;
 
     socketState=QAbstractSocket::UnconnectedState;
     if(QtDatapackClientLoader::datapackLoader!=nullptr)
@@ -546,6 +640,15 @@ void BaseWindow::connectAllSignals()
        abort();
 }
 
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+void BaseWindow::receiveLanPort(uint16_t port)
+{
+   chat->new_system_text(CatchChallenger::Chat_type::Chat_type_system_important,tr("Open to port %1").arg(port).toStdString());
+   ui->openToLan->setToolTip(tr("Open to port %1").arg(port));
+   QMessageBox::information(this,tr("Server ready"),tr("Server open with TCP port: %1").arg(port));
+}
+#endif
+
 void BaseWindow::tradeRequested(const std::string &pseudo,const uint8_t &skinInt)
 {
     WithAnotherPlayer withAnotherPlayerDialog(this,WithAnotherPlayer::WithAnotherPlayerType_Trade,getFrontSkin(skinInt),pseudo);
@@ -699,8 +802,8 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
 
             QPixmap image;
             std::string name;
-            if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(item)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
-                name=QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name;
+            if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+                name=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name;
             else
                 name="id: %1"+std::to_string(item);
             image=QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
@@ -721,7 +824,8 @@ void BaseWindow::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &i
         if(objects.size()>=16)
             objects.push_back("...");
         add_to_inventoryGainList.push_back(stringimplode(objects,", "));
-        add_to_inventoryGainTime.push_back(QTime::currentTime());
+        add_to_inventoryGainTime.push_back(QElapsedTimer());
+        add_to_inventoryGainTime.back().restart();
         BaseWindow::showGain();
     }
     else
@@ -844,10 +948,10 @@ void BaseWindow::on_inventory_itemSelectionChanged()
     QString name=tr("Unknown name");
     QString description=tr("Unknown description");
     QPixmap image;
-    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(items_graphical.at(item))!=
-            QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(items_graphical.at(item))!=
+            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
     {
-        const DatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->itemsExtra.at(items_graphical.at(item));
+        const DatapackClientLoader::ItemExtra &content=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(items_graphical.at(item));
         name=QString::fromStdString(content.name);
         description=QString::fromStdString(content.description);
     }
@@ -860,19 +964,19 @@ void BaseWindow::on_inventory_itemSelectionChanged()
 
     ui->inventoryInformation->setVisible(!inSelection &&
                                          /* is a plant */
-                                         QtDatapackClientLoader::datapackLoader->itemToPlants.find(items_graphical.at(item))!=
-                                         QtDatapackClientLoader::datapackLoader->itemToPlants.cend()
+                                         QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(items_graphical.at(item))!=
+                                         QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()
                                          );
     bool isRecipe=false;
     {
         /* is a recipe */
-        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes
+        isRecipe=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
                 .find(items_graphical.at(item))!=
-                CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend();
+                CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend();
         if(isRecipe)
         {
-            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(items_graphical.at(item));
-            const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(recipeId);
+            const uint16_t &recipeId=CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(items_graphical.at(item));
+            const CraftingRecipe &recipe=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(recipeId);
             if(!haveReputationRequirements(recipe.requirements.reputation))
             {
                 std::string string;
@@ -894,24 +998,24 @@ void BaseWindow::on_inventory_itemSelectionChanged()
                                  isRecipe
                                  ||
                                  /* is a repel */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(items_graphical.at(item))!=
-            CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.find(items_graphical.at(item))!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.cend()
                                  ||
                                  /* is a item with monster effect */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.find(items_graphical.at(item))!=
-            CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffect.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(items_graphical.at(item))!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()
                                  ||
                                  /* is a item with monster effect out of fight */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.find(items_graphical.at(item))!=
-            CatchChallenger::CommonDatapack::commonDatapack.items.monsterItemEffectOutOfFight.cend() && !client->isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.find(items_graphical.at(item))!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items().monsterItemEffectOutOfFight.cend() && !client->isInFight())
                                  ||
                                  /* is a evolution item */
-                                 CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.find(items_graphical.at(item))!=
-            CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem.cend()
+                                 CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.find(items_graphical.at(item))!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.cend()
                                  ||
                                  /* is a evolution item */
-                                 (CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.find(items_graphical.at(item))!=
-            CatchChallenger::CommonDatapack::commonDatapack.items.itemToLearn.cend() && !client->isInFight())
+                                 (CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.find(items_graphical.at(item))!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items().itemToLearn.cend() && !client->isInFight())
                                          );
 }
 
@@ -963,7 +1067,8 @@ void BaseWindow::showTip(const std::string &tip)
 void BaseWindow::showPlace(const std::string &place)
 {
     add_to_inventoryGainExtraList.push_back(place);
-    add_to_inventoryGainExtraTime.push_back(QTime::currentTime());
+    add_to_inventoryGainExtraTime.push_back(QElapsedTimer());
+    add_to_inventoryGainExtraTime.back().restart();
     ui->gain->setVisible(true);
     composeAndDisplayGain();
     gain_timeout.start();
@@ -1055,11 +1160,11 @@ void BaseWindow::forcedEvent(const uint8_t &event,const uint8_t &event_value)
     this->events[event]=event_value;
     //color
     {
-        if(QtDatapackClientLoader::datapackLoader->visualCategories.find(type)!=
-                QtDatapackClientLoader::datapackLoader->visualCategories.cend())
+        if(QtDatapackClientLoader::datapackLoader->get_visualCategories().find(type)!=
+                QtDatapackClientLoader::datapackLoader->get_visualCategories().cend())
         {
             const std::vector<DatapackClientLoader::VisualCategory::VisualCategoryCondition> &conditions=
-                    QtDatapackClientLoader::datapackLoader->visualCategories.at(type).conditions;
+                    QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).conditions;
             unsigned int index=0;
             while(index<conditions.size())
             {
@@ -1078,7 +1183,7 @@ void BaseWindow::forcedEvent(const uint8_t &event,const uint8_t &event_value)
             }
             if(index==conditions.size())
             {
-                const DatapackClientLoader::CCColor &c=QtDatapackClientLoader::datapackLoader->visualCategories.at(type).defaultColor;
+                const DatapackClientLoader::CCColor &c=QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type).defaultColor;
                 mapController->setColor(QColor(c.r,c.g,c.b,c.a),15000);
             }
         }
@@ -1137,7 +1242,7 @@ void BaseWindow::appendReputationRewards(const std::vector<ReputationRewards> &r
     while(index<reputationList.size())
     {
         const ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,reputationRewards.point);
+        appendReputationPoint(CommonDatapack::commonDatapack.get_reputation().at(reputationRewards.reputationId).name,reputationRewards.point);
         index++;
     }
     show_reputation();
@@ -1175,7 +1280,7 @@ bool BaseWindow::haveReputationRequirements(const std::vector<ReputationRequirem
             if(!reputation.positif)//default level is 0, but required level is negative
             {
                 emit message(QStringLiteral("reputation.level(%1)<0 and no reputation.type=%2").arg(reputation.level).arg(
-                                 QString::fromStdString(CommonDatapack::commonDatapack.reputation.at(reputation.reputationId).name)
+                                 QString::fromStdString(CommonDatapack::commonDatapack.get_reputation().at(reputation.reputationId).name)
                                  ).toStdString());
                 return false;
             }
@@ -1222,7 +1327,7 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
         index=0;
         while(index<quest.rewards.reputation.size())
         {
-            appendReputationPoint(CommonDatapack::commonDatapack.reputation.at(
+            appendReputationPoint(CommonDatapack::commonDatapack.get_reputation().at(
                                       quest.rewards.reputation.at(index).reputationId).name,
                                   quest.rewards.reputation.at(index).point);
             index++;
@@ -1243,12 +1348,12 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
 {
     if(point==0)
         return;
-    if(QtDatapackClientLoader::datapackLoader->reputationNameToId.find(type)==QtDatapackClientLoader::datapackLoader->reputationNameToId.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(type)==QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend())
     {
         emit error("Unknow reputation: "+type);
         return;
     }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->reputationNameToId.at(type);
+    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId().at(type);
     PlayerReputation playerReputation;
     if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
         playerReputation=client->player_informations.reputation.at(reputationId);
@@ -1262,30 +1367,30 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
     #endif
     PlayerReputation oldPlayerReputation=playerReputation;
     int32_t old_level=playerReputation.level;
-    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.reputation.at(reputationId));
+    FacilityLib::appendReputationPoint(&playerReputation,point,CommonDatapack::commonDatapack.get_reputation().at(reputationId));
     if(oldPlayerReputation.level==playerReputation.level && oldPlayerReputation.point==playerReputation.point)
         return;
     if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
         client->player_informations.reputation[reputationId]=playerReputation;
     else
         client->player_informations.reputation[reputationId]=playerReputation;
-    const std::string &reputationCodeName=CommonDatapack::commonDatapack.reputation.at(reputationId).name;
+    const std::string &reputationCodeName=CommonDatapack::commonDatapack.get_reputation().at(reputationId).name;
     if(old_level<playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
             showTip(tr("You have better reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have better reputation into %1")
                     .arg("???").toStdString());
     }
     else if(old_level>playerReputation.level)
     {
-        if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputationCodeName)!=
-                QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+        if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputationCodeName)!=
+                QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
             showTip(tr("You have worse reputation into %1")
-                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputationCodeName).name)).toStdString());
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputationCodeName).name)).toStdString());
         else
             showTip(tr("You have worse reputation into %1")
                     .arg("???").toStdString());
@@ -1327,17 +1432,17 @@ void BaseWindow::objectUsed(const ObjectUsage &objectUsage)
         {
             const uint16_t item=objectInUsing.front();
             //is crafting recipe
-            if(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.find(item)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.cend())
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().find(item)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().cend())
             {
-                client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes.at(item));
+                client->addRecipe(CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes().at(item));
                 load_crafting_inventory();
             }
-            else if(CommonDatapack::commonDatapack.items.trap.find(item)!=CommonDatapack::commonDatapack.items.trap.cend())
+            else if(CommonDatapack::commonDatapack.get_items().trap.find(item)!=CommonDatapack::commonDatapack.get_items().trap.cend())
             {
             }
-            else if(CatchChallenger::CommonDatapack::commonDatapack.items.repel.find(item)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.items.repel.cend())
+            else if(CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.find(item)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_items().repel.cend())
             {
             }
             else
@@ -1375,9 +1480,9 @@ void BaseWindow::on_inventoryDestroy_clicked()
         quantity=quantity_temp;
     }
     QMessageBox::StandardButton button;
-    if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 %2?")
-                                     .arg(quantity).arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name))
+                                     .arg(quantity).arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name))
                                      ,QMessageBox::Yes|QMessageBox::No,QMessageBox::Yes);
     else
         button=QMessageBox::question(this,tr("Destroy"),tr("Are you sure you want to destroy %1 unknow item (id: %2)?")
@@ -1426,18 +1531,18 @@ void BaseWindow::on_inventoryInformation_clicked()
         return;
     }
     const uint16_t itemFound=items_graphical.at(item);
-    if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemFound)!=
-            QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemFound)!=
+            QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
     {
-        if(plants_items_to_graphical.find(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound))==plants_items_to_graphical.cend())
+        if(plants_items_to_graphical.find(QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemFound))==plants_items_to_graphical.cend())
         {
             qDebug() << QStringLiteral("on_inventoryInformation_clicked() is not into plant list: item: %1, plant: %2")
-                        .arg(itemFound).arg(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound));
+                        .arg(itemFound).arg(QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemFound));
             return;
         }
         ui->listPlantList->reset();
         ui->stackedWidget->setCurrentWidget(ui->page_plants);
-        plants_items_to_graphical.at(QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemFound))->setSelected(true);
+        plants_items_to_graphical.at(QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemFound))->setSelected(true);
         on_listPlantList_itemSelectionChanged();
     }
     else
@@ -1592,7 +1697,7 @@ void BaseWindow::on_monsterListMoveUp_clicked()
     if(!client->moveUpMonster(currentRow))
         return;
     const bool updateMonsterTile=(currentRow==1);
-    client->monsterMoveUp(currentRow+1);
+    client->monsterMoveUp(currentRow);
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow-1,item);
     ui->monsterList->item(currentRow)->setSelected(false);
@@ -1616,7 +1721,7 @@ void BaseWindow::on_monsterListMoveDown_clicked()
     if(!client->moveDownMonster(static_cast<uint8_t>(currentRow)))
         return;
     const bool updateMonsterTile=(currentRow==0);
-    client->monsterMoveDown(static_cast<uint8_t>(currentRow+1));
+    client->monsterMoveDown(static_cast<uint8_t>(currentRow));
     QListWidgetItem * item=ui->monsterList->takeItem(currentRow);
     ui->monsterList->insertItem(currentRow+1,item);
     ui->monsterList->item(currentRow)->setSelected(false);
@@ -1783,9 +1888,9 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto &n : QtDatapackClientLoader::datapackLoader->monsterExtra)
+        for(const auto &n : QtDatapackClientLoader::datapackLoader->get_monsterExtra())
             keys.push_back(n.first);
-        qSort(keys.begin(),keys.end());
+        std::sort(keys.begin(),keys.end());
         uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_monster[max/8] & (1<<(7-max%8))))
             max--;
@@ -1797,20 +1902,18 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaMonsterKnown_toggled(bo
             const uint16_t &bitgetUp=monsterId;
             if(informations.encyclopedia_monster[bitgetUp/8] & (1<<(7-bitgetUp%8)))
             {
-                if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->monsterExtra.at(monsterId).name));
+                if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monsterId)!=QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monsterId).name));
                 else
                     item->setText("???");
                 item->setData(99,monsterId);
-                if(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.cend())
-                    item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).thumb));
-                else
-                    item->setIcon(QIcon(":/images/monsters/default/small.png"));
+                //if(QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.find(monsterId)!=QtDatapackClientLoader::datapackLoader->ImagemonsterExtra.cend())
+                item->setIcon(QIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monsterId).thumb));
                 firstFound=true;
             }
             else
             {
-                item->setTextColor(QColor(100,100,100));
+                item->setForeground(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
                 item->setIcon(QIcon(":/images/monsters/default/small.png"));
@@ -1834,9 +1937,9 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
     {
         bool firstFound=false;
         std::vector<uint16_t> keys;
-        for(const auto &n : QtDatapackClientLoader::datapackLoader->itemsExtra)
+        for(const auto &n : QtDatapackClientLoader::datapackLoader->get_itemsExtra())
             keys.push_back(n.first);
-        qSort(keys.begin(),keys.end());
+        std::sort(keys.begin(),keys.end());
         uint16_t max=keys.back();
         while(max>0 && !(informations.encyclopedia_item[max/8] & (1<<(7-max%8))))
             max--;
@@ -1848,8 +1951,8 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
             const uint16_t &bitgetUp=itemId;
             if(informations.encyclopedia_item[bitgetUp/8] & (1<<(7-bitgetUp%8)))
             {
-                if(QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId)!=QtDatapackClientLoader::datapackLoader->itemsExtra.cend())
-                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemId).name));
+                if(QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId)!=QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend())
+                    item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name));
                 else
                     item->setText("???");
                 item->setData(99,itemId);
@@ -1860,7 +1963,7 @@ void CatchChallenger::BaseWindow::on_checkBoxEncyclopediaItemKnown_toggled(bool 
             }
             else
             {
-                item->setTextColor(QColor(100,100,100));
+                item->setForeground(QColor(100,100,100));
                 item->setText(tr("Unknown"));
                 item->setData(99,0);
                 //item->setIcon(QIcon(":/images/monsters/default/small.png"));
@@ -1932,7 +2035,7 @@ void CatchChallenger::BaseWindow::on_itemFilterAdmin_returnPressed()
 {
     ui->listAllItem->clear();
     const std::string &text=ui->itemFilterAdmin->text().toUpper().toStdString();
-    for (const auto &n : QtDatapackClientLoader::datapackLoader->itemsExtra)
+    for (const auto &n : QtDatapackClientLoader::datapackLoader->get_itemsExtra())
     {
         const uint16_t &itemId=n.first;
         const DatapackClientLoader::ItemExtra &itemsExtra=n.second;
@@ -1974,3 +2077,11 @@ void CatchChallenger::BaseWindow::on_listAllItem_itemActivated(QListWidgetItem *
     item->setSelected(true);
     on_playerGiveAdmin_clicked();
 }
+
+void BaseWindow::on_openToLan_clicked()
+{
+    ui->openToLan->setEnabled(false);
+    const Player_private_and_public_informations &informations=client->get_player_informations_ro();
+    emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
+}
+

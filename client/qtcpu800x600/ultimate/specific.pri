@@ -20,3 +20,4 @@ ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../base/android-sources
 
 DISTFILES += \
     ../base/android-sources/AndroidManifest.xml
+

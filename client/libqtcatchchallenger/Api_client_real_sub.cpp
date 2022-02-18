@@ -278,7 +278,7 @@ void Api_client_real::datapackChecksumDoneSub(const std::vector<std::string> &da
             qDebug() << "Datapack don't match with server hash, get from mirror";
             QNetworkRequest networkRequest(
                         QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer)
-                                           .split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).at(index_mirror_sub)+
+                                           .split(Api_client_real::text_dotcoma, Qt::SkipEmptyParts).at(index_mirror_sub)+
                         QStringLiteral("pack/diff/datapack-sub-")+
                         QString::fromStdString(CommonSettingsServer::commonSettingsServer.mainDatapackCode)+
                         QStringLiteral("-")+
@@ -302,7 +302,7 @@ void Api_client_real::test_mirror_sub()
         abort();
     }
     QNetworkReply *reply;
-    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts);
+    const QStringList &httpDatapackMirrorList=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma, Qt::SkipEmptyParts);
     if(!datapackTarSub)
     {
         std::cout << (httpDatapackMirrorList.at(index_mirror_base)+QStringLiteral("pack/datapack.tar.zst")).toStdString() << std::endl;
@@ -337,7 +337,7 @@ void Api_client_real::test_mirror_sub()
     }
     if(reply->error()==QNetworkReply::NoError)
     {
-        if(!connect(reply, static_cast<void(QNetworkReply::*)(QNetworkReply::NetworkError)>(&QNetworkReply::error), this, &Api_client_real::httpErrorEventSub))
+        if(!connect(reply, &QNetworkReply::errorOccurred, this, &Api_client_real::httpErrorEventSub))
             abort();
         if(!connect(reply, &QNetworkReply::downloadProgress, this, &Api_client_real::downloadProgressDatapackSub))
             abort();
@@ -365,7 +365,8 @@ void Api_client_real::decodedIsFinishSub()
         TarDecode tarDecode;
         if(tarDecode.decodeData(decodedData))
         {
-            QSet<QString> extensionAllowed=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma).toSet();
+            QStringList l=QString(CATCHCHALLENGER_EXTENSION_ALLOWED).split(Api_client_real::text_dotcoma);
+            QSet<QString> extensionAllowed(l.cbegin(),l.cend());
             QDir dir;
             const std::vector<std::string> &fileList=tarDecode.getFileList();
             const std::vector<std::vector<char> > &dataList=tarDecode.getDataList();
@@ -425,7 +426,7 @@ bool Api_client_real::mirrorTryNextSub(const std::string &error)
     {
         datapackTarSub=false;
         index_mirror_sub++;
-        if(index_mirror_sub>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma,QString::SkipEmptyParts).size())
+        if(index_mirror_sub>=QString::fromStdString(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer).split(Api_client_real::text_dotcoma, Qt::SkipEmptyParts).size())
         {
             newError(tr("Unable to download the datapack").toStdString()+"<br />Details:<br />"+error,"Get the list failed: "+error);
             return false;
@@ -686,13 +687,13 @@ void Api_client_real::downloadProgressDatapackSub(int64_t bytesReceived, int64_t
     emit progressingDatapackFileSub(static_cast<uint32_t>(bytesReceived));
 }
 
-void Api_client_real::httpErrorEventSub()
+void Api_client_real::httpErrorEventSub(QNetworkReply::NetworkError code)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     if(reply==NULL)
     {
         httpError=true;
-        newError(tr("Datapack downloading error").toStdString(),"reply for http is NULL");
+        newError(tr("Datapack downloading error: %1").arg(code).toStdString(),"reply for http is NULL");
         socket->disconnectFromHost();
         return;
     }

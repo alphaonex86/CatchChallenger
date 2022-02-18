@@ -1733,9 +1733,9 @@ opus_int64 op_raw_total(const OggOpusFile *_of,int _li){
 
 ogg_int64_t op_pcm_total(const OggOpusFile *_of,int _li){
   OggOpusLink *links;
-  ogg_int64_t  pcm_total;
-  ogg_int64_t  diff;
-  int          nlinks;
+  ogg_int64_t  pcm_total=0;
+  ogg_int64_t  diff=0;
+  int          nlinks=0;
   nlinks=_of->nlinks;
   if(OP_UNLIKELY(_of->ready_state<OP_OPENED)
    ||OP_UNLIKELY(!_of->seekable)

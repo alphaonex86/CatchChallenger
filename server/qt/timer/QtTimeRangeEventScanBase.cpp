@@ -3,8 +3,7 @@
 #include "../../base/BroadCastWithoutSender.hpp"
 
 QtTimeRangeEventScan::QtTimeRangeEventScan()
-      :
-        next_send_timer(NULL)
+      : next_send_timer(NULL)
 {
     if(!connect(this,&QtTimeRangeEventScan::try_initAll,                  this,&QtTimeRangeEventScan::initAll,              Qt::QueuedConnection))
         abort();
@@ -19,8 +18,10 @@ void QtTimeRangeEventScan::initAll()
     {
         next_send_timer=new QTimer();
         next_send_timer->setInterval(1000*15);
+        next_send_timer->start();
 
-        connect(next_send_timer,&QTimer::timeout,this,&QtTimeRangeEventScan::exec,Qt::QueuedConnection);
+        if(!connect(next_send_timer,&QTimer::timeout,this,&QtTimeRangeEventScan::exec,Qt::QueuedConnection))
+            abort();
     }
 }
 

@@ -90,7 +90,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 
     //load the map
     {
-        QTime time;
+        QElapsedTimer time;
         time.restart();
         tempMapObject->tiledMap = reader.readMap(QString::fromStdString(resolvedFileName));
         qDebug() << QStringLiteral("%1 loaded into %2ms").arg(QString::fromStdString(resolvedFileName)).arg(time.elapsed());
@@ -154,12 +154,12 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
-            if(QtDatapackClientLoader::datapackLoader->itemOnMap.find(resolvedFileName)!=
-                    QtDatapackClientLoader::datapackLoader->itemOnMap.cend())
+            if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(resolvedFileName)!=
+                    QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend())
             {
-                if(QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
-                        QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName).cend())
-                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader->itemOnMap.at(resolvedFileName)
+                if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
+                        QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).cend())
+                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName)
                             .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
@@ -167,7 +167,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             else
             {
                 QStringList keys;
-                for(auto kv : QtDatapackClientLoader::datapackLoader->itemOnMap)
+                for(auto kv : QtDatapackClientLoader::datapackLoader->get_itemOnMap())
                     keys.push_back(QString::fromStdString(kv.first));
                 qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                             .arg(QString::fromStdString(resolvedFileName))
@@ -178,19 +178,19 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         }
     }
     #if defined(CATCHCHALLENGER_EXTRA_CHECK) && ! defined(MAPVISUALISER)
-    if(QtDatapackClientLoader::datapackLoader->fullMapPathToId.find(resolvedFileName)==
-            QtDatapackClientLoader::datapackLoader->fullMapPathToId.cend())
+    if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(resolvedFileName)==
+            QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
     {
         mLastError="Map id unresolved "+resolvedFileName;
         QStringList keys;
-        for(auto kv : QtDatapackClientLoader::datapackLoader->fullMapPathToId)
+        for(auto kv : QtDatapackClientLoader::datapackLoader->get_fullMapPathToId())
             keys.push_back(QString::fromStdString(kv.first));
         qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
-    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->fullMapPathToId.at(resolvedFileName);
+    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(resolvedFileName);
     #else
     tempMapObject->logicalMap.id                                    = 1;
     #endif
@@ -305,7 +305,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             tagTilesetIndex=0;
     }
     else
-        MapVisualiserThread::layerChangeLevelAndTagsChange(tempMapObject,hideTheDoors);
+        MapVisualiserOrder::layerChangeLevelAndTagsChange(tempMapObject,hideTheDoors);
 
     //load the animation into tile layer
     {
@@ -587,12 +587,12 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
     const std::string &fileName=parsedMap->logicalMap.map_file;
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(fileName);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[fileName];
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
@@ -754,8 +754,8 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                             else
                                                             {
                                                                 const char * const zoneString=step->Attribute("zone");
-                                                                if(QtDatapackClientLoader::datapackLoader->zonesExtra.find(zoneString)!=QtDatapackClientLoader::datapackLoader->zonesExtra.cend())
-                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=QtDatapackClientLoader::datapackLoader->zonesExtra.at(zoneString).id;
+                                                                if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zoneString)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
+                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zoneString).id;
                                                                 else
                                                                     qDebug() << (QStringLiteral("zoneString not resolved: for bot id: %1 (%2)")
                                                                         .arg(botId).arg(QString::fromStdString(botFile)));
@@ -771,8 +771,8 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                             {
                                                                 const uint16_t &fightid=stringtouint16(step->Attribute("fightid"),&ok);
                                                                 if(ok)
-                                                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=
-                                                                            CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                                                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightid)!=
+                                                                            CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
                                                                         parsedMap->logicalMap.botsFight[std::pair<uint8_t,uint8_t>(x,y)].push_back(fightid);
                                                             }
                                                         }
@@ -822,17 +822,12 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                 }
                                             }
                                             else
-                                                qDebug() << (QStringLiteral("No file %1: properties->Name(): %2, name: %3")
-                                                             .arg(QString::fromStdString(botFile))
-                                                             .arg(property->Name())
-                                                             .arg(property->Attribute("name")));
+                                                qDebug() << (QStringLiteral("No file %1: properties->Name()")
+                                                             .arg(QString::fromStdString(botFile)));
                                         }
                                     }
                                     else
-                                        qDebug() << (QStringLiteral("Is not a number: properties->Name(): %1, name: %2")
-                                                     .arg(property->Name())
-                                                     .arg(property->Attribute("name"))
-                                                        );
+                                        qDebug() << QStringLiteral("Is not a number: properties->Name(): NULL");
                                 }
                                 properties = properties->NextSiblingElement("properties");
                             }
@@ -853,12 +848,12 @@ bool MapVisualiserThread::loadOtherMapMetaData(Map_full *parsedMap)
     //open and quick check the file
     std::string fileName=parsedMap->logicalMap.map_file;
     stringreplaceAll(fileName,".tmx",".xml");
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(fileName)!=
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(fileName);
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(fileName);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[fileName];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[fileName];
         const auto loadOkay = domDocument->LoadFile(fileName.c_str());
         if(loadOkay!=0)
         {
@@ -919,11 +914,11 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
     botFiles[file];//create the entry
 
     tinyxml2::XMLDocument *domDocument;
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {

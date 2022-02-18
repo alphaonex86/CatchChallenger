@@ -383,7 +383,12 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
 
 bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
-    #if ! defined (ONLYMAPRENDER)
+    #if defined (ONLYMAPRENDER)
+    (void)mapId;
+    (void)x;
+    (void)y;
+    (void)direction;
+    #else
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedTeleportTo tempItem;
@@ -570,7 +575,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Insert:
                 if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
-                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->maps.at(
+                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(
                                                              delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();
                     if(all_map.find(mapPath)!=all_map.cend())
                     {
@@ -642,7 +647,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
         return;
     }
 
-    if(!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.empty())
+    if(!CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().empty())
     {
         //locate the right layer for monster
         if(otherPlayer.monsterMapObject!=NULL)
@@ -661,12 +666,12 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                 while(index<monstersCollisionValue.walkOn.size())
                 {
                     const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
-                    if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+                    if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().size())
                     {
                         /*const CatchChallenger::MonstersCollision &monstersCollision=
                                 CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);*/
                         const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
-                                CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
+                                CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
                         const bool needBeVisible=(monstersCollisionTemp.tile.empty() && otherPlayer.pendingMonsterMoves.size()>=1) ||
                                 (otherPlayer.pendingMonsterMoves.size()==1 && !otherPlayer.inMove);
                         const bool wasVisible=otherPlayer.monsterMapObject->isVisible();
@@ -685,12 +690,12 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
         while(index<monstersCollisionValue.walkOn.size())
         {
             const unsigned int &newIndex=monstersCollisionValue.walkOn.at(index);
-            if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.size())
+            if(newIndex<CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().size())
             {
                 /*const CatchChallenger::MonstersCollision &monstersCollision=
                         CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(newIndex);*/
                 const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
-                        CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp.at(newIndex);
+                        CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
                 //change tile if needed (water to walk transition)
                 if(monstersCollisionTemp.tile!=otherPlayer.lastTileset)
                 {

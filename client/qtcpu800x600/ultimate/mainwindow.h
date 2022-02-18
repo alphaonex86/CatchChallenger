@@ -30,7 +30,7 @@
 #include "../../qtmaprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
-#ifndef NOSINGLEPLAYER
+#if defined(CATCHCHALLENGER_SOLO)
 #include "../base/solo/SoloWindow.h"
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -64,6 +64,8 @@ public:
     QString proxyHost;
     uint16_t proxyPort;
 
+    bool lan;
+
     bool operator<(const ConnexionInfo &connexionInfo) const;
 };
 
@@ -74,6 +76,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     bool toQuit;
+    bool errorInProgress;
 protected:
     void changeEvent(QEvent *e);
 private slots:
@@ -119,9 +122,10 @@ private slots:
     void downloadFile();
     void metaDataChanged();
     void httpFinished();
+    void newLanServer();
     void on_multiplayer_clicked();
     void on_server_back_clicked();
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     void gameSolo_play(const std::string &savegamesPath);
     void gameSolo_back();
     void on_solo_clicked();
@@ -152,7 +156,7 @@ private:
         ServerMode_None
     };
     ServerMode serverMode;
-    std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
+    std::vector<ConnexionInfo> temp_lanConnexionInfoList,temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QSpacerItem *spacer;
     QSpacerItem *spacerServer;
     AddOrEditServer *addServer;
@@ -183,14 +187,14 @@ private:
     ListEntryEnvolued * selectedServer;
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     SoloWindow *solowindow;
     #endif
     QString pass;
     uint64_t timeLaunched;
     QString launchedGamePath;
     bool haveLaunchedGame;
-    #ifndef NOSINGLEPLAYER
+    #if defined(CATCHCHALLENGER_SOLO)
     CatchChallenger::InternalServer * internalServer;
     #endif
     QSet<QString> customServerName;

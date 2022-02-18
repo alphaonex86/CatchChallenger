@@ -102,7 +102,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
-                                else if(CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shop)==CommonDatapackServerSpec::commonDatapackServerSpec.shops.end())
+                                else if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shop)==
+                                        CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().end())
                                         std::cerr << "shop number is not valid shop: for bot id: "
                                                   << bot_Semi.id
                                                   << " ("
@@ -297,8 +298,9 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                               << std::endl;
                                 #endif
                                 const std::string &std=step->Attribute("zone");
-                                if(CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.find(std)!=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.cend())
-                                    mapServer->zonecapture[pairpoint]=CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId.at(std);
+                                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(std)!=
+                                        CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+                                    mapServer->zonecapture[pairpoint]=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(std);
                                 else
                                 {
                                     std::cerr << "zonecapture point put at: for bot id: "
@@ -344,7 +346,8 @@ void BaseServer::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
                                     fightid=stringtouint16(step->Attribute("fightid"),&ok);
                                 if(ok)
                                 {
-                                    if(CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
+                                    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightid)!=
+                                            CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
                                     {
                                         if(bot_Semi.property_text.find("lookAt")!=bot_Semi.property_text.end())
                                         {
@@ -544,11 +547,11 @@ void BaseServer::loadBotFile(const std::string &mapfile,const std::string &file)
     botFiles[file];//create the entry
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif

@@ -2,14 +2,15 @@
 #define MAP_VISUALISER_PLAYER_H
 
 #include "MapVisualiser.hpp"
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 
 #include <QSet>
 #include <QString>
 #include <QTimer>
 #include <QTime>
 
-class MapVisualiserPlayer : public MapVisualiser
+class DLL_PUBLIC MapVisualiserPlayer : public MapVisualiser
 {
     Q_OBJECT
     friend class MapVisualiserPlayerWithFight;
@@ -109,7 +110,7 @@ protected:
     QTimer lookToMove;
     QTimer moveAnimationTimer;
     //QTime
-    QTime lastAction;//to prevent flood
+    QElapsedTimer lastAction;//to prevent flood
 
     //control
     std::unordered_set<int> keyPressed;

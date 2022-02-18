@@ -7,18 +7,21 @@
 #include "GeneralStructures.hpp"
 #include "GeneralVariable.hpp"
 #include "../tinyXML2/tinyxml2.hpp"
+#include "lib.h"
 
 namespace CatchChallenger {
-class CommonDatapack
+class DLL_PUBLIC CommonDatapack
 {
 public:
+    friend class DatapackGeneralLoader;
+    friend class CommonDatapackServerSpec;//industries, see CommonDatapackServerSpec::parseIndustries()
     explicit CommonDatapack();
     static CommonDatapack commonDatapack;
 public:
     void unload();
     void parseDatapack(const std::string &datapackPath);
     bool isParsedContent() const;
-public:
+protected:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     std::unordered_map<uint8_t,Plant> plants;
     std::unordered_map<uint16_t,CraftingRecipe> craftingRecipes;
@@ -46,7 +49,37 @@ public:
 
     std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
     std::vector<std::string > skins;//I think it's clean after use, database have only number
+public:
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    const std::unordered_map<uint8_t,Plant> &get_plants() const;
+    const std::unordered_map<uint16_t,CraftingRecipe> &get_craftingRecipes() const;
+    const std::unordered_map<uint16_t,uint16_t> &get_itemToCraftingRecipes() const;
+    const uint16_t &get_craftingRecipesMaxId() const;
+    const std::unordered_map<uint8_t,Buff> &get_monsterBuffs() const;
+    const ItemFull &get_items() const;
+    const std::unordered_map<uint16_t,Industry> &get_industries() const;
+    const std::unordered_map<uint16_t,IndustryLink> &get_industriesLink() const;
+    const LayersOptions &get_layersOptions() const;
+    const std::vector<Event> &get_events() const;
 
+    const bool &get_monsterRateApplied() const;
+    void set_monsterRateApplied(const bool &v);
+
+    //temp
+    const std::vector<MonstersCollision> &get_monstersCollision() const;//never more than 255
+    const std::vector<MonstersCollisionTemp> &get_monstersCollisionTemp() const;//never more than 255
+    const std::vector<Type> &get_types() const;
+    #endif
+    const std::vector<Reputation> &get_reputation() const;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
+    std::vector<Reputation> &get_reputation_rw();
+    const std::unordered_map<uint16_t,Monster> &get_monsters() const;
+    const uint16_t &get_monstersMaxId() const;
+    const std::unordered_map<uint16_t,Skill> &get_monsterSkills() const;
+    const std::vector<Profile> &get_profileList() const;
+
+    const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile() const;//keep for Map_loader::getXmlCondition(), need to be deleted later
+    std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile_rw();
+    const std::vector<std::string > &get_skins() const;//I think it's clean after use, database have only number
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {

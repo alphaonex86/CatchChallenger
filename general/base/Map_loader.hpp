@@ -7,6 +7,7 @@
 #include "GeneralStructures.hpp"
 #include "GeneralStructuresXml.hpp"
 #include "CommonMap.hpp"
+#include "lib.h"
 
 #ifdef CATCHCHALLENGER_CLASS_GATEWAY
 #error This kind don't need reply on that's
@@ -19,7 +20,7 @@
 #endif
 
 namespace CatchChallenger {
-class Map_loader
+class DLL_PUBLIC Map_loader
 {
 public:
     explicit Map_loader();

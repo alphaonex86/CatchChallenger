@@ -39,6 +39,7 @@
 #include <QPoint>
 #include <QString>
 #include <QPixmap>
+#include "../../general/base/lib.h"
 
 class QImage;
 
@@ -53,7 +54,7 @@ class Terrain;
  * This class currently only supports loading tiles from a tileset image, using
  * loadFromImage(). There is no way to add or remove arbitrary tiles.
  */
-class Tileset : public Object
+class DLL_PUBLIC Tileset : public Object
 {
 public:
     static QHash<QString,Tileset *> preloadedTileset;

@@ -17,28 +17,38 @@
 #include <QCoreApplication>
 #include <QSqlDatabase>
 #include <QDebug>
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#include <QDataStream>
+#include <QTcpSocket>
+#endif
 
-QtServerPrivateVariables QtServer::qtServerPrivateVariables;
+QtServerPrivateVariables *QtServer::qtServerPrivateVariables=nullptr;//point to defer allocation after, else connect() of Qt not work
 
 QtServer::QtServer()
 {
+    if(QtServer::qtServerPrivateVariables==nullptr)
+        QtServer::qtServerPrivateVariables=new QtServerPrivateVariables();
     qRegisterMetaType<std::string>("std::string");
     qRegisterMetaType<QSqlDatabase>("QSqlDatabase");
     qRegisterMetaType<QSqlQuery>("QSqlQuery");
-    connect(QtServer::qtServerPrivateVariables.timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection);
     if(CatchChallenger::GlobalServerData::serverSettings.secondToPositionSync>0)
-        if(!connect(&QtServer::qtServerPrivateVariables.positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection))
+        if(!connect(&QtServer::qtServerPrivateVariables->positionSync,&QTimer::timeout,this,&QtServer::positionSync,Qt::QueuedConnection))
         {
             std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
-    if(!connect(&QtServer::qtServerPrivateVariables.ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection))
+    if(!connect(&QtServer::qtServerPrivateVariables->ddosTimer,&QTimer::timeout,this,&QtServer::ddosTimer,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
     #ifdef CATCHCHALLENGER_SOLO
     if(!connect(&QFakeServer::server,&QFakeServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
+    {
+        std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+        abort();
+    }
+    if(!connect(&server,&QTcpServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
@@ -71,14 +81,14 @@ QtServer::QtServer()
 
     /*
     do via direct connection
-    if(!connect(&QtServer::qtServerPrivateVariables.player_updater,&CatchChallenger::QtPlayerUpdater::newConnectedPlayer,
+    if(!connect(&QtServer::qtServerPrivateVariables->player_updater,&CatchChallenger::QtPlayerUpdater::newConnectedPlayer,
                 &CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender,&CatchChallenger::BroadCastWithoutSender::receive_instant_player_number,
                 Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
-    if(!connect(&QtServer::qtServerPrivateVariables.timeRangeEventScan,&CatchChallenger::QtTimeRangeEventScan::timeRangeEventTrigger,
+    if(!connect(&QtServer::qtServerPrivateVariables->timeRangeEventScan,&CatchChallenger::QtTimeRangeEventScan::timeRangeEventTrigger,
                 &CatchChallenger::BroadCastWithoutSender::broadCastWithoutSender,&CatchChallenger::BroadCastWithoutSender::timeRangeEventTrigger,
                 Qt::QueuedConnection))
     {
@@ -87,6 +97,26 @@ QtServer::QtServer()
     }*/
     if(!connect(this,&QtServer::stop_internal_server_signal,this,&QtServer::stop_internal_server_slot,Qt::QueuedConnection))
         abort();
+
+    if(QtServer::qtServerPrivateVariables->timer_to_send_insert_move_remove==nullptr)
+        QtServer::qtServerPrivateVariables->timer_to_send_insert_move_remove=new QTimer();
+    if(QtServer::qtServerPrivateVariables->timer_city_capture==nullptr)
+        QtServer::qtServerPrivateVariables->timer_city_capture=new QTimer();
+    if(!connect(QtServer::qtServerPrivateVariables->timer_to_send_insert_move_remove,	&QTimer::timeout,this,&QtServer::send_insert_move_remove,Qt::QueuedConnection))
+        abort();
+    if(!QtServer::qtServerPrivateVariables->timer_city_capture->isActive())
+        QtServer::qtServerPrivateVariables->timer_city_capture->start(24*3600*1000);
+    if(!QtServer::qtServerPrivateVariables->timer_to_send_insert_move_remove->isActive())
+        QtServer::qtServerPrivateVariables->timer_to_send_insert_move_remove->start(20);
+
+    if(!QtServer::qtServerPrivateVariables->positionSync.isActive())
+        QtServer::qtServerPrivateVariables->positionSync.start(20);
+    if(!QtServer::qtServerPrivateVariables->ddosTimer.isActive())
+        QtServer::qtServerPrivateVariables->ddosTimer.start(20);
+    if(!QtServer::qtServerPrivateVariables->player_updater.isActive())
+        QtServer::qtServerPrivateVariables->player_updater.start();
+    if(!QtServer::qtServerPrivateVariables->timeRangeEventScan.isActive())
+        QtServer::qtServerPrivateVariables->timeRangeEventScan.start(1000);
 }
 
 QtServer::~QtServer()
@@ -128,9 +158,9 @@ QtServer::~QtServer()
 
 void QtServer::preload_the_city_capture()
 {
-    if(!connect(QtServer::qtServerPrivateVariables.timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection))
+    if(!connect(QtServer::qtServerPrivateVariables->timer_city_capture,&QTimer::timeout,this,&QtServer::load_next_city_capture,Qt::QueuedConnection))
         abort();
-    if(!connect(QtServer::qtServerPrivateVariables.timer_city_capture,&QTimer::timeout,&CatchChallenger::Client::startTheCityCapture))
+    if(!connect(QtServer::qtServerPrivateVariables->timer_city_capture,&QTimer::timeout,&CatchChallenger::Client::startTheCityCapture))
         abort();
     BaseServer::preload_the_city_capture();
 }
@@ -266,6 +296,36 @@ void QtServer::newConnection()
         }
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
+    }
+    while(server.hasPendingConnections())
+    {
+        QTcpSocket *socket = server.nextPendingConnection();
+        if(socket!=NULL)
+        {
+            qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by TCP socket");
+            CatchChallenger::Client *client=nullptr;
+            switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+            {
+                case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
+                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
+                break;
+                case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
+                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
+                break;
+                default:
+                case CatchChallenger::MapVisibilityAlgorithmSelection_None:
+                    client=new QtMapVisibilityAlgorithm_None(socket);
+                break;
+            }
+            connect_the_last_client(client,socket);
+
+            QByteArray data;
+            data.resize(1);
+            data[0x00]=0x00;
+            socket->write(data.constData(),data.size());
+        }
+        else
+            qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection() TCP socket");
     }
     #endif
 }
@@ -449,7 +509,7 @@ void QtServer::loadAndFixSettings()
 {
     if(CatchChallenger::GlobalServerData::serverSettings.secondToPositionSync==0)
     {
-        QtServer::qtServerPrivateVariables.positionSync.stop();
+        QtServer::qtServerPrivateVariables->positionSync.stop();
     }
     BaseServer::loadAndFixSettings();
 }
@@ -469,3 +529,32 @@ void QtServer::unload_the_visibility_algorithm()
 void QtServer::unload_the_events()
 {
 }
+
+#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+void QtServer::openToLan(QString name, bool allowInternet)
+{
+    server.listen();
+    //broadcastLan.bind(QHostAddress::Any, 42489);
+    if(!connect(&broadcastLanTimer,&QTimer::timeout,this,&QtServer::sendBroadcastServer))
+        abort();
+    QDataStream stream(&dataToSend,QIODevice::WriteOnly);
+    stream.setVersion(QDataStream::Qt_4_4);
+    stream << name;
+    stream << server.serverPort();
+    if(dataToSend.isEmpty())
+        abort();
+    emit emitLanPort(server.serverPort());
+    broadcastLanTimer.start(500);
+
+    CatchChallenger::GameServerSettings formatedServerSettings=getSettings();
+    formatedServerSettings.max_players=99;//> 1 to allow open to lan
+    formatedServerSettings.sendPlayerNumber = true;
+    formatedServerSettings.everyBodyIsRoot                                      = false;
+    setSettings(formatedServerSettings);
+}
+
+void QtServer::sendBroadcastServer()
+{
+    broadcastLan.writeDatagram(dataToSend,QHostAddress::Broadcast,42490);
+}
+#endif

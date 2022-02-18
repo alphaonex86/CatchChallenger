@@ -35,11 +35,11 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     //open and quick check the file
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         #else
         domDocument=new tinyxml2::XMLDocument();
         #endif
@@ -525,7 +525,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             const std::string name=child->Attribute("name");
             if(data==nullptr)
             {
-                error=std::string("Is Element for layer is null: ")+data->Name()+" and name: "+name+", file: "+file;
+                error=std::string("Is Element for layer is null: data==nullptr and name: ")+name+", file: "+file;
                 return false;
             }
             else if(data->Attribute("encoding")==nullptr)
@@ -695,9 +695,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         if(!name.empty() && rawSize==(uint32_t)dataRaw.size())
                         {
                             unsigned int index=0;
-                            while(index<CommonDatapack::commonDatapack.monstersCollision.size())
+                            while(index<CommonDatapack::commonDatapack.get_monstersCollision().size())
                             {
-                                const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.monstersCollisionTemp.at(index);
+                                const MonstersCollisionTemp &monstersCollisionTemp=CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(index);
                                 if(monstersCollisionTemp.layer==name)
                                 {
                                     mapLayerContentForMonsterCollision[name]=dataRaw;
@@ -934,9 +934,9 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     {
                                         std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
                                                   << ", actual zone: " << std::to_string(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width])
-                                                  << " (" << CommonDatapack::commonDatapack.monstersCollisionTemp
+                                                  << " (" << CommonDatapack::commonDatapack.get_monstersCollisionTemp()
                                                      .at(this->map_to_send.parsed_layer.simplifiedMap[x+y*this->map_to_send.width]).layer
-                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.monstersCollisionTemp.at(zoneId).layer
+                                                  << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(zoneId).layer
                                                   << ")" << std::endl;
                                         previousHaveMonsterWarn=true;
                                     }

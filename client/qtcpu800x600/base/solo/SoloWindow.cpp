@@ -6,17 +6,16 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-#include "../../qtmaprender/MapVisualiserPlayer.hpp"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/SavegameVersion.hpp"
-#include "../../../general/base/Version.hpp"
-#include "../../libcatchchallenger/DatapackClientLoader.hpp"
+#include "../../../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../../../../general/base/FacilityLib.hpp"
+#include "../../../../general/base/FacilityLibGeneral.hpp"
+#include "../../../../general/base/SavegameVersion.hpp"
+#include "../../../../general/base/Version.hpp"
+#include "../../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../LanguagesSelect.h"
-#include "../../libqtcatchchallenger/ClientFightEngine.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/Version.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/Version.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "../InternetUpdater.h"
 #include "../FacilityLibClient.h"
 

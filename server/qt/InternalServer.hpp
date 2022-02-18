@@ -3,12 +3,13 @@
 #include <QSettings>
 
 #include "QtServer.hpp"
+#include "../../general/base/lib.h"
 
 #ifndef CATCHCHALLENGER_INTERNALSERVER_H
 #define CATCHCHALLENGER_INTERNALSERVER_H
 
 namespace CatchChallenger {
-class InternalServer : public QtServer
+class DLL_PUBLIC InternalServer : public QtServer
 {
     Q_OBJECT
 public:

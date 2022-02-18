@@ -65,6 +65,7 @@ void QtDatapackClientLoader::run()
 
 void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
+    qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack()");
     if(inProgress)
     {
         qDebug() << QStringLiteral("already in progress");
@@ -501,12 +502,12 @@ void QtDatapackClientLoader::parseMonstersExtra()
         }
         tinyxml2::XMLDocument *domDocument=NULL;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
@@ -542,8 +543,8 @@ void QtDatapackClientLoader::parseMonstersExtra()
                 else
                 {
                     const uint16_t id=static_cast<uint16_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.monsters.find(id)
-                            ==CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(id)
+                            ==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster list into monster extra: child->Name(): %2")
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
@@ -698,8 +699,8 @@ void QtDatapackClientLoader::parseMonstersExtra()
     }
 
     auto start_time2 = std::chrono::high_resolution_clock::now();
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsters.begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsters.cend())
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
     {
         if(QtDatapackClientLoader::datapackLoader->monsterExtra.find(i->first)==
                 QtDatapackClientLoader::datapackLoader->monsterExtra.cend())
@@ -745,12 +746,12 @@ void QtDatapackClientLoader::parseBuffExtra()
         const std::string dotgif(".gif");
         tinyxml2::XMLDocument *domDocument;
         //open and quick check the file
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
@@ -787,8 +788,8 @@ void QtDatapackClientLoader::parseBuffExtra()
                 else
                 {
                     const uint8_t &id=static_cast<uint8_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(id)==
-                            CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().find(id)==
+                            CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
                         qDebug() << (QStringLiteral("Unable to open the xml file: %1, id not into monster buff list into buff extra: child->Name(): %2")
                                      .arg(QString::fromStdString(file)).arg(item->Name()));
                     else
@@ -868,8 +869,8 @@ void QtDatapackClientLoader::parseBuffExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().begin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
     {
         if(QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.find(i->first)==
                 QtDatapackClientLoader::datapackLoader->monsterBuffsExtra.cend())
@@ -895,8 +896,8 @@ void QtDatapackClientLoader::parsePlantsExtra()
     const std::string &text_dotpng=".png";
     const std::string &text_dotgif=".gif";
     const std::string &basePath=datapackPath+DATAPACK_BASE_PATH_PLANTS;
-    auto i = CatchChallenger::CommonDatapack::commonDatapack.plants.begin();
-    while (i != CatchChallenger::CommonDatapack::commonDatapack.plants.cend()) {
+    auto i = CatchChallenger::CommonDatapack::commonDatapack.get_plants().begin();
+    while (i != CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend()) {
         //try load the tileset
         QtDatapackClientLoader::QtPlantExtra plant;
         plant.tileset = new Tiled::Tileset(QString::fromStdString(text_plant),16,32);
@@ -909,7 +910,7 @@ void QtDatapackClientLoader::parsePlantsExtra()
                     qDebug() << "Unable the load the default plant tileset";
         }
         QtDatapackClientLoader::datapackLoader->QtplantExtra[i->first]=plant;
-        itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.plants[i->first].itemUsed]=i->first;
+        itemToPlants[CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(i->first).itemUsed]=i->first;
         ++i;
     }
 

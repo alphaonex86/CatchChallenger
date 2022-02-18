@@ -4,6 +4,7 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
+#include "lib.h"
 
 //to group the step by step move into line move
 /* template <typename TMap = Map>
@@ -14,7 +15,7 @@ namespace CatchChallenger {
 
 class CommonMap;
 
-class MoveOnTheMap
+class DLL_PUBLIC MoveOnTheMap
 {
 public:
     MoveOnTheMap();
@@ -35,6 +36,7 @@ public:
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
     static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static bool isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction);
     static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     Direction getDirection() const;

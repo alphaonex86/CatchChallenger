@@ -340,15 +340,15 @@ void DatapackClientLoader::parseVisualCategory()
                         if(event->Attribute("id")!=NULL && event->Attribute("value")!=NULL)
                         {
                             unsigned int index=0;
-                            while(index<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+                            while(index<CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
                             {
-                                if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).name==
+                                if(CatchChallenger::CommonDatapack::commonDatapack.get_events().at(index).name==
                                         event->Attribute("id"))
                                 {
                                     unsigned int sub_index=0;
-                                    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
+                                    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_events().at(index).values.size())
                                     {
-                                        if(CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.at(sub_index)==
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.get_events().at(index).values.at(sub_index)==
                                                 event->Attribute("value"))
                                         {
                                             VisualCategory::VisualCategoryCondition visualCategoryCondition;
@@ -386,13 +386,13 @@ void DatapackClientLoader::parseVisualCategory()
                                         }
                                         sub_index++;
                                     }
-                                    if(sub_index==CatchChallenger::CommonDatapack::commonDatapack.events.at(index).values.size())
+                                    if(sub_index==CatchChallenger::CommonDatapack::commonDatapack.get_events().at(index).values.size())
                                         std::cerr << "event value not found: " << file << std::endl;
                                     break;
                                 }
                                 index++;
                             }
-                            if(index==CatchChallenger::CommonDatapack::commonDatapack.events.size())
+                            if(index==CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
                                 std::cerr << "event not found: " << file << std::endl;
                         }
                         else
@@ -418,9 +418,9 @@ void DatapackClientLoader::parseReputationExtra()
 {
     {
         uint8_t index=0;
-        while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        while(index<CatchChallenger::CommonDatapack::commonDatapack.get_reputation().size())
         {
-            reputationNameToId[CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index).name]=index;
+            reputationNameToId[CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(index).name]=index;
             index++;
         }
     }
@@ -656,9 +656,9 @@ void DatapackClientLoader::parseReputationExtra()
     }
     {
         unsigned int index=0;
-        while(index<CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+        while(index<CatchChallenger::CommonDatapack::commonDatapack.get_reputation().size())
         {
-            const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(index);
+            const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(index);
             if(reputationExtra.find(reputation.name)==reputationExtra.cend())
                 reputationExtra[reputation.name].name="Unknown";
             while((uint32_t)reputationExtra[reputation.name].reputation_negative.size()<reputation.reputation_negative.size())
@@ -1029,7 +1029,7 @@ void DatapackClientLoader::parseQuestsExtra()
             CommonSettingsServer::commonSettingsServer.mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(temp, std::string(), CatchChallenger::FacilityLibGeneral::Dirs);
+    const std::vector<std::string> &returnList=listFolderNotRecursive(temp, std::string());
     unsigned int index=0;
     while(index<returnList.size())
     {
@@ -1043,9 +1043,9 @@ void DatapackClientLoader::parseQuestsExtra()
         }
         bool ok;
         std::string inode=folder_path.substr(temp.size());
-        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\")) {
+        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\"))
             inode=inode.substr(0,inode.size()-1);
-        }
+        //inode=inode.substr(temp.size());
         const uint32_t &tempid=stringtouint32(inode,&ok);
         if(!ok)
         {
@@ -1235,7 +1235,8 @@ void DatapackClientLoader::parseQuestsText()
             DATAPACK_BASE_PATH_QUESTS2;
     stringreplaceAll(temp,"\\\\","\\");
     stringreplaceAll(temp,"//","/");
-    const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(temp, std::string(), CatchChallenger::FacilityLibGeneral::Dirs);
+    //const std::vector<std::string> &returnList=CatchChallenger::FacilityLibGeneral::listFolder(temp);
+    const std::vector<std::string> &returnList=listFolderNotRecursive(temp, std::string());
     unsigned int index=0;
     while(index<(unsigned int)returnList.size())
     {
@@ -1266,9 +1267,8 @@ void DatapackClientLoader::parseQuestsText()
 
         //load the content
         std::string inode=returnList.at(index);
-        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\")) {
+        if(stringEndsWith(inode,"/") || stringEndsWith(inode,"\\"))
             inode=inode.substr(0,inode.size()-1);
-        }
         if(questsPathToId.find(inode)!=questsPathToId.cend())
         {
             const uint16_t questId=questsPathToId.at(inode);
@@ -1379,7 +1379,7 @@ void DatapackClientLoader::parseAudioAmbiance()
         {
             const std::string &type=item->Attribute("type");
             if(audioAmbiance.find(type)==audioAmbiance.cend() && item->GetText()!=NULL)
-                audioAmbiance[type]=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+item->GetText();
+                audioAmbiance[type]=/*datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+*/item->GetText();
             else
                 std::cerr << "Unable to open the file: %1, id number already set: child.Name(): %2" << file << " " << item->Name() << file << std::endl;
         }
@@ -1393,8 +1393,8 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.begin();
-    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests.cend())
+    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cbegin();
+    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
     {
         if(!i->second.steps.empty())
         {
@@ -1425,24 +1425,24 @@ void DatapackClientLoader::parseZoneExtra()
     std::regex xmlFilter("[a-zA-Z0-9\\- _]+\\.xml");
     while(index<returnList.size())
     {
-        const std::string &stringPath=temp+returnList.at(index);
-        if(!CatchChallenger::FacilityLibGeneral::isFile(stringPath))
+        const std::string &fileWithoutPath=returnList.at(index);
+        const std::string &fullPath=temp+fileWithoutPath;
+        if(!CatchChallenger::FacilityLibGeneral::isFile(fullPath))
         {
             index++;
             continue;
         }
         std::smatch m;
-        if(!std::regex_match(stringPath, m, xmlFilter))
+        if(!std::regex_match(fileWithoutPath, m, xmlFilter))
         {
-            std::cerr << "%1 the zone file name not match" << stringPath << std::endl;
+            std::cerr << "%1 the zone file name not match" << fullPath << std::endl;
             index++;
             continue;
         }
-        std::string zoneCodeName=stringPath;
-        const auto &pos=stringPath.find_last_of('/');
-        if(pos!=std::string::npos)
-            zoneCodeName=stringPath.substr(pos);
-        const std::string &file=stringPath;
+        std::string zoneCodeName=fileWithoutPath;
+        stringreplaceAll(zoneCodeName,"/","");
+        stringreplaceAll(zoneCodeName,"\\","");
+        const std::string &file=fullPath;
         if(stringEndsWith(zoneCodeName,".xml"))
             zoneCodeName.resize(zoneCodeName.size()-4);
 
@@ -1555,12 +1555,12 @@ void DatapackClientLoader::parseSkillsExtra()
         }
         //open and quick check the file
         tinyxml2::XMLDocument *domDocument;
-        if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+        if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
+                CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
         else
         {
-            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+            domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
             const auto loadOkay = domDocument->LoadFile(file.c_str());
             if(loadOkay!=0)
             {
@@ -1598,7 +1598,7 @@ void DatapackClientLoader::parseSkillsExtra()
                 else
                 {
                     const uint16_t &id=static_cast<uint16_t>(tempid);
-                    if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(id)==CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(id)==CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
                     {}
                     else
                     {
@@ -1676,8 +1676,8 @@ void DatapackClientLoader::parseSkillsExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.begin();
-    while(i!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+    auto i=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cbegin();
+    while(i!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
     {
         if(monsterSkillsExtra.find(i->first)==monsterSkillsExtra.cend())
         {
@@ -1698,12 +1698,12 @@ void DatapackClientLoader::parseTypesExtra()
     const std::string &file=datapackPath+DATAPACK_BASE_PATH_MONSTERS+"type.xml";
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-            CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         const auto loadOkay = domDocument->LoadFile(file.c_str());
         if(loadOkay!=0)
         {
@@ -1810,12 +1810,12 @@ void DatapackClientLoader::parseBotFightsExtra()
             //const std::string &file=returnList.at(file_index);
             tinyxml2::XMLDocument *domDocument;
             //open and quick check the file
-            if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=
-                    CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(file);
+            if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=
+                    CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(file);
             else
             {
-                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+                domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
                 const auto loadOkay = domDocument->LoadFile(file.c_str());
                 if(loadOkay!=0)
                 {
@@ -1844,8 +1844,8 @@ void DatapackClientLoader::parseBotFightsExtra()
                     if(ok && tempid<65535)
                     {
                         const uint16_t id=static_cast<uint16_t>(tempid);
-                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(id)!=
-                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+                        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(id)!=
+                                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
                         {
                             if(botFightsExtra.find(id)==botFightsExtra.cend())
                             {
@@ -1927,8 +1927,8 @@ void DatapackClientLoader::parseBotFightsExtra()
         file_index++;
     }
 
-    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.begin();
-    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.cend())
+    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().begin();
+    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
     {
         if(botFightsExtra.find(i->first)==botFightsExtra.cend())
         {
@@ -1943,3 +1943,137 @@ void DatapackClientLoader::parseBotFightsExtra()
 
     std::cerr << std::to_string(botFightsExtra.size()) << " fight extra(s) loaded" << std::endl;
 }
+
+std::vector<std::string> DatapackClientLoader::listFolderNotRecursive(const std::string& folder,const std::string& suffix)
+{
+    std::vector<std::string> returnList;
+    std::vector<CatchChallenger::FacilityLibGeneral::InodeDescriptor> entryList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder+suffix, CatchChallenger::FacilityLibGeneral::Dirs);//possible wait time here
+    for (unsigned int index=0;index<entryList.size();++index)
+    {
+        const CatchChallenger::FacilityLibGeneral::InodeDescriptor &fileInfo=entryList.at(index);
+        if(fileInfo.type==CatchChallenger::FacilityLibGeneral::InodeDescriptor::Type::Dir)
+            returnList.push_back(suffix+fileInfo.name + "/");
+    }
+    return returnList;
+}
+
+const std::unordered_map<uint8_t,DatapackClientLoader::TypeExtra> &DatapackClientLoader::get_typeExtra() const
+{
+    return typeExtra;
+}
+
+const std::unordered_map<uint16_t,DatapackClientLoader::MonsterExtra> &DatapackClientLoader::get_monsterExtra() const
+{
+    return monsterExtra;
+}
+
+const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,DatapackClientLoader::MonsterExtra::Buff> &DatapackClientLoader::get_monsterBuffsExtra() const
+{
+    return monsterBuffsExtra;
+}
+
+const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,DatapackClientLoader::MonsterExtra::Skill> &DatapackClientLoader::get_monsterSkillsExtra() const
+{
+    return monsterSkillsExtra;
+}
+
+const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,DatapackClientLoader::ItemExtra> &DatapackClientLoader::get_itemsExtra() const
+{
+    return itemsExtra;
+}
+
+const std::unordered_map<std::string,DatapackClientLoader::ReputationExtra> &DatapackClientLoader::get_reputationExtra() const
+{
+    return reputationExtra;
+}
+
+const std::unordered_map<std::string,uint8_t> &DatapackClientLoader::get_reputationNameToId() const
+{
+    return reputationNameToId;
+}
+
+const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> &DatapackClientLoader::get_itemToPlants() const
+{
+    return itemToPlants;
+}
+
+const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,DatapackClientLoader::QuestExtra> &DatapackClientLoader::get_questsExtra() const
+{
+    return questsExtra;
+}
+
+const std::unordered_map<std::string,uint16_t> &DatapackClientLoader::get_questsPathToId() const
+{
+    return questsPathToId;
+}
+
+const std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > &DatapackClientLoader::get_botToQuestStart() const
+{
+    return botToQuestStart;
+}
+
+const std::unordered_map<uint16_t,DatapackClientLoader::BotFightExtra> &DatapackClientLoader::get_botFightsExtra() const
+{
+    return botFightsExtra;
+}
+
+const std::unordered_map<std::string,DatapackClientLoader::ZoneExtra> &DatapackClientLoader::get_zonesExtra() const
+{
+    return zonesExtra;
+}
+
+const std::unordered_map<std::string,std::string> &DatapackClientLoader::get_audioAmbiance() const
+{
+    return audioAmbiance;
+}
+
+const std::unordered_map<uint32_t,DatapackClientLoader::ProfileText> &DatapackClientLoader::get_profileTextList() const
+{
+    return profileTextList;
+}
+
+const std::unordered_map<std::string,DatapackClientLoader::VisualCategory> &DatapackClientLoader::get_visualCategories() const
+{
+    return visualCategories;
+}
+
+const std::string &DatapackClientLoader::get_language() const
+{
+    return language;
+}
+
+const std::vector<std::string> &DatapackClientLoader::get_maps() const
+{
+    return maps;
+}
+
+const std::vector<std::string> &DatapackClientLoader::get_skins() const
+{
+    return skins;
+}
+
+const std::unordered_map<std::string,uint32_t> &DatapackClientLoader::get_mapToId() const
+{
+    return mapToId;
+}
+
+const std::unordered_map<std::string,uint32_t> &DatapackClientLoader::get_fullMapPathToId() const
+{
+    return fullMapPathToId;
+}
+
+const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &DatapackClientLoader::get_itemOnMap() const
+{
+    return itemOnMap;
+}
+
+const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &DatapackClientLoader::get_plantOnMap() const
+{
+    return plantOnMap;
+}
+
+const std::unordered_map<uint16_t,DatapackClientLoader::PlantIndexContent> &DatapackClientLoader::get_plantIndexOfOnMap() const
+{
+    return plantIndexOfOnMap;
+}
+

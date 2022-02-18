@@ -538,17 +538,17 @@ bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(skinId>=CommonDatapack::commonDatapack.skins.size())
+    if(skinId>=CommonDatapack::commonDatapack.get_skins().size())
     {
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into skin listed");
         return false;
     }
-    if(profileIndex>=CommonDatapack::commonDatapack.profileList.size())
+    if(profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
     {
         newError(std::string("Internal problem"),std::to_string(profileIndex)+">=CommonDatapack::commonDatapack.profileList.size()");
         return false;
     }
-    const Profile &profile=CommonDatapack::commonDatapack.profileList.at(profileIndex);
+    const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     if(!profile.forcedskin.empty() && !vectorcontainsAtLeastOne(profile.forcedskin,skinId))
     {
         newError(std::string("Internal problem"),"skin provided: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex)+" forced skin list");
@@ -713,17 +713,12 @@ void Api_protocol::monsterMoveUp(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number<1)
-    {
-        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
-    }
-    if(number>player_informations.playerMonster.size())
+    if(number>=player_informations.playerMonster.size())
     {
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number==1)
+    if(number==0)
     {
         std::cerr << "can't move up the top monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
@@ -768,17 +763,12 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number<1)
-    {
-        std::cerr << "the monster number start with 1, not 0, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        return;
-    }
-    if(number>player_informations.playerMonster.size())
+    if(number>=player_informations.playerMonster.size())
     {
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if(number==player_informations.playerMonster.size())
+    if((number-1)==player_informations.playerMonster.size())
     {
         std::cerr << "can't move down the bottom monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
@@ -928,22 +918,22 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
             return false;
         }
     }
-    if(playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255)
+    if(playerInformations.items.size()+withdrawItems.size()-depositeItems.size()>=255)
     {
         std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535)
+    if(playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()>=65535)
     {
         std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.playerMonster.size()+withdrawMonsters.size()-depositeMonsters.size()<=255)
+    if(playerInformations.playerMonster.size()+withdrawMonsters.size()-depositeMonsters.size()>=255)
     {
         std::cerr << "playerInformations.items.size()+withdrawItems.size()-depositeItems.size()<=255, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
-    if(playerInformations.warehouse_playerMonster.size()-withdrawMonsters.size()+depositeMonsters.size()<=65535)
+    if(playerInformations.warehouse_playerMonster.size()-withdrawMonsters.size()+depositeMonsters.size()>=65535)
     {
         std::cerr << "playerInformations.warehouse_items.size()-withdrawItems.size()+depositeItems.size()<=65535, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
@@ -1061,13 +1051,19 @@ bool Api_protocol::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &
             return false;
         }
         alreadyMovedToWarehouse.insert(index8);
+        count_change--;
         memcpy(buffer+pos,&index8,sizeof(index8));
         pos+=sizeof(uint8_t);
         index++;
     }
     if((player_informations.playerMonster.size()+count_change)>CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
     {
-        std::cerr << "have more monster to withdraw than the allowed" << std::endl;
+        std::cerr << "have more monster to withdraw than the allowed: " << CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters << std::endl;
+        return false;
+    }
+    if((player_informations.warehouse_playerMonster.size()-count_change)>CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+    {
+        std::cerr << "have more monster to deposite than the allowed: " << CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters << std::endl;
         return false;
     }
 
@@ -2896,5 +2892,18 @@ void Api_protocol::addBeatenBotFight(const uint16_t &botFightId)
     if(player_informations.bot_already_beaten==NULL)
         abort();
     player_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
+}
+
+void Api_protocol::addPlayerMonsterWarehouse(const PlayerMonster &playerMonster)
+{
+    player_informations.warehouse_playerMonster.push_back(playerMonster);
+}
+
+bool Api_protocol::removeMonsterWarehouseByPosition(const uint8_t &monsterPosition)
+{
+    if(monsterPosition>=player_informations.warehouse_playerMonster.size())
+        return false;
+    player_informations.warehouse_playerMonster.erase(player_informations.warehouse_playerMonster.cbegin()+monsterPosition);
+    return true;
 }
 #endif

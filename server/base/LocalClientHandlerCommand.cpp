@@ -37,7 +37,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("objectId is not a number, usage: /give objectId player [quantity=1]");
             return;
         }
-        if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
+        if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
         {
             receiveSystemText("objectId is not a valid item, usage: /give objectId player [quantity=1]");
             return;
@@ -86,9 +86,9 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
         uint8_t index=0,sub_index;
-        while(index<CommonDatapack::commonDatapack.events.size())
+        while(index<CommonDatapack::commonDatapack.get_events().size())
         {
-            const Event &event=CommonDatapack::commonDatapack.events.at(index);
+            const Event &event=CommonDatapack::commonDatapack.get_events().at(index);
             if(event.name==arguments.at(0))
             {
                 sub_index=0;
@@ -119,7 +119,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             }
             index++;
         }
-        if(index==CommonDatapack::commonDatapack.events.size())
+        if(index==CommonDatapack::commonDatapack.get_events().size())
         {
             receiveSystemText("The event is not found");
             return;
@@ -143,7 +143,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("objectId is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(CommonDatapack::commonDatapack.items.item.find(objectId)==CommonDatapack::commonDatapack.items.item.cend())
+        if(CommonDatapack::commonDatapack.get_items().item.find(objectId)==CommonDatapack::commonDatapack.get_items().item.cend())
         {
             receiveSystemText("objectId is not a valid item, usage: /take objectId player [quantity=1]");
             return;

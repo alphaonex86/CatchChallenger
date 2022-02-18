@@ -1,5 +1,3 @@
-TEMPLATE = app
-
 DEFINES += TILED_ZLIB
 LIBS += -lz
 

@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_API_CLIENT_REAL_H
 #if ! defined (ONLYMAPRENDER)
 
-#include "../../../general/base/GeneralVariable.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 #include "QtDatapackChecksum.hpp"
 
 #include <QObject>
@@ -20,8 +20,10 @@
 #include <QNetworkProxy>
 #include <QRegularExpression>
 #include <QDataStream>
+#include <QNetworkReply>
 
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/lib.h"
 #include "../libcatchchallenger/ClientStructures.hpp"
 #include "Api_protocol_Qt.hpp"
 #include "QZstdDecodeThread.hpp"
@@ -29,7 +31,7 @@
 #define MAXFILETODOWNLOAD 100000
 
 namespace CatchChallenger {
-class Api_client_real : public Api_protocol_Qt
+class DLL_PUBLIC Api_client_real : public Api_protocol_Qt
 {
     Q_OBJECT
 public:
@@ -53,9 +55,9 @@ public:
     void test_mirror_base();
     void test_mirror_main();
     void test_mirror_sub();
-    void httpErrorEventBase();
-    void httpErrorEventMain();
-    void httpErrorEventSub();
+    void httpErrorEventBase(QNetworkReply::NetworkError code);
+    void httpErrorEventMain(QNetworkReply::NetworkError code);
+    void httpErrorEventSub(QNetworkReply::NetworkError code);
     void decodedIsFinishBase();
     void decodedIsFinishMain();
     void decodedIsFinishSub();

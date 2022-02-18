@@ -8,12 +8,13 @@
 #include <vector>
 #include <QTimer>
 #include <QResizeEvent>
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
 class Api_protocol_Qt;
 }
 
-class MapControllerMP : public MapVisualiserPlayerWithFight
+class DLL_PUBLIC MapControllerMP : public MapVisualiserPlayerWithFight
 {
     Q_OBJECT
 public:
