@@ -376,6 +376,7 @@ public:
     bool giveXPSP(int xp,int sp) override;
     uint32_t lastGivenXP();
     void newRandomNumber(const std::string &data);
+    bool dropKOCurrentMonster();
 private:
     uint32_t randomSeedsSize() const override;
 private:

@@ -953,6 +953,18 @@ void Api_protocol_Qt::setBotMonster(const std::vector<PlayerMonster> &botFightMo
     mLastGivenXP=0;
 }
 
+bool Api_protocol_Qt::dropKOCurrentMonster()
+{
+    const bool wasInBotFight=!botFightMonsters.empty();
+    const bool &v=CommonFightEngine::dropKOCurrentMonster();
+    if(!haveAnotherMonsterOnThePlayerToFight() || !isInFight())
+    {
+        finishTheTurn(wasInBotFight);
+//        this->fightId=0;
+    }
+    return v;
+}
+
 bool Api_protocol_Qt::addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster)
 {
     if(battleStat.empty())
@@ -1077,6 +1089,7 @@ void Api_protocol_Qt::fightFinished()
     battleStat.clear();
     battleMonsterPlace.clear();
     doTurnIfChangeOfMonster=true;
+    fightId=0;
     CommonFightEngine::fightFinished();
 }
 
@@ -1459,10 +1472,7 @@ bool Api_protocol_Qt::finishTheTurn(const bool &isBot)
             if(isBot)
             {
                 if(player_informations.bot_already_beaten!=NULL)
-                {
                     player_informations.bot_already_beaten[fightId/8]|=(1<<(7-fightId%8));
-                    fightId=0;
-                }
                 else
                 {
                     std::cerr << "Api_protocol_Qt::finishTheTurn() player_informations.bot_already_beaten==NULL: "+std::to_string(fightId) << std::endl;
@@ -1472,6 +1482,7 @@ bool Api_protocol_Qt::finishTheTurn(const bool &isBot)
                              ": Register the win against the bot fight: "+std::to_string(fightId) << std::endl;
             }
         }
+        fightId=0;
     }
     return win;
 }
