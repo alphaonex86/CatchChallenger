@@ -47,7 +47,7 @@ void MapMonsterPreview::DrawContent() {
                       front.width(), front.height(), front);
 
   const CatchChallenger::Monster &monsterGeneralInfo =
-      CatchChallenger::CommonDatapack::commonDatapack.monsters.at(
+      CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
           monster_.monster);
   const CatchChallenger::Monster::Stat &stat =
       CatchChallenger::CommonFightEngine::getStat(monsterGeneralInfo,

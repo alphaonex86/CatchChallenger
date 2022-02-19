@@ -48,13 +48,13 @@ void FinishedQuests::RegisterEvents() {
     has_quests = true;
     const uint16_t questId = i->first;
     const CatchChallenger::PlayerQuest &value = i->second;
-    if (QtDatapackClientLoader::datapackLoader->questsExtra.find(questId) !=
-        QtDatapackClientLoader::datapackLoader->questsExtra.cend()) {
+    if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
+        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
       if (value.step == 0 || value.finish_one_time) {
         if (Ultimate::ultimate.isUltimate()) {
           auto row = UI::Row::Create();
           if (CatchChallenger::CommonDatapackServerSpec::
-                  commonDatapackServerSpec.quests.at(questId)
+                  commonDatapackServerSpec.get_quests().at(questId)
                       .repeatable) {
             auto icon =
                 Sprite::Create(":/CC/images/interface/repeatable.png", row);
@@ -65,13 +65,13 @@ void FinishedQuests::RegisterEvents() {
           }
           auto label = UI::Label::Create(row);
           label->SetText(
-              QtDatapackClientLoader::datapackLoader->questsExtra.at(questId)
+              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
                   .name);
           quests_->AddItem(row);
         } else {
           auto label = UI::Label::Create();
           label->SetText(
-              QtDatapackClientLoader::datapackLoader->questsExtra.at(questId)
+              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
                   .name);
           quests_->AddItem(label);
         }

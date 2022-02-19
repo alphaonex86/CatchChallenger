@@ -100,7 +100,7 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
   // keep the greatest value
   if (zoomFinal > zoomH) zoomFinal = zoomH;
   zoomFinal *=
-      CatchChallenger::CommonDatapack::commonDatapack.layersOptions.zoom;
+      CatchChallenger::CommonDatapack::commonDatapack.get_layersOptions().zoom;
   scale = ceil(zoomFinal);
   MapObjectItem::scale = scale;
   MapObjectItem::playerObject = mapController.getPlayerMapObject();

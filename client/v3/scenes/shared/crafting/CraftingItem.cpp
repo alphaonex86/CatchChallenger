@@ -23,7 +23,7 @@ CraftingItem *CraftingItem::Create() {
 }
 
 void CraftingItem::DrawContent(QPainter *painter) {
-  auto item = QtDatapackClientLoader::datapackLoader->itemsExtra.at(item_id_);
+  auto item = QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id_);
   icon_ = QtDatapackClientLoader::datapackLoader->getItemExtra(item_id_).image;
   icon_ = icon_.scaledToHeight(32);
 

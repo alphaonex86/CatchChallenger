@@ -136,11 +136,11 @@ void Shop::SetMeAsSeller(uint16_t shop_id) {
       connexionManager->client->get_player_informations_ro();
   auto i = player_info.items.begin();
   while (i != player_info.items.cend()) {
-    if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(i->first) !=
-            QtDatapackClientLoader::datapackLoader->itemsExtra.cend() &&
-        CatchChallenger::CommonDatapack::commonDatapack.items.item.at(i->first)
+    if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(i->first) !=
+            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend() &&
+        CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(i->first)
                 .price > 0) {
-      int price = CatchChallenger::CommonDatapack::commonDatapack.items.item
+      int price = CatchChallenger::CommonDatapack::commonDatapack.get_items().item
                       .at(i->first)
                       .price /
                   2;

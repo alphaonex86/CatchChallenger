@@ -68,12 +68,12 @@ bool MapControllerMP::insert_player_final(
 #endif
     return false;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->maps.size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     /// \bug here pass after delete a party, create a new
     emit error(
         "mapId greater than "
         "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->maps.size()));
+        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
     return true;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -137,7 +137,7 @@ bool MapControllerMP::insert_player_final(
     const std::string &mapPath =
         QFileInfo(QString::fromStdString(
                       datapackMapPathSpec +
-                      QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
+                      QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
             .absoluteFilePath()
             .toStdString();
     if (all_map.find(mapPath) == all_map.cend()) {
@@ -818,7 +818,7 @@ bool MapControllerMP::reinsert_player_final(
              << QString::fromStdString(otherPlayerList.at(id).current_map)
              << ") index is wrong ("
              << QString::fromStdString(stringimplode(
-                    QtDatapackClientLoader::datapackLoader->maps, ";"))
+                    QtDatapackClientLoader::datapackLoader->get_maps(), ";"))
              << ")";
     if (!inReplayMode) {
       DelayedReinsertSingle tempItem;

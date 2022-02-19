@@ -67,8 +67,8 @@ void Plant::updatePlant() {
   auto i = playerInformations.items.begin();
   while (i != playerInformations.items.cend()) {
     const uint16_t id = i->first;
-    if (QtDatapackClientLoader::datapackLoader->itemToPlants.find(id) !=
-        QtDatapackClientLoader::datapackLoader->itemToPlants.cend()) {
+    if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(id) !=
+        QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
       auto item = PlantItem::Create(id, i->second);
       item->SetData(99, id);
       item->SetOnClick(
@@ -86,8 +86,8 @@ void Plant::inventoryUse_slot() {
 }
 
 void Plant::OnSelectItem(Node *selected) {
-  if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(selected->Data(
-          99)) == QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(selected->Data(
+          99)) == QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
     return;
   }
   lastItemSelected = selected->Data(99);
@@ -128,16 +128,16 @@ void Plant::Draw(QPainter *painter) {
   int y_offset = 10;
 
   const DatapackClientLoader::ItemExtra &itemExtra =
-      QtDatapackClientLoader::datapackLoader->itemsExtra.at(plant_id);
+      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant_id);
   const QtDatapackClientLoader::QtPlantExtra &contentExtra =
       QtDatapackClientLoader::datapackLoader->getPlantExtra(plant_id);
   const CatchChallenger::Plant &plant =
-      CatchChallenger::CommonDatapack::commonDatapack.plants[plant_id];
+      CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant_id);
 
   const int icon_size = 64;
 
-  if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(plant_id) !=
-      QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(plant_id) !=
+      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
     text->SetPixelSize(14);
     text->SetPos(x_offset, y_offset);
     text->SetWidth(Width() - x_offset);

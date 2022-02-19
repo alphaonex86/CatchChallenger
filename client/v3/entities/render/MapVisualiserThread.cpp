@@ -151,18 +151,18 @@ Map_full *MapVisualiserThread::loadOtherMap(
       newItem.tileObject = NULL;
       newItem.indexOfItemOnMap = 0;
       if (QtDatapackClientLoader::datapackLoader == nullptr) return nullptr;
-      if (QtDatapackClientLoader::datapackLoader->itemOnMap.find(
+      if (QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(
               resolvedFileName) !=
-          QtDatapackClientLoader::datapackLoader->itemOnMap.cend()) {
-        if (QtDatapackClientLoader::datapackLoader->itemOnMap
+          QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend()) {
+        if (QtDatapackClientLoader::datapackLoader->get_itemOnMap()
                 .at(resolvedFileName)
                 .find(
                     std::pair<uint8_t, uint8_t>(item.point.x, item.point.y)) !=
-            QtDatapackClientLoader::datapackLoader->itemOnMap
+            QtDatapackClientLoader::datapackLoader->get_itemOnMap()
                 .at(resolvedFileName)
                 .cend())
           newItem.indexOfItemOnMap =
-              QtDatapackClientLoader::datapackLoader->itemOnMap
+              QtDatapackClientLoader::datapackLoader->get_itemOnMap()
                   .at(resolvedFileName)
                   .at(std::pair<uint8_t, uint8_t>(item.point.x, item.point.y));
         else
@@ -171,7 +171,7 @@ Map_full *MapVisualiserThread::loadOtherMap(
                           .arg(item.point.y);
       } else {
         QStringList keys;
-        for (auto kv : QtDatapackClientLoader::datapackLoader->itemOnMap)
+        for (auto kv : QtDatapackClientLoader::datapackLoader->get_itemOnMap())
           keys.push_back(QString::fromStdString(kv.first));
         qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                         .arg(QString::fromStdString(resolvedFileName))
@@ -184,12 +184,12 @@ Map_full *MapVisualiserThread::loadOtherMap(
     }
   }
 #if defined(CATCHCHALLENGER_EXTRA_CHECK) && !defined(MAPVISUALISER)
-  if (QtDatapackClientLoader::datapackLoader->fullMapPathToId.find(
+  if (QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(
           resolvedFileName) ==
-      QtDatapackClientLoader::datapackLoader->fullMapPathToId.cend()) {
+      QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend()) {
     mLastError = "Map id unresolved " + resolvedFileName;
     QStringList keys;
-    for (auto kv : QtDatapackClientLoader::datapackLoader->fullMapPathToId)
+    for (auto kv : QtDatapackClientLoader::datapackLoader->get_fullMapPathToId())
       keys.push_back(QString::fromStdString(kv.first));
     qDebug() << "Map id unresolved " +
                     QString::fromStdString(resolvedFileName) + " into " +
@@ -199,7 +199,7 @@ Map_full *MapVisualiserThread::loadOtherMap(
     return NULL;
   }
   tempMapObject->logicalMap.id =
-      QtDatapackClientLoader::datapackLoader->fullMapPathToId.at(
+      QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(
           resolvedFileName);
 #else
   tempMapObject->logicalMap.id = 1;
@@ -643,15 +643,15 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap) {
   tinyxml2::XMLDocument *domDocument;
   // open and quick check the file
   const std::string &fileName = parsedMap->logicalMap.map_file;
-  if (CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(
           fileName) !=
-      CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+      CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
     domDocument =
-        &CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(
+        &CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(
             fileName);
   else {
     domDocument = &CatchChallenger::CommonDatapack::commonDatapack
-                       .xmlLoadedFile[fileName];
+                       .get_xmlLoadedFile_rw()[fileName];
     const auto loadOkay = domDocument->LoadFile(fileName.c_str());
     if (loadOkay != 0) {
       std::cerr << fileName + ", " + tinyxml2errordoc(domDocument) << std::endl;
@@ -860,17 +860,17 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap) {
                                                      botFile)));
                               else {
                                 if (CatchChallenger::CommonDatapackServerSpec::
-                                        commonDatapackServerSpec.zoneToId.find(
+                                        commonDatapackServerSpec.get_zoneToId().find(
                                             step->Attribute("zone")) !=
                                     CatchChallenger::CommonDatapackServerSpec::
-                                        commonDatapackServerSpec.zoneToId
+                                        commonDatapackServerSpec.get_zoneToId()
                                             .cend())
                                   parsedMap->logicalMap
                                       .zonecapture[std::pair<uint8_t, uint8_t>(
                                           x, y)] =
                                       CatchChallenger::
                                           CommonDatapackServerSpec::
-                                              commonDatapackServerSpec.zoneToId
+                                              commonDatapackServerSpec.get_zoneToId()
                                                   .at(step->Attribute("zone"));
                                 else
                                   qDebug()
@@ -900,11 +900,11 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap) {
                                 if (ok)
                                   if (CatchChallenger::
                                           CommonDatapackServerSpec::
-                                              commonDatapackServerSpec.botFights
+                                              commonDatapackServerSpec.get_botFights()
                                                   .find(fightid) !=
                                       CatchChallenger::
                                           CommonDatapackServerSpec::
-                                              commonDatapackServerSpec.botFights
+                                              commonDatapackServerSpec.get_botFights()
                                                   .cend())
                                     parsedMap->logicalMap
                                         .botsFight[std::pair<uint8_t, uint8_t>(
@@ -992,15 +992,15 @@ bool MapVisualiserThread::loadOtherMapMetaData(Map_full *parsedMap) {
   // open and quick check the file
   std::string fileName = parsedMap->logicalMap.map_file;
   stringreplaceAll(fileName, ".tmx", ".xml");
-  if (CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(
           fileName) !=
-      CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+      CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
     domDocument =
-        &CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.at(
+        &CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(
             fileName);
   else {
     domDocument = &CatchChallenger::CommonDatapack::commonDatapack
-                       .xmlLoadedFile[fileName];
+                       .get_xmlLoadedFile_rw()[fileName];
     const auto loadOkay = domDocument->LoadFile(fileName.c_str());
     if (loadOkay != 0) {
       std::cerr << fileName + ", " + tinyxml2errordoc(domDocument) << std::endl;
@@ -1056,14 +1056,14 @@ void MapVisualiserThread::loadBotFile(const std::string &file) {
   botFiles[file];  // create the entry
 
   tinyxml2::XMLDocument *domDocument;
-  if (CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(
           file) !=
-      CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
+      CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
     domDocument =
-        &CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        &CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
   else {
     domDocument =
-        &CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        &CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     const auto loadOkay = domDocument->LoadFile(file.c_str());
     if (loadOkay != 0) {
       std::cerr << file + ", " + tinyxml2errordoc(domDocument) << std::endl;

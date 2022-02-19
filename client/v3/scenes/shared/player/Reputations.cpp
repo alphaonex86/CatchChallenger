@@ -52,20 +52,20 @@ void Reputations::LoadReputations() {
   while (i != info.reputation.cend()) {
     if (i->second.level >= 0) {
       if ((i->second.level + 1) ==
-          (int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation
+          (int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
               .at(i->first)
               .reputation_positive.size()) {
         auto label = UI::Label::Create();
         label->SetText(QStringLiteral("100% %1").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->reputationExtra
-                .at(CatchChallenger::CommonDatapack::commonDatapack.reputation
+            QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                         .at(i->first)
                         .name)
                 .reputation_positive.back())));
         list_->AddItem(label);
       } else {
         int32_t next_level_xp =
-            CatchChallenger::CommonDatapack::commonDatapack.reputation
+            CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                 .at(i->first)
                 .reputation_positive.at(i->second.level + 1);
         if (next_level_xp == 0) {
@@ -73,8 +73,8 @@ void Reputations::LoadReputations() {
           return;
         } else {
           std::string text =
-              QtDatapackClientLoader::datapackLoader->reputationExtra
-                  .at(CatchChallenger::CommonDatapack::commonDatapack.reputation
+              QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                  .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                           .at(i->first)
                           .name)
                   .reputation_positive.at(i->second.level);
@@ -87,20 +87,20 @@ void Reputations::LoadReputations() {
       }
     } else {
       if ((-i->second.level) ==
-          (int32_t)CatchChallenger::CommonDatapack::commonDatapack.reputation
+          (int32_t)CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
               .at(i->first)
               .reputation_negative.size()) {
         auto label = UI::Label::Create();
         label->SetText(QStringLiteral("100% %1").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->reputationExtra
-                .at(CatchChallenger::CommonDatapack::commonDatapack.reputation
+            QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                         .at(i->first)
                         .name)
                 .reputation_negative.back())));
         list_->AddItem(label);
       } else {
         int32_t next_level_xp =
-            CatchChallenger::CommonDatapack::commonDatapack.reputation
+            CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                 .at(i->first)
                 .reputation_negative.at(-i->second.level);
         if (next_level_xp == 0) {
@@ -108,8 +108,8 @@ void Reputations::LoadReputations() {
           return;
         } else {
           std::string text =
-              QtDatapackClientLoader::datapackLoader->reputationExtra
-                  .at(CatchChallenger::CommonDatapack::commonDatapack.reputation
+              QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                  .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                           .at(i->first)
                           .name)
                   .reputation_negative.at(-i->second.level - 1);

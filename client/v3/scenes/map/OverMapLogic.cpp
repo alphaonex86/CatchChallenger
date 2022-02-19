@@ -404,13 +404,13 @@ void OverMapLogic::actionOn(CatchChallenger::Map_client *map, uint8_t x,
     if (index >= 0) {
       uint64_t current_time = QDateTime::currentMSecsSinceEpoch() / 1000;
       if (map->plantList.at(index)->mature_at <= current_time) {
-        if (QtDatapackClientLoader::datapackLoader->plantOnMap.find(
+        if (QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(
                 map->map_file) ==
-            QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+            QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
           return;
         const std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t,
                                  pairhash> &plant =
-            QtDatapackClientLoader::datapackLoader->plantOnMap.at(
+            QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(
                 map->map_file);
         if (plant.find(std::pair<uint8_t, uint8_t>(x, y)) == plant.cend())
           return;
@@ -491,12 +491,12 @@ void OverMapLogic::actionOnNothing() { RemoveChild(npc_talk_); }
 
 int32_t OverMapLogic::havePlant(CatchChallenger::Map_client *map, uint8_t x,
                                 uint8_t y) const {
-  if (QtDatapackClientLoader::datapackLoader->plantOnMap.find(map->map_file) ==
-      QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+  if (QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file) ==
+      QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
     return -1;
   const std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t, pairhash>
       &plant =
-          QtDatapackClientLoader::datapackLoader->plantOnMap.at(map->map_file);
+          QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
   if (plant.find(std::pair<uint8_t, uint8_t>(x, y)) == plant.cend()) return -1;
   unsigned int index = 0;
   while (index < map->plantList.size()) {
@@ -862,11 +862,11 @@ void OverMapLogic::currentMapLoaded() {
     Map_full *mapFull = ccmap->mapController.currentMapFull();
     std::string visualName;
     if (!mapFull->zone.empty())
-      if (QtDatapackClientLoader::datapackLoader->zonesExtra.find(
+      if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(
               mapFull->zone) !=
-          QtDatapackClientLoader::datapackLoader->zonesExtra.cend()) {
+          QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend()) {
         const QtDatapackClientLoader::ZoneExtra &zoneExtra =
-            QtDatapackClientLoader::datapackLoader->zonesExtra.at(
+            QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(
                 mapFull->zone);
         visualName = zoneExtra.name;
       }
@@ -892,11 +892,11 @@ void OverMapLogic::currentMapLoaded() {
     // zone sound
     Map_full *mapFull = ccmap->mapController.currentMapFull();
     if (!mapFull->zone.empty())
-      if (QtDatapackClientLoader::datapackLoader->zonesExtra.find(
+      if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(
               mapFull->zone) !=
-          QtDatapackClientLoader::datapackLoader->zonesExtra.cend()) {
+          QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend()) {
         const QtDatapackClientLoader::ZoneExtra &zoneExtra =
-            QtDatapackClientLoader::datapackLoader->zonesExtra.at(
+            QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(
                 mapFull->zone);
         if (zoneExtra.audioAmbiance.find(type) !=
             zoneExtra.audioAmbiance.cend()) {
@@ -907,10 +907,10 @@ void OverMapLogic::currentMapLoaded() {
         }
       }
     // general sound
-    if (QtDatapackClientLoader::datapackLoader->audioAmbiance.find(type) !=
-        QtDatapackClientLoader::datapackLoader->audioAmbiance.cend()) {
+    if (QtDatapackClientLoader::datapackLoader->get_audioAmbiance().find(type) !=
+        QtDatapackClientLoader::datapackLoader->get_audioAmbiance().cend()) {
       const std::string &backgroundsound =
-          QtDatapackClientLoader::datapackLoader->audioAmbiance.at(type);
+          QtDatapackClientLoader::datapackLoader->get_audioAmbiance().at(type);
       if (!backgroundsound.empty() &&
           !vectorcontainsAtLeastOne(soundList, backgroundsound))
         soundList.push_back(backgroundsound);
@@ -945,12 +945,12 @@ void OverMapLogic::currentMapLoaded() {
   {
     if (visualCategory != type) {
       visualCategory = type;
-      if (QtDatapackClientLoader::datapackLoader->visualCategories.find(type) !=
-          QtDatapackClientLoader::datapackLoader->visualCategories.cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_visualCategories().find(type) !=
+          QtDatapackClientLoader::datapackLoader->get_visualCategories().cend()) {
         const std::vector<
             QtDatapackClientLoader::VisualCategory::VisualCategoryCondition>
             &conditions =
-                QtDatapackClientLoader::datapackLoader->visualCategories
+                QtDatapackClientLoader::datapackLoader->get_visualCategories()
                     .at(type)
                     .conditions;
         unsigned int index = 0;
@@ -976,7 +976,7 @@ void OverMapLogic::currentMapLoaded() {
         }
         if (index == conditions.size()) {
           QtDatapackClientLoader::CCColor defaultColor =
-              QtDatapackClientLoader::datapackLoader->visualCategories.at(type)
+              QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type)
                   .defaultColor;
           ccmap->mapController.setColor(QColor(defaultColor.r, defaultColor.g,
                                                defaultColor.b, defaultColor.a),
@@ -1202,12 +1202,12 @@ void OverMapLogic::captureCityYourLeaderHaveStartInOtherCity(
   updater_page_zonecatch.stop();
   // ui->stackedWidget->setCurrentWidget(ui->page_map);
   /// \todo close dialog into updatePageZoneCatch()
-  if (QtDatapackClientLoader::datapackLoader->zonesExtra.find(zone) !=
-      QtDatapackClientLoader::datapackLoader->zonesExtra.cend())
+  if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone) !=
+      QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
     showTip(tr("Your clan leader have start a capture for another city")
                 .toStdString() +
             ": <b>" +
-            QtDatapackClientLoader::datapackLoader->zonesExtra.at(zone).name +
+            QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name +
             "</b>");
   else
     showTip(tr("Your clan leader have start a capture for another city")
@@ -1399,11 +1399,11 @@ void OverMapLogic::add_to_inventory(
       const uint32_t &quantity = n.second;
       QPixmap image;
       std::string name;
-      if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(item) !=
-          QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item) !=
+          QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
         image =
             QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
-        name = QtDatapackClientLoader::datapackLoader->itemsExtra.at(item).name;
+        name = QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name;
       } else {
         image = QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
         name = "id: %1" + std::to_string(item);
@@ -1577,7 +1577,7 @@ void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x,
                                 const uint16_t &seconds_to_mature) {
   Q_UNUSED(plant_id);
   Q_UNUSED(seconds_to_mature);
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->maps.size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
                 "QtDatapackClientLoader::datapackLoader->maps.size()";
     return;
@@ -1587,7 +1587,7 @@ void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x,
 
 void OverMapLogic::remove_plant(const uint32_t &mapId, const uint8_t &x,
                                 const uint8_t &y) {
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->maps.size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
                 "QtDatapackClientLoader::datapackLoader->maps.size()";
     return;
@@ -1631,17 +1631,17 @@ void OverMapLogic::seed_planted(const bool &ok) {
     // do the rewards
     {
       const uint16_t &itemId = seed_in_waiting.front().seedItemId;
-      if (QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId) ==
-          QtDatapackClientLoader::datapackLoader->itemToPlants.cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId) ==
+          QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
         qDebug() << "Item is not a plant";
         emit error(tr("Internal error").toStdString() + ", file: " +
                    std::string(__FILE__) + ":" + std::to_string(__LINE__));
         return;
       }
       const uint8_t &plant =
-          QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
+          QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
       appendReputationRewards(
-          CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant)
+          CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant)
               .rewards.reputation);
     }
   } else {
@@ -1967,7 +1967,7 @@ void OverMapLogic::appendReputationRewards(
     const CatchChallenger::ReputationRewards &reputationRewards =
         reputationList.at(index);
     appendReputationPoint(
-        CatchChallenger::CommonDatapack::commonDatapack.reputation
+        CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
             .at(reputationRewards.reputationId)
             .name,
         reputationRewards.point);
@@ -1979,13 +1979,13 @@ void OverMapLogic::appendReputationRewards(
 void OverMapLogic::appendReputationPoint(const std::string &type,
                                          const int32_t &point) {
   if (point == 0) return;
-  if (QtDatapackClientLoader::datapackLoader->reputationNameToId.find(type) ==
-      QtDatapackClientLoader::datapackLoader->reputationNameToId.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(type) ==
+      QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend()) {
     emit error("Unknow reputation: " + type);
     return;
   }
   const uint8_t &reputationId =
-      QtDatapackClientLoader::datapackLoader->reputationNameToId.at(type);
+      QtDatapackClientLoader::datapackLoader->get_reputationNameToId().at(type);
   CatchChallenger::PlayerReputation playerReputation;
   if (connexionManager->client->player_informations.reputation.find(
           reputationId) !=
@@ -2001,7 +2001,7 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
   int32_t old_level = playerReputation.level;
   CatchChallenger::FacilityLib::appendReputationPoint(
       &playerReputation, point,
-      CatchChallenger::CommonDatapack::commonDatapack.reputation.at(
+      CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(
           reputationId));
   if (oldPlayerReputation.level == playerReputation.level &&
       oldPlayerReputation.point == playerReputation.point)
@@ -2015,16 +2015,16 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
     connexionManager->client->player_informations.reputation[reputationId] =
         playerReputation;
   const std::string &reputationCodeName =
-      CatchChallenger::CommonDatapack::commonDatapack.reputation
+      CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
           .at(reputationId)
           .name;
   if (old_level < playerReputation.level) {
-    if (QtDatapackClientLoader::datapackLoader->reputationExtra.find(
+    if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
             reputationCodeName) !=
-        QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
       showTip(tr("You have better reputation into %1")
                   .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->reputationExtra
+                      QtDatapackClientLoader::datapackLoader->get_reputationExtra()
                           .at(reputationCodeName)
                           .name))
                   .toStdString());
@@ -2032,12 +2032,12 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
       showTip(
           tr("You have better reputation into %1").arg("???").toStdString());
   } else if (old_level > playerReputation.level) {
-    if (QtDatapackClientLoader::datapackLoader->reputationExtra.find(
+    if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
             reputationCodeName) !=
-        QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
       showTip(tr("You have worse reputation into %1")
                   .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->reputationExtra
+                      QtDatapackClientLoader::datapackLoader->get_reputationExtra()
                           .at(reputationCodeName)
                           .name))
                   .toStdString());
@@ -2467,21 +2467,21 @@ void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage) {
     case CatchChallenger::ObjectUsage_correctlyUsed: {
       const uint16_t item = objectInUsing.front();
       // is crafting recipe
-      if (CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes
+      if (CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
               .find(item) != CatchChallenger::CommonDatapack::commonDatapack
-                                 .itemToCraftingRecipes.cend()) {
+                                 .get_itemToCraftingRecipes().cend()) {
         connexionManager->client->addRecipe(
             CatchChallenger::CommonDatapack::commonDatapack
-                .itemToCraftingRecipes.at(item));
+                .get_itemToCraftingRecipes().at(item));
         // load_crafting_inventory();
         abort();
-      } else if (CatchChallenger::CommonDatapack::commonDatapack.items.trap
+      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items().trap
                      .find(item) !=
-                 CatchChallenger::CommonDatapack::commonDatapack.items.trap
+                 CatchChallenger::CommonDatapack::commonDatapack.get_items().trap
                      .cend()) {
-      } else if (CatchChallenger::CommonDatapack::commonDatapack.items.repel
+      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items().repel
                      .find(item) !=
-                 CatchChallenger::CommonDatapack::commonDatapack.items.repel
+                 CatchChallenger::CommonDatapack::commonDatapack.get_items().repel
                      .cend()) {
       } else
         qDebug() << "OverMapLogic::objectUsed(): unknow object type";
@@ -2557,8 +2557,8 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
   auto info = PlayerInfo::GetInstance();
   switch (type) {
     case Inventory::kSeed: {
-      if (QtDatapackClientLoader::datapackLoader->itemToPlants.find(item_id) ==
-          QtDatapackClientLoader::datapackLoader->itemToPlants.cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(item_id) ==
+          QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
         Logger::Log(QString("Item is not a plant"));
         // QMessageBox::critical(this,tr("Error"),tr("Internal
         // error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
@@ -2566,9 +2566,9 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
         return;
       }
       const uint8_t &plant_id =
-          QtDatapackClientLoader::datapackLoader->itemToPlants.at(item_id);
+          QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(item_id);
       if (!connexionManager->client->haveReputationRequirements(
-              CatchChallenger::CommonDatapack::commonDatapack.plants
+              CatchChallenger::CommonDatapack::commonDatapack.get_plants()
                   .at(plant_id)
                   .requirements.reputation)) {
         Logger::Log(
@@ -2604,7 +2604,7 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
           ccmap->mapController.getMap(seedInWaiting.map)->logicalMap.id,
           seedInWaiting.x, seedInWaiting.y, plant_id,
           static_cast<uint16_t>(
-              CatchChallenger::CommonDatapack::commonDatapack.plants
+              CatchChallenger::CommonDatapack::commonDatapack.get_plants()
                   .at(plant_id)
                   .fruits_seconds));
       addQuery(QueryType_Seed);
@@ -2615,14 +2615,14 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
           ccmap->mapController.getMap(seedInWaiting.map)->logicalMap.id,
           seedInWaiting.x, seedInWaiting.y, plant_id,
           static_cast<uint16_t>(
-              CatchChallenger::CommonDatapack::commonDatapack.plants
+              CatchChallenger::CommonDatapack::commonDatapack.get_plants()
                   .at(plant_id)
                   .fruits_seconds));
     } break;
     case Inventory::kRecipe:
       connexionManager->client->useObject(item_id);
       connexionManager->client->addRecipe(
-          CatchChallenger::CommonDatapack::commonDatapack.itemToCraftingRecipes
+          CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
               .at(item_id));
       break;
       // case Inventory::ObjectType_ItemEvolutionOnMonster:

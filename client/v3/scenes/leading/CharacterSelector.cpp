@@ -106,13 +106,13 @@ void CharacterSelector::add_finished() {
     return;
   }
   const std::string &datapackPath = connection_->client->datapackPathBase();
-  if (CatchChallenger::CommonDatapack::commonDatapack.profileList.size() > 1)
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size() > 1)
     profileIndex = addCharacter->getProfileIndex();
   if (profileIndex >=
-      CatchChallenger::CommonDatapack::commonDatapack.profileList.size())
+      CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size())
     return;
   CatchChallenger::Profile profile =
-      CatchChallenger::CommonDatapack::commonDatapack.profileList.at(
+      CatchChallenger::CommonDatapack::commonDatapack.get_profileList().at(
           profileIndex);
   if (newGame == nullptr) {
     newGame = NewGame::Create();
@@ -355,12 +355,12 @@ void CharacterSelector::updateCharacterList(bool prevent_auto_select) {
                            .toStdString();
       item->SetSubTitle(QString::fromStdString(text));
       if (characterEntry.skinId <
-          QtDatapackClientLoader::datapackLoader->skins.size())
+          QtDatapackClientLoader::datapackLoader->get_skins().size())
         item->SetIcon(
             QString::fromStdString(connection_->client->datapackPathBase()) +
             DATAPACK_BASE_PATH_SKIN +
             QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->skins.at(
+                QtDatapackClientLoader::datapackLoader->get_skins().at(
                     characterEntry.skinId)) +
             "/front.png");
       else

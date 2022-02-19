@@ -118,17 +118,17 @@ void NewGame::setDatapack(
   }
   this->skinPath = skinPath;
   uint8_t index = 0;
-  while (index < CatchChallenger::CommonDatapack::commonDatapack.skins.size()) {
+  while (index < CatchChallenger::CommonDatapack::commonDatapack.get_skins().size()) {
     if (forcedSkin.empty() ||
         vectorcontainsAtLeastOne(forcedSkin, (uint8_t)index)) {
       const std::string &currentPath =
           skinPath +
-          CatchChallenger::CommonDatapack::commonDatapack.skins.at(index);
+          CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(index);
       if (QFile::exists(QString::fromStdString(currentPath + "/back.png")) &&
           QFile::exists(QString::fromStdString(currentPath + "/front.png")) &&
           QFile::exists(QString::fromStdString(currentPath + "/trainer.png"))) {
         skinList.push_back(
-            CatchChallenger::CommonDatapack::commonDatapack.skins.at(index));
+            CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(index));
         skinListId.push_back(index);
       }
     }

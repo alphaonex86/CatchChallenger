@@ -680,13 +680,13 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,
                   } else {
                     const std::string tempMap =
                         tempMapObject->logicalMap.map_file;
-                    if (QtDatapackClientLoader::datapackLoader->itemOnMap.find(
+                    if (QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(
                             tempMap) != QtDatapackClientLoader::datapackLoader
-                                            ->itemOnMap.cend()) {
+                                            ->get_itemOnMap().cend()) {
                       const std::unordered_map<std::pair<uint8_t, uint8_t>,
                                                uint16_t,
                                                pairhash> &tempIndexItem =
-                          QtDatapackClientLoader::datapackLoader->itemOnMap.at(
+                          QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(
                               tempMap);
                       if (tempIndexItem.find(std::pair<uint8_t, uint8_t>(
                               static_cast<uint8_t>(x),
@@ -840,7 +840,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey) {
   /// \see into haveStopTileAction(), to NPC fight:
   /// std::vector<std::pair<uint8_t,uint8_t> >
   /// botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-  if (!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision
+  if (!CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision()
            .empty()) {
     // locate the right layer for monster
     if (monsterMapObject != NULL) {
@@ -861,14 +861,14 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey) {
           const unsigned int &newIndex =
               monstersCollisionValue.walkOn.at(index);
           if (newIndex < CatchChallenger::CommonDatapack::commonDatapack
-                             .monstersCollision.size()) {
+                             .get_monstersCollision().size()) {
             const CatchChallenger::MonstersCollision &monstersCollision =
                 CatchChallenger::CommonDatapack::commonDatapack
-                    .monstersCollision.at(newIndex);
+                    .get_monstersCollision().at(newIndex);
             const CatchChallenger::MonstersCollisionTemp
                 &monstersCollisionTemp =
                     CatchChallenger::CommonDatapack::commonDatapack
-                        .monstersCollisionTemp.at(newIndex);
+                        .get_monstersCollisionTemp().at(newIndex);
             if (monstersCollision.item == 0 ||
                 player_informations.items.find(monstersCollision.item) !=
                     player_informations.items.cend()) {
@@ -890,13 +890,13 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey) {
     while (index < monstersCollisionValue.walkOn.size()) {
       const unsigned int &newIndex = monstersCollisionValue.walkOn.at(index);
       if (newIndex < CatchChallenger::CommonDatapack::commonDatapack
-                         .monstersCollision.size()) {
+                         .get_monstersCollision().size()) {
         const CatchChallenger::MonstersCollision &monstersCollision =
-            CatchChallenger::CommonDatapack::commonDatapack.monstersCollision
+            CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision()
                 .at(newIndex);
         const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp =
             CatchChallenger::CommonDatapack::commonDatapack
-                .monstersCollisionTemp.at(newIndex);
+                .get_monstersCollisionTemp().at(newIndex);
         if (monstersCollision.item == 0 ||
             player_informations.items.find(monstersCollision.item) !=
                 player_informations.items.cend()) {
@@ -1550,12 +1550,12 @@ bool MapVisualiserPlayer::insert_player_internal(
         "!player_informations_is_set");
     return false;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->maps.size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     /// \bug here pass after delete a party, create a new
     emit error(
         "mapId greater than "
         "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->maps.size()));
+        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
     return true;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -1658,10 +1658,10 @@ bool MapVisualiserPlayer::insert_player_internal(
     // monster
     updatePlayerMonsterTile(player.monsterId);
 
-    current_map = QtDatapackClientLoader::datapackLoader->maps.at(mapId);
+    current_map = QtDatapackClientLoader::datapackLoader->get_maps().at(mapId);
     std::cout << "datapackMapPathSpec: " << datapackMapPathSpec << std::endl;
     loadPlayerMap(datapackMapPathSpec +
-                      QtDatapackClientLoader::datapackLoader->maps.at(mapId),
+                      QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),
                   static_cast<uint8_t>(x), static_cast<uint8_t>(y));
     setSpeed(player.speed);
   }
@@ -2123,11 +2123,11 @@ void MapVisualiserPlayer::stopMove() { inMove = false; }
 bool MapVisualiserPlayer::teleportTo(
     const uint32_t &mapId, const uint16_t &x, const uint16_t &y,
     const CatchChallenger::Direction &direction) {
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->maps.size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     emit error(
         "mapId greater than "
         "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->maps.size()));
+        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
     return false;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -2146,7 +2146,7 @@ bool MapVisualiserPlayer::teleportTo(
   current_map =
       QFileInfo(QString::fromStdString(
                     datapackMapPathSpec +
-                    QtDatapackClientLoader::datapackLoader->maps.at(mapId)))
+                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
           .absoluteFilePath()
           .toStdString();
   this->x = x;

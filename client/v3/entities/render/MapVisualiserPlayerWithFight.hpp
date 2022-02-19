@@ -3,7 +3,6 @@
 
 #include <QObject>
 
-#include "../../../libqtcatchchallenger/ClientFightEngine.hpp"
 #include "MapVisualiserPlayer.hpp"
 
 class MapVisualiserPlayerWithFight : public MapVisualiserPlayer {

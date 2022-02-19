@@ -663,7 +663,7 @@ void MapControllerMP::reinject_signals_on_valid_map() {
             const std::string &mapPath =
                 QFileInfo(QString::fromStdString(
                               datapackMapPathSpec +
-                              QtDatapackClientLoader::datapackLoader->maps.at(
+                              QtDatapackClientLoader::datapackLoader->get_maps().at(
                                   delayedActions.at(index).insert.mapId)))
                     .absoluteFilePath()
                     .toStdString();
@@ -737,7 +737,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer) {
     return;
   }
 
-  if (!CatchChallenger::CommonDatapack::commonDatapack.monstersCollision
+  if (!CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision()
            .empty()) {
     // locate the right layer for monster
     if (otherPlayer.monsterMapObject != NULL) {
@@ -759,14 +759,14 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer) {
           const unsigned int &newIndex =
               monstersCollisionValue.walkOn.at(index);
           if (newIndex < CatchChallenger::CommonDatapack::commonDatapack
-                             .monstersCollision.size()) {
+                             .get_monstersCollision().size()) {
             const CatchChallenger::MonstersCollision &monstersCollision =
                 CatchChallenger::CommonDatapack::commonDatapack
-                    .monstersCollision.at(newIndex);
+                    .get_monstersCollision().at(newIndex);
             const CatchChallenger::MonstersCollisionTemp
                 &monstersCollisionTemp =
                     CatchChallenger::CommonDatapack::commonDatapack
-                        .monstersCollisionTemp.at(newIndex);
+                        .get_monstersCollisionTemp().at(newIndex);
             const bool needBeVisible =
                 (monstersCollisionTemp.tile.empty() &&
                  otherPlayer.pendingMonsterMoves.size() >= 1) ||
@@ -790,13 +790,13 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer) {
     while (index < monstersCollisionValue.walkOn.size()) {
       const unsigned int &newIndex = monstersCollisionValue.walkOn.at(index);
       if (newIndex < CatchChallenger::CommonDatapack::commonDatapack
-                         .monstersCollision.size()) {
+                         .get_monstersCollision().size()) {
         const CatchChallenger::MonstersCollision &monstersCollision =
-            CatchChallenger::CommonDatapack::commonDatapack.monstersCollision
+            CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision()
                 .at(newIndex);
         const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp =
             CatchChallenger::CommonDatapack::commonDatapack
-                .monstersCollisionTemp.at(newIndex);
+                .get_monstersCollisionTemp().at(newIndex);
         // change tile if needed (water to walk transition)
         if (monstersCollisionTemp.tile != otherPlayer.lastTileset) {
           otherPlayer.lastTileset = monstersCollisionTemp.tile;

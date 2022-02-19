@@ -183,8 +183,8 @@ void OverMapLogic::haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,
     case CatchChallenger::BuyStat_BetterPrice: {
       if (factoryInProduction) break;
       const CatchChallenger::Industry &industry =
-          CatchChallenger::CommonDatapack::commonDatapack.industries.at(
-              CatchChallenger::CommonDatapack::commonDatapack.industriesLink
+          CatchChallenger::CommonDatapack::commonDatapack.get_industries().at(
+              CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink()
                   .at(factoryId)
                   .industry);
       industryStatus.last_update = QDateTime::currentMSecsSinceEpoch() / 1000;
@@ -250,10 +250,10 @@ void OverMapLogic::haveSellFactoryObject(const CatchChallenger::SoldStat &stat,
     case CatchChallenger::SoldStat_BetterPrice: {
       if (factoryInProduction) break;
       const CatchChallenger::IndustryLink &industryLink =
-          CatchChallenger::CommonDatapack::commonDatapack.industriesLink.at(
+          CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().at(
               factoryId);
       const CatchChallenger::Industry &industry =
-          CatchChallenger::CommonDatapack::commonDatapack.industries.at(
+          CatchChallenger::CommonDatapack::commonDatapack.get_industries().at(
               industryLink.industry);
       industryStatus.last_update = QDateTime::currentMSecsSinceEpoch() / 1000;
       updateFactoryStatProduction(industryStatus, industry);

@@ -7,7 +7,6 @@
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../general/base/MoveOnTheMap.hpp"
-#include "../../../libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "TemporaryTile.hpp"
 
@@ -237,7 +236,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(
     unsigned int index = 0;
     while (index < monstersCollisionValue.walkOn.size()) {
       const CatchChallenger::MonstersCollision &monstersCollision =
-          CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(
+          CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(
               monstersCollisionValue.walkOn.at(index));
       if (monstersCollision.item == 0 ||
           player_informations.items.find(monstersCollision.item) !=

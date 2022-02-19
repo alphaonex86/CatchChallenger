@@ -69,11 +69,11 @@ void Quests::LoadQuests() {
   auto i = info.quests.begin();
   while (i != info.quests.cend()) {
     const uint16_t questId = i->first;
-    if (QtDatapackClientLoader::datapackLoader->questsExtra.find(questId) !=
-        QtDatapackClientLoader::datapackLoader->questsExtra.cend()) {
+    if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
+        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
       if (i->second.step > 0) {
         auto item = QuestItem::Create(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->questsExtra.at(questId)
+            QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
                 .name));
         item->SetData(99, questId);
         item->SetOnClick(std::bind(&Quests::OnQuestClick, this, _1));
@@ -110,7 +110,7 @@ void Quests::OnQuestItemChanged() {
     return;
   }
   const QtDatapackClientLoader::QuestExtra &questExtra =
-      QtDatapackClientLoader::datapackLoader->questsExtra.at(questId);
+      QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
   if (info.quests.at(questId).step == 0 ||
       info.quests.at(questId).step > questExtra.steps.size()) {
     qDebug() << "Selected quest step is out of range";
@@ -133,7 +133,7 @@ void Quests::OnQuestItemChanged() {
   {
     std::vector<CatchChallenger::Quest::Item> items =
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .quests.at(questId)
+            .get_quests().at(questId)
             .steps.at(info.quests.at(questId).step - 1)
             .requirements.items;
 
@@ -145,13 +145,13 @@ void Quests::OnQuestItemChanged() {
     while (index < items.size()) {
       QPixmap image;
       std::string name;
-      if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(
+      if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
               items.at(index).item) !=
-          QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+          QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
         image = QtDatapackClientLoader::datapackLoader
                     ->getItemExtra(items.at(index).item)
                     .image;
-        name = QtDatapackClientLoader::datapackLoader->itemsExtra
+        name = QtDatapackClientLoader::datapackLoader->get_itemsExtra()
                    .at(items.at(index).item)
                    .name;
       } else {
@@ -190,20 +190,20 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::Quest::Item> items =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.at(questId)
+              .get_quests().at(questId)
               .rewards.items;
       std::vector<std::string> objects;
       unsigned int index = 0;
       while (index < items.size()) {
         QPixmap image;
         std::string name;
-        if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(
+        if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
                 items.at(index).item) !=
-            QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
           image = QtDatapackClientLoader::datapackLoader
                       ->getItemExtra(items.at(index).item)
                       .image;
-          name = QtDatapackClientLoader::datapackLoader->itemsExtra
+          name = QtDatapackClientLoader::datapackLoader->get_itemsExtra()
                      .at(items.at(index).item)
                      .name;
         } else {
@@ -241,24 +241,24 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::ReputationRewards> reputationRewards =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.at(questId)
+              .get_quests().at(questId)
               .rewards.reputation;
       unsigned int index = 0;
       while (index < reputationRewards.size()) {
-        if (QtDatapackClientLoader::datapackLoader->reputationExtra.find(
-                CatchChallenger::CommonDatapack::commonDatapack.reputation
+        if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+                CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                     .at(reputationRewards.at(index).reputationId)
                     .name) !=
-            QtDatapackClientLoader::datapackLoader->reputationExtra.cend()) {
+            QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend()) {
           const std::string &reputationName =
-              CatchChallenger::CommonDatapack::commonDatapack.reputation
+              CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                   .at(reputationRewards.at(index).reputationId)
                   .name;
           if (reputationRewards.at(index).point < 0) {
             details_->AddItem(CreateLabel(
                 QObject::tr("Less reputation for %1")
                     .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->reputationExtra
+                        QtDatapackClientLoader::datapackLoader->get_reputationExtra()
                             .at(reputationName)
                             .name))));
           }
@@ -266,7 +266,7 @@ void Quests::OnQuestItemChanged() {
             details_->AddItem(CreateLabel(
                 QObject::tr("More reputation for %1")
                     .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->reputationExtra
+                        QtDatapackClientLoader::datapackLoader->get_reputationExtra()
                             .at(reputationName)
                             .name))));
           }
@@ -280,7 +280,7 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::ActionAllow> allowRewards =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.at(questId)
+              .get_quests().at(questId)
               .rewards.allow;
       std::vector<std::string> allows;
       unsigned int index = 0;

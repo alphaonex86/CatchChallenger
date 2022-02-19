@@ -70,11 +70,11 @@ bool MapController::asyncMapLoaded(const std::string &fileName,
       client->get_player_informations();
   if (MapControllerMP::asyncMapLoaded(fileName, tempMapObject)) {
     {
-      if (QtDatapackClientLoader::datapackLoader->plantOnMap.find(fileName) !=
-          QtDatapackClientLoader::datapackLoader->plantOnMap.cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(fileName) !=
+          QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend()) {
         const std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t,
                                  pairhash> &plantCoor =
-            QtDatapackClientLoader::datapackLoader->plantOnMap.at(fileName);
+            QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(fileName);
         for (const auto &n : plantCoor) {
           const uint16_t indexOfMap = n.second;
           if (player_informations.plantOnMap.size() > 1000000) abort();
@@ -90,11 +90,11 @@ bool MapController::asyncMapLoaded(const std::string &fileName,
               seconds_to_mature = static_cast<uint32_t>(
                   playerPlant.mature_at -
                   QDateTime::currentMSecsSinceEpoch() / 1000);
-            if (QtDatapackClientLoader::datapackLoader->fullMapPathToId.find(
+            if (QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(
                     fileName) !=
-                QtDatapackClientLoader::datapackLoader->fullMapPathToId.cend())
+                QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
               insert_plant(
-                  QtDatapackClientLoader::datapackLoader->fullMapPathToId.at(
+                  QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(
                       fileName),
                   static_cast<uint8_t>(x), static_cast<uint8_t>(y),
                   playerPlant.plant, static_cast<uint16_t>(seconds_to_mature));
@@ -534,9 +534,9 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap, const uint32_t &botId,
             stringtouint16(stepBot->Attribute("fightid"), &ok);
         if (ok) {
           if (CatchChallenger::CommonDatapackServerSpec::
-                  commonDatapackServerSpec.botFights.find(fightid) !=
+                  commonDatapackServerSpec.get_botFights().find(fightid) !=
               CatchChallenger::CommonDatapackServerSpec::
-                  commonDatapackServerSpec.botFights.cend()) {
+                  commonDatapackServerSpec.get_botFights().cend()) {
 #ifdef DEBUG_CLIENT_BOT
             qDebug()
                 << (QStringLiteral(

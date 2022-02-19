@@ -67,21 +67,21 @@ bool FacilityLibClient::rectTouch(QRect r1,QRect r2)
 
 std::string FacilityLibClient::reputationRequirementsToText(const CatchChallenger::ReputationRequirements &reputationRequirements)
 {
-    if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.reputation.size())
+    if(reputationRequirements.reputationId>=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().size())
     {
         std::cerr << "reputationRequirements.reputationId" << reputationRequirements.reputationId
                   << ">=CatchChallenger::CommonDatapack::commonDatapack.reputation.size()"
-                  << CatchChallenger::CommonDatapack::commonDatapack.reputation.size() << std::endl;
+                  << CatchChallenger::CommonDatapack::commonDatapack.get_reputation().size() << std::endl;
         return QObject::tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
-    const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRequirements.reputationId);
-    if(QtDatapackClientLoader::datapackLoader->reputationExtra.find(reputation.name)==
-            QtDatapackClientLoader::datapackLoader->reputationExtra.cend())
+    const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRequirements.reputationId);
+    if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputation.name)==
+            QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
     {
         std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
         return QObject::tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->reputationExtra.at(reputation.name);
+    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())

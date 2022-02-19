@@ -78,7 +78,7 @@ void Crafting::OnCreateClick() {
 
   const CatchChallenger::CraftingRecipe &content =
       CatchChallenger::CommonDatapack::commonDatapack
-          .craftingRecipes[current->Recipe()];
+          .get_craftingRecipes().at(current->Recipe());
 
   QStringList mIngredients;
   // load the materials
@@ -107,7 +107,7 @@ void Crafting::OnCreateClick() {
   // send to the network
   ConnectionManager::GetInstance()->client->useRecipe(current->Recipe());
   PlayerInfo::GetInstance()->AppendReputationPoints(
-      CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes
+      CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes()
           .at(current->Recipe())
           .rewards.reputation);
 }
@@ -172,8 +172,8 @@ void Crafting::LoadMaterials() {
   auto craft = static_cast<CraftingItem *>(selected_);
   uint16_t item_id = craft->ItemId();
 
-  if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(item_id) ==
-      QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) ==
+      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
     details_->SetText(tr("Unknown description"));
     create_->SetEnabled(false);
     return;
@@ -187,7 +187,7 @@ void Crafting::LoadMaterials() {
   materials_content_->Clear();
 
   const CatchChallenger::CraftingRecipe &content =
-      CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.at(
+      CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(
           craft->Recipe());
 
   // load the materials
@@ -198,12 +198,12 @@ void Crafting::LoadMaterials() {
   while (index < content.materials.size()) {
     // load the material item
     auto item = IconItem::Create();
-    if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(
+    if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
             content.materials.at(index).item) !=
-        QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+        QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
       nameMaterials = QString::fromStdString(
           QtDatapackClientLoader::datapackLoader
-              ->itemsExtra[content.materials.at(index).item]
+              ->get_itemsExtra().at(content.materials.at(index).item)
               .name);
       item->SetIcon(QtDatapackClientLoader::datapackLoader
                         ->getItemExtra(content.materials.at(index).item)
@@ -245,25 +245,28 @@ void Crafting::LoadRecipes() {
   const auto &info = PlayerInfo::GetInstance()->GetInformationRO();
   craft_content_->Clear();
   uint16_t index = 0;
-  while (index <=
-         CatchChallenger::CommonDatapack::commonDatapack.craftingRecipesMaxId) {
+  while (index <= CatchChallenger::CommonDatapack::commonDatapack
+                      .get_craftingRecipesMaxId()) {
     uint16_t recipe = index;
     if (info.recipes[recipe / 8] & (1 << (7 - recipe % 8))) {
       // load the material item
-      if (CatchChallenger::CommonDatapack::commonDatapack.craftingRecipes.find(
-              recipe) != CatchChallenger::CommonDatapack::commonDatapack
-                             .craftingRecipes.cend()) {
+      if (CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes()
+              .find(recipe) !=
+          CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes()
+              .cend()) {
         const uint16_t &itemId = CatchChallenger::CommonDatapack::commonDatapack
-                                     .craftingRecipes[recipe]
+                                     .get_craftingRecipes().at(recipe)
                                      .doItemId;
         auto item = CraftingItem::Create();
-        if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(itemId) !=
-            QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+        if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+                itemId) !=
+            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
           item->SetIcon(
               QtDatapackClientLoader::datapackLoader->getItemExtra(itemId)
                   .image);
           item->SetName(QString::fromStdString(
-              QtDatapackClientLoader::datapackLoader->itemsExtra[itemId].name));
+              QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId)
+                  .name));
         } else {
           item->SetIcon(
               QtDatapackClientLoader::datapackLoader->defaultInventoryImage());

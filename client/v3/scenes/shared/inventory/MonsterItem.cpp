@@ -49,9 +49,9 @@ void MonsterItem::DrawContent(QPainter *painter) {
 void MonsterItem::LoadMonster() {
   const uint16_t id = monster_.monster;
   const DatapackClientLoader::MonsterExtra monster_extra =
-      QtDatapackClientLoader::datapackLoader->monsterExtra.at(id);
-  if (QtDatapackClientLoader::datapackLoader->monsterExtra.find(id) !=
-      QtDatapackClientLoader::datapackLoader->monsterExtra.cend()) {
+      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(id);
+  if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(id) !=
+      QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend()) {
     QPixmap p =
         QtDatapackClientLoader::datapackLoader->getMonsterExtra(id).thumb;
     p = p.scaledToHeight(Height() - 20);

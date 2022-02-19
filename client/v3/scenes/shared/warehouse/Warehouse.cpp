@@ -348,9 +348,9 @@ void Warehouse::UpdateContent() {
       uint8_t index = 0;
       while (index < playerMonster.size()) {
         const CatchChallenger::PlayerMonster &monster = playerMonster.at(index);
-        if (CatchChallenger::CommonDatapack::commonDatapack.monsters.find(
+        if (CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(
                 monster.monster) !=
-            CatchChallenger::CommonDatapack::commonDatapack.monsters.cend()) {
+            CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend()) {
           auto item = ItemToMonster(index, monster.monster, monster.level);
           if (!vectorcontainsAtLeastOne(temp_monster_deposit_, index) ||
               vectorcontainsAtLeastOne(temp_monster_withdraw_, index)) {
@@ -369,9 +369,9 @@ void Warehouse::UpdateContent() {
       while (index < info.warehouse_playerMonster.size()) {
         const CatchChallenger::PlayerMonster &monster =
             info.warehouse_playerMonster.at(index);
-        if (CatchChallenger::CommonDatapack::commonDatapack.monsters.find(
+        if (CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(
                 monster.monster) !=
-            CatchChallenger::CommonDatapack::commonDatapack.monsters.cend()) {
+            CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend()) {
           auto item = ItemToMonster(index, monster.monster, monster.level);
           if (!vectorcontainsAtLeastOne(temp_monster_withdraw_, index) ||
               vectorcontainsAtLeastOne(temp_monster_deposit_, index))
@@ -399,13 +399,13 @@ WarehouseItem *Warehouse::ItemToItem(const uint16_t &item_id,
   item->SetData(99, item_id);
   item->SetData(98, quantity);
   item->SetOnClick(std::bind(&Warehouse::OnItemClick, this, _1));
-  if (QtDatapackClientLoader::datapackLoader->itemsExtra.find(item_id) !=
-      QtDatapackClientLoader::datapackLoader->itemsExtra.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) !=
+      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
     item->SetPixmap(
         QtDatapackClientLoader::datapackLoader->getItemExtra(item_id).image);
     if (quantity > 1) item->SetText(QString::number(quantity));
     item->setToolTip(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->itemsExtra.at(item_id).name));
+        QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id).name));
   } else {
     item->SetPixmap(
         QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
@@ -426,7 +426,7 @@ WarehouseItem *Warehouse::ItemToMonster(const uint32_t &monster_id,
   item->SetPixmap(
       QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster).front);
   item->setToolTip(QString::fromStdString(
-      QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster).name));
+      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster).name));
   return item;
 }
 
@@ -596,9 +596,9 @@ std::vector<CatchChallenger::PlayerMonster> Warehouse::MonstersWithdrawed()
     uint8_t index = 0;
     while (index < playerMonster.size()) {
       const CatchChallenger::PlayerMonster &monster = playerMonster.at(index);
-      if (CatchChallenger::CommonDatapack::commonDatapack.monsters.find(
+      if (CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(
               monster.monster) !=
-              CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() &&
+              CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend() &&
           !vectorcontainsAtLeastOne(temp_monster_deposit_, index))
         warehouseMonsterOnPlayerList.push_back(monster);
       index++;
@@ -609,9 +609,9 @@ std::vector<CatchChallenger::PlayerMonster> Warehouse::MonstersWithdrawed()
     while (index < info.warehouse_playerMonster.size()) {
       const CatchChallenger::PlayerMonster &monster =
           info.warehouse_playerMonster.at(index);
-      if (CatchChallenger::CommonDatapack::commonDatapack.monsters.find(
+      if (CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(
               monster.monster) !=
-              CatchChallenger::CommonDatapack::commonDatapack.monsters.cend() &&
+              CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend() &&
           vectorcontainsAtLeastOne(temp_monster_withdraw_, index))
         warehouseMonsterOnPlayerList.push_back(monster);
       index++;

@@ -19,20 +19,20 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const {
       &playerInformations =
           connexionManager->client->get_player_informations_ro();
   // do the not started quest here
-  if (QtDatapackClientLoader::datapackLoader->botToQuestStart.find(botId) ==
-      QtDatapackClientLoader::datapackLoader->botToQuestStart.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_botToQuestStart().find(botId) ==
+      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().cend()) {
     std::cerr << "OverMapLogic::botHaveQuest(), botId not found: "
               << std::to_string(botId) << std::endl;
     return false;
   }
   const std::vector<uint8_t> &botQuests =
-      QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
   unsigned int index = 0;
   while (index < botQuests.size()) {
     const uint16_t &questId = botQuests.at(index);
     const CatchChallenger::Quest &currentQuest =
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .quests.at(questId);
+            .get_quests().at(questId);
     if (playerInformations.quests.find(botQuests.at(index)) ==
         playerInformations.quests.cend()) {
       // quest not started
@@ -42,9 +42,9 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const {
       }  // have not the requirement
     } else {
       if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.find(botQuests.at(index)) ==
+              .get_quests().find(botQuests.at(index)) ==
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.cend())
+              .get_quests().cend())
         qDebug() << "internal bug: have quest registred, but no quest found "
                     "with this id";
       else {
@@ -82,7 +82,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const {
     if (!vectorcontainsAtLeastOne(botQuests, i->first) && i->second.step > 0) {
       CatchChallenger::Quest currentQuest =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.at(i->first);
+              .get_quests().at(i->first);
       auto bots = currentQuest.steps.at(i->second.step - 1).bots;
       if (vectorcontainsAtLeastOne(bots, botId))
         return true;  // in progress, but not the starting bot
@@ -156,9 +156,9 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
       return;
     }
     if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .shops.find(shopId) ==
+            .get_shops().find(shopId) ==
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .shops.cend()) {
+            .get_shops().cend()) {
       showTip(tr("Shop not found").toStdString());
 
       return;
@@ -210,7 +210,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
     if (step == 1) {
       if (quests.size() == 1) {
         const std::pair<uint16_t, std::string> &quest = quests.at(0);
-        if (QtDatapackClientLoader::datapackLoader->questsExtra.at(quest.first)
+        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().at(quest.first)
                 .autostep) {
           IG_dialog_text_linkActivated("quest_" + std::to_string(quest.first));
           return;
@@ -298,9 +298,9 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
       showTip(tr("Industry called but wrong id").toStdString());
       return;
     }
-    if (CatchChallenger::CommonDatapack::commonDatapack.industriesLink.find(
+    if (CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().find(
             factoryId) ==
-        CatchChallenger::CommonDatapack::commonDatapack.industriesLink.cend()) {
+        CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().cend()) {
       showTip(tr("The factory is not found").toStdString());
       return;
     }
@@ -379,9 +379,9 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
       return;
     }
     if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .botFights.find(fightId) ==
+            .get_botFights().find(fightId) ==
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .botFights.cend()) {
+            .get_botFights().cend()) {
       showTip(tr("Bot fight not found").toStdString());
       return;
     }
@@ -403,15 +403,15 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
 
 bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId,
                                         const uint16_t &botId, bool silent) {
-  if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests
+  if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests()
           .find(questId) ==
-      CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests
+      CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests()
           .cend()) {
     if (!silent) showTip(tr("Quest not found").toStdString());
     return false;
   }
   const CatchChallenger::Quest &quest =
-      CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.quests
+      CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests()
           .at(questId);
   CatchChallenger::Player_private_and_public_informations &playerInformations =
       connexionManager->client->get_player_informations();
@@ -457,7 +457,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId,
     if (!silent)
       showTip(tr("You have finish the quest <b>%1</b>")
                   .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->questsExtra
+                      QtDatapackClientLoader::datapackLoader->get_questsExtra()
                           .at(questId)
                           .name))
                   .toStdString());
@@ -479,14 +479,14 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId,
 }
 
 void OverMapLogic::showQuestText(const uint32_t &textId) {
-  if (QtDatapackClientLoader::datapackLoader->questsExtra.find(questId) ==
-      QtDatapackClientLoader::datapackLoader->questsExtra.cend()) {
+  if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) ==
+      QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
     qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
     showTip(tr("No quest text for this quest").toStdString());
     return;
   }
   const QtDatapackClientLoader::QuestExtra &questExtra =
-      QtDatapackClientLoader::datapackLoader->questsExtra.at(questId);
+      QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
   if (questExtra.text.find(textId) == questExtra.text.cend()) {
     qDebug() << "No quest text entry point";
     showTip(tr("No quest text entry point").toStdString());
@@ -519,7 +519,7 @@ void OverMapLogic::showQuestText(const uint32_t &textId) {
         case QtDatapackClientLoader::QuestCondition_haverequirements: {
           const CatchChallenger::Quest &quest =
               CatchChallenger::CommonDatapackServerSpec::
-                  commonDatapackServerSpec.quests.at(questId);
+                  commonDatapackServerSpec.get_quests().at(questId);
           if (!haveNextStepQuestRequirements(quest))
             indexCond = e.conditions.size() + 999;  // not validated condition
         } break;
@@ -657,18 +657,18 @@ void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink) {
         continue;
       }
       if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.find(questId) ==
+              .get_quests().find(questId) ==
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.cend()) {
+              .get_quests().cend()) {
         showTip(tr("Quest not found").toStdString());
         index++;
         continue;
       }
       isInQuest = true;
       this->questId = questId;
-      if (QtDatapackClientLoader::datapackLoader->questsExtra.find(questId) !=
-          QtDatapackClientLoader::datapackLoader->questsExtra.cend()) {
-        if (QtDatapackClientLoader::datapackLoader->questsExtra.at(questId)
+      if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
+          QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
+        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
                 .autostep) {
           int index = 0;
           bool ok;
@@ -764,7 +764,7 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
   std::pair<uint16_t, std::string> oneEntry;
   // do the not started quest here
   std::vector<uint8_t> botQuests =
-      QtDatapackClientLoader::datapackLoader->botToQuestStart.at(botId);
+      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
   unsigned int index = 0;
   while (index < botQuests.size()) {
     const uint16_t &questId = botQuests.at(index);
@@ -774,16 +774,16 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
 #endif
     const CatchChallenger::Quest &currentQuest =
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .quests.at(questId);
+            .get_quests().at(questId);
     if (playerInformations.quests.find(botQuests.at(index)) ==
         playerInformations.quests.cend()) {
       // quest not started
       if (haveStartQuestRequirement(currentQuest)) {
         oneEntry.first = questId;
-        if (QtDatapackClientLoader::datapackLoader->questsExtra.find(questId) !=
-            QtDatapackClientLoader::datapackLoader->questsExtra.cend())
+        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
+            QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
           oneEntry.second =
-              QtDatapackClientLoader::datapackLoader->questsExtra.at(questId)
+              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
                   .name;
         else {
           qDebug() << "internal bug: quest extra not found";
@@ -794,9 +794,9 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
       }  // have not the requirement
     } else {
       if (CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.find(botQuests.at(index)) ==
+              .get_quests().find(botQuests.at(index)) ==
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.cend())
+              .get_quests().cend())
         qDebug() << "internal bug: have quest registred, but no quest found "
                     "with this id";
       else {
@@ -807,11 +807,11 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
               // quest already done but repeatable
               if (haveStartQuestRequirement(currentQuest)) {
                 oneEntry.first = questId;
-                if (QtDatapackClientLoader::datapackLoader->questsExtra.find(
+                if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(
                         questId) !=
-                    QtDatapackClientLoader::datapackLoader->questsExtra.cend())
+                    QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
                   oneEntry.second =
-                      QtDatapackClientLoader::datapackLoader->questsExtra
+                      QtDatapackClientLoader::datapackLoader->get_questsExtra()
                           .at(questId)
                           .name;
                 else {
@@ -831,13 +831,13 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
                           .bots;
           if (vectorcontainsAtLeastOne(bots, botId)) {
             oneEntry.first = questId;
-            if (QtDatapackClientLoader::datapackLoader->questsExtra.find(
+            if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(
                     questId) !=
-                QtDatapackClientLoader::datapackLoader->questsExtra.cend())
+                QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
               oneEntry.second =
                   tr("%1 (in progress)")
                       .arg(QString::fromStdString(
-                          QtDatapackClientLoader::datapackLoader->questsExtra
+                          QtDatapackClientLoader::datapackLoader->get_questsExtra()
                               .at(questId)
                               .name))
                       .toStdString();
@@ -860,7 +860,7 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
     if (!vectorcontainsAtLeastOne(botQuests, i->first) && i->second.step > 0) {
       CatchChallenger::Quest currentQuest =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .quests.at(i->first);
+              .get_quests().at(i->first);
       auto bots = currentQuest.steps.at(i->second.step - 1).bots;
       if (vectorcontainsAtLeastOne(bots, botId)) {
         // in progress, but not the starting bot
@@ -868,7 +868,7 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
         oneEntry.second =
             tr("%1 (in progress)")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->questsExtra
+                    QtDatapackClientLoader::datapackLoader->get_questsExtra()
                         .at(i->first)
                         .name))
                 .toStdString();
@@ -941,7 +941,7 @@ bool OverMapLogic::nextStepQuest(const CatchChallenger::Quest &quest) {
     index = 0;
     while (index < quest.rewards.reputation.size()) {
       appendReputationPoint(
-          CatchChallenger::CommonDatapack::commonDatapack.reputation
+          CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
               .at(quest.rewards.reputation.at(index).reputationId)
               .name,
           quest.rewards.reputation.at(index).point);

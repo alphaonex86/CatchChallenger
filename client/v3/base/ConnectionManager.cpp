@@ -772,7 +772,7 @@ void ConnectionManager::datapackParsed() {
 void ConnectionManager::datapackParsedMainSub() {
   if (client == NULL) return;
   if (!client->setMapNumber(
-          QtDatapackClientLoader::datapackLoader->mapToId.size()))
+          QtDatapackClientLoader::datapackLoader->get_mapToId().size()))
     newError(QObject::tr("Internal error").toStdString(),
              "No map loaded to call client->setMapNumber()");
   client->have_main_and_sub_datapack_loaded();

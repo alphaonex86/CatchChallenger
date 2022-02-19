@@ -175,11 +175,11 @@ void Learn::LoadLearnSkills(uint monster_pos) {
                      .arg(monster.level));
 #endif
   unsigned int sub_index = 0;
-  while (sub_index < CatchChallenger::CommonDatapack::commonDatapack.monsters
+  while (sub_index < CatchChallenger::CommonDatapack::commonDatapack.get_monsters()
                          .at(monster.monster)
                          .learn.size()) {
     CatchChallenger::Monster::AttackToLearn learn =
-        CatchChallenger::CommonDatapack::commonDatapack.monsters
+        CatchChallenger::CommonDatapack::commonDatapack.get_monsters()
             .at(monster.monster)
             .learn.at(sub_index);
     if (learn.learnAtLevel <= monster.level) {
@@ -217,42 +217,42 @@ void Learn::LoadLearnSkills(uint monster_pos) {
         item->SetText(
             QObject::tr("%1\nSP cost: %2")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->monsterSkillsExtra
+                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
                         .at(i.key())
                         .name))
                 .arg(CatchChallenger::CommonDatapack::commonDatapack
-                         .monsterSkills.at(i.key())
+                         .get_monsterSkills().at(i.key())
                          .level.at(i.value() - 1)
                          .sp_to_learn));
       else
         item->SetText(
             QObject::tr("%1 level %2\nSP cost: %3")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->monsterSkillsExtra
+                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
                         .at(i.key())
                         .name))
                 .arg(level)
                 .arg(CatchChallenger::CommonDatapack::commonDatapack
-                         .monsterSkills.at(i.key())
+                         .get_monsterSkills().at(i.key())
                          .level.at(i.value() - 1)
                          .sp_to_learn));
     } else {
       if (level <= 1) {
         item->SetText(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->monsterSkillsExtra
+            QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
                 .at(i.key())
                 .name));
       } else {
         item->SetText(QObject::tr("%1 level %2")
                           .arg(QString::fromStdString(
                                    QtDatapackClientLoader::datapackLoader
-                                       ->monsterSkillsExtra.at(i.key())
+                                       ->get_monsterSkillsExtra().at(i.key())
                                        .name)
                                    .arg(level)));
       }
     }
     if (CommonSettingsServer::commonSettingsServer.useSP &&
-        CatchChallenger::CommonDatapack::commonDatapack.monsterSkills
+        CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills()
                 .at(i.key())
                 .level.at(i.value() - 1)
                 .sp_to_learn > monster.sp) {

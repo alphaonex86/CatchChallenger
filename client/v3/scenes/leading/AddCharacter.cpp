@@ -83,7 +83,7 @@ void AddCharacter::setDatapack(std::string path) {
   this->ok = false;
 
   comboBox->Clear();
-  if (CatchChallenger::CommonDatapack::commonDatapack.profileList.empty()) {
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty()) {
     description->SetText(tr("No profile selected to start a new game"));
     return;
   }
@@ -123,9 +123,9 @@ void AddCharacter::loadProfileText() {
   std::vector<const tinyxml2::XMLElement *> xmlList =
       CatchChallenger::DatapackGeneralLoader::loadProfileList(
           datapackPath, xmlFile,
-          CatchChallenger::CommonDatapack::commonDatapack.items.item,
-          CatchChallenger::CommonDatapack::commonDatapack.monsters,
-          CatchChallenger::CommonDatapack::commonDatapack.reputation)
+          CatchChallenger::CommonDatapack::commonDatapack.get_items().item,
+          CatchChallenger::CommonDatapack::commonDatapack.get_monsters(),
+          CatchChallenger::CommonDatapack::commonDatapack.get_reputation())
           .first;
   profileTextList.clear();
   unsigned int index = 0;
