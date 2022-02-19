@@ -4,7 +4,7 @@
 
 #include "../libqtcatchchallenger/Settings.hpp"
 
-Options Options::options;
+Options* Options::instance_ = nullptr;
 
 Options::Options() {
   fps = 25;
@@ -16,6 +16,13 @@ Options::Options() {
 
 Options::~Options() {}
 
+Options* Options::GetInstance() {
+  if (instance_ == nullptr) {
+    instance_ = new Options();
+  }
+  return instance_;
+}
+
 void Options::loadVar() {
   bool ok;
   /* for portable version
@@ -24,9 +31,9 @@ void Options::loadVar() {
 */
   if (Settings::settings->contains("fps")) {
     fps = static_cast<uint8_t>(Settings::settings->value("fps").toUInt(&ok));
-    if (!ok) fps = 25;
+    if (!ok) fps = 150;
   } else
-    fps = 25;
+    fps = 150;
   if (Settings::settings->contains("limitedFPS"))
     limitedFPS = Settings::settings->value("limitedFPS").toBool();
   else

@@ -7,6 +7,7 @@
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/Version.hpp"
 #include "../Globals.hpp"
+#include "../Options.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
   #include "AudioPlayer.hpp"
 #endif
@@ -128,7 +129,7 @@ SceneManager::SceneManager() : graphic_scene_(new QGraphicsScene(this)) {
   action_render_.start(1);
   Render();
 
-  SetTargetFPS(150);
+  SetTargetFPS(Options::GetInstance()->getFPS());
 }
 
 SceneManager::~SceneManager() {

@@ -20,6 +20,7 @@
 #include "../../core/EventManager.hpp"
 #include "../../core/Logger.hpp"
 #include "../../core/SceneManager.hpp"
+#include "../../entities/Utils.hpp"
 #include "../shared/inventory/MonsterBag.hpp"
 
 using Scenes::Battle;
@@ -57,6 +58,7 @@ Battle::Battle() : Scene(nullptr) {
 
   player_ = Sprite::Create(this);
   enemy_ = Sprite::Create(this);
+  enemy_->SetSize(400, 400);
 
   action_background_ =
       Sprite::Create(":/CC/images/interface/message.png", this);
@@ -142,14 +144,17 @@ void Battle::SetVariables() {
 
 QPixmap Battle::GetBackSkin(const uint32_t &skinId) {
   /// \todo merge it cache string + id
-  const std::vector<std::string> &skinFolderList=QtDatapackClientLoader::datapackLoader->get_skins();
+  const std::vector<std::string> &skinFolderList =
+      QtDatapackClientLoader::datapackLoader->get_skins();
 
   std::string skin;
-  //front image
-  if(skinId<(uint32_t)skinFolderList.size()) {
-      skin = QtDatapackClientLoader::datapackLoader->getSkinPath(skinFolderList.at(skinId),"back");
+  // front image
+  if (skinId < (uint32_t)skinFolderList.size()) {
+    skin = QtDatapackClientLoader::datapackLoader->getSkinPath(
+        skinFolderList.at(skinId), "back");
+  } else {
+    skin = ":/CC/images/player_default/back.png";
   }
-  skin = ":/CC/images/player_default/back.png";
   return QPixmap(QString::fromStdString(skin));
 }
 
@@ -469,7 +474,8 @@ void Battle::BotFightInitialize(Map_client *map, const uint8_t &x,
                                 const uint8_t &y, const uint16_t &fight_id) {
   if (CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(
           fight_id) ==
-      CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend()) {
+      CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
+          .cend()) {
     // emit error("fight id not found at collision");
     return;
   }
@@ -544,13 +550,15 @@ void Battle::PlayerMonsterInitialize(PlayerMonster *fight_monster) {
         QtDatapackClientLoader::datapackLoader->get_monsterExtra()
             .at(fight_monster->monster)
             .name));
-    Monster::Stat fight_stat = client_->getStat(
-        CommonDatapack::commonDatapack.get_monsters().at(fight_monster->monster),
-        fight_monster->level);
+    Monster::Stat fight_stat =
+        client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
+                             fight_monster->monster),
+                         fight_monster->level);
     player_hp_bar_->SetMaximum(fight_stat.hp);
     player_hp_bar_->SetValue(fight_monster->hp);
     const Monster &monster_info =
-        CommonDatapack::commonDatapack.get_monsters().at(fight_monster->monster);
+        CommonDatapack::commonDatapack.get_monsters().at(
+            fight_monster->monster);
     int level_to_xp = monster_info.level_to_xp.at(fight_monster->level - 1);
     player_exp_bar_->SetMaximum(level_to_xp);
     player_exp_bar_->SetValue(fight_monster->remaining_xp);
@@ -561,35 +569,36 @@ void Battle::PlayerMonsterInitialize(PlayerMonster *fight_monster) {
       while (index < fight_monster->buffs.size()) {
         const PlayerBuff &buff_effect = fight_monster->buffs.at(index);
         auto item = Sprite::Create();
-        if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().find(
-                buff_effect.buff) ==
-            QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().cend()) {
+        if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
+                .find(buff_effect.buff) ==
+            QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
+                .cend()) {
           item->SetToolTip(tr("Unknown buff"));
           item->SetPixmap(QPixmap(":/CC/images/interface/buff.png"));
         } else {
-          item->SetPixmap(
-              QtDatapackClientLoader::datapackLoader->getMonsterBuffExtra(buff_effect.buff)
-                  .icon);
+          item->SetPixmap(QtDatapackClientLoader::datapackLoader
+                              ->getMonsterBuffExtra(buff_effect.buff)
+                              .icon);
           if (buff_effect.level <= 1) {
             item->SetToolTip(QString::fromStdString(
                 QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
                     .at(buff_effect.buff)
                     .name));
           } else {
-            item->SetToolTip(
-                tr("%1 at level %2")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader
-                            ->get_monsterBuffsExtra().at(buff_effect.buff)
-                            .name))
-                    .arg(buff_effect.level));
+            item->SetToolTip(tr("%1 at level %2")
+                                 .arg(QString::fromStdString(
+                                     QtDatapackClientLoader::datapackLoader
+                                         ->get_monsterBuffsExtra()
+                                         .at(buff_effect.buff)
+                                         .name))
+                                 .arg(buff_effect.level));
           }
           item->SetToolTip(
               item->ToolTip() + "\n" +
-              QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .description));
+              QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                         ->get_monsterBuffsExtra()
+                                         .at(buff_effect.buff)
+                                         .description));
         }
         item->SetData(
             99,
@@ -696,34 +705,35 @@ void Battle::updateOtherMonsterInformation() {
       while (index < otherMonster->buffs.size()) {
         const PlayerBuff &buff_effect = otherMonster->buffs.at(index);
         auto item = Sprite::Create();
-        if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().find(
-                buff_effect.buff) ==
-            QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().cend()) {
+        if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
+                .find(buff_effect.buff) ==
+            QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
+                .cend()) {
           item->SetToolTip(tr("Unknown buff"));
           item->SetPixmap(QPixmap(":/CC/images/interface/buff.png"));
         } else {
-          item->SetPixmap(
-              QtDatapackClientLoader::datapackLoader->getMonsterBuffExtra(buff_effect.buff)
-                  .icon);
+          item->SetPixmap(QtDatapackClientLoader::datapackLoader
+                              ->getMonsterBuffExtra(buff_effect.buff)
+                              .icon);
           if (buff_effect.level <= 1)
             item->SetToolTip(QString::fromStdString(
                 QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
                     .at(buff_effect.buff)
                     .name));
           else
-            item->SetToolTip(
-                tr("%1 at level %2")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader
-                            ->get_monsterBuffsExtra().at(buff_effect.buff)
-                            .name))
-                    .arg(buff_effect.level));
+            item->SetToolTip(tr("%1 at level %2")
+                                 .arg(QString::fromStdString(
+                                     QtDatapackClientLoader::datapackLoader
+                                         ->get_monsterBuffsExtra()
+                                         .at(buff_effect.buff)
+                                         .name))
+                                 .arg(buff_effect.level));
           item->SetToolTip(
               item->ToolTip() + "\n" +
-              QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .description));
+              QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                         ->get_monsterBuffsExtra()
+                                         .at(buff_effect.buff)
+                                         .description));
         }
         item->SetData(
             99,
@@ -1194,7 +1204,8 @@ void Battle::doNextAction() {
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
   PublicPlayerMonster *currentMonster = client_->getCurrentMonster();
   if (currentMonster != NULL) {
-    if (CommonDatapack::commonDatapack.get_monsters().find(currentMonster->monster) ==
+    if (CommonDatapack::commonDatapack.get_monsters().find(
+            currentMonster->monster) ==
         CommonDatapack::commonDatapack.get_monsters().cend()) {
       /* emit error(QStringLiteral("Current monster don't exists: %1")
                      .arg(currentMonster->monster)
@@ -1213,7 +1224,8 @@ void Battle::doNextAction() {
   }
   PublicPlayerMonster *otherMonster = client_->getOtherMonster();
   if (otherMonster != NULL) {
-    if (CommonDatapack::commonDatapack.get_monsters().find(otherMonster->monster) ==
+    if (CommonDatapack::commonDatapack.get_monsters().find(
+            otherMonster->monster) ==
         CommonDatapack::commonDatapack.get_monsters().cend()) {
       emit error(QStringLiteral("Current monster don't exists: %1")
                      .arg(otherMonster->monster)
@@ -1283,7 +1295,8 @@ void Battle::UseBagItem(Inventory::ObjectType type, uint16_t item,
     const uint8_t &monsterPosition = client_->getCurrentSelectedMonsterNumber();
     if (client_->useObjectOnMonsterByPosition(item, monsterPosition)) {
       client_->remove_to_inventory({{item, 1}});
-      if (CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(item) !=
+      if (CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(
+              item) !=
           CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()) {
         client_->useObjectOnMonsterByPosition(item, monsterPosition);
         UpdateAttackSkills();
@@ -1303,22 +1316,30 @@ void Battle::UseBagItem(Inventory::ObjectType type, uint16_t item,
 }
 
 void Battle::ConfigureFighters() {
+  auto bounding = BoundingRect();
+
   const auto &informations = client_->player_informations.public_informations;
   playerBackImage = GetBackSkin(informations.skinId);
   playerBackImage = playerBackImage.scaledToHeight(600);
   player_->SetPixmap(playerBackImage);
-  player_->SetPos(-150, 290);
+
+  qreal player_x = bounding.width() * 0.1;
+  qreal player_y = bounding.height() - player_->Height() + 50;
+  qreal enemy_x = bounding.width() - enemy_->Width() - 50;
+  qreal enemy_y = bounding.height() * 0.15;
+
+  player_->SetPos(-playerBackImage.width(), player_y);
   player_->StoreState(kOutScreen);
 
-  player_->SetPos(60, 290);
+  player_->SetPos(bounding.width() * 0.1, player_y);
   player_->StoreState(kReadyForBattle);
 
-  auto move_player = MoveTo::Create(1500, -400, 290);
+  auto move_player = MoveTo::Create(1500, -playerBackImage.width(), player_y);
   player_exit_ = Sequence::Create(
       move_player, CallFunc::Create(std::bind(&Battle::OnPlayerExitDone, this)),
       nullptr);
 
-  enemy_move_exit_ = MoveTo::Create(1500, 1500, 90);
+  enemy_move_exit_ = MoveTo::Create(1500, bounding.width(), enemy_y);
   enemy_exit_ = Sequence::Create(
       enemy_move_exit_,
       CallFunc::Create(std::bind(&Battle::OnEnemyExitDone, this)), nullptr);
@@ -1330,12 +1351,12 @@ void Battle::ConfigureFighters() {
                     nullptr),
       CallFunc::Create([&]() { OnBothActionDone(1); }), nullptr);
 
-  move_player = MoveTo::Create(1500, -400, 290);
+  move_player = MoveTo::Create(1500, -playerBackImage.width(), player_y);
   player_dead_ = Sequence::Create(
       move_player, CallFunc::Create(std::bind(&Battle::OnPlayerDeadDone, this)),
       nullptr);
 
-  enemy_move_dead_ = MoveTo::Create(1500, 1500, 90);
+  enemy_move_dead_ = MoveTo::Create(1500, bounding.width(), enemy_y);
   enemy_dead_ = Sequence::Create(
       enemy_move_dead_,
       CallFunc::Create(std::bind(&Battle::OnEnemyDeadDone, this)), nullptr);
@@ -1347,12 +1368,12 @@ void Battle::ConfigureFighters() {
                     nullptr),
       CallFunc::Create([&]() { OnBothActionDone(2); }), nullptr);
 
-  move_player = MoveTo::Create(1500, 60, 290);
+  move_player = MoveTo::Create(1500, player_x, player_y);
   player_enter_ = Sequence::Create(
       move_player,
       CallFunc::Create(std::bind(&Battle::OnPlayerEnterDone, this)), nullptr);
 
-  enemy_move_enter_ = MoveTo::Create(1500, 910, 90);
+  enemy_move_enter_ = MoveTo::Create(1500, enemy_x, enemy_y);
   enemy_enter_ = Sequence::Create(
       enemy_move_enter_,
       CallFunc::Create(std::bind(&Battle::OnEnemyEnterDone, this)), nullptr);
@@ -1374,10 +1395,10 @@ void Battle::ConfigureFighters() {
       CallFunc::Create(std::bind(&Battle::OnExperienceGainDone, this)),
       nullptr);
 
-  enemy_->SetPos(1500, 90);
+  enemy_->SetPos(bounding.width(), enemy_y);
   enemy_->StoreState(kOutScreen);
 
-  enemy_->SetPos(910, 90);
+  enemy_->SetPos(enemy_x, enemy_y);
   enemy_->StoreState(kReadyForBattle);
 
   enemy_buff_ = UI::ListView::Create(enemy_background_);
@@ -1486,11 +1507,12 @@ void Battle::OnEnemyDeadDone() {
     if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(
             otherMonster->monster) !=
         QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
-      status = tr("The other player call %1")
-                   .arg(QString::fromStdString(
-                       QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                           .at(otherMonster->monster)
-                           .name));
+      status =
+          tr("The other player call %1")
+              .arg(QString::fromStdString(
+                  QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                      .at(otherMonster->monster)
+                      .name));
     else
       status = tr("The other player call %1").arg(tr("(Unknown monster)"));
     ShowStatusMessage(status, false, false);
@@ -1606,19 +1628,19 @@ void Battle::UpdateAttackSkills() {
     if (skill.level > 1)
       item->SetText(
           QStringLiteral("%1, level %2 (remaining endurance: %3)")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(skill.skill)
-                      .name))
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(skill.skill)
+                                              .name))
               .arg(skill.level)
               .arg(skill.endurance));
     else
       item->SetText(
           QStringLiteral("%1 (remaining endurance: %2)")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(skill.skill)
-                      .name))
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(skill.skill)
+                                              .name))
               .arg(skill.endurance));
     item->SetData(kSkillId, skill.skill);
     item->SetData(kSkillEndurance, skill.endurance);
@@ -1629,14 +1651,16 @@ void Battle::UpdateAttackSkills() {
   if (useTheRescueSkill &&
       CommonDatapack::commonDatapack.get_monsterSkills().find(0) !=
           CommonDatapack::commonDatapack.get_monsterSkills().cend()) {
-    if (!CommonDatapack::commonDatapack.get_monsterSkills().at(0).level.empty()) {
+    if (!CommonDatapack::commonDatapack.get_monsterSkills()
+             .at(0)
+             .level.empty()) {
       auto item = CreateSkillButton();
       item->SetText(
           QStringLiteral("Rescue skill: %1")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(0)
-                      .name)));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(0)
+                                              .name)));
       item->SetData(kSkillId, 0);
       player_skills_->AddItem(item);
     }
@@ -1664,11 +1688,12 @@ void Battle::OnMonsterSelect(uint8_t monster_index) {
     player_->SetPixmap(QtDatapackClientLoader::datapackLoader
                            ->getMonsterExtra(playerMonster->monster)
                            .back.scaled(400, 400));
-    ShowStatusMessage(tr("Go %1").arg(QString::fromStdString(
-                          QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                              .at(playerMonster->monster)
-                              .name)),
-                      false, false);
+    ShowStatusMessage(
+        tr("Go %1").arg(QString::fromStdString(
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                .at(playerMonster->monster)
+                .name)),
+        false, false);
   } else {
     ShowStatusMessage(tr("You change of monster"), false, false);
     player_->SetPixmap(QPixmap(":/CC/images/monsters/default/back.png"));
@@ -1739,9 +1764,8 @@ void Battle::StartAttack() {
   {
     uint32_t attack_id = client_->getFirstAttackReturn().attack;
 
-    //static_cast<Animation *>(attack_animation_->ActionAt(0))
-        //->SetFrames(QtDatapackClientLoader::datapackLoader->GetSkillAnimation(
-            //attack_id));
+    static_cast<Animation *>(attack_animation_->ActionAt(0))
+        ->SetFrames(Utils::GetSkillAnimation(attack_id));
   }
 
   if (apply_on_enemy) {
@@ -1892,10 +1916,10 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(other_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(buff_effect.buff)
+                                              .name));
       buff_list = enemy_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = false;
@@ -1905,10 +1929,10 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
         (buff_effect.on & ApplyOn::ApplyOn_Themself)) {
       attack_owner +=
           tr("add the buff %1 on themself")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(buff_effect.buff)
+                                              .name));
       buff_list = player_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = true;
@@ -1923,10 +1947,10 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(current_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(buff_effect.buff)
+                                              .name));
       buff_list = player_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = true;
@@ -1936,10 +1960,10 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
         (buff_effect.on & ApplyOn::ApplyOn_Themself)) {
       attack_owner +=
           tr("add the buff %1 on themself")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(buff_effect.buff)
+                                              .name));
       buff_list = enemy_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = false;
@@ -1968,7 +1992,8 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
     }
     if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().find(
             buff_effect.buff) ==
-        QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra().cend()) {
+        QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
+            .cend()) {
       item->SetToolTip(tr("Unknown buff"));
       item->SetPixmap(QPixmap(":/CC/images/interface/buff.png"));
     } else {
@@ -2051,20 +2076,20 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(other_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(remove_buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(remove_buff_effect.buff)
+                                              .name));
       buff_list = enemy_buff_;
     }
     if ((remove_buff_effect.on & ApplyOn::ApplyOn_AllAlly) ||
         (remove_buff_effect.on & ApplyOn::ApplyOn_Themself)) {
       attack_owner +=
           tr("add the buff %1 on themself")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(remove_buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(remove_buff_effect.buff)
+                                              .name));
       buff_list = player_buff_;
     }
   } else {
@@ -2076,20 +2101,20 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(current_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(remove_buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(remove_buff_effect.buff)
+                                              .name));
       buff_list = player_buff_;
     }
     if ((remove_buff_effect.on & ApplyOn::ApplyOn_AllAlly) ||
         (remove_buff_effect.on & ApplyOn::ApplyOn_Themself)) {
       attack_owner +=
           tr("add the buff %1 on themself")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                      .at(remove_buff_effect.buff)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterBuffsExtra()
+                                              .at(remove_buff_effect.buff)
+                                              .name));
       buff_list = enemy_buff_;
     }
   }
@@ -2166,10 +2191,10 @@ bool Battle::ProcessAttack() {
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(current_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(current_attack.attack)
-                      .name)));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(current_attack.attack)
+                                              .name)));
     else
       ShowStatusMessage(
           tr("The other %1 have failed the attack %2")
@@ -2177,10 +2202,10 @@ bool Battle::ProcessAttack() {
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(other_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(current_attack.attack)
-                      .name)));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(current_attack.attack)
+                                              .name)));
     client_->removeTheFirstAttackReturn();
     return false;
   }
@@ -2194,10 +2219,10 @@ bool Battle::ProcessAttack() {
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(current_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(current_attack.attack)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(current_attack.attack)
+                                              .name));
     else
       attack_owner =
           tr("The other %1 do the attack %2 and ")
@@ -2205,10 +2230,10 @@ bool Battle::ProcessAttack() {
                   QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(other_monster->monster)
                       .name))
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
-                      .at(current_attack.attack)
-                      .name));
+              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader
+                                              ->get_monsterSkillsExtra()
+                                              .at(current_attack.attack)
+                                              .name));
   } else {
     if (current_attack.doByTheCurrentMonster) {
       attack_owner = tr("Your %1").arg(QString::fromStdString(
@@ -2455,12 +2480,13 @@ void Battle::UseTrap(const uint16_t &item_id) {
     trap_->SetSize(100, 100);
   }
 
-  ShowStatusMessage(QStringLiteral("Try catch the wild %1")
-                        .arg(QString::fromStdString(
-                            QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                                .at(client_->getOtherMonster()->monster)
-                                .name)),
-                    false, false);
+  ShowStatusMessage(
+      QStringLiteral("Try catch the wild %1")
+          .arg(QString::fromStdString(
+              QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                  .at(client_->getOtherMonster()->monster)
+                  .name)),
+      false, false);
 
   trap_->SetPos(enemy_->X(), enemy_->Y());
   trap_->SetData(10, item_id);
@@ -2826,15 +2852,17 @@ void Battle::Win() {
   load_monsters();
   switch (battleType) {
     case BattleType_Bot: {
-      if (CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(
-              fightId) ==
-          CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend()) {
+      if (CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
+              .find(fightId) ==
+          CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
+              .cend()) {
         emit error("fight id not found at collision");
         return;
       }
-      auto cash = CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
-                      .at(fightId)
-                      .cash;
+      auto cash =
+          CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
+              .at(fightId)
+              .cash;
       auto information = client_->get_player_informations();
       information.cash += cash;
       client_->addBeatenBotFight(fightId);
@@ -2885,7 +2913,8 @@ void Battle::CheckEvolution() {
           evolution.data.level == monster->level) {
         monsterEvolutionPostion = client_->getPlayerMonsterPosition(monster);
         const Monster &monsterInformationsEvolution =
-            CommonDatapack::commonDatapack.get_monsters().at(evolution.evolveTo);
+            CommonDatapack::commonDatapack.get_monsters().at(
+                evolution.evolveTo);
         const QtDatapackClientLoader::MonsterExtra
             &monsterInformationsEvolutionExtra =
                 QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
@@ -2950,7 +2979,8 @@ void Battle::CheckEvolution() {
       continue;
     }
     const Monster &monsterInformations =
-        CommonDatapack::commonDatapack.get_monsters().at(playerMonster->monster);
+        CommonDatapack::commonDatapack.get_monsters().at(
+            playerMonster->monster);
     const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra =
         QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
             playerMonster->monster);
@@ -2961,7 +2991,8 @@ void Battle::CheckEvolution() {
       if (evolution.type == Monster::EvolutionType_Trade) {
         monsterEvolutionPostion = monsterPosition;
         const Monster &monsterInformationsEvolution =
-            CommonDatapack::commonDatapack.get_monsters().at(evolution.evolveTo);
+            CommonDatapack::commonDatapack.get_monsters().at(
+                evolution.evolveTo);
         const QtDatapackClientLoader::MonsterExtra
             &monsterInformationsEvolutionExtra =
                 QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
@@ -3077,12 +3108,14 @@ void Battle::ProcessEnemyMonsterKO() {
     if (((uint32_t)player_exp_bar_->Value() + last_given_xp) >= max_xp) {
       delta_given_xp_ = last_given_xp - (max_xp - player_exp_bar_->Value());
 
-      const Monster::Stat &old_stat = client_->getStat(
-          CommonDatapack::commonDatapack.get_monsters().at(current_monster->monster),
-          player_monster_lvl_);
-      const Monster::Stat &new_stat = client_->getStat(
-          CommonDatapack::commonDatapack.get_monsters().at(current_monster->monster),
-          player_monster_lvl_ + 1);
+      const Monster::Stat &old_stat =
+          client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
+                               current_monster->monster),
+                           player_monster_lvl_);
+      const Monster::Stat &new_stat =
+          client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
+                               current_monster->monster),
+                           player_monster_lvl_ + 1);
       if (old_stat.hp < new_stat.hp) {
         qDebug()
             << QStringLiteral(
@@ -3163,12 +3196,13 @@ void Battle::ProcessEnemyMonsterKO() {
     emit error("No other monster into doNextAction()");
     return;
   }
-  ShowStatusMessage(tr("The other %1 have lost!")
-                        .arg(QString::fromStdString(
-                            QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                                .at(other_monster->monster)
-                                .name)),
-                    false, false);
+  ShowStatusMessage(
+      tr("The other %1 have lost!")
+          .arg(QString::fromStdString(
+              QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                  .at(other_monster->monster)
+                  .name)),
+      false, false);
   doNextActionStep = DoNextActionStep_Start;
   // current player monster is KO
   enemy_->RunAction(enemy_dead_);
@@ -3178,9 +3212,9 @@ void Battle::OnExperienceIncrementDone() {
   // If the monster levels up
   if (player_exp_bar_->Value() == player_exp_bar_->Maximum()) {
     auto current_monster = client_->getCurrentMonster();
-    player_exp_bar_->SetMaximum(
-        CommonDatapack::commonDatapack.get_monsters().at(current_monster->monster)
-            .level_to_xp.at(player_monster_lvl_ - 1));
+    player_exp_bar_->SetMaximum(CommonDatapack::commonDatapack.get_monsters()
+                                    .at(current_monster->monster)
+                                    .level_to_xp.at(player_monster_lvl_ - 1));
     player_exp_bar_->SetValue(0);
     qDebug() << "Delta exp: " << delta_given_xp_;
     if (delta_given_xp_ > 0) {
@@ -3213,11 +3247,12 @@ void Battle::OnBothActionDone(int8_t type) {
       QString text;
       PublicPlayerMonster *otherMonster = client_->getOtherMonster();
       if (otherMonster != NULL) {
-        text += tr("The other player call %1!")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                            .at(otherMonster->monster)
-                            .name));
+        text +=
+            tr("The other player call %1!")
+                .arg(QString::fromStdString(
+                    QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                        .at(otherMonster->monster)
+                        .name));
       } else {
         PrintError(__FILE__, __LINE__, "NULL pointer for current monster");
         text += tr("The other player call %1!").arg("(Unknow monster)");
@@ -3225,11 +3260,12 @@ void Battle::OnBothActionDone(int8_t type) {
       text += "\n";
       PublicPlayerMonster *monster = client_->getCurrentMonster();
       if (monster != NULL) {
-        text += tr("You call %1!")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                            .at(monster->monster)
-                            .name));
+        text +=
+            tr("You call %1!")
+                .arg(QString::fromStdString(
+                    QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+                        .at(monster->monster)
+                        .name));
       } else {
         PrintError(__FILE__, __LINE__, "NULL pointer for current monster");
         text += tr("You call %1!").arg("(Unknow monster)");
@@ -3267,12 +3303,14 @@ void Battle::BotFightFullDiffered() {
   enemy_background_->SetVisible(false);
   player_->SetVisible(true);
   enemy_->SetVisible(true);
-  ShowStatusMessage(
-      QtDatapackClientLoader::datapackLoader->get_botFightsExtra().at(fightId).start,
-      false, false);
+  ShowStatusMessage(QtDatapackClientLoader::datapackLoader->get_botFightsExtra()
+                        .at(fightId)
+                        .start,
+                    false, false);
   std::vector<PlayerMonster> botFightMonstersTransformed;
   const std::vector<BotFight::BotFightMonster> &monsters =
-      CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId)
+      CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights()
+          .at(fightId)
           .monsters;
   unsigned int index = 0;
   while (index < monsters.size()) {
@@ -3280,9 +3318,9 @@ void Battle::BotFightFullDiffered() {
     botFightMonstersTransformed.push_back(
         FacilityLib::botFightMonsterToPlayerMonster(
             monsters.at(index),
-            client_->getStat(
-                CommonDatapack::commonDatapack.get_monsters().at(botFightMonster.id),
-                monsters.at(index).level)));
+            client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
+                                 botFightMonster.id),
+                             monsters.at(index).level)));
     index++;
   }
   client_->setBotMonster(botFightMonstersTransformed, fightId);

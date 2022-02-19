@@ -11,7 +11,7 @@ private:
     explicit Options();
     ~Options();
 public:
-    static Options options;
+    static Options* GetInstance();
     void loadVar();
     uint16_t getFPS() const;
     bool getLimitedFPS() const;
@@ -45,6 +45,7 @@ private:
     std::string language;
     int indexDevice;
     QStringList devices;
+    static Options* instance_;
 };
 
 #endif // OPTIONS_H

@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
   if (Settings::settings->contains("language"))
     Language::language.setLanguage(
         Settings::settings->value("language").toString());
-  Options::options.loadVar();
+  Options::GetInstance()->loadVar();
 
   // ScreenTransition s;
   SceneManager *s = SceneManager::GetInstance();
