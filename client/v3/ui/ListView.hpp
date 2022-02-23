@@ -17,6 +17,7 @@ class ListView : public Node {
   void AddItem(Node *node);
   void AddItems(std::vector<Node *> nodes);
   Node *GetItem(uint8_t index);
+  void RemoveItem(Node *node);
   void RemoveItem(uint8_t index);
   uint8_t Count();
   Node *GetSelectedItem();

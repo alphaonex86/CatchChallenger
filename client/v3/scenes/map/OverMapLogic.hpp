@@ -11,6 +11,7 @@
 #include "../shared/shop/Shop.hpp"
 #include "../shared/learn/Learn.hpp"
 #include "../shared/warehouse/Warehouse.hpp"
+#include "../shared/industry/Industry.hpp"
 #include "../shared/crafting/Crafting.hpp"
 #include "OverMap.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
@@ -165,18 +166,6 @@ class OverMapLogic : public OverMap {
   // void load_inventory();
   // void on_inventory_itemActivated(QListWidgetItem *item);
   void objectUsed(const CatchChallenger::ObjectUsage &objectUsage);
-  // factory
-  void updateFactoryStatProduction(
-      const CatchChallenger::IndustryStatus &industryStatus,
-      const CatchChallenger::Industry &industry);
-  void haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,
-                            const uint32_t &newPrice);
-  void haveSellFactoryObject(const CatchChallenger::SoldStat &stat,
-                             const uint32_t &newPrice);
-  void haveFactoryList(
-      const uint32_t &remainingProductionTime,
-      const std::vector<CatchChallenger::ItemToSellOrBuy> &resources,
-      const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
   // plant
   void insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y,
                     const uint8_t &plant_id, const uint16_t &seconds_to_mature);
@@ -293,7 +282,6 @@ class OverMapLogic : public OverMap {
 
   // industry
   uint16_t factoryId;
-  CatchChallenger::IndustryStatus industryStatus;
   bool factoryInProduction;
   // bot
   CatchChallenger::Bot actualBot;
@@ -319,6 +307,7 @@ class OverMapLogic : public OverMap {
   std::vector<uint32_t> monster_to_deposit, monster_to_withdraw;
 
   Warehouse *warehouse_;
+  Industry *industry_;
 
   OverMapLogic();
   void OnInventoryNav(std::string id);

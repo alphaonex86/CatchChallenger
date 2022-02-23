@@ -15,52 +15,59 @@
 #include "IndustryItem.hpp"
 
 namespace Scenes {
-class Industry : public UI::Dialog {
- public:
-  static Industry *Create();
-  ~Industry();
+class Industry : public QObject, public UI::Dialog {
+    Q_OBJECT
+   public:
+    static Industry *Create();
+    ~Industry();
 
-  void OnEnter() override;
-  void OnExit() override;
-  void OnScreenResize() override;
+    void OnEnter() override;
+    void OnExit() override;
+    void OnScreenResize() override;
 
-  void SetOnTransactionFinish(std::function<void()> callback);
+    void SetBot(const CatchChallenger::Bot &bot, uint16_t industry_id);
 
- private:
-  UI::Label *player_name_;
-  UI::Label *storage_name_;
-  UI::Combo *mode_;
-  UI::Button *move_right_;
-  UI::Button *move_left_;
-  UI::Button *accept_;
-  UI::GridView *inventory_content_;
-  UI::GridView *storage_content_;
-  UI::Label *player_cash_;
-  UI::Label *storage_cash_;
-  std::function<void()> on_transaction_finish_;
-  ConnectionManager *connexionManager;
-  Node *selected_item_;
+   private:
+    Sprite *npc_icon_;
 
-  int64_t temp_cash_;
-  int8_t current_mode_;
-  std::unordered_map<uint16_t, int32_t> temp_items_;
-  std::vector<uint8_t> temp_monster_withdraw_;
-  std::vector<uint8_t> temp_monster_deposit_;
+    UI::Label *products_title_;
+    UI::ListView *products_content_;
+    UI::Button *products_buy_;
 
-  Industry();
-  void OnItemClick(Node *node);
-  void OnModeChange(uint8_t index);
-  void OnAcceptClick();
-  void UpdateContent();
-  void OnWithdraw();
-  void OnWithdrawDelayed(const QString &value);
-  void OnDeposit();
-  void OnDepositDelayed(const QString &value);
-  IndustryItem *ItemToItem(const uint16_t &item_id, const uint32_t &quantity);
-  IndustryItem *ItemToMonster(const uint32_t &monster_id,
-                               const uint16_t &monster,
-                               const uint32_t &quantity);
-  std::vector<CatchChallenger::PlayerMonster> MonstersWithdrawed() const;
+    UI::Label *resources_title_;
+    UI::ListView *resources_content_;
+    UI::Button *resources_sell_;
+
+    Node *selected_product_;
+    Node *selected_resource_;
+
+    uint16_t industry_id_;
+    CatchChallenger::IndustryStatus industryStatus;
+
+    std::vector<CatchChallenger::ItemToSellOrBuy> items_sold_;
+    std::vector<CatchChallenger::ItemToSellOrBuy> items_bought_;
+
+    bool factoryInProduction;
+
+    Industry();
+    void OnProductClick(Node *node);
+    void OnResourceClick(Node *node);
+    void OnBuyClick();
+    void OnSellClick();
+    void UpdateContent();
+    void TranslateLabels();
+
+    void UpdateFactoryStatProduction(
+        const CatchChallenger::IndustryStatus &industryStatus,
+        const CatchChallenger::Industry &industry);
+    void HaveFactoryListSlot(
+        const uint32_t &remainingProductionTime,
+        const std::vector<CatchChallenger::ItemToSellOrBuy> &resources,
+        const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
+    void HaveBuyFactoryObjectSlot(const CatchChallenger::BuyStat &stat,
+                                  const uint32_t &newPrice);
+    void HaveSellFactoryObjectSlot(const CatchChallenger::SoldStat &stat,
+                                   const uint32_t &newPrice);
 };
 }  // namespace Scenes
 #endif  // CLIENT_V3_SCENES_SHARED_INDUSTRY_INDUSTRY_HPP_

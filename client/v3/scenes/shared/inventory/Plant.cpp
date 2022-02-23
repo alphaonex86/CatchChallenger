@@ -119,7 +119,7 @@ void Plant::UnRegisterEvents() {
 
 void Plant::Draw(QPainter *painter) {
   if (lastItemSelected == -1) return;
-  int plant_id = lastItemSelected;
+  int item_id = lastItemSelected;
 
   auto icon = Sprite::Create();
   auto text = UI::Label::Create();
@@ -128,15 +128,17 @@ void Plant::Draw(QPainter *painter) {
   int y_offset = 10;
 
   const DatapackClientLoader::ItemExtra &itemExtra =
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant_id);
-  const QtDatapackClientLoader::QtPlantExtra &contentExtra =
-      QtDatapackClientLoader::datapackLoader->getPlantExtra(plant_id);
+      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id);
+  const uint8_t plant_id =
+      QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(item_id);
   const CatchChallenger::Plant &plant =
       CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant_id);
+  const QtDatapackClientLoader::QtPlantExtra &contentExtra =
+      QtDatapackClientLoader::datapackLoader->getPlantExtra(plant_id);
 
   const int icon_size = 64;
 
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(plant_id) !=
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) !=
       QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
     text->SetPixelSize(14);
     text->SetPos(x_offset, y_offset);

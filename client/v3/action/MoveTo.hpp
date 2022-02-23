@@ -26,6 +26,9 @@ class MoveTo : public Action {
   int timeout_;
   int ellapsed_;
 
+  bool finish_x_;
+  bool finish_y_;
+
   MoveTo();
   void CalculateDelta();
 };

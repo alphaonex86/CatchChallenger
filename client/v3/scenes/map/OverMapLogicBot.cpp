@@ -304,30 +304,12 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
       showTip(tr("The factory is not found").toStdString());
       return;
     }
-    std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
-              << "industry" << std::endl;
-    // TODO(lanstat): Verify in refineer on Megalopolis
-    /*ui->factoryResources->clear();
-    ui->factoryProducts->clear();
-    ui->factoryStatus->setText(tr("Waiting of status"));
-    if(actualBot.properties.find("skin")!=actualBot.properties.cend())
-    {
-        QPixmap
-    skin=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
-        if(!skin.isNull())
-        {
-            ui->factoryBotImage->setPixmap(skin.scaled(80,80));
-            ui->factoryBotImage->setVisible(true);
-        }
-        else
-            ui->factoryBotImage->setVisible(false);
+    if (industry_ == nullptr) {
+      industry_ = Industry::Create();
     }
-    else
-        ui->factoryBotImage->setVisible(false);
-    ui->stackedWidget->setCurrentWidget(ui->page_factory);
-    connexionManager->client->getFactoryList(factoryId);
-    return;*/
-    abort();
+    AddChild(industry_);
+    industry_->SetBot(actualBot, factoryId);
+    return;
   } else if (strcmp(stepXml->Attribute("type"), "zonecapture") == 0) {
     if (stepXml->Attribute("zone") == NULL) {
       showTip(tr("Missing attribute for the step").toStdString());

@@ -22,8 +22,10 @@
 #include "../../core/SceneManager.hpp"
 #include "../../entities/Utils.hpp"
 #include "../shared/inventory/MonsterBag.hpp"
+#include "BattleActions.hpp"
 
 using Scenes::Battle;
+using Scenes::BattleActions;
 using namespace CatchChallenger;
 using CatchChallenger::PublicPlayerMonster;
 using std::placeholders::_1;
@@ -2470,10 +2472,10 @@ void Battle::UseTrap(const uint16_t &item_id) {
 
   if (trap_ == nullptr) {
     trap_ = Sprite::Create(this);
-    trap_->TestMode();
-    trap_throw_ = Sequence::Create(
-        Delay::Create(1500),
-        CallFunc::Create(std::bind(&Battle::OnTrapThrowDone, this)), nullptr);
+    trap_->SetPos(0, BoundingRect().height());
+    trap_->SetPixmap(QtDatapackClientLoader::datapackLoader->getItemExtra(item_id).image);
+    trap_throw_ = BattleActions::CreateThrowAction(
+        trap_, enemy_, std::bind(&Battle::OnTrapThrowDone, this));
     trap_catch_ = Sequence::Create(
         Delay::Create(1000),
         CallFunc::Create(std::bind(&Battle::OnTrapCatchDone, this)), nullptr);
@@ -2488,13 +2490,13 @@ void Battle::UseTrap(const uint16_t &item_id) {
                   .name)),
       false, false);
 
-  trap_->SetPos(enemy_->X(), enemy_->Y());
   trap_->SetData(10, item_id);
   trap_->SetVisible(true);
   trap_->RunAction(trap_throw_);
 }
 
 void Battle::OnTrapThrowDone() {
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
   auto other_monster = client_->getOtherMonster();
   auto current_monster = client_->getCurrentMonster();
   if (other_monster == NULL) {

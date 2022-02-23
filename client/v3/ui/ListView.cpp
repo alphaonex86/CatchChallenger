@@ -93,6 +93,17 @@ void ListView::RemoveItem(uint8_t index) {
   ReDraw();
 }
 
+void ListView::RemoveItem(Node *node) {
+  uint8_t index = 0;
+  for (auto item : items_) {
+    if (item == node) {
+      RemoveItem(index);
+      break;
+    }
+    index++;
+  }
+}
+
 Node *ListView::GetSelectedItem() { return selected_item_; }
 
 std::vector<Node *> ListView::Items() { return items_; }

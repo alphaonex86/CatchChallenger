@@ -66,6 +66,7 @@ SOURCES += \
     $$PWD/MyApplication.cpp \
     $$PWD/scenes/ParallaxForest.cpp \
     $$PWD/scenes/battle/Battle.cpp \
+    $$PWD/scenes/battle/BattleActions.cpp \
     $$PWD/scenes/map/CCMap.cpp \
     $$PWD/scenes/map/Map.cpp \
     $$PWD/scenes/map/MapMonsterPreview.cpp \
@@ -74,7 +75,6 @@ SOURCES += \
     $$PWD/scenes/map/OverMapLogic.cpp \
     $$PWD/scenes/map/OverMapLogicBot.cpp \
     $$PWD/scenes/map/OverMapLogicClan.cpp \
-    $$PWD/scenes/map/OverMapLogicFactory.cpp \
     $$PWD/scenes/map/OverMapLogicTrade.cpp \
     $$PWD/scenes/map/PlayerPortrait.cpp \
     $$PWD/scenes/map/Tip.cpp \
@@ -100,6 +100,8 @@ SOURCES += \
     $$PWD/scenes/shared/learn/Learn.cpp \
     $$PWD/scenes/shared/warehouse/Warehouse.cpp \
     $$PWD/scenes/shared/warehouse/WarehouseItem.cpp \
+    $$PWD/scenes/shared/industry/Industry.cpp \
+    $$PWD/scenes/shared/industry/IndustryItem.cpp \
     $$PWD/scenes/shared/chat/Chat.cpp \
     $$PWD/scenes/test/Test.cpp \
     $$PWD/scenes/test/TestItem.cpp \
@@ -169,6 +171,7 @@ HEADERS  += \
     $$PWD/MyApplication.h \
     $$PWD/scenes/ParallaxForest.hpp \
     $$PWD/scenes/battle/Battle.hpp \
+    $$PWD/scenes/battle/BattleActions.hpp \
     $$PWD/scenes/map/Map.hpp \
     $$PWD/scenes/map/CCMap.hpp \
     $$PWD/scenes/map/MapMonsterPreview.hpp \
@@ -199,6 +202,8 @@ HEADERS  += \
     $$PWD/scenes/shared/learn/Learn.hpp \
     $$PWD/scenes/shared/warehouse/Warehouse.hpp \
     $$PWD/scenes/shared/warehouse/WarehouseItem.hpp \
+    $$PWD/scenes/shared/industry/Industry.hpp \
+    $$PWD/scenes/shared/industry/IndustryItem.hpp \
     $$PWD/scenes/shared/chat/Chat.hpp \
     $$PWD/scenes/test/Test.hpp \
     $$PWD/scenes/test/TestItem.hpp \

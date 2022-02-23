@@ -30,6 +30,8 @@ MoveTo::~MoveTo() { Action::~Action(); }
 
 void MoveTo::Start() {
   ellapsed_ = 0;
+  finish_x_ = false;
+  finish_y_ = false;
   CalculateDelta();
   done_ = false;
 }
@@ -47,13 +49,21 @@ void MoveTo::Step(unsigned int ellapsed) {
   ellapsed_ += ellapsed;
   if (ellapsed_ >= timeout_) {
     ellapsed_ = 0;
-    if (std::abs(node_->X() - end_x_) > std::abs(delta_x_) ||
-        std::abs(node_->Y() - end_y_) > std::abs(delta_y_)) {
-      if (delta_x_ != 0) node_->SetX(node_->X() + delta_x_);
-      if (delta_y_ != 0) node_->SetY(node_->Y() + delta_y_);
-    } else {
+
+    if (std::abs(node_->X() - end_x_) <= std::abs(delta_x_)) {
+      finish_x_ = true;
+    }
+
+    if (std::abs(node_->Y() - end_y_) <= std::abs(delta_y_)) {
+      finish_y_ = true;
+    }
+
+    if (finish_x_ && finish_y_) {
       node_->SetPos(end_x_, end_y_);
       OnFinish();
+    } else {
+      if (!finish_x_ && delta_x_ != 0) node_->SetX(node_->X() + delta_x_);
+      if (!finish_y_ && delta_y_ != 0) node_->SetY(node_->Y() + delta_y_);
     }
   }
 }

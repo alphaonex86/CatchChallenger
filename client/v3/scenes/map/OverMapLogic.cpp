@@ -45,6 +45,7 @@ OverMapLogic::OverMapLogic() : OverMap() {
   warehouse_ = nullptr;
   crafting_ = nullptr;
   learn_ = nullptr;
+  industry_ = nullptr; 
 
   npc_talk_->SetOnItemClick(
       std::bind(&OverMapLogic::IG_dialog_text_linkActivated, this, _1));
@@ -346,19 +347,6 @@ void OverMapLogic::connectAllSignals() {
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtobjectUsed, this,
                &OverMapLogic::objectUsed))
-    abort();
-  // factory
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QthaveFactoryList, this,
-               &OverMapLogic::haveFactoryList))
-    abort();
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QthaveSellFactoryObject, this,
-               &OverMapLogic::haveSellFactoryObject))
-    abort();
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QthaveBuyFactoryObject, this,
-               &OverMapLogic::haveBuyFactoryObject))
     abort();
   /*//battle
   if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtbattleRequested,

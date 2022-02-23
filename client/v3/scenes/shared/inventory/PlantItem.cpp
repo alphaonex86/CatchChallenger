@@ -30,14 +30,11 @@ void PlantItem::DrawContent(QPainter *painter) {
   auto icon = Sprite::Create();
   auto text = UI::Label::Create();
 
-  const DatapackClientLoader::ItemExtra &itemExtra =
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant_id_);
-  const QtDatapackClientLoader::QtPlantExtra &contentExtra =
-      QtDatapackClientLoader::datapackLoader->getPlantExtra(plant_id_);
-  const CatchChallenger::Plant &plant =
-      CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant_id_);
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(plant_id_) !=
+  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+          plant_id_) !=
       QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+    const DatapackClientLoader::ItemExtra &itemExtra =
+        QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant_id_);
     QPixmap p =
         QtDatapackClientLoader::datapackLoader->getItemExtra(plant_id_).image;
     p = p.scaledToWidth(p.width() * 2);
