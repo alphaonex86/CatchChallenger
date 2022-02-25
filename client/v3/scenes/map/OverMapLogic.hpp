@@ -7,12 +7,13 @@
 #include "../../entities/Map_client.hpp"
 #include "../../entities/render/MapVisualiserPlayer.hpp"
 #include "../../ui/LinkedDialog.hpp"
-#include "../shared/inventory/Inventory.hpp"
-#include "../shared/shop/Shop.hpp"
-#include "../shared/learn/Learn.hpp"
-#include "../shared/warehouse/Warehouse.hpp"
-#include "../shared/industry/Industry.hpp"
 #include "../shared/crafting/Crafting.hpp"
+#include "../shared/industry/Industry.hpp"
+#include "../shared/inventory/Inventory.hpp"
+#include "../shared/learn/Learn.hpp"
+#include "../shared/shop/Shop.hpp"
+#include "../shared/warehouse/Warehouse.hpp"
+#include "../shared/zonecatch/ZoneCatch.hpp"
 #include "OverMap.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
@@ -126,21 +127,14 @@ class OverMapLogic : public OverMap {
   void ClanInviteSlot(const uint32_t &clan_id, const std::string &name);
 
   // city
-  void cityCapture(const uint32_t &remainingTime, const uint8_t &type);
-  void cityCaptureUpdateTime();
-  void updatePageZoneCatch();
-  void on_zonecaptureCancel_clicked();
-  void captureCityYourAreNotLeader();
-  void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone);
-  void captureCityPreviousNotFinished();
-  void captureCityStartBattle(const uint16_t &player_count,
-                              const uint16_t &clan_count);
-  void captureCityStartBotFight(const uint16_t &player_count,
-                                const uint16_t &clan_count,
-                                const uint16_t &fightId);
-  void captureCityDelayedStart(const uint16_t &player_count,
-                               const uint16_t &clan_count);
-  void captureCityWin();
+  void CaptureCityYourAreNotLeaderSlot();
+  void CaptureCityYourLeaderHaveStartInOtherCitySlot(const std::string &zone);
+  void CaptureCityPreviousNotFinishedSlot();
+  void CaptureCityStartBotFightSlot(const uint16_t &player_count,
+                                    const uint16_t &clan_count,
+                                    const uint16_t &fightId);
+  void CaptureCityWinSlot();
+
   // inventory
   // void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items,
   // const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
@@ -288,15 +282,11 @@ class OverMapLogic : public OverMap {
   // quest
   bool isInQuest;
   uint16_t questId;
-  // city
-  QTimer nextCityCatchTimer;
-  CatchChallenger::City city;
-  QTimer updater_page_zonecatch;
-  QDateTime nextCatch, nextCatchOnScreen;
-  std::string zonecatchName;
-  bool zonecatch;
+
   // shop
   Shop *shop_;
+
+  std::string zonecatchName;
 
   // learn
   Learn *learn_;
@@ -308,6 +298,7 @@ class OverMapLogic : public OverMap {
 
   Warehouse *warehouse_;
   Industry *industry_;
+  ZoneCatch *zonecatch_;
 
   OverMapLogic();
   void OnInventoryNav(std::string id);

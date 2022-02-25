@@ -102,6 +102,7 @@ SOURCES += \
     $$PWD/scenes/shared/warehouse/WarehouseItem.cpp \
     $$PWD/scenes/shared/industry/Industry.cpp \
     $$PWD/scenes/shared/industry/IndustryItem.cpp \
+    $$PWD/scenes/shared/zonecatch/ZoneCatch.cpp \
     $$PWD/scenes/shared/chat/Chat.cpp \
     $$PWD/scenes/test/Test.cpp \
     $$PWD/scenes/test/TestItem.cpp \
@@ -204,6 +205,7 @@ HEADERS  += \
     $$PWD/scenes/shared/warehouse/WarehouseItem.hpp \
     $$PWD/scenes/shared/industry/Industry.hpp \
     $$PWD/scenes/shared/industry/IndustryItem.hpp \
+    $$PWD/scenes/shared/zonecatch/ZoneCatch.hpp \
     $$PWD/scenes/shared/chat/Chat.hpp \
     $$PWD/scenes/test/Test.hpp \
     $$PWD/scenes/test/TestItem.hpp \

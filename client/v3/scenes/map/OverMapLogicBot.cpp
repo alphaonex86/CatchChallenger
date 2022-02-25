@@ -311,6 +311,10 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
     industry_->SetBot(actualBot, factoryId);
     return;
   } else if (strcmp(stepXml->Attribute("type"), "zonecapture") == 0) {
+    if (zonecatch_ == nullptr) {
+      zonecatch_ = ZoneCatch::Create();
+    }
+
     if (stepXml->Attribute("zone") == NULL) {
       showTip(tr("Missing attribute for the step").toStdString());
       return;
@@ -320,32 +324,15 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
           tr("You can't try capture if you are not in a clan").toStdString());
       return;
     }
-    if (!nextCityCatchTimer.isActive()) {
+    if (!zonecatch_->IsNextCityCatchActive()) {
       showTip(tr("City capture disabled").toStdString());
       return;
     }
+
     const std::string zone = stepXml->Attribute("zone");
-    /*
-    if(QtDatapackClientLoader::datapackLoader->zonesExtra.find(zone)!=QtDatapackClientLoader::datapackLoader->zonesExtra.cend())
-    {
-        zonecatchName=QtDatapackClientLoader::datapackLoader->zonesExtra.at(zone).name;
-        ui->zonecaptureWaitText->setText(tr("You are waiting to capture
-    %1").arg(QString("<b>%1</b>").arg(QString::fromStdString(zonecatchName))));
-    }
-    else
-    {
-        zonecatchName.clear();
-        ui->zonecaptureWaitText->setText(tr("You are waiting to capture a
-    zone"));
-    }
-    updater_page_zonecatch.start(1000);
-    nextCatchOnScreen=nextCatch;
-    zonecatch=true;
-    ui->stackedWidget->setCurrentWidget(ui->page_zonecatch);
-    connexionManager->client->waitingForCityCapture(false);
-    updatePageZoneCatch();
-    return;*/
-    abort();
+    AddChild(zonecatch_);
+    zonecatch_->SetZone(zone);
+    zonecatchName = zonecatch_->GetZoneName();
   } else if (strcmp(stepXml->Attribute("type"), "fight") == 0) {
     if (stepXml->Attribute("fightid") == NULL) {
       showTip(tr("Bot step missing data error, repport this error please")

@@ -43,9 +43,10 @@ OverMapLogic::OverMapLogic() : OverMap() {
 
   shop_ = nullptr;
   warehouse_ = nullptr;
+  zonecatch_ = nullptr;
   crafting_ = nullptr;
   learn_ = nullptr;
-  industry_ = nullptr; 
+  industry_ = nullptr;
 
   npc_talk_->SetOnItemClick(
       std::bind(&OverMapLogic::IG_dialog_text_linkActivated, this, _1));
@@ -54,12 +55,6 @@ OverMapLogic::OverMapLogic() : OverMap() {
     abort();
   if (!connect(&gain_timeout, &QTimer::timeout, this,
                &OverMapLogic::gainTimeout))
-    abort();
-  if (!connect(&nextCityCatchTimer, &QTimer::timeout, this,
-               &OverMapLogic::cityCaptureUpdateTime))
-    abort();
-  if (!connect(&updater_page_zonecatch, &QTimer::timeout, this,
-               &OverMapLogic::updatePageZoneCatch))
     abort();
 }
 
@@ -135,13 +130,7 @@ void OverMapLogic::resetAll() {
   questId = 0;
   clanName.clear();
   haveClanInformations = false;
-  city.capture.day = CatchChallenger::City::Capture::Day::Monday;
-  city.capture.frenquency =
-      CatchChallenger::City::Capture::Frequency::Frequency_week;
-  city.capture.hour = 0;
-  city.capture.minute = 0;
   zonecatchName.clear();
-  zonecatch = false;
   tempQuantityForSell = 0;
   waitToSell = false;
   objectInUsing.clear();
@@ -243,46 +232,28 @@ void OverMapLogic::connectAllSignals() {
                &OverMapLogic::ClanInviteSlot, Qt::UniqueConnection))
     abort();
 
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QtcityCapture, this,
-               &OverMapLogic::cityCapture, Qt::UniqueConnection))
-    abort();
-
+  // Signal city capture
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtcaptureCityYourAreNotLeader,
-               this, &OverMapLogic::captureCityYourAreNotLeader,
-               Qt::UniqueConnection))
+               this, &OverMapLogic::CaptureCityYourAreNotLeaderSlot))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::
                    QtcaptureCityYourLeaderHaveStartInOtherCity,
-               this, &OverMapLogic::captureCityYourLeaderHaveStartInOtherCity,
-               Qt::UniqueConnection))
+               this, &OverMapLogic::CaptureCityYourLeaderHaveStartInOtherCitySlot))
     abort();
   if (!connect(
           connexionManager->client,
           &CatchChallenger::Api_client_real::QtcaptureCityPreviousNotFinished,
-          this, &OverMapLogic::captureCityPreviousNotFinished,
-          Qt::UniqueConnection))
-    abort();
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QtcaptureCityStartBattle,
-               this, &OverMapLogic::captureCityStartBattle,
-               Qt::UniqueConnection))
+          this, &OverMapLogic::CaptureCityPreviousNotFinishedSlot))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtcaptureCityStartBotFight,
-               this, &OverMapLogic::captureCityStartBotFight,
-               Qt::UniqueConnection))
-    abort();
-  if (!connect(connexionManager->client,
-               &CatchChallenger::Api_client_real::QtcaptureCityDelayedStart,
-               this, &OverMapLogic::captureCityDelayedStart,
-               Qt::UniqueConnection))
+               this, &OverMapLogic::CaptureCityStartBotFightSlot))
     abort();
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::QtcaptureCityWin, this,
-               &OverMapLogic::captureCityWin, Qt::UniqueConnection))
+               &OverMapLogic::CaptureCityWinSlot))
     abort();
 
   // inventory
@@ -479,12 +450,13 @@ void OverMapLogic::actionOnNothing() { RemoveChild(npc_talk_); }
 
 int32_t OverMapLogic::havePlant(CatchChallenger::Map_client *map, uint8_t x,
                                 uint8_t y) const {
-  if (QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file) ==
+  if (QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(
+          map->map_file) ==
       QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
     return -1;
   const std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t, pairhash>
-      &plant =
-          QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
+      &plant = QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(
+          map->map_file);
   if (plant.find(std::pair<uint8_t, uint8_t>(x, y)) == plant.cend()) return -1;
   unsigned int index = 0;
   while (index < map->plantList.size()) {
@@ -895,7 +867,8 @@ void OverMapLogic::currentMapLoaded() {
         }
       }
     // general sound
-    if (QtDatapackClientLoader::datapackLoader->get_audioAmbiance().find(type) !=
+    if (QtDatapackClientLoader::datapackLoader->get_audioAmbiance().find(
+            type) !=
         QtDatapackClientLoader::datapackLoader->get_audioAmbiance().cend()) {
       const std::string &backgroundsound =
           QtDatapackClientLoader::datapackLoader->get_audioAmbiance().at(type);
@@ -933,8 +906,10 @@ void OverMapLogic::currentMapLoaded() {
   {
     if (visualCategory != type) {
       visualCategory = type;
-      if (QtDatapackClientLoader::datapackLoader->get_visualCategories().find(type) !=
-          QtDatapackClientLoader::datapackLoader->get_visualCategories().cend()) {
+      if (QtDatapackClientLoader::datapackLoader->get_visualCategories().find(
+              type) !=
+          QtDatapackClientLoader::datapackLoader->get_visualCategories()
+              .cend()) {
         const std::vector<
             QtDatapackClientLoader::VisualCategory::VisualCategoryCondition>
             &conditions =
@@ -964,7 +939,8 @@ void OverMapLogic::currentMapLoaded() {
         }
         if (index == conditions.size()) {
           QtDatapackClientLoader::CCColor defaultColor =
-              QtDatapackClientLoader::datapackLoader->get_visualCategories().at(type)
+              QtDatapackClientLoader::datapackLoader->get_visualCategories()
+                  .at(type)
                   .defaultColor;
           ccmap->mapController.setColor(QColor(defaultColor.r, defaultColor.g,
                                                defaultColor.b, defaultColor.a),
@@ -1132,132 +1108,6 @@ pseudo"),tr("Player pseudo to invite:"),QLineEdit::Normal,QString(),
     }
 }*/
 
-void OverMapLogic::cityCaptureUpdateTime() {
-  if (city.capture.frenquency == CatchChallenger::City::Capture::Frequency_week)
-    nextCatch = QDateTime::fromMSecsSinceEpoch(
-        QDateTime::currentMSecsSinceEpoch() + 24 * 3600 * 7 * 1000);
-  else
-    nextCatch = QDateTime::fromMSecsSinceEpoch(
-        CatchChallenger::FacilityLib::nextCaptureTime(city));
-  nextCityCatchTimer.start(static_cast<uint32_t>(
-      nextCatch.toMSecsSinceEpoch() - QDateTime::currentMSecsSinceEpoch()));
-}
-
-void OverMapLogic::updatePageZoneCatch() {
-  /// \todo do into above dialog
-  /*    if(QDateTime::currentMSecsSinceEpoch()<nextCatchOnScreen.toMSecsSinceEpoch())
-      {
-          int
-     sec=static_cast<uint32_t>(nextCatchOnScreen.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch())/1000+1;
-          std::string timeText;
-          if(sec>3600*24*365*50)
-              timeText="Time player: bug";
-          else
-              timeText=CatchChallenger::FacilityLibClient::timeToString(sec);
-          ui->zonecaptureWaitTime->setText(tr("Remaining time: %1")
-                                           .arg(QStringLiteral("<b>%1</b>")
-                                           .arg(QString::fromStdString(timeText)))
-                                           );
-          ui->zonecaptureCancel->setVisible(true);
-      }
-      else
-      {
-          ui->zonecaptureCancel->setVisible(false);
-          ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting of players
-     list")+"</i>"); updater_page_zonecatch.stop();
-      }*/
-}
-
-void OverMapLogic::on_zonecaptureCancel_clicked() {
-  // return of updatePageZoneCatch()
-  updater_page_zonecatch.stop();
-  /*    ui->stackedWidget->setCurrentWidget(ui->page_map);
-      client->waitingForCityCapture(true);*/
-  zonecatch = false;
-}
-
-void OverMapLogic::captureCityYourAreNotLeader() {
-  updater_page_zonecatch.stop();
-  /// \todo close dialog into updatePageZoneCatch()
-  // ui->stackedWidget->setCurrentWidget(ui->page_map);
-  showTip(
-      tr("You are not a clan leader to start a city capture").toStdString());
-  zonecatch = false;
-}
-
-void OverMapLogic::captureCityYourLeaderHaveStartInOtherCity(
-    const std::string &zone) {
-  updater_page_zonecatch.stop();
-  // ui->stackedWidget->setCurrentWidget(ui->page_map);
-  /// \todo close dialog into updatePageZoneCatch()
-  if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone) !=
-      QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
-    showTip(tr("Your clan leader have start a capture for another city")
-                .toStdString() +
-            ": <b>" +
-            QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name +
-            "</b>");
-  else
-    showTip(tr("Your clan leader have start a capture for another city")
-                .toStdString());
-  zonecatch = false;
-}
-
-void OverMapLogic::captureCityPreviousNotFinished() {
-  updater_page_zonecatch.stop();
-  /// \todo close dialog into updatePageZoneCatch()
-  // ui->stackedWidget->setCurrentWidget(ui->page_map);
-  showTip(tr("Previous capture of this city is not finished").toStdString());
-  zonecatch = false;
-}
-
-void OverMapLogic::captureCityStartBattle(const uint16_t &player_count,
-                                          const uint16_t &clan_count) {
-  /// \todo set text into captureCityStartBattle() and disable cancel button
-  /*ui->zonecaptureCancel->setVisible(false);
-  ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture
-  the city").arg("<b>"+tr("%n
-  player(s)","",player_count)+"</b>").arg("<b>"+tr("%n
-  clan(s)","",clan_count)+"</b>")+"</i>");*/
-  updater_page_zonecatch.stop();
-}
-
-void OverMapLogic::captureCityStartBotFight(const uint16_t &player_count,
-                                            const uint16_t &clan_count,
-                                            const uint16_t &fightId) {
-  /// \todo set text into captureCityStartBattle() and disable cancel button
-  /*ui->zonecaptureCancel->setVisible(false);
-  ui->zonecaptureWaitTime->setText("<i>"+tr("%1 and %2 in wainting to capture
-  the city").arg("<b>"+tr("%n
-  player(s)","",player_count)+"</b>").arg("<b>"+tr("%n
-  clan(s)","",clan_count)+"</b>")+"</i>");*/
-  updater_page_zonecatch.stop();
-  botFight(fightId);
-}
-
-void OverMapLogic::captureCityDelayedStart(const uint16_t &player_count,
-                                           const uint16_t &clan_count) {
-  /// \todo set text into captureCityStartBattle() and disable cancel button
-  /*ui->zonecaptureCancel->setVisible(false);
-  ui->zonecaptureWaitTime->setText("<i>"+tr("In waiting fight.")+" "+tr("%1 and
-  %2 in wainting to capture the city").arg("<b>"+tr("%n
-  player(s)","",player_count)+"</b>").arg("<b>"+tr("%n
-  clan(s)","",clan_count)+"</b>")+"</i>");*/
-  updater_page_zonecatch.stop();
-}
-
-void OverMapLogic::captureCityWin() {
-  updater_page_zonecatch.stop();
-  /// \todo close captureCityStartBattle()
-  // ui->stackedWidget->setCurrentWidget(ui->page_map);
-  if (!zonecatchName.empty())
-    showTip(tr("Your clan win the city").toStdString() + ": <b>" +
-            zonecatchName + "</b>");
-  else
-    showTip(tr("Your clan win the city").toStdString());
-  zonecatch = false;
-}
-
 /*void OverMapLogic::have_inventory(const std::unordered_map<uint16_t,uint32_t>
 &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
 {
@@ -1391,7 +1241,9 @@ void OverMapLogic::add_to_inventory(
           QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
         image =
             QtDatapackClientLoader::datapackLoader->getItemExtra(item).image;
-        name = QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item).name;
+        name = QtDatapackClientLoader::datapackLoader->get_itemsExtra()
+                   .at(item)
+                   .name;
       } else {
         image = QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
         name = "id: %1" + std::to_string(item);
@@ -1538,34 +1390,13 @@ void OverMapLogic::botFightCollision(CatchChallenger::Map_client *map,
 
 void OverMapLogic::BattleFinished() {}
 
-void OverMapLogic::cityCapture(const uint32_t &remainingTime,
-                               const uint8_t &type) {
-  if (remainingTime == 0) {
-    nextCityCatchTimer.stop();
-    std::cout << "City capture disabled" << std::endl;
-    return;  // disabled
-  }
-  nextCityCatchTimer.start(remainingTime * 1000);
-  nextCatch = QDateTime::fromMSecsSinceEpoch(
-      QDateTime::currentMSecsSinceEpoch() + remainingTime * 1000);
-  city.capture.frenquency = (CatchChallenger::City::Capture::Frequency)type;
-  city.capture.day =
-      (CatchChallenger::City::Capture::Day)QDateTime::currentDateTime()
-          .addSecs(remainingTime)
-          .date()
-          .dayOfWeek();
-  city.capture.hour = static_cast<uint8_t>(
-      QDateTime::currentDateTime().addSecs(remainingTime).time().hour());
-  city.capture.minute = static_cast<uint8_t>(
-      QDateTime::currentDateTime().addSecs(remainingTime).time().minute());
-}
-
 void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x,
                                 const uint8_t &y, const uint8_t &plant_id,
                                 const uint16_t &seconds_to_mature) {
   Q_UNUSED(plant_id);
   Q_UNUSED(seconds_to_mature);
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >=
+      (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
                 "QtDatapackClientLoader::datapackLoader->maps.size()";
     return;
@@ -1575,7 +1406,8 @@ void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x,
 
 void OverMapLogic::remove_plant(const uint32_t &mapId, const uint8_t &x,
                                 const uint8_t &y) {
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >=
+      (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
                 "QtDatapackClientLoader::datapackLoader->maps.size()";
     return;
@@ -1619,7 +1451,8 @@ void OverMapLogic::seed_planted(const bool &ok) {
     // do the rewards
     {
       const uint16_t &itemId = seed_in_waiting.front().seedItemId;
-      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId) ==
+      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(
+              itemId) ==
           QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
         qDebug() << "Item is not a plant";
         emit error(tr("Internal error").toStdString() + ", file: " +
@@ -1629,7 +1462,8 @@ void OverMapLogic::seed_planted(const bool &ok) {
       const uint8_t &plant =
           QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
       appendReputationRewards(
-          CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant)
+          CatchChallenger::CommonDatapack::commonDatapack.get_plants()
+              .at(plant)
               .rewards.reputation);
     }
   } else {
@@ -1967,7 +1801,8 @@ void OverMapLogic::appendReputationRewards(
 void OverMapLogic::appendReputationPoint(const std::string &type,
                                          const int32_t &point) {
   if (point == 0) return;
-  if (QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(type) ==
+  if (QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(
+          type) ==
       QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend()) {
     emit error("Unknow reputation: " + type);
     return;
@@ -2010,12 +1845,13 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
     if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
             reputationCodeName) !=
         QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
-      showTip(tr("You have better reputation into %1")
-                  .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->get_reputationExtra()
-                          .at(reputationCodeName)
-                          .name))
-                  .toStdString());
+      showTip(
+          tr("You have better reputation into %1")
+              .arg(QString::fromStdString(
+                  QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                      .at(reputationCodeName)
+                      .name))
+              .toStdString());
     else
       showTip(
           tr("You have better reputation into %1").arg("???").toStdString());
@@ -2023,12 +1859,13 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
     if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
             reputationCodeName) !=
         QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
-      showTip(tr("You have worse reputation into %1")
-                  .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->get_reputationExtra()
-                          .at(reputationCodeName)
-                          .name))
-                  .toStdString());
+      showTip(
+          tr("You have worse reputation into %1")
+              .arg(QString::fromStdString(
+                  QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                      .at(reputationCodeName)
+                      .name))
+              .toStdString());
     else
       showTip(tr("You have worse reputation into %1").arg("???").toStdString());
   }
@@ -2455,22 +2292,25 @@ void OverMapLogic::objectUsed(const CatchChallenger::ObjectUsage &objectUsage) {
     case CatchChallenger::ObjectUsage_correctlyUsed: {
       const uint16_t item = objectInUsing.front();
       // is crafting recipe
-      if (CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
+      if (CatchChallenger::CommonDatapack::commonDatapack
+              .get_itemToCraftingRecipes()
               .find(item) != CatchChallenger::CommonDatapack::commonDatapack
-                                 .get_itemToCraftingRecipes().cend()) {
+                                 .get_itemToCraftingRecipes()
+                                 .cend()) {
         connexionManager->client->addRecipe(
             CatchChallenger::CommonDatapack::commonDatapack
-                .get_itemToCraftingRecipes().at(item));
+                .get_itemToCraftingRecipes()
+                .at(item));
         // load_crafting_inventory();
         abort();
-      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items().trap
-                     .find(item) !=
-                 CatchChallenger::CommonDatapack::commonDatapack.get_items().trap
-                     .cend()) {
-      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items().repel
-                     .find(item) !=
-                 CatchChallenger::CommonDatapack::commonDatapack.get_items().repel
-                     .cend()) {
+      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                     .trap.find(item) !=
+                 CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                     .trap.cend()) {
+      } else if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                     .repel.find(item) !=
+                 CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                     .repel.cend()) {
       } else
         qDebug() << "OverMapLogic::objectUsed(): unknow object type";
     } break;
@@ -2545,7 +2385,8 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
   auto info = PlayerInfo::GetInstance();
   switch (type) {
     case Inventory::kSeed: {
-      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(item_id) ==
+      if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(
+              item_id) ==
           QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
         Logger::Log(QString("Item is not a plant"));
         // QMessageBox::critical(this,tr("Error"),tr("Internal
@@ -2554,7 +2395,8 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
         return;
       }
       const uint8_t &plant_id =
-          QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(item_id);
+          QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(
+              item_id);
       if (!connexionManager->client->haveReputationRequirements(
               CatchChallenger::CommonDatapack::commonDatapack.get_plants()
                   .at(plant_id)
@@ -2610,7 +2452,8 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
     case Inventory::kRecipe:
       connexionManager->client->useObject(item_id);
       connexionManager->client->addRecipe(
-          CatchChallenger::CommonDatapack::commonDatapack.get_itemToCraftingRecipes()
+          CatchChallenger::CommonDatapack::commonDatapack
+              .get_itemToCraftingRecipes()
               .at(item_id));
       break;
       // case Inventory::ObjectType_ItemEvolutionOnMonster:
@@ -2761,4 +2604,44 @@ void OverMapLogic::ShowPlantDialog() {
   item->SetVar(true);
   inventory_tabs_->SetCurrentItem("plants");
   AddChild(inventory_tabs_);
+}
+
+void OverMapLogic::CaptureCityYourAreNotLeaderSlot() {
+  showTip(
+      tr("You are not a clan leader to start a city capture").toStdString());
+}
+
+void OverMapLogic::CaptureCityYourLeaderHaveStartInOtherCitySlot(
+    const std::string &zone) {
+  if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone) !=
+      QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend()) {
+    showTip(
+        tr("Your clan leader have start a capture for another city")
+            .toStdString() +
+        ": <b>" +
+        QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name +
+        "</b>");
+  } else {
+    showTip(tr("Your clan leader have start a capture for another city")
+                .toStdString());
+  }
+}
+
+void OverMapLogic::CaptureCityPreviousNotFinishedSlot() {
+  showTip(tr("Previous capture of this city is not finished").toStdString());
+}
+
+void OverMapLogic::CaptureCityStartBotFightSlot(const uint16_t &player_count,
+                                            const uint16_t &clan_count,
+                                            const uint16_t &fightId) {
+  botFight(fightId);
+}
+
+void OverMapLogic::CaptureCityWinSlot() {
+  if (!zonecatchName.empty()) {
+    showTip(tr("Your clan win the city").toStdString() + ": <b>" +
+            zonecatchName + "</b>");
+  } else {
+    showTip(tr("Your clan win the city").toStdString());
+  }
 }
