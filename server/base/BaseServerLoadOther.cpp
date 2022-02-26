@@ -18,7 +18,7 @@ void BaseServer::preload_other()
         }
         char logicalGroup[64];
         Client::protocolMessageLogicalGroupAndServerListSize=0;
-        //C20F
+        //0x44
         {
             //no logical group
             //send the network message
@@ -38,7 +38,7 @@ void BaseServer::preload_other()
             Client::protocolMessageLogicalGroupAndServerListSize+=9;
         }
         uint32_t posOutput=0;
-        //C20E
+        //0x40
         {
             //send the network message
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x40;
@@ -85,9 +85,17 @@ void BaseServer::preload_other()
         if(Client::protocolMessageLogicalGroupAndServerList!=NULL)
             delete Client::protocolMessageLogicalGroupAndServerList;
         Client::protocolMessageLogicalGroupAndServerList=(unsigned char *)malloc(Client::protocolMessageLogicalGroupAndServerListSize+16);
+        memset(Client::protocolMessageLogicalGroupAndServerList,0,Client::protocolMessageLogicalGroupAndServerListSize+16);
         memcpy(Client::protocolMessageLogicalGroupAndServerList,logicalGroup,9);
         memcpy(Client::protocolMessageLogicalGroupAndServerList+9,ProtocolParsingBase::tempBigBufferForOutput,Client::protocolMessageLogicalGroupAndServerListSize);
     }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
+    {
+        std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
+        abort();
+    }
+    #endif
 
     //charater list reply header
     {

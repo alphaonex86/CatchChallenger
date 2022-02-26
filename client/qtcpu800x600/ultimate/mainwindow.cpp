@@ -445,11 +445,11 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
 {
     if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
         if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).isFile())
-            return loadXmlConnexionInfoList(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
-    return loadXmlConnexionInfoList(QStringLiteral(":/other/default_server_list.xml"));
+            return loadXmlConnexionInfoListFromFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
+    return loadXmlConnexionInfoListFromFile(QStringLiteral(":/other/default_server_list.xml"));
 }
 
-std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray &xmlContent)
+std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoListFromData(const QByteArray &xmlContent)
 {
     std::vector<ConnexionInfo> returnedVar;
     tinyxml2::XMLDocument domDocument;
@@ -608,7 +608,7 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QByteArray
     return returnedVar;
 }
 
-std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QString &file)
+std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoListFromFile(const QString &file)
 {
     std::vector<ConnexionInfo> returnedVar;
     //open and quick check the file
@@ -621,7 +621,7 @@ std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList(const QString &f
     }
     xmlContent=itemsFile.readAll();
     itemsFile.close();
-    return loadXmlConnexionInfoList(xmlContent);
+    return loadXmlConnexionInfoListFromData(xmlContent);
 }
 
 bool ConnexionInfo::operator<(const ConnexionInfo &connexionInfo) const
@@ -1913,37 +1913,46 @@ void MainWindow::httpFinished()
         reply=NULL;
         return;
     }
-    std::cout << "Got new server list" << std::endl;
     ui->warning->setVisible(false);
     QByteArray content=reply->readAll();
+    //std::cout << "Got new server list: " << std::string(content.data(),content.size()) << std::endl;
+    QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
+    bool save=true;
+    struct stat sb;
+    memset(&sb,0,sizeof(sb));
     QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
-    if(cache.open(QIODevice::ReadWrite))
+    if(val.isValid() && stat(cache.fileName().toLocal8Bit().data(), &sb)==0)
     {
-        cache.write(content);
-        cache.resize(content.size());
-        QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
-        if(val.isValid())
-        {
-            #ifdef Q_CC_GNU
-                //this function avalaible on unix and mingw
-                utimbuf butime;
-                butime.actime=val.toDateTime().toTime_t();
-                butime.modtime=val.toDateTime().toTime_t();
-                int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
-                if(returnVal==0)
-                    return;
-                else
-                {
-                    qDebug() << QStringLiteral("Can't set time: %1").arg(cache.fileName());
-                    return;
-                }
-            #else
-                #error "Not supported on this platform"
-            #endif
-        }
-        cache.close();
+        if(sb.st_mtime==val.toDateTime().toTime_t())
+            save=false;
     }
-    temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
+    if(save)
+    {
+        if(cache.open(QIODevice::ReadWrite))
+        {
+            cache.write(content);
+            cache.resize(content.size());
+            if(val.isValid())
+            {
+                #ifdef Q_CC_GNU
+                    //this function avalaible on unix and mingw
+                    utimbuf butime;
+                    butime.actime=val.toDateTime().toTime_t();
+                    butime.modtime=val.toDateTime().toTime_t();
+                    int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
+                    if(returnVal!=0)
+                    {
+                        qDebug() << QStringLiteral("Can't set time: %1").arg(cache.fileName());
+                        return;
+                    }
+                #else
+                    #error "Not supported on this platform"
+                #endif
+            }
+            cache.close();
+        }
+    }
+    temp_xmlConnexionInfoList=loadXmlConnexionInfoListFromData(content);
     serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());

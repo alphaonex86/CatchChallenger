@@ -69,7 +69,14 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     callbackRegistred.pop();
     //send signals into the server
 
-    //C20F and C2OE, logical block and server list
+    //0x44 and 0x40, logical block and server list
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
+    {
+        std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
+        abort();
+    }
+    #endif
     sendRawBlock((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -348,6 +355,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     paramToPassToCallBackType.pop();
     #endif
     callbackRegistred.pop();
+    //if account already exist then return error
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         //send the network reply
