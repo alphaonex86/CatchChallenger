@@ -71,7 +71,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 
     //0x44 and 0x40, logical block and server list
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
+    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
     {
         std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
         abort();
