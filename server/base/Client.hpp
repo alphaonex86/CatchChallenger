@@ -48,6 +48,7 @@ class Client : public ProtocolParsingInputOutput, public CommonFightEngine, publ
 {
 public:
     friend class BaseServer;
+    friend class PlayerUpdaterBase;
     explicit Client();
     virtual ~Client();
     //to get some info
@@ -107,9 +108,11 @@ public:
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
+private:
     static unsigned char *protocolMessageLogicalGroupAndServerList;
     static uint16_t protocolMessageLogicalGroupAndServerListSize;
     static uint16_t protocolMessageLogicalGroupAndServerListPosPlayerNumber;
+public:
     #else
     static unsigned char protocolReplyCompressionNone[7];
     static unsigned char protocolReplyCompresssionZstandard[7];
