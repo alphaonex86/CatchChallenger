@@ -146,7 +146,13 @@ int main(int argc, char *argv[])
         if(!Epoll::epoll.init())
             return EPOLLERR;
 
-        const int &linkfd=LinkToLogin::tryConnect(
+        #ifdef SERVERSSL
+        ctx from what?
+        LoginLinkToLogin::loginLinkToLogin=new LoginLinkToLogin(ctx);
+        #else
+        LinkToLogin::linkToLogin=new LinkToLogin();
+        #endif
+        const int &linkfd=LinkToLogin::linkToLogin->tryConnect(
                     host.c_str(),
                     port,
                     tryInterval,
@@ -157,13 +163,6 @@ int main(int argc, char *argv[])
             std::cerr << "Unable to connect on login" << std::endl;
             abort();
         }
-
-        #ifdef SERVERSSL
-        ctx from what?
-        LoginLinkToLogin::loginLinkToLogin=new LoginLinkToLogin(linkfd,ctx);
-        #else
-        LinkToLogin::linkToLogin=new LinkToLogin(linkfd);
-        #endif
 
         LinkToLogin::linkToLogin->stat=LinkToLogin::Stat::Connected;
         LinkToLogin::linkToLogin->readTheFirstSslHeader();
