@@ -28,12 +28,10 @@ uint16_t LinkToLogin::port=22222;
 
 LinkToLogin::LinkToLogin(
         #ifdef SERVERSSL
-            const int &infd, SSL_CTX *ctx
-        #else
-            const int &infd
+            SSL_CTX *ctx
         #endif
         ) :
-        EpollClient(infd),
+        EpollClient(-1),
         ProtocolParsingInputOutput(
            #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
             PacketModeTransmission_Client
@@ -151,6 +149,19 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
         {
             std::cout << "Connected to login server" << std::endl;
             LinkToLogin::linkToLoginSocketFd=sfd;
+            {
+                epoll_event event;
+                event.data.ptr = this;
+                event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+                errno=0;
+                int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
+                if(s == -1)
+                {
+                    std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << std::endl;
+                    abort();
+                }
+                reopen(LinkToLogin::linkToLoginSocketFd);
+            }
             haveTheFirstSslHeader=false;
             freeaddrinfo(result);
             return sfd;
@@ -165,6 +176,20 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     freeaddrinfo(result);           /* No longer needed */
 
     haveTheFirstSslHeader=false;
+    if(LinkToLogin::linkToLoginSocketFd>=0)
+    {
+        epoll_event event;
+        event.data.ptr = this;
+        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
+        errno=0;
+        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
+        if(s == -1)
+        {
+            std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << ", LinkToLogin::linkToLoginSocketFd: " << LinkToLogin::linkToLoginSocketFd << std::endl;
+            abort();
+        }
+        reopen(LinkToLogin::linkToLoginSocketFd);
+    }
 
     return LinkToLogin::linkToLoginSocketFd;
 }
@@ -179,17 +204,6 @@ void LinkToLogin::setConnexionSettings(const uint8_t &tryInterval,const uint8_t 
     {
         std::cerr << "LoginLinkToLogin::setConnexionSettings() LoginLinkToLogin::linkToLoginSocketFd==-1 (abort)" << std::endl;
         abort();
-    }
-    {
-        epoll_event event;
-        event.data.ptr = this;
-        event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
-        if(s == -1)
-        {
-            std::cerr << "epoll_ctl on socket (login link) error" << std::endl;
-            abort();
-        }
     }
     {
         /*const int s = EpollSocket::make_non_blocking(LoginLinkToLogin::linkToLoginSocketFd);
@@ -241,16 +255,16 @@ void LinkToLogin::connectInternal()
         return;
     }
     haveTheFirstSslHeader=false;
-    if(connStatusType==0)
+    if(connStatusType>=0)
     {
         stat=Stat::Connected;
-        //std::cout << "(Re)Connected to login" << std::endl;
+        std::cout << "(Re)Connected to login" << std::endl;
     }
-    else
+/*    else
     {
         stat=Stat::Connecting;
-        //std::cout << "(Re)Connecting in progress to login" << std::endl;
-    }
+        std::cout << "(Re)Connecting in progress to login" << std::endl;
+    }*/
     setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
 

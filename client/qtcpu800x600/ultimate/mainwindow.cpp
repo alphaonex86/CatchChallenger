@@ -1913,9 +1913,9 @@ void MainWindow::httpFinished()
         reply=NULL;
         return;
     }
-    std::cout << "Got new server list" << std::endl;
     ui->warning->setVisible(false);
     QByteArray content=reply->readAll();
+    std::cout << "Got new server list: " << std::string(content.data(),content.size()) << std::endl;
     QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
     if(cache.open(QIODevice::ReadWrite))
     {
