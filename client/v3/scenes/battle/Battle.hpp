@@ -27,7 +27,8 @@
 #include "../shared/inventory/Inventory.hpp"
 
 namespace Scenes {
-class Battle : public Scene {
+class Battle : public QObject, public Scene {
+  Q_OBJECT
  public:
   static Battle *Create();
   ~Battle();
@@ -246,6 +247,8 @@ class Battle : public Scene {
                   uint32_t quantity);
   void newError(std::string error, std::string detailedError);
   void error(std::string error);
+  void TeleportToSlot(const uint32_t &mapId, const uint16_t &x,
+                      const uint16_t &y, const CatchChallenger::Direction &direction);
 
  protected:
   void OnScreenSD() override;

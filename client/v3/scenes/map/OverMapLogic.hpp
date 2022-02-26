@@ -307,6 +307,8 @@ class OverMapLogic : public OverMap {
   void OnUseItem(Inventory::ObjectType type, const uint16_t &item_id,
                  const uint32_t &quantity);
   void ShowPlantDialog();
+  void TeleportTo(const uint32_t &mapId, const uint16_t &x, const uint16_t &y,
+                  const CatchChallenger::Direction &direction);
 };
 }  // namespace Scenes
 #endif  // CLIENT_V3_SCENES_MAP_OVERMAPLOGIC_HPP_

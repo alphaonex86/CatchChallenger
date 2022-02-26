@@ -240,7 +240,8 @@ void OverMapLogic::connectAllSignals() {
   if (!connect(connexionManager->client,
                &CatchChallenger::Api_client_real::
                    QtcaptureCityYourLeaderHaveStartInOtherCity,
-               this, &OverMapLogic::CaptureCityYourLeaderHaveStartInOtherCitySlot))
+               this,
+               &OverMapLogic::CaptureCityYourLeaderHaveStartInOtherCitySlot))
     abort();
   if (!connect(
           connexionManager->client,
@@ -345,9 +346,6 @@ void OverMapLogic::connectAllSignals() {
   this,&OverMapLogic::marketWithdrawObject)) abort();
   if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtmarketWithdrawMonster,
   this,&OverMapLogic::marketWithdrawMonster)) abort();*/
-  // fight
-  /*    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtteleportTo,this,&OverMapLogic::teleportTo,Qt::UniqueConnection))
-         abort();*/
 }
 
 void OverMapLogic::selectObject(const ObjectType &objectType) {}
@@ -2632,8 +2630,8 @@ void OverMapLogic::CaptureCityPreviousNotFinishedSlot() {
 }
 
 void OverMapLogic::CaptureCityStartBotFightSlot(const uint16_t &player_count,
-                                            const uint16_t &clan_count,
-                                            const uint16_t &fightId) {
+                                                const uint16_t &clan_count,
+                                                const uint16_t &fightId) {
   botFight(fightId);
 }
 
