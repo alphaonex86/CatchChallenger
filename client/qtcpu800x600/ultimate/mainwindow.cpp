@@ -1915,7 +1915,7 @@ void MainWindow::httpFinished()
     }
     ui->warning->setVisible(false);
     QByteArray content=reply->readAll();
-    std::cout << "Got new server list: " << std::string(content.data(),content.size()) << std::endl;
+    //std::cout << "Got new server list: " << std::string(content.data(),content.size()) << std::endl;
     QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
     bool save=true;
     struct stat sb;
@@ -1923,8 +1923,8 @@ void MainWindow::httpFinished()
     QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
     if(val.isValid() && stat(cache.fileName().toLocal8Bit().data(), &sb)==0)
     {
-            if(sb.st_mtime==val.toDateTime().toTime_t())
-                save=false;
+        if(sb.st_mtime==val.toDateTime().toTime_t())
+            save=false;
     }
     if(save)
     {
