@@ -66,6 +66,13 @@ void BaseServer::preload_other()
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
                 posOutput+=2;
                 Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber==0)
+                {
+                    std::cerr << "Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber==0 corruption detected" << std::endl;
+                    abort();
+                }
+                #endif
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
                 posOutput+=2;
             }
@@ -76,6 +83,8 @@ void BaseServer::preload_other()
                 else
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(65535);
                 posOutput+=2;
+                //allow onfly change GlobalServerData::serverSettings.sendPlayerNumber
+                Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber=Client::protocolMessageLogicalGroupAndServerListSize+static_cast<uint16_t>(posOutput);
                 *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
                 posOutput+=2;
             }
@@ -232,7 +241,7 @@ void BaseServer::preload_other()
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
-        //Sub type cod
+        //Sub type code
         {
             const std::string &text=CommonSettingsServer::commonSettingsServer.subDatapackCode;
             if(text.size()>255)
