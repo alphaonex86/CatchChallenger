@@ -18,9 +18,7 @@ class LinkToLogin : public EpollClient, public ProtocolParsingInputOutput
 public:
     explicit LinkToLogin(
         #ifdef SERVERSSL
-            const int &infd, SSL_CTX *ctx
-        #else
-            const int &infd
+            SSL_CTX *ctx
         #endif
             );
     ~LinkToLogin();
@@ -89,7 +87,7 @@ public:
     std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
-    static int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
+    int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();
     void setConnexionSettings(const uint8_t &tryInterval, const uint8_t &considerDownAfterNumberOfTry);
     bool registerStatsClient(const char * const dynamicToken);
