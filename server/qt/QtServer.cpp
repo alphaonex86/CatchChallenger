@@ -548,7 +548,7 @@ void QtServer::openToLan(QString name, bool allowInternet)
 
     CatchChallenger::GameServerSettings formatedServerSettings=getSettings();
     formatedServerSettings.max_players=99;//> 1 to allow open to lan
-    formatedServerSettings.sendPlayerNumber = true;
+    //formatedServerSettings.sendPlayerNumber = true;//> not work because connected_players is blocked to 1
     formatedServerSettings.everyBodyIsRoot                                      = false;
     setSettings(formatedServerSettings);
 }

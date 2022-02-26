@@ -81,9 +81,13 @@ void PlayerUpdaterBase::exec()
     {
         sended_connected_players=connected_players;
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        *reinterpret_cast<uint16_t *>(Client::protocolMessageLogicalGroupAndServerList+9/*logical group size*/+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber)=htole16(connected_players);
+        if(GlobalServerData::serverSettings.sendPlayerNumber)
+        {
+            if(Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber!=0)
+                *reinterpret_cast<uint16_t *>(Client::protocolMessageLogicalGroupAndServerList+9/*logical group size*/+Client::protocolMessageLogicalGroupAndServerListPosPlayerNumber)=htole16(connected_players);
+        }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
+        if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
         {
             std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
             abort();
