@@ -115,8 +115,8 @@ private slots:
     void on_server_refresh_clicked();
     void on_login_cancel_clicked();
     std::vector<ConnexionInfo> loadXmlConnexionInfoList();
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QByteArray &xmlContent);
-    std::vector<ConnexionInfo> loadXmlConnexionInfoList(const QString &file);
+    std::vector<ConnexionInfo> loadXmlConnexionInfoListFromData(const QByteArray &xmlContent);
+    std::vector<ConnexionInfo> loadXmlConnexionInfoListFromFile(const QString &file);
     std::vector<ConnexionInfo> loadConfigConnexionInfoList();
     void closeEvent(QCloseEvent *event);
     void downloadFile();
