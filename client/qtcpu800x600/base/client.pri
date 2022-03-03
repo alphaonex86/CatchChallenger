@@ -82,8 +82,6 @@ FORMS    += $$PWD/interface/BaseWindow.ui \
 #commented to workaround to compil under wine
 win32:RC_FILE += $$PWD/resources/resources-windows.rc
 ICON = $$PWD/resources/client.icns
-macx:INCLUDEPATH += /Users/user/Desktop/VLC.app/Contents/MacOS/include/
-macx:LIBS += -L/Users/user/Desktop/VLC.app/Contents/MacOS/lib/
 
 RESOURCES += $$PWD/resources/client-resources.qrc \
     $$PWD/../crafting/resources/client-resources-plant.qrc \

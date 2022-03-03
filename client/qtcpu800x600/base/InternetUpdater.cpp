@@ -28,7 +28,7 @@
     typedef BOOL (WINAPI *PGPI) (DWORD, DWORD, DWORD, DWORD, PDWORD);
 #endif
 #ifdef Q_OS_MAC
-#include "../../general/base/tinyXML2/tinyxml2.h"
+#include "../../../general/tinyXML2/tinyxml2.hpp"
 #endif
 
 InternetUpdater *InternetUpdater::internetUpdater=NULL;
