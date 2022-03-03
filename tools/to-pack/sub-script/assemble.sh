@@ -50,15 +50,8 @@ function assemble {
 #       cp -f ${BASE_PWD}/data/qm-translation/pt.qm ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/Languages/pt/qt.qm
 #       cp -f ${BASE_PWD}/data/qm-translation/ru.qm ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/Languages/ru/qt.qm
         rm -Rf ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/client/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/general/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/server/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/tools/
-        if [ "${TARGET}" == "single-player" ]
-        then
-            rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/datapack/
-        fi
-        if [ "${TARGET}" == "ultimate" ]
-        then
-            mkdir -p ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/datapack/
-            rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/datapack/internal/
-        fi
+        mkdir -p ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/datapack/
+        rsync -aqrt ${CATCHCHALLENGERSOURCESPATH}/../CatchChallenger-datapack/ ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/datapack/internal/ --exclude=.git
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -iname "*.ts" -exec rm {} \; > /dev/null 2>&1
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
         find ${TEMP_PATH}/catchchallenger-${TARGET}-windows-${ARCHITECTURE}/ -type d -empty -delete > /dev/null 2>&1
