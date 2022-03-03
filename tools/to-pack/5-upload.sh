@@ -14,8 +14,8 @@ source sub-script/upload.sh
 cd ${BASE_PWD}
 echo "upload... done"
 
-echo "force-update-datapack-git"
-/root/script-custom/force-update-datapack-git.sh
-echo "force-update-datapack-git done"
+#echo "force-update-datapack-git"
+#/root/script-custom/force-update-datapack-git.sh
+#echo "force-update-datapack-git done"
 
 

@@ -80,10 +80,10 @@ function compil {
         echo ${MXEPATHQMAKE} fail into `pwd` $LINENO
         exit 1
     fi
-    make -j16 ${COMPIL_SUFFIX} > /dev/null
+    make -j24 ${COMPIL_SUFFIX} > /dev/null
     if [ ! -f ${COMPIL_FOLDER}/catchchallenger.exe ]
     then
-        make -j16 ${COMPIL_SUFFIX} > /tmp/bug.log 2>&1
+        make -j24 ${COMPIL_SUFFIX} > /tmp/bug.log 2>&1
         if [ ! -f ${COMPIL_FOLDER}/catchchallenger.exe ]
         then
             cat /tmp/bug.log
