@@ -159,5 +159,5 @@ win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
 linux:DEFINES += __linux__
 win32: {
 #to debug for now
-CONFIG+=debug console
+#CONFIG+=debug console
 }

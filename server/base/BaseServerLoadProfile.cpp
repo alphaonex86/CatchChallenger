@@ -413,6 +413,7 @@ void BaseServer::preload_profile()
             abort();
             return;
         }
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         unsigned int profileIndex=0;
         while(profileIndex<GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
         {
@@ -443,6 +444,7 @@ void BaseServer::preload_profile()
             }
             profileIndex++;
         }
+        #endif
     }
     #endif
 
