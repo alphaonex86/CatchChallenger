@@ -6,9 +6,21 @@ QtDatapackClientLoaderThread::QtDatapackClientLoaderThread()
     stopIt=false;
 }
 
+QtDatapackClientLoaderThread::~QtDatapackClientLoaderThread()
+{
+    stopIt=true;
+    #ifndef NOTHREADS
+    exit();
+    wait();
+    #endif
+}
+
 void QtDatapackClientLoaderThread::stop()
 {
     stopIt=true;
+    #ifndef NOTHREADS
+    exit();
+    #endif
 }
 
 void QtDatapackClientLoaderThread::run()

@@ -71,7 +71,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 
     //0x44 and 0x40, logical block and server list
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 && Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
+    if(Client::protocolMessageLogicalGroupAndServerList[0]!=0x44 || Client::protocolMessageLogicalGroupAndServerList[9]!=0x40)
     {
         std::cerr << "Client::protocolMessageLogicalGroupAndServerList corruption detected" << std::endl;
         abort();
@@ -271,6 +271,27 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("monsterGroupId: "+std::to_string(skinId)+" is not into profile "+std::to_string(profileIndex));
         return;
     }
+    if(profileIndex>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+    {
+        errorOutput("out of bound");
+        std::cerr << "out of bound (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+        return;
+    }
+    if(monsterGroupId>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.size())
+    {
+        errorOutput("out of bound");
+        std::cerr << "out of bound (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+        return;
+    }
+    if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.at(monsterGroupId).character_insert.empty())
+    {
+        errorOutput("character_insert.empty()");
+        std::cerr << "character_insert.empty() (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+        return;
+    }
     AddCharacterParam *addCharacterParam=new AddCharacterParam();
     addCharacterParam->query_id=query_id;
     addCharacterParam->profileIndex=profileIndex;
@@ -355,9 +376,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     paramToPassToCallBackType.pop();
     #endif
     callbackRegistred.pop();
-    //if account already exist then return error
+    //if character already exist then return error
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
+        std::cerr << "character already exist then return error " << __FILE__ << __LINE__ << std::endl;
+
         //send the network reply
         removeFromQueryReceived(query_id);
         uint32_t posOutput=0;
@@ -380,6 +403,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
 
     const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
+    if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()<=profileIndex)
+    {
+        std::cerr << "GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()<=profileIndex " << __FILE__ << __LINE__ << std::endl;
+        abort();
+    }
     ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
@@ -387,6 +415,11 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     int monster_position=1;
 
     const std::vector<Profile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+    if(serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId)
+    {
+        std::cerr << "serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId " << __FILE__ << __LINE__ << std::endl;
+        abort();
+    }
     ServerProfileInternal::PreparedStatementForCreationMonsterGroup &monsterGroupInternal=serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup[monsterGroupId];
     PreparedStatementUnit &character_insert=monsterGroupInternal.character_insert;
     std::vector<PreparedStatementUnit> &monsters=monsterGroupInternal.monster_insert;
@@ -422,7 +455,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         }
     }
 
-    character_insert.asyncWrite({
+    if(!character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(account_id),
                 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -432,7 +465,27 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 #endif
                 std::to_string(DictionaryLogin::dictionary_skin_internal_to_database.at(skinId)),
                 std::to_string(sFrom1970())
-                });
+                }))
+    {
+        std::cerr << "character insert query failed " << __FILE__ << __LINE__ << std::endl;
+
+        //send the network reply
+        removeFromQueryReceived(query_id);
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+        posOutput+=1;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+        posOutput+=1;
+
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x03;
+        posOutput+=1;
+        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+        posOutput+=4;
+
+        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+        return;
+    }
 
     //send the network reply
     removeFromQueryReceived(query_id);

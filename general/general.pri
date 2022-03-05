@@ -156,6 +156,8 @@ HEADERS += \
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc
-mac:INCLUDEPATH += /usr/local/include/
-mac:LIBS += -L/usr/local/lib/
 linux:DEFINES += __linux__
+win32: {
+#to debug for now
+#CONFIG+=debug console
+}

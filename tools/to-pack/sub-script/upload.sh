@@ -12,13 +12,12 @@ fi
 cd ${TEMP_PATH}/
 
 echo "Move some elements..."
-
-mkdir -p /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
-mv ${TEMP_PATH}/catchchallenger-*.tar.xz /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
-mv ${TEMP_PATH}/catchchallenger-*.7z /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
-mv ${TEMP_PATH}/catchchallenger-*.zip /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
-mv ${TEMP_PATH}/catchchallenger-*-setup.exe /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
-mv ${TEMP_PATH}/catchchallenger-*.tar.bz2 /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mkdir -p /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mv ${TEMP_PATH}/catchchallenger-*.tar.xz /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mv ${TEMP_PATH}/catchchallenger-*.7z /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mv ${TEMP_PATH}/catchchallenger-*.zip /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mv ${TEMP_PATH}/catchchallenger-*-setup.exe /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
+#mv ${TEMP_PATH}/catchchallenger-*.tar.bz2 /home/first-world.info/files-rw/catchchallenger/${CATCHCHALLENGER_VERSION}/
 echo "Move some elements... done"
 
 #echo "Upload to the shop..."
@@ -27,10 +26,9 @@ echo "Move some elements... done"
 #/usr/bin/php /home/first-world.info/catchchallenger/shop/update_catchchallenger_version.php ${CATCHCHALLENGER_VERSION}
 #echo "Upload to the shop... done"
 
-rm ${TEMP_PATH}/*
+rm -Rf ${TEMP_PATH}/*
 
 echo "Change the static files..."
-echo -ne ${CATCHCHALLENGER_VERSION} > /home/first-world.info/catchchallenger/updater.txt
-echo -ne ${CATCHCHALLENGER_VERSION} > /home/first-world.info/catchchallenger-update/updater.txt
-/etc/init.d/lighttpd restart
+ssh root@763.vps.confiared.com "echo -ne ${CATCHCHALLENGER_VERSION} > /home/first-world.info/catchchallenger/updater.txt"
+echo -ne ${CATCHCHALLENGER_VERSION} > /home/user/Desktop/www/catchchallenger.first-world.info/updater.txt
 echo "Change the static files... done"

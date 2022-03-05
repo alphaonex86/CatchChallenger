@@ -9,6 +9,7 @@ class QtDatapackClientLoaderThread : public QThread
     Q_OBJECT
 public:
     QtDatapackClientLoaderThread();
+    ~QtDatapackClientLoaderThread();
     void stop();
 #ifndef NOTHREADS
     void run() override;
