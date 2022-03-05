@@ -48,7 +48,11 @@ bool PreparedStatementUnit::setQuery(const std::string &query)
         return false;
     this->query=query;
     if(this->query.empty())
+    {
+        std::cerr << "PreparedStatementUnit::asyncRead() query empty, unable to do it (abort)" << std::endl;
+        abort();
         return false;
+    }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     if(PreparedStatementUnit::queryCount.find(database)==PreparedStatementUnit::queryCount.cend())
         PreparedStatementUnit::queryCount[database]=0;
@@ -111,7 +115,11 @@ DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallB
     (void)values;
     #endif
     if(query.empty())
+    {
+        std::cerr << "PreparedStatementUnit::asyncRead() query empty, unable to do it (abort)" << std::endl;
+        abort();
         return NULL;
+    }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
             return database->asyncPreparedRead(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,returnObject,method,values);
@@ -132,7 +140,11 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
     (void)values;
     #endif
     if(query.empty())
+    {
+        std::cerr << "PreparedStatementUnit::asyncWrite() query empty, unable to do it (abort)" << std::endl;
+        abort();
         return false;
+    }
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
             return database->asyncPreparedWrite(PreparedStatementUnit::writeToPrepare(queryText()),uniqueName,values);

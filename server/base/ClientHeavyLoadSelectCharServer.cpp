@@ -85,6 +85,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     const auto &sFrom1970String=std::to_string(sFrom1970());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     {
+        if(profileIndex>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+        {
+            errorOutput("out of bound");
+            std::cerr << "out of bound (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
         serverProfileInternal.preparedQueryAddCharacterForServer.asyncWrite({
@@ -125,6 +132,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             //drop before re-add
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_character_server_by_id.asyncWrite({characterIdString});
 
+            if(profileIndex>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+            {
+                errorOutput("out of bound");
+                std::cerr << "out of bound (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
             ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
             serverProfileInternal.preparedQueryAddCharacterForServer.asyncWrite({

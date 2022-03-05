@@ -51,7 +51,8 @@ void BaseWindow::resetAll()
     characterSelected=false;
     haveCharacterPosition=false;
     haveCharacterInformation=false;
-    QtDatapackClientLoader::datapackLoader->resetAll();
+    if(QtDatapackClientLoader::datapackLoader!=nullptr)
+        QtDatapackClientLoader::datapackLoader->resetAll();
     haveInventory=false;
     isLogged=false;
     datapackIsParsed=false;

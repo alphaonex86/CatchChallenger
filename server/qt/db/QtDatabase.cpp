@@ -94,6 +94,9 @@ void QtDatabase::syncDisconnect()
 
 DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cerr << "QtDatabase::asyncRead(): " << query << std::endl;
+    #endif
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
@@ -151,6 +154,9 @@ void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
 
 bool QtDatabase::asyncWrite(const std::string &query)
 {
+    #ifdef DEBUG_MESSAGE_CLIENT_SQL
+    std::cerr << "QtDatabase::asyncWrite(): " << query << std::endl;
+    #endif
     if(conn==NULL)
     {
         std::cerr << "pg not connected" << std::endl;
