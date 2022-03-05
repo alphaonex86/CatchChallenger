@@ -45,18 +45,24 @@ void BaseServer::preload_profile()
     }
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
 
-    GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.get_profileList().size());
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     const DatabaseBase::DatabaseType &databaseType=GlobalServerData::serverPrivateVariables.db_common->databaseType();
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
     const uint8_t &common_blobversion_datapack=GlobalServerData::serverPrivateVariables.common_blobversion_datapack;
     #endif
 
+    //if reallocate query, los pointer, it's why reserved/allocted before all
+    GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.get_profileList().size());
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
         const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().at(index);
-        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(index);
+        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[index];
+        serverProfileInternal.map=nullptr;
+        serverProfileInternal.orientation=Orientation_none;
+        serverProfileInternal.valid=false;
+        serverProfileInternal.x=0;
+        serverProfileInternal.y=0;
         if(GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)==GlobalServerData::serverPrivateVariables.map_list.cend())
         {
             std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
@@ -174,13 +180,16 @@ void BaseServer::preload_profile()
         ServerProfileInternal::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type;
         //assume here all is the same type
         {
+            if(preparedStatementForCreationType.monsterGroup.size()!=profile.monstergroup.size())
+                preparedStatementForCreationType.monsterGroup.resize(profile.monstergroup.size());
+
             unsigned int monsterGroupIndex=0;
             while(monsterGroupIndex<profile.monstergroup.size())
             {
                 const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
-                if(preparedStatementForCreationType.monsterGroup.size()<=monsterGroupIndex)
-                    preparedStatementForCreationType.monsterGroup.resize(monsterGroupIndex+1);
                 ServerProfileInternal::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup[monsterGroupIndex];
+                if(preparedStatementForCreationMonsterGroup.monster_insert.size()!=monsters.size())
+                    preparedStatementForCreationMonsterGroup.monster_insert.resize(monsters.size());
                 std::vector<uint16_t> monsterForEncyclopedia;
                 unsigned int monsterIndex=0;
                 while(monsterIndex<monsters.size())
@@ -229,7 +238,7 @@ void BaseServer::preload_profile()
                                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
                                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
-                            preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
+                            preparedStatementForCreationMonsterGroup.monster_insert[monsterIndex]=PreparedStatementUnit(queryText,database);
                         }
                         else
                         {
@@ -247,7 +256,7 @@ void BaseServer::preload_profile()
                                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
                                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
-                            preparedStatementForCreationMonsterGroup.monster_insert.push_back(PreparedStatementUnit(queryText,database));
+                            preparedStatementForCreationMonsterGroup.monster_insert[monsterIndex]=PreparedStatementUnit(queryText,database);
                         }
                     }
                     monsterForEncyclopedia.push_back(monster.id);
@@ -389,6 +398,53 @@ void BaseServer::preload_profile()
 
         index++;
     }
+
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    {
+        if(index!=CommonDatapack::commonDatapack.get_profileList().size())
+        {
+            std::cerr << "index!=CommonDatapack::commonDatapack.get_profileList().size() corrupted (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
+        if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()!=CommonDatapack::commonDatapack.get_profileList().size())
+        {
+            std::cerr << "GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()!=CommonDatapack::commonDatapack.get_profileList().size() corrupted (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
+        unsigned int profileIndex=0;
+        while(profileIndex<GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
+        {
+            unsigned int monsterGroupId=0;
+            while(monsterGroupId<GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.size())
+            {
+                if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).valid)
+                {
+                    if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.at(monsterGroupId).character_insert.empty())
+                    {
+                        std::cerr << "GlobalServerData::serverPrivateVariables.serverProfileInternalList corrupted (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                        return;
+                    }
+                    unsigned int indexMonsterQueryIndex=0;
+                    while(indexMonsterQueryIndex<GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.at(monsterGroupId).monster_insert.size())
+                    {
+                        if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.at(monsterGroupId).monster_insert.at(indexMonsterQueryIndex).empty())
+                        {
+                            std::cerr << "GlobalServerData::serverPrivateVariables.serverProfileInternalList corrupted (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                            abort();
+                            return;
+                        }
+                        indexMonsterQueryIndex++;
+                    }
+                }
+                monsterGroupId++;
+            }
+            profileIndex++;
+        }
+    }
+    #endif
 
     if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.empty())
     {
