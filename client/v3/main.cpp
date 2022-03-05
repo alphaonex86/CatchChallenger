@@ -175,9 +175,10 @@ int main(int argc, char *argv[]) {
   Settings::init();
 
   QFontDatabase::addApplicationFont(":/CC/other/comicbd.ttf");
-  QFontDatabase::addApplicationFont(":/CC/other/aristotelica.ttf");
   QFontDatabase::addApplicationFont(":/CC/other/calibri.ttf");
-  QFont font("Comic Sans MS");
+  QFontDatabase::addApplicationFont(":/CC/other/RobotoCondensed-Regular.ttf");
+  QFontDatabase::addApplicationFont(":/CC/other/icomoon.ttf");
+  QFont font("Roboto Condensed");
   font.setStyleHint(QFont::Monospace);
   // font.setBold(true);
   font.setPixelSize(15);

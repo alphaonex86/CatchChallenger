@@ -87,6 +87,8 @@
         <file>other/default_server_list.xml</file>
         <file>other/comicbd.ttf</file>
         <file>other/calibri.ttf</file>
+        <file>other/RobotoCondensed-Regular.ttf</file>
+        <file>other/icomoon.ttf</file>
         <file>images/interface/server_list/star1.png</file>
         <file>images/interface/server_list/star2.png</file>
         <file>images/interface/server_list/star3.png</file>

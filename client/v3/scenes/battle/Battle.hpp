@@ -25,6 +25,8 @@
 #include "../../ui/ListView.hpp"
 #include "../../ui/Progressbar.hpp"
 #include "../shared/inventory/Inventory.hpp"
+#include "ActionBar.hpp"
+#include "StatusCard.hpp"
 
 namespace Scenes {
 class Battle : public QObject, public Scene {
@@ -106,6 +108,9 @@ class Battle : public QObject, public Scene {
   ActionManager *action_manager_;
 
   bool waiting_server_reply_;
+
+  ActionBar *action_button_;
+  StatusCard *player_status_;
 
   // Action bar
   Sprite *action_background_;
@@ -236,7 +241,6 @@ class Battle : public QObject, public Scene {
   void botFightFull(const uint16_t &fightId);
   void prepareFight();
   QPixmap GetBackSkin(const uint32_t &skinId);
-  void load_monsters();
 
   void init_other_monster_display();
   void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
@@ -248,7 +252,8 @@ class Battle : public QObject, public Scene {
   void newError(std::string error, std::string detailedError);
   void error(std::string error);
   void TeleportToSlot(const uint32_t &mapId, const uint16_t &x,
-                      const uint16_t &y, const CatchChallenger::Direction &direction);
+                      const uint16_t &y,
+                      const CatchChallenger::Direction &direction);
 
  protected:
   void OnScreenSD() override;

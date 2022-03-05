@@ -23,6 +23,7 @@ SOURCES += \
     $$PWD/ui/Label.cpp \
     $$PWD/ui/ListView.cpp \
     $$PWD/ui/Button.cpp \
+    $$PWD/ui/RoundedButton.cpp \
     $$PWD/ui/Progressbar.cpp \
     $$PWD/ui/Input.cpp \
     $$PWD/ui/Combo.cpp \
@@ -30,6 +31,7 @@ SOURCES += \
     $$PWD/ui/Checkbox.cpp \
     $$PWD/ui/MessageDialog.cpp \
     $$PWD/ui/InputDialog.cpp \
+    $$PWD/ui/ThemedRoundedButton.cpp \
     $$PWD/ui/ThemedButton.cpp \
     $$PWD/ui/ThemedLabel.cpp \
     $$PWD/ui/GridView.cpp \
@@ -66,7 +68,10 @@ SOURCES += \
     $$PWD/MyApplication.cpp \
     $$PWD/scenes/ParallaxForest.cpp \
     $$PWD/scenes/battle/Battle.cpp \
+    $$PWD/scenes/battle/ActionBar.cpp \
+    $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.cpp \
+    $$PWD/scenes/battle/StatusCard.cpp \
     $$PWD/scenes/map/CCMap.cpp \
     $$PWD/scenes/map/Map.cpp \
     $$PWD/scenes/map/MapMonsterPreview.cpp \
@@ -127,6 +132,7 @@ HEADERS  += \
     $$PWD/ui/Label.hpp \
     $$PWD/ui/ListView.hpp \
     $$PWD/ui/Button.hpp \
+    $$PWD/ui/RoundedButton.hpp \
     $$PWD/ui/Progressbar.hpp \
     $$PWD/ui/Input.hpp \
     $$PWD/ui/Combo.hpp \
@@ -134,6 +140,7 @@ HEADERS  += \
     $$PWD/ui/Checkbox.hpp \
     $$PWD/ui/MessageDialog.hpp \
     $$PWD/ui/InputDialog.hpp \
+    $$PWD/ui/ThemedRoundedButton.hpp \
     $$PWD/ui/ThemedButton.hpp \
     $$PWD/ui/ThemedLabel.hpp \
     $$PWD/ui/GridView.hpp \
@@ -172,7 +179,10 @@ HEADERS  += \
     $$PWD/MyApplication.h \
     $$PWD/scenes/ParallaxForest.hpp \
     $$PWD/scenes/battle/Battle.hpp \
+    $$PWD/scenes/battle/ActionBar.hpp \
+    $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.hpp \
+    $$PWD/scenes/battle/StatusCard.hpp \
     $$PWD/scenes/map/Map.hpp \
     $$PWD/scenes/map/CCMap.hpp \
     $$PWD/scenes/map/MapMonsterPreview.hpp \

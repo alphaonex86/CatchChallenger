@@ -100,6 +100,9 @@ Battle::Battle() : Scene(nullptr) {
   inventory->SetOnUseItem(std::bind(&Battle::UseBagItem, this, _1, _2, _3));
   linked_->AddItem(inventory, "inventory");
 
+  action_button_ = ActionBar::Create(this);
+  player_status_ = StatusCard::Create(this);
+
   trap_ = nullptr;
 
   ChangeLanguage();
@@ -123,6 +126,8 @@ void Battle::OnEnter() {
   action_escape_->RegisterEvents();
   action_return_->RegisterEvents();
   player_skills_->RegisterEvents();
+
+  action_button_->RegisterEvents();
 }
 
 void Battle::OnExit() {
@@ -133,6 +138,8 @@ void Battle::OnExit() {
   action_escape_->UnRegisterEvents();
   action_return_->UnRegisterEvents();
   player_skills_->UnRegisterEvents();
+
+  action_button_->UnRegisterEvents();
 }
 
 void Battle::SetVariables() {
@@ -353,6 +360,7 @@ void Battle::init_other_monster_display() { updateOtherMonsterInformation(); }
 void Battle::PlayerMonsterInitialize(PlayerMonster *fight_monster) {
   if (fight_monster == nullptr) fight_monster = client_->getCurrentMonster();
   if (fight_monster != nullptr) {
+    player_status_->SetMonster(fight_monster);
     // current monster
     player_background_->SetVisible(false);
     player_name_->SetText(QString::fromStdString(
@@ -1426,6 +1434,9 @@ void Battle::UpdateAttackSkills() {
   player_skills_->Clear();
   unsigned int index = 0;
   useTheRescueSkill = true;
+
+  action_button_->SetMonster(monster);
+
   while (index < monster->skills.size()) {
     auto item = CreateSkillButton();
     const PlayerMonster::PlayerSkill &skill = monster->skills.at(index);

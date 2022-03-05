@@ -3,7 +3,10 @@
 
 using Scenes::Battle;
 
-void Battle::OnScreenResize() {}
+void Battle::OnScreenResize() {
+  action_button_->SetPos(100, 100);
+  player_status_->SetPos(-player_status_->Padding(), BoundingRect().height() - player_status_->Height() - 20);
+}
 
 void Battle::OnScreenSD() {}
 
