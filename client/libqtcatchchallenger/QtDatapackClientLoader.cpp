@@ -213,7 +213,6 @@ void QtDatapackClientLoader::startThread()
         threads.push_back(t);
         index++;
     }
-    index=0;
     {
         unsigned int index=0;
         while(index<threads.size())
@@ -237,10 +236,10 @@ void QtDatapackClientLoader::threadFinished()
         abort();
         return;
     }
-    /*not need, no event loop: thread->exit();
+    disconnect(thread);
+    thread->exit();
     thread->quit();
-    thread->terminate();*/
-    thread->deleteLater();
+    //thread->terminate();
     if(threads.empty())
     {
         //loading image finished
@@ -333,7 +332,9 @@ void QtDatapackClientLoader::resetAll()
     for(auto t:this->threads)
     {
         t->stop();
+        #ifndef NOTHREADS
         t->wait();
+        #endif
     }
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     if(mDefaultInventoryImage==NULL)
