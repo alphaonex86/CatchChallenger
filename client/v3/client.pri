@@ -42,6 +42,7 @@ SOURCES += \
     $$PWD/ui/SelectableItem.cpp \
     $$PWD/ui/ThemedItem.cpp \
     $$PWD/ui/Backdrop.cpp \
+    $$PWD/ui/MessageBar.cpp \
     $$PWD/core/Node.cpp \
     $$PWD/core/Stateful.cpp \
     $$PWD/core/Sprite.cpp \
@@ -72,6 +73,7 @@ SOURCES += \
     $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.cpp \
     $$PWD/scenes/battle/StatusCard.cpp \
+    $$PWD/scenes/battle/BattleStates.cpp \
     $$PWD/scenes/map/CCMap.cpp \
     $$PWD/scenes/map/Map.cpp \
     $$PWD/scenes/map/MapMonsterPreview.cpp \
@@ -151,6 +153,7 @@ HEADERS  += \
     $$PWD/ui/SelectableItem.hpp \
     $$PWD/ui/ThemedItem.hpp \
     $$PWD/ui/Backdrop.hpp \
+    $$PWD/ui/MessageBar.hpp \
     $$PWD/core/uthash.h \
     $$PWD/core/Vector.hpp \
     $$PWD/core/Node.hpp \
@@ -183,6 +186,7 @@ HEADERS  += \
     $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.hpp \
     $$PWD/scenes/battle/StatusCard.hpp \
+    $$PWD/scenes/battle/BattleStates.hpp \
     $$PWD/scenes/map/Map.hpp \
     $$PWD/scenes/map/CCMap.hpp \
     $$PWD/scenes/map/MapMonsterPreview.hpp \

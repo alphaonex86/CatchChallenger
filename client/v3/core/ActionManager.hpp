@@ -15,7 +15,7 @@ class ActionManager {
   ~ActionManager();
 
   static ActionManager *GetInstance();
-  void AddAction(Action *action, Node *target, bool paused);
+  void AddAction(Action *action, Node *target, bool paused, bool deletable);
   void RemoveAllActions();
   void RemoveAction(Action *action);
   void RemoveAllActionsFromTarget(Node *target);

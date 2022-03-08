@@ -30,6 +30,10 @@ class Scene : public Node {
   void OnResize() override;
   void OnEnter() override;
 
+  void PrintError(const char *file, int line, const QString &message);
+  void PrintError(const QString &message);
+  void PrintError(const std::string &message);
+
  protected:
   explicit Scene(Node *parent = nullptr);
 
@@ -37,9 +41,5 @@ class Scene : public Node {
   virtual void OnScreenHD();
   virtual void OnScreenHDR();
   virtual void OnScreenResize();
-
-  void PrintError(const char *file, int line, const QString &message);
-  void PrintError(const QString &message);
-  void PrintError(const std::string &message);
 };
 #endif  // CLIENT_V3_CORE_SCENE_HPP_

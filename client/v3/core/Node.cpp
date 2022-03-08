@@ -89,7 +89,11 @@ QRectF Node::MapRectToScene(const QRectF inner) const {
 }
 
 void Node::RunAction(Action *action) {
-  action_manager_->AddAction(action, this, false);
+  action_manager_->AddAction(action, this, false, false);
+}
+
+void Node::RunAction(Action *action, bool deletable) {
+  action_manager_->AddAction(action, this, false, deletable);
 }
 
 Action *Node::GetAction(int tag) {

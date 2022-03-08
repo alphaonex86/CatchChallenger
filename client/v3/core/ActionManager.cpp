@@ -16,6 +16,7 @@ typedef struct HashElement {
   Action *current_action;
   bool paused;
   bool current_action_salvaged;
+  bool deletable;
   UT_hash_handle hh;
 } HashElementType;
 
@@ -25,14 +26,15 @@ ActionManager::ActionManager() : targets_(nullptr), current_target_(nullptr) {
   last_execution_ = std::chrono::high_resolution_clock::now();
 }
 
-ActionManager::~ActionManager() {}
+ActionManager::~ActionManager() { RemoveAllActions(); }
 
 ActionManager *ActionManager::GetInstance() {
   if (instance_ == nullptr) instance_ = new ActionManager();
   return instance_;
 }
 
-void ActionManager::AddAction(Action *action, Node *target, bool paused) {
+void ActionManager::AddAction(Action *action, Node *target, bool paused,
+                              bool deletable) {
   if (action == nullptr || target == nullptr) return;
 
   HashElementType *element = nullptr;
@@ -41,6 +43,7 @@ void ActionManager::AddAction(Action *action, Node *target, bool paused) {
     element = (HashElementType *)calloc(sizeof(*element), 1);
     element->paused = paused;
     element->target = target;
+    element->deletable = deletable;
     element->actions = new std::vector<Action *>();
     HASH_ADD_PTR(targets_, target, element);
   }
@@ -115,6 +118,16 @@ void ActionManager::RemoveAllActionsFromTarget(Node *target) {
       element->current_action_salvaged = true;
     }
 
+    if (element->deletable) {
+      size_t length = element->actions->size();
+      size_t index = 0;
+      while (index < length) {
+        Action *action = element->actions->at(index);
+        delete action;
+        index++;
+      }
+    }
+
     element->actions->clear();
     if (current_target_ == element) {
       current_target_salvaged_ = true;
@@ -153,6 +166,9 @@ void ActionManager::RemoveActionAtIndex(unsigned int index,
       (!element->current_action_salvaged)) {
     // element->currentAction->retain();
     element->current_action_salvaged = true;
+  }
+  if (element->deletable) {
+    delete action;
   }
 
   element->actions->erase(element->actions->begin() + index);

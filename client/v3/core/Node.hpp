@@ -49,6 +49,7 @@ class Node : public QGraphicsItem {
   QRectF MapRectToScene(QRectF inner) const;
   /** Start an action */
   void RunAction(Action *action);
+  void RunAction(Action *action, bool deletable);
   void StartAllActions();
   Action *GetAction(int tag);
   bool HasRunningActions();

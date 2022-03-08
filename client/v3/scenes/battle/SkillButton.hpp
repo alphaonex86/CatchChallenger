@@ -14,6 +14,7 @@ class SkillButton : public UI::RoundedButton {
   void DrawContent(QPainter *painter, QColor color, QRectF boundary) override;
 
   void SetSkill(const CatchChallenger::PlayerMonster::PlayerSkill &skill);
+  void SetRescueSkill();
 
  private:
   CatchChallenger::PlayerMonster::PlayerSkill skill_;
