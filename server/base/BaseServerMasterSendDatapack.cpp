@@ -121,7 +121,9 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
                                 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                                 //from sha224 to xxhash
                                 BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                                cacheFile.partialHash=XXH32(data.data(),data.size(),0);
+                                XXH32_canonical_t htemp;
+                                XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+                                memcpy(&cacheFile.partialHash,&htemp.digest,sizeof(cacheFile.partialHash));
                                 datapack_file_hash_cache_base[datapack_file_temp.at(index)]=cacheFile;
                              /*   SHA224 hashFile;
                                 hashFile.init();

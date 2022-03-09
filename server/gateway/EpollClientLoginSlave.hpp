@@ -141,7 +141,9 @@ private:
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     void sendCompressedFileContent();
+    #endif
 public:
     bool sendRawBlock(const char * const data, const unsigned int &size);
 private:

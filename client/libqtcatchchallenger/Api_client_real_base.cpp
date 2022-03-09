@@ -42,11 +42,31 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
         QDir(fileInfo.absolutePath()).mkpath(fileInfo.absolutePath());
 
         if(file.exists())
+        {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            {
+                QFile file(QString::fromStdString(fullPath));
+                if(file.open(QIODevice::ReadOnly))
+                {
+                    QByteArray data2=file.readAll();
+                    if((size_t)data2.size()==data.size())
+                    {
+                        if(memcmp(data2.data(),data.data(),data.size())==0)
+                        {
+                            std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                    }
+                    file.close();
+                }
+            }
+            #endif
             if(!file.remove())
             {
                 qDebug() << (QStringLiteral("Can't remove: %1: %2").arg(QString::fromStdString(fileName)).arg(file.errorString()));
                 return;
             }
+        }
         if(!file.open(QIODevice::WriteOnly))
         {
             qDebug() << (QStringLiteral("Can't open: %1: %2").arg(QString::fromStdString(fileName)).arg(file.errorString()));
@@ -60,9 +80,37 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
         }
         file.flush();
         file.close();
-        const uint32_t h=XXH32(data.data(),data.size(),0);
+        uint32_t h=0;
+        XXH32_canonical_t htemp;
+        XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+        memcpy(&h,&htemp.digest,sizeof(h));
         utimbuf butime;butime.actime=h;butime.modtime=h;
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
         utime(fullPath.c_str(),&butime);
+        #else
+        if(utime(fullPath.c_str(),&butime)!=0)
+        {
+            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
+
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        struct stat sb;
+        if (stat(fullPath.c_str(), &sb) == 0)
+        {
+            if(sb.st_mtime!=h)
+            {
+                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                abort();
+            }
+        }
+        else
+        {
+            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
     }
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(!mDatapackBaseCache.empty() && !cacheRemovedBase)
@@ -390,9 +438,37 @@ void Api_client_real::decodedIsFinishBase()
                     {
                         file.write(dataList.at(index).data(),dataList.at(index).size());
                         file.close();
-                        const uint32_t h=XXH32(dataList.at(index).data(),dataList.at(index).size(),0);
+                        uint32_t h=0;
+                        XXH32_canonical_t htemp;
+                        XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
+                        memcpy(&h,&htemp.digest,sizeof(h));
                         utimbuf butime;butime.actime=h;butime.modtime=h;
-                        utime((mDatapackMain+fileList.at(index)).c_str(),&butime);
+                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        utime(fileInfo.absoluteFilePath().toStdString().c_str(),&butime);
+                        #else
+                        if(utime(fileInfo.absoluteFilePath().toStdString().c_str(),&butime)!=0)
+                        {
+                            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
+
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        struct stat sb;
+                        if (stat(fileInfo.absoluteFilePath().toStdString().c_str(), &sb) == 0)
+                        {
+                            if(sb.st_mtime!=h)
+                            {
+                                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
                     }
                     else
                     {
