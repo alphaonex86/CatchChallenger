@@ -180,7 +180,9 @@ void BaseServer::preload_the_datapack()
                         if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
                             BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                            cacheFile.partialHash=XXH32(data.data(),data.size(),0);
+                            XXH32_canonical_t htemp;
+                            XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+                            memcpy(&cacheFile.partialHash,&htemp.digest,sizeof(cacheFile.partialHash));
                             BaseServerMasterSendDatapack::datapack_file_hash_cache_base[fileName]=cacheFile;
                         }
                         #endif
@@ -328,7 +330,9 @@ void BaseServer::preload_the_datapack()
                         if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                         {
                             BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                            cacheFile.partialHash=XXH32(data.data(),data.size(),0);
+                            XXH32_canonical_t htemp;
+                            XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+                            memcpy(&cacheFile.partialHash,&htemp.digest,sizeof(cacheFile.partialHash));
                             Client::datapack_file_hash_cache_main[fileName]=cacheFile;
                         }
                         #endif
@@ -398,7 +402,9 @@ void BaseServer::preload_the_datapack()
                     if(CommonSettingsServer::commonSettingsServer.httpDatapackMirrorServer.empty())
                     {
                         BaseServerMasterSendDatapack::DatapackCacheFile cacheFile;
-                        cacheFile.partialHash=XXH32(data.data(),data.size(),0);
+                        XXH32_canonical_t htemp;
+                        XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+                        memcpy(&cacheFile.partialHash,&htemp.digest,sizeof(cacheFile.partialHash));
                         Client::datapack_file_hash_cache_sub[fileName]=cacheFile;
                     }
                     #endif

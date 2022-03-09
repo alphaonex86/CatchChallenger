@@ -354,7 +354,9 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             {
                 errorParsingLayer("wrong packet code (header): "+std::to_string(packetCode)+
                                   ", data: "+binarytoHexa(commonBuffer,size)+
-                                  ", cursor: "+std::to_string(cursor));
+                                  ", cursor: "+std::to_string(cursor)+","+std::to_string(size)+
+                                  ", splited data: "+binarytoHexa(commonBuffer,cursor)+
+                                  " "+binarytoHexa(commonBuffer+cursor,size-cursor));
                 return -1;//packetCode code wrong
             }
             else if(dataSize!=0xFE)
