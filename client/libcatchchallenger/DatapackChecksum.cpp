@@ -82,15 +82,19 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
     std::regex datapack_rightFileName=std::regex(DATAPACK_FILE_REGEX);
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(datapackPath);
     std::sort(returnList.begin(),returnList.end());
+    //std::cout << "doFullSyncChecksumBase " << returnList.size() << " for " << datapackPath << " " << __FILE__ << ":" << __LINE__ << std::endl;
     unsigned int index=0;
     while(index<returnList.size())
     {
+        //std::cout << "doFullSyncChecksumBase " << __FILE__ << ":" << __LINE__ << std::endl;
         const std::string &fileName=returnList.at(index);
         if(regex_search(fileName,datapack_rightFileName) && !regex_search(fileName,excludePath))
         {
+            //std::cout << "doFullSyncChecksumBase " << __FILE__ << ":" << __LINE__ << std::endl;
             const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffix(fileName);
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
+                //std::cout << "doFullSyncChecksumBase " << __FILE__ << ":" << __LINE__ << std::endl;
                 std::string fullPathFileToOpen=datapackPath+fileName;
                 #ifdef Q_OS_WIN32
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
@@ -98,7 +102,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
+                {
+                    //std::cout << "checksum " << fullPathFileToOpen.c_str() << ":" << sb.st_mtime << " " << __FILE__ << ":" << __LINE__ << std::endl;
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
+                }
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
@@ -186,7 +193,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
@@ -271,7 +278,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);

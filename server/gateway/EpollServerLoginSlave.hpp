@@ -26,6 +26,7 @@ public:
     void close();
     static std::string httpMirrorFix(const std::string &mirrors);
     static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
+    unsigned int toUTF8WithHeader(const std::string &text,char * const data);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
 

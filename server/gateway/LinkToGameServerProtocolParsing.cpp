@@ -640,7 +640,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     {
         if(size>(40+CATCHCHALLENGER_SHA224HASH_SIZE) && data[0x00]==0x01)//all is good, change the reply
         {
-            unsigned int pos=14;
+            unsigned int pos=sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint8_t)+sizeof(uint16_t);
             if(replySelectListInWait!=NULL)
             {
                 parseNetworkReadError("another reply04inWait in suspend");
