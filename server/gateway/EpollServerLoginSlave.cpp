@@ -111,20 +111,21 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
 
     LinkToGameServer::httpDatapackMirrorRewriteBase.resize(256+1);
     LinkToGameServer::httpDatapackMirrorRewriteBase.resize(
-                FacilityLibGeneral::toUTF8WithHeader(
+                toUTF8WithHeader(
                     httpMirrorFix(settings.value("httpDatapackMirrorRewriteBase")),
                     LinkToGameServer::httpDatapackMirrorRewriteBase.data()
                     )
                 );
+
     if(LinkToGameServer::httpDatapackMirrorRewriteBase.empty())
     {
         settings.sync();
-        std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() abort" << std::endl;
+        std::cerr << "httpDatapackMirrorRewriteBase.isEmpty() error, disable CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
         abort();
     }
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(256+1);
     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.resize(
-                FacilityLibGeneral::toUTF8WithHeader(
+                toUTF8WithHeader(
                     httpMirrorFix(settings.value("httpDatapackMirrorRewriteMainAndSub")),
                     LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.data()
                     )
@@ -132,7 +133,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.empty())
     {
         settings.sync();
-        std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() abort" << std::endl;
+        std::cerr << "httpDatapackMirrorRewriteMainAndSub.isEmpty() error, disable CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR (abort)" << std::endl;
         abort();
     }
 
@@ -277,5 +278,14 @@ bool EpollServerLoginSlave::tryListen()
         server_port=NULL;
     }
     return returnedValue;
+}
+
+unsigned int EpollServerLoginSlave::toUTF8WithHeader(const std::string &text,char * const data)
+{
+    data[0]=static_cast<uint8_t>(text.size());
+    if(text.empty() || text.size()>255)
+        return 1;
+    memcpy(data+1,text.data(),static_cast<size_t>(text.size()));
+    return 1+static_cast<uint8_t>(text.size());
 }
 

@@ -2,17 +2,22 @@
 
 using namespace CatchChallenger;
 
+#include <utime.h>
+#include <sys/stat.h>
 #include <iostream>
 #include <cmath>
 #include <regex>
 #include <thread>
 #include <chrono>
+#include <utime.h>
+
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/libzstd/lib/zstd.h"
+#include "../../general/xxhash/xxhash.h"
 #include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollServerLoginSlave.hpp"
@@ -39,6 +44,42 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
             abort();
         }
 
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            FILE *pFile = fopen(fullPath.c_str(),"rb");
+            if(pFile!=NULL)
+            {
+                size_t lSize;
+                char * buffer;
+                size_t result;
+
+                // obtain file size:
+                fseek (pFile , 0 , SEEK_END);
+                lSize = ftell (pFile);
+                rewind (pFile);
+
+                // allocate memory to contain the whole file:
+                buffer = (char*) malloc (sizeof(char)*lSize);
+                if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+                // copy the file into the buffer:
+                result = fread (buffer,1,lSize,pFile);
+                if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+                if(result==data.size())
+                {
+                    if(memcmp(buffer,data.data(),result)==0)
+                    {
+                        std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                        abort();
+                    }
+                }
+
+                fclose(pFile);
+                free (buffer);
+            }
+        }
+        #endif
         FILE *file=fopen(fullPath.c_str(),"wb");
         if(file==NULL)
         {
@@ -52,6 +93,37 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
             return;
         }
         fclose(file);
+        uint32_t h=0;
+        XXH32_canonical_t htemp;
+        XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+        memcpy(&h,&htemp.digest,sizeof(h));
+        utimbuf butime;butime.actime=h;butime.modtime=h;
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        utime(fullPath.c_str(),&butime);
+        #else
+        if(utime(fullPath.c_str(),&butime)!=0)
+        {
+            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
+
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        struct stat sb;
+        if (stat(fullPath.c_str(), &sb) == 0)
+        {
+            if(sb.st_mtime!=h)
+            {
+                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                abort();
+            }
+        }
+        else
+        {
+            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
     }
 }
 
@@ -470,6 +542,37 @@ void DatapackDownloaderMainSub::decodedIsFinishSub(const std::vector<char> &rawD
                             return;
                         }
                         fclose(file);
+                        uint32_t h=0;
+                        XXH32_canonical_t htemp;
+                        XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
+                        memcpy(&h,&htemp.digest,sizeof(h));
+                        utimbuf butime;butime.actime=h;butime.modtime=h;
+                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        utime((mDatapackSub+fileList.at(index)).c_str(),&butime);
+                        #else
+                        if(utime((mDatapackSub+fileList.at(index)).c_str(),&butime)!=0)
+                        {
+                            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
+
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        struct stat sb;
+                        if (stat((mDatapackSub+fileList.at(index)).c_str(), &sb) == 0)
+                        {
+                            if(sb.st_mtime!=h)
+                            {
+                                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
                     }
                     else
                     {
@@ -723,6 +826,42 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                                 abort();
                             }
 
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            {
+                                FILE *pFile = fopen(chunk->fileName.c_str(),"rb");
+                                if(pFile!=NULL)
+                                {
+                                    size_t lSize;
+                                    char * buffer;
+                                    size_t result;
+
+                                    // obtain file size:
+                                    fseek (pFile , 0 , SEEK_END);
+                                    lSize = ftell (pFile);
+                                    rewind (pFile);
+
+                                    // allocate memory to contain the whole file:
+                                    buffer = (char*) malloc (sizeof(char)*lSize);
+                                    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+                                    // copy the file into the buffer:
+                                    result = fread (buffer,1,lSize,pFile);
+                                    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+                                    if(result==chunk->size)
+                                    {
+                                        if(memcmp(buffer,chunk->memory,result)==0)
+                                        {
+                                            std::cerr << "duplicate download detected: " << chunk->fileName << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                            abort();
+                                        }
+                                    }
+
+                                    fclose(pFile);
+                                    free (buffer);
+                                }
+                            }
+                            #endif
                             FILE *fp = fopen(chunk->fileName.c_str(),"wb");
                             if(fp!=NULL)
                             {
@@ -736,6 +875,37 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                                 std::cerr << "unable to open file to write:" << chunk->fileName << std::endl;
                                 abort();
                             }
+                            uint32_t h=0;
+                            XXH32_canonical_t htemp;
+                            XXH32_canonicalFromHash(&htemp,XXH32(chunk->memory,chunk->size,0));
+                            memcpy(&h,&htemp.digest,sizeof(h));
+                            utimbuf butime;butime.actime=h;butime.modtime=h;
+                            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                            utime(chunk->fileName.c_str(),&butime);
+                            #else
+                            if(utime(chunk->fileName.c_str(),&butime)!=0)
+                            {
+                                std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                            #endif
+
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            struct stat sb;
+                            if (stat(chunk->fileName.c_str(), &sb) == 0)
+                            {
+                                if(sb.st_mtime!=h)
+                                {
+                                    std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                            #endif
 
                             if(chunk->memory!=NULL)
                                 delete chunk->memory;

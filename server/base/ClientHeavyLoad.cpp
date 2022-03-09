@@ -1,7 +1,7 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/sha224/sha224.hpp"
+#include "../../general/xxhash/xxhash.h"
 #include <sys/stat.h>
 
 /// \todo solve disconnecting/destroy during the SQL loading
@@ -70,11 +70,14 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
                                 stringreplaceAll(fileName,"\\","/");//remplace if is under windows server
                                 #endif
                                 const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(filedesc);
-                                SHA224 ctx = SHA224();
-                                ctx.init();
-                                ctx.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
-                                ctx.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                                ::memcpy(&datapackCacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
+
+                                uint32_t h=0;
+                                XXH32_canonical_t htemp;
+                                XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+                                memcpy(&h,&htemp.digest,sizeof(h));
+
+                                datapackCacheFile.partialHash=h;
+                                filesList[fileName]=datapackCacheFile;
                             }
                             else
                             {
@@ -95,8 +98,10 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
                     }
                 }
                 else
+                {
                     datapackCacheFile.partialHash=0;
-                filesList[fileName]=datapackCacheFile;
+                    filesList[fileName]=datapackCacheFile;
+                }
             }
         }
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
