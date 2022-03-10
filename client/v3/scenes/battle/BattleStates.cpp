@@ -27,19 +27,30 @@ using Scenes::WildPresentationState;
 
 BattleContext::BattleContext(Battle *battle) {
   battle_ = battle;
-  state_ = new WildPresentationState();
+  state_ = nullptr;
 }
 
 BattleContext *BattleContext::Create(Battle *battle) {
   return new (std::nothrow) BattleContext(battle);
 }
 
-void BattleContext::SetState(BattleState *state) { state_ = state; }
+void BattleContext::SetState(BattleState *state) {
+  state_ = state;
+}
+
+void BattleContext::SetTransition(bool is_transition) {
+  is_transition_ = is_transition;
+}
 
 void BattleContext::Handle() {
+  is_transition_ = false;
   auto state = state_;
   state->Handle(this, battle_);
   delete state;
+
+  if (is_transition_) {
+    Handle();
+  }
 }
 
 void BattleContext::Restart(StartState state) {
@@ -101,13 +112,6 @@ void WildPresentationState::Handle(BattleContext *context, Battle *battle) {
                   .name)),
       true, false);
 
-  Battle::Step step;
-  step.type = Battle::kBattleStep_CallMonster;
-  step.is_player = true;
-  step.param_1 = nullptr;
-
-  battle->steps.push_back(step);
-
   context->SetState(new CallMonsterState());
 }
 
@@ -128,7 +132,7 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
                                      ->getMonsterExtra(monster->monster)
                                      .back.scaled(400, 400));
       battle->action_bar_->SetMonster(monster);
-      //battle->UpdateAttackSkills();
+      // battle->UpdateAttackSkills();
       auto bounding = battle->BoundingRect();
       qreal player_x = bounding.width() * 0.1;
       qreal player_y = bounding.height() - battle->player_->Height() + 50;
@@ -137,6 +141,7 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
                            CallFunc::Create([context]() { context->Handle(); }),
                            nullptr),
           true);
+
       if (monster != NULL) {
         battle->ShowStatusMessage(
             QObject::tr("Protect me %1!")
@@ -240,14 +245,15 @@ void UserInputState::Handle(BattleContext *context, Battle *battle) {
 }
 
 void BattleBehaviorState::Handle(BattleContext *context, Battle *battle) {
-  switch (battle->action_type) {
-    case ActionBar::kActionType_Attack:
-      break;
-    case ActionBar::kActionType_Bag:
-      break;
-    case ActionBar::kActionType_Monster:
-      break;
-    case ActionBar::kActionType_Run:
-      break;
+  context->SetTransition(true);
+  if (battle->client_->getAttackReturnList().empty()) {
+    context->SetState(new UserInputState());
+  } else {
+    battle->action_chained = battle->client_->getAttackReturnList();
+    if (battle->player_action.type != Battle::kBattleAction_None) {
+      battle->player_action.type = Battle::kBattleAction_None;
+    }
   }
 }
+
+void EscapeState::Handle(BattleContext *context, Battle *battle) {}

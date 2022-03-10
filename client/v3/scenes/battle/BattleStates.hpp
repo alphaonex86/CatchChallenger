@@ -67,12 +67,14 @@ class BattleContext {
   enum StartState { kStartState_Wild, kStartState_PVN, kStartState_PVP };
 
   void SetState(BattleState *state);
+  void SetTransition(bool is_transition);
   void Handle();
   void Restart(StartState start);
 
  private:
   BattleState *state_;
   Battle *battle_;
+  bool is_transition_;
 
   BattleContext(Battle *battle);
 };

@@ -83,7 +83,7 @@ Battle::Battle() : Scene(nullptr) {
     } else if (type == ActionBar::kActionType_Bag) {
       OnActionBagClick(nullptr);
     } else if (type == ActionBar::kActionType_Run) {
-      battle_context_->Handle();
+      OnActionEscapeClick(nullptr);
     }
   });
   action_bar_->SetOnSkillClick(
@@ -94,7 +94,12 @@ Battle::Battle() : Scene(nullptr) {
 
   trap_ = nullptr;
 
+  wait_timer_.setSingleShot(true);
+  wait_timer_.setInterval(1000);
   battle_context_ = BattleContext::Create(this);
+
+  if (!connect(&wait_timer_, &QTimer::timeout, this, &Battle::OnWaitEngineMoveSlot))
+    abort();
 
   ChangeLanguage();
   SetVariables();
@@ -1158,7 +1163,7 @@ void Battle::ShowStatusMessage(const std::string &text, bool show_next_btn,
                                bool use_timeout) {
   message_bar_->SetMessage(text);
   if (use_timeout) {
-    message_bar_->RunAction(status_timeout_);
+    message_bar_->RunAction(Delay::Create(1500), true);
     message_bar_->ShowNext(false);
   } else {
     message_bar_->ShowNext(show_next_btn);
@@ -2175,14 +2180,9 @@ void Battle::OnActionEscapeClick(Node *) {
         tr("Sorry but the client wait more data from the server to do it"));
     return;
   }
-  doNextActionStep = DoNextActionStep_Start;
-  escape = true;
-  qDebug() << "Battle::OnActionEscapeClick(): fight engine tryEscape()";
-  if (fightEngine->tryEscape())
-    escapeSuccess = true;
-  else
-    escapeSuccess = false;
-  doNextAction();
+  player_action.type = kBattleAction_Run;
+  player_action.success = fightEngine->tryEscape();
+  ProcessActions();
 }
 
 void Battle::OnActionReturnClick(Node *) {
@@ -2887,3 +2887,22 @@ void Battle::BotFightFullDiffered() {
 }
 
 void Battle::Finished() { SceneManager::GetInstance()->PopScene(); }
+
+void Battle::OnWaitEngineMoveSlot() {
+  if (client_->getAttackReturnList().empty()) {
+    wait_timer_.start();
+  } else {
+    battle_context_->Handle();
+  }
+}
+
+void Battle::ProcessActions() {
+  // Move action run to attackreturn
+  if (client_->getAttackReturnList().empty() && player_action.type != kBattleAction_Run) {
+    ShowStatusMessage(tr("In waiting of the other player action"), false,
+        false);
+    wait_timer_.start();
+  } else {
+    battle_context_->Handle();
+  }
+}

@@ -51,6 +51,15 @@ class Battle : public QObject, public Scene {
     kBattleStep_UseTrap
   };
 
+  enum BattleAction {
+    kBattleAction_CallMonster,
+    kBattleAction_Fight,
+    kBattleAction_UseItem,
+    kBattleAction_UseTrap,
+    kBattleAction_Run,
+    kBattleAction_None
+  };
+
   enum DoNextActionStep {
     DoNextActionStep_Start,
     DoNextActionStep_Loose,
@@ -74,14 +83,18 @@ class Battle : public QObject, public Scene {
   };
 
   struct Step {
-    BattleStep type;
+    BattleAction type;
     bool is_player;
-    void *param_1;
+    bool success;
     int param_2;
     int param_3;
     int param_4;
   };
-  std::vector<Step> steps;
+
+  Step player_action;
+  std::vector<CatchChallenger::Skill::AttackReturn> action_chained;
+
+  BattleStep battleStep;
 
   bool check_monsters();
   bool WildFightInitialize(CatchChallenger::Map_client *map, const uint8_t &x,
@@ -91,7 +104,6 @@ class Battle : public QObject, public Scene {
   void SetVariables();
   void OnEnter() override;
   void OnExit() override;
-  BattleStep battleStep;
   CatchChallenger::Api_protocol_Qt *client_;
   BattleType battleType;
 
@@ -200,8 +212,13 @@ class Battle : public QObject, public Scene {
   std::vector<uint8_t> tradeEvolutionMonsters;
 
   BattleContext *battle_context_;
+  QTimer wait_timer_;
 
   Battle();
+
+  void OnWaitEngineMoveSlot();
+  void ProcessActions();
+
   void OnPlayerExitDone();
   void OnPlayerEnterDone();
   void OnPlayerDeadDone();
