@@ -283,8 +283,10 @@ bool EpollServerLoginSlave::tryListen()
 unsigned int EpollServerLoginSlave::toUTF8WithHeader(const std::string &text,char * const data)
 {
     data[0]=static_cast<uint8_t>(text.size());
-    if(text.empty() || text.size()>255)
+    if(text.empty())
         return 1;
+    if(text.size()>255)
+        return 0;
     memcpy(data+1,text.data(),static_cast<size_t>(text.size()));
     return 1+static_cast<uint8_t>(text.size());
 }
