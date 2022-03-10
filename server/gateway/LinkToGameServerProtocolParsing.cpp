@@ -766,6 +766,9 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     }
     else if(mainCodeType==0x93 || mainCodeType==0xAC)//Select character
     {
+        const unsigned int offsetToMainTypeCode=sizeof(uint8_t)+sizeof(uint16_t)+sizeof(uint32_t)+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint8_t)+
+                sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+sizeof(uint32_t)+
+                sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t);
         /// \warning
         /// multiple game server mean multiple max client, then multiple packet size
         setMaxPlayers(*reinterpret_cast<const uint16_t *>(data+1));
@@ -865,7 +868,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                     std::cerr << "Unknown game server mode or not set: " << std::to_string(gameServerMode) << std::endl;
                 abort();
             }
-            if(size<=40)
+            if(size<=offsetToMainTypeCode)
             {
                 if(size==1)
                 {
@@ -898,7 +901,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
             }
             else
             {
-                unsigned int pos=40;
+                unsigned int pos=offsetToMainTypeCode;
 
                 {
                     if((size-pos)<1)

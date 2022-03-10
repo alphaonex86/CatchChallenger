@@ -22,6 +22,14 @@ static const std::string text_slash="/";
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollClientLoginSlave::datapack_file_list(const std::string &path,const bool withHash)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(path.empty())
+    {
+        //mostly for listFolderNotRecursive()/listFolder() protect
+        std::cerr << "can't EpollClientLoginSlave::datapack_file_list(\"\")" << std::endl;
+        abort();
+    }
+    #endif
 /*old code    std::unordered_map<std::string,DatapackCacheFile> filesList;
     std::regex datapack_rightFileName(DATAPACK_FILE_REGEX);
 
