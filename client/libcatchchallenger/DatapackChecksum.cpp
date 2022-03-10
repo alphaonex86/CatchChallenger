@@ -104,7 +104,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
                 {
                     //std::cout << "checksum " << fullPathFileToOpen.c_str() << ":" << sb.st_mtime << " " << __FILE__ << ":" << __LINE__ << std::endl;
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as big endian xxhash cache
                 }
                 else
                 {
@@ -193,7 +193,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as big endian xxhash cache
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);
@@ -278,7 +278,7 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
                 struct stat sb;
                 fullDatapackChecksumReturn.datapackFilesList.push_back(returnList.at(index));
                 if (stat(fullPathFileToOpen.c_str(), &sb) == 0)
-                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as little endian xxhash cache
+                    fullDatapackChecksumReturn.partialHashList.push_back(sb.st_mtime);//use sb.st_mtime as big endian xxhash cache
                 else
                 {
                     fullDatapackChecksumReturn.partialHashList.push_back(0);

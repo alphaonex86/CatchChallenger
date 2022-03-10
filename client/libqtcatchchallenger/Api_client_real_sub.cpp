@@ -52,7 +52,7 @@ void Api_client_real::writeNewFileSub(const std::string &fileName,const std::str
                         if(memcmp(data2.data(),data.data(),data.size())==0)
                         {
                             std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                            abort();
+                            //abort();
                         }
                     }
                     file.close();

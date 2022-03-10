@@ -48,12 +48,17 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
     if(folder.empty())
     {
         std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"\")" << std::endl;
+        abort();
+        return std::vector<FacilityLibGeneral::InodeDescriptor>();
     }
     {
-        const char lastChar=folder.at(folder.size()-1);
-        if(lastChar!='/' && lastChar!='\\')
+        if(!folder.empty())
         {
-            std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"XXXXX\"), XXXX don't end with /" << std::endl;
+            const char lastChar=folder.at(folder.size()-1);
+            if(lastChar!='/' && lastChar!='\\')
+            {
+                std::cerr << "can't FacilityLibGeneral::listFolderNotRecursive(\"XXXXX\"), XXXX don't end with /" << std::endl;
+            }
         }
     }
     #endif
@@ -100,6 +105,26 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
 
 std::vector<std::string> FacilityLibGeneral::listFolder(const std::string& folder,const std::string& suffix)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(folder.empty())
+    {
+        //mostly for listFolderNotRecursive() protect
+        std::cerr << "can't FacilityLibGeneral::listFolder(\"\")" << std::endl;
+        abort();
+        return std::vector<std::string>();
+    }
+    {
+        //mostly for listFolderNotRecursive() protect
+        if(!folder.empty())
+        {
+            const char lastChar=folder.at(folder.size()-1);
+            if(lastChar!='/' && lastChar!='\\')
+            {
+                std::cerr << "can't FacilityLibGeneral::listFolder(\"XXXXX\"), XXXX don't end with /" << std::endl;
+            }
+        }
+    }
+    #endif
     std::vector<std::string> returnList;
     std::vector<FacilityLibGeneral::InodeDescriptor> entryList=listFolderNotRecursive(folder+suffix);//possible wait time here
     for (unsigned int index=0;index<entryList.size();++index)
