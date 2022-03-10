@@ -254,8 +254,13 @@ void DatapackDownloaderMainSub::haveTheDatapackMainSub()
     //regen the datapack cache
     if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()<=1)
     {
+        //mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
         EpollClientLoginSlave::datapack_file_main[mainDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackMain);
-        EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackSub);
+        if(!mDatapackSub.empty())
+            //mDatapackSub=mDatapackBase+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
+            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackSub);
+        else
+            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache.clear();
     }
 
     resetAll();
