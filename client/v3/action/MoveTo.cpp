@@ -18,6 +18,16 @@ MoveTo* MoveTo::Create(int milliseconds, int x, int y) {
   return instance;
 }
 
+MoveTo* MoveTo::Create(int milliseconds, QPointF point) {
+  MoveTo* instance = new MoveTo();
+
+  instance->milliseconds_ = milliseconds;
+  instance->end_x_ = point.x();
+  instance->end_y_ = point.y();
+
+  return instance;
+}
+
 MoveTo::MoveTo() : Action() {
   delta_x_ = 0;
   delta_y_ = 0;

@@ -5,9 +5,12 @@
 #include <iostream>
 
 #include "../../../general/base/GeneralStructures.hpp"
+#include "../../action/Animation.hpp"
+#include "../../action/Blink.hpp"
 #include "../../action/CallFunc.hpp"
 #include "../../action/MoveTo.hpp"
 #include "../../action/Sequence.hpp"
+#include "../../entities/Utils.hpp"
 #include "ActionBar.hpp"
 #include "Battle.hpp"
 
@@ -15,11 +18,15 @@ using Scenes::ActionBar;
 using Scenes::Battle;
 using Scenes::BattleBehaviorState;
 using Scenes::BattleContext;
+using Scenes::BattleCycleState;
 using Scenes::BattleState;
 using Scenes::CallMonsterState;
+using Scenes::ChooseMonsterState;
 using Scenes::EndState;
 using Scenes::EscapeState;
 using Scenes::FightState;
+using Scenes::MonsterDeadState;
+using Scenes::UpdateMonsterStatState;
 using Scenes::UseItemState;
 using Scenes::UserInputState;
 using Scenes::UseTrapState;
@@ -34,9 +41,7 @@ BattleContext *BattleContext::Create(Battle *battle) {
   return new (std::nothrow) BattleContext(battle);
 }
 
-void BattleContext::SetState(BattleState *state) {
-  state_ = state;
-}
+void BattleContext::SetState(BattleState *state) { state_ = state; }
 
 void BattleContext::SetTransition(bool is_transition) {
   is_transition_ = is_transition;
@@ -83,8 +88,6 @@ void WildPresentationState::Handle(BattleContext *context, Battle *battle) {
     // emit error("is in fight but without monster");
     // return false;
   }
-  battle->player_background_->SetVisible(false);
-
   battle->ConfigureBattleground();
 
   battle->init_other_monster_display();
@@ -96,7 +99,10 @@ void WildPresentationState::Handle(BattleContext *context, Battle *battle) {
   }
   battle->battleStep = Battle::BattleStep_PresentationMonster;
   battle->battleType = Battle::BattleType_Wild;
-  battle->resetPosition(true, false, true);
+
+  battle->player_->SetPos(battle->player_out_);
+  battle->enemy_->SetPos(battle->enemy_in_);
+
   battle->PrintError(
       __FILE__, __LINE__,
       QStringLiteral("You are in front of monster id: %1 level: %2 with hp: %3")
@@ -133,11 +139,8 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
                                      .back.scaled(400, 400));
       battle->action_bar_->SetMonster(monster);
       // battle->UpdateAttackSkills();
-      auto bounding = battle->BoundingRect();
-      qreal player_x = bounding.width() * 0.1;
-      qreal player_y = bounding.height() - battle->player_->Height() + 50;
       battle->player_->RunAction(
-          Sequence::Create(MoveTo::Create(1500, player_x, player_y),
+          Sequence::Create(MoveTo::Create(1500, battle->player_in_),
                            CallFunc::Create([context]() { context->Handle(); }),
                            nullptr),
           true);
@@ -168,72 +171,6 @@ void CallMonsterState::LoadPlayerMonster(
     fight_monster = battle->client_->getCurrentMonster();
   }
   battle->player_status_->SetMonster(fight_monster);
-
-  // current monster
-  // player_background_->SetVisible(false);
-  // player_name_->SetText(QString::fromStdString(
-  // QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-  //.at(fight_monster->monster)
-  //.name));
-  // Monster::Stat fight_stat =
-  // client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
-  // fight_monster->monster),
-  // fight_monster->level);
-  // player_hp_bar_->SetMaximum(fight_stat.hp);
-  // player_hp_bar_->SetValue(fight_monster->hp);
-  // const Monster &monster_info =
-  // CommonDatapack::commonDatapack.get_monsters().at(
-  // fight_monster->monster);
-  // int level_to_xp = monster_info.level_to_xp.at(fight_monster->level - 1);
-  // player_exp_bar_->SetMaximum(level_to_xp);
-  // player_exp_bar_->SetValue(fight_monster->remaining_xp);
-  //// do the buff, todo the remake
-  //{
-  // player_buff_->Clear();
-  // unsigned int index = 0;
-  // while (index < fight_monster->buffs.size()) {
-  // const PlayerBuff &buff_effect = fight_monster->buffs.at(index);
-  // auto item = Sprite::Create();
-  // if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-  //.find(buff_effect.buff) ==
-  // QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-  //.cend()) {
-  // item->SetToolTip(tr("Unknown buff"));
-  // item->SetPixmap(QPixmap(":/CC/images/interface/buff.png"));
-  //} else {
-  // item->SetPixmap(QtDatapackClientLoader::datapackLoader
-  //->getMonsterBuffExtra(buff_effect.buff)
-  //.icon);
-  // if (buff_effect.level <= 1) {
-  // item->SetToolTip(QString::fromStdString(
-  // QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-  //.at(buff_effect.buff)
-  //.name));
-  //} else {
-  // item->SetToolTip(tr("%1 at level %2")
-  //.arg(QString::fromStdString(
-  // QtDatapackClientLoader::datapackLoader
-  //->get_monsterBuffsExtra()
-  //.at(buff_effect.buff)
-  //.name))
-  //.arg(buff_effect.level));
-  //}
-  // item->SetToolTip(
-  // item->ToolTip() + "\n" +
-  // QString::fromStdString(QtDatapackClientLoader::datapackLoader
-  //->get_monsterBuffsExtra()
-  //.at(buff_effect.buff)
-  //.description));
-  //}
-  // item->SetData(
-  // 99,
-  // buff_effect.buff);  // to prevent duplicate buff, because
-  //// add can be to re-enable an already
-  //// enable buff (for larger period then)
-  // player_buff_->AddItem(item);
-  // index++;
-  //}
-  //}
 }
 
 void UserInputState::Handle(BattleContext *context, Battle *battle) {
@@ -246,14 +183,268 @@ void UserInputState::Handle(BattleContext *context, Battle *battle) {
 
 void BattleBehaviorState::Handle(BattleContext *context, Battle *battle) {
   context->SetTransition(true);
-  if (battle->client_->getAttackReturnList().empty()) {
+
+  int player_hp = battle->player_status_->HP();
+  int enemy_hp = battle->enemy_status_->HP();
+  auto attack_return = battle->client_->getAttackReturnList();
+  int index = 0;
+  while (index < attack_return.size()) {
+    const auto &item = attack_return.at(index);
+    switch (item.attackReturnCase) {
+      case CatchChallenger::Skill::AttackReturnCase_NormalAttack:
+        if (!item.lifeEffectMonster.empty()) {
+          int index_j = 0;
+          while (index_j < item.lifeEffectMonster.size()) {
+            const auto &life_effect = item.lifeEffectMonster.at(index_j);
+            Battle::BattleAction attack;
+            attack.do_by_player = item.doByTheCurrentMonster;
+            attack.success = item.success;
+            attack.id = item.attack;
+            attack.monster_index = item.monsterPlace;
+            attack.type = Battle::kBattleAction_Fight;
+            attack.apply_on = life_effect.on;
+            attack.effective = life_effect.effective;
+            attack.quantity = life_effect.quantity;
+            attack.critical = life_effect.critical;
+            attack.effective = life_effect.effective;
+
+            if (attack.do_by_player) {
+              if ((attack.apply_on == CatchChallenger::ApplyOn_AloneEnemy) ||
+                  (attack.apply_on == CatchChallenger::ApplyOn_AllEnemy)) {
+                attack.apply_on_enemy = true;
+              }
+            } else {
+              if ((attack.apply_on == CatchChallenger::ApplyOn_Themself) ||
+                  (attack.apply_on == CatchChallenger::ApplyOn_AllAlly)) {
+                attack.apply_on_enemy = true;
+              }
+            }
+
+            if (attack.apply_on_enemy) {
+              std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
+                        << (int)attack.quantity << std::endl;
+              enemy_hp += attack.quantity;
+            } else {
+              player_hp += attack.quantity;
+            }
+
+            battle->actions_.push_back(attack);
+            index_j++;
+          }
+        } else if (!item.buffLifeEffectMonster.empty()) {
+          int index_j = 0;
+          while (index_j < item.buffLifeEffectMonster.size()) {
+            const auto &life_effect = item.buffLifeEffectMonster.at(index_j);
+            Battle::BattleAction attack;
+            attack.do_by_player = item.doByTheCurrentMonster;
+            attack.success = item.success;
+            attack.id = item.attack;
+            attack.type = Battle::kBattleAction_ApplyBuff;
+            attack.apply_on = life_effect.on;
+            attack.effective = life_effect.effective;
+            attack.quantity = life_effect.quantity;
+            attack.critical = life_effect.critical;
+            attack.effective = life_effect.effective;
+
+            battle->actions_.push_back(attack);
+            index_j++;
+          }
+        } else if (!item.addBuffEffectMonster.empty()) {
+          int index_j = 0;
+          while (index_j < item.addBuffEffectMonster.size()) {
+            const auto &effect = item.addBuffEffectMonster.at(index_j);
+            Battle::BattleAction attack;
+            attack.do_by_player = item.doByTheCurrentMonster;
+            attack.success = item.success;
+            attack.id = effect.buff;
+            attack.monster_index = item.monsterPlace;
+            attack.type = Battle::kBattleAction_AddBuff;
+            attack.apply_on = effect.on;
+            attack.level = effect.level;
+
+            battle->actions_.push_back(attack);
+            index_j++;
+          }
+        } else if (!item.removeBuffEffectMonster.empty()) {
+          int index_j = 0;
+          while (index_j < item.removeBuffEffectMonster.size()) {
+            const auto &effect = item.removeBuffEffectMonster.at(index_j);
+            Battle::BattleAction attack;
+            attack.do_by_player = item.doByTheCurrentMonster;
+            attack.success = item.success;
+            attack.id = effect.buff;
+            attack.monster_index = item.monsterPlace;
+            attack.type = Battle::kBattleAction_AddBuff;
+            attack.apply_on = effect.on;
+            attack.level = effect.level;
+
+            battle->actions_.push_back(attack);
+            index_j++;
+          }
+        } else {
+          battle->client_->removeTheFirstAttackReturn();
+          return;
+        }
+
+        // Determine if the monster is dead
+        if (player_hp <= 0) {
+          Battle::BattleAction action;
+          action.type = Battle::kBattleAction_MonsterDead;
+          action.apply_on_enemy = false;
+          battle->actions_.push_back(action);
+        }
+
+        if (enemy_hp <= 0) {
+          Battle::BattleAction action;
+          action.type = Battle::kBattleAction_MonsterDead;
+          action.apply_on_enemy = true;
+          battle->actions_.push_back(action);
+        }
+
+        break;
+    }
+
+    battle->client_->removeTheFirstAttackReturn();
+    index++;
+  }
+  std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
+            << battle->actions_.size() << std::endl;
+
+  context->SetState(new BattleCycleState());
+}
+
+void BattleCycleState::Handle(BattleContext *context, Battle *battle) {
+  context->SetTransition(true);
+  if (battle->actions_.empty()) {
     context->SetState(new UserInputState());
   } else {
-    battle->action_chained = battle->client_->getAttackReturnList();
-    if (battle->player_action.type != Battle::kBattleAction_None) {
-      battle->player_action.type = Battle::kBattleAction_None;
+    switch (battle->actions_.front().type) {
+      case Battle::kBattleAction_Fight:
+        context->SetState(new FightState());
+        break;
+      case Battle::kBattleAction_CallMonster:
+        context->SetState(new CallMonsterState());
+        break;
+      case Battle::kBattleAction_End:
+        context->SetState(new EndState());
+        break;
+      case Battle::kBattleAction_Run:
+        context->SetState(new EscapeState());
+        break;
+      case Battle::kBattleAction_MonsterDead:
+        context->SetState(new MonsterDeadState());
+        break;
+      default:
+        break;
     }
   }
 }
 
-void EscapeState::Handle(BattleContext *context, Battle *battle) {}
+void EscapeState::Handle(BattleContext *context, Battle *battle) {
+  context->SetTransition(true);
+  auto action = battle->actions_.front();
+  battle->actions_.erase(battle->actions_.begin());
+
+  if (action.success) {
+    Battle::BattleAction end;
+    end.type = Battle::kBattleAction_End;
+
+    battle->actions_.push_back(end);
+  }
+
+  context->SetState(new BattleCycleState());
+}
+
+void FightState::Handle(BattleContext *context, Battle *battle) {
+  auto action = battle->actions_.front();
+  battle->actions_.erase(battle->actions_.begin());
+
+  CatchChallenger::ApplyOn apply_on = action.apply_on;
+  bool apply_on_enemy = action.apply_on_enemy;
+
+  // attack animation
+  uint32_t attack_id = action.id;
+  auto animation = Sequence::Create(
+      Animation::Create(Utils::GetSkillAnimation(attack_id), 75),
+      CallFunc::Create([battle, apply_on_enemy, context]() {
+        battle->attack_->SetVisible(false);
+        auto damage = Sequence::Create(
+            Blink::Create(100, 10),
+            CallFunc::Create([context]() { context->Handle(); }), nullptr);
+        if (apply_on_enemy) {
+          battle->enemy_->RunAction(damage, true);
+        } else {
+          battle->player_->RunAction(damage, true);
+        }
+      }),
+      nullptr);
+
+  if (apply_on_enemy) {
+    battle->attack_->SetSize(battle->enemy_->Width(), battle->enemy_->Height());
+    battle->attack_->SetPos(battle->enemy_->X(), battle->enemy_->Y());
+  } else {
+    battle->attack_->SetSize(battle->player_->Width(),
+                             battle->player_->Height());
+    battle->attack_->SetPos(battle->player_->X(), battle->player_->Y());
+  }
+
+  battle->attack_->SetVisible(true);
+  battle->attack_->RunAction(animation, true);
+
+  context->SetState(new BattleCycleState());
+}
+
+void ChooseMonsterState::Handle(BattleContext *context, Battle *battle) {
+  auto action = battle->actions_.front();
+  battle->actions_.erase(battle->actions_.begin());
+
+  battle->ShowMonsterDialog(true);
+}
+
+void MonsterDeadState::Handle(BattleContext *context, Battle *battle) {
+  auto action = battle->actions_.front();
+  battle->actions_.erase(battle->actions_.begin());
+
+  if (action.apply_on_enemy) {
+    battle->ShowStatusMessage(
+        QObject::tr("Enemy %1 fainted!").arg(battle->enemy_status_->Name()),
+        false, true);
+    context->SetState(new UpdateMonsterStatState());
+    battle->enemy_->RunAction(
+        Sequence::Create(MoveTo::Create(1500, battle->enemy_out_),
+                         CallFunc::Create([context]() { context->Handle(); }),
+                         nullptr),
+        true);
+  } else {
+    if (battle->client_->haveAnotherMonsterOnThePlayerToFight()) {
+      context->SetState(new ChooseMonsterState());
+    }
+    battle->player_->RunAction(
+        Sequence::Create(MoveTo::Create(1500, battle->player_out_),
+                         CallFunc::Create([context]() { context->Handle(); }),
+                         nullptr),
+        true);
+  }
+}
+
+void UpdateMonsterStatState::Handle(BattleContext *context, Battle *battle) {
+  if (battle->battleType != Battle::BattleType_Wild &&
+      battle->client_->haveBattleOtherMonster()) {
+    context->SetState(new BattleBehaviorState());
+    battle->ProcessActions();
+    return;
+  }
+  battle->player_->RunAction(
+      Sequence::Create(Delay::Create(500),
+                       CallFunc::Create([context]() { context->Handle(); }),
+                       nullptr),
+      true);
+  context->SetState(new EndState());
+}
+
+void EndState::Handle(BattleContext *context, Battle *battle) {
+  auto action = battle->actions_.front();
+  battle->actions_.erase(battle->actions_.begin());
+
+  battle->Win();
+}

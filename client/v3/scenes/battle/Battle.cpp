@@ -45,17 +45,6 @@ Battle::Battle() : Scene(nullptr) {
                   QtDatapackClientLoader::datapackLoader->getDatapackPath()) +
               "/map/fight/grass/foreground.png");
 
-  player_background_ = Sprite::Create(":/CC/images/interface/b1.png", this);
-  player_name_ = UI::Label::Create(player_background_);
-  player_hp_bar_ = UI::Progressbar::Create(player_background_);
-  player_exp_bar_ = UI::Progressbar::Create(player_background_);
-  player_exp_bar_->SetOnIncrementDone(
-      std::bind(&Battle::OnExperienceIncrementDone, this));
-
-  enemy_background_ = Sprite::Create(":/CC/images/interface/b1.png", this);
-  enemy_name_ = UI::Label::Create(enemy_background_);
-  enemy_hp_bar_ = UI::Progressbar::Create(enemy_background_);
-
   labelFightPlateformBottom = Sprite::Create(this);
   labelFightPlateformTop = Sprite::Create(this);
 
@@ -89,6 +78,7 @@ Battle::Battle() : Scene(nullptr) {
   action_bar_->SetOnSkillClick(
       std::bind(&Battle::OnSkillClick, this, _1, _2, _3));
   player_status_ = StatusCard::Create(this);
+  enemy_status_ = StatusCard::Create(this);
   message_bar_ = UI::MessageBar::Create(this);
   message_bar_->SetOnHide([&]() { battle_context_->Handle(); });
 
@@ -98,7 +88,8 @@ Battle::Battle() : Scene(nullptr) {
   wait_timer_.setInterval(1000);
   battle_context_ = BattleContext::Create(this);
 
-  if (!connect(&wait_timer_, &QTimer::timeout, this, &Battle::OnWaitEngineMoveSlot))
+  if (!connect(&wait_timer_, &QTimer::timeout, this,
+               &Battle::OnWaitEngineMoveSlot))
     abort();
 
   ChangeLanguage();
@@ -171,8 +162,6 @@ void Battle::BotFightInitialize(Map_client *map, const uint8_t &x,
 
   player_->SetVisible(false);
   enemy_->SetVisible(false);
-  enemy_background_->SetVisible(false);
-  player_background_->SetVisible(false);
 
   zone_collision_ = MoveOnTheMap::getZoneCollision(*map, x, y);
   ConfigureBattleground();
@@ -225,11 +214,11 @@ void Battle::updateCurrentMonsterInformationXp() {
              "NULL pointer at updateCurrentMonsterInformation()");
     return;
   }
-  player_exp_bar_->SetValue(monster->remaining_xp);
+  //player_exp_bar_->SetValue(monster->remaining_xp);
   const Monster &monsterInformations =
       CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
   uint32_t maxXp = monsterInformations.level_to_xp.at(monster->level - 1);
-  player_exp_bar_->SetMaximum(maxXp);
+  //player_exp_bar_->SetMaximum(maxXp);
 }
 
 void Battle::updateCurrentMonsterInformation() {
@@ -252,7 +241,6 @@ void Battle::updateCurrentMonsterInformation() {
   player_->SetPixmap(
       QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster->monster)
           .back.scaled(400, 400));
-  player_background_->SetVisible(true);
   player_monster_lvl_ = monster->level;
   action_bar_->SetMonster(monster);
   UpdateAttackSkills();
@@ -263,69 +251,15 @@ void Battle::updateOtherMonsterInformation() {
     PrintError(__FILE__, __LINE__, "but have not other monter");
     return;
   }
-  enemy_->UseState(kReadyForBattle);
+  enemy_->SetPos(enemy_in_);
   PublicPlayerMonster *otherMonster = client_->getOtherMonster();
   if (otherMonster != NULL) {
     enemy_->SetPixmap(QtDatapackClientLoader::datapackLoader
                           ->getMonsterExtra(otherMonster->monster)
                           .front.scaled(400, 400));
     // other monster
-    enemy_background_->SetVisible(true);
-    enemy_name_->SetText(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-            .at(otherMonster->monster)
-            .name));
-    Monster::Stat otherStat = client_->getStat(
-        CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),
-        otherMonster->level);
-    enemy_hp_bar_->SetMaximum(otherStat.hp);
-    enemy_hp_bar_->SetValue(otherMonster->hp);
-    // do the buff
-    {
-      enemy_buff_->Clear();
-      unsigned int index = 0;
-      while (index < otherMonster->buffs.size()) {
-        const PlayerBuff &buff_effect = otherMonster->buffs.at(index);
-        auto item = Sprite::Create();
-        if (QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                .find(buff_effect.buff) ==
-            QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                .cend()) {
-          item->SetToolTip(tr("Unknown buff"));
-          item->SetPixmap(QPixmap(":/CC/images/interface/buff.png"));
-        } else {
-          item->SetPixmap(QtDatapackClientLoader::datapackLoader
-                              ->getMonsterBuffExtra(buff_effect.buff)
-                              .icon);
-          if (buff_effect.level <= 1)
-            item->SetToolTip(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterBuffsExtra()
-                    .at(buff_effect.buff)
-                    .name));
-          else
-            item->SetToolTip(tr("%1 at level %2")
-                                 .arg(QString::fromStdString(
-                                     QtDatapackClientLoader::datapackLoader
-                                         ->get_monsterBuffsExtra()
-                                         .at(buff_effect.buff)
-                                         .name))
-                                 .arg(buff_effect.level));
-          item->SetToolTip(
-              item->ToolTip() + "\n" +
-              QString::fromStdString(QtDatapackClientLoader::datapackLoader
-                                         ->get_monsterBuffsExtra()
-                                         .at(buff_effect.buff)
-                                         .description));
-        }
-        item->SetData(
-            99,
-            buff_effect.buff);  // to prevent duplicate buff, because
-                                // add can be to re-enable an already
-                                // enable buff (for larger period then)
-        enemy_buff_->AddItem(item);
-        index++;
-      }
-    }
+    enemy_status_->SetVisible(true);
+    enemy_status_->SetMonster(otherMonster);
   } else {
     PrintError(__FILE__, __LINE__, "Unable to load the other monster");
     return;
@@ -627,7 +561,6 @@ void Battle::battleAcceptedByOtherFull(
   prepareFight();
   battleType = BattleType_OtherPlayer;
 
-  // skinFolderList=FacilityLib::skinIdList(client->get_datapack_base_name()+QStringLiteral(DATAPACK_BASE_PATH_SKIN));
   QPixmap otherFrontImage = QPixmap(QString::fromStdString(
       QtDatapackClientLoader::datapackLoader->getFrontSkinPath(
           battleInformations.skinId)));
@@ -635,8 +568,6 @@ void Battle::battleAcceptedByOtherFull(
   // reset the other player info
   enemy_->SetPixmap(otherFrontImage.scaled(160, 160));
   // battleOtherPseudo->setText(lastBattleQuery.first().first);
-  enemy_background_->SetVisible(false);
-  player_background_->SetVisible(false);
   player_->SetPixmap(playerBackImage.scaledToHeight(600));
   ShowStatusMessage(tr("%1 wish fight with you")
                         .arg(QString::fromStdString(battleInformations.pseudo)),
@@ -794,15 +725,6 @@ void Battle::doNextAction() {
                      .toStdString());*/
       return;
     }
-    if ((int)currentMonster->hp != player_hp_bar_->Value()) {
-      emit error(
-          QStringLiteral("Current monster damage don't match with the internal "
-                         "value (doNextAction && currentMonster): %1!=%2")
-              .arg(currentMonster->hp)
-              .arg(player_hp_bar_->Value())
-              .toStdString());
-      return;
-    }
   }
   PublicPlayerMonster *otherMonster = client_->getOtherMonster();
   if (otherMonster != NULL) {
@@ -812,15 +734,6 @@ void Battle::doNextAction() {
       emit error(QStringLiteral("Current monster don't exists: %1")
                      .arg(otherMonster->monster)
                      .toStdString());
-      return;
-    }
-    if ((int)otherMonster->hp != enemy_hp_bar_->Value()) {
-      emit error(
-          QStringLiteral("Other monster damage don't match with the internal "
-                         "value (doNextAction && otherMonster): %1!=%2")
-              .arg(otherMonster->hp)
-              .arg(enemy_hp_bar_->Value())
-              .toStdString());
       return;
     }
   }
@@ -905,113 +818,21 @@ void Battle::ConfigureFighters() {
   playerBackImage = playerBackImage.scaledToHeight(600);
   player_->SetPixmap(playerBackImage);
 
-  qreal player_x = bounding.width() * 0.1;
-  qreal player_y = bounding.height() - player_->Height() + 50;
-  qreal enemy_x = bounding.width() - enemy_->Width() - 50;
-  qreal enemy_y = bounding.height() * 0.15;
-
-  player_->SetPos(-playerBackImage.width(), player_y);
-  player_->StoreState(kOutScreen);
-
-  player_->SetPos(bounding.width() * 0.1, player_y);
-  player_->StoreState(kReadyForBattle);
-
-  auto move_player = MoveTo::Create(1500, -playerBackImage.width(), player_y);
-  player_exit_ = Sequence::Create(
-      move_player, CallFunc::Create(std::bind(&Battle::OnPlayerExitDone, this)),
-      nullptr);
-
-  enemy_move_exit_ = MoveTo::Create(1500, bounding.width(), enemy_y);
-  enemy_exit_ = Sequence::Create(
-      enemy_move_exit_,
-      CallFunc::Create(std::bind(&Battle::OnEnemyExitDone, this)), nullptr);
-
-  both_exit_ = Sequence::Create(
-      Spawn::Create(move_player, CallFunc::Create([&]() {
-                      enemy_->RunAction(enemy_move_exit_);
-                    }),
-                    nullptr),
-      CallFunc::Create([&]() { OnBothActionDone(1); }), nullptr);
-
-  move_player = MoveTo::Create(1500, -playerBackImage.width(), player_y);
-  player_dead_ = Sequence::Create(
-      move_player, CallFunc::Create(std::bind(&Battle::OnPlayerDeadDone, this)),
-      nullptr);
-
-  enemy_move_dead_ = MoveTo::Create(1500, bounding.width(), enemy_y);
-  enemy_dead_ = Sequence::Create(
-      enemy_move_dead_,
-      CallFunc::Create(std::bind(&Battle::OnEnemyDeadDone, this)), nullptr);
-
-  both_dead_ = Sequence::Create(
-      Spawn::Create(move_player, CallFunc::Create([&]() {
-                      enemy_->RunAction(enemy_move_dead_);
-                    }),
-                    nullptr),
-      CallFunc::Create([&]() { OnBothActionDone(2); }), nullptr);
-
-  move_player = MoveTo::Create(1500, player_x, player_y);
-  player_enter_ = Sequence::Create(
-      move_player,
-      CallFunc::Create(std::bind(&Battle::OnPlayerEnterDone, this)), nullptr);
-
-  enemy_move_enter_ = MoveTo::Create(1500, enemy_x, enemy_y);
-  enemy_enter_ = Sequence::Create(
-      enemy_move_enter_,
-      CallFunc::Create(std::bind(&Battle::OnEnemyEnterDone, this)), nullptr);
-
-  both_enter_ = Sequence::Create(
-      Spawn::Create(move_player, CallFunc::Create([&]() {
-                      enemy_->RunAction(enemy_move_enter_);
-                    }),
-                    nullptr),
-      CallFunc::Create([&]() { OnBothActionDone(0); }), nullptr);
-
-  player_buff_ = UI::ListView::Create(player_background_);
-  // player_buff_->SetHorizontal(true);
-  player_buff_->SetPos(200, 25);
-  player_buff_->SetSize(180, 16);
-
-  experience_gain_ = Sequence::Create(
-      Delay::Create(500),
-      CallFunc::Create(std::bind(&Battle::OnExperienceGainDone, this)),
-      nullptr);
-
-  enemy_->SetPos(bounding.width(), enemy_y);
-  enemy_->StoreState(kOutScreen);
-
-  enemy_->SetPos(enemy_x, enemy_y);
-  enemy_->StoreState(kReadyForBattle);
-
-  enemy_buff_ = UI::ListView::Create(enemy_background_);
-  enemy_buff_->SetPos(200, 20);
-  enemy_buff_->SetSize(180, 16);
+  player_in_ = QPointF(bounding.width() * 0.1, bounding.height() - player_->Height() + 50);
+  player_out_ = QPointF(-playerBackImage.width(), bounding.height() - player_->Height() + 50);
+  enemy_in_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.15);
+  enemy_out_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.15);
 }
 
 void Battle::ConfigureCommons() {
   action_bar_->SetVisible(false);
   player_status_->SetVisible(false);
+  enemy_status_->SetVisible(false);
 
   // status_label_->SetText(QString());
   status_timeout_ = Sequence::Create(
       Delay::Create(1500),
       CallFunc::Create([this]() { battle_context_->Handle(); }), nullptr);
-
-  sprite_damage_ = Sequence::Create(
-      Blink::Create(100, 10),
-      CallFunc::Create(std::bind(&Battle::OnDamageDone, this)), nullptr);
-
-  attack_ = Sprite::Create(this);
-
-  std::vector<QPixmap> frames;
-  attack_animation_ = Sequence::Create(
-      Animation::Create(frames, 75),
-      CallFunc::Create(std::bind(&Battle::OnAttackDone, this)), nullptr);
-
-  both_delay_ = Sequence::Create(
-      Delay::Create(500),
-      CallFunc::Create(std::bind(&Battle::BotFightFullDiffered, this)),
-      nullptr);
 }
 
 void Battle::OnPlayerEnterDone() {
@@ -1084,7 +905,6 @@ void Battle::OnEnemyDeadDone() {
     }
     // action_next_->SetVisible(false);
     init_other_monster_display();
-    enemy_background_->SetVisible(false);
     updateOtherMonsterInformation();
 
     QString status;
@@ -1109,7 +929,7 @@ void Battle::OnEnemyDeadDone() {
     if (!escape) {
       PlayerMonster *currentMonster = client_->getCurrentMonster();
       if (currentMonster != NULL) {
-        player_exp_bar_->SetValue(currentMonster->remaining_xp);
+        //player_exp_bar_->SetValue(currentMonster->remaining_xp);
       }
       ShowStatusMessage(tr("You win!"));
     } else {
@@ -1137,26 +957,10 @@ void Battle::OnSkillClick(uint8_t index, uint16_t skill_id, uint8_t endurance) {
                       tr("You have no more endurance to use this skill"));
     return;
   }
-  doNextActionStep = DoNextActionStep_Start;
-  escape = false;
-  PlayerMonster *monster = client_->getCurrentMonster();
-  if (monster == NULL) {
-    newError(tr("Internal error").toStdString() + ", file: " +
-                 std::string(__FILE__) + ":" + std::to_string(__LINE__),
-             "NULL pointer at updateCurrentMonsterInformation()");
-    return;
-  }
-  if (useTheRescueSkill)
-    client_->useSkill(0);
-  else
-    client_->useSkill(skill_id);
-  UpdateAttackSkills();
-  if (battleType != BattleType_OtherPlayer) {
-    doNextAction();
-  } else {
-    ShowStatusMessage(tr("In waiting of the other player action"), false,
-                      false);
-  }
+
+  client_->useSkill(skill_id);
+  // UpdateAttackSkills();
+  ProcessActions();
 }
 
 void Battle::ShowStatusMessage(const std::string &text, bool show_next_btn,
@@ -1217,7 +1021,7 @@ void Battle::OnMonsterSelect(uint8_t monster_index) {
   if (!client_->changeOfMonsterInFight(monster_index)) return;
   client_->changeOfMonsterInFightByPosition(monster_index);
   PlayerMonster *playerMonster = client_->getCurrentMonster();
-  //PlayerMonsterInitialize(&copiedMonster);
+  // PlayerMonsterInitialize(&copiedMonster);
   if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(
           playerMonster->monster) !=
       QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend()) {
@@ -1400,11 +1204,11 @@ void Battle::OnAttackDone() {
     int hp_to_change = attack_return.lifeEffectMonster.front().quantity;
     if (hp_to_change != 0) {
       client_->firstLifeEffectQuantityChange(-hp_to_change);
-      if (apply_on_enemy) {
-        enemy_hp_bar_->IncrementValue(hp_to_change, true);
-      } else {
-        player_hp_bar_->IncrementValue(hp_to_change, true);
-      }
+      //if (apply_on_enemy) {
+        //enemy_hp_bar_->IncrementValue(hp_to_change, true);
+      //} else {
+        //player_hp_bar_->IncrementValue(hp_to_change, true);
+      //}
     }
   }
 }
@@ -1456,7 +1260,7 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(buff_effect.buff)
                                               .name));
-      buff_list = enemy_buff_;
+      //buff_list = enemy_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = false;
 #endif
@@ -1469,7 +1273,7 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(buff_effect.buff)
                                               .name));
-      buff_list = player_buff_;
+      //buff_list = player_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = true;
 #endif
@@ -1487,7 +1291,7 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(buff_effect.buff)
                                               .name));
-      buff_list = player_buff_;
+      //buff_list = player_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = true;
 #endif
@@ -1500,7 +1304,7 @@ bool Battle::AddBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(buff_effect.buff)
                                               .name));
-      buff_list = enemy_buff_;
+      //buff_list = enemy_buff_;
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
       on_buff_current_monster = false;
 #endif
@@ -1616,7 +1420,7 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(remove_buff_effect.buff)
                                               .name));
-      buff_list = enemy_buff_;
+      //buff_list = enemy_buff_;
     }
     if ((remove_buff_effect.on & ApplyOn::ApplyOn_AllAlly) ||
         (remove_buff_effect.on & ApplyOn::ApplyOn_Themself)) {
@@ -1626,7 +1430,7 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(remove_buff_effect.buff)
                                               .name));
-      buff_list = player_buff_;
+      //buff_list = player_buff_;
     }
   } else {
     if ((remove_buff_effect.on & ApplyOn::ApplyOn_AllEnemy) ||
@@ -1641,7 +1445,7 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(remove_buff_effect.buff)
                                               .name));
-      buff_list = player_buff_;
+      //buff_list = player_buff_;
     }
     if ((remove_buff_effect.on & ApplyOn::ApplyOn_AllAlly) ||
         (remove_buff_effect.on & ApplyOn::ApplyOn_Themself)) {
@@ -1651,7 +1455,7 @@ bool Battle::RemoveBuffEffect(PublicPlayerMonster *current_monster,
                                               ->get_monsterBuffsExtra()
                                               .at(remove_buff_effect.buff)
                                               .name));
-      buff_list = enemy_buff_;
+      //buff_list = enemy_buff_;
     }
   }
   ShowStatusMessage(attack_owner);
@@ -2180,8 +1984,12 @@ void Battle::OnActionEscapeClick(Node *) {
         tr("Sorry but the client wait more data from the server to do it"));
     return;
   }
-  player_action.type = kBattleAction_Run;
-  player_action.success = fightEngine->tryEscape();
+
+  BattleAction action;
+  action.type = kBattleAction_Run;
+  action.success = fightEngine->tryEscape();
+  actions_.push_back(action);
+
   ProcessActions();
 }
 
@@ -2348,45 +2156,7 @@ void Battle::ConfigureBattleground() {
 }
 
 void Battle::Win() {
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
-  PublicPlayerMonster *current_monster = client_->getCurrentMonster();
-  if (current_monster != NULL) {
-    if ((int)current_monster->hp != player_hp_bar_->Value()) {
-      emit error(
-          QStringLiteral("Current monster damage don't match with the internal "
-                         "value (win && currentMonster): %1!=%2")
-              .arg(current_monster->hp)
-              .arg(player_hp_bar_->Value())
-              .toStdString());
-      return;
-    }
-  }
-  PublicPlayerMonster *other_monster = client_->getOtherMonster();
-  if (other_monster != NULL)
-    if ((int)other_monster->hp != enemy_hp_bar_->Value()) {
-      emit error(QStringLiteral("Current monster damage don't match with the "
-                                "internal value (win && otherMonster): %1!=%2")
-                     .arg(other_monster->hp)
-                     .arg(enemy_hp_bar_->Value())
-                     .toStdString());
-      return;
-    }
-#endif
   client_->fightFinished();
-#ifdef CATCHCHALLENGER_EXTRA_CHECK
-  if (current_monster != NULL)
-    if ((int)current_monster->hp != player_hp_bar_->Value()) {
-      emit error(
-          QStringLiteral("Current monster damage don't match with the internal "
-                         "value (win end && currentMonster): %1!=%2")
-              .arg(current_monster->hp)
-              .arg(player_hp_bar_->Value())
-              .toStdString());
-      return;
-    }
-#endif
-  fightTimerFinish = false;
-  escape = false;
   doNextActionStep = DoNextActionStep_Start;
   switch (battleType) {
     case BattleType_Bot: {
@@ -2421,16 +2191,6 @@ void Battle::Win() {
     default:
       break;
   }
-  /*if (!battleInformationsList.empty()) {
-    const BattleInformations &battleInformations =
-        battleInformationsList.front();
-    battleInformationsList.erase(battleInformationsList.cbegin());
-    battleAcceptedByOtherFull(battleInformations);
-  } else if (!botFightList.empty()) {
-    const uint16_t fightId = botFightList.front();
-    botFightList.erase(botFightList.cbegin());
-    botFightFull(fightId);
-  }*/
   CheckEvolution();
   Finished();
 }
@@ -2600,19 +2360,19 @@ void Battle::OnExperienceGainDone() {
     doNextAction();
     return;
   }
-  if (player_monster_lvl_ == current_monster->level &&
-      (uint32_t)player_exp_bar_->Value() > current_monster->remaining_xp) {
-    /*message(
-        QStringLiteral(
-            "part0: displayed xp greater than the real xp: %1>%2, auto fix")
-            .arg(player_exp_bar_->Value())
-            .arg(currentMonster->remaining_xp)
-            .toStdString());*/
-    player_exp_bar_->SetValue(current_monster->remaining_xp);
-    qDebug() << "no deberia entrar";
-    doNextAction();
-    return;
-  }
+  //if (player_monster_lvl_ == current_monster->level &&
+      //(uint32_t)player_exp_bar_->Value() > current_monster->remaining_xp) {
+    //[>message(
+        //QStringLiteral(
+            //"part0: displayed xp greater than the real xp: %1>%2, auto fix")
+            //.arg(player_exp_bar_->Value())
+            //.arg(currentMonster->remaining_xp)
+            //.toStdString());*/
+    ////player_exp_bar_->SetValue(current_monster->remaining_xp);
+    //qDebug() << "no deberia entrar";
+    //doNextAction();
+    //return;
+  //}
   doNextAction();
   return;
 }
@@ -2642,9 +2402,9 @@ void Battle::ProcessEnemyMonsterKO() {
       return;
     }
 
-    uint32_t max_xp = player_exp_bar_->Maximum();
-    if (((uint32_t)player_exp_bar_->Value() + last_given_xp) >= max_xp) {
-      delta_given_xp_ = last_given_xp - (max_xp - player_exp_bar_->Value());
+    uint32_t max_xp = player_status_->XPMax();
+    if (((uint32_t)player_status_->XP() + last_given_xp) >= max_xp) {
+      delta_given_xp_ = last_given_xp - (max_xp - player_status_->XP());
 
       const Monster::Stat &old_stat =
           client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
@@ -2655,27 +2415,27 @@ void Battle::ProcessEnemyMonsterKO() {
                                current_monster->monster),
                            player_monster_lvl_ + 1);
       if (old_stat.hp < new_stat.hp) {
-        qDebug() << QStringLiteral(
-                        "Now the old hp: %1/%2 increased of %3 for the old "
-                        "level %4")
-                        .arg(player_hp_bar_->Value())
-                        .arg(player_hp_bar_->Maximum())
-                        .arg(new_stat.hp - old_stat.hp)
-                        .arg(player_monster_lvl_);
-        player_hp_bar_->SetMaximum(player_hp_bar_->Maximum() +
-                                   (new_stat.hp - old_stat.hp));
-        player_hp_bar_->SetValue(player_hp_bar_->Value() +
-                                 (new_stat.hp - old_stat.hp));
+        //qDebug() << QStringLiteral(
+                        //"Now the old hp: %1/%2 increased of %3 for the old "
+                        //"level %4")
+                        //.arg(player_hp_bar_->Value())
+                        //.arg(player_hp_bar_->Maximum())
+                        //.arg(new_stat.hp - old_stat.hp)
+                        //.arg(player_monster_lvl_);
+        //player_hp_bar_->SetMaximum(player_hp_bar_->Maximum() +
+                                   //(new_stat.hp - old_stat.hp));
+        //player_hp_bar_->SetValue(player_hp_bar_->Value() +
+                                 //(new_stat.hp - old_stat.hp));
       } else {
-        qDebug()
-            << QStringLiteral(
-                   "The hp at level change is untouched: %1/%2 for the old "
-                   "level %3")
-                   .arg(player_hp_bar_->Value())
-                   .arg(player_hp_bar_->Maximum())
-                   .arg(player_monster_lvl_);
+        //qDebug()
+            //<< QStringLiteral(
+                   //"The hp at level change is untouched: %1/%2 for the old "
+                   //"level %3")
+                   //.arg(player_hp_bar_->Value())
+                   //.arg(player_hp_bar_->Maximum())
+                   //.arg(player_monster_lvl_);
       }
-      player_exp_bar_->IncrementValue(max_xp - player_exp_bar_->Value(), true);
+      //player_exp_bar_->IncrementValue(max_xp - player_exp_bar_->Value(), true);
 
       if (player_monster_lvl_ >= CATCHCHALLENGER_MONSTER_LEVEL_MAX) {
         doNextAction();
@@ -2686,7 +2446,7 @@ void Battle::ProcessEnemyMonsterKO() {
       return;
     } else {
       if (player_monster_lvl_ < CATCHCHALLENGER_MONSTER_LEVEL_MAX) {
-        player_exp_bar_->IncrementValue(last_given_xp, true);
+        //player_exp_bar_->IncrementValue(last_given_xp, true);
       } else {
         doNextAction();
         return;
@@ -2707,24 +2467,24 @@ void Battle::ProcessEnemyMonsterKO() {
     PublicPlayerMonster *other_monster = client_->getOtherMonster();
     PublicPlayerMonster *current_monster = client_->getCurrentMonster();
     if (current_monster != NULL) {
-      if (static_cast<int>(current_monster->hp) != player_hp_bar_->Value()) {
-        emit error(QStringLiteral("Current monster hp don't match with the "
-                                  "internal value (do next action): %1!=%2")
-                       .arg(current_monster->hp)
-                       .arg(player_hp_bar_->Value())
-                       .toStdString());
-        return;
-      }
+      //if (static_cast<int>(current_monster->hp) != player_hp_bar_->Value()) {
+        //emit error(QStringLiteral("Current monster hp don't match with the "
+                                  //"internal value (do next action): %1!=%2")
+                       //.arg(current_monster->hp)
+                       //.arg(player_hp_bar_->Value())
+                       //.toStdString());
+        //return;
+      //}
     }
     if (other_monster != NULL) {
-      if (static_cast<int>(other_monster->hp) != enemy_hp_bar_->Value()) {
-        emit error(QStringLiteral("Other monster hp don't match with the "
-                                  "internal value (do next action): %1!=%2")
-                       .arg(other_monster->hp)
-                       .arg(enemy_hp_bar_->Value())
-                       .toStdString());
-        return;
-      }
+      //if (static_cast<int>(other_monster->hp) != enemy_hp_bar_->Value()) {
+        //emit error(QStringLiteral("Other monster hp don't match with the "
+                                  //"internal value (do next action): %1!=%2")
+                       //.arg(other_monster->hp)
+                       //.arg(enemy_hp_bar_->Value())
+                       //.toStdString());
+        //return;
+      //}
     }
   }
 #endif
@@ -2748,18 +2508,18 @@ void Battle::ProcessEnemyMonsterKO() {
 
 void Battle::OnExperienceIncrementDone() {
   // If the monster levels up
-  if (player_exp_bar_->Value() == player_exp_bar_->Maximum()) {
-    auto current_monster = client_->getCurrentMonster();
-    player_exp_bar_->SetMaximum(CommonDatapack::commonDatapack.get_monsters()
-                                    .at(current_monster->monster)
-                                    .level_to_xp.at(player_monster_lvl_ - 1));
-    player_exp_bar_->SetValue(0);
-    qDebug() << "Delta exp: " << delta_given_xp_;
-    if (delta_given_xp_ > 0) {
-      player_exp_bar_->IncrementValue(delta_given_xp_, true);
-    }
-    delta_given_xp_ = 0;
-  }
+  //if (player_exp_bar_->Value() == player_exp_bar_->Maximum()) {
+    //auto current_monster = client_->getCurrentMonster();
+    //player_exp_bar_->SetMaximum(CommonDatapack::commonDatapack.get_monsters()
+                                    //.at(current_monster->monster)
+                                    //.level_to_xp.at(player_monster_lvl_ - 1));
+    //player_exp_bar_->SetValue(0);
+    //qDebug() << "Delta exp: " << delta_given_xp_;
+    //if (delta_given_xp_ > 0) {
+      //player_exp_bar_->IncrementValue(delta_given_xp_, true);
+    //}
+    //delta_given_xp_ = 0;
+  //}
 }
 
 void Battle::OnBothActionDone(int8_t type) {
@@ -2775,10 +2535,9 @@ void Battle::OnBothActionDone(int8_t type) {
     }
   } else if (type == 1) {  // Exit
     if (battleStep == BattleStep_Presentation) {
-      //PlayerMonsterInitialize(nullptr);
-      // action_next_->SetVisible(false);
+      // PlayerMonsterInitialize(nullptr);
+      //  action_next_->SetVisible(false);
       init_other_monster_display();
-      enemy_background_->SetVisible(false);
       updateCurrentMonsterInformation();
       updateOtherMonsterInformation();
       resetPosition(true, true, true);
@@ -2824,14 +2583,12 @@ void Battle::OnBothActionDone(int8_t type) {
   } else if (type == 2) {  // Dead
     if (battleStep == BattleStep_Presentation) {
       player_->SetPixmap(playerBackImage.scaledToHeight(600));
-      //PlayerMonsterInitialize(nullptr);
+      // PlayerMonsterInitialize(nullptr);
       init_other_monster_display();
       updateCurrentMonsterInformation();
       updateOtherMonsterInformation();
       battleStep = BattleStep_PresentationMonster;
       player_->RunAction(both_enter_);
-      enemy_background_->SetVisible(true);
-      player_background_->SetVisible(true);
     } else {
       // action_next_->SetVisible(true);
     }
@@ -2840,7 +2597,6 @@ void Battle::OnBothActionDone(int8_t type) {
 
 void Battle::BotFightFullDiffered() {
   prepareFight();
-  enemy_background_->SetVisible(false);
   player_->SetVisible(true);
   enemy_->SetVisible(true);
   ShowStatusMessage(QtDatapackClientLoader::datapackLoader->get_botFightsExtra()
@@ -2865,8 +2621,8 @@ void Battle::BotFightFullDiffered() {
   }
   client_->setBotMonster(botFightMonstersTransformed, fightId);
   player_->SetPixmap(playerBackImage.scaledToHeight(600));
-  //PlayerMonsterInitialize(nullptr);
-  // action_next_->SetVisible(false);
+  // PlayerMonsterInitialize(nullptr);
+  //  action_next_->SetVisible(false);
   battleType = BattleType_Bot;
   QPixmap botImage;
   if (actualBot.properties.find("skin") != actualBot.properties.cend()) {
@@ -2898,9 +2654,9 @@ void Battle::OnWaitEngineMoveSlot() {
 
 void Battle::ProcessActions() {
   // Move action run to attackreturn
-  if (client_->getAttackReturnList().empty() && player_action.type != kBattleAction_Run) {
+  if (client_->getAttackReturnList().empty() && actions_.empty()) {
     ShowStatusMessage(tr("In waiting of the other player action"), false,
-        false);
+                      false);
     wait_timer_.start();
   } else {
     battle_context_->Handle();

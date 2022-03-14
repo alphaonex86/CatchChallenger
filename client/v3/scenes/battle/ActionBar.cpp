@@ -92,6 +92,10 @@ void ActionBar::SetMonster(CatchChallenger::PlayerMonster *monster) {
     auto skill = SkillButton::Create(this);
     skill->SetSkill(monster->skills.at(index));
     skill->SetVisible(show_skills_);
+    skill->SetData(97, index);
+    skill->SetOnClick([this](Node *node) {
+      on_skill_click_(node->Data(97), node->Data(99), node->Data(98));
+    });
     skills_.push_back(skill);
     index++;
   }

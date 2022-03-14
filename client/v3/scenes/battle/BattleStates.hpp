@@ -35,6 +35,11 @@ class BattleBehaviorState : public BattleState {
   void Handle(BattleContext *context, Battle *battle) override;
 };
 
+class BattleCycleState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
 class EscapeState : public BattleState {
  public:
   void Handle(BattleContext *context, Battle *battle) override;
@@ -56,6 +61,21 @@ class FightState : public BattleState {
 };
 
 class EndState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
+class ChooseMonsterState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
+class MonsterDeadState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
+class UpdateMonsterStatState : public BattleState {
  public:
   void Handle(BattleContext *context, Battle *battle) override;
 };

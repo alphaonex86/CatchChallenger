@@ -1,4 +1,3 @@
-
 // Copyright 2021 CatchChallenger
 #ifndef CLIENT_V3_SCENES_BATTLE_STATUSCARD_HPP_
 #define CLIENT_V3_SCENES_BATTLE_STATUSCARD_HPP_
@@ -19,17 +18,24 @@ class StatusCard : public Node {
   void OnResize() override;
 
   void SetMonster(CatchChallenger::PlayerMonster *monster);
+  void SetMonster(CatchChallenger::PublicPlayerMonster *monster);
   void UpdateData();
   qreal Padding() const;
+  uint32_t HP() const;
+  uint32_t XP() const;
+  uint32_t XPMax() const;
+  QString Name() const;
 
  private:
   QFont *font_;
-  CatchChallenger::PlayerMonster *monster_;
 
   QString name_;
-  QString level_;
-  QString hp_;
-  QString hp_max_;
+  uint16_t monster_id_;
+  uint8_t level_;
+  uint32_t hp_;
+  uint32_t hp_max_;
+  uint32_t exp_;
+  uint32_t exp_max_;
   CatchChallenger::Gender gender_;
   qreal padding_;
 

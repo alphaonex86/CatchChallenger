@@ -115,6 +115,8 @@ QRectF Node::BoundingRect() const { return bounding_rect_; }
 
 void Node::SetPos(qreal x, qreal y) { setPos(x, y); }
 
+void Node::SetPos(QPointF point) { SetPos(point.x(), point.y()); }
+
 void Node::SetX(qreal x) { setX(x); }
 
 void Node::SetY(qreal y) { setY(y); }

@@ -15,6 +15,7 @@ class Node : public QGraphicsItem {
   virtual ~Node();
 
   void SetPos(qreal x, qreal y);
+  void SetPos(QPointF point);
   void SetX(qreal x);
   void SetY(qreal y);
   qreal X() const;

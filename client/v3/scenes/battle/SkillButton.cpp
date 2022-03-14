@@ -67,6 +67,9 @@ void SkillButton::SetSkill(
   const CatchChallenger::Skill &skill_data =
       CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(
           skill.skill);
+
+  SetData(99, skill_.skill);
+  SetData(98, skill_.endurance);
   effectiveness_ = QString("Effective");
   count_ = QStringLiteral("%1/%2")
                .arg(skill.endurance)

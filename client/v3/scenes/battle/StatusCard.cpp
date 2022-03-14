@@ -13,7 +13,7 @@ StatusCard::StatusCard(Node* parent) : Node(parent) {
   font_ = new QFont();
   font_->setFamily("Roboto Condensed");
 
-  monster_ = nullptr;
+  monster_id_ = 0;
 
   SetSize(500, 100);
   padding_ = bounding_rect_.height() / 3;
@@ -38,7 +38,7 @@ void StatusCard::Draw(QPainter* painter) {
   base_path.lineTo(padding_, 0);
   painter->drawPath(base_path);
 
-  if (monster_ != nullptr) {
+  if (monster_id_ != 0) {
     painter->setPen(Qt::black);
     font_->setPixelSize(24);
     painter->setFont(*font_);
@@ -48,8 +48,10 @@ void StatusCard::Draw(QPainter* painter) {
     painter->drawText(bounding_rect_.width() - padding_ - 70, 32, "Lv. ");
     font_->setPixelSize(32);
     painter->setFont(*font_);
-    painter->drawText(bounding_rect_.width() - padding_ - 40, 32, level_);
-    painter->drawText(padding_ + 20, bounding_rect_.height() - 10, hp_);
+    painter->drawText(bounding_rect_.width() - padding_ - 40, 32,
+                      QString::number(level_));
+    painter->drawText(padding_ + 20, bounding_rect_.height() - 10,
+                      QStringLiteral("%1/%2").arg(hp_).arg(hp_max_));
   }
 }
 
@@ -60,28 +62,53 @@ void StatusCard::UnRegisterEvents() {}
 void StatusCard::OnResize() {}
 
 void StatusCard::SetMonster(CatchChallenger::PlayerMonster* monster) {
-  monster_ = monster;
+  monster_id_ = monster->monster;
+  level_ = monster->level;
+  hp_ = monster->hp;
 
-  UpdateData();
+  auto monster_extra =
+      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
+          monster_id_);
+  auto stat = ConnectionManager::GetInstance()->client->getStat(
+      CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
+          monster_id_),
+      level_);
+
+  name_ = QString::fromStdString(monster_extra.name);
+  gender_ = monster->gender;
+  hp_max_ = stat.hp;
 
   ReDraw();
 }
 
-void StatusCard::UpdateData() {
+void StatusCard::SetMonster(CatchChallenger::PublicPlayerMonster* monster) {
+  monster_id_ = monster->monster;
+  level_ = monster->level;
+  hp_ = monster->hp;
+
   auto monster_extra =
       QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
-          monster_->monster);
+          monster_id_);
   auto stat = ConnectionManager::GetInstance()->client->getStat(
       CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
-          monster_->monster),
-      monster_->level);
+          monster_id_),
+      level_);
 
   name_ = QString::fromStdString(monster_extra.name);
-  level_ = QString::number(monster_->level);
-  hp_ = QStringLiteral("%1/%2").arg(monster_->hp).arg(stat.hp);
-  gender_ = monster_->gender;
+  gender_ = monster->gender;
+  hp_max_ = stat.hp;
+
+  ReDraw();
 }
 
-qreal StatusCard::Padding() const {
-  return padding_;
+qreal StatusCard::Padding() const { return padding_; }
+
+uint32_t StatusCard::HP() const { return hp_; }
+
+QString StatusCard::Name() const {
+  return name_;
 }
+
+uint32_t StatusCard::XP() const { return exp_; }
+
+uint32_t StatusCard::XPMax() const { return exp_max_; }
