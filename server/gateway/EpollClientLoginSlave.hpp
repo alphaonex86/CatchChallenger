@@ -61,7 +61,7 @@ public:
         );
     ~EpollClientLoginSlave();
     bool disconnectClient();
-    enum EpollClientLoginStat
+    enum EpollClientLoginStat : uint8_t
     {
         None,
         ProtocolGood,
@@ -69,7 +69,7 @@ public:
         GameServerConnected,
     };
     EpollClientLoginStat stat;
-    enum DatapackStatus
+    enum DatapackStatus : uint8_t
     {
         Base=0x01,
         Main=0x02,

@@ -284,9 +284,13 @@ int main(int argc, char *argv[])
                     }
                     //ready to read
                     if(events[i].events & EPOLLIN)
+                    {
+                        std::cout << "event EPOLLIN " << client << std::endl;
                         client->parseIncommingData();
+                    }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || client->socketIsClosed())
                     {
+                        std::cout << "event EPOLLHUP " << client << std::endl;
                         numberOfConnectedClient--;
 
                         if(client->disconnectClient())

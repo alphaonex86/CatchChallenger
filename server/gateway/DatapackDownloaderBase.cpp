@@ -49,6 +49,12 @@ DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase)
     index_mirror_base=0;
     wait_datapack_content_base=false;
     curlm = curl_multi_init();
+    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+    {
+        curl_easy_setopt(curlm, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+        curl_easy_setopt(curlm, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+        curl_easy_setopt(curlm, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4A);
+    }
 }
 
 DatapackDownloaderBase::~DatapackDownloaderBase()
@@ -215,7 +221,7 @@ void DatapackDownloaderBase::writeNewFileBase(const std::string &fileName,const 
                     if(memcmp(buffer,data.data(),result)==0)
                     {
                         std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                        abort();
+                        //abort();
                     }
                 }
 
@@ -1014,7 +1020,7 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                                         if(memcmp(buffer,chunk->memory,result)==0)
                                         {
                                             std::cerr << "duplicate download detected: " << chunk->fileName << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                                            abort();
+                                            //abort();
                                         }
                                     }
 
