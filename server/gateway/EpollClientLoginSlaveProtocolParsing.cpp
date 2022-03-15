@@ -40,24 +40,32 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
         case 0xA0:
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                stat=EpollClientLoginStat::ProtocolGood;
-
                 stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
                 /// \todo do the async connect
                 /// linkToGameServer->stat=Stat::Connecting;
-                const int &socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                int socketFd=-1;
+                if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip.c_str(),EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                else
+                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
                 if(Q_LIKELY(socketFd>=0))
                 {
                     stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
                     this->linkToGameServer=linkToGameServer;
-                    linkToGameServer->stat=LinkToGameServer::Stat::Connected;
+                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingFirstSslHeader;
+                    else
+                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingProxy;
                     linkToGameServer->client=this;
                     linkToGameServer->protocolQueryNumber=queryNumber;
                     //send the protocol
                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                     linkToGameServer->setConnexionSettings();
-                    linkToGameServer->parseIncommingData();
+                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                        linkToGameServer->parseIncommingData();
+                    else
+                        linkToGameServer->sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
                     /*int s = EpollSocket::make_non_blocking(socketFd);
                     if(s == -1)
                         std::cerr << "unable to make to socket non blocking" << std::endl;*/

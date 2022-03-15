@@ -30,8 +30,10 @@ public:
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
 
-    char * destination_server_ip;
+    std::string destination_server_ip;
     uint16_t destination_server_port;
+    char * destination_proxy_ip;
+    uint16_t destination_proxy_port;
     uint8_t gatewayNumber;
 public:
     bool tcpNodelay,tcpCork;
