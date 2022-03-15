@@ -71,7 +71,7 @@ void DatapackDownloaderMainSub::writeNewFileSub(const std::string &fileName,cons
                     if(memcmp(buffer,data.data(),result)==0)
                     {
                         std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                        abort();
+                        //abort();
                     }
                 }
 
@@ -853,7 +853,7 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListSub(const std::vector
                                         if(memcmp(buffer,chunk->memory,result)==0)
                                         {
                                             std::cerr << "duplicate download detected: " << chunk->fileName << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                                            abort();
+                                            //abort();
                                         }
                                     }
 

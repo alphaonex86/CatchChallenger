@@ -38,7 +38,13 @@ protected:
 
     //temp
     std::vector<MonstersCollision> monstersCollision;//never more than 255
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+public:
+    #endif
     std::vector<MonstersCollisionTemp> monstersCollisionTemp;//never more than 255
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+protected:
+    #endif
     std::vector<Type> types;
     #endif
     std::vector<Reputation> reputation;//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;

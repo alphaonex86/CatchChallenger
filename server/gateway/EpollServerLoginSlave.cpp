@@ -54,6 +54,10 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
         settings.setValue("destination_ip","");
     if(!settings.contains("destination_port"))
         settings.setValue("destination_port",rand()%40000+10000);
+    if(!settings.contains("destination_proxy_ip"))
+        settings.setValue("destination_proxy_ip","");
+    if(!settings.contains("destination_proxy_port"))
+        settings.setValue("destination_proxy_port",rand()%40000+10000);
     if(!settings.contains("httpDatapackMirrorRewriteBase"))
         settings.setValue("httpDatapackMirrorRewriteBase","");
     if(!settings.contains("httpDatapackMirrorRewriteMainAndSub"))
@@ -82,10 +86,7 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
     {
         const std::string &destination_server_ip_stdstring=settings.value("destination_ip");
         if(!destination_server_ip_stdstring.empty())
-        {
-            destination_server_ip=new char[destination_server_ip_stdstring.size()+1];
-            strcpy(destination_server_ip,destination_server_ip_stdstring.data());
-        }
+            destination_server_ip=destination_server_ip_stdstring;
         else
         {
             settings.sync();
@@ -107,6 +108,34 @@ EpollServerLoginSlave::EpollServerLoginSlave() :
             abort();
         }
         destination_server_port=tempPort;
+    }
+    {
+        const std::string &destination_proxy_ip_stdstring=settings.value("destination_proxy_ip");
+        if(!destination_proxy_ip_stdstring.empty())
+        {
+            destination_proxy_ip=new char[destination_proxy_ip_stdstring.size()+1];
+            strcpy(destination_proxy_ip,destination_proxy_ip_stdstring.data());
+        }
+        else
+        {
+            destination_proxy_ip=new char[1];
+            destination_proxy_ip[0]=0x00;
+        }
+        bool ok;
+        unsigned int tempPort=stringtouint16(settings.value("destination_proxy_port"),&ok);
+        if(!ok)
+        {
+            settings.sync();
+            std::cerr << "destination_proxy_port not number: " << settings.value("destination_port") << std::endl;
+            abort();
+        }
+        if(tempPort==0 || tempPort>65535)
+        {
+            settings.sync();
+            std::cerr << "destination_proxy_port ==0 || >65535: " << tempPort << std::endl;
+            abort();
+        }
+        destination_proxy_port=tempPort;
     }
 
     LinkToGameServer::httpDatapackMirrorRewriteBase.resize(256+1);
