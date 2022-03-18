@@ -75,13 +75,6 @@ DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase)
         }
         DatapackDownloaderBase::proxyStringForCurl=(char *)malloc(final_proxy_string.size()+1);
         memcpy(DatapackDownloaderBase::proxyStringForCurl,final_proxy_string.c_str(),final_proxy_string.size()+1);
-
-        /*curl_multi_setopt(curlm, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-        curl_multi_setopt(curlm, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
-        curl_multi_setopt(curlm, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);*/
-        curl_easy_setopt(curlm, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
-        curl_easy_setopt(curlm, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
-        curl_easy_setopt(curlm, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
     }
 }
 
