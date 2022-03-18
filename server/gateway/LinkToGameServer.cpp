@@ -154,7 +154,10 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
         }
         if(connStatusType>=0)
         {
-            std::cout << "Connected to game server" << std::endl;
+            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                std::cout << "Connected to proxy server" << std::endl;
+            else
+                std::cout << "Connected to game server" << std::endl;
             freeaddrinfo(result);
             return sfd;
         }
@@ -171,6 +174,7 @@ int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,c
 
 void LinkToGameServer::sendProxyRequest(const std::string &host,const uint16_t &port)
 {
+    //socks4a
     char buffer[1+1+2+4+1+host.size()+1];
     buffer[0]=0x04;
     buffer[1]=0x01;
@@ -269,6 +273,28 @@ void LinkToGameServer::readTheProxyReply()
         closeSocket();
         return;
     }
+    switch(buffer[1])
+    {
+        case 0x5a:
+        break;
+        case 0x5b:
+        std::cerr << "ERROR proxy reply[1] wrong: " << std::to_string(buffer[1]) << " (RequestRejected)" << std::endl;
+        closeSocket();
+        return;
+        case 0x5c:
+        std::cerr << "ERROR proxy reply[1] wrong: " << std::to_string(buffer[1]) << " (RequestFailedNoIdentd)" << std::endl;
+        closeSocket();
+        return;
+        case 0x5d:
+        std::cerr << "ERROR proxy reply[1] wrong: " << std::to_string(buffer[1]) << " (RequestFailedWrongId)" << std::endl;
+        closeSocket();
+        return;
+        default:
+        std::cerr << "ERROR proxy reply[1] wrong: " << std::to_string(buffer[1]) << std::endl;
+        closeSocket();
+        return;
+    }
+
     if(buffer[1]!=0x5a)
     {
         std::cerr << "ERROR proxy reply[1] wrong" << std::endl;
@@ -286,6 +312,7 @@ void LinkToGameServer::readTheProxyReply()
         std::cerr << "readTheFirstSslHeader() stat corrupted " << std::to_string(stat) << " (abort)" << std::endl;
         abort();
     }
+    std::cout << "Connected to game server via proxy" << std::endl;
 }
 
 void LinkToGameServer::readTheFirstSslHeader()

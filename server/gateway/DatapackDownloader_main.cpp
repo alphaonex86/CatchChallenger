@@ -171,6 +171,12 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10)
     {
         curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
+        if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+        {
+            curl_easy_setopt(curl, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+        }
         DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
     }
     else
@@ -756,6 +762,12 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                                 curl_easy_cleanup(curl);
                                 curl_multi_add_handle(DatapackDownloaderBase::curlm, url);
+                                if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+                                {
+                                    curl_easy_setopt(curl, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+                                    curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                    curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+                                }
                                 DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
                                 continue;
                             }
@@ -792,6 +804,12 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                         if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
                             curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
+                            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+                            {
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+                            }
                             DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
                             DatapackDownloaderBase::curlSuspendList.pop_back();
                         }
