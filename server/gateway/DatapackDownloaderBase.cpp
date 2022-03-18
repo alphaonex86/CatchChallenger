@@ -14,6 +14,7 @@ using namespace CatchChallenger;
 #include <thread>
 #include <chrono>
 #include <utime.h>
+#include <arpa/inet.h>
 
 #include "../../general/libzstd/lib/zstd.h"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -34,6 +35,7 @@ std::unordered_set<std::string> DatapackDownloaderBase::extensionAllowed;
 std::regex DatapackDownloaderBase::excludePathBase("^(map[/\\\\]main[/\\\\]|pack[/\\\\]|datapack-list[/\\\\])");
 std::string DatapackDownloaderBase::commandUpdateDatapackBase;
 std::vector<std::string> DatapackDownloaderBase::httpDatapackMirrorBaseList;
+char *DatapackDownloaderBase::proxyStringForCurl=NULL;
 
 DatapackDownloaderBase * DatapackDownloaderBase::datapackDownloaderBase=NULL;
 CURLM *DatapackDownloaderBase::curlm=NULL;
@@ -49,9 +51,35 @@ DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase)
     index_mirror_base=0;
     wait_datapack_content_base=false;
     curlm = curl_multi_init();
-    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+    const unsigned int destination_proxy_ip_len=strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+    if(destination_proxy_ip_len>0)
     {
-        curl_easy_setopt(curlm, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+        std::string string_port(std::to_string(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port));
+
+        if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+            delete DatapackDownloaderBase::proxyStringForCurl;
+        unsigned char buf[sizeof(struct in6_addr)];
+        int domain, s;
+        domain=AF_INET6;
+        std::string final_proxy_string;
+        s = inet_pton(domain,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip, buf);
+        if (s <= 0)
+        {
+            //not ipv6, then host:port
+            final_proxy_string=std::string(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)+":"+string_port;
+        }
+        else
+        {
+            //ipv6, then [host]:port
+            final_proxy_string=std::string("[")+std::string(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)+"]:"+string_port;
+        }
+        DatapackDownloaderBase::proxyStringForCurl=(char *)malloc(final_proxy_string.size()+1);
+        memcpy(DatapackDownloaderBase::proxyStringForCurl,final_proxy_string.c_str(),final_proxy_string.size()+1);
+
+        /*curl_multi_setopt(curlm, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+        curl_multi_setopt(curlm, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+        curl_multi_setopt(curlm, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);*/
+        curl_easy_setopt(curlm, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
         curl_easy_setopt(curlm, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
         curl_easy_setopt(curlm, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
     }
@@ -298,6 +326,12 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
         std::cerr << "curl_easy_init() failed abort" << std::endl;
         abort();
     }
+    if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+    {
+        curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+        curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+        curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+    }
     if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
         std::cerr << "Unable to set the curl keep alive" << std::endl;
     if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
@@ -323,12 +357,6 @@ bool DatapackDownloaderBase::getHttpFileBase(const std::string &url, const std::
     if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10)
     {
         curl_multi_add_handle(DatapackDownloaderBase::curlm, curl);
-        if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
-        {
-            curl_easy_setopt(curl, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
-            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
-            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
-        }
         DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
     }
     else
@@ -475,6 +503,12 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
                 std::cerr << "curl_easy_init() failed abort" << std::endl;
                 abort();
             }
+            if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+            {
+                curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+                curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+            }
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
                 std::cerr << "Unable to set the curl keep alive" << std::endl;
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
@@ -537,6 +571,12 @@ void DatapackDownloaderBase::test_mirror_base()
             std::cerr << "curl_easy_init() failed abort" << std::endl;
             abort();
         }
+        if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+        {
+            curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+        }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
@@ -594,6 +634,12 @@ void DatapackDownloaderBase::test_mirror_base()
         {
             std::cerr << "curl_easy_init() failed abort" << std::endl;
             abort();
+        }
+        if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+        {
+            curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
         }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
@@ -942,9 +988,9 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                                 curl_easy_cleanup(curl);
                                 curl_multi_add_handle(DatapackDownloaderBase::curlm, url);
-                                if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+                                if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
                                 {
-                                    curl_easy_setopt(curl, CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+                                    curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
                                     curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
                                     curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                                 }
@@ -984,9 +1030,9 @@ void DatapackDownloaderBase::httpFinishedForDatapackListBase(const std::vector<c
                         if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
                             curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
-                            if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)>0)
+                            if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
                             {
-                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXY, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
                                 curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
                                 curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                             }
