@@ -28,7 +28,7 @@ public:
     static uint32_t readCachePartialHash(const std::string &file);
     static bool writeFileMDateTime(const std::string &file,const int64_t &date);
     static bool writeCachePartialHash(const std::string &file, const uint32_t &hash);
-    #ifdef Q_OS_WIN32
+    #ifdef __WIN32__
     static std::string GetLastErrorStdStr();
     static std::string toFinalPath(std::string path);
     #endif
