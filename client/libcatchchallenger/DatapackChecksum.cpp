@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sys/types.h>
 #include <sys/stat.h>
-//#include <unistd.h>--> problem with Microsoft Visual C++ Compiler
+#include <utime.h>
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/FacilityLib.hpp"
@@ -46,7 +46,7 @@ std::vector<char> DatapackChecksum::doChecksumBase(const std::string &datapackPa
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
                     std::string fullPathFileToOpen=datapackPath+fileName;
-                    #ifdef Q_OS_WIN32
+                    #ifdef __WIN32__
                     stringreplaceAll(fullPathFileToOpen,"/","\\");
                     #endif
                     FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
@@ -96,10 +96,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             {
                 //std::cout << "doFullSyncChecksumBase " << __FILE__ << ":" << __LINE__ << std::endl;
                 std::string fullPathFileToOpen=datapackPath+fileName;
-                #ifdef Q_OS_WIN32
+                #ifdef __WIN32__
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                fullDatapackChecksumReturn.datapackFilesList.push_back(fullPathFileToOpen);
+                fullDatapackChecksumReturn.datapackFilesList.push_back(fileName);
                 fullDatapackChecksumReturn.partialHashList.push_back(readCachePartialHash(fullPathFileToOpen));//use sb.st_mtime as big endian xxhash cache
             }
         }
@@ -131,7 +131,7 @@ std::vector<char> DatapackChecksum::doChecksumMain(const std::string &datapackPa
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
                     std::string fullPathFileToOpen=datapackPath+fileName;
-                    #ifdef Q_OS_WIN32
+                    #ifdef __WIN32__
                     stringreplaceAll(fullPathFileToOpen,"/","\\");
                     #endif
                     FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
@@ -177,10 +177,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
                 std::string fullPathFileToOpen=datapackPath+fileName;
-                #ifdef Q_OS_WIN32
+                #ifdef __WIN32__
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                fullDatapackChecksumReturn.datapackFilesList.push_back(fullPathFileToOpen);
+                fullDatapackChecksumReturn.datapackFilesList.push_back(fileName);
                 fullDatapackChecksumReturn.partialHashList.push_back(readCachePartialHash(fullPathFileToOpen));//use sb.st_mtime as big endian xxhash cache
             }
         }
@@ -210,7 +210,7 @@ std::vector<char> DatapackChecksum::doChecksumSub(const std::string &datapackPat
                 if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
                 {
                     std::string fullPathFileToOpen=datapackPath+fileName;
-                    #ifdef Q_OS_WIN32
+                    #ifdef __WIN32__
                     stringreplaceAll(fullPathFileToOpen,"/","\\");
                     #endif
                     FILE *file=fopen(fullPathFileToOpen.c_str(),"rb");
@@ -255,10 +255,10 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
             if(!suffix.empty() && extensionAllowed.find(suffix)!=extensionAllowed.cend())
             {
                 std::string fullPathFileToOpen=datapackPath+fileName;
-                #ifdef Q_OS_WIN32
+                #ifdef __WIN32__
                 stringreplaceAll(fullPathFileToOpen,"/","\\");
                 #endif
-                fullDatapackChecksumReturn.datapackFilesList.push_back(fullPathFileToOpen);
+                fullDatapackChecksumReturn.datapackFilesList.push_back(fileName);
                 fullDatapackChecksumReturn.partialHashList.push_back(readCachePartialHash(fullPathFileToOpen));//use sb.st_mtime as big endian xxhash cache
             }
         }
@@ -271,41 +271,37 @@ DatapackChecksum::FullDatapackChecksumReturn DatapackChecksum::doFullSyncChecksu
 int64_t DatapackChecksum::readFileMDateTime(const std::string &file)
 {
     /** Why not do it with Qt? Because it not support setModificationTime(), and get the time with Qt, that's mean use local time where in C is UTC time */
-    #ifdef Q_OS_UNIX
+    #ifndef __WIN32__
         struct stat info;
-        if(stat(TransferThread::internalStringTostring(file).c_str(),&info)!=0)
+        if(stat(file.c_str(),&info)!=0)
         {
             std::cerr << "Unable to read modification time path: " << file << ", errno: " << std::to_string(errno) << std::endl;
             return -1;
         }
-        #ifdef Q_OS_MAC
+        #ifdef __APPLE__
         return info.st_mtimespec.tv_sec;
         #else
         return info.st_mtim.tv_sec;
         #endif
     #else
-        #ifdef Q_OS_WIN32
-            HANDLE hFileSouce = CreateFileW(TransferThread::toFinalPath(source).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
-            if(hFileSouce == INVALID_HANDLE_VALUE)
-                return -1;
-            FILETIME ftCreate, ftAccess, ftWrite;
-            if(!GetFileTime(hFileSouce, &ftCreate, &ftAccess, &ftWrite))
-            {
-                CloseHandle(hFileSouce);
-                std::cerr << "Unable to read modification time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
-                return -1;
-            }
-            CloseHandle(hFileSouce);
-            //const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of Unix epoch) in "ticks"
-            //const int64_t TICKS_PER_SECOND = 10000000; //a tick is 100ns
-            LARGE_INTEGER li;
-            li.LowPart  = ftWrite.dwLowDateTime;
-            li.HighPart = ftWrite.dwHighDateTime;
-            //return (li.QuadPart - UNIX_TIME_START) / TICKS_PER_SECOND;
-            return (li.QuadPart - 0x019DB1DED53E8000) / 10000000;
-        #else
+        HANDLE hFileSouce = CreateFileW(toFinalPath(file).c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
+        if(hFileSouce == INVALID_HANDLE_VALUE)
             return -1;
-        #endif
+        FILETIME ftCreate, ftAccess, ftWrite;
+        if(!GetFileTime(hFileSouce, &ftCreate, &ftAccess, &ftWrite))
+        {
+            CloseHandle(hFileSouce);
+            std::cerr << "Unable to read modification time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
+            return -1;
+        }
+        CloseHandle(hFileSouce);
+        //const int64_t UNIX_TIME_START = 0x019DB1DED53E8000; //January 1, 1970 (start of Unix epoch) in "ticks"
+        //const int64_t TICKS_PER_SECOND = 10000000; //a tick is 100ns
+        LARGE_INTEGER li;
+        li.LowPart  = ftWrite.dwLowDateTime;
+        li.HighPart = ftWrite.dwHighDateTime;
+        //return (li.QuadPart - UNIX_TIME_START) / TICKS_PER_SECOND;
+        return (li.QuadPart - 0x019DB1DED53E8000) / 10000000;
     #endif
     return -1;
 }
@@ -334,23 +330,26 @@ uint32_t DatapackChecksum::readCachePartialHash(const std::string &file)
 bool DatapackChecksum::writeFileMDateTime(const std::string &file,const int64_t &date)
 {
     /** Why not do it with Qt? Because it not support setModificationTime(), and get the time with Qt, that's mean use local time where in C is UTC time */
-    #ifdef Q_OS_UNIX
+    #ifndef __WIN32__
+        struct utimbuf butime;
+        butime.actime=date;
+        butime.modtime=date;
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
-        return utime(fullPath.c_str(),&butime)==0;
+        return utime(file.c_str(),&butime)==0;
         #else
-        if(utime(fullPath.c_str(),&butime)!=0)
+        if(utime(file.c_str(),&butime)!=0)
         {
-            std::cerr << "hash cache into modification time set failed on path: " << fullPath
+            std::cerr << "hash cache into modification time set failed on path: " << file
                       << ", errno: " << std::to_string(errno)
                       << " (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
             return false;
         }
         struct stat sb;
-        if (stat(fullPath.c_str(), &sb) == 0)
+        if (stat(file.c_str(), &sb) == 0)
         {
-            if(sb.st_mtime!=h)
+            if(sb.st_mtime!=date)
             {
-                std::cerr << "hash cache into modification time wrong  on path: " << fullPath
+                std::cerr << "hash cache into modification time wrong  on path: " << file
                           << ", errno: " << std::to_string(errno)
                           << " (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
                 return false;
@@ -358,7 +357,7 @@ bool DatapackChecksum::writeFileMDateTime(const std::string &file,const int64_t 
         }
         else
         {
-            std::cerr << "unable to open modification time of datapack to check the hash  on path: " << fullPath
+            std::cerr << "unable to open modification time of datapack to check the hash  on path: " << file
                       << ", errno: " << std::to_string(errno)
                       << " (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
             return false;
@@ -366,28 +365,29 @@ bool DatapackChecksum::writeFileMDateTime(const std::string &file,const int64_t 
         return true;
         #endif
     #else
-        #ifdef Q_OS_WIN32
-            HANDLE hFileDestination = CreateFileW(TransferThread::toFinalPath(destination).c_str(), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-            if(hFileDestination == INVALID_HANDLE_VALUE)
-            {
-                std::cerr << "Unable to read modification (write windows) time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
-                return false;
-            }
-            FILETIME ftCreate, ftAccess, ftWrite;
-            ftCreate=this->ftCreate;
-            ftAccess=this->ftAccess;
-            ftWrite=this->ftWrite;
-            if(!SetFileTime(hFileDestination, &ftCreate, &ftAccess, &ftWrite))
-            {
-                CloseHandle(hFileDestination);
-                std::cerr << "Unable to read modification time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
-                return false;
-            }
-            CloseHandle(hFileDestination);
-            return true;
-        #else
+        HANDLE hFileDestination = CreateFileW(toFinalPath(file).c_str(), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if(hFileDestination == INVALID_HANDLE_VALUE)
+        {
+            std::cerr << "Unable to read modification (write windows) time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
             return false;
-        #endif
+        }
+        ULARGE_INTEGER time_value;
+        time_value.QuadPart = (date * 10000000LL) + 116444736000000000LL;
+        pft->dwLowDateTime = time_value.LowPart;
+        pft->dwHighDateTime = time_value.HighPart;
+
+        FILETIME ftCreate, ftAccess, ftWrite;
+        ftCreate=time_value;
+        ftAccess=time_value;
+        ftWrite=time_value;
+        if(!SetFileTime(hFileDestination, &ftCreate, &ftAccess, &ftWrite))
+        {
+            CloseHandle(hFileDestination);
+            std::cerr << "Unable to read modification time path: " << file << ", error: " << GetLastErrorStdStr() << std::endl;
+            return false;
+        }
+        CloseHandle(hFileDestination);
+        return true;
     #endif
     return false;
 }
@@ -402,8 +402,8 @@ bool DatapackChecksum::writeCachePartialHash(const std::string &file,const uint3
     #endif
 }
 
-#ifdef Q_OS_WIN32
-std::string TransferThread::GetLastErrorStdStr()
+#ifdef __WIN32__
+std::string DatapackChecksum::GetLastErrorStdStr()
 {
   DWORD error = GetLastError();
   if (error)
@@ -429,7 +429,7 @@ std::string TransferThread::GetLastErrorStdStr()
   return "2: "+std::to_string(error);
 }
 
-std::string TransferThread::toFinalPath(std::string path)
+std::string DatapackChecksum::toFinalPath(std::string path)
 {
     if(path.size()==2 && path.at(1)==':')
         path+="\\";
