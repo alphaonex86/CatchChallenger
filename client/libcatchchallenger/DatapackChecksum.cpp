@@ -7,6 +7,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <utime.h>
+#ifdef __WIN32__
+#include <locale>
+#include <codecvt>
+#include <string>
+#endif
 
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/FacilityLib.hpp"
@@ -372,14 +377,15 @@ bool DatapackChecksum::writeFileMDateTime(const std::string &file,const int64_t 
             return false;
         }
         ULARGE_INTEGER time_value;
+        FILETIME pft;
         time_value.QuadPart = (date * 10000000LL) + 116444736000000000LL;
-        pft->dwLowDateTime = time_value.LowPart;
-        pft->dwHighDateTime = time_value.HighPart;
+        pft.dwLowDateTime = time_value.LowPart;
+        pft.dwHighDateTime = time_value.HighPart;
 
         FILETIME ftCreate, ftAccess, ftWrite;
-        ftCreate=time_value;
-        ftAccess=time_value;
-        ftWrite=time_value;
+        ftCreate=pft;
+        ftAccess=pft;
+        ftWrite=pft;
         if(!SetFileTime(hFileDestination, &ftCreate, &ftAccess, &ftWrite))
         {
             CloseHandle(hFileDestination);
@@ -429,7 +435,7 @@ std::string DatapackChecksum::GetLastErrorStdStr()
   return "2: "+std::to_string(error);
 }
 
-std::string DatapackChecksum::toFinalPath(std::string path)
+std::wstring DatapackChecksum::toFinalPath(std::string path)
 {
     if(path.size()==2 && path.at(1)==':')
         path+="\\";
@@ -439,7 +445,11 @@ std::string DatapackChecksum::toFinalPath(std::string path)
         pathW="\\\\?\\UNC\\"+path.substr(2);
     else
         pathW="\\\\?\\"+path;
-    return pathW;
+
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wide = converter.from_bytes(pathW);
+
+    return wide;
 }
 #endif
 
