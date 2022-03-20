@@ -30,7 +30,7 @@ public:
     static bool writeCachePartialHash(const std::string &file, const uint32_t &hash);
     #ifdef __WIN32__
     static std::string GetLastErrorStdStr();
-    static std::string toFinalPath(std::string path);
+    static std::wstring toFinalPath(std::string path);
     #endif
 
 /*    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
