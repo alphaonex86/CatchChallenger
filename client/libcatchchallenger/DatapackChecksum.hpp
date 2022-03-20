@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 
 namespace CatchChallenger {
 class DatapackChecksum
@@ -22,6 +23,16 @@ public:
     static FullDatapackChecksumReturn doFullSyncChecksumBase(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumMain(const std::string &datapackPath);
     static FullDatapackChecksumReturn doFullSyncChecksumSub(const std::string &datapackPath);
+
+    static int64_t readFileMDateTime(const std::string &file);
+    static uint32_t readCachePartialHash(const std::string &file);
+    static bool writeFileMDateTime(const std::string &file,const int64_t &date);
+    static bool writeCachePartialHash(const std::string &file, const uint32_t &hash);
+    #ifdef Q_OS_WIN32
+    static std::string GetLastErrorStdStr();
+    static std::string toFinalPath(std::string path);
+    #endif
+
 /*    #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
     void stopThread();
 private:
