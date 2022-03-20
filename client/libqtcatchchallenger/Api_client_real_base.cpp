@@ -2,12 +2,6 @@
 
 using namespace CatchChallenger;
 
-#ifdef Q_CC_GNU
-//this next header is needed to change file time/date under gcc
-#include <utime.h>
-#include <sys/stat.h>
-#endif
-
 #include <iostream>
 #include <cmath>
 #include <QRegularExpression>
@@ -84,32 +78,11 @@ void Api_client_real::writeNewFileBase(const std::string &fileName,const std::st
         XXH32_canonical_t htemp;
         XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
         memcpy(&h,&htemp.digest,sizeof(h));
-        utimbuf butime;butime.actime=h;butime.modtime=h;
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
-        utime(fullPath.c_str(),&butime);
+        DatapackChecksum::writeCachePartialHash(fullPath,h);
         #else
-        if(utime(fullPath.c_str(),&butime)!=0)
-        {
-            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+        if(!DatapackChecksum::writeCachePartialHash(fullPath,h))
             abort();
-        }
-        #endif
-
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        struct stat sb;
-        if (stat(fullPath.c_str(), &sb) == 0)
-        {
-            if(sb.st_mtime!=h)
-            {
-                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                abort();
-            }
-        }
-        else
-        {
-            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-            abort();
-        }
         #endif
     }
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -442,32 +415,11 @@ void Api_client_real::decodedIsFinishBase()
                         XXH32_canonical_t htemp;
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
-                        utimbuf butime;butime.actime=h;butime.modtime=h;
                         #ifndef CATCHCHALLENGER_EXTRA_CHECK
-                        utime(fileInfo.absoluteFilePath().toStdString().c_str(),&butime);
+                        DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h);
                         #else
-                        if(utime(fileInfo.absoluteFilePath().toStdString().c_str(),&butime)!=0)
-                        {
-                            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                        if(!DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h))
                             abort();
-                        }
-                        #endif
-
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        struct stat sb;
-                        if (stat(fileInfo.absoluteFilePath().toStdString().c_str(), &sb) == 0)
-                        {
-                            if(sb.st_mtime!=h)
-                            {
-                                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                                abort();
-                            }
-                        }
-                        else
-                        {
-                            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
-                            abort();
-                        }
                         #endif
                     }
                     else
