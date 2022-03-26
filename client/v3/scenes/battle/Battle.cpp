@@ -121,7 +121,7 @@ void Battle::SetVariables() {
   fightEngine = static_cast<CommonFightEngine *>(client_);
 
   if (!connect(client_, &CatchChallenger::Api_client_real::QtmonsterCatch, this,
-               &Battle::MonsterCatch))
+               &Battle::MonsterCatchSlot))
     abort();
   if (!connect(client_, &CatchChallenger::Api_client_real::QtteleportTo, this,
                &Battle::TeleportToSlot))
@@ -183,6 +183,8 @@ void Battle::prepareFight() {
 // Initialize the battle for wild encounter
 bool Battle::WildFightInitialize(Map_client *map, const uint8_t &x,
                                  const uint8_t &y) {
+  wait_timer_.stop();
+
   zone_collision_ = MoveOnTheMap::getZoneCollision(*map, x, y);
   battle_context_->Restart(Scenes::BattleContext::kStartState_Wild);
   return true;
@@ -818,10 +820,10 @@ void Battle::ConfigureFighters() {
   playerBackImage = playerBackImage.scaledToHeight(600);
   player_->SetPixmap(playerBackImage);
 
-  player_in_ = QPointF(bounding.width() * 0.1, bounding.height() - player_->Height() + 50);
-  player_out_ = QPointF(-playerBackImage.width(), bounding.height() - player_->Height() + 50);
-  enemy_in_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.15);
-  enemy_out_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.15);
+  player_in_ = QPointF(bounding.width() * 0.1, bounding.height() - player_->Height() + 200);
+  player_out_ = QPointF(-playerBackImage.width(), bounding.height() - player_->Height() + 200);
+  enemy_in_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.25);
+  enemy_out_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.25);
 }
 
 void Battle::ConfigureCommons() {
@@ -1009,7 +1011,6 @@ void Battle::UpdateAttackSkills() {
 
 void Battle::OnMonsterSelect(uint8_t monster_index) {
   linked_->Close();
-  resetPosition(true, false, true);
   // do copie here because the call of changeOfMonsterInFight apply the skill
   // / buff effect
   const PlayerMonster *tempMonster = client_->monsterByPosition(monster_index);
@@ -1017,11 +1018,11 @@ void Battle::OnMonsterSelect(uint8_t monster_index) {
     qDebug() << "Monster not found";
     return;
   }
-  PlayerMonster copiedMonster = *tempMonster;
   if (!client_->changeOfMonsterInFight(monster_index)) return;
   client_->changeOfMonsterInFightByPosition(monster_index);
+  player_status_->SetVisible(false);
+
   PlayerMonster *playerMonster = client_->getCurrentMonster();
-  // PlayerMonsterInitialize(&copiedMonster);
   if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(
           playerMonster->monster) !=
       QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend()) {
@@ -1806,22 +1807,12 @@ void Battle::UseTrap(const uint16_t &item_id) {
     qDebug() << "!connexionManager->client->tryCatchClient(itemId)";
     abort();
   }
-  waiting_server_reply_ = true;
 
-  // TODO(lanstat): use item_id to determine whick trap texture use
-
-  if (trap_ == nullptr) {
-    trap_ = Sprite::Create(this);
-    trap_->SetPos(0, BoundingRect().height());
-    trap_->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->getItemExtra(item_id).image);
-    trap_throw_ = BattleActions::CreateThrowAction(
-        trap_, enemy_, std::bind(&Battle::OnTrapThrowDone, this));
-    trap_catch_ = Sequence::Create(
-        Delay::Create(1000),
-        CallFunc::Create(std::bind(&Battle::OnTrapCatchDone, this)), nullptr);
-    trap_->SetSize(100, 100);
-  }
+  BattleAction action;
+  action.type = kBattleAction_UseTrap;
+  action.id = item_id;
+  action.success = false;
+  actions_.push_back(action);
 
   ShowStatusMessage(
       QStringLiteral("Try catch the wild %1")
@@ -1830,108 +1821,23 @@ void Battle::UseTrap(const uint16_t &item_id) {
                   .at(client_->getOtherMonster()->monster)
                   .name)),
       false, false);
-
-  trap_->SetData(10, item_id);
-  trap_->SetVisible(true);
-  trap_->RunAction(trap_throw_);
 }
 
-void Battle::OnTrapThrowDone() {
-  std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
-            << "asdas" << std::endl;
-  auto other_monster = client_->getOtherMonster();
-  auto current_monster = client_->getCurrentMonster();
-  if (other_monster == NULL) {
-    error(
-        "OnTrapActionDone(): crash: unable to get the other monster to use "
-        "trap");
-    doNextAction();
-    return;
-  }
-  if (current_monster == NULL) {
-    newError(tr("Internal error").toStdString() + ", file: " +
-                 std::string(__FILE__) + ":" + std::to_string(__LINE__),
-             "OnTrapActionDone(): crash: unable to get the current monster");
-    doNextAction();
-    return;
-  }
-
-  // if server doesnt reply dont do anything
-  if (waiting_server_reply_) {
-    return;
-  }
-  // TODO(lanstat): Determine which animation show, use is_trap_success_
-  trap_->RunAction(trap_catch_);
-}
-
-void Battle::OnTrapCatchDone() {
-  auto other_monster = client_->getOtherMonster();
-  if (is_trap_success_) {
-    client_->catchIsDone();  // why? do at the screen change to return on
-                             // the map, not here!
-    ShowStatusMessage(
-        tr("You have catched the wild %1")
-            .arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                    .at(other_monster->monster)
-                    .name)));
-  } else {
-    ShowStatusMessage(
-        tr("You have failed the catch of the wild %1")
-            .arg(QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                    .at(other_monster->monster)
-                    .name)));
-  }
-  trap_->SetVisible(false);
-  return;
-}
-
-void Battle::MonsterCatch(const bool &success) {
+void Battle::MonsterCatchSlot(const bool &success) {
   if (client_->playerMonster_catchInProgress.empty()) {
     error("Internal bug: cupture monster list is emtpy");
     return;
   }
-  waiting_server_reply_ = false;
-  is_trap_success_ = success;
+
+  actions_.front().success = success;
 
   Logger::Log(QStringLiteral("Trap success: %1").arg(success));
 
-  if (!is_trap_success_) {
-#ifdef CATCHCHALLENGER_DEBUG_FIGHT
-    emit message(QStringLiteral("catch is failed"));
-#endif
+  if (!success) {
     client_->generateOtherAttack();
+    wait_timer_.start();
   } else {
-#ifdef CATCHCHALLENGER_DEBUG_FIGHT
-    emit message(QStringLiteral("catch is success"));
-#endif
-    // connexionManager->client->playerMonster_catchInProgress.first().id=newMonsterId;
-    if (client_->getPlayerMonster().size() >=
-        CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters) {
-      Player_private_and_public_informations &informations =
-          client_->get_player_informations();
-      if (informations.warehouse_playerMonster.size() >=
-          CommonSettingsCommon::commonSettingsCommon
-              .maxWarehousePlayerMonsters) {
-        ShowMessageDialog(tr("Error"), tr("You have already the maximum number "
-                                          "of monster into you warehouse"));
-        return;
-      }
-      informations.warehouse_playerMonster.push_back(
-          client_->playerMonster_catchInProgress.front());
-    } else {
-      Logger::Log(QStringLiteral("mob: %1").arg(
-          client_->playerMonster_catchInProgress.front().id));
-      client_->addPlayerMonster(client_->playerMonster_catchInProgress.front());
-    }
-  }
-  client_->playerMonster_catchInProgress.erase(
-      client_->playerMonster_catchInProgress.cbegin());
-
-  // Verify is trap is running an animation
-  if (!trap_->HasRunningActions()) {
-    OnTrapThrowDone();
+    battle_context_->Handle();
   }
 }
 

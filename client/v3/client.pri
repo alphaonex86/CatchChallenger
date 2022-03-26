@@ -264,6 +264,7 @@ SOURCES += \
     $$PWD/entities/render/TriggerAnimation.cpp \
     $$PWD/entities/Map_client.cpp \
     $$PWD/entities/PlayerInfo.cpp \
+    $$PWD/entities/ActionUtils.cpp \
     $$PWD/entities/Utils.cpp
 HEADERS  += \
     $$PWD/entities/render/MapController.hpp \
@@ -285,6 +286,7 @@ HEADERS  += \
     $$PWD/entities/render/TriggerAnimation.hpp \
     $$PWD/entities/Map_client.hpp \
     $$PWD/entities/PlayerInfo.hpp \
+    $$PWD/entities/ActionUtils.hpp \
     $$PWD/entities/Utils.hpp
 
 wasm: {

@@ -21,8 +21,6 @@ class WildPresentationState : public BattleState {
 class CallMonsterState : public BattleState {
  public:
   void Handle(BattleContext *context, Battle *battle) override;
-  void LoadPlayerMonster(Battle *battle,
-                         CatchChallenger::PlayerMonster *fight_monster);
 };
 
 class UserInputState : public BattleState {
@@ -61,6 +59,16 @@ class FightState : public BattleState {
 };
 
 class EndState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
+class WinState : public BattleState {
+ public:
+  void Handle(BattleContext *context, Battle *battle) override;
+};
+
+class LoseState : public BattleState {
  public:
   void Handle(BattleContext *context, Battle *battle) override;
 };

@@ -103,7 +103,7 @@ class Battle : public QObject, public Scene {
   };
 
   std::vector<BattleAction> actions_;
-
+  uint16_t fightId;
   BattleStep battleStep;
 
   bool WildFightInitialize(CatchChallenger::Map_client *map, const uint8_t &x,
@@ -165,6 +165,7 @@ class Battle : public QObject, public Scene {
   void doNextAction();
   void updateCurrentMonsterInformation();
   void ProcessActions();
+  void ShowMessageDialog(const QString &title, const QString &message);
 
  private:
   Sprite *labelFightBackground;
@@ -188,7 +189,6 @@ class Battle : public QObject, public Scene {
   bool useTheRescueSkill;
   ConnectionManager *connexionManager;
   bool fightTimerFinish;
-  uint16_t fightId;
 
   DoNextActionStep doNextActionStep;
 
@@ -255,7 +255,7 @@ class Battle : public QObject, public Scene {
   void UseTrap(const uint16_t &item_id);
   void OnTrapThrowDone();
   void OnTrapCatchDone();
-  void MonsterCatch(const bool &success);
+  void MonsterCatchSlot(const bool &success);
   void OnActionNextClick(Node *);
   void OnActionAttackClick(Node *);
   void OnActionBagClick(Node *);
@@ -279,7 +279,6 @@ class Battle : public QObject, public Scene {
   QPixmap GetBackSkin(const uint32_t &skinId);
 
   void battleAcceptedByOtherFull(const BattleInformations &battleInformations);
-  void ShowMessageDialog(const QString &title, const QString &message);
   void ShowBagDialog();
   void UseBagItem(Scenes::Inventory::ObjectType type, uint16_t item,
                   uint32_t quantity);
