@@ -18,6 +18,9 @@ void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,
     }
     //if not in query type done into ProtocolParsingCheck
     #endif
+    #ifdef DEBUG_PROTOCOLPARSING_RAW_NETWORK
+    std::cout << this << " ProtocolParsingInputOutput::registerOutputQuery(" << std::to_string(queryNumber) << "," << std::to_string(packetCode) << ")" << std::endl;
+    #endif
     //registrer on the check
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     protocolParsingCheck->registerOutputQuery(queryNumber,packetCode);

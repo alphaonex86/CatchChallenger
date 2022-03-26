@@ -40,24 +40,32 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
         case 0xA0:
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                stat=EpollClientLoginStat::ProtocolGood;
-
                 stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
                 /// \todo do the async connect
                 /// linkToGameServer->stat=Stat::Connecting;
-                const int &socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                int socketFd=-1;
+                if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip.c_str(),EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
+                else
+                    socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
                 if(Q_LIKELY(socketFd>=0))
                 {
                     stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
                     this->linkToGameServer=linkToGameServer;
-                    linkToGameServer->stat=LinkToGameServer::Stat::Connected;
+                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingFirstSslHeader;
+                    else
+                        linkToGameServer->stat=LinkToGameServer::Stat::WaitingProxy;
                     linkToGameServer->client=this;
                     linkToGameServer->protocolQueryNumber=queryNumber;
                     //send the protocol
                     //wait readTheFirstSslHeader() to sendProtocolHeader();
                     linkToGameServer->setConnexionSettings();
-                    linkToGameServer->parseIncommingData();
+                    if(strlen(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip)<=0)
+                        linkToGameServer->parseIncommingData();
+                    else
+                        linkToGameServer->sendProxyRequest(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_server_port);
                     /*int s = EpollSocket::make_non_blocking(socketFd);
                     if(s == -1)
                         std::cerr << "unable to make to socket non blocking" << std::endl;*/
@@ -224,9 +232,8 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
             break;
             //Send datapack file list
             case 0xA1:
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
             {
-                uint32_t pos=0;
-                #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
                 switch(datapackStatus)
                 {
                     case DatapackStatus::Base:
@@ -260,9 +267,10 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                     return false;
                 }
 
+                uint32_t pos=0;
                 if((size-pos)<(int)sizeof(uint8_t))
                 {
-                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType));
+                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
                 const uint8_t &stepToSkip=data[pos];
@@ -309,21 +317,47 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
 
                 if((size-pos)<(int)sizeof(uint32_t))
                 {
-                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType));
+                    parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
                 const uint32_t &number_of_file=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+pos)));
                 pos+=sizeof(uint32_t);
                 std::vector<std::string> files;
+                files.reserve(number_of_file);
                 std::vector<uint32_t> partialHashList;
+                partialHashList.reserve(number_of_file);
                 std::string tempFileName;
                 uint32_t index=0;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                std::regex datapack_rightFileName = std::regex(DATAPACK_FILE_REGEX);
+                #endif
+                if(number_of_file>1000000)
+                {
+                    parseNetworkReadError("number_of_file > million: "+std::to_string(number_of_file)+": parseQuery("+
+                        std::to_string(mainCodeType)+
+                        ","+
+                        std::to_string(queryNumber)+
+                        "): "+
+                        binarytoHexa(data,pos)+
+                        " "+
+                        binarytoHexa(data+pos,size-pos)
+                        );
+                    return false;
+                }
                 while(index<number_of_file)
                 {
                     {
                         if((size-pos)<(int)sizeof(uint8_t))
                         {
-                            parseNetworkReadError("wrong utf8 to std::string size in PM for text size");
+                            parseNetworkReadError("wrong utf8 to std::string size "+std::to_string(size)+" pos "+std::to_string(pos)+": parseQuery("+
+                                std::to_string(mainCodeType)+
+                                ","+
+                                std::to_string(queryNumber)+
+                                "): "+
+                                binarytoHexa(data,pos)+
+                                " "+
+                                binarytoHexa(data+pos,size-pos)
+                                );
                             return false;
                         }
                         const uint8_t &textSize=data[pos];
@@ -334,26 +368,51 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                             if((size-pos)<textSize)
                             {
                                 parseNetworkReadError("wrong utf8 to std::string size for file name: parseQuery("+
-                                                      std::to_string(mainCodeType)+","+
-                                                      std::to_string(queryNumber)+
-                                                      ")");
+                                    std::to_string(mainCodeType)+
+                                    ","+
+                                    std::to_string(queryNumber)+
+                                    "): "+
+                                    binarytoHexa(data,pos)+
+                                    " "+
+                                    binarytoHexa(data+pos,size-pos)
+                                    );
                                 return false;
                             }
                             tempFileName=std::string(data+pos,textSize);
                             pos+=textSize;
                         }
-                    }
-                    if((size-pos)<1)
-                    {
-                        parseNetworkReadError("missing header utf8 datapack file list query");
-                        return false;
+                        else
+                            tempFileName.clear();
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(!std::regex_match(tempFileName,datapack_rightFileName))
+                        {
+                            parseNetworkReadError("wrong file name \""+tempFileName+"\": parseQuery("+
+                                std::to_string(mainCodeType)+
+                                ","+
+                                std::to_string(queryNumber)+
+                                "): "+
+                                binarytoHexa(data,pos)+
+                                " "+
+                                binarytoHexa(data+pos,size-pos)
+                                );
+                            return false;
+                        }
+                        #endif
                     }
                     files.push_back(tempFileName);
+                    index++;
+                }
+                index=0;
+                while(index<number_of_file)
+                {
                     if((size-pos)<(int)sizeof(uint32_t))
                     {
-                        parseNetworkReadError("wrong size for id with main ident: "+std::to_string(mainCodeType)+
-                                              ", remaining: "+std::to_string(size-pos)+
-                                              ", lower than: "+std::to_string((int)sizeof(uint32_t))
+                        parseNetworkReadError("wrong size for id with main ident: "+
+                                              std::to_string(mainCodeType)+
+                                              ", remaining: "+
+                                              std::to_string(size-pos)+
+                                              ", lower than: "+
+                                              std::to_string((int)sizeof(uint32_t))
                                               );
                         return false;
                     }
@@ -365,15 +424,23 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                 datapackList(queryNumber,files,partialHashList);
                 if((size-pos)!=0)
                 {
-                    parseNetworkReadError("remaining data: parseQuery("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");
+                    parseNetworkReadError("remaining data: parseQuery("+
+                        std::to_string(mainCodeType)+
+                        ","+
+                        std::to_string(queryNumber)+
+                        "): "+
+                        binarytoHexa(data,pos)+
+                        " "+
+                        binarytoHexa(data+pos,size-pos)
+                        );
                     return false;
                 }
                 return true;
-                #else
-                parseNetworkReadError("CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR");
-                return false;
-                #endif
             }
+            #else
+            parseNetworkReadError("CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR");
+            return false;
+            #endif
             break;
             default:
             break;

@@ -40,7 +40,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
     }
     if(vectorcontainsAtLeastOne(lastQueryNumber,queryNumber))
     {
-        errorParsingLayer("Api_protocol::parseReplyData(): queryNumber: allready returned: "+std::to_string(queryNumber));
+        errorParsingLayer("Api_protocol::parseReplyData(): queryNumber: already returned: "+std::to_string(queryNumber));
         abort();
     }
     else
@@ -281,7 +281,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                         pos+=mirrorSize;
                         if(!regex_search(CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase,std::regex("^https?://")))
                         {
-                            parseError("Procotol wrong or corrupted","mirror with not http(s) protocol with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Procotol wrong or corrupted","mirror with not http(s) protocol with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+" data: "+binarytoHexa(data,size));
                             return false;
                         }
                     }

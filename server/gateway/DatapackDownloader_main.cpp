@@ -2,11 +2,14 @@
 
 using namespace CatchChallenger;
 
+#include <utime.h>
+#include <sys/stat.h>
 #include <iostream>
 #include <cmath>
 #include <regex>
 #include <thread>
 #include <chrono>
+#include <utime.h>
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -14,6 +17,7 @@ using namespace CatchChallenger;
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/libzstd/lib/zstd.h"
+#include "../../general/xxhash/xxhash.h"
 #include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollServerLoginSlave.hpp"
@@ -38,6 +42,42 @@ void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,con
             abort();
         }
 
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            FILE *pFile = fopen(fullPath.c_str(),"rb");
+            if(pFile!=NULL)
+            {
+                size_t lSize;
+                char * buffer;
+                size_t result;
+
+                // obtain file size:
+                fseek (pFile , 0 , SEEK_END);
+                lSize = ftell (pFile);
+                rewind (pFile);
+
+                // allocate memory to contain the whole file:
+                buffer = (char*) malloc (sizeof(char)*lSize);
+                if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+                // copy the file into the buffer:
+                result = fread (buffer,1,lSize,pFile);
+                if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+                if(result==data.size())
+                {
+                    if(memcmp(buffer,data.data(),result)==0)
+                    {
+                        std::cerr << "duplicate download detected: " << fullPath << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                        //abort();
+                    }
+                }
+
+                fclose(pFile);
+                free (buffer);
+            }
+        }
+        #endif
         FILE *file=fopen(fullPath.c_str(),"wb");
         if(file==NULL)
         {
@@ -51,6 +91,37 @@ void DatapackDownloaderMainSub::writeNewFileMain(const std::string &fileName,con
             return;
         }
         fclose(file);
+        uint32_t h=0;
+        XXH32_canonical_t htemp;
+        XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
+        memcpy(&h,&htemp.digest,sizeof(h));
+        utimbuf butime;butime.actime=h;butime.modtime=h;
+        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+        utime(fullPath.c_str(),&butime);
+        #else
+        if(utime(fullPath.c_str(),&butime)!=0)
+        {
+            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
+
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        struct stat sb;
+        if (stat(fullPath.c_str(), &sb) == 0)
+        {
+            if(sb.st_mtime!=h)
+            {
+                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                abort();
+            }
+        }
+        else
+        {
+            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+            abort();
+        }
+        #endif
     }
 }
 
@@ -74,6 +145,12 @@ bool DatapackDownloaderMainSub::getHttpFileMain(const std::string &url, const st
     {
         std::cerr << "curl_easy_init() failed abort" << std::endl;
         abort();
+    }
+    if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+    {
+        curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+        curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+        curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
     }
     if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
         std::cerr << "Unable to set the curl keep alive" << std::endl;
@@ -240,6 +317,12 @@ void DatapackDownloaderMainSub::datapackChecksumDoneMain(const std::vector<std::
                 std::cerr << "curl_easy_init() failed abort" << std::endl;
                 abort();
             }
+            if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+            {
+                curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+                curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+            }
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
                 std::cerr << "Unable to set the curl keep alive" << std::endl;
             if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
@@ -299,6 +382,12 @@ void DatapackDownloaderMainSub::test_mirror_main()
             std::cerr << "curl_easy_init() failed abort" << std::endl;
             abort();
         }
+        if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+        {
+            curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+        }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 120L)!=CURLE_OK)
@@ -356,6 +445,12 @@ void DatapackDownloaderMainSub::test_mirror_main()
         {
             std::cerr << "curl_easy_init() failed abort" << std::endl;
             abort();
+        }
+        if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+        {
+            curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+            curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+            curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
         }
         if(curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L)!=CURLE_OK)
             std::cerr << "Unable to set the curl keep alive" << std::endl;
@@ -458,6 +553,37 @@ void DatapackDownloaderMainSub::decodedIsFinishMain(const std::vector<char> &raw
                             return;
                         }
                         fclose(file);
+                        uint32_t h=0;
+                        XXH32_canonical_t htemp;
+                        XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
+                        memcpy(&h,&htemp.digest,sizeof(h));
+                        utimbuf butime;butime.actime=h;butime.modtime=h;
+                        #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                        utime((mDatapackMain+fileList.at(index)).c_str(),&butime);
+                        #else
+                        if(utime((mDatapackMain+fileList.at(index)).c_str(),&butime)!=0)
+                        {
+                            std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
+
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        struct stat sb;
+                        if (stat((mDatapackMain+fileList.at(index)).c_str(), &sb) == 0)
+                        {
+                            if(sb.st_mtime!=h)
+                            {
+                                std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                        }
+                        else
+                        {
+                            std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                            abort();
+                        }
+                        #endif
                     }
                     else
                     {
@@ -654,6 +780,12 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                                 curl_multi_remove_handle(DatapackDownloaderBase::curlm,curl);
                                 curl_easy_cleanup(curl);
                                 curl_multi_add_handle(DatapackDownloaderBase::curlm, url);
+                                if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+                                {
+                                    curl_easy_setopt(curl, CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+                                    curl_easy_setopt(curl, CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                    curl_easy_setopt(curl, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+                                }
                                 DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
                                 continue;
                             }
@@ -690,6 +822,12 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                         if(DatapackDownloaderBase::DatapackDownloaderBase::curlmCount<10 && !DatapackDownloaderBase::curlSuspendList.empty())
                         {
                             curl_multi_add_handle(DatapackDownloaderBase::curlm, DatapackDownloaderBase::curlSuspendList.back());
+                            if(DatapackDownloaderBase::proxyStringForCurl!=NULL)
+                            {
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXY, DatapackDownloaderBase::proxyStringForCurl);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYPORT, EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port);
+                                curl_easy_setopt(DatapackDownloaderBase::curlSuspendList.back(), CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+                            }
                             DatapackDownloaderBase::DatapackDownloaderBase::curlmCount++;
                             DatapackDownloaderBase::curlSuspendList.pop_back();
                         }
@@ -711,6 +849,42 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                                 abort();
                             }
 
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            {
+                                FILE *pFile = fopen(chunk->fileName.c_str(),"rb");
+                                if(pFile!=NULL)
+                                {
+                                    size_t lSize;
+                                    char * buffer;
+                                    size_t result;
+
+                                    // obtain file size:
+                                    fseek (pFile , 0 , SEEK_END);
+                                    lSize = ftell (pFile);
+                                    rewind (pFile);
+
+                                    // allocate memory to contain the whole file:
+                                    buffer = (char*) malloc (sizeof(char)*lSize);
+                                    if (buffer == NULL) {fputs ("Memory error",stderr); exit (2);}
+
+                                    // copy the file into the buffer:
+                                    result = fread (buffer,1,lSize,pFile);
+                                    if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
+
+                                    if(result==chunk->size)
+                                    {
+                                        if(memcmp(buffer,chunk->memory,result)==0)
+                                        {
+                                            std::cerr << "duplicate download detected: " << chunk->fileName << ", the file on hdd is same than downloaded file (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                            //abort();
+                                        }
+                                    }
+
+                                    fclose(pFile);
+                                    free (buffer);
+                                }
+                            }
+                            #endif
                             FILE *fp = fopen(chunk->fileName.c_str(),"wb");
                             if(fp!=NULL)
                             {
@@ -724,6 +898,37 @@ void DatapackDownloaderMainSub::httpFinishedForDatapackListMain(const std::vecto
                                 std::cerr << "unable to open file to write:" << chunk->fileName << std::endl;
                                 abort();
                             }
+                            uint32_t h=0;
+                            XXH32_canonical_t htemp;
+                            XXH32_canonicalFromHash(&htemp,XXH32(chunk->memory,chunk->size,0));
+                            memcpy(&h,&htemp.digest,sizeof(h));
+                            utimbuf butime;butime.actime=h;butime.modtime=h;
+                            #ifndef CATCHCHALLENGER_EXTRA_CHECK
+                            utime(chunk->fileName.c_str(),&butime);
+                            #else
+                            if(utime(chunk->fileName.c_str(),&butime)!=0)
+                            {
+                                std::cerr << "hash cache into modification time set failed (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                            #endif
+
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            struct stat sb;
+                            if (stat(chunk->fileName.c_str(), &sb) == 0)
+                            {
+                                if(sb.st_mtime!=h)
+                                {
+                                    std::cerr << "hash cache into modification time wrong (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                    abort();
+                                }
+                            }
+                            else
+                            {
+                                std::cerr << "unable to open modification time of datapack to check the hash (abort) " << __FILE__ << ":" << __LINE__ << std::endl << std::endl;
+                                abort();
+                            }
+                            #endif
 
                             if(chunk->memory!=NULL)
                                 delete chunk->memory;

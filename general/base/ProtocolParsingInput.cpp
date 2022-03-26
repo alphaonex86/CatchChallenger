@@ -354,7 +354,9 @@ int8_t ProtocolParsingBase::parseHeader(const char * const commonBuffer,const ui
             {
                 errorParsingLayer("wrong packet code (header): "+std::to_string(packetCode)+
                                   ", data: "+binarytoHexa(commonBuffer,size)+
-                                  ", cursor: "+std::to_string(cursor));
+                                  ", cursor: "+std::to_string(cursor)+","+std::to_string(size)+
+                                  ", splited data: "+binarytoHexa(commonBuffer,cursor)+
+                                  " "+binarytoHexa(commonBuffer+cursor,size-cursor));
                 return -1;//packetCode code wrong
             }
             else if(dataSize!=0xFE)
@@ -425,6 +427,8 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
                     }
                     index++;
                 }
+                std::cerr << this << " not a reply to a known query (parseQueryNumber): " << std::to_string(queryNumber) << ", query in progress: " << returnedList
+                          << ", data: " << binarytoHexa(commonBuffer,size) << ", cursor: " << std::to_string(cursor) << std::endl;
                 errorParsingLayer("not a reply to a known query (parseQueryNumber): "+std::to_string(queryNumber)+", query in progress: "+returnedList);
                 #else
                 errorParsingLayer("not a reply to a known query (parseQueryNumber): "+std::to_string(queryNumber));
@@ -624,7 +628,7 @@ bool ProtocolParsingBase::parseDispatch(const char * const data, const int &size
                     std::to_string(flags & 0x10)+
                     #endif
         std::string(" parseIncommingData(): need_query_number && is_reply && reply_subCodeType.contains(queryNumber), queryNumber: ")+
-                    std::to_string(queryNumber)+(", packetCode: ")+std::to_string(packetCode));
+                    std::to_string(queryNumber)+(", packetCode: ")+std::to_string(packetCode)+", replyTo: "+std::to_string(replyTo));
         #endif
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(!returnValue)

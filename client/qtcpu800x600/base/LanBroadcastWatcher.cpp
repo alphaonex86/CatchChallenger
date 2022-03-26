@@ -3,6 +3,7 @@
 #include <QNetworkDatagram>
 #include <QByteArray>
 #include <QDataStream>
+#include <QCryptographicHash>
 
 LanBroadcastWatcher *LanBroadcastWatcher::lanBroadcastWatcher=nullptr;
 
@@ -34,7 +35,10 @@ void LanBroadcastWatcher::processPendingDatagrams()
         e.port=0;
         stream >> e.port;
         e.lastseen=QDateTime::currentSecsSinceEpoch();
-        e.uniqueKey=e.name;
+        /* can't contain incorrect char for path!
+         * example: toto's server
+         * on windows ' is not supported */
+        e.uniqueKey=QString(QCryptographicHash::hash(e.name.toUtf8(), QCryptographicHash::Sha224).toHex());
 
         int index=0;
         while(index<list.size())

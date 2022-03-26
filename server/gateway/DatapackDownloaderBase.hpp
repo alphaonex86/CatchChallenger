@@ -42,6 +42,7 @@ public:
     static std::unordered_set<std::string> extensionAllowed;
     static std::string commandUpdateDatapackBase;
     static std::vector<std::string> httpDatapackMirrorBaseList;
+    static char *proxyStringForCurl;
     static CURLM *curlm;
     static unsigned int curlmCount;
     static std::vector<CURL *> curlSuspendList;

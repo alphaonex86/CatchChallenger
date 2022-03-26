@@ -26,11 +26,14 @@ public:
     void close();
     static std::string httpMirrorFix(const std::string &mirrors);
     static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp);
+    unsigned int toUTF8WithHeader(const std::string &text,char * const data);
 public:
     static EpollServerLoginSlave *epollServerLoginSlave;
 
-    char * destination_server_ip;
+    std::string destination_server_ip;
     uint16_t destination_server_port;
+    char * destination_proxy_ip;
+    uint16_t destination_proxy_port;
     uint8_t gatewayNumber;
 public:
     bool tcpNodelay,tcpCork;

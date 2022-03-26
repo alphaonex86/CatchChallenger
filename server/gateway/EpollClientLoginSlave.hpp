@@ -61,7 +61,7 @@ public:
         );
     ~EpollClientLoginSlave();
     bool disconnectClient();
-    enum EpollClientLoginStat
+    enum EpollClientLoginStat : uint8_t
     {
         None,
         ProtocolGood,
@@ -69,7 +69,7 @@ public:
         GameServerConnected,
     };
     EpollClientLoginStat stat;
-    enum DatapackStatus
+    enum DatapackStatus : uint8_t
     {
         Base=0x01,
         Main=0x02,
@@ -141,7 +141,9 @@ private:
     void addDatapackListReply(const bool &fileRemove);
     void purgeDatapackListReply(const uint8_t &query_id);
     void sendFileContent();
+    #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     void sendCompressedFileContent();
+    #endif
 public:
     bool sendRawBlock(const char * const data, const unsigned int &size);
 private:
