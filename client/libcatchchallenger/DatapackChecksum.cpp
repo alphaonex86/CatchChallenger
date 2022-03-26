@@ -11,6 +11,7 @@
 #include <locale>
 #include <codecvt>
 #include <string>
+#include "../../general/base/cpp11addition.hpp"
 #endif
 
 #include "../../general/base/GeneralVariable.hpp"
@@ -437,6 +438,8 @@ std::string DatapackChecksum::GetLastErrorStdStr()
 
 std::wstring DatapackChecksum::toFinalPath(std::string path)
 {
+    while(stringreplaceAll(path,"//","/")!=0)
+    {}
     if(path.size()==2 && path.at(1)==':')
         path+="\\";
     stringreplaceAll(path,"/","\\");

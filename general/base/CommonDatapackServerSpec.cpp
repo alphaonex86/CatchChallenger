@@ -105,6 +105,15 @@ void CommonDatapackServerSpec::applyMonstersRate()
     }
     for(const auto& n : CommonDatapack::commonDatapack.get_monsters()) {
         CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
+
+        /*prevent double call, double call on client, not solved for now:
+         * Client open to lan 1 call, client connect on this server: 2 call */
+        if(!monster.level_to_xp.empty())
+        {
+            std::cerr << "CommonDatapackServerSpec::applyMonstersRate() drop dual call" << std::endl;
+            return;
+        }
+
         const uint32_t &oldXP=monster.give_xp;
         monster.give_xp*=CommonSettingsServer::commonSettingsServer.rates_xp;
         //monster.give_xp/=1000;//why?
@@ -195,6 +204,11 @@ void CommonDatapackServerSpec::unload()
     shops.clear();
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
+
+    for(const auto& n : CommonDatapack::commonDatapack.get_monsters()) {
+        CatchChallenger::Monster &monster=CommonDatapack::commonDatapack.monsters.at(n.first);
+        monster.level_to_xp.clear();
+    }
 
     parsingSpec=false;
     isParsedSpec=false;

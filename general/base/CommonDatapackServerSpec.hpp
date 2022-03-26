@@ -75,7 +75,7 @@ private:
     void parseServerProfileList();
     void parseIndustries();
     #ifdef CATCHCHALLENGER_CLIENT
-    void applyMonstersRate();//xp,sp variable by server, only have this second pass on client
+    void applyMonstersRate();//xp,sp variable by server, only have this second pass on client, take care
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     void parseMonstersDrop();//drop rate variable by server
