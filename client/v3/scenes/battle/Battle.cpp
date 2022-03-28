@@ -51,6 +51,7 @@ Battle::Battle() : Scene(nullptr) {
   player_ = Sprite::Create(this);
   enemy_ = Sprite::Create(this);
   enemy_->SetSize(400, 400);
+  attack_ = Sprite::Create(this);
 
   escape = false;
   escapeSuccess = false;
@@ -245,7 +246,7 @@ void Battle::updateCurrentMonsterInformation() {
           .back.scaled(400, 400));
   player_monster_lvl_ = monster->level;
   action_bar_->SetMonster(monster);
-  UpdateAttackSkills();
+  //UpdateAttackSkills();
 }
 
 void Battle::updateOtherMonsterInformation() {
@@ -790,19 +791,13 @@ void Battle::UseBagItem(Inventory::ObjectType type, uint16_t item,
     UseTrap(item);
   } else {  // else it's to use on current monster
     const uint8_t &monsterPosition = client_->getCurrentSelectedMonsterNumber();
-    if (client_->useObjectOnMonsterByPosition(item, monsterPosition)) {
+    if (client_->useObjectOnMonsterByPosition(item + 1, monsterPosition)) {
       client_->remove_to_inventory({{item, 1}});
       if (CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(
               item) !=
           CommonDatapack::commonDatapack.get_items().monsterItemEffect.cend()) {
-        client_->useObjectOnMonsterByPosition(item, monsterPosition);
-        UpdateAttackSkills();
-        if (battleType != BattleType_OtherPlayer) {
-          doNextAction();
-        } else {
-          ShowStatusMessage(tr("In waiting of the other player action"), false,
-                            false);
-        }
+        client_->useObjectOnMonsterByPosition(item, monsterPosition + 1);
+        ProcessActions();
       } else {
         error(tr("You have selected a buggy object").toStdString());
       }
@@ -823,7 +818,7 @@ void Battle::ConfigureFighters() {
   player_in_ = QPointF(bounding.width() * 0.1, bounding.height() - player_->Height() + 200);
   player_out_ = QPointF(-playerBackImage.width(), bounding.height() - player_->Height() + 200);
   enemy_in_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.25);
-  enemy_out_ = QPointF(bounding.width() - enemy_->Width() - 50, bounding.height() * 0.25);
+  enemy_out_ = QPointF(bounding.width()- 50, bounding.height() * 0.25);
 }
 
 void Battle::ConfigureCommons() {
@@ -835,116 +830,6 @@ void Battle::ConfigureCommons() {
   status_timeout_ = Sequence::Create(
       Delay::Create(1500),
       CallFunc::Create([this]() { battle_context_->Handle(); }), nullptr);
-}
-
-void Battle::OnPlayerEnterDone() {
-  updateCurrentMonsterInformation();
-  doNextAction();
-}
-
-void Battle::OnPlayerExitDone() {
-  updateCurrentMonsterInformation();
-  updateCurrentMonsterInformationXp();
-  if (battleStep == BattleStep_Presentation) {
-    resetPosition(true, false, true);
-    battleStep = BattleStep_PresentationMonster;
-    PlayerMonster *monster = client_->getCurrentMonster();
-    if (monster == NULL) {
-      newError(tr("Internal error").toStdString() + ", file: " +
-                   std::string(__FILE__) + ":" + std::to_string(__LINE__),
-               "NULL pointer at updateCurrentMonsterInformation()");
-      return;
-    }
-    ShowStatusMessage(tr("Go %1").arg(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-            .at(monster->monster)
-            .name)));
-    player_->RunAction(player_enter_);
-  }
-}
-
-void Battle::OnPlayerDeadDone() {
-  client_->dropKOCurrentMonster();
-  if (client_->haveAnotherMonsterOnThePlayerToFight()) {
-    if (client_->isInFight()) {
-#ifdef DEBUG_CLIENT_BATTLE
-      qDebug() << "Your current monster is KO, select another";
-#endif
-      ShowMonsterDialog(false);
-    } else {
-#ifdef DEBUG_CLIENT_BATTLE
-      qDebug() << "You win";
-#endif
-      doNextActionStep = DoNextActionStep_Win;
-      ShowStatusMessage(tr("You win!"), false, true);
-    }
-  } else {
-#ifdef DEBUG_CLIENT_BATTLE
-    qDebug() << "You lose";
-#endif
-    doNextActionStep = DoNextActionStep_Loose;
-    ShowStatusMessage(tr("You lose!"), false, true);
-  }
-}
-
-void Battle::OnEnemyEnterDone() {
-  updateOtherMonsterInformation();
-  doNextAction();
-}
-
-void Battle::OnEnemyExitDone() {
-  updateOtherMonsterInformation();
-  doNextAction();
-}
-
-void Battle::OnEnemyDeadDone() {
-  client_->dropKOOtherMonster();
-  if (client_->isInFight()) {
-    if (client_->isInBattle() && !client_->haveBattleOtherMonster()) {
-      ShowStatusMessage(tr("In waiting of other monster selection"), false,
-                        false);
-      return;
-    }
-    // action_next_->SetVisible(false);
-    init_other_monster_display();
-    updateOtherMonsterInformation();
-
-    QString status;
-    PublicPlayerMonster *otherMonster = client_->getOtherMonster();
-    if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(
-            otherMonster->monster) !=
-        QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
-      status =
-          tr("The other player call %1")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                      .at(otherMonster->monster)
-                      .name));
-    else
-      status = tr("The other player call %1").arg(tr("(Unknown monster)"));
-    ShowStatusMessage(status, false, false);
-    resetPosition(true, true, false);
-    enemy_->RunAction(enemy_enter_);
-  } else {
-    PrintError(__FILE__, __LINE__, "you win");
-    doNextActionStep = DoNextActionStep_Win;
-    if (!escape) {
-      PlayerMonster *currentMonster = client_->getCurrentMonster();
-      if (currentMonster != NULL) {
-        //player_exp_bar_->SetValue(currentMonster->remaining_xp);
-      }
-      ShowStatusMessage(tr("You win!"));
-    } else {
-      if (escapeSuccess)
-        ShowStatusMessage(tr("Your escape is successful"));
-      else
-        ShowStatusMessage(tr("Your escape have failed but you win"));
-    }
-    if (escape) {
-      fightTimerFinish = true;
-      doNextAction();
-    }
-  }
 }
 
 void Battle::OnSkillClick(uint8_t index, uint16_t skill_id, uint8_t endurance) {
@@ -961,7 +846,6 @@ void Battle::OnSkillClick(uint8_t index, uint16_t skill_id, uint8_t endurance) {
   }
 
   client_->useSkill(skill_id);
-  // UpdateAttackSkills();
   ProcessActions();
 }
 
@@ -982,33 +866,6 @@ void Battle::ShowStatusMessage(const QString &text, bool show_next_btn,
   ShowStatusMessage(text.toStdString(), show_next_btn, use_timeout);
 }
 
-void Battle::UpdateAttackSkills() {
-  if (!client_->getAbleToFight()) {
-    newError(tr("Internal error").toStdString() + ", file: " +
-                 std::string(__FILE__) + ":" + std::to_string(__LINE__),
-             "Try update the monster when have not any ready monster");
-    return;
-  }
-  PlayerMonster *monster = client_->getCurrentMonster();
-  if (monster == NULL) {
-    newError(tr("Internal error").toStdString() + ", file: " +
-                 std::string(__FILE__) + ":" + std::to_string(__LINE__),
-             "NULL pointer at updateCurrentMonsterInformation()");
-    return;
-  }
-  unsigned int index = 0;
-  useTheRescueSkill = true;
-
-  while (index < monster->skills.size()) {
-    auto skill = monster->skills.at(index);
-    if (skill.endurance > 0) useTheRescueSkill = false;
-    index++;
-  }
-  if (useTheRescueSkill) {
-    action_bar_->ShowRescueSkill(true);
-  }
-}
-
 void Battle::OnMonsterSelect(uint8_t monster_index) {
   linked_->Close();
   // do copie here because the call of changeOfMonsterInFight apply the skill
@@ -1022,25 +879,13 @@ void Battle::OnMonsterSelect(uint8_t monster_index) {
   client_->changeOfMonsterInFightByPosition(monster_index);
   player_status_->SetVisible(false);
 
-  PlayerMonster *playerMonster = client_->getCurrentMonster();
-  if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(
-          playerMonster->monster) !=
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend()) {
-    player_->SetPixmap(QtDatapackClientLoader::datapackLoader
-                           ->getMonsterExtra(playerMonster->monster)
-                           .back.scaled(400, 400));
-    ShowStatusMessage(
-        tr("Go %1").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterExtra()
-                .at(playerMonster->monster)
-                .name)),
-        false, false);
-  } else {
-    ShowStatusMessage(tr("You change of monster"), false, false);
-    player_->SetPixmap(QPixmap(":/CC/images/monsters/default/back.png"));
-  }
-  battleStep = BattleStep_Presentation;
-  player_->RunAction(player_enter_);
+
+  BattleAction action;
+  action.type = kBattleAction_CallMonster;
+  action.success = true;
+  actions_.push_back(action);
+
+  ProcessActions();
 }
 
 void Battle::StartAttack() {

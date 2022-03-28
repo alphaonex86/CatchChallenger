@@ -17,6 +17,7 @@ StatusCard::StatusCard(Node* parent) : Node(parent) {
 
   SetSize(500, 100);
   padding_ = bounding_rect_.height() / 3;
+  hp_bar_ = UI::SlimProgressbar::Create(this);
 }
 
 StatusCard::~StatusCard() { delete font_; }
@@ -52,6 +53,9 @@ void StatusCard::Draw(QPainter* painter) {
                       QString::number(level_));
     painter->drawText(padding_ + 20, bounding_rect_.height() - 10,
                       QStringLiteral("%1/%2").arg(hp_).arg(hp_max_));
+
+    hp_bar_->SetPos(padding_ + 20, 40);
+    hp_bar_->SetSize(bounding_rect_.width() - padding_ * 2 - 40, 15);
   }
 }
 
@@ -78,6 +82,10 @@ void StatusCard::SetMonster(CatchChallenger::PlayerMonster* monster) {
   gender_ = monster->gender;
   hp_max_ = stat.hp;
 
+  hp_bar_->SetMinimum(0);
+  hp_bar_->SetMaximum(hp_max_);
+  hp_bar_->SetValue(hp_);
+
   ReDraw();
 }
 
@@ -97,6 +105,10 @@ void StatusCard::SetMonster(CatchChallenger::PublicPlayerMonster* monster) {
   name_ = QString::fromStdString(monster_extra.name);
   gender_ = monster->gender;
   hp_max_ = stat.hp;
+
+  hp_bar_->SetMinimum(0);
+  hp_bar_->SetMaximum(hp_max_);
+  hp_bar_->SetValue(hp_);
 
   ReDraw();
 }

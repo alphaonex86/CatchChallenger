@@ -25,6 +25,7 @@ SOURCES += \
     $$PWD/ui/Button.cpp \
     $$PWD/ui/RoundedButton.cpp \
     $$PWD/ui/Progressbar.cpp \
+    $$PWD/ui/SlimProgressbar.cpp \
     $$PWD/ui/Input.cpp \
     $$PWD/ui/Combo.cpp \
     $$PWD/ui/Dialog.cpp \
@@ -136,6 +137,7 @@ HEADERS  += \
     $$PWD/ui/Button.hpp \
     $$PWD/ui/RoundedButton.hpp \
     $$PWD/ui/Progressbar.hpp \
+    $$PWD/ui/SlimProgressbar.hpp \
     $$PWD/ui/Input.hpp \
     $$PWD/ui/Combo.hpp \
     $$PWD/ui/Dialog.hpp \

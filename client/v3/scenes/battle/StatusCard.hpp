@@ -6,6 +6,7 @@
 
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../core/Node.hpp"
+#include "../../ui/SlimProgressbar.hpp"
 
 namespace Scenes {
 class StatusCard : public Node {
@@ -38,6 +39,7 @@ class StatusCard : public Node {
   uint32_t exp_max_;
   CatchChallenger::Gender gender_;
   qreal padding_;
+  UI::SlimProgressbar *hp_bar_;
 
   StatusCard(Node *parent);
 };

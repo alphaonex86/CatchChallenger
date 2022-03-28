@@ -160,7 +160,7 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
 
     // Verify if the monster is in the screen
     if (enemy->X() < battle->Width()) {
-      actions.push_back(MoveTo::Create(500, battle->enemy_out_));
+      actions.push_back(MoveTo::Create(1000, battle->enemy_out_));
     }
 
     actions.push_back(CallFunc::Create([battle]() {
@@ -189,16 +189,15 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
   } else {
     std::vector<Action *> actions;
 
-    if (player->X() < 0) {
-      actions.push_back(MoveTo::Create(500, battle->player_out_));
+    if (player->X() > 0) {
+      actions.push_back(MoveTo::Create(1000, battle->player_out_));
     }
     actions.push_back(CallFunc::Create([battle]() {
-      std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdasd" << std::endl;
       auto monster = battle->client_->getCurrentMonster();
       auto player = battle->player_;
       player->SetPixmap(QtDatapackClientLoader::datapackLoader
                             ->getMonsterExtra(monster->monster)
-                            .front.scaled(400, 400));
+                            .back.scaled(400, 400));
       auto name = QtDatapackClientLoader::datapackLoader->get_monsterExtra()
                       .at(monster->monster)
                       .name;
@@ -349,7 +348,7 @@ void BattleBehaviorState::Handle(BattleContext *context, Battle *battle) {
         break;
       case CatchChallenger::Skill::AttackReturnCase_ItemUsage:
         std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
-                  << "asdasd" << std::endl;
+                  << "ItemUsage" << std::endl;
         break;
       case CatchChallenger::Skill::AttackReturnCase_MonsterChange:
         Battle::BattleAction action;
@@ -426,7 +425,6 @@ void FightState::Handle(BattleContext *context, Battle *battle) {
   auto action = battle->actions_.front();
   battle->actions_.erase(battle->actions_.begin());
 
-  /*
   CatchChallenger::ApplyOn apply_on = action.apply_on;
   bool apply_on_enemy = action.apply_on_enemy;
 
@@ -458,17 +456,13 @@ void FightState::Handle(BattleContext *context, Battle *battle) {
 
   battle->attack_->SetVisible(true);
   battle->attack_->RunAction(animation, true);
-  */
-  battle->RunAction(
-      ActionUtils::WaitAndThen(1000, [context]() { context->Handle(); }), true);
+  // battle->RunAction(
+  // ActionUtils::WaitAndThen(1000, [context]() { context->Handle(); }), true);
 
   context->SetState(new BattleCycleState());
 }
 
 void ChooseMonsterState::Handle(BattleContext *context, Battle *battle) {
-  auto action = battle->actions_.front();
-  battle->actions_.erase(battle->actions_.begin());
-
   battle->ShowMonsterDialog(false);
 }
 
@@ -477,28 +471,33 @@ void MonsterDeadState::Handle(BattleContext *context, Battle *battle) {
   battle->actions_.erase(battle->actions_.begin());
 
   if (action.apply_on_enemy) {
+    battle->client_->dropKOOtherMonster();
     battle->enemy_status_->SetVisible(false);
     battle->ShowStatusMessage(
         QObject::tr("Enemy %1 fainted!").arg(battle->enemy_status_->Name()),
         false, true);
     context->SetState(new UpdateMonsterStatState());
-    // battle->enemy_->RunAction(
-    // Sequence::Create(MoveTo::Create(1500, battle->enemy_out_),
-    // CallFunc::Create([context]() { context->Handle(); }),
-    // nullptr),
-    // true);
-    battle->RunAction(
-        ActionUtils::WaitAndThen(1000, [context]() { context->Handle(); }),
+    std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< (int)battle->enemy_->X() << " " << (int)battle->enemy_out_.x() << std::endl;
+    battle->enemy_->RunAction(
+        Sequence::Create(MoveTo::Create(1000, battle->enemy_out_),
+                         CallFunc::Create([context]() { context->Handle(); }),
+                         nullptr),
         true);
   } else {
+    battle->client_->dropKOCurrentMonster();
     battle->player_status_->SetVisible(false);
+    battle->action_bar_->SetVisible(false);
     if (battle->client_->haveAnotherMonsterOnThePlayerToFight()) {
       context->SetState(new ChooseMonsterState());
     } else {
       context->SetState(new LoseState());
     }
+
+    battle->ShowStatusMessage(
+        QObject::tr("%1 fainted!").arg(battle->player_status_->Name()), false,
+        true);
     battle->player_->RunAction(
-        Sequence::Create(MoveTo::Create(1500, battle->player_out_),
+        Sequence::Create(MoveTo::Create(1000, battle->player_out_),
                          CallFunc::Create([context]() { context->Handle(); }),
                          nullptr),
         true);
@@ -559,7 +558,7 @@ void UpdateMonsterStatState::Handle(BattleContext *context, Battle *battle) {
 
 void WinState::Handle(BattleContext *context, Battle *battle) {
   std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
-            << "Wind" << std::endl;
+            << "Win" << std::endl;
   battle->RunAction(
       ActionUtils::WaitAndThen(500, [context]() { context->Handle(); }), true);
   context->SetState(new EndState());

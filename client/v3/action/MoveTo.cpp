@@ -4,11 +4,11 @@
 #include <cmath>
 #include <iostream>
 
-#include "../core/Node.hpp"
 #include "../Options.hpp"
+#include "../core/Node.hpp"
 #include "Action.hpp"
 
-MoveTo* MoveTo::Create(int milliseconds, int x, int y) {
+MoveTo* MoveTo::Create(int milliseconds, qreal x, qreal y) {
   MoveTo* instance = new MoveTo();
 
   instance->milliseconds_ = milliseconds;
@@ -40,6 +40,8 @@ MoveTo::~MoveTo() { Action::~Action(); }
 
 void MoveTo::Start() {
   ellapsed_ = 0;
+  delta_x_ = 0;
+  delta_y_ = 0;
   finish_x_ = false;
   finish_y_ = false;
   CalculateDelta();
@@ -60,20 +62,24 @@ void MoveTo::Step(unsigned int ellapsed) {
   if (ellapsed_ >= timeout_) {
     ellapsed_ = 0;
 
-    if (std::abs(node_->X() - end_x_) <= std::abs(delta_x_)) {
-      finish_x_ = true;
+    if (!finish_x_) {
+      if (std::abs(node_->X() - end_x_) <= std::abs(delta_x_)) {
+        finish_x_ = true;
+      }
     }
 
-    if (std::abs(node_->Y() - end_y_) <= std::abs(delta_y_)) {
-      finish_y_ = true;
+    if (!finish_y_) {
+      if (std::abs(node_->Y() - end_y_) <= std::abs(delta_y_)) {
+        finish_y_ = true;
+      }
     }
 
     if (finish_x_ && finish_y_) {
       node_->SetPos(end_x_, end_y_);
       OnFinish();
     } else {
-      if (!finish_x_ && delta_x_ != 0) node_->SetX(node_->X() + delta_x_);
-      if (!finish_y_ && delta_y_ != 0) node_->SetY(node_->Y() + delta_y_);
+      if (!finish_x_) node_->SetX(node_->X() + delta_x_);
+      if (!finish_y_) node_->SetY(node_->Y() + delta_y_);
     }
   }
 }
@@ -82,9 +88,18 @@ bool MoveTo::IsDone() { return done_; }
 
 void MoveTo::CalculateDelta() {
   auto fps = Options::GetInstance()->getFPS();
-  double frames = milliseconds_ / 1000 * fps;
+  qreal frames = (milliseconds_ / 1000) * fps;
 
   timeout_ = 1000 / fps;
-  delta_x_ = (end_x_ - node_->X()) / frames;
-  delta_y_ = (end_y_ - node_->Y()) / frames;
+  if (end_x_ == node_->X()) {
+    finish_x_ = true;
+  } else {
+    delta_x_ = (end_x_ - node_->X()) / frames;
+  }
+
+  if (end_y_ == node_->Y()) {
+    finish_y_ = true;
+  } else {
+    delta_y_ = (end_y_ - node_->Y()) / frames;
+  }
 }

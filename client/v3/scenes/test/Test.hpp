@@ -5,6 +5,7 @@
 #include "../../core/Scene.hpp"
 #include "../../core/Sprite.hpp"
 #include "../../ui/Label.hpp"
+#include "../../ui/Button.hpp"
 
 namespace Scenes {
 class Test : public Scene {
@@ -25,6 +26,9 @@ class Test : public Scene {
   Sprite *sprite_4;
   Sprite *sprite_5;
   UI::Label *label_;
+  UI::Button *button_;
+
+  void OnButtonClick(Node* node);
 };
 }  // namespace Scenes
 #endif  // CLIENT_V3_SCENES_TEST_TEST_HPP_
