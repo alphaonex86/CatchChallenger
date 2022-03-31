@@ -12,7 +12,7 @@ int EpollSocket::make_non_blocking(int sfd)
     flags = fcntl(sfd, F_GETFL, 0);
     if(flags == -1)
     {
-        std::cerr << "fcntl get flags error" << std::endl;
+        std::cerr << "fcntl get flags error on " << sfd << std::endl;
         return -1;
     }
 
@@ -20,7 +20,7 @@ int EpollSocket::make_non_blocking(int sfd)
     s = fcntl(sfd, F_SETFL, flags);
     if(s == -1)
     {
-        std::cerr << "fcntl set flags error" << std::endl;
+        std::cerr << "fcntl set flags error on " << sfd << std::endl;
         return -1;
     }
 

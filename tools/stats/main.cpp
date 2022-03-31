@@ -91,8 +91,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    EpollServerStats epollServerStats;
-    LinkToLogin::linkToLogin=NULL;
+    LinkToLogin::linkToLogin=new LinkToLogin();
     std::string unixSocketPath;
     std::string outputFile;
     {
@@ -188,7 +187,7 @@ int main(int argc, char *argv[])
     /* Buffer where events are returned */
     epoll_event events[MAXEVENTS];
 
-    if(!epollServerStats.tryListen(unixSocketPath.c_str()))
+    if(!EpollServerStats::epollServerStats.tryListen(unixSocketPath.c_str()))
         std::cerr << "Unable to listen the unix socket, file: " << unixSocketPath << std::endl;
 
     /* The event loop */
@@ -255,7 +254,7 @@ int main(int argc, char *argv[])
                     {
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
-                        const int &infd = epollServerStats.accept(&in_addr, &in_len);
+                        const int &infd = EpollServerStats::epollServerStats.accept(&in_addr, &in_len);
                         if(infd == -1)
                         {
                             if((errno == EAGAIN) ||
