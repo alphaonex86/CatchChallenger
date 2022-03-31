@@ -86,7 +86,7 @@ ssize_t EpollClient::read(char *buffer,const size_t &bufferSize)
         const int &flags = fcntl(infd, F_GETFL, 0);
         if(flags == -1)
         {
-            std::cerr << "fcntl get flags error" << std::endl;
+            std::cerr << "fcntl get flags error on " << infd << std::endl;
             return -1;
         }
 
