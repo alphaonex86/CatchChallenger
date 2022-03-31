@@ -4,6 +4,7 @@
 #include "../../general/sha224/sha224.hpp"
 #include "../../server/epoll/Epoll.hpp"
 #include "../../server/epoll/EpollSocket.hpp"
+#include "EpollServerStats.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -18,10 +19,7 @@
 
 using namespace CatchChallenger;
 
-#ifndef STATSODROIDSHOW2
 LinkToLogin *LinkToLogin::linkToLogin=NULL;
-#endif
-int LinkToLogin::linkToLoginSocketFd=-1;
 bool LinkToLogin::haveTheFirstSslHeader=false;
 char LinkToLogin::host[]="localhost";
 uint16_t LinkToLogin::port=22222;
@@ -56,7 +54,6 @@ LinkToLogin::LinkToLogin(
 LinkToLogin::~LinkToLogin()
 {
     closeSocket();
-    LinkToLogin::linkToLoginSocketFd=-1;
     //critical bug, need be reopened, never closed
     abort();
 }
@@ -78,7 +75,7 @@ const std::string &LinkToLogin::getJsonFileContent() const
     return jsonFileContent;
 }
 
-int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
+bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
 {
     if(port==0)
     {
@@ -87,9 +84,12 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     }
     strcpy(LinkToLogin::host,host);
     LinkToLogin::port=port;
-    if(LinkToLogin::linkToLoginSocketFd!=-1)
-        ::close(LinkToLogin::linkToLoginSocketFd);
-    LinkToLogin::linkToLoginSocketFd=-1;
+    if(infd!=-1)
+    {
+        std::cout << "close fd: " << infd << __FILE__ << ":" << __LINE__ << std::endl;
+        ::close(infd);
+    }
+    infd=-1;
 
     const int &socketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(socketFd<0)
@@ -111,7 +111,7 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     s = getaddrinfo(host,std::to_string(port).c_str(), &hints, &result);
     if (s != 0) {
         std::cerr << "ERROR connecting to login server server on: " << host << ":" << port << ": " << gai_strerror(s) << std::endl;
-        return -1;
+        return false;
     }
 
     for (rp = result; rp != NULL; rp = rp->ai_next) {
@@ -148,25 +148,29 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
         if(connStatusType>=0)
         {
             std::cout << "Connected to login server" << std::endl;
-            LinkToLogin::linkToLoginSocketFd=sfd;
+            infd=sfd;
             {
                 epoll_event event;
                 event.data.ptr = this;
                 event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
                 errno=0;
-                int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
+                int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                 if(s == -1)
                 {
                     std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << std::endl;
                     abort();
                 }
-                reopen(LinkToLogin::linkToLoginSocketFd);
             }
             haveTheFirstSslHeader=false;
             freeaddrinfo(result);
-            return sfd;
+            if(infd==-1)
+            {
+                std::cerr << "infd==-1 internal error (abort)" << std::endl;
+                abort();
+            }
+            return true;
         }
-
+        std::cout << "close sfd: " << infd << __FILE__ << ":" << __LINE__ << std::endl;
         ::close(sfd);
     }
     if (rp == NULL)               /* No address succeeded */
@@ -176,22 +180,27 @@ int LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const 
     freeaddrinfo(result);           /* No longer needed */
 
     haveTheFirstSslHeader=false;
-    if(LinkToLogin::linkToLoginSocketFd>=0)
+    if(infd>=0)
     {
         epoll_event event;
         event.data.ptr = this;
         event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLRDHUP;//EPOLLET | EPOLLOUT
         errno=0;
-        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, LinkToLogin::linkToLoginSocketFd, &event);
+        int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
         if(s == -1)
         {
-            std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << ", LinkToLogin::linkToLoginSocketFd: " << LinkToLogin::linkToLoginSocketFd << std::endl;
+            std::cerr << __FILE__ << ":" << __LINE__ << " epoll_ctl on socket (login link) error, errno: " << errno << ", infd: " << infd << std::endl;
             abort();
         }
-        reopen(LinkToLogin::linkToLoginSocketFd);
+        if(infd==-1)
+        {
+            std::cerr << "infd==-1 internal error (abort)" << std::endl;
+            abort();
+        }
+        return true;
     }
-
-    return LinkToLogin::linkToLoginSocketFd;
+    else
+        return false;
 }
 
 void LinkToLogin::setConnexionSettings(const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
@@ -200,72 +209,47 @@ void LinkToLogin::setConnexionSettings(const uint8_t &tryInterval,const uint8_t 
         this->tryInterval=tryInterval;
     if(considerDownAfterNumberOfTry>0 && considerDownAfterNumberOfTry<60)
         this->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
-    if(LinkToLogin::linkToLoginSocketFd==-1)
+    if(infd==-1)
     {
         std::cerr << "LoginLinkToLogin::setConnexionSettings() LoginLinkToLogin::linkToLoginSocketFd==-1 (abort)" << std::endl;
-        abort();
-    }
-    {
-        /*const int s = EpollSocket::make_non_blocking(LoginLinkToLogin::linkToLoginSocketFd);
-        if(s == -1)
-        {
-            std::cerr << "unable to make to socket non blocking" << std::endl;
-            abort();
-        }
-        else*/
-        {
-            //if(tcpCork)
-            {
-                //set cork for CatchChallener because don't have real time part
-                int state = 1;
-                if(setsockopt(LinkToLogin::linkToLoginSocketFd, IPPROTO_TCP, TCP_CORK, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp cork" << std::endl;
-                    abort();
-                }
-            }
-            /*else if(tcpNodelay)
-            {
-                //set no delay to don't try group the packet and improve the performance
-                int state = 1;
-                if(setsockopt(LoginLinkToLogin::linkToLoginSocketFd, IPPROTO_TCP, TCP_NODELAY, &state, sizeof(state))!=0)
-                {
-                    std::cerr << "Unable to apply tcp no delay" << std::endl;
-                    abort();
-                }
-            }*/
-        }
+        //abort();
     }
 }
 
 void LinkToLogin::connectInternal()
 {
-    LinkToLogin::linkToLoginSocketFd=socket(AF_INET, SOCK_STREAM, 0);
+    /*Non sens for me, already done into tryConnect() LinkToLogin::linkToLoginSocketFd=socket(AF_INET, SOCK_STREAM, 0);
     if(LinkToLogin::linkToLoginSocketFd<0)
     {
         std::cerr << "ERROR opening socket to login server (abort)" << std::endl;
         abort();
-    }
-    EpollClient::reopen(LinkToLogin::linkToLoginSocketFd);
+    }*/
 
-    int connStatusType=tryConnect(LinkToLogin::host,LinkToLogin::port,1,1);
-    if(connStatusType<0)
+    bool connStatusType=tryConnect(LinkToLogin::host,LinkToLogin::port,1,1);
+    if(!connStatusType)
     {
         stat=Stat::Unconnected;
         return;
     }
     haveTheFirstSslHeader=false;
-    if(connStatusType>=0)
+    if(connStatusType)
     {
+        if(infd==-1)
+        {
+            std::cerr << "infd==-1 internal error (abort)" << std::endl;
+            abort();
+        }
         stat=Stat::Connected;
         std::cout << "(Re)Connected to login" << std::endl;
+        if(!EpollServerStats::epollServerStats.reopen())
+            std::cout << "Reopen unix socket failed: " << errno << " " << __FILE__ << ":" << __LINE__ << std::endl;
+        setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
     }
-/*    else
+    /*why disabled?: else
     {
         stat=Stat::Connecting;
         std::cout << "(Re)Connecting in progress to login" << std::endl;
     }*/
-    setConnexionSettings(this->tryInterval,this->considerDownAfterNumberOfTry);
 }
 
 void LinkToLogin::readTheFirstSslHeader()
@@ -274,13 +258,16 @@ void LinkToLogin::readTheFirstSslHeader()
         return;
     //std::cout << "LoginLinkToLogin::readTheFirstSslHeader()" << std::endl;
     char buffer[1];
-    if(::read(LinkToLogin::linkToLoginSocketFd,buffer,1)<0)
+    if(::read(infd,buffer,1)<0)
     {
-        //reconnect, need maybe more time
-        EpollSocket::make_non_blocking(LinkToLogin::linkToLoginSocketFd);
         /*then disable:
         jsonFileContent.clear();
         displayErrorAndQuit("ERROR reading from socket to login server (abort)");*/
+    }
+    else if(infd>=0)
+    {
+        //reconnect, need maybe more time
+        EpollSocket::make_non_blocking(infd);
     }
     #ifdef SERVERSSL
     if(buffer[0]!=0x01)
@@ -297,7 +284,7 @@ void LinkToLogin::readTheFirstSslHeader()
     #endif
     haveTheFirstSslHeader=true;
     stat=Stat::Connected;
-    EpollSocket::make_non_blocking(LinkToLogin::linkToLoginSocketFd);
+    EpollSocket::make_non_blocking(infd);
     sendProtocolHeader();
 }
 
@@ -577,6 +564,7 @@ void LinkToLogin::removeJsonFile()
 {
     if(pFile!=NULL)
     {
+        std::cout << "close fd: " << pFile << __FILE__ << ":" << __LINE__ << std::endl;
         fclose(pFile);
         pFile=NULL;
     }
@@ -622,8 +610,16 @@ ssize_t LinkToLogin::write(const char * const data, const size_t &size)
 {
     //do some basic check on low level protocol (message split, ...)
     if(ProtocolParsingInputOutput::write(data,size)<0)
+    {
+        std::cerr << "error to write ProtocolParsingInputOutput::write() " << infd << " into LinkToLogin::write(): " << binarytoHexa(data,size) << std::endl;
         return -1;
-    return EpollClient::write(data,size);
+    }
+    if(EpollClient::write(data,size)!=(ssize_t)size)
+    {
+        std::cerr << "error to write ProtocolParsingInputOutput::write() " << infd << " into LinkToLogin::write(): " << binarytoHexa(data,size) << std::endl;
+        return -1;
+    }
+    return size;
 }
 
 void LinkToLogin::closeSocket()

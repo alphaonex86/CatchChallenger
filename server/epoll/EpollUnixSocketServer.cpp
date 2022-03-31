@@ -27,8 +27,14 @@ EpollUnixSocketServer::~EpollUnixSocketServer()
 
 bool EpollUnixSocketServer::tryListen(const char * const path)
 {
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::tryListen(): " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     if(sfd != -1)
+    {
+        std::cerr << "Can't create the unix socket, sfd != -1" << std::endl;
         return false;
+    }
 
     if((sfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
@@ -73,13 +79,22 @@ bool EpollUnixSocketServer::tryListen(const char * const path)
         std::cerr << "epoll_ctl error: " << errno << std::endl;
         return false;
     }
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::tryListen() ok " << sfd << ": " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     return true;
 }
 
 void EpollUnixSocketServer::close()
 {
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::close(): " << sfd << " " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     if(sfd!=-1)
+    {
         ::close(sfd);
+        sfd=-1;
+    }
 }
 
 int EpollUnixSocketServer::accept(sockaddr *in_addr,socklen_t *in_len)

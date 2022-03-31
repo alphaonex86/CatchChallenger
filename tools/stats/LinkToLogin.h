@@ -78,16 +78,13 @@ public:
     static int usbdev;
     #endif
     static std::string pFilePath;
-    #ifndef STATSODROIDSHOW2
     static LinkToLogin *linkToLogin;
-    #endif
     static bool withIndentation;
-    static int linkToLoginSocketFd;
     static bool haveTheFirstSslHeader;
     std::vector<uint8_t> queryNumberList;
     BaseClassSwitch::EpollObjectType getType() const;
     void parseIncommingData();
-    int tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
+    bool tryConnect(const char * const host,const uint16_t &port,const uint8_t &tryInterval=1,const uint8_t &considerDownAfterNumberOfTry=30);
     void connectInternal();
     void setConnexionSettings(const uint8_t &tryInterval, const uint8_t &considerDownAfterNumberOfTry);
     bool registerStatsClient(const char * const dynamicToken);
