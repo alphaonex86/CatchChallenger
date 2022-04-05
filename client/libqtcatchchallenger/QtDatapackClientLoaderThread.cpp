@@ -33,7 +33,9 @@ void QtDatapackClientLoaderThread::run()
         std::vector<uint16_t> ImagemonsterToLoad;
         //load the work
         {
+            #ifndef NOTHREADS
             QMutexLocker a(&QtDatapackClientLoader::datapackLoader->mutex);
+            #endif
             while(ImageitemsToLoad.size()<20 && !QtDatapackClientLoader::datapackLoader->ImageitemsToLoad.empty())
             {
                 ImageitemsToLoad.push_back(QtDatapackClientLoader::datapackLoader->ImageitemsToLoad.back());
