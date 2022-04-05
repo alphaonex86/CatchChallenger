@@ -18,6 +18,7 @@ class SlimProgressbar : public Node {
   void SetMaximum(const int &value);
   void SetMinimum(const int &value);
   void SetValue(const int &value);
+  void SetForegroundColor(const QColor &color);
   void IncrementValue(const int &delta, const bool &animate);
   int Maximum();
   int Minimum();

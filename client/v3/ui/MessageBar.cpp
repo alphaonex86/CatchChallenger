@@ -24,7 +24,7 @@ MessageBar::MessageBar(Node *parent) : Node(parent) {
   auto scene_width = SceneManager::GetInstance()->width();
   auto scene_height = SceneManager::GetInstance()->height();
 
-  SetSize(scene_width, scene_height * 0.2);
+  SetSize(scene_width, scene_height * 0.15);
   SetPos(0, scene_height - Height() - 30);
   SetZValue(99);
 }

@@ -3,11 +3,11 @@
 
 #include <iostream>
 
+#include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../Globals.hpp"
 #include "../../../base/ConnectionManager.hpp"
-#include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../core/SceneManager.hpp"
-#include "../../../ui/LinkedDialog.hpp"
+#include "../../../entities/Shapes.hpp"
 #include "MonsterItem.hpp"
 
 using CatchChallenger::PlayerMonster;
@@ -16,11 +16,11 @@ using std::placeholders::_1;
 
 MonsterBag::MonsterBag(Mode mode) {
   on_select_monster_ = nullptr;
-  monster_list_ = UI::ListView::Create(this);
-  monster_list_->SetItemSpacing(10);
+  backdrop_ = UI::Backdrop::Create(
+      std::bind(&MonsterBag::BackgroundCanvas, this, _1), this);
 
-  select_ = UI::Button::Create(":/CC/images/interface/validate.png");
-  select_->SetOnClick(std::bind(&MonsterBag::OnAcceptClicked, this));
+  monster_list_ = UI::Column::Create(this);
+  monster_list_->SetItemSpacing(10);
 
   connection_manager_ = ConnectionManager::GetInstance();
   client_ = connection_manager_->client;
@@ -37,22 +37,14 @@ MonsterBag *MonsterBag::Create(Mode mode) {
 }
 
 void MonsterBag::Draw(QPainter *painter) {
-  auto b2 = Sprite::Create(":/CC/images/interface/b2.png");
-  b2->Strech(24, 22, 20, Width(), Height());
-  b2->SetPos(0, 0);
-  b2->Render(painter);
-}
-
-void MonsterBag::OnResize() {
-  monster_list_->SetPos(20, 20);
-  monster_list_->SetSize(Width() - 40, Height() - 40);
-  ReDraw();
 }
 
 void MonsterBag::LoadMonster() {
+  auto width = bounding_rect_.width() / 4;
+  auto height = (bounding_rect_.height() - 200) / 7;
   const std::vector<PlayerMonster> &monsters = client_->getPlayerMonster();
 
-  monster_list_->Clear();
+  monster_list_->RemoveAllChildrens(true);
   auto i = monsters.begin();
   int index = 0;
   while (i != monsters.cend()) {
@@ -60,7 +52,8 @@ void MonsterBag::LoadMonster() {
     item->SetData(99, (*i).monster);
     item->SetData(98, index);
     item->SetOnClick(std::bind(&MonsterBag::OnSelectItem, this, _1));
-    monster_list_->AddItem(item);
+    item->SetSize(width, height);
+    monster_list_->AddChild(item);
     ++i;
     index++;
   }
@@ -68,13 +61,6 @@ void MonsterBag::LoadMonster() {
 
 void MonsterBag::OnSelectItem(Node *node) {
   selected_item_ = node;
-  auto items = monster_list_->Items();
-  for (auto item : items) {
-    if (node == item) {
-      continue;
-    }
-    static_cast<MonsterItem *>(item)->SetSelected(false);
-  }
 }
 
 void MonsterBag::OnAcceptClicked() {
@@ -94,34 +80,6 @@ void MonsterBag::ShowMessageDialog(const QString &title,
   Globals::GetAlertDialog()->Show(title, message);
 }
 
-void MonsterBag::RegisterEvents() {
-  auto linked = static_cast<UI::LinkedDialog *>(Parent());
-  linked->SetTitle(QObject::tr("MONSTERS"));
-  LoadMonster();
-  monster_list_->RegisterEvents();
-  if (show_select_) {
-    linked->AddActionButton(select_);
-  }
-}
-
-void MonsterBag::UnRegisterEvents() {
-  monster_list_->UnRegisterEvents();
-  if (Parent() == nullptr) return;
-  static_cast<UI::LinkedDialog *>(Parent())->RemoveActionButton(select_);
-}
-
-void MonsterBag::ShowSelectAction(bool show) {
-  if (show_select_ == show) return;
-
-  show_select_ = show;
-  if (Parent() == nullptr) return;
-  if (show_select_) {
-    static_cast<UI::LinkedDialog *>(Parent())->AddActionButton(select_);
-  } else {
-    static_cast<UI::LinkedDialog *>(Parent())->RemoveActionButton(select_);
-  }
-}
-
 void MonsterBag::SetOnSelectMonster(std::function<void(uint8_t)> callback) {
   on_select_monster_ = callback;
 }
@@ -130,15 +88,40 @@ void MonsterBag::SetMode(Mode mode) {
   if (mode_ == mode) return;
   mode_ = mode;
 
-  switch (mode_) {
-    case kOnBattle:
-      ShowSelectAction(true);
-      break;
-    case kOnItemUse:
-      ShowSelectAction(true);
-      break;
-    case kDefault:
-      ShowSelectAction(false);
-      break;
-  }
+}
+
+void MonsterBag::OnScreenSD() {}
+
+void MonsterBag::OnScreenHD() {}
+
+void MonsterBag::OnScreenHDR() {}
+
+void MonsterBag::OnScreenResize() {
+  backdrop_->SetSize(bounding_rect_.width(), bounding_rect_.height());
+  monster_list_->SetPos(20, 50);
+}
+
+void MonsterBag::BackgroundCanvas(QPainter *painter) {
+  painter->setPen(Qt::NoPen);
+  painter->setBrush(QColor(232, 251, 255));
+  painter->drawRect(0, 0, bounding_rect_.width(), bounding_rect_.height());
+  qreal padding = bounding_rect_.width() / 4;
+  auto rect = QRectF(0, 0, bounding_rect_.width(), bounding_rect_.height());
+  auto painter_path = Shapes::DrawDiamond(rect, padding);
+  painter_path.translate(-padding, 0);
+  painter->setBrush(QColor(196, 40, 53));
+  painter->drawPath(painter_path);
+  painter_path.translate(-200, 0);
+  painter->setBrush(QColor(227, 49, 61));
+  painter->drawPath(painter_path);
+}
+
+void MonsterBag::OnEnter() { 
+  Scene::OnEnter();
+  LoadMonster();
+  monster_list_->RegisterEvents();
+}
+
+void MonsterBag::OnExit() {
+  monster_list_->UnRegisterEvents();
 }

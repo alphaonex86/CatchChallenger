@@ -138,7 +138,7 @@ void RoundedButton::Draw(QPainter *painter) {
     content_cache_->fill(Qt::transparent);
     QPainter *inner_painter = new QPainter(content_cache_);
     QColor color = checked_ ? Qt::white : Qt::black;
-    QRectF boundary(0, 0, bounding_rect_.width() - (slope * 2), inner_height);
+    QRectF boundary(slope, 0, bounding_rect_.width() - (slope * 2), inner_height);
     DrawContent(inner_painter, color, boundary);
     delete inner_painter;
   }

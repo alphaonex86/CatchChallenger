@@ -44,6 +44,7 @@ SOURCES += \
     $$PWD/ui/ThemedItem.cpp \
     $$PWD/ui/Backdrop.cpp \
     $$PWD/ui/MessageBar.cpp \
+    $$PWD/ui/PlainLabel.cpp \
     $$PWD/core/Node.cpp \
     $$PWD/core/Stateful.cpp \
     $$PWD/core/Sprite.cpp \
@@ -75,6 +76,7 @@ SOURCES += \
     $$PWD/scenes/battle/BattleActions.cpp \
     $$PWD/scenes/battle/StatusCard.cpp \
     $$PWD/scenes/battle/BattleStates.cpp \
+    $$PWD/scenes/battle/MonsterSwap.cpp \
     $$PWD/scenes/map/CCMap.cpp \
     $$PWD/scenes/map/Map.cpp \
     $$PWD/scenes/map/MapMonsterPreview.cpp \
@@ -156,6 +158,7 @@ HEADERS  += \
     $$PWD/ui/ThemedItem.hpp \
     $$PWD/ui/Backdrop.hpp \
     $$PWD/ui/MessageBar.hpp \
+    $$PWD/ui/PlainLabel.hpp \
     $$PWD/core/uthash.h \
     $$PWD/core/Vector.hpp \
     $$PWD/core/Node.hpp \
@@ -189,6 +192,7 @@ HEADERS  += \
     $$PWD/scenes/battle/BattleActions.hpp \
     $$PWD/scenes/battle/StatusCard.hpp \
     $$PWD/scenes/battle/BattleStates.hpp \
+    $$PWD/scenes/battle/MonsterSwap.hpp \
     $$PWD/scenes/map/Map.hpp \
     $$PWD/scenes/map/CCMap.hpp \
     $$PWD/scenes/map/MapMonsterPreview.hpp \
@@ -267,6 +271,7 @@ SOURCES += \
     $$PWD/entities/Map_client.cpp \
     $$PWD/entities/PlayerInfo.cpp \
     $$PWD/entities/ActionUtils.cpp \
+    $$PWD/entities/Shapes.cpp \
     $$PWD/entities/Utils.cpp
 HEADERS  += \
     $$PWD/entities/render/MapController.hpp \
@@ -289,6 +294,7 @@ HEADERS  += \
     $$PWD/entities/Map_client.hpp \
     $$PWD/entities/PlayerInfo.hpp \
     $$PWD/entities/ActionUtils.hpp \
+    $$PWD/entities/Shapes.hpp \
     $$PWD/entities/Utils.hpp
 
 wasm: {

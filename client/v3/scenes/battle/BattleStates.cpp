@@ -448,16 +448,16 @@ void FightState::Handle(BattleContext *context, Battle *battle) {
   if (apply_on_enemy) {
     battle->attack_->SetSize(battle->enemy_->Width(), battle->enemy_->Height());
     battle->attack_->SetPos(battle->enemy_->X(), battle->enemy_->Y());
+    battle->enemy_status_->UpdateHP(action.quantity);
   } else {
     battle->attack_->SetSize(battle->player_->Width(),
                              battle->player_->Height());
     battle->attack_->SetPos(battle->player_->X(), battle->player_->Y());
+    battle->player_status_->UpdateHP(action.quantity);
   }
 
   battle->attack_->SetVisible(true);
   battle->attack_->RunAction(animation, true);
-  // battle->RunAction(
-  // ActionUtils::WaitAndThen(1000, [context]() { context->Handle(); }), true);
 
   context->SetState(new BattleCycleState());
 }

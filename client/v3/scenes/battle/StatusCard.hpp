@@ -27,6 +27,9 @@ class StatusCard : public Node {
   uint32_t XPMax() const;
   QString Name() const;
 
+  void UpdateHP(int32_t hp);
+  void UpdateXP(int32_t xp);
+
  private:
   QFont *font_;
 
@@ -40,6 +43,8 @@ class StatusCard : public Node {
   CatchChallenger::Gender gender_;
   qreal padding_;
   UI::SlimProgressbar *hp_bar_;
+  UI::SlimProgressbar *xp_bar_;
+  bool is_enemy_;
 
   StatusCard(Node *parent);
 };

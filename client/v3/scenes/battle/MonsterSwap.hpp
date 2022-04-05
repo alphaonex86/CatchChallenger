@@ -1,22 +1,21 @@
 // Copyright 2021 <CatchChallenger>
-#ifndef CLIENT_V3_SCENES_SHARED_INVENTORY_MONSTERBAG_HPP_
-#define CLIENT_V3_SCENES_SHARED_INVENTORY_MONSTERBAG_HPP_
+#ifndef CLIENT_V3_SCENES_BATTLE_MONSTERSWAP_HPP_
+#define CLIENT_V3_SCENES_BATTLE_MONSTERSWAP_HPP_
 
-#include "../../../base/ConnectionManager.hpp"
-#include "../../../core/Scene.hpp"
-#include "../../../ui/Button.hpp"
-#include "../../../ui/Dialog.hpp"
-#include "../../../ui/Column.hpp"
-#include "../../../ui/MessageDialog.hpp"
-#include "../../../ui/Backdrop.hpp"
+#include "../../base/ConnectionManager.hpp"
+#include "../../core/Scene.hpp"
+#include "../../ui/Button.hpp"
+#include "../../ui/Dialog.hpp"
+#include "../../ui/Column.hpp"
+#include "../../ui/MessageDialog.hpp"
+#include "../../ui/Backdrop.hpp"
+#include "../../ui/PlainLabel.hpp"
 
 namespace Scenes {
-class MonsterBag : public Scene {
+class MonsterSwap : public Scene {
  public:
-  enum Mode { kDefault, kOnBattle, kOnItemUse };
-
-  ~MonsterBag();
-  static MonsterBag *Create(Mode mode = kDefault);
+  ~MonsterSwap();
+  static MonsterSwap *Create();
 
   void Draw(QPainter *painter);
 
@@ -24,7 +23,6 @@ class MonsterBag : public Scene {
   void SetOnSelectMonster(std::function<void(uint8_t)> callback);
   void OnSelectMonster(uint8_t monsterPosition);
   void LoadMonster();
-  void SetMode(Mode mode);
 
  protected:
   void OnScreenSD() override;
@@ -42,13 +40,13 @@ class MonsterBag : public Scene {
   CatchChallenger::Api_protocol_Qt *client_;
   std::function<void(uint8_t)> on_select_monster_;
   Node *selected_item_;
-  Mode mode_;
+  UI::PlainLabel *title_; 
 
-  MonsterBag(Mode mode);
+  MonsterSwap();
   void OnSelectItem(Node *node);
   void ShowMessageDialog(const QString &title, const QString &message);
   void ClearSelection();
   void BackgroundCanvas(QPainter *painter);
 };
 }  // namespace Scenes
-#endif  // CLIENT_V3_SCENES_SHARED_INVENTORY_MONSTERBAG_HPP_
+#endif  // CLIENT_V3_SCENES_BATTLE_MONSTERSWAP_HPP_

@@ -28,6 +28,7 @@
 #include "../shared/inventory/Inventory.hpp"
 #include "ActionBar.hpp"
 #include "BattleStates.hpp"
+#include "MonsterSwap.hpp"
 #include "StatusCard.hpp"
 
 namespace Scenes {
@@ -41,7 +42,8 @@ class Battle : public QObject, public Scene {
   enum BattleType { BattleType_Wild, BattleType_Bot, BattleType_OtherPlayer };
   enum SkillData { kSkillId = 0, kSkillEndurance = 1 };
   enum BattleStep {
-    BattleStep_Presentation, BattleStep_PresentationMonster,
+    BattleStep_Presentation,
+    BattleStep_PresentationMonster,
     BattleStep_Middle,
     BattleStep_Final,
     kBattleStep_CallMonster,
@@ -97,7 +99,7 @@ class Battle : public QObject, public Scene {
     uint16_t id;
     uint8_t monster_index;
     uint8_t level;
-    uint32_t quantity;
+    int32_t quantity;
     bool critical;
     float effective;
   };
@@ -193,7 +195,7 @@ class Battle : public QObject, public Scene {
   DoNextActionStep doNextActionStep;
 
   UI::LinkedDialog *linked_;
-  UI::ListView *player_skills_;
+  MonsterSwap *monsters_;
 
   bool waiting_server_reply_;
 

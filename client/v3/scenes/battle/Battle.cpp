@@ -21,7 +21,6 @@
 #include "../../core/Logger.hpp"
 #include "../../core/SceneManager.hpp"
 #include "../../entities/Utils.hpp"
-#include "../shared/inventory/MonsterBag.hpp"
 #include "BattleActions.hpp"
 
 using Scenes::Battle;
@@ -57,9 +56,9 @@ Battle::Battle() : Scene(nullptr) {
   escapeSuccess = false;
 
   linked_ = UI::LinkedDialog::Create(false);
-  auto monster = MonsterBag::Create(MonsterBag::kOnBattle);
-  monster->SetOnSelectMonster(std::bind(&Battle::OnMonsterSelect, this, _1));
-  linked_->AddItem(monster, "monsters");
+  monsters_ = MonsterSwap::Create();
+  //monster->SetOnSelectMonster(std::bind(&Battle::OnMonsterSelect, this, _1));
+  //linked_->AddItem(monster, "monsters");
   auto inventory = Inventory::Create();
   inventory->SetVar(Inventory::ObjectFilter_UseInFight, true);
   inventory->SetOnUseItem(std::bind(&Battle::UseBagItem, this, _1, _2, _3));
@@ -754,9 +753,7 @@ void Battle::ShowMessageDialog(const QString &title, const QString &message) {
 }
 
 void Battle::ShowMonsterDialog(bool show_close) {
-  linked_->SetCurrentItem("monsters");
-  linked_->ShowClose(show_close);
-  AddChild(linked_);
+  AddChild(monsters_);
 }
 
 void Battle::ShowBagDialog() {

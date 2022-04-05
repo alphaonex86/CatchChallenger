@@ -22,7 +22,7 @@ SlimProgressbar::SlimProgressbar(Node *parent)
   background_color_ = QColor(99, 99, 101);
   foreground_color_ = QColor(0, 221, 6);
 
-  tick_ = Tick::Create(50, std::bind(&SlimProgressbar::OnTick, this));
+  tick_ = Tick::Create(100, std::bind(&SlimProgressbar::OnTick, this));
 }
 
 SlimProgressbar::~SlimProgressbar() {
@@ -119,4 +119,9 @@ void SlimProgressbar::SetSize(int width, int height) {
 
 void SlimProgressbar::SetOnIncrementDone(const std::function<void()> &callback) {
   on_increment_done_ = callback;
+}
+
+void SlimProgressbar::SetForegroundColor(const QColor &color) {
+  foreground_color_ = color;
+  ReDraw();
 }
