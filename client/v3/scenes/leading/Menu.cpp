@@ -115,10 +115,12 @@ Menu::~Menu() {
     delete multi_scene_;
     multi_scene_ = nullptr;
   }
+#ifndef NOSINGLEPLAYER
   if (solo_scene_) {
     delete solo_scene_;
     solo_scene_ = nullptr;
   }
+#endif
   if (option_scene_) {
     delete option_scene_;
     option_scene_ = nullptr;
@@ -163,6 +165,7 @@ void Menu::Initialize() {
   news_update_ =
       UI::Button::Create(":/CC/images/interface/greenbutton.png", news_);
   news_update_->SetOutlineColor(QColor(44, 117, 0));
+#ifndef CATCHCHALLENGER_SOLO
 #ifndef __EMSCRIPTEN__
   if (!QObject::connect(InternetUpdater::GetInstance(),
                         &InternetUpdater::newUpdate,
@@ -176,7 +179,6 @@ void Menu::Initialize() {
                  "MenuWindow::rssEntryList) failed"
               << std::endl;
   feed_news->checkCache();
-#ifndef CATCHCHALLENGER_SOLO
   solo_->SetVisible(false);
 #endif
 
@@ -188,7 +190,9 @@ void Menu::Initialize() {
   options_->SetOnClick(std::bind(&Menu::GoToOptions, this));
   debug_->SetOnClick(std::bind(&Menu::GoToDebug, this));
 
+#ifndef NOSINGLEPLAYER
   solo_scene_ = nullptr;
+#endif
   multi_scene_ = nullptr;
   option_scene_ = nullptr;
   debug_scene_ = nullptr;
@@ -317,8 +321,10 @@ void Menu::OpenUpdate() {
 }
 
 void Menu::GoToSolo() {
+#ifndef NOSINGLEPLAYER
   if (!solo_scene_) solo_scene_ = Solo::Create();
   static_cast<StackedScene *>(Parent())->PushForeground(solo_scene_);
+#endif
 }
 
 void Menu::GoToMulti() {

@@ -2,6 +2,7 @@
 #include "OverMapLogic.hpp"
 
 #include <iostream>
+#include <QBuffer>
 
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/FacilityLib.hpp"

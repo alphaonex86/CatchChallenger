@@ -13,7 +13,9 @@
 #include "Debug.hpp"
 #include "Multi.hpp"
 #include "Options.hpp"
+#ifndef NOSINGLEPLAYER
 #include "Solo.hpp"
+#endif
 
 #ifndef CATCHCHALLENGER_NOAUDIO
   #include <QAudioOutput>
@@ -52,7 +54,9 @@ class Menu : public Scene {
   bool is_loaded_;
 
   Multi *multi_scene_;
+#ifndef NOSINGLEPLAYER
   Solo *solo_scene_;
+#endif
   Options *option_scene_;
   Debug *debug_scene_;
 

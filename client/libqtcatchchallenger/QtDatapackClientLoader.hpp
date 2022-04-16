@@ -47,7 +47,9 @@ public:
         QImage back;
         QImage thumb;
     };
+#ifndef NOTHREADS
     QMutex mutex;
+#endif
 
     struct QtItemExtra
     {

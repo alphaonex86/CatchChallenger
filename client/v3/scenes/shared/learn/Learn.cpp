@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "../../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../Globals.hpp"
 #include "../../../core/AssetsLoader.hpp"

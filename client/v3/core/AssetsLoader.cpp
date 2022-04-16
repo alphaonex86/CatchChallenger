@@ -162,4 +162,9 @@ void AssetsLoader::SetOnDataParsed(std::function<void()> callback) {
   on_data_parsed_ = callback;
 }
 
-bool AssetsLoader::IsLoaded() { return is_loaded_; }
+bool AssetsLoader::IsLoaded() {
+#ifndef NOTHREADS
+  return is_loaded_;
+#endif
+  return true; 
+}

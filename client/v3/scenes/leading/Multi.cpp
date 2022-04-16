@@ -84,7 +84,7 @@ Multi::Multi() : reply(nullptr) {
   newLanguage();
 
   // need be the last
-  downloadFile();
+  //downloadFile();
   displayServerList();
   addServer = nullptr;
   subserver_ = nullptr;
@@ -807,7 +807,7 @@ void Multi::on_server_refresh_clicked() {
     reply->deleteLater();
     reply = NULL;
   }
-  downloadFile();
+  //downloadFile();
 }
 
 void Multi::server_select_clicked() {

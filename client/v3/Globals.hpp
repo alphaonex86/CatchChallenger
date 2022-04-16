@@ -4,7 +4,9 @@
 
 #include <QThread>
 
+#ifndef NOSINGLEPLAYER
 #include "../../server/qt/InternalServer.hpp"
+#endif
 #include "scenes/battle/Battle.hpp"
 #include "scenes/leading/Leading.hpp"
 #include "scenes/map/Map.hpp"
@@ -13,7 +15,9 @@
 
 class Globals {
  public:
+#ifndef NOSINGLEPLAYER
   static CatchChallenger::InternalServer* InternalServer;
+#endif
 #ifndef NOTHREADS
   static QThread* ThreadSolo;
 #endif

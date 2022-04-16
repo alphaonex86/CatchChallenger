@@ -25,7 +25,7 @@ extern "C" {
 #define FALSE 0
 #else
 #include <stdbool.h>
-#define BOOL _Bool
+#define BOOL bool
 #define TRUE 1
 #define FALSE 0
 #endif

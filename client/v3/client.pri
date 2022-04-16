@@ -119,7 +119,6 @@ SOURCES += \
     $$PWD/scenes/leading/Leading.cpp \
     $$PWD/scenes/leading/Loading.cpp \
     $$PWD/scenes/leading/Multi.cpp \
-    $$PWD/scenes/leading/Solo.cpp \
     $$PWD/scenes/leading/MultiItem.cpp \
     $$PWD/scenes/leading/AddOrEditServer.cpp \
     $$PWD/scenes/leading/Login.cpp \
@@ -132,6 +131,10 @@ SOURCES += \
     $$PWD/scenes/leading/Options.cpp \
     $$PWD/scenes/leading/Debug.cpp \
     $$PWD/scenes/leading/Menu.cpp
+!contains(DEFINES, NOSINGLEPLAYER) {
+SOURCES += $$PWD/scenes/leading/Solo.cpp
+HEADERS  += $$PWD/scenes/leading/Solo.hpp
+}
 HEADERS  += \
     $$PWD/base/ConnectionInfo.cpp \
     $$PWD/ui/Label.hpp \
@@ -233,7 +236,6 @@ HEADERS  += \
     $$PWD/scenes/leading/Loading.hpp \
     $$PWD/scenes/leading/MultiItem.hpp \
     $$PWD/scenes/leading/Multi.hpp \
-    $$PWD/scenes/leading/Solo.hpp \
     $$PWD/scenes/leading/AddOrEditServer.hpp \
     $$PWD/scenes/leading/Login.hpp \
     $$PWD/scenes/leading/SubServer.hpp \
@@ -302,7 +304,6 @@ wasm: {
 }
 else
 {
-    DEFINES += CATCHCHALLENGER_SOLO
 #    DEFINES += NOWEBSOCKET
 }
 

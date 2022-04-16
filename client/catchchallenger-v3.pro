@@ -3,7 +3,7 @@ wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
 }
 
-DEFINES += CATCHCHALLENGER_CLASS_QT
+DEFINES += CATCHCHALLENGER_CLASS_QT NOSINGLEPLAYER
 !contains(DEFINES, NOSINGLEPLAYER) {
     include(v3/entities/solo/solo-server.pri)
     INCLUDEPATH += -I/usr/include/
@@ -11,6 +11,7 @@ DEFINES += CATCHCHALLENGER_CLASS_QT
     include(../server/catchchallenger-serverheader.pri)
     include(../server/qt/catchchallenger-server-qt.pri)
     include(../server/qt/catchchallenger-server-qtheader.pri)
+    DEFINES += CATCHCHALLENGER_SOLO
 }
 TARGET = catchchallenger
 include(v3/client.pri)

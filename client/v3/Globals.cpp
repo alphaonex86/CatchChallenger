@@ -3,9 +3,13 @@
 
 #include "scenes/leading/Loading.hpp"
 
+#ifndef NOSINGLEPLAYER
 CatchChallenger::InternalServer *Globals::InternalServer = nullptr;
+#endif
 
+#ifndef NOTHREADS
 QThread *Globals::ThreadSolo = nullptr;
+#endif
 
 Scenes::Leading *Globals::leading_ = nullptr;
 
