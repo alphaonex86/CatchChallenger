@@ -26,24 +26,17 @@ protected:
 private:
     Ui::MainWindow *ui;
     CCBackground *m_CCBackground;
-    CustomButton *p;
     QGraphicsScene *mScene;
-    QGraphicsTextItem* simpleText;
-    QGraphicsPixmapItem *image;
-    QGraphicsPixmapItem *imageText;
-    CustomButton *button;
 
     uint8_t waitRenderTime;
     QTimer timerRender;
     QTime timeRender;
     uint16_t frameCounter;
-    QTimer timerUpdateFPS;
-    QTime timeUpdateFPS;
+    QTimer startRender;
 private:
+    void startRenderSlot();
     void render();
     void paintEvent(QPaintEvent * event) override;
-    void updateFPS();
-    void setTargetFPS(int targetFPS);
 signals:
     void newFPSvalue(const unsigned int FPS);
 };

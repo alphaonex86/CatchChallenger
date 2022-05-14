@@ -1,6 +1,7 @@
 #include "CCBackground.h"
 #include <QPainter>
 #include <QTime>
+#include <QTextItem>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -39,14 +40,9 @@ CCBackground::CCBackground()
     dialog1Text="";
     dialog2Text="";
 
-    dialogs.push_back("1: Hi, what we doing here?");
-    dialogs.push_back("2: It's the background of CatchChallenger!<br>What better place to speak about CatchChallenger?");
-    dialogs.push_back("2: We will speak about technique, concept, news and events!");
-
-    text.setParent(this);
-    text.setPos(0,0);
-    text.setTextWidth(100);
-    text.setHtml("test");
+    dialogs.push_back("2: Hi, what we doing here?");
+    dialogs.push_back("1: It's the background of CatchChallenger!<br>What better place to speak about CatchChallenger?");
+    dialogs.push_back("1: We will speak about technique, concept, news and events!");
 }
 
 int CCBackground::count_partial_letter(std::string s)
@@ -87,11 +83,13 @@ void CCBackground::showDialogSlot()
     {
         std::cout << "1: " << finalstr << std::endl;
         dialog1Text=finalstr;
+        dialog1Qt.setHtml(QString::fromStdString(finalstr));
     }
     else
     {
         std::cout << "2: " << finalstr << std::endl;
         dialog2Text=finalstr;
+        dialog2Qt.setHtml(QString::fromStdString(finalstr));
     }
     //compute time to show based on Syllable
     pauseBeforeRemovePerSyllableDialog.start(1000*count_partial_letter(finalstr));
@@ -101,6 +99,8 @@ void CCBackground::hideDialogSlot()
 {
     dialog1Text="";
     dialog2Text="";
+    dialog1Qt.setHtml("");
+    dialog2Qt.setHtml("");
     if(!pauseBeforeDisplayDialog.isActive())
         pauseBeforeDisplayDialog.start();
 }
@@ -186,7 +186,7 @@ unsigned int CCBackground::getTargetZoom(QWidget *widget)
     return targetZoom;
 }
 
-void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget)
+void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem * option, QWidget *widget)
 {
     QTime time;
     time.restart();
@@ -354,13 +354,27 @@ void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QW
             {
                 painter->drawPixmap(widget->width()/2-dialog1.width(),grassOffset+grass.height()-player1.height()-dialog1.height(),dialog1.width(),    dialog1.height(),    dialog1);
                 painter->setPen(QColor(25,11,0));
-                painter->drawText(widget->width()/2-dialog1.width()+offsetBorder,grassOffset+grass.height()-player1.height()-dialog1.height()+offsetBorder,QString::fromStdString(dialog1Text));
+                //painter->drawText(widget->width()/2-dialog1.width()+offsetBorder,grassOffset+grass.height()-player1.height()-dialog1.height()+offsetBorder,QString::fromStdString(dialog1Text));
+
+                painter->save();
+                painter->translate(widget->width()/2-dialog1.width()+offsetBorder,grassOffset+grass.height()-player1.height()-dialog1.height()+offsetBorder);
+                dialog1Qt.paint(painter,option,widget);
+                dialog1Qt.setTextWidth(420);
+                dialog1Qt.setHtml("<span style=\"color:#401c02\">"+QString::fromStdString(dialog1Text)+"</span>");
+                painter->restore();
             }
             if(!dialog2Text.empty())
             {
                 painter->drawPixmap(widget->width()/2,grassOffset+grass.height()-player1.height()-dialog2.height(),dialog2.width(),    dialog2.height(),    dialog2);
                 painter->setPen(QColor(25,11,0));
-                painter->drawText(widget->width()/2+offsetBorder,grassOffset+grass.height()-player1.height()-dialog2.height()+offsetBorder,QString::fromStdString(dialog2Text));
+                //painter->drawText(widget->width()/2+offsetBorder,grassOffset+grass.height()-player1.height()-dialog2.height()+offsetBorder,QString::fromStdString(dialog2Text));
+
+                painter->save();
+                painter->translate(widget->width()/2+offsetBorder,grassOffset+grass.height()-player1.height()-dialog2.height()+offsetBorder);
+                dialog1Qt.paint(painter,option,widget);
+                dialog1Qt.setTextWidth(420);
+                dialog1Qt.setHtml("<span style=\"color:#401c02\">"+QString::fromStdString(dialog2Text)+"</span>");
+                painter->restore();
             }
             painter->drawPixmap(widget->width()/2-player1.width(),grassOffset+grass.height()-player1.height(),player1.width(),    player1.height(),    player1);
             painter->drawPixmap(widget->width()/2,grassOffset+grass.height()-player2.height(),player2.width(),    player2.height(),    player2);

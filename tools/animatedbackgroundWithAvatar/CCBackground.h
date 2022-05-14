@@ -15,7 +15,7 @@ class CCBackground : public QObject, public QGraphicsItem
     Q_OBJECT
 public:
     CCBackground();
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget) override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
     void startAnimation();
     void stopAnimation();
 private:
@@ -48,7 +48,7 @@ private:
     void showDialogSlot();
     void hideDialogSlot();
     std::vector<std::string> dialogs;
-    QGraphicsTextItem text;
+    QGraphicsTextItem dialog1Qt,dialog2Qt;
 };
 
 #endif // PROGRESSBARDARK_H

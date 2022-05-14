@@ -57,18 +57,12 @@ qDebug()<<event->scenePos();
     setRenderHint(QPainter::NonCosmeticDefaultPen,true);*/
     show();
 
-    timerUpdateFPS.setSingleShot(true);
-    timerUpdateFPS.setInterval(1000);
-    timeUpdateFPS.restart();
     frameCounter=0;
     timeRender.restart();
     waitRenderTime=40;
     timerRender.setSingleShot(true);
     if(!connect(&timerRender,&QTimer::timeout,this,&MainWindow::render))
         abort();
-    if(!connect(&timerUpdateFPS,&QTimer::timeout,this,&MainWindow::updateFPS))
-        abort();
-    timerUpdateFPS.start();
 
     setScene(mScene);
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
@@ -82,7 +76,7 @@ qDebug()<<event->scenePos();
     viewport()->setAttribute(Qt::WA_NoSystemBackground);
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 
-    simpleText=new QGraphicsTextItem("<span style=\"color:red\">test</span>");
+    /*simpleText=new QGraphicsTextItem("<span style=\"color:red\">test</span>");
     mScene->addItem(simpleText);
     simpleText->setPos(0,0);
     QPixmap p(":/f.png");
@@ -96,14 +90,16 @@ qDebug()<<event->scenePos();
     mScene->addItem(imageText);
     imageText->setPos(0,0);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
-    mScene->setSceneRect(QRectF(0,0,width(),height()));
+    mScene->setSceneRect(QRectF(0,0,width(),height()));*/
 
-    mScene->addItem(m_CCBackground);
+    //mScene->addItem(m_CCBackground);
     //mScene->addItem(button);
 
-    render();
+    startRender.start(5000);
+    startRender.setSingleShot(true);
+    connect(&startRender,&QTimer::timeout,this,&MainWindow::startRenderSlot);
 
-    setTargetFPS(100);
+    render();
 }
 
 MainWindow::~MainWindow()
@@ -119,18 +115,18 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    const uint8_t x=event->x();
+    /*const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    std::cerr << "void MainWindow::mousePressEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->setPressed(true);*/
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    const uint8_t x=event->x();
+    /*const uint8_t x=event->x();
     const uint8_t y=event->y();
-    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;
+    std::cerr << "void MainWindow::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) " << x << "," << y << std::endl;*/
     /*if(button->boundingRect().contains(x,y))
         button->emitclicked();
     button->setPressed(false);*/
@@ -160,32 +156,7 @@ void MainWindow::paintEvent(QPaintEvent * event)
         frameCounter++;
 }
 
-void MainWindow::updateFPS()
+void MainWindow::startRenderSlot()
 {
-    const unsigned int FPS=(int)(((float)frameCounter)*1000)/timeUpdateFPS.elapsed();
-    emit newFPSvalue(FPS);
-    QImage pix(50,40,QImage::Format_ARGB32_Premultiplied);
-    pix.fill(Qt::transparent);
-    QPainter p(&pix);
-    p.setPen(QPen(Qt::green));
-    p.setFont(QFont("Times", 12, QFont::Bold));
-    p.drawText(pix.rect(), Qt::AlignCenter,QString::number(FPS));
-    imageText->setPixmap(QPixmap::fromImage(pix));
-
-    frameCounter=0;
-    timeUpdateFPS.restart();
-    timerUpdateFPS.start();
+    mScene->addItem(m_CCBackground);
 }
-
-void MainWindow::setTargetFPS(int targetFPS)
-{
-    if(targetFPS==0)
-        waitRenderTime=0;
-    else
-    {
-        waitRenderTime=static_cast<uint8_t>(static_cast<float>(1000.0)/(float)targetFPS);
-        if(waitRenderTime<1)
-            waitRenderTime=1;
-    }
-}
-
