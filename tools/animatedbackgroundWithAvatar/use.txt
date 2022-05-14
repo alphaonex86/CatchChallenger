@@ -1,0 +1,2 @@
+recordmydesktop --no-cursor --no-sound --windowid `xwininfo -display :0 | grep 'id: 0x' | grep -Eo '0x[a-z0-9]+'`
+ffmpeg -i out.ogv -filter:v "crop=1920:1080:0:8" -vcodec libx264 -vprofile high -preset slow -b:v 600k -maxrate 5000k -bufsize 1000k -threads 24 -an out2.mp4
