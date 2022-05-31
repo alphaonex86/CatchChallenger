@@ -64,12 +64,12 @@ void MonsterItem::DrawContent(QPainter *painter, QColor color,
 void MonsterItem::LoadMonster() {
   const uint16_t id = monster_.monster;
   const DatapackClientLoader::MonsterExtra monster_extra =
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(id);
-  if (QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(id) !=
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend()) {
+      QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(id);
+  if (QtDatapackClientLoader::GetInstance()->get_monsterExtra().find(id) !=
+      QtDatapackClientLoader::GetInstance()->get_monsterExtra().cend()) {
     level_ = monster_.level;
     QPixmap p =
-        QtDatapackClientLoader::datapackLoader->getMonsterExtra(id).thumb;
+        QtDatapackClientLoader::GetInstance()->getMonsterExtra(id).thumb;
     auto stat = client_->getStat(
         CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(id),
         level_);
@@ -84,7 +84,7 @@ void MonsterItem::LoadMonster() {
     hp_bar_->SetValue(hp_);
   } else {
     icon_->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
     name_ = QStringLiteral("id: %1").arg(id);
   }
 }

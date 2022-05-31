@@ -209,18 +209,18 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
   this->client = static_cast<CatchChallenger::Api_protocol_Qt *>(client);
   connectTheExternalSocket(connexionInfo, client);
   std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::datapackLoader << std::endl;
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::GetInstance() << std::endl;
 
   // connect the datapack loader
-  if (!connect(QtDatapackClientLoader::datapackLoader,
+  if (!connect(QtDatapackClientLoader::GetInstance(),
                &QtDatapackClientLoader::datapackParsed, this,
                &ConnectionManager::datapackParsed, Qt::QueuedConnection))
     abort();
-  if (!connect(QtDatapackClientLoader::datapackLoader,
+  if (!connect(QtDatapackClientLoader::GetInstance(),
                &QtDatapackClientLoader::datapackParsedMainSub, this,
                &ConnectionManager::datapackParsedMainSub, Qt::QueuedConnection))
     abort();
-  if (!connect(QtDatapackClientLoader::datapackLoader,
+  if (!connect(QtDatapackClientLoader::GetInstance(),
                &QtDatapackClientLoader::datapackChecksumError, this,
                &ConnectionManager::datapackChecksumError, Qt::QueuedConnection))
     abort();
@@ -711,7 +711,7 @@ void ConnectionManager::haveTheDatapack() {
               .toHex()));
 
   if (client != NULL) {
-    QtDatapackClientLoader::datapackLoader->parseDatapack(
+    QtDatapackClientLoader::GetInstance()->parseDatapack(
         client->datapackPathBase());
   }
 }
@@ -740,7 +740,7 @@ void ConnectionManager::haveTheDatapackMainSub() {
               .toHex()));
 
   if (client != NULL) {
-    QtDatapackClientLoader::datapackLoader->parseDatapackMainSub(
+    QtDatapackClientLoader::GetInstance()->parseDatapackMainSub(
         client->mainDatapackCode(), client->subDatapackCode());
   }
 }
@@ -776,7 +776,7 @@ void ConnectionManager::datapackParsed() {
 void ConnectionManager::datapackParsedMainSub() {
   if (client == NULL) return;
   if (!client->setMapNumber(
-          QtDatapackClientLoader::datapackLoader->get_mapToId().size()))
+          QtDatapackClientLoader::GetInstance()->get_mapToId().size()))
     newError(QObject::tr("Internal error").toStdString(),
              "No map loaded to call client->setMapNumber()");
   client->have_main_and_sub_datapack_loaded();

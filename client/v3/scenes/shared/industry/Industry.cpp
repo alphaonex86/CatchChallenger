@@ -125,7 +125,7 @@ void Industry::OnBuyClick() {
     bool ok;
     // quantityToBuy = QInputDialog::getInt(this, tr("Buy"),tr("Amount %1 to
     // buy:")
-    //.arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->itemsExtra.at(id).name)),
+    //.arg(QString::fromStdString(QtDatapackClientLoader::GetInstance()->itemsExtra.at(id).name)),
     // 0, 0, static_cast<int>(quantity),
     // 1, &ok); if(!ok || quantityToBuy<=0) return;
   }
@@ -202,7 +202,7 @@ void Industry::OnSellClick() {
     // this, tr("Sell"),
     // tr("Amount %1 to sell:")
     //.arg(QString::fromStdString(
-    // QtDatapackClientLoader::datapackLoader->itemsExtra.at(itemid)
+    // QtDatapackClientLoader::GetInstance()->itemsExtra.at(itemid)
     //.name)),
     // 0, 0, quantityToSell, 1, &ok);
     // if (!ok || i <= 0) return;
@@ -322,7 +322,7 @@ void Industry::SetBot(const CatchChallenger::Bot &bot, uint16_t industry_id) {
   industry_id_ = industry_id;
   if (bot.properties.find("skin") != bot.properties.cend()) {
     QPixmap skin = QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->getFrontSkinPath(
+        QtDatapackClientLoader::GetInstance()->getFrontSkinPath(
             std::stoi(bot.properties.at("skin"))));
     if (!skin.isNull()) {
       npc_icon_->SetPixmap(skin.scaled(80, 80));

@@ -39,7 +39,7 @@ void MapMonsterPreview::DrawContent() {
   auto painter = new QPainter(&tmp);
 
   const QtDatapackClientLoader::QtMonsterExtra &monsterExtra =
-      QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster_.monster);
+      QtDatapackClientLoader::GetInstance()->getMonsterExtra(monster_.monster);
   QPixmap front = monsterExtra.thumb.scaledToWidth(
       monsterExtra.thumb.width() * 2, Qt::FastTransformation);
   painter->drawPixmap(bounding_rect_.width() / 2 - front.width() / 2,

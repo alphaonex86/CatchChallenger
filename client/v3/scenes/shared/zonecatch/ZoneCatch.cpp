@@ -135,10 +135,10 @@ void ZoneCatch::OnScreenResize() {
 }
 
 void ZoneCatch::SetZone(std::string zone) {
-  if (QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zone) !=
-      QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_zonesExtra().find(zone) !=
+      QtDatapackClientLoader::GetInstance()->get_zonesExtra().cend()) {
     zonecatchName =
-        QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zone).name;
+        QtDatapackClientLoader::GetInstance()->get_zonesExtra().at(zone).name;
     wait_text_->SetText(
         tr("You are waiting to capture %1")
             .arg(QString("%1").arg(QString::fromStdString(zonecatchName))));

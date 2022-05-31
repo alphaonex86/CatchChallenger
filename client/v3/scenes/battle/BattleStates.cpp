@@ -111,7 +111,7 @@ void WildPresentationState::Handle(BattleContext *context, Battle *battle) {
   enemy->SetPos(battle->enemy_in_);
   auto other_monster = client->getOtherMonster();
   if (other_monster != NULL) {
-    enemy->SetPixmap(QtDatapackClientLoader::datapackLoader
+    enemy->SetPixmap(QtDatapackClientLoader::GetInstance()
                          ->getMonsterExtra(other_monster->monster)
                          .front.scaled(400, 400));
     // other monster
@@ -132,7 +132,7 @@ void WildPresentationState::Handle(BattleContext *context, Battle *battle) {
   battle->ShowStatusMessage(
       QStringLiteral("Wild %1 appeared")
           .arg(QString::fromStdString(
-              QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+              QtDatapackClientLoader::GetInstance()->get_monsterExtra()
                   .at(other_monster->monster)
                   .name)),
       true, false);
@@ -166,10 +166,10 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
     actions.push_back(CallFunc::Create([battle]() {
       auto monster = battle->client_->getOtherMonster();
       auto enemy = battle->enemy_;
-      enemy->SetPixmap(QtDatapackClientLoader::datapackLoader
+      enemy->SetPixmap(QtDatapackClientLoader::GetInstance()
                            ->getMonsterExtra(monster->monster)
                            .front.scaled(400, 400));
-      auto name = QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+      auto name = QtDatapackClientLoader::GetInstance()->get_monsterExtra()
                       .at(monster->monster)
                       .name;
       battle->enemy_status_->SetMonster(monster);
@@ -195,10 +195,10 @@ void CallMonsterState::Handle(BattleContext *context, Battle *battle) {
     actions.push_back(CallFunc::Create([battle]() {
       auto monster = battle->client_->getCurrentMonster();
       auto player = battle->player_;
-      player->SetPixmap(QtDatapackClientLoader::datapackLoader
+      player->SetPixmap(QtDatapackClientLoader::GetInstance()
                             ->getMonsterExtra(monster->monster)
                             .back.scaled(400, 400));
-      auto name = QtDatapackClientLoader::datapackLoader->get_monsterExtra()
+      auto name = QtDatapackClientLoader::GetInstance()->get_monsterExtra()
                       .at(monster->monster)
                       .name;
       battle->player_status_->SetMonster(monster);

@@ -30,13 +30,13 @@ void PlantItem::DrawContent(QPainter *painter) {
   auto icon = Sprite::Create();
   auto text = UI::Label::Create();
 
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
           plant_id_) !=
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     const DatapackClientLoader::ItemExtra &itemExtra =
-        QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(plant_id_);
+        QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(plant_id_);
     QPixmap p =
-        QtDatapackClientLoader::datapackLoader->getItemExtra(plant_id_).image;
+        QtDatapackClientLoader::GetInstance()->getItemExtra(plant_id_).image;
     p = p.scaledToWidth(p.width() * 2);
     icon->SetPixmap(p);
     icon->SetPos(10, Height() / 2 - icon->Height() / 2);
@@ -49,7 +49,7 @@ void PlantItem::DrawContent(QPainter *painter) {
     text->Render(painter);
   } else {
     icon->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
     icon->SetPos(10, 10);
     icon->Render(painter);
 

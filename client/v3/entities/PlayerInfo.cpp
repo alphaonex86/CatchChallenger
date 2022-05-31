@@ -115,14 +115,14 @@ void PlayerInfo::AppendReputationPoints(
 void PlayerInfo::AppendReputationPoints(const std::string &type,
                                         const uint32_t &point) {
   if (point == 0) return;
-  if (QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(
+  if (QtDatapackClientLoader::GetInstance()->get_reputationNameToId().find(
           type) ==
-      QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend()) {
+      QtDatapackClientLoader::GetInstance()->get_reputationNameToId().cend()) {
     emit OnTipShowed("Unknow reputation: " + type, true);
     return;
   }
   const uint8_t &reputationId =
-      QtDatapackClientLoader::datapackLoader->get_reputationNameToId().at(type);
+      QtDatapackClientLoader::GetInstance()->get_reputationNameToId().at(type);
   CatchChallenger::PlayerReputation playerReputation;
 
   auto &info = GetInformation();
@@ -153,13 +153,13 @@ void PlayerInfo::AppendReputationPoints(const std::string &type,
 
   std::string tip;
   if (old_level < playerReputation.level) {
-    if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+    if (QtDatapackClientLoader::GetInstance()->get_reputationExtra().find(
             reputationCodeName) !=
-        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend()) {
+        QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend()) {
       tip =
           tr("You have better reputation into %1")
               .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                  QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                       .at(reputationCodeName)
                       .name))
               .toStdString();
@@ -167,13 +167,13 @@ void PlayerInfo::AppendReputationPoints(const std::string &type,
       tip = tr("You have better reputation into %1").arg("???").toStdString();
     }
   } else if (old_level > playerReputation.level) {
-    if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+    if (QtDatapackClientLoader::GetInstance()->get_reputationExtra().find(
             reputationCodeName) !=
-        QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend()) {
+        QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend()) {
       tip =
           tr("You have worse reputation into %1")
               .arg(QString::fromStdString(
-                  QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                  QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                       .at(reputationCodeName)
                       .name))
               .toStdString();

@@ -69,11 +69,11 @@ void Quests::LoadQuests() {
   auto i = info.quests.begin();
   while (i != info.quests.cend()) {
     const uint16_t questId = i->first;
-    if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
-        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
+    if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) !=
+        QtDatapackClientLoader::GetInstance()->get_questsExtra().cend()) {
       if (i->second.step > 0) {
         auto item = QuestItem::Create(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
+            QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
                 .name));
         item->SetData(99, questId);
         item->SetOnClick(std::bind(&Quests::OnQuestClick, this, _1));
@@ -110,7 +110,7 @@ void Quests::OnQuestItemChanged() {
     return;
   }
   const QtDatapackClientLoader::QuestExtra &questExtra =
-      QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
+      QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId);
   if (info.quests.at(questId).step == 0 ||
       info.quests.at(questId).step > questExtra.steps.size()) {
     qDebug() << "Selected quest step is out of range";
@@ -145,17 +145,17 @@ void Quests::OnQuestItemChanged() {
     while (index < items.size()) {
       QPixmap image;
       std::string name;
-      if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+      if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
               items.at(index).item) !=
-          QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
-        image = QtDatapackClientLoader::datapackLoader
+          QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
+        image = QtDatapackClientLoader::GetInstance()
                     ->getItemExtra(items.at(index).item)
                     .image;
-        name = QtDatapackClientLoader::datapackLoader->get_itemsExtra()
+        name = QtDatapackClientLoader::GetInstance()->get_itemsExtra()
                    .at(items.at(index).item)
                    .name;
       } else {
-        image = QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
+        image = QtDatapackClientLoader::GetInstance()->defaultInventoryImage();
         name = "id: " + std::to_string(items.at(index).item);
       }
 
@@ -197,18 +197,18 @@ void Quests::OnQuestItemChanged() {
       while (index < items.size()) {
         QPixmap image;
         std::string name;
-        if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+        if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
                 items.at(index).item) !=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
-          image = QtDatapackClientLoader::datapackLoader
+            QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
+          image = QtDatapackClientLoader::GetInstance()
                       ->getItemExtra(items.at(index).item)
                       .image;
-          name = QtDatapackClientLoader::datapackLoader->get_itemsExtra()
+          name = QtDatapackClientLoader::GetInstance()->get_itemsExtra()
                      .at(items.at(index).item)
                      .name;
         } else {
           image =
-              QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
+              QtDatapackClientLoader::GetInstance()->defaultInventoryImage();
           name =
               QStringLiteral("id: %1").arg(items.at(index).item).toStdString();
         }
@@ -245,11 +245,11 @@ void Quests::OnQuestItemChanged() {
               .rewards.reputation;
       unsigned int index = 0;
       while (index < reputationRewards.size()) {
-        if (QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(
+        if (QtDatapackClientLoader::GetInstance()->get_reputationExtra().find(
                 CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                     .at(reputationRewards.at(index).reputationId)
                     .name) !=
-            QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend()) {
+            QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend()) {
           const std::string &reputationName =
               CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                   .at(reputationRewards.at(index).reputationId)
@@ -258,7 +258,7 @@ void Quests::OnQuestItemChanged() {
             details_->AddItem(CreateLabel(
                 QObject::tr("Less reputation for %1")
                     .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                        QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                             .at(reputationName)
                             .name))));
           }
@@ -266,7 +266,7 @@ void Quests::OnQuestItemChanged() {
             details_->AddItem(CreateLabel(
                 QObject::tr("More reputation for %1")
                     .arg(QString::fromStdString(
-                        QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+                        QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                             .at(reputationName)
                             .name))));
           }

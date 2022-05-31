@@ -48,8 +48,8 @@ void FinishedQuests::RegisterEvents() {
     has_quests = true;
     const uint16_t questId = i->first;
     const CatchChallenger::PlayerQuest &value = i->second;
-    if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
-        QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
+    if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) !=
+        QtDatapackClientLoader::GetInstance()->get_questsExtra().cend()) {
       if (value.step == 0 || value.finish_one_time) {
         if (Ultimate::ultimate.isUltimate()) {
           auto row = UI::Row::Create();
@@ -65,13 +65,13 @@ void FinishedQuests::RegisterEvents() {
           }
           auto label = UI::Label::Create(row);
           label->SetText(
-              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
+              QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
                   .name);
           quests_->AddItem(row);
         } else {
           auto label = UI::Label::Create();
           label->SetText(
-              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
+              QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
                   .name);
           quests_->AddItem(label);
         }

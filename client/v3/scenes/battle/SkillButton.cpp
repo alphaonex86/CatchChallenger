@@ -61,7 +61,7 @@ void SkillButton::SetSkill(
   skill_ = skill;
 
   name_ = QString::fromStdString(
-      QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
+      QtDatapackClientLoader::GetInstance()->get_monsterSkillsExtra()
           .at(skill.skill)
           .name);
   const CatchChallenger::Skill &skill_data =
@@ -77,13 +77,13 @@ void SkillButton::SetSkill(
 
   QColor color(168, 168, 120, 255);
   if (skill_data.type != 255) {
-    if (QtDatapackClientLoader::datapackLoader->get_typeExtra().find(
+    if (QtDatapackClientLoader::GetInstance()->get_typeExtra().find(
             skill_data.type) !=
-        QtDatapackClientLoader::datapackLoader->get_typeExtra().cend()) {
-      if (!QtDatapackClientLoader::datapackLoader->get_typeExtra()
+        QtDatapackClientLoader::GetInstance()->get_typeExtra().cend()) {
+      if (!QtDatapackClientLoader::GetInstance()->get_typeExtra()
                .at(skill_data.type)
                .name.empty()) {
-        auto cc_color = QtDatapackClientLoader::datapackLoader->get_typeExtra()
+        auto cc_color = QtDatapackClientLoader::GetInstance()->get_typeExtra()
                             .at(skill_data.type)
                             .color;
         color = QColor(cc_color.r * (cc_color.r < 0 ? -1 : 1),
@@ -102,7 +102,7 @@ void SkillButton::SetRescueSkill() {
   skill_.skill = 0;
 
   name_ = QString::fromStdString(
-      QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
+      QtDatapackClientLoader::GetInstance()->get_monsterSkillsExtra()
           .at(0)
           .name);
   const CatchChallenger::Skill &skill_data =

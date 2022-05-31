@@ -172,8 +172,8 @@ void Crafting::LoadMaterials() {
   auto craft = static_cast<CraftingItem *>(selected_);
   uint16_t item_id = craft->ItemId();
 
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) ==
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(item_id) ==
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     details_->SetText(tr("Unknown description"));
     create_->SetEnabled(false);
     return;
@@ -198,21 +198,21 @@ void Crafting::LoadMaterials() {
   while (index < content.materials.size()) {
     // load the material item
     auto item = IconItem::Create();
-    if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+    if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
             content.materials.at(index).item) !=
-        QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+        QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
       nameMaterials = QString::fromStdString(
-          QtDatapackClientLoader::datapackLoader
+          QtDatapackClientLoader::GetInstance()
               ->get_itemsExtra().at(content.materials.at(index).item)
               .name);
-      item->SetIcon(QtDatapackClientLoader::datapackLoader
+      item->SetIcon(QtDatapackClientLoader::GetInstance()
                         ->getItemExtra(content.materials.at(index).item)
                         .image);
     } else {
       nameMaterials =
           tr("Unknow item (%1)").arg(content.materials.at(index).item);
       item->SetIcon(
-          QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+          QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
     }
 
     // load the quantity into the inventory
@@ -258,18 +258,18 @@ void Crafting::LoadRecipes() {
                                      .get_craftingRecipes().at(recipe)
                                      .doItemId;
         auto item = CraftingItem::Create();
-        if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+        if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
                 itemId) !=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+            QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
           item->SetIcon(
-              QtDatapackClientLoader::datapackLoader->getItemExtra(itemId)
+              QtDatapackClientLoader::GetInstance()->getItemExtra(itemId)
                   .image);
           item->SetName(QString::fromStdString(
-              QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId)
+              QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(itemId)
                   .name));
         } else {
           item->SetIcon(
-              QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+              QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
           item->SetName(tr("Unknow item: %1").arg(itemId));
         }
         item->SetRecipe(recipe);

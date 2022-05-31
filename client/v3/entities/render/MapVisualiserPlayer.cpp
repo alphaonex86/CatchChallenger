@@ -680,13 +680,13 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,
                   } else {
                     const std::string tempMap =
                         tempMapObject->logicalMap.map_file;
-                    if (QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(
-                            tempMap) != QtDatapackClientLoader::datapackLoader
+                    if (QtDatapackClientLoader::GetInstance()->get_itemOnMap().find(
+                            tempMap) != QtDatapackClientLoader::GetInstance()
                                             ->get_itemOnMap().cend()) {
                       const std::unordered_map<std::pair<uint8_t, uint8_t>,
                                                uint16_t,
                                                pairhash> &tempIndexItem =
-                          QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(
+                          QtDatapackClientLoader::GetInstance()->get_itemOnMap().at(
                               tempMap);
                       if (tempIndexItem.find(std::pair<uint8_t, uint8_t>(
                               static_cast<uint8_t>(x),
@@ -1550,12 +1550,12 @@ bool MapVisualiserPlayer::insert_player_internal(
         "!player_informations_is_set");
     return false;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     /// \bug here pass after delete a party, create a new
     emit error(
         "mapId greater than "
-        "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
+        "QtDatapackClientLoader::GetInstance()->maps.size(): " +
+        std::to_string(QtDatapackClientLoader::GetInstance()->get_maps().size()));
     return true;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -1563,7 +1563,7 @@ bool MapVisualiserPlayer::insert_player_internal(
       << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)")
              .arg(player.pseudo)
              .arg(player.simplifiedId)
-             .arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId))
+             .arg(QtDatapackClientLoader::GetInstance()->maps.value(mapId))
              .arg(x)
              .arg(y)
              .arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
@@ -1658,10 +1658,10 @@ bool MapVisualiserPlayer::insert_player_internal(
     // monster
     updatePlayerMonsterTile(player.monsterId);
 
-    current_map = QtDatapackClientLoader::datapackLoader->get_maps().at(mapId);
+    current_map = QtDatapackClientLoader::GetInstance()->get_maps().at(mapId);
     std::cout << "datapackMapPathSpec: " << datapackMapPathSpec << std::endl;
     loadPlayerMap(datapackMapPathSpec +
-                      QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),
+                      QtDatapackClientLoader::GetInstance()->get_maps().at(mapId),
                   static_cast<uint8_t>(x), static_cast<uint8_t>(y));
     setSpeed(player.speed);
   }
@@ -2123,17 +2123,17 @@ void MapVisualiserPlayer::stopMove() { inMove = false; }
 bool MapVisualiserPlayer::teleportTo(
     const uint32_t &mapId, const uint16_t &x, const uint16_t &y,
     const CatchChallenger::Direction &direction) {
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     emit error(
         "mapId greater than "
-        "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
+        "QtDatapackClientLoader::GetInstance()->maps.size(): " +
+        std::to_string(QtDatapackClientLoader::GetInstance()->get_maps().size()));
     return false;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
   qDebug()
       << QStringLiteral("teleportTo(%1,%2,%3,%4)")
-             .arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId))
+             .arg(QtDatapackClientLoader::GetInstance()->maps.value(mapId))
              .arg(x)
              .arg(y)
              .arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
@@ -2146,7 +2146,7 @@ bool MapVisualiserPlayer::teleportTo(
   current_map =
       QFileInfo(QString::fromStdString(
                     datapackMapPathSpec +
-                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                    QtDatapackClientLoader::GetInstance()->get_maps().at(mapId)))
           .absoluteFilePath()
           .toStdString();
   this->x = x;

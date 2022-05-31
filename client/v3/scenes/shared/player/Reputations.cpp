@@ -57,7 +57,7 @@ void Reputations::LoadReputations() {
               .reputation_positive.size()) {
         auto label = UI::Label::Create();
         label->SetText(QStringLiteral("100% %1").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+            QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                 .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                         .at(i->first)
                         .name)
@@ -73,7 +73,7 @@ void Reputations::LoadReputations() {
           return;
         } else {
           std::string text =
-              QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+              QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                   .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                           .at(i->first)
                           .name)
@@ -92,7 +92,7 @@ void Reputations::LoadReputations() {
               .reputation_negative.size()) {
         auto label = UI::Label::Create();
         label->SetText(QStringLiteral("100% %1").arg(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+            QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                 .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                         .at(i->first)
                         .name)
@@ -108,7 +108,7 @@ void Reputations::LoadReputations() {
           return;
         } else {
           std::string text =
-              QtDatapackClientLoader::datapackLoader->get_reputationExtra()
+              QtDatapackClientLoader::GetInstance()->get_reputationExtra()
                   .at(CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                           .at(i->first)
                           .name)

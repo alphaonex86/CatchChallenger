@@ -663,7 +663,7 @@ void MapControllerMP::reinject_signals_on_valid_map() {
             const std::string &mapPath =
                 QFileInfo(QString::fromStdString(
                               datapackMapPathSpec +
-                              QtDatapackClientLoader::datapackLoader->get_maps().at(
+                              QtDatapackClientLoader::GetInstance()->get_maps().at(
                                   delayedActions.at(index).insert.mapId)))
                     .absoluteFilePath()
                     .toStdString();

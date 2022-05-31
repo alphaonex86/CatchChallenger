@@ -150,19 +150,19 @@ Map_full *MapVisualiserThread::loadOtherMap(
       newItem.item = item.item;
       newItem.tileObject = NULL;
       newItem.indexOfItemOnMap = 0;
-      if (QtDatapackClientLoader::datapackLoader == nullptr) return nullptr;
-      if (QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(
+      if (QtDatapackClientLoader::GetInstance() == nullptr) return nullptr;
+      if (QtDatapackClientLoader::GetInstance()->get_itemOnMap().find(
               resolvedFileName) !=
-          QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend()) {
-        if (QtDatapackClientLoader::datapackLoader->get_itemOnMap()
+          QtDatapackClientLoader::GetInstance()->get_itemOnMap().cend()) {
+        if (QtDatapackClientLoader::GetInstance()->get_itemOnMap()
                 .at(resolvedFileName)
                 .find(
                     std::pair<uint8_t, uint8_t>(item.point.x, item.point.y)) !=
-            QtDatapackClientLoader::datapackLoader->get_itemOnMap()
+            QtDatapackClientLoader::GetInstance()->get_itemOnMap()
                 .at(resolvedFileName)
                 .cend())
           newItem.indexOfItemOnMap =
-              QtDatapackClientLoader::datapackLoader->get_itemOnMap()
+              QtDatapackClientLoader::GetInstance()->get_itemOnMap()
                   .at(resolvedFileName)
                   .at(std::pair<uint8_t, uint8_t>(item.point.x, item.point.y));
         else
@@ -171,7 +171,7 @@ Map_full *MapVisualiserThread::loadOtherMap(
                           .arg(item.point.y);
       } else {
         QStringList keys;
-        for (auto kv : QtDatapackClientLoader::datapackLoader->get_itemOnMap())
+        for (auto kv : QtDatapackClientLoader::GetInstance()->get_itemOnMap())
           keys.push_back(QString::fromStdString(kv.first));
         qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                         .arg(QString::fromStdString(resolvedFileName))
@@ -184,12 +184,12 @@ Map_full *MapVisualiserThread::loadOtherMap(
     }
   }
 #if defined(CATCHCHALLENGER_EXTRA_CHECK) && !defined(MAPVISUALISER)
-  if (QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(
+  if (QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().find(
           resolvedFileName) ==
-      QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend()) {
+      QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().cend()) {
     mLastError = "Map id unresolved " + resolvedFileName;
     QStringList keys;
-    for (auto kv : QtDatapackClientLoader::datapackLoader->get_fullMapPathToId())
+    for (auto kv : QtDatapackClientLoader::GetInstance()->get_fullMapPathToId())
       keys.push_back(QString::fromStdString(kv.first));
     qDebug() << "Map id unresolved " +
                     QString::fromStdString(resolvedFileName) + " into " +
@@ -199,7 +199,7 @@ Map_full *MapVisualiserThread::loadOtherMap(
     return NULL;
   }
   tempMapObject->logicalMap.id =
-      QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(
+      QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().at(
           resolvedFileName);
 #else
   tempMapObject->logicalMap.id = 1;

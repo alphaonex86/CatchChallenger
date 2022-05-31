@@ -24,7 +24,7 @@ void PlayerPortrait::SetInformation(
     const CatchChallenger::Player_private_and_public_informations
         &informations) {
   image_ = QString::fromStdString(
-      QtDatapackClientLoader::datapackLoader->getFrontSkinPath(
+      QtDatapackClientLoader::GetInstance()->getFrontSkinPath(
           informations.public_informations.skinId));
   name_ = QString::fromStdString(informations.public_informations.pseudo);
   std::cout << "info.public_informations.pseudo: "

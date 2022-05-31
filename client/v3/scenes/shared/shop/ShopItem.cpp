@@ -27,9 +27,9 @@ ShopItem *ShopItem::Create(uint16_t object_id, uint32_t quantity,
 }
 
 void ShopItem::DrawContent(QPainter *painter) {
-  auto item = QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(object_id_);
+  auto item = QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(object_id_);
   QPixmap p =
-      QtDatapackClientLoader::datapackLoader->getItemExtra(object_id_).image;
+      QtDatapackClientLoader::GetInstance()->getItemExtra(object_id_).image;
   p = p.scaledToHeight(32);
 
   name_ = item.name;

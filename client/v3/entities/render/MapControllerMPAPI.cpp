@@ -68,12 +68,12 @@ bool MapControllerMP::insert_player_final(
 #endif
     return false;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     /// \bug here pass after delete a party, create a new
     emit error(
         "mapId greater than "
-        "QtDatapackClientLoader::datapackLoader->maps.size(): " +
-        std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
+        "QtDatapackClientLoader::GetInstance()->maps.size(): " +
+        std::to_string(QtDatapackClientLoader::GetInstance()->get_maps().size()));
     return true;
   }
 #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
@@ -81,7 +81,7 @@ bool MapControllerMP::insert_player_final(
       << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)")
              .arg(player.pseudo)
              .arg(player.simplifiedId)
-             .arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId))
+             .arg(QtDatapackClientLoader::GetInstance()->maps.value(mapId))
              .arg(x)
              .arg(y)
              .arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
@@ -137,7 +137,7 @@ bool MapControllerMP::insert_player_final(
     const std::string &mapPath =
         QFileInfo(QString::fromStdString(
                       datapackMapPathSpec +
-                      QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                      QtDatapackClientLoader::GetInstance()->get_maps().at(mapId)))
             .absoluteFilePath()
             .toStdString();
     if (all_map.find(mapPath) == all_map.cend()) {
@@ -795,7 +795,7 @@ bool MapControllerMP::reinsert_player_final(
 #endif
 
   /// \warning search by loop because otherPlayerList.value(id).current_map is
-  /// the full path, QtDatapackClientLoader::datapackLoader->maps relative path
+  /// the full path, QtDatapackClientLoader::GetInstance()->maps relative path
   std::string tempCurrentMap = otherPlayerList.at(id).current_map;
   // if not found, search into sub
   if (all_map.find(tempCurrentMap) == all_map.cend() &&
@@ -818,7 +818,7 @@ bool MapControllerMP::reinsert_player_final(
              << QString::fromStdString(otherPlayerList.at(id).current_map)
              << ") index is wrong ("
              << QString::fromStdString(stringimplode(
-                    QtDatapackClientLoader::datapackLoader->get_maps(), ";"))
+                    QtDatapackClientLoader::GetInstance()->get_maps(), ";"))
              << ")";
     if (!inReplayMode) {
       DelayedReinsertSingle tempItem;

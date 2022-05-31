@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
   std::cerr.rdbuf(new androidbuferror);
 #endif
   // work around for android
-  QtDatapackClientLoader::datapackLoader = nullptr;
+  // QtDatapackClientLoader::datapackLoader = nullptr;
 #ifndef CATCHCHALLENGER_NOAUDIO
   AudioPlayer::GetInstance();
 #endif
@@ -226,12 +226,14 @@ s.setMinimumSize(QSize(screen->availableSize().width(),
   s->showMaximized();
 #endif
 #endif
-  QtDatapackClientLoader::datapackLoader = nullptr;
   const auto returnCode = a.exec();
+  /*
+  QtDatapackClientLoader::datapackLoader = nullptr;
   if (QtDatapackClientLoader::datapackLoader != nullptr) {
     delete QtDatapackClientLoader::datapackLoader;
     QtDatapackClientLoader::datapackLoader = nullptr;
   }
+  */
 #if !defined(QT_NO_EMIT) && !defined(EPOLLCATCHCHALLENGERSERVER) && \
     !defined(NOTHREADS)
   CatchChallenger::QtDatapackChecksum::thread.quit();

@@ -60,7 +60,7 @@ void Player::RegisterEvents() {
           connexionManager->client->get_player_informations_ro();
 
   preview_->SetPixmap(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->getFrontSkinPath(
+        QtDatapackClientLoader::GetInstance()->getFrontSkinPath(
 
           playerInformations.public_informations.skinId)), false);
   name_value->SetText(playerInformations.public_informations.pseudo);

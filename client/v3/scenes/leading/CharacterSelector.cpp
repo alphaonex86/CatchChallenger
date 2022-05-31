@@ -147,7 +147,7 @@ void CharacterSelector::newGame_finished() {
   characterEntry.character_id = 0;
   characterEntry.delete_time_left = 0;
   characterEntry.last_connect = QDateTime::currentMSecsSinceEpoch() / 1000;
-  // characterEntry.mapId=QtDatapackClientLoader::datapackLoader->mapToId.value(profile.map);
+  // characterEntry.mapId=QtDatapackClientLoader::GetInstance()->mapToId.value(profile.map);
   characterEntry.played_time = 0;
   characterEntry.pseudo = newGame->pseudo();
   characterEntry.charactersGroupIndex = newGame->monsterGroupId();
@@ -355,12 +355,12 @@ void CharacterSelector::updateCharacterList(bool prevent_auto_select) {
                            .toStdString();
       item->SetSubTitle(QString::fromStdString(text));
       if (characterEntry.skinId <
-          QtDatapackClientLoader::datapackLoader->get_skins().size())
+          QtDatapackClientLoader::GetInstance()->get_skins().size())
         item->SetIcon(
             QString::fromStdString(connection_->client->datapackPathBase()) +
             DATAPACK_BASE_PATH_SKIN +
             QString::fromStdString(
-                QtDatapackClientLoader::datapackLoader->get_skins().at(
+                QtDatapackClientLoader::GetInstance()->get_skins().at(
                     characterEntry.skinId)) +
             "/front.png");
       else

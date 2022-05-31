@@ -6,14 +6,14 @@
 #include "MapController.hpp"
 
 std::string MapController::mapIdToString(const uint32_t &mapId) const {
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
-                "QtDatapackClientLoader::datapackLoader->maps.size()";
+                "QtDatapackClientLoader::GetInstance()->maps.size()";
     return std::string();
   }
   return QFileInfo(QString::fromStdString(
                        datapackMapPathSpec +
-                       QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                       QtDatapackClientLoader::GetInstance()->get_maps().at(mapId)))
       .absoluteFilePath()
       .toStdString();
 }
@@ -32,15 +32,15 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x,
     delayedPlantInsert.push_back(tempItem);
     return;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     qDebug() << "MapController::insert_plant() mapId greater than "
-                "QtDatapackClientLoader::datapackLoader->maps.size()";
+                "QtDatapackClientLoader::GetInstance()->maps.size()";
     return;
   }
   const std::string &map =
       QFileInfo(QString::fromStdString(
                     datapackMapPathSpec +
-                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                    QtDatapackClientLoader::GetInstance()->get_maps().at(mapId)))
           .absoluteFilePath()
           .toStdString();
   if (!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap)) {
@@ -125,7 +125,7 @@ bool MapController::updatePlantGrowing(
   Tiled::Cell cell = plant->mapObject->cell();
   if (plant->mature_at <= currentTime) {
     cell.tile =
-        QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id)
+        QtDatapackClientLoader::GetInstance()->getPlantExtra(plant->plant_id)
             .tileset->tileAt(4);
     plant->mapObject->setCell(cell);
     return false;
@@ -149,22 +149,22 @@ bool MapController::updatePlantGrowing(
   if (seconds_to_mature < floweringDiff) {
     plant->start(seconds_to_mature * 1000);
     cell.tile =
-        QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id)
+        QtDatapackClientLoader::GetInstance()->getPlantExtra(plant->plant_id)
             .tileset->tileAt(3);
   } else if (seconds_to_mature < tallerDiff) {
     plant->start((seconds_to_mature - floweringDiff) * 1000);
     cell.tile =
-        QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id)
+        QtDatapackClientLoader::GetInstance()->getPlantExtra(plant->plant_id)
             .tileset->tileAt(2);
   } else if (seconds_to_mature < sproutedDiff) {
     plant->start((seconds_to_mature - tallerDiff) * 1000);
     cell.tile =
-        QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id)
+        QtDatapackClientLoader::GetInstance()->getPlantExtra(plant->plant_id)
             .tileset->tileAt(1);
   } else {
     plant->start((seconds_to_mature - sproutedDiff) * 1000);
     cell.tile =
-        QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id)
+        QtDatapackClientLoader::GetInstance()->getPlantExtra(plant->plant_id)
             .tileset->tileAt(0);
   }
   plant->mapObject->setCell(cell);
@@ -188,15 +188,15 @@ void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x,
                 "insert";
     return;
   }
-  if (mapId >= (uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size()) {
+  if (mapId >= (uint32_t)QtDatapackClientLoader::GetInstance()->get_maps().size()) {
     qDebug() << "MapController::remove_plant() mapId greater than "
-                "QtDatapackClientLoader::datapackLoader->maps.size()";
+                "QtDatapackClientLoader::GetInstance()->maps.size()";
     return;
   }
   remove_plant_full(
       QFileInfo(QString::fromStdString(
                     datapackMapPathSpec +
-                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                    QtDatapackClientLoader::GetInstance()->get_maps().at(mapId)))
           .absoluteFilePath()
           .toStdString(),
       x, y);
@@ -206,7 +206,7 @@ void MapController::remove_plant_full(const std::string &map, const uint8_t &x,
                                       const uint8_t &y) {
 #ifdef DEBUG_CLIENT_PLANTS
   qDebug() << std::stringLiteral("remove_plant(%1,%2,%3)")
-                  .arg(QtDatapackClientLoader::datapackLoader->maps[mapId])
+                  .arg(QtDatapackClientLoader::GetInstance()->maps[mapId])
                   .arg(x)
                   .arg(y);
 #endif

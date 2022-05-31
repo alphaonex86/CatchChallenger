@@ -127,14 +127,14 @@ void Utils::MoveFile(const QString &origin, const QString &folder,
 std::vector<QPixmap> Utils::GetSkillAnimation(const uint16_t &id) {
   QString file_animation =
       QString::fromStdString(
-          QtDatapackClientLoader::datapackLoader->getDatapackPath()) +
+          QtDatapackClientLoader::GetInstance()->getDatapackPath()) +
       DATAPACK_BASE_PATH_SKILLANIMATION + QStringLiteral("%1.gif").arg(id);
 
   std::vector<QPixmap> frames;
   if (!QFile(file_animation).exists()) {
     file_animation =
         QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->getDatapackPath()) +
+            QtDatapackClientLoader::GetInstance()->getDatapackPath()) +
         DATAPACK_BASE_PATH_SKILLANIMATION + QStringLiteral("0.gif");
   }
   QGifImage gif(file_animation);

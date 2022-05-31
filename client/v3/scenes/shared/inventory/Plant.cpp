@@ -67,8 +67,8 @@ void Plant::updatePlant() {
   auto i = playerInformations.items.begin();
   while (i != playerInformations.items.cend()) {
     const uint16_t id = i->first;
-    if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(id) !=
-        QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend()) {
+    if (QtDatapackClientLoader::GetInstance()->get_itemToPlants().find(id) !=
+        QtDatapackClientLoader::GetInstance()->get_itemToPlants().cend()) {
       auto item = PlantItem::Create(id, i->second);
       item->SetData(99, id);
       item->SetOnClick(
@@ -86,8 +86,8 @@ void Plant::inventoryUse_slot() {
 }
 
 void Plant::OnSelectItem(Node *selected) {
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(selected->Data(
-          99)) == QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(selected->Data(
+          99)) == QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     return;
   }
   lastItemSelected = selected->Data(99);
@@ -128,18 +128,18 @@ void Plant::Draw(QPainter *painter) {
   int y_offset = 10;
 
   const DatapackClientLoader::ItemExtra &itemExtra =
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id);
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(item_id);
   const uint8_t plant_id =
-      QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(item_id);
+      QtDatapackClientLoader::GetInstance()->get_itemToPlants().at(item_id);
   const CatchChallenger::Plant &plant =
       CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant_id);
   const QtDatapackClientLoader::QtPlantExtra &contentExtra =
-      QtDatapackClientLoader::datapackLoader->getPlantExtra(plant_id);
+      QtDatapackClientLoader::GetInstance()->getPlantExtra(plant_id);
 
   const int icon_size = 64;
 
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) !=
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(item_id) !=
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     text->SetPixelSize(14);
     text->SetPos(x_offset, y_offset);
     text->SetWidth(Width() - x_offset);
@@ -214,7 +214,7 @@ void Plant::Draw(QPainter *painter) {
     }
   } else {
     icon->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
     icon->SetPos(x_offset + 10, 10);
     icon->Render(painter);
 

@@ -19,14 +19,14 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const {
       &playerInformations =
           connexionManager->client->get_player_informations_ro();
   // do the not started quest here
-  if (QtDatapackClientLoader::datapackLoader->get_botToQuestStart().find(botId) ==
-      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_botToQuestStart().find(botId) ==
+      QtDatapackClientLoader::GetInstance()->get_botToQuestStart().cend()) {
     std::cerr << "OverMapLogic::botHaveQuest(), botId not found: "
               << std::to_string(botId) << std::endl;
     return false;
   }
   const std::vector<uint8_t> &botQuests =
-      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
+      QtDatapackClientLoader::GetInstance()->get_botToQuestStart().at(botId);
   unsigned int index = 0;
   while (index < botQuests.size()) {
     const uint16_t &questId = botQuests.at(index);
@@ -210,7 +210,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step) {
     if (step == 1) {
       if (quests.size() == 1) {
         const std::pair<uint16_t, std::string> &quest = quests.at(0);
-        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().at(quest.first)
+        if (QtDatapackClientLoader::GetInstance()->get_questsExtra().at(quest.first)
                 .autostep) {
           IG_dialog_text_linkActivated("quest_" + std::to_string(quest.first));
           return;
@@ -426,7 +426,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId,
     if (!silent)
       showTip(tr("You have finish the quest <b>%1</b>")
                   .arg(QString::fromStdString(
-                      QtDatapackClientLoader::datapackLoader->get_questsExtra()
+                      QtDatapackClientLoader::GetInstance()->get_questsExtra()
                           .at(questId)
                           .name))
                   .toStdString());
@@ -448,14 +448,14 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId,
 }
 
 void OverMapLogic::showQuestText(const uint32_t &textId) {
-  if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) ==
-      QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) ==
+      QtDatapackClientLoader::GetInstance()->get_questsExtra().cend()) {
     qDebug() << QStringLiteral("No quest text for this quest: %1").arg(questId);
     showTip(tr("No quest text for this quest").toStdString());
     return;
   }
   const QtDatapackClientLoader::QuestExtra &questExtra =
-      QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId);
+      QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId);
   if (questExtra.text.find(textId) == questExtra.text.cend()) {
     qDebug() << "No quest text entry point";
     showTip(tr("No quest text entry point").toStdString());
@@ -635,9 +635,9 @@ void OverMapLogic::IG_dialog_text_linkActivated(const std::string &rawlink) {
       }
       isInQuest = true;
       this->questId = questId;
-      if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
-          QtDatapackClientLoader::datapackLoader->get_questsExtra().cend()) {
-        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
+      if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) !=
+          QtDatapackClientLoader::GetInstance()->get_questsExtra().cend()) {
+        if (QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
                 .autostep) {
           int index = 0;
           bool ok;
@@ -733,7 +733,7 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
   std::pair<uint16_t, std::string> oneEntry;
   // do the not started quest here
   std::vector<uint8_t> botQuests =
-      QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
+      QtDatapackClientLoader::GetInstance()->get_botToQuestStart().at(botId);
   unsigned int index = 0;
   while (index < botQuests.size()) {
     const uint16_t &questId = botQuests.at(index);
@@ -749,10 +749,10 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
       // quest not started
       if (haveStartQuestRequirement(currentQuest)) {
         oneEntry.first = questId;
-        if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId) !=
-            QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+        if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) !=
+            QtDatapackClientLoader::GetInstance()->get_questsExtra().cend())
           oneEntry.second =
-              QtDatapackClientLoader::datapackLoader->get_questsExtra().at(questId)
+              QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
                   .name;
         else {
           qDebug() << "internal bug: quest extra not found";
@@ -776,11 +776,11 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
               // quest already done but repeatable
               if (haveStartQuestRequirement(currentQuest)) {
                 oneEntry.first = questId;
-                if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(
+                if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(
                         questId) !=
-                    QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+                    QtDatapackClientLoader::GetInstance()->get_questsExtra().cend())
                   oneEntry.second =
-                      QtDatapackClientLoader::datapackLoader->get_questsExtra()
+                      QtDatapackClientLoader::GetInstance()->get_questsExtra()
                           .at(questId)
                           .name;
                 else {
@@ -800,13 +800,13 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
                           .bots;
           if (vectorcontainsAtLeastOne(bots, botId)) {
             oneEntry.first = questId;
-            if (QtDatapackClientLoader::datapackLoader->get_questsExtra().find(
+            if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(
                     questId) !=
-                QtDatapackClientLoader::datapackLoader->get_questsExtra().cend())
+                QtDatapackClientLoader::GetInstance()->get_questsExtra().cend())
               oneEntry.second =
                   tr("%1 (in progress)")
                       .arg(QString::fromStdString(
-                          QtDatapackClientLoader::datapackLoader->get_questsExtra()
+                          QtDatapackClientLoader::GetInstance()->get_questsExtra()
                               .at(questId)
                               .name))
                       .toStdString();
@@ -837,7 +837,7 @@ std::vector<std::pair<uint16_t, std::string> > OverMapLogic::getQuestList(
         oneEntry.second =
             tr("%1 (in progress)")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->get_questsExtra()
+                    QtDatapackClientLoader::GetInstance()->get_questsExtra()
                         .at(i->first)
                         .name))
                 .toStdString();
@@ -933,12 +933,12 @@ void OverMapLogic::updateDisplayedQuests() {
      i=playerInformations.quests.begin();
       while(i!=playerInformations.quests.cend())
       {
-          if(QtDatapackClientLoader::datapackLoader->questsExtra.find(i->first)!=QtDatapackClientLoader::datapackLoader->questsExtra.cend())
+          if(QtDatapackClientLoader::GetInstance()->questsExtra.find(i->first)!=QtDatapackClientLoader::GetInstance()->questsExtra.cend())
           {
               if(i->second.step>0)
               {
                   QListWidgetItem * item=new
-     QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::datapackLoader->questsExtra.at(i->first).name));
+     QListWidgetItem(QString::fromStdString(QtDatapackClientLoader::GetInstance()->questsExtra.at(i->first).name));
                   quests_to_id_graphical[item]=i->first;
                   ui->questsList->addItem(item);
               }
@@ -951,10 +951,10 @@ void OverMapLogic::updateDisplayedQuests() {
                           html+=imagesInterfaceRepeatableString;
                       if(i->second.step>0)
                           html+=imagesInterfaceInProgressString;
-                      html+=QtDatapackClientLoader::datapackLoader->questsExtra.at(i->first).name+"</li>";
+                      html+=QtDatapackClientLoader::GetInstance()->questsExtra.at(i->first).name+"</li>";
                   }
                   else
-                      html+="<li>"+QtDatapackClientLoader::datapackLoader->questsExtra.at(i->first).name+"</li>";
+                      html+="<li>"+QtDatapackClientLoader::GetInstance()->questsExtra.at(i->first).name+"</li>";
               }
           }
           ++i;

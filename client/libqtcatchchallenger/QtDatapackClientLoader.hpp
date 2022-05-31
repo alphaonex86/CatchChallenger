@@ -34,7 +34,6 @@ class DLL_PUBLIC QtDatapackClientLoader
     Q_OBJECT
 public:
     friend class QtDatapackClientLoaderThread;
-    static QtDatapackClientLoader *datapackLoader;//pointer to control the init
     static QtDatapackClientLoader* GetInstance();
     explicit QtDatapackClientLoader();
     ~QtDatapackClientLoader();
@@ -102,6 +101,7 @@ signals:
 private:
     QPixmap *mDefaultInventoryImage;
     std::string getLanguage() override;
+    static QtDatapackClientLoader *datapackLoader;//pointer to control the init
 
     std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
     std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;

@@ -84,8 +84,8 @@ void Inventory::UpdateInventory(uint8_t targetSize, bool force) {
         case ObjectFilter_Seed:
           // reputation requierement control is into load_plant_inventory() NOT:
           // on_listPlantList_itemSelectionChanged()
-          if (QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(id) !=
-              QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
+          if (QtDatapackClientLoader::GetInstance()->get_itemToPlants().find(id) !=
+              QtDatapackClientLoader::GetInstance()->get_itemToPlants().cend())
             show = true;
           break;
         case ObjectFilter_UseInFight:
@@ -109,12 +109,12 @@ void Inventory::UpdateInventory(uint8_t targetSize, bool force) {
     }
     if (show) {
       const DatapackClientLoader::ItemExtra &itemExtra =
-          QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(id);
+          QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(id);
       auto item = InventoryItem::Create();
-      if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(id) !=
-          QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+      if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(id) !=
+          QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
         QPixmap p =
-            QtDatapackClientLoader::datapackLoader->getItemExtra(id).image;
+            QtDatapackClientLoader::GetInstance()->getItemExtra(id).image;
         p = p.scaledToHeight(targetSize);
         item->SetPixmap(p);
         if (i->second > 1) item->SetText(QString::number(i->second) + " ");
@@ -122,7 +122,7 @@ void Inventory::UpdateInventory(uint8_t targetSize, bool force) {
         item->SetToolTip(QString::fromStdString(itemExtra.name));
       } else {
         item->SetPixmap(
-            QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+            QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
         if (i->second > 1)
           item->SetText(QStringLiteral("id: %1 (x%2)").arg(id).arg(i->second));
         else
@@ -163,9 +163,9 @@ void Inventory::inventoryDestroy_slot() {
 }
 
 void Inventory::on_inventory_itemSelectionChanged() {
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
           lastItemSelected) ==
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     inventory_description->SetVisible(false);
     inventoryUse->SetEnabled(false);
     inventoryDestroy->SetEnabled(!inSelection);
@@ -173,7 +173,7 @@ void Inventory::on_inventory_itemSelectionChanged() {
     return;
   }
   const QtDatapackClientLoader::ItemExtra &content =
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(lastItemSelected);
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(lastItemSelected);
   inventoryDestroy->SetEnabled(!inSelection);
   inventory_description->SetVisible(true);
   inventory_description->SetText(QString::fromStdString(content.description));

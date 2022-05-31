@@ -41,11 +41,11 @@ void IndustryItem::DrawContent(QPainter *painter) {
     text_ = QStringLiteral("%1$").arg(price_);
   }
   const uint16_t &itemId = object_id_;
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(itemId) !=
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
-    icon_ = QtDatapackClientLoader::datapackLoader->getItemExtra(itemId).image;
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(itemId) !=
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
+    icon_ = QtDatapackClientLoader::GetInstance()->getItemExtra(itemId).image;
   } else {
-    icon_ = QtDatapackClientLoader::datapackLoader->defaultInventoryImage();
+    icon_ = QtDatapackClientLoader::GetInstance()->defaultInventoryImage();
   }
   std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
             << quantity_ << std::endl;

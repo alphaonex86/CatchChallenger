@@ -75,13 +75,13 @@ std::string FacilityLibClient::reputationRequirementsToText(const CatchChallenge
         return QObject::tr("Unknown reputation id: %1").arg(reputationRequirements.reputationId).toStdString();
     }
     const CatchChallenger::Reputation &reputation=CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRequirements.reputationId);
-    if(QtDatapackClientLoader::datapackLoader->get_reputationExtra().find(reputation.name)==
-            QtDatapackClientLoader::datapackLoader->get_reputationExtra().cend())
+    if(QtDatapackClientLoader::GetInstance()->get_reputationExtra().find(reputation.name)==
+            QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend())
     {
-        std::cerr << "!QtDatapackClientLoader::datapackLoader->reputationExtra.contains("+reputation.name+")" << std::endl;
+        std::cerr << "!QtDatapackClientLoader::GetInstance()->reputationExtra.contains("+reputation.name+")" << std::endl;
         return QObject::tr("Unknown reputation name: %1").arg(QString::fromStdString(reputation.name)).toStdString();
     }
-    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::datapackLoader->get_reputationExtra().at(reputation.name);
+    const QtDatapackClientLoader::ReputationExtra &reputationExtra=QtDatapackClientLoader::GetInstance()->get_reputationExtra().at(reputation.name);
     if(reputationRequirements.positif)
     {
         if(reputationRequirements.level>=reputationExtra.reputation_positive.size())

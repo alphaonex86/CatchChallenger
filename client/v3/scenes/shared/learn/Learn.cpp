@@ -157,7 +157,7 @@ void Learn::LoadLearnSkills(uint monster_pos) {
   CatchChallenger::PlayerMonster monster =
       PlayerInfo::GetInstance()->GetInformationRO().playerMonster.at(index);
   portrait_->SetPixmap(
-      QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster)
+      QtDatapackClientLoader::GetInstance()->getMonsterExtra(monster.monster)
           .front.scaled(160, 160));
 
   current_monster_ = monster;
@@ -170,7 +170,7 @@ void Learn::LoadLearnSkills(uint monster_pos) {
 #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
   info_->SetText(QObject::tr("<b>%1</b><br />Level %2")
                      .arg(QString::fromStdString(
-                         QtDatapackClientLoader::datapackLoader->monsterExtra
+                         QtDatapackClientLoader::GetInstance()->monsterExtra
                              .at(monster.monster)
                              .name))
                      .arg(monster.level));
@@ -218,7 +218,7 @@ void Learn::LoadLearnSkills(uint monster_pos) {
         item->SetText(
             QObject::tr("%1\nSP cost: %2")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
+                    QtDatapackClientLoader::GetInstance()->get_monsterSkillsExtra()
                         .at(i.key())
                         .name))
                 .arg(CatchChallenger::CommonDatapack::commonDatapack
@@ -229,7 +229,7 @@ void Learn::LoadLearnSkills(uint monster_pos) {
         item->SetText(
             QObject::tr("%1 level %2\nSP cost: %3")
                 .arg(QString::fromStdString(
-                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
+                    QtDatapackClientLoader::GetInstance()->get_monsterSkillsExtra()
                         .at(i.key())
                         .name))
                 .arg(level)
@@ -240,13 +240,13 @@ void Learn::LoadLearnSkills(uint monster_pos) {
     } else {
       if (level <= 1) {
         item->SetText(QString::fromStdString(
-            QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra()
+            QtDatapackClientLoader::GetInstance()->get_monsterSkillsExtra()
                 .at(i.key())
                 .name));
       } else {
         item->SetText(QObject::tr("%1 level %2")
                           .arg(QString::fromStdString(
-                                   QtDatapackClientLoader::datapackLoader
+                                   QtDatapackClientLoader::GetInstance()
                                        ->get_monsterSkillsExtra().at(i.key())
                                        .name)
                                    .arg(level)));

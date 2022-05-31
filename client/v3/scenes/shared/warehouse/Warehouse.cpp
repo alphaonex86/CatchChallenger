@@ -399,16 +399,16 @@ WarehouseItem *Warehouse::ItemToItem(const uint16_t &item_id,
   item->SetData(99, item_id);
   item->SetData(98, quantity);
   item->SetOnClick(std::bind(&Warehouse::OnItemClick, this, _1));
-  if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(item_id) !=
-      QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend()) {
+  if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(item_id) !=
+      QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
     item->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->getItemExtra(item_id).image);
+        QtDatapackClientLoader::GetInstance()->getItemExtra(item_id).image);
     if (quantity > 1) item->SetText(QString::number(quantity));
     item->setToolTip(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id).name));
+        QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(item_id).name));
   } else {
     item->SetPixmap(
-        QtDatapackClientLoader::datapackLoader->defaultInventoryImage());
+        QtDatapackClientLoader::GetInstance()->defaultInventoryImage());
     if (quantity > 1)
       item->SetText(QStringLiteral("id: %1 (x%2)").arg(item_id).arg(quantity));
     else
@@ -424,9 +424,9 @@ WarehouseItem *Warehouse::ItemToMonster(const uint32_t &monster_id,
   item->SetData(99, monster_id);
   item->SetOnClick(std::bind(&Warehouse::OnItemClick, this, _1));
   item->SetPixmap(
-      QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster).front);
+      QtDatapackClientLoader::GetInstance()->getMonsterExtra(monster).front);
   item->setToolTip(QString::fromStdString(
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster).name));
+      QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(monster).name));
   return item;
 }
 

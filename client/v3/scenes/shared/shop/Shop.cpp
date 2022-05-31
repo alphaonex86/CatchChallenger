@@ -89,7 +89,7 @@ void Shop::SetSeller(const CatchChallenger::Bot &bot, uint16_t shop_id) {
   content_->Clear();
   if (bot.properties.find("skin") != bot.properties.cend()) {
     QPixmap skin(QString::fromStdString(
-        QtDatapackClientLoader::datapackLoader->getSkinPath(
+        QtDatapackClientLoader::GetInstance()->getSkinPath(
             bot.properties.at("skin"), "front")));
     if (!skin.isNull()) {
       portrait_->SetPixmap(skin.scaled(160, 160));
@@ -136,8 +136,8 @@ void Shop::SetMeAsSeller(uint16_t shop_id) {
       connexionManager->client->get_player_informations_ro();
   auto i = player_info.items.begin();
   while (i != player_info.items.cend()) {
-    if (QtDatapackClientLoader::datapackLoader->get_itemsExtra().find(i->first) !=
-            QtDatapackClientLoader::datapackLoader->get_itemsExtra().cend() &&
+    if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(i->first) !=
+            QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend() &&
         CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(i->first)
                 .price > 0) {
       int price = CatchChallenger::CommonDatapack::commonDatapack.get_items().item

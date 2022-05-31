@@ -89,7 +89,7 @@ Multi::Multi() : reply(nullptr) {
   displayServerList();
   addServer = nullptr;
   subserver_ = nullptr;
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::datapackLoader << std::endl;
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::GetInstance() << std::endl;
 }
 
 Multi::~Multi() {

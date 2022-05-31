@@ -23,8 +23,8 @@ CraftingItem *CraftingItem::Create() {
 }
 
 void CraftingItem::DrawContent(QPainter *painter) {
-  auto item = QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item_id_);
-  icon_ = QtDatapackClientLoader::datapackLoader->getItemExtra(item_id_).image;
+  auto item = QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(item_id_);
+  icon_ = QtDatapackClientLoader::GetInstance()->getItemExtra(item_id_).image;
   icon_ = icon_.scaledToHeight(32);
 
   text_ = QString::fromStdString(item.name);

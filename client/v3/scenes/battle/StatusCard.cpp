@@ -76,7 +76,7 @@ void StatusCard::SetMonster(CatchChallenger::PlayerMonster* monster) {
   is_enemy_ = false;
 
   auto monster_extra =
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
+      QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(
           monster_id_);
   auto monster_info =
       CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
@@ -111,7 +111,7 @@ void StatusCard::SetMonster(CatchChallenger::PublicPlayerMonster* monster) {
   is_enemy_ = true;
 
   auto monster_extra =
-      QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(
+      QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(
           monster_id_);
   auto stat = ConnectionManager::GetInstance()->client->getStat(
       CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
