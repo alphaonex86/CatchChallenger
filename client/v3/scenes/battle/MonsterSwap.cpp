@@ -21,10 +21,9 @@ MonsterSwap::MonsterSwap() {
 
   monster_list_ = UI::Column::Create(this);
   monster_list_->SetItemSpacing(10);
-  title_ = UI::PlainLabel::Create(Qt::green, this);
+  title_ = UI::PlainLabel::Create(Qt::white, this);
   title_->SetText(QString::fromStdString("Can Battle"));
   title_->SetWidth(400);
-  title_->TestMode();
 
   connection_manager_ = ConnectionManager::GetInstance();
   client_ = connection_manager_->client;
@@ -91,7 +90,7 @@ void MonsterSwap::OnScreenHDR() {}
 void MonsterSwap::OnScreenResize() {
   backdrop_->SetSize(bounding_rect_.width(), bounding_rect_.height());
   monster_list_->SetPos(20, 50);
-  title_->SetPos(600, 10);
+  title_->SetPos(bounding_rect_.width() / 2, 30 - title_->Height()/2);
 }
 
 void MonsterSwap::BackgroundCanvas(QPainter *painter) {
@@ -105,7 +104,7 @@ void MonsterSwap::BackgroundCanvas(QPainter *painter) {
   painter->setBrush(QColor(165, 21, 45));
   painter->drawRect(0, 0, bounding_rect_.width(), 60);
   painter->setBrush(QColor(220, 220, 220));
-  painter->drawRect(0, 40, bounding_rect_.width(), 60);
+  painter->drawRect(0, 60, bounding_rect_.width(), 60);
 
   qreal padding = bounding_rect_.width() / 3;
   auto rect = QRectF(0, 0, bounding_rect_.width(), bounding_rect_.height());

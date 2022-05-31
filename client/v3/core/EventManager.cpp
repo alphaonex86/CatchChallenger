@@ -11,7 +11,7 @@
 #include "VirtualInput.hpp"
 #include "uthash.h"
 
-typedef struct HashElement {
+typedef struct HashElementEvent {
   Node *target;
   int z;
   int8_t paused;

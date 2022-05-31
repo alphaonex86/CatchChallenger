@@ -7,7 +7,7 @@
 Options* Options::instance_ = nullptr;
 
 Options::Options() {
-  fps = 25;
+  fps = 30;
   limitedFPS = true;
   zoom = 0;
   audioVolume = 100;
@@ -31,7 +31,7 @@ void Options::loadVar() {
 */
   if (Settings::settings->contains("fps")) {
     fps = static_cast<uint8_t>(Settings::settings->value("fps").toUInt(&ok));
-    if (!ok) fps = 150;
+    if (!ok) fps = 30;
   } else
     fps = 150;
   if (Settings::settings->contains("limitedFPS"))

@@ -8,7 +8,7 @@
 #include <vector>
 
 class Node;
-class HashElement;
+class HashElementEvent;
 class HashScene;
 
 class EventManager {
@@ -33,11 +33,11 @@ class EventManager {
  private:
   EventManager();
 
-  HashElement *DeleteHashElement(HashElement *item, HashElement *element);
+  HashElementEvent *DeleteHashElement(HashElementEvent *item, HashElementEvent *element);
   HashScene *DeleteHashScene(HashScene *item, HashScene *element);
   HashScene *RemoveListener(HashScene *scene, Node *listener);
   HashScene *AddListener(HashScene *scene, Node *listener, bool paused);
-  struct HashElement *current_target_;
+  struct HashElementEvent *current_target_;
   bool current_target_salvaged_;
 
  protected:
