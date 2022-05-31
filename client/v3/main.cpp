@@ -218,8 +218,13 @@ s.setMinimumSize(QSize(screen->availableSize().width(),
   s->setMinimumSize(QSize(640, 480));
   s->showFullScreen();
 #else
+#ifdef Q_OS_WASM
+  s->setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
+  s->showFullScreen();
+#else
   // s->show();
   s->showMaximized();
+#endif
 #endif
   QtDatapackClientLoader::datapackLoader = nullptr;
   const auto returnCode = a.exec();

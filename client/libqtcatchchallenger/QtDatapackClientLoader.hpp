@@ -35,6 +35,7 @@ class DLL_PUBLIC QtDatapackClientLoader
 public:
     friend class QtDatapackClientLoaderThread;
     static QtDatapackClientLoader *datapackLoader;//pointer to control the init
+    static QtDatapackClientLoader* GetInstance();
     explicit QtDatapackClientLoader();
     ~QtDatapackClientLoader();
     struct ImageItemExtra

@@ -10,12 +10,14 @@
 #include "../../core/StackedScene.hpp"
 #include "Loading.hpp"
 #include "SubServerItem.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
 using Scenes::SubServer;
 using std::placeholders::_1;
 
 SubServer::SubServer() {
   connection_ = ConnectionManager::GetInstance();
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::datapackLoader << std::endl;
   connection_->SetOnLogged(std::bind(&SubServer::OnLogged, this, _1));
   auto loader = Loading::GetInstance();
   loader->Reset();

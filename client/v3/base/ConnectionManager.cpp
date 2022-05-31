@@ -208,6 +208,8 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
       static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() / 1000);
   this->client = static_cast<CatchChallenger::Api_protocol_Qt *>(client);
   connectTheExternalSocket(connexionInfo, client);
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::datapackLoader << std::endl;
 
   // connect the datapack loader
   if (!connect(QtDatapackClientLoader::datapackLoader,
@@ -223,6 +225,7 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
                &ConnectionManager::datapackChecksumError, Qt::QueuedConnection))
     abort();
 
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
 #ifndef NOTCPSOCKET
   if (realSslSocket != nullptr) {
     if (!connect(
@@ -245,6 +248,7 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
   }
 #endif
 #ifndef NOWEBSOCKET
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
   if (realWebSocket != nullptr) {
     if (!connect(realWebSocket, &QWebSocket::stateChanged, this,
                  &ConnectionManager::stateChanged, Qt::DirectConnection))

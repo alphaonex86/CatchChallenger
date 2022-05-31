@@ -172,6 +172,7 @@ void Menu::Initialize() {
                         std::bind(&Menu::NewUpdate, this, _1)))
     abort();
 #endif
+  /*
   auto feed_news = FeedNews::GetInstance();
   if (!QObject::connect(feed_news, &FeedNews::feedEntryList,
                         std::bind(&Menu::FeedEntryList, this, _1, _2)))
@@ -179,6 +180,7 @@ void Menu::Initialize() {
                  "MenuWindow::rssEntryList) failed"
               << std::endl;
   feed_news->checkCache();
+  */
   solo_->SetVisible(false);
 #endif
 
@@ -328,6 +330,7 @@ void Menu::GoToSolo() {
 }
 
 void Menu::GoToMulti() {
+  QtDatapackClientLoader::GetInstance();
   if (!multi_scene_) multi_scene_ = Multi::Create();
   static_cast<StackedScene *>(Parent())->PushForeground(multi_scene_);
 }
@@ -378,7 +381,6 @@ void Menu::OnAssetsDataParsed() {
   SceneManager::GetInstance()->setWindowTitle(
       tr("CatchChallenger %1")
           .arg(QString::fromStdString(CatchChallenger::Version::str)));
-  QtDatapackClientLoader::datapackLoader = new QtDatapackClientLoader();
 
   Initialize();
 
