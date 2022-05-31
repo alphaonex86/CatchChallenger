@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.show();
-    w.resize(1920,1080);
+    w.resize(1920,1080+10);
     //w.resize(420,360);
 
     return a.exec();

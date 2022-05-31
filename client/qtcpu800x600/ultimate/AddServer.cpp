@@ -42,7 +42,7 @@ return -1;
 
 void AddOrEditServer::setType(const int &type)
 {
-#if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
+#if !  defined(NOTCPSOCKET) && ! defined(NOWEBSOCKET)
 ui->type->setCurrentIndex(type);
 #else
     #if defined(NOTCPSOCKET)
@@ -59,7 +59,10 @@ ui->type->setCurrentIndex(type);
 void AddOrEditServer::setEdit(const bool &edit)
 {
     if(edit)
+    {
+        setWindowTitle(tr("Edit server"));
         ui->ok->setText(tr("Save"));
+    }
 }
 
 void AddOrEditServer::on_ok_clicked()
