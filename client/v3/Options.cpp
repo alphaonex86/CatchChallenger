@@ -7,7 +7,7 @@
 Options* Options::instance_ = nullptr;
 
 Options::Options() {
-  fps = 25;
+  fps = 24;
   limitedFPS = true;
   zoom = 0;
   audioVolume = 100;
@@ -29,11 +29,12 @@ void Options::loadVar() {
   settings=new
   QSettings(QCoreApplication::applicationDirPath()+"/client-settings.conf",QSettings::IniFormat);
 */
-  if (Settings::settings->contains("fps")) {
-    fps = static_cast<uint8_t>(Settings::settings->value("fps").toUInt(&ok));
-    if (!ok) fps = 150;
-  } else
-    fps = 150;
+  //if (Settings::settings->contains("fps")) {
+    //fps = static_cast<uint8_t>(Settings::settings->value("fps").toUInt(&ok));
+    //if (!ok) fps = 30;
+  //} else {
+    //fps = 30;
+  //}
   if (Settings::settings->contains("limitedFPS"))
     limitedFPS = Settings::settings->value("limitedFPS").toBool();
   else

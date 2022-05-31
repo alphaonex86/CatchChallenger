@@ -88,7 +88,7 @@ bool MoveTo::IsDone() { return done_; }
 
 void MoveTo::CalculateDelta() {
   auto fps = Options::GetInstance()->getFPS();
-  qreal frames = (milliseconds_ / 1000) * fps;
+  qreal frames = (milliseconds_ / 1000) * (fps / 2);
 
   timeout_ = 1000 / fps;
   if (end_x_ == node_->X()) {

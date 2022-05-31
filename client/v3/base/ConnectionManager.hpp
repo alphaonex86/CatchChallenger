@@ -1,6 +1,6 @@
 // Copyright 2021 CatchChallenger
-#ifndef CLIENT_QTOPENGL_BASE_CONNECTIONMANAGER_HPP_
-#define CLIENT_QTOPENGL_BASE_CONNECTIONMANAGER_HPP_
+#ifndef CLIENT_V3_BASE_CONNECTIONMANAGER_HPP_
+#define CLIENT_V3_BASE_CONNECTIONMANAGER_HPP_
 
 #include <QObject>
 #include <functional>
@@ -106,4 +106,4 @@ class ConnectionManager : public ProgressNotifier, public QObject {
   void QthaveCharacter();
 };
 
-#endif  // CLIENT_QTOPENGL_BASE_CONNECTIONMANAGER_HPP_
+#endif  // CLIENT_V3L_BASE_CONNECTIONMANAGER_HPP_

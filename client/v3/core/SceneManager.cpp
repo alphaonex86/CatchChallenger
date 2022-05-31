@@ -55,6 +55,7 @@ SceneManager::SceneManager() : graphic_scene_(new QGraphicsScene(this)) {
     if (context->isValid()) {
        QSurfaceFormat format;
        format.setSamples(4);
+       format.setSwapInterval(1);
        context->setFormat(format);
 
       setViewport(context);
@@ -334,6 +335,7 @@ void SceneManager::UpdateFPS() {
 }
 
 void SceneManager::SetTargetFPS(int targetFPS) {
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< targetFPS << std::endl;
   if (targetFPS == 0) {
     wait_render_time_ = 0;
   } else {
