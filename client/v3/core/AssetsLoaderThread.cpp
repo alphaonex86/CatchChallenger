@@ -17,10 +17,15 @@ uint32_t AssetsLoaderThread::image = 0;
 
 AssetsLoaderThread::AssetsLoaderThread(uint32_t index) {
   this->m_index = index;
+#ifdef NOTHREADS
+  CatchChallenger::ProtocolParsing::initialiseTheVariable();
+#endif
 }
 
 void AssetsLoaderThread::run() {
-  if (m_index == 0) CatchChallenger::ProtocolParsing::initialiseTheVariable();
+  if (m_index == 0) {
+    CatchChallenger::ProtocolParsing::initialiseTheVariable();
+  }
   unsigned int index = 0;
   while (index < toLoad.size()) {
     QTime myTimer;

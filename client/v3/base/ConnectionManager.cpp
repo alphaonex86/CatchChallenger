@@ -87,6 +87,7 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
   #endif
   #ifndef NOWEBSOCKET
   if (socket == nullptr) {
+    std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "web entro" << std::endl;
     if (!connexionInfo.ws.isEmpty()) {
       realWebSocket = new QWebSocket();
       socket = new CatchChallenger::ConnectedSocket(realWebSocket);
