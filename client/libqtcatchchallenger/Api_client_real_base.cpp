@@ -415,7 +415,7 @@ void Api_client_real::decodedIsFinishBase()
                         XXH32_canonical_t htemp;
                         XXH32_canonicalFromHash(&htemp,XXH32(dataList.at(index).data(),dataList.at(index).size(),0));
                         memcpy(&h,&htemp.digest,sizeof(h));
-                        #if NOTHREADS
+                        #ifndef Q_OS_WASM
                         #ifndef CATCHCHALLENGER_EXTRA_CHECK
                         DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h);
                         #else

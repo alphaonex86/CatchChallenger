@@ -75,7 +75,7 @@ SOURCES += \
     $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.cpp \
     $$PWD/scenes/battle/StatusCard.cpp \
-    $$PWD/scenes/battle/BattleStates.cpp \
+    #$$PWD/scenes/battle/BattleStates.cpp \
     $$PWD/scenes/battle/MonsterSwap.cpp \
     $$PWD/scenes/map/CCMap.cpp \
     $$PWD/scenes/map/Map.cpp \
@@ -194,7 +194,7 @@ HEADERS  += \
     $$PWD/scenes/battle/SkillButton.cpp \
     $$PWD/scenes/battle/BattleActions.hpp \
     $$PWD/scenes/battle/StatusCard.hpp \
-    $$PWD/scenes/battle/BattleStates.hpp \
+    #$$PWD/scenes/battle/BattleStates.hpp \
     $$PWD/scenes/battle/MonsterSwap.hpp \
     $$PWD/scenes/map/Map.hpp \
     $$PWD/scenes/map/CCMap.hpp \
