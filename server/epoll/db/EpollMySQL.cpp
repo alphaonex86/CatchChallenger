@@ -1,5 +1,5 @@
 #ifdef CATCHCHALLENGER_DB_MYSQL
-#include "EpollMySQL.h"
+#include "EpollMySQL.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -9,19 +9,21 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
-#include "../Epoll.h"
-#include "../EpollSocket.h"
-#include "../../../general/base/GeneralVariable.h"
-#include "../../../general/base/cpp11addition.h"
-#include "../../VariableServer.h"
+#include "../Epoll.hpp"
+#include "../EpollSocket.hpp"
+#include "../../../general/base/GeneralVariable.hpp"
+#include "../../../general/base/cpp11addition.hpp"
+#ifdef DEBUG_MESSAGE_CLIENT_SQL
+#include "../../base/SqlFunction.hpp"
+#endif
 #include <chrono>
 #include <ctime>
 #include <thread>
 #include <mysql/mysqld_error.h>
 
 char EpollMySQL::emptyString[]={'\0'};
-CatchChallenger::DatabaseBase::CallBack EpollMySQL::emptyCallback;
-CatchChallenger::DatabaseBase::CallBack EpollMySQL::tempCallback;
+CatchChallenger::DatabaseBaseCallBack EpollMySQL::emptyCallback;
+CatchChallenger::DatabaseBaseCallBack EpollMySQL::tempCallback;
 
 EpollMySQL::EpollMySQL() :
     conn(NULL),
@@ -164,7 +166,7 @@ void EpollMySQL::syncReconnect()
         sendNextQuery();
 }
 
-BaseClassSwitch::EpollObjectType EpollPostgresql::getType() const
+BaseClassSwitch::EpollObjectType EpollMySQL::getType() const
 {
     return BaseClassSwitch::EpollObjectType::Database;
 }
@@ -185,7 +187,7 @@ void EpollMySQL::syncDisconnect()
     conn=NULL;
 }
 
-CatchChallenger::DatabaseBase::CallBack * EpollMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
+CatchChallenger::DatabaseBaseCallBack * EpollMySQL::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
     if(conn==NULL)
     {
@@ -321,7 +323,7 @@ bool EpollMySQL::epollEvent(const uint32_t &events)
             }
             if(!queue.empty())
             {
-                CallBack callback=queue.front();
+                CatchChallenger::DatabaseBaseCallBack callback=queue.front();
                 if(callback.method!=NULL)
                     callback.method(callback.object);
                 queue.erase(queue.cbegin());
