@@ -471,6 +471,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
 {
     //add into db
     std::string clan_leader;
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
@@ -479,6 +480,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
             clan_leader=StaticText::text_0;
     }
     else
+    #endif
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=StaticText::text_true;
