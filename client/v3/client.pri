@@ -309,14 +309,14 @@ else
 
 
 android: {
-    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm64/usr/include/
-    INCLUDEPATH += /var/lib/docker/overlay2/e914fb178b67f59eee382992f7f454c694a769808d18e8f452675ee1959aae30/diff/opt/android-sdk/ndk-r19c/platforms/android-26/arch-arm/usr/include/
-    LIBS += -L/opt/Qt5.12.4/5.12.4/android_arm64_v8a/lib/
-    LIBS += -L/opt/Qt5.12.4/5.12.4/android_armv7/lib/
+    LIBS += -L/opt/Qt/5.15.2/android/lib/
     QT += androidextras
     QMAKE_CFLAGS += -g
     QMAKE_CXXFLAGS += -g
-    DISTFILES += $$PWD/../android-sources/AndroidManifest.xml
+    #DISTFILES += $$PWD/../android-sources/AndroidManifest.xml
+    OTHER_FILES += \
+        $$PWD/../android-sources/AndroidManifest.xml \
+        $$PWD/../android-sources/src/org/catchchallenger/client/Client.java
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android-sources
 
 }
