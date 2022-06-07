@@ -313,12 +313,17 @@ android: {
     QT += androidextras
     QMAKE_CFLAGS += -g
     QMAKE_CXXFLAGS += -g
-    #DISTFILES += $$PWD/../android-sources/AndroidManifest.xml
     OTHER_FILES += \
         $$PWD/../android-sources/AndroidManifest.xml \
-        $$PWD/../android-sources/src/org/catchchallenger/client/Client.java
+        $$PWD/../android-sources/src/org/catchchallenger/client/Client.java \
+        $$PWD/../android-sources/src/org/catchchallenger/client/JniMessenger.java \
+        $$PWD/../android-sources/assets/datapack.zip
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android-sources
-
+    include(../openssl/openssl.pri)
+    SOURCES += \
+        $$PWD/entities/JniMessenger.cpp
+    HEADERS  += \
+        $$PWD/entities/JniMessenger.hpp
 }
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets
@@ -362,12 +367,6 @@ ICON = $$PWD/../resources/client.icns
 
 RESOURCES += $$PWD/../resources/client-resources.qrc
 
-deployment.files=$$PWD/../datapack.tar
-android {
-    deployment.path=/assets
-}
-INSTALLS += deployment
-
 TRANSLATIONS    = $$PWD/../resources/languages/en/translation.ts \
     $$PWD/../languages/fr/translation.ts
 
@@ -375,6 +374,3 @@ include(viewports/viewport.pri)
 
 DISTFILES += \
     $$PWD/client.pri
-
-#FORMS += \
-#    $$PWD/../qt/LanguagesSelect.ui

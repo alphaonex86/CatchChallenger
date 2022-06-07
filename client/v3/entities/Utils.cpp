@@ -122,6 +122,7 @@ void Utils::MoveDatapackFolder(const QString &origin, const QString &dest) {
 void Utils::MoveFile(const QString &origin, const QString &folder,
                      const QString &name) {
   QFile file(origin);
+  file.rename(folder + "/" + name);
 }
 
 std::vector<QPixmap> Utils::GetSkillAnimation(const uint16_t &id) {

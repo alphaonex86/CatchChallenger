@@ -1,4 +1,4 @@
-rm -r build-android
+#rm -r build-android
 mkdir -p build-android
 cd build-android
 echo "Configuring for Native..."
@@ -6,7 +6,11 @@ qmake -platform android-clang -r ../catchchallenger-v3.pro CONFIG+=debug CONFIG-
 echo "Building for Native..."
 make -j16
 
+echo "Preparing datapack..."
+zip -r datapack.zip datapack
+
 # Bug from QT5.15 builder
+rm -r dist
 mkdir -p dist/libs/
 cd dist/libs/
 mkdir armeabi-v7a

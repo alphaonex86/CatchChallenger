@@ -16,6 +16,9 @@
 #include "../../core/StackedScene.hpp"
 #include "../../entities/Utils.hpp"
 #include "Loading.hpp"
+#ifdef __ANDROID_API__
+#include "../../entities/JniMessenger.hpp"
+#endif
 
 using Scenes::Solo;
 using std::placeholders::_1;
@@ -141,9 +144,10 @@ void Solo::Initialize() {
     // std::string datapackPathBase=client->datapackPathBase();
     std::string datapackPathBase =
         QCoreApplication::applicationDirPath().toStdString() + "/datapack/";
+    std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< datapackPathBase << std::endl;
 #ifdef __ANDROID_API__
-    Utils::MoveFile("assets:/datapack.tar",
-                    QString::fromStdString(datapackPathBase), "datapack.tar");
+    auto datapackFolder = JniMessenger::DecompressDatapack();
+    datapackPathBase = datapackFolder.toStdString();
 #endif
     CatchChallenger::GameServerSettings formatedServerSettings =
         Globals::InternalServer->getSettings();
@@ -273,6 +277,7 @@ void Solo::Initialize() {
     Globals::InternalServer->setSettings(formatedServerSettings);
   }
 
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "llego" << std::endl;
   Globals::InternalServer->start();
   // do after server is init connectToServer(connexionInfo,QString(),QString());
 }

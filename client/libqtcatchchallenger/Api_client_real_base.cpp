@@ -419,8 +419,10 @@ void Api_client_real::decodedIsFinishBase()
                         #ifndef CATCHCHALLENGER_EXTRA_CHECK
                         DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h);
                         #else
-                        if(!DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h))
+                        if(!DatapackChecksum::writeCachePartialHash(fileInfo.absoluteFilePath().toStdString(),h)){
+
                             abort();
+                        }
                         #endif
                         #endif
                     }
