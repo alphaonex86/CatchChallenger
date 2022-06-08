@@ -9,6 +9,7 @@
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../libqtcatchchallenger/ConnectedSocket.hpp"
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
+#include "../../libqtcatchchallenger/Api_client_virtual.hpp"
 #include "../../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../core/ProgressNotifier.hpp"
 #include "ConnectionInfo.hpp"

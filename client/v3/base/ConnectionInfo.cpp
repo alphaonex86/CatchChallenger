@@ -8,3 +8,16 @@ bool ConnectionInfo::operator<(const ConnectionInfo &connexionInfo) const {
   if (lastConnexion > connexionInfo.lastConnexion) return true;
   return true;
 }
+
+ConnectionInfo::Type ConnectionInfo::GetType() const {
+  if (!host.isEmpty()){
+    return ConnectionInfo::Type_TCP;
+  } else if (!ws.isEmpty()) {
+    return ConnectionInfo::Type_WebSocket;
+  }
+  return ConnectionInfo::Type_Solo;
+}
+
+bool ConnectionInfo::HasProxy() const {
+  return !proxyHost.isEmpty();
+}

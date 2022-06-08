@@ -144,7 +144,6 @@ void Solo::Initialize() {
     // std::string datapackPathBase=client->datapackPathBase();
     std::string datapackPathBase =
         QCoreApplication::applicationDirPath().toStdString() + "/datapack/";
-    std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< datapackPathBase << std::endl;
 #ifdef __ANDROID_API__
     auto datapackFolder = JniMessenger::DecompressDatapack();
     datapackPathBase = datapackFolder.toStdString();
@@ -277,7 +276,6 @@ void Solo::Initialize() {
     Globals::InternalServer->setSettings(formatedServerSettings);
   }
 
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "llego" << std::endl;
   Globals::InternalServer->start();
   // do after server is init connectToServer(connexionInfo,QString(),QString());
 }

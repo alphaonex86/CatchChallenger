@@ -8,7 +8,6 @@
 
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../libqtcatchchallenger/Settings.hpp"
 
@@ -43,11 +42,10 @@ ConnectionManager *ConnectionManager::GetInstance() {
 }
 
 void ConnectionManager::ClearInstance() {
-  /*
-  if (instance_) {
+  if (instance_ != nullptr) {
     delete instance_;
     instance_ = nullptr;
-  }*/
+  }
 }
 
 void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
@@ -69,25 +67,24 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
 #endif
   }
 #if defined(NOTCPSOCKET) && defined(NOWEBSOCKET)
-  #error can t be both NOTCPSOCKET and NOWEBSOCKET disabled
+#error can t be both NOTCPSOCKET and NOWEBSOCKET disabled
 #else
-  #ifndef NOTCPSOCKET
-  if (!connexionInfo.host.isEmpty()) {
+#ifndef NOTCPSOCKET
+  if (connexionInfo.GetType() == ConnectionInfo::Type_TCP) {
     realSslSocket = new QSslSocket();
     socket = new CatchChallenger::ConnectedSocket(realSslSocket);
-  } else if (connexionInfo.ws.isEmpty()) {
-    #ifdef CATCHCHALLENGER_SOLO
+  } else if (connexionInfo.GetType() == ConnectionInfo::Type_Solo) {
+#ifdef CATCHCHALLENGER_SOLO
     fakeSocket = new QFakeSocket();
     socket = new CatchChallenger::ConnectedSocket(fakeSocket);
-    #else
+#else
     std::cerr << "host is empty" << std::endl;
     abort();
-    #endif
+#endif
   }
-  #endif
-  #ifndef NOWEBSOCKET
+#endif
+#ifndef NOWEBSOCKET
   if (socket == nullptr) {
-    std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "web entro" << std::endl;
     if (!connexionInfo.ws.isEmpty()) {
       realWebSocket = new QWebSocket();
       socket = new CatchChallenger::ConnectedSocket(realWebSocket);
@@ -96,15 +93,22 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
       abort();
     }
   }
-  #endif
+#endif
 #endif
   // work around for the resetAll() of protocol
   const std::string mainDatapackCode =
       CommonSettingsServer::commonSettingsServer.mainDatapackCode;
   const std::string subDatapackCode =
       CommonSettingsServer::commonSettingsServer.subDatapackCode;
-  CatchChallenger::Api_client_real *client =
-      new CatchChallenger::Api_client_real(socket);
+
+  CatchChallenger::Api_protocol_Qt *client = nullptr;
+
+  if (connexionInfo.GetType() == ConnectionInfo::Type_Solo) {
+    client = new CatchChallenger::Api_client_virtual(socket);
+  } else {
+    client = new CatchChallenger::Api_client_real(socket);
+  }
+
   CommonSettingsServer::commonSettingsServer.mainDatapackCode =
       mainDatapackCode;
   CommonSettingsServer::commonSettingsServer.subDatapackCode = subDatapackCode;
@@ -120,73 +124,77 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
                &ConnectionManager::message))
     abort();
 
-  if (!connect(client, &CatchChallenger::Api_client_real::Qtdisconnected, this,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::Qtdisconnected, this,
                &ConnectionManager::disconnected))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QtnotLogged, this,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QtnotLogged, this,
                &ConnectionManager::disconnected))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QthaveTheDatapack,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QthaveTheDatapack,
                this, &ConnectionManager::haveTheDatapack))
     abort();
   if (!connect(client,
-               &CatchChallenger::Api_client_real::QthaveTheDatapackMainSub,
+               &CatchChallenger::Api_protocol_Qt::QthaveTheDatapackMainSub,
                this, &ConnectionManager::haveTheDatapackMainSub))
     abort();
 
-  if (!connect(client, &CatchChallenger::Api_client_real::Qtlogged, this,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::Qtlogged, this,
                &ConnectionManager::Qtlogged, Qt::QueuedConnection))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QtdatapackSizeBase,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QtdatapackSizeBase,
                this, &ConnectionManager::QtdatapackSizeBase))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QtdatapackSizeMain,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QtdatapackSizeMain,
                this, &ConnectionManager::QtdatapackSizeMain))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QtdatapackSizeSub,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QtdatapackSizeSub,
                this, &ConnectionManager::QtdatapackSizeSub))
     abort();
-  if (!connect(client,
-               &CatchChallenger::Api_client_real::progressingDatapackFileBase,
-               this, &ConnectionManager::progressingDatapackFileBase))
-    abort();
-  if (!connect(client,
-               &CatchChallenger::Api_client_real::progressingDatapackFileMain,
-               this, &ConnectionManager::progressingDatapackFileMain))
-    abort();
-  if (!connect(client,
-               &CatchChallenger::Api_client_real::progressingDatapackFileSub,
-               this, &ConnectionManager::progressingDatapackFileSub))
-    abort();
 
-  if (!connect(client, &CatchChallenger::Api_client_real::Qtprotocol_is_good,
+  if (connexionInfo.GetType() != ConnectionInfo::Type_Solo) {
+    auto real = dynamic_cast<CatchChallenger::Api_client_real *>(client);
+    if (!connect(real,
+                 &CatchChallenger::Api_client_real::progressingDatapackFileBase,
+                 this, &ConnectionManager::progressingDatapackFileBase))
+      abort();
+    if (!connect(real,
+                 &CatchChallenger::Api_client_real::progressingDatapackFileMain,
+                 this, &ConnectionManager::progressingDatapackFileMain))
+      abort();
+    if (!connect(real,
+                 &CatchChallenger::Api_client_real::progressingDatapackFileSub,
+                 this, &ConnectionManager::progressingDatapackFileSub))
+      abort();
+  }
+
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::Qtprotocol_is_good,
                this, &ConnectionManager::protocol_is_good))
     abort();
   if (!connect(client,
-               &CatchChallenger::Api_client_real::QtconnectedOnLoginServer,
+               &CatchChallenger::Api_protocol_Qt::QtconnectedOnLoginServer,
                this, &ConnectionManager::connectedOnLoginServer))
     abort();
   if (!connect(client,
-               &CatchChallenger::Api_client_real::QtconnectingOnGameServer,
+               &CatchChallenger::Api_protocol_Qt::QtconnectingOnGameServer,
                this, &ConnectionManager::connectingOnGameServer))
     abort();
   if (!connect(client,
-               &CatchChallenger::Api_client_real::QtconnectedOnGameServer, this,
+               &CatchChallenger::Api_protocol_Qt::QtconnectedOnGameServer, this,
                &ConnectionManager::connectedOnGameServer))
     abort();
   if (!connect(client,
-               &CatchChallenger::Api_client_real::QthaveDatapackMainSubCode,
+               &CatchChallenger::Api_protocol_Qt::QthaveDatapackMainSubCode,
                this, &ConnectionManager::haveDatapackMainSubCode))
     abort();
-  if (!connect(client, &CatchChallenger::Api_client_real::QtgatewayCacheUpdate,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QtgatewayCacheUpdate,
                this, &ConnectionManager::gatewayCacheUpdate))
     abort();
 
-  if (!connect(client, &CatchChallenger::Api_client_real::QthaveCharacter, this,
+  if (!connect(client, &CatchChallenger::Api_protocol_Qt::QthaveCharacter, this,
                &ConnectionManager::QthaveCharacter, Qt::QueuedConnection))
     abort();
 
-  if (!connexionInfo.proxyHost.isEmpty()) {
+  if (connexionInfo.HasProxy()) {
     QNetworkProxy proxy;
 #ifndef NOTCPSOCKET
     if (realSslSocket != nullptr) proxy = realSslSocket->proxy();
@@ -207,8 +215,11 @@ void ConnectionManager::connectToServer(ConnectionInfo connexionInfo,
   connexionInfo.connexionCounter++;
   connexionInfo.lastConnexion =
       static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch() / 1000);
-  this->client = static_cast<CatchChallenger::Api_protocol_Qt *>(client);
-  connectTheExternalSocket(connexionInfo, client);
+  this->client = client;
+  if (connexionInfo.GetType() != ConnectionInfo::Type_Solo) {
+    auto real = dynamic_cast<CatchChallenger::Api_client_real *>(client);
+    connectTheExternalSocket(connexionInfo, real);
+  }
 
   // connect the datapack loader
   if (!connect(QtDatapackClientLoader::GetInstance(),
@@ -329,7 +340,7 @@ void ConnectionManager::sslErrors(const QList<QSslError> &errors) {
 void ConnectionManager::connectTheExternalSocket(
     ConnectionInfo connexionInfo, CatchChallenger::Api_client_real *client) {
   // continue the normal procedure
-  if (!connexionInfo.proxyHost.isEmpty()) {
+  if (connexionInfo.HasProxy()) {
     QNetworkProxy proxy;
 #ifndef NOTCPSOCKET
     if (realSslSocket != nullptr) proxy = realSslSocket->proxy();

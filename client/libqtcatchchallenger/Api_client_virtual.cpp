@@ -9,6 +9,8 @@ using namespace CatchChallenger;
 #include <sys/stat.h>
 #endif
 #include <QString>
+#include <iostream>
+#include <QStandardPaths>
 
 //need host + port here to have datapack base
 
@@ -16,6 +18,9 @@ Api_client_virtual::Api_client_virtual(ConnectedSocket *socket) :
     Api_protocol_Qt(socket)
 {
     mDatapackBase=QStringLiteral("%1/datapack/").arg(QCoreApplication::applicationDirPath()).toStdString();
+    #ifdef Q_OS_ANDROID
+    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/datapack/";
+    #endif
 }
 
 Api_client_virtual::~Api_client_virtual()

@@ -1,11 +1,13 @@
 // Copyright 2021 CatchChallenger
-#ifndef CLIENT_QTOPENGL_BASE_CONNECTIONINFO_HPP_
-#define CLIENT_QTOPENGL_BASE_CONNECTIONINFO_HPP_
+#ifndef CLIENT_V3_BASE_CONNECTIONINFO_HPP_
+#define CLIENT_V3_BASE_CONNECTIONINFO_HPP_
 
 #include <QString>
 
 class ConnectionInfo {
  public:
+  enum Type { Type_None, Type_Solo, Type_TCP, Type_WebSocket };
+
   QString unique_code;
   QString name;
   bool isCustom;
@@ -27,6 +29,10 @@ class ConnectionInfo {
   uint16_t proxyPort;
 
   bool operator<(const ConnectionInfo &connexionInfo) const;
+
+  Type GetType() const;
+
+  bool HasProxy() const;
 };
 
-#endif  // CLIENT_QTOPENGL_BASE_CONNECTIONINFO_HPP_
+#endif  // CLIENT_V3_BASE_CONNECTIONINFO_HPP_

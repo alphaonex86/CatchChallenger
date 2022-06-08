@@ -95,3 +95,4 @@ tools/to-pack/data/windows-x*
 /server/server-properties.xml
 /client/datapack
 /server/datapack
+datapack.zip

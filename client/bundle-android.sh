@@ -7,7 +7,7 @@ echo "Building for Native..."
 make -j16
 
 echo "Preparing datapack..."
-zip -r datapack.zip datapack
+#zip -r datapack.zip datapack
 
 # Bug from QT5.15 builder
 rm -r dist

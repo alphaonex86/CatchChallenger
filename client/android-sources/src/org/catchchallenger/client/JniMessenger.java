@@ -8,10 +8,10 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipEntry;
 
 public class JniMessenger {
-    public static String decompressDatapack() {
+    public static void decompressDatapack(String outDir) {
         AssetManager assetManager = Client.getContext().getAssets();
-        String outDir = Client.getContext().getExternalFilesDir(null).getAbsolutePath() + "/";
-        Log.i("tag", "outDir: " + outDir);
+        // String outDir = Client.getContext().getExternalFilesDir(null).getAbsolutePath() + "/";
+        Log.i("LAN", "outDir: " + outDir);
         InputStream in = null;
         OutputStream out = null;
         String filename = "datapack.zip";
@@ -40,11 +40,11 @@ public class JniMessenger {
                 }
                 bos.flush();
             }
-            Log.v("tag", "Decompress Success");
+            Log.v("LAN", "Decompress Success");
         } catch (IOException e) {
-            Log.e("tag", "Failed to decompress: " + filename, e);
+            Log.e("LAN", "Failed to decompress: " + filename, e);
         }
 
-        return outDir + "datapack/";
+        //return outDir + "datapack/";
     }
 }
