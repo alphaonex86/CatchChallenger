@@ -123,6 +123,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                 serialBuffer >> reputationExtra;
                 serialBuffer >> monsterExtra;
                 serialBuffer >> monsterBuffsExtra;
+                serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
                 auto end_time = std::chrono::high_resolution_clock::now();
                 auto time = end_time - start_time;
                 std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
@@ -153,6 +154,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     hps::to_stream(reputationExtra, out_file);
                     hps::to_stream(monsterExtra, out_file);
                     hps::to_stream(monsterBuffsExtra, out_file);
+                    hps::to_stream(reputationNameToId, out_file);//used by client->player_informations.reputation[reputationId]
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp, out_file);
                     out_file.flush();
                     out_file.close();
