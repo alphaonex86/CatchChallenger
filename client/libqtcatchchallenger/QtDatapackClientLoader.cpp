@@ -113,6 +113,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
             {
                 auto start_time = std::chrono::high_resolution_clock::now();
                 hps::StreamInputBuffer serialBuffer(in_file);
+                uint8_t cacheversion=0;
+                serialBuffer >> cacheversion;//to discard buggy cache later
                 serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
                 serialBuffer >> visualCategories;
                 serialBuffer >> typeExtra;
@@ -144,6 +146,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                 std::ofstream out_file(cachepath+".tmp", std::ofstream::binary);
                 if(out_file.good() && out_file.is_open())
                 {
+                    uint8_t cacheversion=0;//to discard buggy cache later
+                    hps::to_stream(cacheversion, out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack, out_file);
                     hps::to_stream(visualCategories, out_file);
                     hps::to_stream(typeExtra, out_file);
