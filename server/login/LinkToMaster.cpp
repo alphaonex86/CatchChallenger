@@ -290,7 +290,7 @@ bool LinkToMaster::disconnectClient()
         EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
         if(dataForSelectedCharacterReturn.client!=NULL)
         {
-            messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
+            messageParsingLayer("LinkToMaster::disconnectClient(): connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
             if(client->stat!=EpollClientLoginSlave::GameServerConnected)
             {
                 static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
@@ -519,14 +519,14 @@ void LinkToMaster::detectTimeout()
             {
                 if(client->stat!=EpollClientLoginSlave::GameServerConnected)
                 {
-                    messageParsingLayer("connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
+                    messageParsingLayer("LinkToMaster::detectTimeout(): connected player: account_id: "+std::to_string(client->account_id)+" (stat: "+std::to_string(client->stat)+")");
                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                     ->closeSocket();
                 }
                 else
-                    messageParsingLayer("connected player: "+std::to_string(client->account_id)+", should be removed from this list");
+                    messageParsingLayer("LinkToMaster::detectTimeout(): connected player: account_id: "+std::to_string(client->account_id)+", should be removed from this list");
                 const uint8_t queryNumber=n.first;
                 queryNumberList.push_back(queryNumber);
                 selectCharacterClients.erase(queryNumber);
