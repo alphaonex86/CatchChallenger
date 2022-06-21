@@ -88,6 +88,7 @@ protected:
 private:
     static char host[256];
     static uint16_t port;
+    std::unordered_set<std::string> duplicateWarning;
 };
 }
 

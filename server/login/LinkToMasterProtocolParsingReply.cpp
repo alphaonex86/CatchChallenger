@@ -257,9 +257,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                 ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting;
                                 /// \todo do the async connect
                                 /// linkToGameServer->stat=Stat::Connecting;
+                                const std::string dest=server.host+":"+std::to_string(server.port);
                                 const int &socketFd=LinkToGameServer::tryConnect(server.host.c_str(),server.port,5,1);
                                 if(Q_LIKELY(socketFd>=0))
                                 {
+                                    duplicateWarning.erase(dest);
                                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);
@@ -281,6 +283,11 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                 {
                                     /*static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->parseNetworkReadMessage("not able to connect on the game server as proxy, parseReplyData("+std::to_string(mainCodeType)+","+std::to_string(queryNumber)+")");*/
+                                    if(duplicateWarning.find(dest)==duplicateWarning.cend())
+                                    {
+                                        duplicateWarning.insert(dest);
+                                        std::cerr << "Error to connect on " << server.host << ":" << server.port << ", errno: " << errno << std::endl;
+                                    }
                                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04);
                                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
@@ -303,6 +310,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                     {
                         if(dataForSelectedCharacterReturn.client!=NULL)
                         {
+                            std::cerr << "Error from master, size==1" << std::endl;
                             static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                             ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,data[0]);
                             static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
