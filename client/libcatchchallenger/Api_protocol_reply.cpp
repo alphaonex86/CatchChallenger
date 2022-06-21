@@ -90,7 +90,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                     if(!login.empty())
                         tryLogin(login,pass);
                     else
-                        std::cerr << "Api_protocol::protocol_is_good(), login is empty, can't login" << std::endl;
+                        std::cerr << "Api_protocol::protocol_is_good(), login is empty, normal for login without creation" << std::endl;
                     //std::cout << "Api_protocol::protocol_is_good(), stageConnexion==StageConnexion::Stage1" << std::endl;
                 }
                 else if(stageConnexion==StageConnexion::Stage4)
