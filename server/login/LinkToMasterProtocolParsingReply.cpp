@@ -289,7 +289,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                                         std::cerr << "Error to connect on " << server.host << ":" << server.port << ", errno: " << errno << std::endl;
                                     }
                                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04);
+                                    ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04,"Error to connect on "+server.host+":"+std::to_string(server.port)+", errno: "+std::to_string(errno));
                                     static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
                                     ->closeSocket();
                                     //continue to clean, return true;//if false mean the master is the fault

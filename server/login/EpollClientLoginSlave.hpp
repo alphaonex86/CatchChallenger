@@ -116,7 +116,7 @@ public:
     04 (Server internal problem)
     05 (Server not found)
     08 (Too recently disconnected)*/
-    void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
+    void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError=std::string());
     void addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId);
     void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
     void removeCharacter_ReturnOk(const uint8_t &query_id);

@@ -13,9 +13,9 @@
 //#define DEBUG_CLIENT_BOT
 //#define DEBUG_CLIENT_NETWORK_USAGE
 
-#define CATCHCHALLENGER_SERVER_LIST_URL "https://catchchallenger.first-world.info/server_list.xml"
-#define CATCHCHALLENGER_UPDATER_URL "https://cdn.confiared.com/catchchallenger.first-world.info/updater.txt"
-#define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.first-world.info/rss_global.xml"
+#define CATCHCHALLENGER_SERVER_LIST_URL "https://catchchallenger.herman-brule.com/server_list.xml"
+#define CATCHCHALLENGER_UPDATER_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/updater.txt"
+#define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/rss_global.xml"
 
 #define CATCHCHALLENGER_CLIENT_MUSIC_LOADING "/music/loading.opus"
 #define CATCHCHALLENGER_CLIENT_INSTANT_SHOP
