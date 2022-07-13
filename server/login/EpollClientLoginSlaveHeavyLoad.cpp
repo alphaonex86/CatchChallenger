@@ -789,7 +789,7 @@ void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,
     }
 }
 
-void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
+void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError)
 {
     //send the network reply
     removeFromQueryReceived(query_id);
@@ -816,7 +816,10 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
             errorParsingLayer("Master have relply: Character too recently disconnected");
         break;
         default:
-            errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
+            if(customError.empty())
+                errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
+            else
+                errorParsingLayer(customError);
         break;
     }
 }
