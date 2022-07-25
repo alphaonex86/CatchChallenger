@@ -1,0 +1,19 @@
+clang
+
+%h -x
+%h c++-header
+
+-Ilibopus/include
+-I../general/libzstd/lib
+-I/usr/include/qt
+-I/usr/include/qt/QtOpenGL
+-I/usr/include/qt/QtWidgets
+-I/usr/include/qt/QtMultimedia
+-I/usr/include/qt/QtGui
+-I/usr/include/qt/QtWebSockets
+-I/usr/include/qt/QtNetwork
+-I/usr/include/qt/QtXml
+-I/usr/include/qt/QtSql
+-I/usr/include/qt/QtCore
+-I/usr/lib/qt/mkspecs/linux-g++
+

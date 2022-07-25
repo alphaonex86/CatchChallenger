@@ -1,5 +1,5 @@
 // Copyright 2021 <CatchChallenger>
-#include "../../scenes/battle/Battle.hpp"
+#include "Battle.hpp"
 
 using Scenes::Battle;
 
@@ -84,3 +84,4 @@ void Battle::OnScreenHDR() {
       action_background_->Width() - space - action_return_->Width(),
       action_background_->Height() - space - action_return_->Height());
 }
+

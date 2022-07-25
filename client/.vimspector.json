@@ -1,0 +1,17 @@
+{
+  "configurations": {
+    "Launch": {
+      "adapter": "vscode-cpptools",
+      "filetypes": [ "cpp", "c", "objc", "rust" ],
+      "configuration": {
+        "request": "launch",
+        "program": "catchchallenger",
+        "args": [],
+        "cwd": "${PWD}",
+        "environment": [],
+        "externalConsole": true,
+        "MIMode": "gdb"
+      }
+    }
+  }
+}

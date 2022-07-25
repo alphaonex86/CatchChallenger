@@ -18,6 +18,8 @@ QT += multimedia
     DEFINES += USE_ALLOCA OPUS_BUILD
 }
 
+VIEWPORT = mobile
+
 SOURCES += \
     $$PWD/base/ConnectionInfo.cpp \
     $$PWD/ui/Label.cpp \
@@ -70,6 +72,7 @@ SOURCES += \
     $$PWD/FacilityLibClient.cpp \
     $$PWD/MyApplication.cpp \
     $$PWD/scenes/ParallaxForest.cpp \
+    $$PWD/scenes/battle/Battle-$${VIEWPORT}.cpp \
     $$PWD/scenes/battle/Battle.cpp \
     $$PWD/scenes/battle/ActionBar.cpp \
     $$PWD/scenes/battle/SkillButton.cpp \
@@ -130,6 +133,7 @@ SOURCES += \
     $$PWD/scenes/leading/CharacterItem.cpp \
     $$PWD/scenes/leading/Options.cpp \
     $$PWD/scenes/leading/Debug.cpp \
+    $$PWD/scenes/leading/Menu-$${VIEWPORT}.cpp \
     $$PWD/scenes/leading/Menu.cpp
 !contains(DEFINES, NOSINGLEPLAYER) {
 SOURCES += $$PWD/scenes/leading/Solo.cpp
@@ -369,8 +373,6 @@ RESOURCES += $$PWD/../resources/client-resources.qrc
 
 TRANSLATIONS    = $$PWD/../resources/languages/en/translation.ts \
     $$PWD/../languages/fr/translation.ts
-
-include(viewports/viewport.pri)
 
 DISTFILES += \
     $$PWD/client.pri

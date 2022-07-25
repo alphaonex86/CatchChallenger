@@ -27,8 +27,8 @@ include(libqtcatchchallenger/libqtheader.pri)
 # include(tiled/tiled.pri)
 # include(tiled/tiledheader.pri)
 
-linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
-linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
+linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations -g"
+linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations -g"
 
 DEFINES += OPENGL
 # CATCHCHALLENGER_CACHE_HPS -> include hps.pri

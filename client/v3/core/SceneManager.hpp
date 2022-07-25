@@ -7,6 +7,7 @@
 #include <QTimer>
 #include <QWidget>
 #include <vector>
+#include <QGraphicsScene>
 
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../base/ConnectionManager.hpp"
