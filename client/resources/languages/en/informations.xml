@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <language>
     <!-- Who wrote this plugin -->
-    <author><![CDATA[BRULE Herman, alpha_one_x86 (alpha_one_x86@first-world.info)]]></author>
+    <author><![CDATA[BRULE Herman, alpha_one_x86 (contact@herman-brule.com)]]></author>
     <!-- The full name in the language we're translating to. -->
     <fullName><![CDATA[English]]></fullName>
     <!-- Short name, language name in English -->
