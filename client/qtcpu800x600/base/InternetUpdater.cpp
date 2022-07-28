@@ -134,7 +134,7 @@ bool InternetUpdater::versionIsNewer(const std::string &version)
 
 std::string InternetUpdater::getText(const std::string &version)
 {
-    std::string url="http://catchchallenger.first-world.info/download.html";
+    std::string url="https://catchchallenger.herman-brule.com/download.html";
     return QStringLiteral("<a href=\"%1\" style=\"text-decoration:none;color:#100;\">%2</a>")
             .arg(QString::fromStdString(url))
             .arg(tr("New version: %1").arg("<b>"+QString::fromStdString(version)+"</b>"))
