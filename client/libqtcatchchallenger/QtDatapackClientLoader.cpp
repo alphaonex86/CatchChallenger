@@ -28,6 +28,7 @@
 #include <QRegularExpression>
 #include <QCryptographicHash>
 #include <iostream>
+#include <unistd.h>
 
 QtDatapackClientLoader *QtDatapackClientLoader::datapackLoader=nullptr;
 
@@ -113,24 +114,38 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
             {
                 auto start_time = std::chrono::high_resolution_clock::now();
                 hps::StreamInputBuffer serialBuffer(in_file);
-                uint8_t cacheversion=0;
-                serialBuffer >> cacheversion;//to discard buggy cache later
-                serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
-                serialBuffer >> visualCategories;
-                serialBuffer >> typeExtra;
-                serialBuffer >> itemsExtra;
-                serialBuffer >> skins;
-                serialBuffer >> monsterSkillsExtra;
-                serialBuffer >> audioAmbiance;
-                serialBuffer >> reputationExtra;
-                serialBuffer >> monsterExtra;
-                serialBuffer >> monsterBuffsExtra;
-                serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
-                auto end_time = std::chrono::high_resolution_clock::now();
-                auto time = end_time - start_time;
-                std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
-                loaded=true;
+                #ifdef __EXCEPTIONS
+                try
+                {
+                    #endif
+                    uint8_t cacheversion=0;
+                    serialBuffer >> cacheversion;//to discard buggy cache later
+                    serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
+                    serialBuffer >> visualCategories;
+                    serialBuffer >> typeExtra;
+                    serialBuffer >> itemsExtra;
+                    serialBuffer >> skins;
+                    serialBuffer >> monsterSkillsExtra;
+                    serialBuffer >> audioAmbiance;
+                    serialBuffer >> reputationExtra;
+                    serialBuffer >> monsterExtra;
+                    serialBuffer >> monsterBuffsExtra;
+                    serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
+                    auto end_time = std::chrono::high_resolution_clock::now();
+                    auto time = end_time - start_time;
+                    std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
+                    loaded=true;
+                    #ifdef __EXCEPTIONS
+                }
+                catch (...) {
+                    // Block of code to handle errors
+                    std::cout << "Error to get catch from HPS" << std::endl;
+                    ::unlink(cachepath.c_str());
+                }
+                #endif
             }
+            else
+                ::unlink(cachepath.c_str());
         }
         if(!loaded)
         {
