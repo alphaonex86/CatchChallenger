@@ -104,13 +104,23 @@ Api_protocol_Qt::~Api_protocol_Qt()
 
 void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
 {
-    std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
+    QAbstractSocket * socket = qobject_cast<QAbstractSocket *>(sender());
+    if(socket!=nullptr)
+        std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") for " << socket->peerAddress().toString().toStdString() << ":" << std::to_string(socket->peerPort()) << std::endl;
+    else
+        std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ")" << std::endl;
     if(socketState==QAbstractSocket::UnconnectedState)
     {
-        std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL, client->stage(): " << stage() << std::endl;
+        if(socket!=nullptr)
+            std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL, client->stage(): " << stage() << " for " << socket->peerAddress().toString().toStdString() << ":" << std::to_string(socket->peerPort()) << std::endl;
+        else
+            std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") client!=NULL, client->stage(): " << stage() << std::endl;
         if(stage()==StageConnexion::Stage2 || stage()==StageConnexion::Stage3)
         {
-            std::cout << "ConnexionManager::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
+            if(socket!=nullptr)
+                std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect for " << socket->peerAddress().toString().toStdString() << ":" << std::to_string(socket->peerPort()) << std::endl;
+            else
+                std::cout << "Api_protocol_Qt::stateChanged(" << std::to_string((int)socketState) << ") call socketDisconnectedForReconnect" << std::endl;
             socketDisconnectedForReconnect();//need by call after closeSocket() because it call the reconnection
             return;
         }

@@ -6,6 +6,7 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <chrono>
 
 using namespace CatchChallenger;
 
@@ -132,7 +133,9 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             }
             sfd_list.push_back(sfd);
 
-            std::cout
+            const auto p1 = std::chrono::system_clock::now();
+            std::cout << "[" << std::chrono::duration_cast<std::chrono::seconds>(
+                   p1.time_since_epoch()).count() << "] "
                     << "correctly bind: familly: " << rp->ai_family
                     << ", rp->ai_socktype: " << rp->ai_socktype
                     << ", rp->ai_protocol: " << rp->ai_protocol
