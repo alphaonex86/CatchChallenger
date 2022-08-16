@@ -1,9 +1,10 @@
 #include "EpollServerLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
-#include "../epoll/Epoll.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
+#include "LinkToMaster.hpp"
+#include "LinkToGameServer.hpp"
 #include "../base/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
@@ -18,7 +19,6 @@ using namespace CatchChallenger;
 #include "EpollClientLoginSlave.hpp"
 #include "../base/DictionaryLogin.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../epoll/EpollSocket.hpp"
 
 EpollServerLoginSlave *EpollServerLoginSlave::epollServerLoginSlave=NULL;
 
