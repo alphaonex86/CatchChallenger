@@ -53,12 +53,12 @@ private:
         {
             struct Map_BorderContent_TopBottom
             {
-                SimplifiedMapForPathFinding *map;
+                std::string map;
                 int32_t x_offset;
             };
             struct Map_BorderContent_LeftRight
             {
-                SimplifiedMapForPathFinding *map;
+                std::string map;
                 int32_t y_offset;
             };
             Map_BorderContent_TopBottom top;
