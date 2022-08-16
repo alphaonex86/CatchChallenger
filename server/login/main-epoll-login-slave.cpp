@@ -15,6 +15,8 @@
 #include "../epoll/Epoll.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "EpollClientLoginSlave.hpp"
+#include "LinkToMaster.hpp"
+#include "LinkToGameServer.hpp"
 #include "TimerDdos.hpp"
 #include "TimerDetectTimeout.hpp"
 

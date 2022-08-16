@@ -1,8 +1,8 @@
 #include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
+#include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "../base/GlobalServerData.hpp"
+#include "../base/BaseServerLogin.hpp"
 #include <iostream>
 #include <chrono>
 #include "../../general/base/CommonSettingsCommon.hpp"

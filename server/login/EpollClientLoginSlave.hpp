@@ -2,13 +2,10 @@
 #define EPOLLCLIENTLOGINMASTER_H
 
 #include "../epoll/EpollClient.hpp"
-#include "../epoll/EpollSslClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
 #include "../base/DdosBuffer.hpp"
-#include "LinkToMaster.hpp"
-#include "LinkToGameServer.hpp"
 
 #include <string>
 #include <vector>
@@ -42,6 +39,7 @@
 #define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 45
 
 namespace CatchChallenger {
+class LinkToGameServer;
 class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
@@ -85,13 +83,13 @@ public:
     {
         uint32_t index;
     };
-    enum ProxyMode
+    enum ProxyMode : uint8_t
     {
         Reconnect=0x01,
         Proxy=0x02
     };
     static ProxyMode proxyMode;
-    enum EpollClientLoginStat
+    enum EpollClientLoginStat : uint8_t
     {
         None=0x00,
         ProtocolGood=0x01,
@@ -125,6 +123,8 @@ public:
     void parseNetworkReadError(const std::string &errorString);
     void parseNetworkReadMessage(const std::string &errorString);
 
+    uint64_t get_lastActivity() const;
+    uint64_t lastActivity;
     LinkToGameServer *linkToGameServer;
     uint8_t charactersGroupIndex;
     uint32_t serverUniqueKey;

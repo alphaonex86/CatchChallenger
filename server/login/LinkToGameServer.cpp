@@ -1,7 +1,6 @@
 #include "LinkToGameServer.hpp"
 #include "EpollClientLoginSlave.hpp"
 #include "../epoll/Epoll.hpp"
-#include "../epoll/EpollSocket.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
@@ -12,6 +11,7 @@
 #include <thread>         // std::this_thread::sleep_for
 #include <chrono>         // std::chrono::seconds
 #include <unistd.h>
+#include <sys/time.h>
 
 using namespace CatchChallenger;
 
@@ -35,6 +35,7 @@ LinkToGameServer::LinkToGameServer(
         socketFd(infd)
 {
     flags|=0x08;
+    lastActivity=LinkToGameServer::msFrom1970();
 }
 
 LinkToGameServer::~LinkToGameServer()
@@ -47,6 +48,18 @@ LinkToGameServer::~LinkToGameServer()
         //break the link
         client=NULL;
     }
+}
+
+uint64_t LinkToGameServer::get_lastActivity() const
+{
+    return lastActivity;
+}
+
+uint64_t LinkToGameServer::msFrom1970() //ms from 1970
+{
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    return te.tv_sec*1000LL + te.tv_usec/1000;
 }
 
 int LinkToGameServer::tryConnect(const char * const host, const uint16_t &port,const uint8_t &tryInterval,const uint8_t &considerDownAfterNumberOfTry)
@@ -260,6 +273,7 @@ BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const
 
 void LinkToGameServer::parseIncommingData()
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     if(!haveTheFirstSslHeader)
         readTheFirstSslHeader();
     if(haveTheFirstSslHeader)
@@ -275,6 +289,7 @@ void LinkToGameServer::sendProtocolHeader()
 
 bool LinkToGameServer::sendRawBlock(const char * const data,const unsigned int &size)
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     return internalSendRawSmallPacket(data,size);
 }
 
@@ -285,11 +300,13 @@ bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
 
 ssize_t LinkToGameServer::read(char * data, const size_t &size)
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     return EpollClient::read(data,size);
 }
 
 ssize_t LinkToGameServer::write(const char * const data, const size_t &size)
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     //do some basic check on low level protocol (message split, ...)
     if(ProtocolParsingInputOutput::write(data,size)<0)
         return -1;

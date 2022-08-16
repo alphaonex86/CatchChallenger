@@ -1,4 +1,5 @@
 #include "EpollClientLoginSlave.hpp"
+#include "LinkToGameServer.hpp"
 #include "../base/BaseServerLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 
