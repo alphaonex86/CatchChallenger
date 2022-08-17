@@ -2,11 +2,10 @@
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../../general/base/Version.hpp"
-#include "../../general/hps/hps.h"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
 #include <fstream>
 
 using namespace CatchChallenger;
@@ -16,6 +15,12 @@ BaseServer::BaseServer() :
     dataLoaded(false)
 {
     ProtocolParsing::initialiseTheVariable();
+    timeDatapack=0;
+    entryListIndex=0;
+    plant_on_the_map=0;
+    preload_market_monsters_prices_call=false;
+    preload_industries_call=false;
+    preload_market_items_call=false;
 
     dictionary_pointOnMap_maxId_item=0;
     dictionary_pointOnMap_maxId_plant=0;

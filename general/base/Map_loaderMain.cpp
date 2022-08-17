@@ -2,6 +2,7 @@
 #include "../tinyXML2/customtinyxml2.hpp"
 #include "FacilityLibGeneral.hpp"
 #include "CommonDatapack.hpp"
+#include "cpp11addition.hpp"
 
 #include <iostream>
 #ifdef EXTERNALLIBZSTD

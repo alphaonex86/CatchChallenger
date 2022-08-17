@@ -1,6 +1,9 @@
 #include "BaseServer.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include <iostream>
 
 using namespace CatchChallenger;
 

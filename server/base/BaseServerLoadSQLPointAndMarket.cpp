@@ -4,6 +4,7 @@
 #include "Client.hpp"
 
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
 

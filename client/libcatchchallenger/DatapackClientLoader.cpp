@@ -1,15 +1,13 @@
 #include "DatapackClientLoader.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/DatapackGeneralLoader.hpp"
 #include "DatapackChecksum.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/DatapackGeneralLoader.hpp"
 #include "../../general/base/Map_loader.hpp"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
 #include <fstream>

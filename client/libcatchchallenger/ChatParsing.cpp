@@ -1,4 +1,5 @@
 #include "ChatParsing.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 

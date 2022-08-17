@@ -1,9 +1,6 @@
-#include "../base/VariableServer.hpp"
 #include "../base/GlobalServerData.hpp"
-#include "../base/MapServer.hpp"
 #include "../base/Client.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/FacilityLib.hpp"
 #include "../base/Client.hpp"
 #include "../base/PreparedDBQuery.hpp"
 

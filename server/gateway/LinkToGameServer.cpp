@@ -1,11 +1,11 @@
 #include "LinkToGameServer.hpp"
 #include "EpollClientLoginSlave.hpp"
 #include "../epoll/Epoll.hpp"
-#include "../epoll/EpollSocket.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -48,6 +48,8 @@ LinkToGameServer::LinkToGameServer(
         replySelectCharInWaitQueryNumber(0),
         queryIdToReconnect(0)
 {
+    selectedServer.port=0;
+    memset(&tokenForGameServer,0,sizeof(tokenForGameServer));
     flags|=0x08;
 }
 

@@ -1,7 +1,6 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
-#include "StaticText.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.hpp"
 #endif

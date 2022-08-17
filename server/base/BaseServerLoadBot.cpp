@@ -1,9 +1,13 @@
 #include "BaseServer.hpp"
+#include "MapServer.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
-#include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapack.hpp"
+#endif
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 

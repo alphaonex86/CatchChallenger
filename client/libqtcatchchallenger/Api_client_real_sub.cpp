@@ -14,7 +14,6 @@ using namespace CatchChallenger;
 #include <QDirIterator>
 #endif
 
-#include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../libcatchchallenger/TarDecode.hpp"

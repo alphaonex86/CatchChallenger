@@ -2,9 +2,11 @@
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
 #include "PreparedDBQuery.hpp"
+#include "MapServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/fight/CommonFightEngineBase.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../general/fight/CommonFightEngine.hpp"
 
 using namespace CatchChallenger;
 

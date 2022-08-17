@@ -1,4 +1,5 @@
 #include "MapController.hpp"
+#include "../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include <iostream>

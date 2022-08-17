@@ -1,8 +1,13 @@
 #include "Client.hpp"
 #include "PreparedDBQuery.hpp"
 #include "GlobalServerData.hpp"
-#include "SqlFunction.hpp"
 #include "StaticText.hpp"
+#ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+#include "SqlFunction.hpp"
+#endif
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#endif
 
 using namespace CatchChallenger;
 

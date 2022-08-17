@@ -1,6 +1,5 @@
 #include "MapVisibilityAlgorithm_WithoutSender.hpp"
 #include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
-#include "Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
 
 using namespace CatchChallenger;

@@ -1,6 +1,5 @@
 #include "EpollServerLoginSlave.hpp"
-#include "../epoll/Epoll.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 
@@ -15,8 +14,6 @@ using namespace CatchChallenger;
 #include "EpollClientLoginSlave.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
-#include "../base/DictionaryLogin.hpp"
-#include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../base/TinyXMLSettings.hpp"
 

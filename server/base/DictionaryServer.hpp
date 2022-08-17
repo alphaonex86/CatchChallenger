@@ -3,9 +3,6 @@
 
 #include <string>
 #include <vector>
-#include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/cpp11addition.hpp"
 #include "MapServer.hpp"
 
 namespace CatchChallenger {

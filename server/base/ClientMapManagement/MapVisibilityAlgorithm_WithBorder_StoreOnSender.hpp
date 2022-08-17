@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_MAPVISIBILITYALGORITHM_WITHBORDER_STOREONSENDER_H
 
 #include "../Client.hpp"
-#include "Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../../../general/base/CommonMap.hpp"
 
 #include <unordered_map>

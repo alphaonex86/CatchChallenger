@@ -1,5 +1,7 @@
 #include "MapMark.hpp"
 #include "ObjectGroupItem.hpp"
+#include "../tiled/tiled_tile.hpp"
+#include "../tiled/tiled_objectgroup.hpp"
 #include <QDebug>
 
 MapMark::MapMark(Tiled::MapObject *mapObject) :

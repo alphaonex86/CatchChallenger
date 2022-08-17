@@ -3,6 +3,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/ProtocolVersion.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/PreparedDBQuery.hpp"

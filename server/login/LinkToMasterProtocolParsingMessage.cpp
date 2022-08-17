@@ -4,8 +4,7 @@
 #include "EpollClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
-#include "../epoll/EpollSocket.hpp"
-#include "VariableLoginServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 

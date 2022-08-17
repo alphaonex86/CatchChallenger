@@ -1,7 +1,7 @@
 #include "EpollClientLoginMaster.hpp"
 #include "EpollServerLoginMaster.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 #include <string>
