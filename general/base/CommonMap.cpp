@@ -1,5 +1,4 @@
 #include "CommonMap.hpp"
-#include "FacilityLib.hpp"
 #include "Map_loader.hpp"
 
 using namespace CatchChallenger;

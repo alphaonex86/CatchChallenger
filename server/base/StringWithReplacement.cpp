@@ -1,5 +1,4 @@
 #include "StringWithReplacement.hpp"
-#include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include <iostream>
 #include <string.h>//memcpy

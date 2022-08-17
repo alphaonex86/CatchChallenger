@@ -15,9 +15,8 @@
 #endif
 
 #include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 
 using namespace CatchChallenger;

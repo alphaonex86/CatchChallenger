@@ -1,5 +1,6 @@
 #include "CharactersGroup.hpp"
-#include "EpollServerLoginMaster.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "EpollClientLoginMaster.hpp"
 #include <iostream>
 #include <chrono>
 
@@ -276,7 +277,7 @@ CharactersGroup::InternalGameServer * CharactersGroup::addGameServerUniqueKey(Ep
                 else
                 {
                     //find the other game server and disconnect character on it
-                    if(Q_UNLIKELY(timeLock==0))
+                    if(timeLock==0)
                     {
                         auto j=gameServers.begin();
                         while(j!=gameServers.cend())

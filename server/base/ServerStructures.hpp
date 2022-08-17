@@ -12,12 +12,9 @@
 #include "../../general/base/CompressionProtocol.hpp"
 #endif
 #include "PlayerUpdaterBase.hpp"
-#include "TimeRangeEventScanBase.hpp"
-#include "StringWithReplacement.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/timer/PlayerUpdaterToMaster.hpp"
 #endif
-#include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "VariableServer.hpp"
 #include "../base/PreparedDBQuery.hpp"

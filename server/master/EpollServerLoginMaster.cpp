@@ -727,14 +727,16 @@ void EpollServerLoginMaster::doTheServerList()
         }
         #endif
         const EpollClientLoginMaster * const gameServerOnEpollClientLoginMaster=EpollClientLoginMaster::gameServers.at(serverListIndex);
-        const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(gameServerOnCharactersGroup==NULL)
+        if(gameServerOnEpollClientLoginMaster==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
             abort();
         }
-        if(gameServerOnEpollClientLoginMaster==NULL)
+        #endif
+        const CharactersGroup::InternalGameServer * const gameServerOnCharactersGroup=gameServerOnEpollClientLoginMaster->charactersGroupForGameServerInformation;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(gameServerOnCharactersGroup==NULL)
         {
             std::cerr << "charactersGroup==NULL (abort)" << std::endl;
             abort();

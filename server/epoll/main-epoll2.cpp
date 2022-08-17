@@ -3,6 +3,8 @@
 #include "../base/TinyXMLSettings.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "EpollServer.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
@@ -230,8 +232,8 @@ void send_settings(
     else
     {
         std::cerr << "unsupported database type" << std::endl;
-        abort();
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+        abort();
     }
     switch(formatedServerSettings.database_login.tryOpenType)
     {
@@ -295,8 +297,8 @@ void send_settings(
     else
     {
         std::cerr << "unsupported database type" << std::endl;
-                abort();
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Unknown;
+        abort();
     }
     switch(formatedServerSettings.database_base.tryOpenType)
     {
@@ -361,8 +363,8 @@ void send_settings(
     else
     {
         std::cerr << "unsupported database type" << std::endl;
-        abort();
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+        abort();
     }
     switch(formatedServerSettings.database_common.tryOpenType)
     {
@@ -419,8 +421,8 @@ void send_settings(
     else
     {
         std::cerr << "unsupported database type" << std::endl;
-        abort();
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Unknown;
+        abort();
     }
     switch(formatedServerSettings.database_server.tryOpenType)
     {
@@ -517,12 +519,12 @@ void send_settings(
                         {
                             GameServerSettings::ProgrammedEvent event;
                             event.value=settings->value("value");
-                            bool ok;
-                            event.cycle=stringtouint16(settings->value("cycle"),&ok);
-                            if(!ok)
+                            bool ok2;
+                            event.cycle=stringtouint16(settings->value("cycle"),&ok2);
+                            if(!ok2)
                                 event.cycle=0;
-                            event.offset=stringtouint16(settings->value("offset"),&ok);
-                            if(!ok)
+                            event.offset=stringtouint16(settings->value("offset"),&ok2);
+                            if(!ok2)
                                 event.offset=0;
                             if(event.cycle>0)
                                 formatedServerSettings.programmedEventList[type][groupName]=event;
@@ -538,39 +540,39 @@ void send_settings(
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
-        bool ok;
+        bool ok2;
         settings->beginGroup("master");
         master_host=settings->value("host");
-        master_port=stringtouint16(settings->value("port"),&ok);
-        if(master_port==0 || !ok)
+        master_port=stringtouint16(settings->value("port"),&ok2);
+        if(master_port==0 || !ok2)
         {
             std::cerr << "Master port not a number or 0:" << settings->value("port") << std::endl;
             abort();
         }
-        master_tryInterval=stringtouint8(settings->value("tryInterval"),&ok);
-        if(master_tryInterval<=0 || !ok)
+        master_tryInterval=stringtouint8(settings->value("tryInterval"),&ok2);
+        if(master_tryInterval<=0 || !ok2)
         {
-            std::cerr << "master_tryInterval<=0 || !ok (abort)" << std::endl;
+            std::cerr << "master_tryInterval<=0 || !ok2 (abort)" << std::endl;
             abort();
         }
         if(master_tryInterval>=60)
             std::cerr << "Take care: master_tryInterval>=60" << std::endl;
-        master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok);
-        if(!ok)
+        master_considerDownAfterNumberOfTry=stringtouint8(settings->value("considerDownAfterNumberOfTry"),&ok2);
+        if(!ok2)
         {
-            std::cerr << "considerDownAfterNumberOfTry==0 || !ok (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+            std::cerr << "considerDownAfterNumberOfTry==0 || !ok2 (abort) " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
             abort();
         }
         if(master_considerDownAfterNumberOfTry>=60)
             std::cerr << "Take care: master_considerDownAfterNumberOfTry>=60 " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-        LinkToMaster::maxLockAge=stringtouint16(settings->value("maxLockAge"),&ok);
-        if(LinkToMaster::maxLockAge<1 || LinkToMaster::maxLockAge>3600 || !ok)
+        LinkToMaster::maxLockAge=stringtouint16(settings->value("maxLockAge"),&ok2);
+        if(LinkToMaster::maxLockAge<1 || LinkToMaster::maxLockAge>3600 || !ok2)
         {
             std::cerr << "maxLockAge<1 || maxLockAge>3600 || not number (abort)" << std::endl;
             abort();
         }
-        LinkToMaster::purgeLockPeriod=stringtouint16(settings->value("purgeLockPeriod"),&ok);
-        if(LinkToMaster::purgeLockPeriod<1 || LinkToMaster::purgeLockPeriod>3600 || LinkToMaster::purgeLockPeriod>LinkToMaster::maxLockAge || !ok)
+        LinkToMaster::purgeLockPeriod=stringtouint16(settings->value("purgeLockPeriod"),&ok2);
+        if(LinkToMaster::purgeLockPeriod<1 || LinkToMaster::purgeLockPeriod>3600 || LinkToMaster::purgeLockPeriod>LinkToMaster::maxLockAge || !ok2)
         {
             std::cerr << "purgeLockPeriod<1 || purgeLockPeriod>3600 || purgeLockPeriod>maxLockAge || not number (abort)" << std::endl;
             abort();
@@ -606,14 +608,14 @@ void send_settings(
     const std::vector<std::string> &capture_time_string_list=stringsplit(settings->value("capture_time"),':');
     if(capture_time_string_list.size()==2)
     {
-        bool ok;
-        formatedServerSettings.city.capture.hour=stringtouint8(capture_time_string_list.front(),&ok);
-        if(!ok)
+        bool ok2;
+        formatedServerSettings.city.capture.hour=stringtouint8(capture_time_string_list.front(),&ok2);
+        if(!ok2)
             formatedServerSettings.city.capture.hour=0;
         else
         {
-            formatedServerSettings.city.capture.minute=stringtouint8(capture_time_string_list.back(),&ok);
-            if(!ok)
+            formatedServerSettings.city.capture.minute=stringtouint8(capture_time_string_list.back(),&ok2);
+            if(!ok2)
                 formatedServerSettings.city.capture.minute=0;
         }
     }

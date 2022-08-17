@@ -1,8 +1,11 @@
 #include "DatapackGeneralLoader.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif
+#include "../../general/tinyXML2/customtinyxml2.hpp"
 #include <iostream>
+#include <regex>
 
 using namespace CatchChallenger;
 

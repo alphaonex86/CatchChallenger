@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_MAP_SERVER_CRAFTING_H
 
 #include <map>
-#include "../../general/base/GeneralStructures.hpp"
+#include <cstdint>
 
 namespace CatchChallenger {
 

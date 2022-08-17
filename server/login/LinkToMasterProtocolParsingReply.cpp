@@ -3,6 +3,7 @@
 #include "EpollServerLoginSlave.hpp"
 #include "EpollClientLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include "VariableLoginServer.hpp"
 #include "LinkToGameServer.hpp"

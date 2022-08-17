@@ -34,6 +34,7 @@ LinkToGameServer::LinkToGameServer(
         queryIdToReconnect(0),
         socketFd(infd)
 {
+    memset(&tokenForGameServer,0,sizeof(tokenForGameServer));
     flags|=0x08;
     lastActivity=LinkToGameServer::msFrom1970();
 }

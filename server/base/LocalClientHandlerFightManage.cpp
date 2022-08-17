@@ -1,9 +1,5 @@
 #include "Client.hpp"
 
-#include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "PreparedDBQuery.hpp"
-#include "GlobalServerData.hpp"
 #include "MapServer.hpp"
 
 using namespace CatchChallenger;

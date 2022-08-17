@@ -1,14 +1,16 @@
 #ifndef PATHFINDING_H
 #define PATHFINDING_H
 
+#include "MapVisualiserOrder.hpp"
 #ifndef NOTHREADS
 #include <QThread>
 #else
 #include <QObject>
 #endif
 #include <QMutex>
+#include <unordered_map>
+#include <string>
 #include "../../general/base/GeneralStructures.hpp"
-#include "MapVisualiserThread.hpp"
 
 class PathFinding
         #ifndef NOTHREADS

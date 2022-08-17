@@ -1,6 +1,8 @@
 #include "FightLoader.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif

@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "GeneralStructures.hpp"
+#include "cpp11addition.hpp"
 #include "lib.h"
 
 namespace CatchChallenger {

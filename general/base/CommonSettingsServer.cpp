@@ -4,6 +4,7 @@ CommonSettingsServer CommonSettingsServer::commonSettingsServer;
 
 CommonSettingsServer::CommonSettingsServer()
 {
+    everyBodyIsRoot=false;
     forcedSpeed=0;
     useSP=false;
     autoLearn=false;

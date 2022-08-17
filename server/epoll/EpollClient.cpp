@@ -13,8 +13,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "Epoll.hpp"
-#include "EpollSocket.hpp"
-#include "../../general/base/GeneralVariable.hpp"
 
 using namespace CatchChallenger;
 
