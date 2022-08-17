@@ -2,7 +2,6 @@
 #define LOGINLINKTOLOGIN_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../../server/base/TinyXMLSettings.hpp"
 #include "../../server/epoll/EpollClient.hpp"
 #include <vector>
 #include <random>

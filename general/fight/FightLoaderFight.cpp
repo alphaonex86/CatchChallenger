@@ -4,6 +4,7 @@
 #endif
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

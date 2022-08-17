@@ -4,9 +4,6 @@
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include <vector>
 #include <regex>
-#include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "VariableServer.hpp"
 #include "DatabaseBase.hpp"
 
 namespace CatchChallenger {

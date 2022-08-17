@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_MAP_SERVER_MAPVISIBILITY_SIMPLE_STOREONSENDER_H
 
 #include "../MapServer.hpp"
-#include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 
 #include <vector>
 

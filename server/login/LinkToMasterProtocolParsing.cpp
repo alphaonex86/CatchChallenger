@@ -1,11 +1,4 @@
 #include "LinkToMaster.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
-#include "EpollClientLoginSlave.hpp"
-#include "CharactersGroupForLogin.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
-#include "../epoll/EpollSocket.hpp"
-#include "VariableLoginServer.hpp"
 
 #include <iostream>
 

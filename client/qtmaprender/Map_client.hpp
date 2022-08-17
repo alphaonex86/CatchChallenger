@@ -4,7 +4,6 @@
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralStructuresXml.hpp"
-#include "../../general/base/GeneralVariable.hpp"
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
 
 #include <QString>

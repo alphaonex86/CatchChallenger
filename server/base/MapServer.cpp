@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "VariableServer.hpp"
 #include "Client.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
 
@@ -15,6 +16,14 @@ MapServer::MapServer() :
     reverse_db_id(0),
     zone(65535)
 {
+    border.bottom.x_offset=0;
+    border.bottom.map=nullptr;
+    border.top.x_offset=0;
+    border.top.map=nullptr;
+    border.right.y_offset=0;
+    border.right.map=nullptr;
+    border.left.y_offset=0;
+    border.left.map=nullptr;
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }
 

@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"

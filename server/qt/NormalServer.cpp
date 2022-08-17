@@ -1,6 +1,6 @@
 #include "NormalServer.hpp"
 #include "../base/GlobalServerData.hpp"
-#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include <QSslSocket>
 #include <QTcpSocket>
 #include <QNetworkProxy>

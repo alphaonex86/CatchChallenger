@@ -7,8 +7,7 @@
 #include "../base/BaseServerLogin.hpp"
 #include "../base/PreparedStatementUnit.hpp"
 #include "../base/TinyXMLSettings.hpp"
-#include "../base/StringWithReplacement.hpp"
-#include "EpollClientLoginSlave.hpp"
+#include "../../general/base/GeneralType.hpp"
 
 #include <string>
 #include <vector>

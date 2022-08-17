@@ -1,5 +1,4 @@
 #include "FacilityLibGeneral.hpp"
-#include "PortableEndian.hpp"
 #include "GeneralVariable.hpp"
 
 #include <cstring>

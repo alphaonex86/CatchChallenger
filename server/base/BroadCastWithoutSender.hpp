@@ -1,8 +1,7 @@
 #ifndef CATCHCHALLENGER_BROADCASTWITHOUTSENDER_H
 #define CATCHCHALLENGER_BROADCASTWITHOUTSENDER_H
 
-#include "../../general/base/GeneralStructures.hpp"
-#include "ServerStructures.hpp"
+#include <cstdint>
 
 namespace CatchChallenger {
 class BroadCastWithoutSender

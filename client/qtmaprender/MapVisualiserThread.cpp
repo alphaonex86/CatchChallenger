@@ -1,11 +1,13 @@
 #include "MapVisualiserThread.hpp"
 #include "MapItem.hpp"
-#include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/Map_loader.hpp"
 #include "../../../general/tinyXML2/tinyxml2.hpp"
 #include "../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../tiled/tiled_mapobject.hpp"
+#include "../tiled/tiled_isometricrenderer.hpp"
+#include "../tiled/tiled_orthogonalrenderer.hpp"
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../libcatchchallenger/ClientVariable.hpp"

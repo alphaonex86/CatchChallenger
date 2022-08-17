@@ -4,12 +4,10 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../../general/base/GeneralType.hpp"
 
 #include <iostream>
+#include <regex>
 
 #if ! defined (ONLYMAPRENDER)
 

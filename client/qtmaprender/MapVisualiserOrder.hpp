@@ -6,21 +6,12 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#include "../tiled/tiled_isometricrenderer.hpp"
 #include "../tiled/tiled_map.hpp"
+#include "../tiled/tiled_maprenderer.hpp"
 #include "../tiled/tiled_mapobject.hpp"
-#include "../tiled/tiled_mapreader.hpp"
 #include "../tiled/tiled_objectgroup.hpp"
-#include "../tiled/tiled_orthogonalrenderer.hpp"
-#include "../tiled/tiled_tilelayer.hpp"
-#include "../tiled/tiled_tileset.hpp"
 #include "../tiled/tiled_tile.hpp"
 
-#include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/CommonMap.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "../libqtcatchchallenger/DisplayStructures.hpp"
-#include "../../general/base/Map_loader.hpp"
 #include "MapDoor.hpp"
 #include "Map_client.hpp"
 #include "TriggerAnimation.hpp"

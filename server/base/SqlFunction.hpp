@@ -1,9 +1,11 @@
 #ifndef CATCHCHALLENGER_SQLFUNCTION_H
 #define CATCHCHALLENGER_SQLFUNCTION_H
 
+#ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #include <string>
 #include "DatabaseBase.hpp"
 #include "VariableServer.hpp"
+#endif
 
 namespace CatchChallenger {
 class SqlFunction

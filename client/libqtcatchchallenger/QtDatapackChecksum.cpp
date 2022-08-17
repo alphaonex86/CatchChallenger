@@ -12,11 +12,6 @@
 #include <openssl/sha.h>
 #endif
 
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
-
 using namespace CatchChallenger;
 
 #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)

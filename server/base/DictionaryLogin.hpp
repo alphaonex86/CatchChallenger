@@ -2,8 +2,7 @@
 #define CATCHCHALLENGER_DictionaryLogin_H
 
 #include <vector>
-#include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/GeneralVariable.hpp"
+#include <cstdint>
 
 namespace CatchChallenger {
 class DictionaryLogin

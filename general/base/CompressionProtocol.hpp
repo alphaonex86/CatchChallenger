@@ -2,7 +2,6 @@
 #ifndef COMPRESSIONPROTOCOL_H
 #define COMPRESSIONPROTOCOL_H
 
-#include "GeneralStructures.hpp"
 #include "lib.h"
 
 #include <cstdint>

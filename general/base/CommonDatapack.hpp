@@ -5,7 +5,6 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
-#include "GeneralVariable.hpp"
 #include "../tinyXML2/tinyxml2.hpp"
 #include "lib.h"
 

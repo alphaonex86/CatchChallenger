@@ -1,5 +1,6 @@
 #include "EpollClientLoginSlave.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/xxhash/xxhash.h"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"

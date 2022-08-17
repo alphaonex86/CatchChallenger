@@ -1,6 +1,7 @@
 #include "PlayerUpdaterBase.hpp"
 #include "GlobalServerData.hpp"
 #include "Client.hpp"
+#include "BroadCastWithoutSender.hpp"
 
 using namespace CatchChallenger;
 

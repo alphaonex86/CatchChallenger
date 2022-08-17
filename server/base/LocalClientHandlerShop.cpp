@@ -1,8 +1,7 @@
 #include "Client.hpp"
 #include "MapServer.hpp"
-#include "GlobalServerData.hpp"
-#include "PreparedDBQuery.hpp"
-#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 
 using namespace CatchChallenger;
 

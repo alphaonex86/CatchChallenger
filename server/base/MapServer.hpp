@@ -1,9 +1,11 @@
 #ifndef CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVERMAP_H
 #define CATCHCHALLENGER_MAP_VISIBILITY_SIMPLE_SERVERMAP_H
 
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include "../../general/hps/hps.h"
+#endif
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/hps/hps.h"
 #include "../crafting/MapServerCrafting.hpp"
 #include "VariableServer.hpp"
 #include "GlobalServerData.hpp"

@@ -4,4 +4,6 @@ ServerPrivateVariablesEpoll ServerPrivateVariablesEpoll::serverPrivateVariablesE
 
 ServerPrivateVariablesEpoll::ServerPrivateVariablesEpoll()
 {
+    timer_to_send_insert_move_remove = nullptr;
+    nextTimeStampsToCaptureCity=0;
 }

@@ -1,6 +1,5 @@
 #include "ProtocolParsing.hpp"
 #include "GeneralVariable.hpp"
-#include "GeneralStructures.hpp"
 #include "ProtocolParsingCheck.hpp"
 #include <iostream>
 #include <cstring>

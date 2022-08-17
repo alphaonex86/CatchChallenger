@@ -1,15 +1,13 @@
 #include "../base/BaseServer.hpp"
+#include "../base/GlobalServerData.hpp"
+#include "../base/DatabaseFunction.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/CommonMap.hpp"
-#include "../../general/fight/FightLoader.hpp"
-#include "../../general/tinyXML2/tinyxml2.hpp"
-#include "../base/GlobalServerData.hpp"
-#include "../base/VariableServer.hpp"
-#include "../base/DatabaseFunction.hpp"
+#include "../../general/base/DatapackGeneralLoader.hpp"
 
 #include <string>
 #include <vector>
+#include <iostream>
 
 using namespace CatchChallenger;
 
@@ -53,7 +51,7 @@ void BaseServer::load_sql_monsters_max_id()
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         abort();//stop because can't do the first db access
-        load_clan_max_id();
+        //load_clan_max_id();->abort
     }
     return;
 }

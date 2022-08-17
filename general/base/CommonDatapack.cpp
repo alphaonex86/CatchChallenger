@@ -1,9 +1,10 @@
 #include "CommonDatapack.hpp"
-#include "CommonSettingsServer.hpp"
 #include "GeneralVariable.hpp"
-#include "FacilityLib.hpp"
 #include "../fight/FightLoader.hpp"
 #include "DatapackGeneralLoader.hpp"
+#ifndef CATCHCHALLENGER_CLASS_MASTER
+#include "CommonSettingsServer.hpp"
+#endif
 
 #include <iostream>
 #include <vector>
@@ -14,6 +15,10 @@ CommonDatapack CommonDatapack::commonDatapack;
 
 CommonDatapack::CommonDatapack()
 {
+    #ifndef CATCHCHALLENGER_CLASS_MASTER
+    items.itemMaxId=0;
+    layersOptions.zoom=0;
+    #endif
     isParsed=false;
     parsing=false;
     #ifndef CATCHCHALLENGER_CLASS_MASTER

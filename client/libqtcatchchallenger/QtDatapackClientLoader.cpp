@@ -1,15 +1,9 @@
 #include "QtDatapackClientLoader.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/DatapackGeneralLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/DatapackGeneralLoader.hpp"
-#include "../../../general/base/Map_loader.hpp"
-#include "QtDatapackChecksum.hpp"
+#include "../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../tiled/tiled_tileset.hpp"
 #include "../tiled/tiled_mapreader.hpp"
 #include "Settings.hpp"
@@ -83,7 +77,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
     if(hash.size()!=28)
     {
         Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(datapackPath));
-        hash.empty();
+        hash.clear();
     }
     #ifdef CATCHCHALLENGER_CACHE_HPS
     this->language=Language::language.getLanguage().toStdString();

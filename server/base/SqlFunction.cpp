@@ -1,10 +1,9 @@
-#include "SqlFunction.hpp"
-#include "../../general/base/cpp11addition.hpp"
-
-using namespace CatchChallenger;
-
 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
 #else
+#include "SqlFunction.hpp"
+#include "../../general/base/cpp11addition.hpp"
+using namespace CatchChallenger;
+
 std::string SqlFunction::text_antislash="\\";
 std::string SqlFunction::text_double_antislash="\\\\";
 std::string SqlFunction::text_antislash_quote="\"";

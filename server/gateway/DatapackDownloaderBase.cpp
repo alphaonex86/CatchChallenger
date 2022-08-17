@@ -17,7 +17,6 @@ using namespace CatchChallenger;
 #include <arpa/inet.h>
 
 #include "../../general/libzstd/lib/zstd.h"
-#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
@@ -46,6 +45,8 @@ std::unordered_map<CURL *,void *> DatapackDownloaderBase::curlPrivateData;
 DatapackDownloaderBase::DatapackDownloaderBase(const std::string &mDatapackBase) :
     mDatapackBase(mDatapackBase)
 {
+    numberOfFileWritten=0;
+    httpError=false;
     httpModeBase=false;
     datapackTarBase=false;
     index_mirror_base=0;

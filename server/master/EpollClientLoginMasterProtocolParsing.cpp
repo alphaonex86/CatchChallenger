@@ -1,6 +1,7 @@
 #include "EpollClientLoginMaster.hpp"
 #include "EpollServerLoginMaster.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 
 #include <iostream>
@@ -990,12 +991,14 @@ bool EpollClientLoginMaster::parseReplyData(const uint8_t &mainCodeType,const ui
                     secondServerInConflict.clear();
                 }
 
+                if(charactersGroupForGameServerInformation==NULL)
+                    abort();
                 if(!charactersGroupForGameServerInformation->addSend)
                 {
                     haveChange=true;
                     CharactersGroup::InternalGameServer tempData;
-                    if(charactersGroupForGameServerInformation==NULL)
-                        abort();
+                    /*if(charactersGroupForGameServerInformation==NULL)
+                        abort();*/
                     tempData=*charactersGroupForGameServerInformation;
                     charactersGroupForGameServerInformation=charactersGroupForGameServer->addGameServerUniqueKey(
                                 this,uniqueKey,tempData.host,tempData.port,tempData.metaData,tempData.logicalGroupIndex,tempData.currentPlayer,tempData.maxPlayer,tempData.lockedAccountByGameserver);

@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#include "cpp11addition.hpp"
 #include "GeneralType.hpp"
 
 #if defined(CATCHCHALLENGER_CLIENT)

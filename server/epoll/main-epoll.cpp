@@ -6,8 +6,8 @@
 #include "../base/ServerStructures.hpp"
 #include "../base/TinyXMLSettings.hpp"
 #include "../base/GlobalServerData.hpp"
-#include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "EpollServer.hpp"
 #include "Epoll.hpp"
@@ -30,7 +30,6 @@
 #include "timer/TimerPositionSync.hpp"
 #include "timer/TimerSendInsertMoveRemove.hpp"
 #include "timer/PlayerUpdaterEpoll.hpp"
-#include "timer/TimeRangeEventScan.hpp"
 
 #define MAXEVENTS 512
 
@@ -676,11 +675,11 @@ int main(int argc, char *argv[])
                             //just for informations
                             {
                                 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-                                const int &s = getnameinfo(&in_addr, in_len,
+                                const int &s2 = getnameinfo(&in_addr, in_len,
                                 hbuf, sizeof hbuf,
                                 sbuf, sizeof sbuf,
                                 NI_NUMERICHOST | NI_NUMERICSERV);
-                                if(s == 0)
+                                if(s2 == 0)
                                 {
                                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                                     //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
@@ -700,9 +699,9 @@ int main(int argc, char *argv[])
                             epoll_event event;
                             memset(&event,0,sizeof(event));
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLET | EPOLLOUT;
-                            const int s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
-                            if(s == -1)
+                            event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLOUT;
+                            const int s2 = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
+                            if(s2 == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
                                 switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)

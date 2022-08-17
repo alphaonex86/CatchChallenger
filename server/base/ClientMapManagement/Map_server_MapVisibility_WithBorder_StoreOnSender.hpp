@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_MAP_SERVER_MAPVISIBILITY_WITHBORDER_STOREONSENDER_H
 
 #include "../MapServer.hpp"
-#include "MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
 
 #include <set>
 #include <vector>

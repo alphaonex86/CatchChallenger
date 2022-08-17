@@ -1,11 +1,5 @@
-#include "../tiled/tiled_isometricrenderer.hpp"
-#include "../tiled/tiled_map.hpp"
 #include "../tiled/tiled_mapobject.hpp"
-#include "../tiled/tiled_mapreader.hpp"
 #include "../tiled/tiled_objectgroup.hpp"
-#include "../tiled/tiled_orthogonalrenderer.hpp"
-#include "../tiled/tiled_tilelayer.hpp"
-#include "../tiled/tiled_tileset.hpp"
 
 #ifndef OBJECTGROUPITEM_H
 #define OBJECTGROUPITEM_H

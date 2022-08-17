@@ -5,7 +5,9 @@
 #include "../base/BaseServerLogin.hpp"
 #include <iostream>
 #include <chrono>
+#include <string.h>
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include "VariableLoginServer.hpp"
 
@@ -390,11 +392,11 @@ void EpollClientLoginSlave::askLogin_cancel()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
     #endif
+    loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     delete askLoginParam;
     askLoginParam=NULL;
 }

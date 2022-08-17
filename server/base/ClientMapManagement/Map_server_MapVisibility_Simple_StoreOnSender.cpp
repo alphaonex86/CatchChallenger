@@ -1,5 +1,7 @@
 #include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
+#include "../Client.hpp"
 
 /// \todo optimise: preserialize, filter streaming to send + filter
 
@@ -37,7 +39,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         unsigned int index=0;
         while(index<clients.size())
         {
-            Client * const client=clients.at(index);
+            MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients[index];
             //clientdropAllClients();
             client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
             index++;

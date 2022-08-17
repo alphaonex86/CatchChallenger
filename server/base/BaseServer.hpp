@@ -6,15 +6,14 @@
 #include <regex>
 #include <atomic>
 
-#include "../../general/base/Map_loader.hpp"
-#include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/lib.h"
+#include "../../general/base/Map_loader.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
 #endif
 #include "ServerStructures.hpp"
-#include "MapServer.hpp"
 #include "BaseServerMasterLoadDictionary.hpp"
 #include "BaseServerMasterSendDatapack.hpp"
 #include "BaseServerLogin.hpp"

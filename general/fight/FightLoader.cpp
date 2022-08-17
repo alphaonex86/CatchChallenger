@@ -2,6 +2,7 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif
+#include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

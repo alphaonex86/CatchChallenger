@@ -7,7 +7,6 @@
 
 #include "ClientStructures.hpp"
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/GeneralVariable.hpp"
 #if ! defined (ONLYMAPRENDER)
 #include "../../general/base/ProtocolParsing.hpp"
 #endif

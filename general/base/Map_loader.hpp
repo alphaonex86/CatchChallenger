@@ -6,7 +6,6 @@
 
 #include "GeneralStructures.hpp"
 #include "GeneralStructuresXml.hpp"
-#include "CommonMap.hpp"
 #include "lib.h"
 
 #ifdef CATCHCHALLENGER_CLASS_GATEWAY

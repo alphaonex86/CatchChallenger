@@ -43,6 +43,7 @@ EpollPostgresql::EpollPostgresql() :
     result(NULL),
     started(false)
 {
+    memset(strCoPG,0,sizeof(strCoPG));
     emptyCallback.object=NULL;
     emptyCallback.method=NULL;
     databaseTypeVar=DatabaseBase::DatabaseType::PostgreSQL;

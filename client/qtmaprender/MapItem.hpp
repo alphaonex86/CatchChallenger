@@ -1,16 +1,9 @@
 #include "MapObjectItem.hpp"
+#include "MapVisualiserOrder.hpp"
 #include "ObjectGroupItem.hpp"
 #include "TileLayerItem.hpp"
-
-#include "../tiled/tiled_isometricrenderer.hpp"
 #include "../tiled/tiled_map.hpp"
-#include "../tiled/tiled_mapobject.hpp"
-#include "../tiled/tiled_mapreader.hpp"
-#include "../tiled/tiled_objectgroup.hpp"
-#include "../tiled/tiled_orthogonalrenderer.hpp"
-#include "../tiled/tiled_tilelayer.hpp"
-#include "../tiled/tiled_tileset.hpp"
-#include "MapVisualiserThread.hpp"
+#include "../libcatchchallenger/ClientStructures.hpp"
 
 #ifndef MAPITEM_H
 #define MAPITEM_H
@@ -30,8 +23,6 @@
 #include <QGraphicsObject>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "../libcatchchallenger/ClientStructures.hpp"
 
 class MapItem : public QGraphicsObject
 {

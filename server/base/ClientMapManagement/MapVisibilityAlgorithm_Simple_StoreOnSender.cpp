@@ -1,5 +1,4 @@
 #include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
-#include "MapVisibilityAlgorithm_WithoutSender.hpp"
 #include "../GlobalServerData.hpp"
 #include "../VariableServer.hpp"
 

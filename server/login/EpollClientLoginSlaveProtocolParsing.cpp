@@ -2,6 +2,7 @@
 #include "LinkToGameServer.hpp"
 #include "../base/BaseServerLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 

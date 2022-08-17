@@ -3,10 +3,9 @@
 
 #include <vector>
 #include <regex>
-#include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "VariableServer.hpp"
-#include "DatabaseBase.hpp"
+#include <unordered_map>
+#include <unordered_set>
+#include <string>
 
 namespace CatchChallenger {
 class BaseServerMasterSendDatapack
