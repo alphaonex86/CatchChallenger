@@ -1,8 +1,6 @@
 #ifndef SERVERSSL
 
 #include "EpollServer.hpp"
-#include "EpollSocket.hpp"
-#include "Epoll.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #include "db/EpollPostgresql.hpp"
 #endif

@@ -11,7 +11,6 @@ using namespace CatchChallenger;
 #include <chrono>
 #include <utime.h>
 
-#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"

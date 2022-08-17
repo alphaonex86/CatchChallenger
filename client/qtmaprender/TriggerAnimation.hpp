@@ -6,7 +6,6 @@
 
 #include "../tiled/tiled_mapobject.hpp"
 #include "../tiled/tiled_tile.hpp"
-#include "../tiled/tiled_tileset.hpp"
 
 class TriggerAnimation : public QObject
 {

@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "../ServerStructures.hpp"
-#include "../VariableServer.hpp"
 #include "MapBasicMove.hpp"
 
 namespace CatchChallenger {

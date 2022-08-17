@@ -6,9 +6,6 @@ using namespace CatchChallenger;
 #include <cmath>
 #include <regex>
 
-#include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
-#include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollClientLoginSlave.hpp"
@@ -30,6 +27,11 @@ DatapackDownloaderMainSub::DatapackDownloaderMainSub(const std::string &mDatapac
     mainDatapackCode(mainDatapackCode),
     subDatapackCode(subDatapackCode)
 {
+    numberOfFileWrittenMain=0;
+    numberOfFileWrittenSub=0;
+    httpError=false;
+    httpModeMain=false;
+    httpModeSub=false;
     datapackStatus=DatapackStatus::Main;
     datapackTarMain=false;
     datapackTarSub=false;

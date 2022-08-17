@@ -1,5 +1,6 @@
 #include "EpollClientLoginSlave.hpp"
 #include "EpollServerLoginSlave.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 #include <string>

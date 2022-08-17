@@ -12,6 +12,7 @@ CharactersGroupForLogin::CharactersGroupForLogin(const char * const db,const cha
     maxMonsterIdRequested(false),
     databaseBaseCommon(new EpollPostgresql())
 {
+    charactersGroupIndex=0;
     databaseBaseCommon->considerDownAfterNumberOfTry=considerDownAfterNumberOfTry;
     databaseBaseCommon->tryInterval=tryInterval;
     if(!databaseBaseCommon->syncConnect(host,db,login,pass))

@@ -1,11 +1,5 @@
 #include "../base/Client.hpp"
-#include "../base/PreparedDBQuery.hpp"
-#include "../base/GlobalServerData.hpp"
 
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../base/DatabaseFunction.hpp"
 
 using namespace CatchChallenger;
 

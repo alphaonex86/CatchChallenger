@@ -3,14 +3,13 @@
 #include "DictionaryLogin.hpp"
 #include "StaticText.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.hpp"
 #endif
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 #include "SqlFunction.hpp"
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/sha224/sha224.hpp"
-#include "SqlFunction.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

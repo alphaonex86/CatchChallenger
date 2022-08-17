@@ -2,13 +2,11 @@
 #include "EpollClientLoginSlave.hpp"
 #include <iostream>
 #include "EpollServerLoginSlave.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CompressionProtocol.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
-#include "../epoll/Epoll.hpp"
 #include <netinet/tcp.h>
 
 using namespace CatchChallenger;
@@ -1218,6 +1216,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
     {
         //ERROR connecting to game server server on: cc-server-test.portable-datacenter.first-world.info:22768: Name or service not known
         errorParsingLayer("client==NULL, maybe unable connect to game server");
+        disconnectClient();
         return false;
         std::cerr << "client==NULL can't be at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();

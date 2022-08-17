@@ -3,6 +3,8 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif
+#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 

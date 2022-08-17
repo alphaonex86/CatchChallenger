@@ -1,7 +1,6 @@
 #ifndef CATCHCHALLENGER_BASESERVERLOGIN_H
 #define CATCHCHALLENGER_BASESERVERLOGIN_H
 
-#include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "VariableServer.hpp"
 #include "DatabaseBase.hpp"

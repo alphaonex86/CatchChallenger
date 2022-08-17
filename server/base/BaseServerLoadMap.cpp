@@ -4,11 +4,10 @@
 
 #include <chrono>
 
-#include "ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
-#include "ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
-#include "ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
 
 using namespace CatchChallenger;
 

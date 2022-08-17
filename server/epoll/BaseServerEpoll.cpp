@@ -1,5 +1,6 @@
 #include "BaseServerEpoll.hpp"
 #include "ServerPrivateVariablesEpoll.hpp"
+#include "../base/GlobalServerData.hpp"
 
 BaseServerEpoll::BaseServerEpoll()
 {
