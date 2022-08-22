@@ -4,6 +4,7 @@
 #include "GameServerVariables.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include <vector>
+#include <cstring>
 
 using namespace CatchChallenger;
 

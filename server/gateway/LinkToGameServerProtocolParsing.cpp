@@ -8,6 +8,7 @@
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 #include <netinet/tcp.h>
+#include <cstring>
 
 using namespace CatchChallenger;
 

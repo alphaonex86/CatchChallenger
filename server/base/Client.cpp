@@ -11,6 +11,7 @@
 #include "BaseServerLogin.hpp"
 
 #include <chrono>
+#include <cstring>
 
 using namespace CatchChallenger;
 

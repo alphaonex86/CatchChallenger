@@ -8,6 +8,7 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #endif
+#include <cstring>
 
 using namespace CatchChallenger;
 

@@ -18,6 +18,7 @@
 #include <fstream>
 #include <unistd.h>
 #endif
+#include <cstring>
 
 #if ! defined (ONLYMAPRENDER)
 
