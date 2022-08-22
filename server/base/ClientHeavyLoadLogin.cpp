@@ -9,6 +9,7 @@
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/sha224/sha224.hpp"
+#include <cstring>
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
