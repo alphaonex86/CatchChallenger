@@ -4,6 +4,7 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include <sys/stat.h>
+#include <cstring>
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

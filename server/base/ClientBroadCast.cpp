@@ -9,6 +9,7 @@
 #endif
 #endif
 #include "GameServerVariables.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

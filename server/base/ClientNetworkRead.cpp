@@ -3,6 +3,7 @@
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.hpp"
 #endif
+#include <cstring>
 
 using namespace CatchChallenger;
 
