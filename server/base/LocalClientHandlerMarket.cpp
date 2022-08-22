@@ -4,6 +4,7 @@
 #include "PreparedDBQuery.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

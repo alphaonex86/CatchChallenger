@@ -3,6 +3,7 @@
 #include "../../general/base/FacilityLib.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #include "GlobalServerData.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

@@ -5,6 +5,7 @@
 #include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
+#include <cstring>
 
 using namespace CatchChallenger;
 

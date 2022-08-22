@@ -3,6 +3,7 @@
 #include "GlobalServerData.hpp"
 #include "StaticText.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 
