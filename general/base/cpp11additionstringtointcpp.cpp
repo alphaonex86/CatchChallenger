@@ -1,6 +1,10 @@
 #include "cpp11addition.hpp"
+#include "GeneralVariable.hpp"
 #include <cstdio>
 #include <stdexcept>
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#include <iostream>
+#endif
 
 /// \todo, check number validity by http://en.cppreference.com/w/c/string/byte/strtol
 /* to check: bool my_strtol(const std::string &str, long &v) {
