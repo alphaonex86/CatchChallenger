@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <string>
 #include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 class PathFinding
         #ifndef NOTHREADS
@@ -92,6 +93,7 @@ private:
     std::vector<Map_full> mapList;
 public:
     static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y);
+    static bool canMove(const CatchChallenger::Orientation &orientation, std::string &current_map, uint8_t &x, uint8_t &y, const std::unordered_map<std::string, SimplifiedMapForPathFinding> &simplifiedMapList);
 };
 
 #endif // PATHFINDING_H
