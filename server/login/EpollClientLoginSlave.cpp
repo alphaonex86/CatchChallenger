@@ -41,6 +41,7 @@ EpollClientLoginSlave::EpollClientLoginSlave(
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
+    //std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ")" << std::endl;
     if(stat!=EpollClientLoginStat::LoggedStatClient)
     {
         unsigned int index=0;
@@ -139,6 +140,7 @@ uint64_t EpollClientLoginSlave::get_lastActivity() const
 
 bool EpollClientLoginSlave::disconnectClient()
 {
+    //std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
     if(linkToGameServer!=NULL)
     {
         linkToGameServer->closeSocket();
