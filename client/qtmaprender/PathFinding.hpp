@@ -32,7 +32,7 @@ public slots:
     void searchPath(const std::unordered_map<std::string, Map_full *> &all_map,const std::string &destination_map,
                     const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,
                     const std::unordered_map<uint16_t,uint32_t> &items);
-    void internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items);
+    void internalSearchPath(const std::string &destination_map, const uint8_t &destination_x, const uint8_t &destination_y, const std::string &source_map, const uint8_t &source_x, const uint8_t &source_y, const std::unordered_map<uint16_t,uint32_t> &items);
     void cancel();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     static void extraControlOnData(const std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > &controlVar,const CatchChallenger::Orientation &orientation);

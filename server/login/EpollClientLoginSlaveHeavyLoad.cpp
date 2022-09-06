@@ -6,6 +6,10 @@
 #include <iostream>
 #include <chrono>
 #include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
@@ -157,6 +161,31 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
+
+        {
+            struct sockaddr_in addr;
+            socklen_t addr_size = sizeof(struct sockaddr_in);
+            int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
+            if(res==0)
+            {
+                char str[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+                std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
+            }
+            else
+            {
+                struct sockaddr_in6 addr;
+                socklen_t addr_size = sizeof(struct sockaddr_in6);
+                int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
+                if(res==0)
+                {
+                    char str[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, &(addr.sin6_addr), str, INET6_ADDRSTRLEN);
+                    std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
+                }
+            }
+        }
+
 
         stat=EpollClientLoginStat::LoggedStatClient;
         //flags|=0x08;->just listen
