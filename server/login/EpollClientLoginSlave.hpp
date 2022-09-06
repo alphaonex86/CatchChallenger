@@ -142,6 +142,7 @@ public:
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
     static std::vector<EpollClientLoginSlave *> stat_client_list;
+    static std::vector<EpollClientLoginSlave *> client_list;
 
     /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave(), login server mode: 0x01 reconnect, 0x02 proxy
         [0x01]: 8Bits: serverListSize
@@ -257,7 +258,6 @@ private:
     unsigned int serverListForReplyRawDataSize;
 
     uint8_t serverListForReplyInSuspend;
-    static std::vector<EpollClientLoginSlave *> client_list;
 
     DdosBuffer<uint8_t,3> movePacketKick;
     DdosBuffer<uint8_t,3> chatPacketKick;
