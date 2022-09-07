@@ -2283,7 +2283,7 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
     return false;
 }
 
-void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &pathList,const std::string &current_map,const uint8_t &x,const uint8_t &y,
+void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &pathList, const std::string &current_map, const uint8_t &x, const uint8_t &y,
                                                     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path)
 {
     if(keyAccepted.empty() || keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend())

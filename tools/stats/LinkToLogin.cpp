@@ -86,7 +86,7 @@ bool LinkToLogin::tryConnect(const char * const host, const uint16_t &port,const
     LinkToLogin::port=port;
     if(infd!=-1)
     {
-        std::cout << "close fd: " << infd << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cout << "close fd: " << infd << " " << __FILE__ << ":" << __LINE__ << std::endl;
         ::close(infd);
     }
     infd=-1;
