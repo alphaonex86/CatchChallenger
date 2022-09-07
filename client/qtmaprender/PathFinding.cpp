@@ -427,7 +427,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.left.size()>nearPathToGo.left.size())
+                                if(pathToGo.left.empty() || pathToGo.left.size()>nearPathToGo.left.size())
                                 {
                                     pathToGo.left=nearPathToGo.left;
                                     pathToGo.left.back().second++;
@@ -492,7 +492,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.right.size()>nearPathToGo.right.size())
+                                if(pathToGo.right.empty() || pathToGo.right.size()>nearPathToGo.right.size())
                                 {
                                     pathToGo.right=nearPathToGo.right;
                                     pathToGo.right.back().second++;
@@ -557,7 +557,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.top.size()>nearPathToGo.top.size())
+                                if(pathToGo.top.empty() || pathToGo.top.size()>nearPathToGo.top.size())
                                 {
                                     pathToGo.top=nearPathToGo.top;
                                     pathToGo.top.back().second++;
@@ -622,7 +622,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                             if(newMapObject.pathToGo.find(coord)!=newMapObject.pathToGo.cend())
                             {
                                 const SimplifiedMapForPathFinding::PathToGo &nearPathToGo=newMapObject.pathToGo.at(coord);
-                                if(pathToGo.bottom.size()>nearPathToGo.bottom.size())
+                                if(pathToGo.bottom.empty() || pathToGo.bottom.size()>nearPathToGo.bottom.size())
                                 {
                                     pathToGo.bottom=nearPathToGo.bottom;
                                     pathToGo.bottom.back().second++;
