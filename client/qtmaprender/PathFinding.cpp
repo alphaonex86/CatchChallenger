@@ -15,6 +15,7 @@ PathFinding::PathFinding() :
         abort();
     if(!connect(this,&PathFinding::emitSearchPath,this,&PathFinding::internalSearchPath,Qt::QueuedConnection))
         abort();
+    qRegisterMetaType<PathFinding::PathFinding_status >("PathFinding::PathFinding_status");
 }
 
 PathFinding::~PathFinding()
@@ -40,7 +41,7 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
     if(all_map.find(current_map)==all_map.cend())
     {
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
-        emit result(std::string(),0,0,path);
+        emit result(std::string(),0,0,path,PathFinding_status_InternalError);
         std::cerr << "searchPath(): all_map.find(current_map)==all_map.cend()" << std::endl;
         return;
     }
@@ -341,7 +342,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
     if(simplifiedMapList.find(source_map)==simplifiedMapList.cend())
     {
         tryCancel=false;
-        emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >());
+        emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_InternalError);
         std::cerr << "bug: simplifiedMapList.find(current_map)==simplifiedMapList.cend()" << std::endl;
         return;
     }
@@ -379,7 +380,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
             {
                 if(time.elapsed()>3000)
                 {
-                    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >());
+                    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
                     std::cerr << "Path timeout into " << time.elapsed() << "ms" << std::endl;
                     return;
                 }
@@ -447,24 +448,24 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
-                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<=1)
+                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
-                            std::cerr << "Bug due for last step bottom" << std::endl;
+                            std::cerr << "Bug due for last step bottom " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.top.empty() && pathToGo.top.back().second<=1)
+                        if(!pathToGo.top.empty() && pathToGo.top.back().second<1)
                         {
-                            std::cerr << "Bug due for last step top" << std::endl;
+                            std::cerr << "Bug due for last step top " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.right.empty() && pathToGo.right.back().second<=1)
+                        if(!pathToGo.right.empty() && pathToGo.right.back().second<1)
                         {
-                            std::cerr << "Bug due for last step right" << std::endl;
+                            std::cerr << "Bug due for last step right " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.left.empty() && pathToGo.left.back().second<=1)
+                        if(!pathToGo.left.empty() && pathToGo.left.back().second<1)
                         {
-                            std::cerr << "Bug due for last step left" << std::endl;
+                            std::cerr << "Bug due for last step left " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
                     }
@@ -512,24 +513,24 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
-                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<=1)
+                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
-                            std::cerr << "Bug due for last step bottom" << std::endl;
+                            std::cerr << "Bug due for last step bottom " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.top.empty() && pathToGo.top.back().second<=1)
+                        if(!pathToGo.top.empty() && pathToGo.top.back().second<1)
                         {
-                            std::cerr << "Bug due for last step top" << std::endl;
+                            std::cerr << "Bug due for last step top " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.right.empty() && pathToGo.right.back().second<=1)
+                        if(!pathToGo.right.empty() && pathToGo.right.back().second<1)
                         {
-                            std::cerr << "Bug due for last step right" << std::endl;
+                            std::cerr << "Bug due for last step right " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.left.empty() && pathToGo.left.back().second<=1)
+                        if(!pathToGo.left.empty() && pathToGo.left.back().second<1)
                         {
-                            std::cerr << "Bug due for last step left" << std::endl;
+                            std::cerr << "Bug due for last step left " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
                     }
@@ -577,24 +578,24 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
-                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<=1)
+                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
-                            std::cerr << "Bug due for last step bottom" << std::endl;
+                            std::cerr << "Bug due for last step bottom " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.top.empty() && pathToGo.top.back().second<=1)
+                        if(!pathToGo.top.empty() && pathToGo.top.back().second<1)
                         {
-                            std::cerr << "Bug due for last step top" << std::endl;
+                            std::cerr << "Bug due for last step top " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.right.empty() && pathToGo.right.back().second<=1)
+                        if(!pathToGo.right.empty() && pathToGo.right.back().second<1)
                         {
-                            std::cerr << "Bug due for last step right" << std::endl;
+                            std::cerr << "Bug due for last step right " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.left.empty() && pathToGo.left.back().second<=1)
+                        if(!pathToGo.left.empty() && pathToGo.left.back().second<1)
                         {
-                            std::cerr << "Bug due for last step left" << std::endl;
+                            std::cerr << "Bug due for last step left " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
                     }
@@ -642,24 +643,24 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
-                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<=1)
+                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
-                            std::cerr << "Bug due for last step bottom" << std::endl;
+                            std::cerr << "Bug due for last step bottom " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.top.empty() && pathToGo.top.back().second<=1)
+                        if(!pathToGo.top.empty() && pathToGo.top.back().second<1)
                         {
-                            std::cerr << "Bug due for last step top" << std::endl;
+                            std::cerr << "Bug due for last step top " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.right.empty() && pathToGo.right.back().second<=1)
+                        if(!pathToGo.right.empty() && pathToGo.right.back().second<1)
                         {
-                            std::cerr << "Bug due for last step right" << std::endl;
+                            std::cerr << "Bug due for last step right " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.left.empty() && pathToGo.left.back().second<=1)
+                        if(!pathToGo.left.empty() && pathToGo.left.back().second<1)
                         {
-                            std::cerr << "Bug due for last step left" << std::endl;
+                            std::cerr << "Bug due for last step left " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
                     }
@@ -680,24 +681,24 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
                     if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
-                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<=1)
+                        if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
-                            std::cerr << "Bug due for last step bottom" << std::endl;
+                            std::cerr << "Bug due for last step bottom " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.top.empty() && pathToGo.top.back().second<=1)
+                        if(!pathToGo.top.empty() && pathToGo.top.back().second<1)
                         {
-                            std::cerr << "Bug due for last step top" << std::endl;
+                            std::cerr << "Bug due for last step top " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.right.empty() && pathToGo.right.back().second<=1)
+                        if(!pathToGo.right.empty() && pathToGo.right.back().second<1)
                         {
-                            std::cerr << "Bug due for last step right" << std::endl;
+                            std::cerr << "Bug due for last step right " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
-                        if(!pathToGo.left.empty() && pathToGo.left.back().second<=1)
+                        if(!pathToGo.left.empty() && pathToGo.left.back().second<1)
                         {
-                            std::cerr << "Bug due for last step left" << std::endl;
+                            std::cerr << "Bug due for last step left " << __FILE__ << ":" << __LINE__ << std::endl;
                             return;
                         }
                     }
@@ -733,7 +734,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         returnedVar=pathToGo.left;
                 if(!returnedVar.empty())
                 {
-                    if(returnedVar.back().second<=1)
+                    if(returnedVar.back().second<1)
                     {
                         std::cerr << "Bug due for last step" << std::endl;
                         return;
@@ -742,7 +743,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     {
                         std::cout << "Path result into " << time.elapsed() << "ms" << std::endl;
                         returnedVar.back().second--;
-                        emit result(source_map,source_x,source_y,returnedVar);
+                        emit result(source_map,source_x,source_y,returnedVar,PathFinding_status_OK);
                         return;
                     }
                 }
@@ -906,7 +907,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         }
     }
     tryCancel=false;
-    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >());
+    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
     std::cerr << "Path not found into " << time.elapsed() << "ms" << std::endl;
 }
 
