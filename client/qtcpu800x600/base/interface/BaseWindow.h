@@ -217,6 +217,7 @@ private slots:
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void currentMapLoaded();
     void pathFindingNotFound();
+    void pathFindingInternalError();
     void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);

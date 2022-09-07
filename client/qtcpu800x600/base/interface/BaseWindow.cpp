@@ -317,6 +317,8 @@ BaseWindow::BaseWindow() :
         abort();
     if(!connect(mapController,   &MapController::pathFindingNotFound,    this,&BaseWindow::pathFindingNotFound))
         abort();
+    if(!connect(mapController,   &MapController::pathFindingInternalError,    this,&BaseWindow::pathFindingInternalError))
+        abort();
     if(!connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom))
         abort();
     if(!connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop))

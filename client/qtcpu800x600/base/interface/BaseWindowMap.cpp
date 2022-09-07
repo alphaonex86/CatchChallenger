@@ -294,6 +294,12 @@ void BaseWindow::pathFindingNotFound()
     //showTip(tr("Path finding disabled"));
 }
 
+void BaseWindow::pathFindingInternalError()
+{
+    showTip(tr("Internal error to resolv the path to go here").toStdString());
+    //showTip(tr("Path finding disabled"));
+}
+
 void BaseWindow::currentMapLoaded()
 {
     qDebug() << "BaseWindow::currentMapLoaded(): map: " << QString::fromStdString(mapController->currentMap())

@@ -24,8 +24,16 @@ class PathFinding
 public:
     explicit PathFinding();
     virtual ~PathFinding();
+    enum PathFinding_status : uint8_t
+    {
+        PathFinding_status_OK,
+        PathFinding_status_PathNotFound,
+        PathFinding_status_Canceled,
+        PathFinding_status_InternalError,
+    };
+
 signals:
-    void result(const std::string &current_map,const uint8_t &x,const uint8_t &y,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path);
+    void result(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path,const PathFinding::PathFinding_status &status);
     void internalCancel();
     void emitSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items);
 public slots:

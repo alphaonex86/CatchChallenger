@@ -8,7 +8,6 @@ EpollServerStats EpollServerStats::epollServerStats;
 
 EpollServerStats::EpollServerStats()
 {
-
 }
 
 bool EpollServerStats::tryListen(const char * const path)
