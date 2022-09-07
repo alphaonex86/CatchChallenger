@@ -766,7 +766,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &x=pos.first;
     const uint8_t &y=pos.second;
-    CatchChallenger::Orientation orientation;
+    CatchChallenger::Orientation orientation=CatchChallenger::Orientation::Orientation_bottom;
     if(pathList.size()>1)
     {
         PathResolved::StartPoint startPoint=pathList.back().startPoint;
@@ -778,9 +778,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
 
         PathResolved &pathFirst=pathList.front();
         std::pair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.front();
-        orientation=pathFirstUnit.first;
-        pathFirstUnit.second--;
-        if(pathFirstUnit.second==0)
+        if(pathFirstUnit.second<=0)
         {
             pathFirst.path.erase(pathFirst.path.cbegin());
             if(pathFirst.path.empty())
@@ -796,15 +794,36 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
                         pathList.clear();
                 }
             }
+            return CatchChallenger::Direction_look_at_bottom;
+        }
+        else
+        {
+            orientation=pathFirstUnit.first;
+            pathFirstUnit.second--;
+            if(pathFirstUnit.second==0)
+            {
+                pathFirst.path.erase(pathFirst.path.cbegin());
+                if(pathFirst.path.empty())
+                {
+                    pathList.erase(pathList.cbegin());
+                    if(!pathList.empty())
+                    {
+                        PathResolved::StartPoint startPoint=pathList.back().startPoint;
+                        if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                        {
+                        }
+                        else
+                            pathList.clear();
+                    }
+                }
+            }
         }
     }
     else
     {
         PathResolved &pathFirst=pathList.front();
         std::pair<CatchChallenger::Orientation,uint8_t> &pathFirstUnit=pathFirst.path.front();
-        orientation=pathFirstUnit.first;
-        pathFirstUnit.second--;
-        if(pathFirstUnit.second==0)
+        if(pathFirstUnit.second<=0)
         {
             pathFirst.path.erase(pathFirst.path.cbegin());
             if(pathFirst.path.empty())
@@ -818,6 +837,29 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
                     }
                     else
                         pathList.clear();
+                }
+            }
+            return CatchChallenger::Direction_look_at_bottom;
+        }
+        else
+        {
+            orientation=pathFirstUnit.first;
+            pathFirstUnit.second--;
+            if(pathFirstUnit.second==0)
+            {
+                pathFirst.path.erase(pathFirst.path.cbegin());
+                if(pathFirst.path.empty())
+                {
+                    pathList.erase(pathList.cbegin());
+                    if(!pathList.empty())
+                    {
+                        PathResolved::StartPoint startPoint=pathList.back().startPoint;
+                        if(startPoint.map==currentMap() && startPoint.x==x && startPoint.y==y)
+                        {
+                        }
+                        else
+                            pathList.clear();
+                    }
                 }
             }
         }
@@ -831,7 +873,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
         return CatchChallenger::Direction_move_at_left;
     if(orientation==CatchChallenger::Orientation_right)
         return CatchChallenger::Direction_move_at_right;
-    return CatchChallenger::Direction_move_at_bottom;
+    return CatchChallenger::Direction_look_at_bottom;
 }
 
 void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
@@ -860,25 +902,38 @@ bool MapControllerMP::nextPathStep()//true if have step
     if(!pathList.empty())
     {
         const CatchChallenger::Direction &direction=MapControllerMP::moveFromPath();
-        return MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
+        switch (direction) {
+        case CatchChallenger::Direction::Direction_move_at_bottom:
+        case CatchChallenger::Direction::Direction_move_at_left:
+        case CatchChallenger::Direction::Direction_move_at_right:
+        case CatchChallenger::Direction::Direction_move_at_top:
+            return MapVisualiserPlayer::nextPathStepInternal(pathList,direction);
+            break;
+        default:
+            return false;
+            break;
+        }
     }
     return false;
 }
 
-void MapControllerMP::pathFindingResult(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path)
+void MapControllerMP::pathFindingResult(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path, const PathFinding::PathFinding_status &status)
 {
-    if(!path.empty())
-    {
-        if(path.front().second==0)
-        {
-            std::cerr << "MapControllerMP::pathFindingResult(): path.first().second==0" << std::endl;
-            pathFindingNotFound();
-            return;
-        }
+    switch (status) {
+    case PathFinding::PathFinding_status_OK:
         MapVisualiserPlayer::pathFindingResultInternal(pathList,current_map,x,y,path);
-    }
-    else
+        break;
+    case PathFinding::PathFinding_status_PathNotFound:
         pathFindingNotFound();
+        break;
+    case PathFinding::PathFinding_status_Canceled:
+        break;
+    case PathFinding::PathFinding_status_InternalError:
+        pathFindingInternalError();
+        break;
+    default:
+        break;
+    }
 }
 
 void MapControllerMP::keyPressParse()
