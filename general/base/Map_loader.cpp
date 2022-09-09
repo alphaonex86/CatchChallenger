@@ -1,7 +1,9 @@
 #include "Map_loader.hpp"
 #include "../tinyXML2/customtinyxml2.hpp"
 #include "CommonDatapack.hpp"
+#include "GeneralVariable.hpp"
 #include "CommonDatapackServerSpec.hpp"
+#include "cpp11addition.hpp"
 
 #ifdef TILED_ZLIB
     #ifndef __EMSCRIPTEN__

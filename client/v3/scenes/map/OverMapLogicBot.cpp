@@ -2,6 +2,7 @@
 #include <QDesktopServices>
 #include <iostream>
 
+#include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"

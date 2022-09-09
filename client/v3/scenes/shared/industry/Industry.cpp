@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <iostream>
 
+#include "../../../../../general/base/CommonDatapack.hpp"
 #include "../../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../../general/base/FacilityLib.hpp"

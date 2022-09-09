@@ -1,5 +1,8 @@
 #include "DatapackGeneralLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

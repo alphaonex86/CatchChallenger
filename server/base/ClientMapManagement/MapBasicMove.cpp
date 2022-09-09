@@ -1,10 +1,6 @@
 #include "MapBasicMove.hpp"
-#include "../MapServer.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
-#ifdef EPOLLCATCHCHALLENGERSERVER
-#include "../Client.hpp"
-#endif
+#include "../../../general/base/CommonMap.hpp"
 
 using namespace CatchChallenger;
 
@@ -18,7 +14,8 @@ using namespace CatchChallenger;
 MapBasicMove::MapBasicMove() :
     map(NULL),
     x(0),
-    y(0)
+    y(0),
+    last_direction(Direction_look_at_top)
 {
 }
 
@@ -88,7 +85,7 @@ bool MapBasicMove::moveThePlayer(const uint8_t &previousMovedUnit,const Directio
     /** \warning Don't put emit here, because call by LocalClientHandler, visiblity algo, LocalBroadcast */
 
     uint8_t moveThePlayer_index_move=0;
-    if(Q_UNLIKELY(last_direction==direction))
+    if(last_direction==direction)
     {
         errorOutput("Previous action is same direction: "+std::to_string(last_direction));
         return false;

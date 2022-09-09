@@ -1,11 +1,7 @@
 #include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "MapServer.hpp"
-#include "../../general/base/ProtocolParsingCheck.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
-#ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.hpp"
-#endif
+#include "../../general/base/CommonSettingsServer.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

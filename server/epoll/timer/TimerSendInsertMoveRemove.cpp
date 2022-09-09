@@ -1,5 +1,4 @@
 #include "TimerSendInsertMoveRemove.hpp"
-#include "../Epoll.hpp"
 
 #include "../../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
 

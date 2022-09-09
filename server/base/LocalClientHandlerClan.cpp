@@ -1,8 +1,14 @@
 #include "Client.hpp"
 #include "PreparedDBQuery.hpp"
 #include "GlobalServerData.hpp"
-#include "SqlFunction.hpp"
 #include "StaticText.hpp"
+#ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
+#include "SqlFunction.hpp"
+#endif
+#ifndef EPOLLCATCHCHALLENGERSERVER
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#endif
+#include <cstring>
 
 using namespace CatchChallenger;
 
@@ -471,6 +477,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
 {
     //add into db
     std::string clan_leader;
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
@@ -479,6 +486,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
             clan_leader=StaticText::text_0;
     }
     else
+    #endif
     {
         if(public_and_private_informations.clan_leader)
             clan_leader=StaticText::text_true;

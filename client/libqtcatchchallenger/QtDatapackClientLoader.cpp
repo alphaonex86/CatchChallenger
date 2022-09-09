@@ -9,6 +9,7 @@
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/Map_loader.hpp"
+#include "../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../tiled/tiled_mapreader.hpp"
 #include "../tiled/tiled_tileset.hpp"
 #include "Language.hpp"
@@ -20,6 +21,8 @@
 
 #include "../../../general/hps/hps.h"
 #endif
+#include <unistd.h>
+
 #include <QByteArray>
 #include <QCryptographicHash>
 #include <QDebug>
@@ -87,7 +90,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath) {
     if (hash.size() != 28) {
         Settings::settings->remove("DatapackHashBase-" +
                                    QString::fromStdString(datapackPath));
-        hash.empty();
+        hash.clear();
     }
 #ifdef CATCHCHALLENGER_CACHE_HPS
     this->language = Language::language.getLanguage().toStdString();
@@ -118,24 +121,40 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath) {
         if (in_file.good() && in_file.is_open()) {
             auto start_time = std::chrono::high_resolution_clock::now();
             hps::StreamInputBuffer serialBuffer(in_file);
-            serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
-            serialBuffer >> visualCategories;
-            serialBuffer >> typeExtra;
-            serialBuffer >> itemsExtra;
-            serialBuffer >> skins;
-            serialBuffer >> monsterSkillsExtra;
-            serialBuffer >> audioAmbiance;
-            serialBuffer >> reputationExtra;
-            serialBuffer >> monsterExtra;
-            serialBuffer >> monsterBuffsExtra;
-            auto end_time = std::chrono::high_resolution_clock::now();
-            auto time = end_time - start_time;
-            std::cout << "CatchChallenger::CommonDatapack::commonDatapack."
-                         "parseDatapack() took "
-                      << time / std::chrono::milliseconds(1) << "ms to parse "
-                      << datapackPath << std::endl;
-            loaded = true;
-        }
+#ifdef __EXCEPTIONS
+            try {
+#endif
+                uint8_t cacheversion = 0;
+                serialBuffer >> cacheversion;  // to discard buggy cache later
+                serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
+                serialBuffer >> visualCategories;
+                serialBuffer >> typeExtra;
+                serialBuffer >> itemsExtra;
+                serialBuffer >> skins;
+                serialBuffer >> monsterSkillsExtra;
+                serialBuffer >> audioAmbiance;
+                serialBuffer >> reputationExtra;
+                serialBuffer >> monsterExtra;
+                serialBuffer >> monsterBuffsExtra;
+                serialBuffer >>
+                    reputationNameToId;  // used by
+                                         // client->player_informations.reputation[reputationId]
+                auto end_time = std::chrono::high_resolution_clock::now();
+                auto time = end_time - start_time;
+                std::cout << "CatchChallenger::CommonDatapack::commonDatapack."
+                             "parseDatapack() took "
+                          << time / std::chrono::milliseconds(1)
+                          << "ms to parse " << datapackPath << std::endl;
+                loaded = true;
+#ifdef __EXCEPTIONS
+            } catch (...) {
+                // Block of code to handle errors
+                std::cout << "Error to get catch from HPS" << std::endl;
+                ::unlink(cachepath.c_str());
+            }
+#endif
+        } else
+            ::unlink(cachepath.c_str());
     }
     if (!loaded) {
 #endif
@@ -149,6 +168,8 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath) {
         if (!cachepath.empty()) {
             std::ofstream out_file(cachepath + ".tmp", std::ofstream::binary);
             if (out_file.good() && out_file.is_open()) {
+                uint8_t cacheversion = 0;  // to discard buggy cache later
+                hps::to_stream(cacheversion, out_file);
                 hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack,
                                out_file);
                 hps::to_stream(visualCategories, out_file);
@@ -160,6 +181,10 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath) {
                 hps::to_stream(reputationExtra, out_file);
                 hps::to_stream(monsterExtra, out_file);
                 hps::to_stream(monsterBuffsExtra, out_file);
+                hps::to_stream(
+                    reputationNameToId,
+                    out_file);  // used by
+                                // client->player_informations.reputation[reputationId]
                 hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack
                                    .monstersCollisionTemp,
                                out_file);

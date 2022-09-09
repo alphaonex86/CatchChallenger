@@ -1,4 +1,6 @@
 #include "EpollClientLoginSlave.hpp"
+#include "LinkToGameServer.hpp"
+#include "LinkToMaster.hpp"
 #include "CharactersGroupForLogin.hpp"
 #include "../base/BaseServerLogin.hpp"
 
@@ -34,10 +36,12 @@ EpollClientLoginSlave::EpollClientLoginSlave(
         serverListForReplyInSuspend(0)
 {
     client_list.push_back(this);
+    lastActivity=LinkToGameServer::msFrom1970();
 }
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
+    //std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ")" << std::endl;
     if(stat!=EpollClientLoginStat::LoggedStatClient)
     {
         unsigned int index=0;
@@ -129,8 +133,14 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
     disconnectClient();
 }
 
+uint64_t EpollClientLoginSlave::get_lastActivity() const
+{
+    return lastActivity;
+}
+
 bool EpollClientLoginSlave::disconnectClient()
 {
+    //std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
     if(linkToGameServer!=NULL)
     {
         linkToGameServer->closeSocket();
@@ -205,6 +215,7 @@ BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const
 
 void EpollClientLoginSlave::parseIncommingData()
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     ProtocolParsingInputOutput::parseIncommingData();
 }
 
@@ -228,11 +239,13 @@ void EpollClientLoginSlave::breakNeedMoreData()
 
 ssize_t EpollClientLoginSlave::read(char * data, const size_t &size)
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     return EpollClient::read(data,size);
 }
 
 ssize_t EpollClientLoginSlave::write(const char * const data, const size_t &size)
 {
+    lastActivity=LinkToGameServer::msFrom1970();
     //do some basic check on low level protocol (message split, ...)
     if(ProtocolParsingInputOutput::write(data,size)<0)
         return -1;

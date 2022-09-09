@@ -1,7 +1,6 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../../general/base/FacilityLib.hpp"
 #include "PreparedDBQuery.hpp"
 #include "StaticText.hpp"
 #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
@@ -10,6 +9,7 @@
 #endif
 #endif
 #include "GameServerVariables.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

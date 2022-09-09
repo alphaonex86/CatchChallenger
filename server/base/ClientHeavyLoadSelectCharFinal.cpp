@@ -1,8 +1,9 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
-#include "../../general/base/FacilityLib.hpp"
 #include "DictionaryServer.hpp"
-#include "BaseServer.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
 
 using namespace CatchChallenger;
 

@@ -21,7 +21,7 @@ public:
     bool syncConnectInternal(bool infinityTry=false);
     void syncDisconnect();
     void syncReconnect();
-    CallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
+    CatchChallenger::DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method);
     bool asyncWrite(const std::string &query);
     bool epollEvent(const uint32_t &events);
     void clear();
@@ -38,12 +38,12 @@ private:
     int ntuples;
     int nfields;
     MYSQL_RES *result;
-    std::vector<CallBack> queue;
+    std::vector<CatchChallenger::DatabaseBaseCallBack> queue;
     std::vector<std::string> queriesList;
     bool started;
     static char emptyString[1];
-    static CallBack emptyCallback;
-    static CallBack tempCallback;
+    static CatchChallenger::DatabaseBaseCallBack emptyCallback;
+    static CatchChallenger::DatabaseBaseCallBack tempCallback;
     std::chrono::time_point<std::chrono::high_resolution_clock> start;
 
     char strCohost[255];

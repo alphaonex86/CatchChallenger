@@ -3,9 +3,10 @@
 
 #include <iostream>
 
+#include "../../../../../general/base/CommonDatapack.hpp"
 #include "../../../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../Globals.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../Globals.hpp"
 #include "../../../core/AssetsLoader.hpp"
 #include "../../../core/Logger.hpp"
 #include "../../../entities/PlayerInfo.hpp"
@@ -136,12 +137,14 @@ void Shop::SetMeAsSeller(uint16_t shop_id) {
       connexionManager->client->get_player_informations_ro();
   auto i = player_info.items.begin();
   while (i != player_info.items.cend()) {
-    if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(i->first) !=
+    if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
+            i->first) !=
             QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend() &&
-        CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(i->first)
+        CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                .item.at(i->first)
                 .price > 0) {
-      int price = CatchChallenger::CommonDatapack::commonDatapack.get_items().item
-                      .at(i->first)
+      int price = CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                      .item.at(i->first)
                       .price /
                   2;
       auto node = ShopItem::Create(i->first, i->second, price);

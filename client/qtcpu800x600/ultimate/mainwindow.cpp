@@ -2431,6 +2431,7 @@ void MainWindow::on_server_edit_clicked()
 
             editServer.setProxyServer(connexionInfo->proxyHost);
             editServer.setProxyPort(connexionInfo->proxyPort);
+            editServer.setEdit(true);
             editServer.exec();
             if(!editServer.isOk())
                 return;

@@ -187,12 +187,13 @@ protected slots:
     virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer);
-    void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
+    void pathFindingResult(const std::string &current_map, const uint8_t &x, const uint8_t &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path, const PathFinding::PathFinding_status &status);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
     void searchPath(std::vector<Map_full> mapList);
     void pathFindingNotFound();
+    void pathFindingInternalError();
 };
 
 #endif // CATCHCHALLENGER_MAPCONTROLLERMP_H

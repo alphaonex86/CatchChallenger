@@ -7,9 +7,7 @@
 #include <vector>
 
 #include "GeneralStructures.hpp"
-#include "GeneralVariable.hpp"
 #include "../tinyXML2/tinyxml2.hpp"
-#include "../tinyXML2/customtinyxml2.hpp"
 #include "../../general/base/lib.h"
 
 namespace CatchChallenger {

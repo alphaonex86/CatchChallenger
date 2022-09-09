@@ -1,5 +1,4 @@
 #include "ClientNetworkReadWithoutSender.hpp"
-#include "GlobalServerData.hpp"
 #include "Client.hpp"
 
 using namespace CatchChallenger;

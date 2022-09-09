@@ -15,9 +15,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../../general/base/FacilityLib.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/GeneralType.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 //need host + port here to have datapack base
 
@@ -208,6 +206,11 @@ uint8_t Api_protocol::queryNumber()
 
 bool Api_protocol::sendProtocol()
 {
+    /* tcp socket call stack qtcpu800x600:
+     * Api_protocol_Qt::readForFirstHeader()
+     * Api_protocol_Qt::connectTheExternalSocketInternal()
+     * Api_protocol::connectTheExternalSocketInternal() */
+    std::cout << "Api_protocol::connectTheExternalSocketInternal()" << std::endl;
     if(have_send_protocol)
     {
         newError("Internal problem","Api_protocol::sendProtocol() Have already send the protocol");
@@ -277,6 +280,7 @@ bool Api_protocol::protocolWrong() const
 
 bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
 {
+    std::cout << "Api_protocol::tryLogin()" << std::endl;
     if(!have_send_protocol)
     {
         this->login=login;
@@ -582,6 +586,7 @@ bool Api_protocol::removeCharacter(const uint8_t &charactersGroupIndex,const uin
 
 bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId)
 {
+    std::cout << "Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t)" << std::endl;
     if(characterId==0)
     {
         std::cerr << "Api_protocol::selectCharacter() can't have characterId==0" << std::endl;
@@ -601,6 +606,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
 
 bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const uint32_t &serverUniqueKey, const uint32_t &characterId,const uint32_t &serverIndex)
 {
+    std::cout << "Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t,uint32_t)" << std::endl;
     if(characterId==0)
     {
         std::cerr << "Api_protocol::selectCharacter() with server index can't have characterId==0" << std::endl;
@@ -637,6 +643,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
 
 bool Api_protocol::selectCharacter(const uint32_t &serverIndex, const uint32_t &characterId)
 {
+    std::cout << "Api_protocol::selectCharacter(uint32_t,uint32_t)" << std::endl;
     const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=getServerOrdenedList();
     if(serverIndex>=serverOrdenedList.size())
     {
@@ -768,7 +775,7 @@ void Api_protocol::monsterMoveDown(const uint8_t &number)
         std::cerr << "the monster number greater than monster count, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    if((number-1)==player_informations.playerMonster.size())
+    if(((int)number-1)==(int)player_informations.playerMonster.size())
     {
         std::cerr << "can't move down the bottom monster, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
@@ -2352,6 +2359,7 @@ void Api_protocol::sslHandcheckIsFinished()
 
 void Api_protocol::connectTheExternalSocketInternal()
 {
+    std::cout << "Api_protocol::connectTheExternalSocketInternal()" << std::endl;
     //continue the normal procedure
     if(stageConnexion==StageConnexion::Stage1)
         connectedOnLoginServer();

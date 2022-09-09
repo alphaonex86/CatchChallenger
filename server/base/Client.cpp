@@ -1,16 +1,17 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "../../general/base/GeneralType.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
 #else
 #include "../../general/sha224/sha224.hpp"
 #endif
+#include "../../general/base/CommonSettingsServer.hpp"
 
 #include "BaseServerLogin.hpp"
 
 #include <chrono>
+#include <cstring>
 
 using namespace CatchChallenger;
 

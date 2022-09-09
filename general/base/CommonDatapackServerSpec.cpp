@@ -1,8 +1,9 @@
 #include "CommonDatapackServerSpec.hpp"
 #include "CommonDatapack.hpp"
+#ifdef CATCHCHALLENGER_CLIENT
 #include "CommonSettingsServer.hpp"
+#endif
 #include "GeneralVariable.hpp"
-#include "FacilityLib.hpp"
 #include "Map_loader.hpp"
 #include "../fight/FightLoader.hpp"
 #include "DatapackGeneralLoader.hpp"

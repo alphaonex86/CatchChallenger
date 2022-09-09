@@ -2,13 +2,10 @@
 #define EPOLLCLIENTLOGINMASTER_H
 
 #include "../epoll/EpollClient.hpp"
-#include "../epoll/EpollSslClient.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
 #include "../base/DdosBuffer.hpp"
-#include "LinkToMaster.hpp"
-#include "LinkToGameServer.hpp"
 
 #include <string>
 #include <vector>
@@ -42,6 +39,7 @@
 #define CATCHCHALLENGER_DDOS_KICKLIMITOTHER 45
 
 namespace CatchChallenger {
+class LinkToGameServer;
 class EpollClientLoginSlave : public EpollClient, public ProtocolParsingInputOutput
 {
 public:
@@ -85,13 +83,13 @@ public:
     {
         uint32_t index;
     };
-    enum ProxyMode
+    enum ProxyMode : uint8_t
     {
         Reconnect=0x01,
         Proxy=0x02
     };
     static ProxyMode proxyMode;
-    enum EpollClientLoginStat
+    enum EpollClientLoginStat : uint8_t
     {
         None=0x00,
         ProtocolGood=0x01,
@@ -116,7 +114,7 @@ public:
     04 (Server internal problem)
     05 (Server not found)
     08 (Too recently disconnected)*/
-    void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
+    void selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError=std::string());
     void addCharacter_ReturnOk(const uint8_t &query_id,const uint32_t &characterId);
     void addCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode);
     void removeCharacter_ReturnOk(const uint8_t &query_id);
@@ -125,6 +123,8 @@ public:
     void parseNetworkReadError(const std::string &errorString);
     void parseNetworkReadMessage(const std::string &errorString);
 
+    uint64_t get_lastActivity() const;
+    uint64_t lastActivity;
     LinkToGameServer *linkToGameServer;
     uint8_t charactersGroupIndex;
     uint32_t serverUniqueKey;
@@ -142,6 +142,7 @@ public:
     static char loginGood[256*1024];
     static unsigned int loginGoodSize;
     static std::vector<EpollClientLoginSlave *> stat_client_list;
+    static std::vector<EpollClientLoginSlave *> client_list;
 
     /*  [0x00]: 8Bits: do into EpollServerLoginSlave::EpollServerLoginSlave(), login server mode: 0x01 reconnect, 0x02 proxy
         [0x01]: 8Bits: serverListSize
@@ -257,7 +258,6 @@ private:
     unsigned int serverListForReplyRawDataSize;
 
     uint8_t serverListForReplyInSuspend;
-    static std::vector<EpollClientLoginSlave *> client_list;
 
     DdosBuffer<uint8_t,3> movePacketKick;
     DdosBuffer<uint8_t,3> chatPacketKick;

@@ -1,13 +1,12 @@
 #ifndef CATCHCHALLENGER_SERVER_STRUCTURESEpoll_H
 #define CATCHCHALLENGER_SERVER_STRUCTURESEpoll_H
 
-#include "../epoll/timer/TimerCityCapture.hpp"
 #include "../epoll/timer/TimerDdos.hpp"
 #include "../epoll/timer/TimerPositionSync.hpp"
 #include "../epoll/timer/TimerSendInsertMoveRemove.hpp"
-#include "../epoll/timer/TimerEvents.hpp"
 #include "../epoll/timer/TimeRangeEventScan.hpp"
-#include "../base/DatabaseBase.hpp"
+#include "timer/TimerEvents.hpp"
+#include <vector>
 
 class ServerPrivateVariablesEpoll
 {

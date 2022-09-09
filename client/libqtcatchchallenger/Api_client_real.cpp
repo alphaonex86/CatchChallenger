@@ -16,9 +16,7 @@ using namespace CatchChallenger;
 #include <QDataStream>
 #include <QDebug>
 
-#include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
-#include "../libcatchchallenger/TarDecode.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 
 //need host + port here to have datapack base

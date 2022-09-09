@@ -1,5 +1,4 @@
 #include "ClientMapManagement.hpp"
-#include "../VariableServer.hpp"
 #include <iostream>
 #include <string>
 
@@ -23,7 +22,7 @@ bool ClientMapManagement::moveThePlayer(const uint8_t &previousMovedUnit,const D
             << ", previousMovedUnit: " << std::to_string(previousMovedUnit)
             ;
     #endif
-    if(Q_UNLIKELY(!MapBasicMove::moveThePlayer(previousMovedUnit,direction)))
+    if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
         return false;
     moveClient(previousMovedUnit,direction);
     return true;

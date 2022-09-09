@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <utility>
 
-#include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/lib.h"
+#include "../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralType.hpp"
 
 class DLL_PUBLIC DatapackClientLoader
 {

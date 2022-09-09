@@ -1,9 +1,7 @@
 #include "LinkToGameServer.hpp"
 #include "EpollClientLoginSlave.hpp"
 #include <iostream>
-#include "EpollServerLoginSlave.hpp"
-#include "CharactersGroupForLogin.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
+#include <string.h>
 
 using namespace CatchChallenger;
 

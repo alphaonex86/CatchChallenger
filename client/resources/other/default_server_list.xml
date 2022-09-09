@@ -1,18 +1,18 @@
 <servers>
-    <server host="cc-server.first-world.info" port="42489" unique_code="9e3n9n3FUi0598IN"
-        ws="wss://cc-server.first-world.info/official">
+    <server host="cc-server.herman-brule.com" port="42489" unique_code="9e3n9n3FUi0598IN"
+        ws="wss://cc-server.herman-brule.com/official">
         <lang lang="en">   
             <name>Official CatchChallenger server</name>
-            <register_page>https://catchchallenger.first-world.info/register.html</register_page>
-            <lost_passwd_page>https://catchchallenger.first-world.info/lost_password.html</lost_passwd_page>
-            <site_page>https://catchchallenger.first-world.info/</site_page>
+            <register_page>https://catchchallenger.herman-brule.com/register.html</register_page>
+            <lost_passwd_page>https://catchchallenger.herman-brule.com/lost_password.html</lost_passwd_page>
+            <site_page>https://catchchallenger.herman-brule.com/</site_page>
         </lang>
     </server>  
-    <server host="gateway.first-world.info" port="42490" unique_code="6jPb6u6Nd3Qqwquk"
-        ws="wss://gateway.first-world.info/pkmn">
+    <server host="gateway.herman-brule.com" port="42490" unique_code="6jPb6u6Nd3Qqwquk"
+        ws="wss://gateway.herman-brule.com/pkmn">
         <lang lang="en">
             <name>Pokemon CatchChallenger server</name>
-            <site_page>https://gateway.first-world.info/</site_page>
+            <site_page>https://gateway.herman-brule.com/</site_page>
         </lang>
     </server>
 </servers>

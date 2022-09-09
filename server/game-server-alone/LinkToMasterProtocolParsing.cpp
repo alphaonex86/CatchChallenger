@@ -6,6 +6,8 @@
 #include "../base/GlobalServerData.hpp"
 #include "../base/DictionaryLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
 

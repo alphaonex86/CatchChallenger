@@ -13,7 +13,6 @@
 
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Version.hpp"
-#include "../epoll/EpollSocket.hpp"
 #include "../epoll/Epoll.hpp"
 #include "EpollServerLoginMaster.hpp"
 #include "EpollClientLoginMaster.hpp"
@@ -38,7 +37,7 @@ void signal_callback_handler(int signum){
         printf("Caught signal SIGPIPE %d\n",signum);
 }
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
     /* Catch Signal Handler SIGPIPE */
     if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)

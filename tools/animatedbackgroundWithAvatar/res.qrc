@@ -1,0 +1,20 @@
+<RCC>
+    <qresource prefix="/">
+        <file>treefront.png</file>
+        <file>treeback.png</file>
+        <file>sun.png</file>
+        <file>grass.png</file>
+        <file>cloud.png</file>
+        <file>quit.png</file>
+        <file>empty.png</file>
+        <file>Pbarbackground.png</file>
+        <file>Pbarforeground.png</file>
+        <file>message.png</file>
+        <file>f.png</file>
+        <file>copyright/1.png</file>
+        <file>copyright/1b.png</file>
+        <file>copyright/2.png</file>
+        <file>copyright/dialog1.png</file>
+        <file>copyright/dialog2.png</file>
+    </qresource>
+</RCC>

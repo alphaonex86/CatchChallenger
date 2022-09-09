@@ -1,7 +1,6 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
-#include "StaticText.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "BaseServerLogin.hpp"
 #endif
@@ -10,6 +9,7 @@
 #endif
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/sha224/sha224.hpp"
+#include <cstring>
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

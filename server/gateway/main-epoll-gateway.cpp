@@ -10,7 +10,6 @@
 #include <signal.h>
 
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../epoll/EpollSocket.hpp"
 #include "../epoll/Epoll.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "EpollClientLoginSlave.hpp"

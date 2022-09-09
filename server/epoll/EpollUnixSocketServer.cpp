@@ -27,25 +27,37 @@ EpollUnixSocketServer::~EpollUnixSocketServer()
 
 bool EpollUnixSocketServer::tryListen(const char * const path)
 {
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::tryListen(): " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
+    unlink(path);
     if(sfd != -1)
+    {
+        std::cerr << "Can't create the unix socket, sfd != -1, call close before" << std::endl;
         return false;
+    }
 
     if((sfd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
     {
         sfd=-1;
-        std::cerr << "Can't create the unix socket" << std::endl;
+        std::cerr << "Can't create the unix socket, errno: " << errno << std::endl;
         return false;
     }
+    const int enable = 1;
+    if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0)
+        std::cerr << "setsockopt(SO_REUSEADDR) failed, errno: " << errno << std::endl;
 
     struct sockaddr_un local;
     local.sun_family = AF_UNIX;
     strcpy(local.sun_path,path);
-    unlink(local.sun_path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family);
     if(bind(sfd, (struct sockaddr *)&local, len)!=0)
     {
         close();
-        std::cerr << "Can't bind the unix socket, error (errno): " << errno << ", error string: " << strerror(errno) << std::endl;
+        std::cerr << "Can't bind the unix socket, error (errno): " << errno << ", error string: " << strerror(errno) << " path: " << path << std::endl;
+        std::string p(path);
+        if(!p.empty())
+            system((std::string("netstat -nap | grep LISTEN | grep unix | grep ")+p).c_str());
         return false;
     }
 
@@ -73,13 +85,22 @@ bool EpollUnixSocketServer::tryListen(const char * const path)
         std::cerr << "epoll_ctl error: " << errno << std::endl;
         return false;
     }
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::tryListen() ok " << sfd << ": " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     return true;
 }
 
 void EpollUnixSocketServer::close()
 {
+    #ifdef CATCHCHALLENGER_CLASS_STATS
+    std::cout << "EpollUnixSocketServer::close(): " << sfd << " " << __FILE__ << ":" << __LINE__ << std::endl;
+    #endif
     if(sfd!=-1)
+    {
         ::close(sfd);
+        sfd=-1;
+    }
 }
 
 int EpollUnixSocketServer::accept(sockaddr *in_addr,socklen_t *in_len)

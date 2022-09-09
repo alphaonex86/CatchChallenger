@@ -15,7 +15,6 @@ using namespace CatchChallenger;
 #endif
 
 #include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../libcatchchallenger/TarDecode.hpp"
 #include "../../../general/base/GeneralVariable.hpp"

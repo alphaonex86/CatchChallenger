@@ -1,5 +1,5 @@
 #include "NewGame.h"
-#include "../../../../general/base/GeneralVariable.hpp"
+#include "../../../../general/base/cpp11addition.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "ui_NewGame.h"

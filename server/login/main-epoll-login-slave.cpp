@@ -15,6 +15,8 @@
 #include "../epoll/Epoll.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "EpollClientLoginSlave.hpp"
+#include "LinkToMaster.hpp"
+#include "LinkToGameServer.hpp"
 #include "TimerDdos.hpp"
 #include "TimerDetectTimeout.hpp"
 
@@ -226,7 +228,7 @@ int main(int argc, char *argv[])
                             epoll_event event;
                             memset(&event,0,sizeof(event));
                             event.data.ptr = client;
-                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT | EPOLLHUP;
+                            event.events = EPOLLIN | EPOLLERR | EPOLLRDHUP | EPOLLHUP | EPOLLET | EPOLLOUT;
                             s = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s == -1)
                             {

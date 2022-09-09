@@ -2,7 +2,6 @@
 #define CATCHCHALLENGER_MAPCONTROLLER_H
 
 #include "MapControllerMP.hpp"
-#include "../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../general/base/lib.h"
 
 #include <string>

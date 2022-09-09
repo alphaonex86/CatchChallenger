@@ -317,6 +317,8 @@ BaseWindow::BaseWindow() :
         abort();
     if(!connect(mapController,   &MapController::pathFindingNotFound,    this,&BaseWindow::pathFindingNotFound))
         abort();
+    if(!connect(mapController,   &MapController::pathFindingInternalError,    this,&BaseWindow::pathFindingInternalError))
+        abort();
     if(!connect(&moveFightMonsterBottomTimer,   &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterBottom))
         abort();
     if(!connect(&moveFightMonsterTopTimer,      &QTimer::timeout,                       this,&BaseWindow::moveFightMonsterTop))
@@ -1348,12 +1350,14 @@ void BaseWindow::appendReputationPoint(const std::string &type,const int32_t &po
 {
     if(point==0)
         return;
-    if(QtDatapackClientLoader::datapackLoader->get_reputationNameToId().find(type)==QtDatapackClientLoader::datapackLoader->get_reputationNameToId().cend())
+    const std::unordered_map<std::string,uint8_t> &reputationNameToId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId();
+    if(reputationNameToId.find(type)==reputationNameToId.cend())
     {
+        std::cerr << std::string("appendReputationPoint(")+type+std::string(",")+std::to_string(point)+std::string(")") << std::endl;
         emit error("Unknow reputation: "+type);
         return;
     }
-    const uint8_t &reputationId=QtDatapackClientLoader::datapackLoader->get_reputationNameToId().at(type);
+    const uint8_t &reputationId=reputationNameToId.at(type);
     PlayerReputation playerReputation;
     if(client->player_informations.reputation.find(reputationId)!=client->player_informations.reputation.cend())
         playerReputation=client->player_informations.reputation.at(reputationId);

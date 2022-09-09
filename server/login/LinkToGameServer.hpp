@@ -21,7 +21,7 @@ public:
         #endif
             );
     ~LinkToGameServer();
-    enum Stat
+    enum Stat : uint8_t
     {
         Unconnected,
         Connecting,
@@ -31,6 +31,9 @@ public:
         Logged,
     };
     Stat stat;
+    uint64_t get_lastActivity() const;
+    uint64_t lastActivity;
+    static uint64_t msFrom1970();//ms from 1970
 
     char tokenForGameServer[CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER];
     EpollClientLoginSlave *client;

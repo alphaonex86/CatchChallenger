@@ -1,11 +1,17 @@
 #include "EpollClientLoginSlave.hpp"
-#include "EpollServerLoginSlave.hpp"
 #include "CharactersGroupForLogin.hpp"
+#include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "../base/GlobalServerData.hpp"
+#include "../base/BaseServerLogin.hpp"
 #include <iostream>
 #include <chrono>
+#include <string.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <arpa/inet.h>
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include "VariableLoginServer.hpp"
 
@@ -155,6 +161,31 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         ProtocolParsingBase::tempBigBufferForOutput[0x02]=0x01;
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
+
+        {
+            struct sockaddr_in addr;
+            socklen_t addr_size = sizeof(struct sockaddr_in);
+            int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
+            if(res==0)
+            {
+                char str[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+                std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
+            }
+            else
+            {
+                struct sockaddr_in6 addr;
+                socklen_t addr_size = sizeof(struct sockaddr_in6);
+                int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
+                if(res==0)
+                {
+                    char str[INET6_ADDRSTRLEN];
+                    inet_ntop(AF_INET6, &(addr.sin6_addr), str, INET6_ADDRSTRLEN);
+                    std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
+                }
+            }
+        }
+
 
         stat=EpollClientLoginStat::LoggedStatClient;
         //flags|=0x08;->just listen
@@ -390,11 +421,11 @@ void EpollClientLoginSlave::askLogin_cancel()
     #endif
     AskLoginParam *askLoginParam=static_cast<AskLoginParam *>(paramToPassToCallBack.front());
     paramToPassToCallBack.pop();
-    loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(askLoginParam==NULL)
         abort();
     #endif
+    loginIsWrong(askLoginParam->query_id,0x04,"Canceled by the Charaters group");
     delete askLoginParam;
     askLoginParam=NULL;
 }
@@ -789,7 +820,7 @@ void EpollClientLoginSlave::selectCharacter_ReturnToken(const uint8_t &query_id,
     }
 }
 
-void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode)
+void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id,const uint8_t &errorCode,const std::string &customError)
 {
     //send the network reply
     removeFromQueryReceived(query_id);
@@ -816,7 +847,10 @@ void EpollClientLoginSlave::selectCharacter_ReturnFailed(const uint8_t &query_id
             errorParsingLayer("Master have relply: Character too recently disconnected");
         break;
         default:
-            errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
+            if(customError.empty())
+                errorParsingLayer("Master have relply: EpollClientLoginSlave::selectCharacter_ReturnFailed() errorCode:"+std::to_string(errorCode)+", query_id: "+std::to_string(query_id));
+            else
+                errorParsingLayer(customError);
         break;
     }
 }

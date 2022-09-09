@@ -1,11 +1,12 @@
 #include "CharactersGroupForLogin.hpp"
 #include "EpollServerLoginSlave.hpp"
 #include "VariableLoginServer.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../base/SqlFunction.hpp"
+#include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #include "../base/DictionaryLogin.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 #include <chrono>
 

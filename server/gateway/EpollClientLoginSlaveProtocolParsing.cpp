@@ -1,10 +1,9 @@
 #include "EpollClientLoginSlave.hpp"
 #include "EpollServerLoginSlave.hpp"
-#include "../base/BaseServerLogin.hpp"
-#include "../epoll/EpollSocket.hpp"
-#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
+#include <cstring>
 
 using namespace CatchChallenger;
 
@@ -48,7 +47,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                     socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_server_ip.c_str(),EpollServerLoginSlave::epollServerLoginSlave->destination_server_port,5,1);
                 else
                     socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
-                if(Q_LIKELY(socketFd>=0))
+                if(socketFd>=0)
                 {
                     stat=EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected;
                     LinkToGameServer *linkToGameServer=new LinkToGameServer(socketFd);

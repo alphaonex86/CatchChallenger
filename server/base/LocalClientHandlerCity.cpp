@@ -1,11 +1,11 @@
 #include "Client.hpp"
 #include "PreparedDBQuery.hpp"
-
-using namespace CatchChallenger;
-
 #include "MapServer.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+
+using namespace CatchChallenger;
 
 bool Client::captureCityInProgress()
 {

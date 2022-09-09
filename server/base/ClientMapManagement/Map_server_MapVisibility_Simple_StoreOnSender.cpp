@@ -1,5 +1,7 @@
 #include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
+#include "../Client.hpp"
 
 /// \todo optimise: preserialize, filter streaming to send + filter
 
@@ -37,7 +39,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         unsigned int index=0;
         while(index<clients.size())
         {
-            Client * const client=clients.at(index);
+            MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients[index];
             //clientdropAllClients();
             client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
             index++;
@@ -141,7 +143,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         return;
     unsigned int clientsToSendDataSizeNewClients=0;
     unsigned int clientsToSendDataSizeOldClients=0;
-    /// \todo use simplified id with max visible player and updater http://catchchallenger.first-world.info/wiki/Base_protocol_messages#C0
+    /// \todo use simplified id with max visible player and updater http://catchchallenger.herman-brule.com/wiki/Base_protocol_messages#C0
     //Insert player on map (Fast)
     if(to_send_insert)
     {

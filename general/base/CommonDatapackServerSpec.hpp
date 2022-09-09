@@ -5,7 +5,6 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
-#include "CommonDatapack.hpp"
 #include "lib.h"
 
 namespace CatchChallenger {
