@@ -1,4 +1,4 @@
-rm -r build-android
+#rm -r build-android
 mkdir -p build-android
 cd build-android
 echo "Configuring for Native..."

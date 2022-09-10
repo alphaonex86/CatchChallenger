@@ -1,6 +1,7 @@
 #include "BaseServer.hpp"
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
+#include <map>
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../general/base/CommonDatapack.hpp"
