@@ -15,6 +15,11 @@
 
 using namespace CatchChallenger;
 
+std::vector<void *> LinkToGameServer::gameLinkToDelete[16];
+size_t LinkToGameServer::gameLinkToDeleteSize=0;
+uint8_t LinkToGameServer::gameLinkToDeleteIndex=0;
+std::unordered_set<void *> LinkToGameServer::detectDuplicateGameLinkToDelete;
+
 LinkToGameServer::LinkToGameServer(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
@@ -231,6 +236,12 @@ void LinkToGameServer::readTheFirstSslHeader()
 
 bool LinkToGameServer::disconnectClient()
 {
+    if(detectDuplicateGameLinkToDelete.find(this)==detectDuplicateGameLinkToDelete.cend())
+    {
+        gameLinkToDelete[gameLinkToDeleteIndex].push_back(this);
+        gameLinkToDeleteSize++;
+        detectDuplicateGameLinkToDelete.insert(this);
+    }
     if(client!=NULL)
     {
         //linkToGameServer=NULL before closeSocket, else segfault
