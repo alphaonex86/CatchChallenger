@@ -93,33 +93,56 @@ int main(int argc, char *argv[])
 
     int numberOfConnectedClient=0;
     /* The event loop */
-    std::vector<void *> elementsToDelete[16];
-    size_t elementsToDeleteSize=0;
-    uint8_t elementsToDeleteIndex=0;
 
     int number_of_events, i;
     while(1)
     {
         number_of_events = Epoll::epoll.wait(events, MAXEVENTS);
-        if(elementsToDeleteSize>0 && number_of_events<MAXEVENTS)
+
+        //delete part
+        if(EpollClientLoginSlave::clientToDeleteSize>0 && number_of_events<MAXEVENTS)
         {
-            if(elementsToDeleteIndex>=15)
-                elementsToDeleteIndex=0;
+            if(EpollClientLoginSlave::clientToDeleteIndex>=15)
+                EpollClientLoginSlave::clientToDeleteIndex=0;
             else
-                ++elementsToDeleteIndex;
-            const std::vector<void *> &elementsToDeleteSub=elementsToDelete[elementsToDeleteIndex];
-            if(!elementsToDeleteSub.empty())
+                ++EpollClientLoginSlave::clientToDeleteIndex;
+            const std::vector<void *> &clientToDeleteSub=EpollClientLoginSlave::clientToDelete[EpollClientLoginSlave::clientToDeleteIndex];
+            if(!clientToDeleteSub.empty())
             {
                 unsigned int index=0;
-                while(index<elementsToDeleteSub.size())
+                while(index<clientToDeleteSub.size())
                 {
-                    delete static_cast<EpollClientLoginSlave *>(elementsToDeleteSub.at(index));
+                    EpollClientLoginSlave *client=reinterpret_cast<EpollClientLoginSlave *>(clientToDeleteSub.at(index));
+                    delete client;
+                    EpollClientLoginSlave::detectDuplicateClientToDelete.erase(client);
                     index++;
                 }
             }
-            elementsToDeleteSize-=elementsToDeleteSub.size();
-            elementsToDelete[elementsToDeleteIndex].clear();
+            EpollClientLoginSlave::clientToDeleteSize-=clientToDeleteSub.size();
+            EpollClientLoginSlave::clientToDelete[EpollClientLoginSlave::clientToDeleteIndex].clear();
         }
+        if(LinkToGameServer::gameLinkToDeleteSize>0 && number_of_events<MAXEVENTS)
+        {
+            if(LinkToGameServer::gameLinkToDeleteIndex>=15)
+                LinkToGameServer::gameLinkToDeleteIndex=0;
+            else
+                ++LinkToGameServer::gameLinkToDeleteIndex;
+            const std::vector<void *> &gameLinkToDeleteSub=LinkToGameServer::gameLinkToDelete[LinkToGameServer::gameLinkToDeleteIndex];
+            if(!gameLinkToDeleteSub.empty())
+            {
+                unsigned int index=0;
+                while(index<gameLinkToDeleteSub.size())
+                {
+                    LinkToGameServer *client=reinterpret_cast<LinkToGameServer *>(gameLinkToDeleteSub.at(index));
+                    delete client;
+                    LinkToGameServer::detectDuplicateGameLinkToDelete.erase(client);
+                    index++;
+                }
+            }
+            LinkToGameServer::gameLinkToDeleteSize-=gameLinkToDeleteSub.size();
+            LinkToGameServer::gameLinkToDelete[LinkToGameServer::gameLinkToDeleteIndex].clear();
+        }
+
         for(i = 0; i < number_of_events; i++)
         {
             switch(static_cast<BaseClassSwitch *>(events[i].data.ptr)->getType())
@@ -142,7 +165,7 @@ int main(int argc, char *argv[])
                         sockaddr in_addr;
                         socklen_t in_len = sizeof(in_addr);
                         const int &infd = EpollServerLoginSlave::epollServerLoginSlave->accept(&in_addr, &in_len);
-                        if(elementsToDeleteSize>64 || BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
+                        if(EpollClientLoginSlave::clientToDeleteSize>64 || BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                         {
                             /// \todo dont clean error on client into this case
                             std::cerr << "server overload" << std::endl;
@@ -256,6 +279,7 @@ int main(int argc, char *argv[])
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
+                        std::cerr << "BaseClassSwitch::EpollObjectType::Client events[i].events : " << client << " (" << events[i].events  << ")" << std::endl;
                         /* An error has occured on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
@@ -263,8 +287,6 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
-                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
-                        elementsToDeleteSize++;
 
                         continue;
                     }
@@ -277,9 +299,6 @@ int main(int argc, char *argv[])
                         //disconnected, remove the object
 
                         client->disconnectClient();
-
-                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
-                        elementsToDeleteSize++;
                     }
                 }
                 break;
@@ -342,9 +361,6 @@ int main(int argc, char *argv[])
                         numberOfConnectedClient--;
 
                         client->disconnectClient();
-                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
-                        elementsToDeleteSize++;
-
                         continue;
                     }
                     //ready to read
@@ -357,9 +373,6 @@ int main(int argc, char *argv[])
 
                         if(client!=nullptr)
                             client->disconnectClient();
-
-                        elementsToDelete[elementsToDeleteIndex].push_back(events[i].data.ptr);
-                        elementsToDeleteSize++;
                     }
                 }
                 break;

@@ -470,6 +470,7 @@ EpollServerLoginSlave::~EpollServerLoginSlave()
 
 void EpollServerLoginSlave::close()
 {
+    std::cerr << "EpollServerLoginSlave::close()" << std::endl;
     if(LinkToMaster::linkToMaster!=NULL)
     {
         delete LinkToMaster::linkToMaster;
