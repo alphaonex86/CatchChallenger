@@ -29,7 +29,7 @@ void EpollClientLoginSlave::doDDOSCompute()
 bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
     (void)size;
-    std::cout << " EpollClientLoginSlave::parseInputBeforeLogin(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");
@@ -39,17 +39,17 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     switch(mainCodeType)
     {
         case 0xA0:
-            std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+            //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
             if(memcmp(data,EpollClientLoginSlave::protocolHeaderToMatch,sizeof(EpollClientLoginSlave::protocolHeaderToMatch))==0)
             {
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 removeFromQueryReceived(queryNumber);
                 if(stat!=EpollClientLoginStat::None)
                 {
                     parseNetworkReadError("stat!=EpollClientLoginStat::None for case 0xA0");
                     return false;
                 }
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 //if lot of un logged connection, remove the first
                 if(BaseServerLogin::tokenForAuthSize>=CATCHCHALLENGER_SERVER_MAXNOTLOGGEDCONNECTION)
                 {
@@ -73,7 +73,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         #endif
                     }
                 }
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 BaseServerLogin::TokenLink *token=&BaseServerLogin::tokenForAuth[BaseServerLogin::tokenForAuthSize];
                 {
                     token->client=this;
@@ -99,7 +99,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                         //messageParsingLayer("auth token send: "+binarytoHexa(token->value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT));
                     }
                 }
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
                 switch(CompressionProtocol::compressionTypeServer)
                 {
@@ -122,13 +122,13 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
                 memcpy(EpollClientLoginSlave::protocolReplyCompressionNone+7,token->value,CATCHCHALLENGER_TOKENSIZE);
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyCompressionNone),sizeof(EpollClientLoginSlave::protocolReplyCompressionNone));
                 #endif
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 BaseServerLogin::tokenForAuthSize++;
                 stat=EpollClientLoginStat::ProtocolGood;
             }
             else
             {
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 /*don't send packet to prevent DDOS
                 *(EpollClientLoginSlave::protocolReplyProtocolNotSupported+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::protocolReplyProtocolNotSupported),sizeof(EpollClientLoginSlave::protocolReplyProtocolNotSupported));*/
@@ -138,10 +138,10 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
         break;
         //login
         case 0xA8:
-            std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+            //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
             if(stat==EpollClientLoginStat::LoginInProgress)
             {
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 removeFromQueryReceived(queryNumber);
                 *(EpollClientLoginSlave::loginInProgressBuffer+1)=queryNumber;
                 internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::loginInProgressBuffer),sizeof(EpollClientLoginSlave::loginInProgressBuffer));
@@ -149,13 +149,13 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
             }
             else if(stat!=EpollClientLoginStat::ProtocolGood)
             {
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 parseNetworkReadError("send login before the protocol");
                 return false;
             }
             else
             {
-                std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
+                //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin() " << __FILE__ << ":" << __LINE__ << std::endl;
                 stat=EpollClientLoginStat::LoginInProgress;
                 askLogin(queryNumber,data);
                 return true;
@@ -224,7 +224,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
 
 bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char * const data, const unsigned int &size)
 {
-    std::cout << " EpollClientLoginSlave::parseMessage(" << std::to_string(mainCodeType) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    //std::cout << " EpollClientLoginSlave::parseMessage(" << std::to_string(mainCodeType) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(stat==EpollClientLoginStat::GameServerConnecting)
     {
         parseNetworkReadError("main ident while game server connecting: "+std::to_string(mainCodeType));
@@ -310,7 +310,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
 //have query with reply
 bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNumber,const char * const data,const unsigned int &size)
 {
-    std::cout << " EpollClientLoginSlave::parseQuery(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
+    //std::cout << " EpollClientLoginSlave::parseQuery(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
         parseNetworkReadError("Too many packet in sort time, check DDOS limit");

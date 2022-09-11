@@ -163,30 +163,30 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
         internalSendRawSmallPacket(reinterpret_cast<char *>(EpollClientLoginSlave::serverLogicalGroupAndServerList),EpollClientLoginSlave::serverLogicalGroupAndServerListSize);
 
         {
-            struct sockaddr_in addr;
-            socklen_t addr_size = sizeof(struct sockaddr_in);
+            struct sockaddr_in6 addr;
+            socklen_t addr_size = sizeof(struct sockaddr_in6);
             int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
             if(res==0)
             {
-                char str[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
+                char str[INET6_ADDRSTRLEN];
+                inet_ntop(AF_INET6, &(addr.sin6_addr), str, INET6_ADDRSTRLEN);
                 std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
             }
             else
             {
-                struct sockaddr_in6 addr;
-                socklen_t addr_size = sizeof(struct sockaddr_in6);
+                struct sockaddr_in addr;
+                socklen_t addr_size = sizeof(struct sockaddr_in);
                 int res = getpeername(infd, (struct sockaddr *)&addr, &addr_size);
                 if(res==0)
                 {
-                    char str[INET6_ADDRSTRLEN];
-                    inet_ntop(AF_INET6, &(addr.sin6_addr), str, INET6_ADDRSTRLEN);
+                    char str[INET_ADDRSTRLEN];
+                    inet_ntop(AF_INET, &(addr.sin_addr), str, INET_ADDRSTRLEN);
                     std::cerr << "new stat client: " << str << " (" << infd << ")" << std::endl;
                 }
             }
         }
 
-
+        std::cerr << "new stat client: " << this << " (" << infd << ") stat: " << (int)stat << std::endl;
         stat=EpollClientLoginStat::LoggedStatClient;
         //flags|=0x08;->just listen
 
@@ -201,6 +201,8 @@ void EpollClientLoginSlave::askStatClient(const uint8_t &query_id,const char *ra
             }
             index++;
         }
+        if(index>=client_list.size())
+            std::cerr << "new stat client: " << this << " (" << infd << ") NOT found into client_list" << std::endl;
         stat_client_list.push_back(this);
     }
 }
@@ -744,6 +746,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!CharactersGroupForLogin::list.at(charactersGroupIndex)->containsServerUniqueKey(serverUniqueKey))
     {
         //work around, previous disconnect do unable to send clean reply
+        std::cerr << "EpollClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
 
@@ -768,6 +771,7 @@ void EpollClientLoginSlave::selectCharacter(const uint8_t &query_id,const uint32
     if(!LinkToMaster::linkToMaster->trySelectCharacter(this,query_id,serverUniqueKey,charactersGroupIndex,characterId))
     {
         //work around, previous disconnect do unable to send clean reply
+        std::cerr << "EpollClientLoginSlave::selectCharacter(): " << __FILE__ << ":" << __LINE__ << std::endl;
         disconnectClient();
         return;
 

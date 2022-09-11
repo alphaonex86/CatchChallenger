@@ -10,6 +10,11 @@
 
 using namespace CatchChallenger;
 
+std::vector<void *> EpollClientLoginSlave::clientToDelete[16];
+size_t EpollClientLoginSlave::clientToDeleteSize=0;
+uint8_t EpollClientLoginSlave::clientToDeleteIndex=0;
+std::unordered_set<void *> EpollClientLoginSlave::detectDuplicateClientToDelete;
+
 EpollClientLoginSlave::EpollClientLoginSlave(
         #ifdef SERVERSSL
             const int &infd, SSL_CTX *ctx
@@ -37,11 +42,66 @@ EpollClientLoginSlave::EpollClientLoginSlave(
 {
     client_list.push_back(this);
     lastActivity=LinkToGameServer::msFrom1970();
+    std::cerr << "EpollClientLoginSlave::EpollClientLoginSlave() " << this << std::endl;
 }
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
-    //std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ")" << std::endl;
+    std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ")" << std::endl;
+    disconnectClient();
+}
+
+uint64_t EpollClientLoginSlave::get_lastActivity() const
+{
+    return lastActivity;
+}
+
+bool EpollClientLoginSlave::disconnectClient()
+{
+    std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
+
+    if(detectDuplicateClientToDelete.find(this)==detectDuplicateClientToDelete.cend())
+    {
+        clientToDelete[clientToDeleteIndex].push_back(this);
+        clientToDeleteSize++;
+        detectDuplicateClientToDelete.insert(this);
+    }
+
+    if(linkToGameServer!=NULL)
+    {
+        linkToGameServer->closeSocket();
+        //break the link
+        linkToGameServer->client=NULL;
+        linkToGameServer=NULL;
+    }
+    EpollClient::close();
+
+    {
+        uint32_t index=0;
+        while(index<BaseServerLogin::tokenForAuthSize)
+        {
+            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
+            if(tokenLink.client==this)
+            {
+                BaseServerLogin::tokenForAuthSize--;
+                if(BaseServerLogin::tokenForAuthSize>0)
+                {
+                    while(index<BaseServerLogin::tokenForAuthSize)
+                    {
+                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
+                        index++;
+                    }
+                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
+                        abort();
+                    #endif
+                }
+                break;
+            }
+            index++;
+        }
+    }
     if(stat!=EpollClientLoginStat::LoggedStatClient)
     {
         unsigned int index=0;
@@ -55,6 +115,8 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             }
             index++;
         }
+        if(index>=client_list.size())
+            std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
     }
     else
     {
@@ -69,10 +131,15 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
             }
             index++;
         }
+        if(index>=stat_client_list.size())
+            std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ") client not found" << std::endl;
     }
 
     if(socketString!=NULL)
+    {
         delete[] socketString;
+        socketString=nullptr;
+    }
     {
         unsigned int index=0;
 
@@ -129,52 +196,6 @@ EpollClientLoginSlave::~EpollClientLoginSlave()
         }
 
         //crash with heap-buffer-overflow if not flush before the end of destructor
-    }
-    disconnectClient();
-}
-
-uint64_t EpollClientLoginSlave::get_lastActivity() const
-{
-    return lastActivity;
-}
-
-bool EpollClientLoginSlave::disconnectClient()
-{
-    //std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
-    if(linkToGameServer!=NULL)
-    {
-        linkToGameServer->closeSocket();
-        //break the link
-        linkToGameServer->client=NULL;
-        linkToGameServer=NULL;
-    }
-    EpollClient::close();
-
-    {
-        uint32_t index=0;
-        while(index<BaseServerLogin::tokenForAuthSize)
-        {
-            const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[index];
-            if(tokenLink.client==this)
-            {
-                BaseServerLogin::tokenForAuthSize--;
-                if(BaseServerLogin::tokenForAuthSize>0)
-                {
-                    while(index<BaseServerLogin::tokenForAuthSize)
-                    {
-                        BaseServerLogin::tokenForAuth[index]=BaseServerLogin::tokenForAuth[index+1];
-                        index++;
-                    }
-                    //don't work:memmove(BaseServerLogin::tokenForAuth+index*sizeof(TokenLink),BaseServerLogin::tokenForAuth+index*sizeof(TokenLink)+sizeof(TokenLink),sizeof(TokenLink)*(BaseServerLogin::tokenForAuthSize-index));
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(BaseServerLogin::tokenForAuth[0].client==NULL)
-                        abort();
-                    #endif
-                }
-                break;
-            }
-            index++;
-        }
     }
     return true;
 }
@@ -254,5 +275,6 @@ ssize_t EpollClientLoginSlave::write(const char * const data, const size_t &size
 
 void EpollClientLoginSlave::closeSocket()
 {
+    std::cerr << "EpollClientLoginSlave::closeSocket(): " << this << " (" << infd << ")" << std::endl;
     disconnectClient();
 }

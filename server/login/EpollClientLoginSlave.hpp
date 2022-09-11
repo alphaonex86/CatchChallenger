@@ -103,6 +103,12 @@ public:
     };
     EpollClientLoginStat stat;
 
+    //to delete into the event loop (main-epoll-login-slave.cpp) after unregister for epoll, into the next event loop parse
+    static std::vector<void *> clientToDelete[16];
+    static size_t clientToDeleteSize;
+    static uint8_t clientToDeleteIndex;
+    static std::unordered_set<void *> detectDuplicateClientToDelete;
+
     void parseIncommingData();
     void doDDOSCompute();
     static void doDDOSComputeAll();

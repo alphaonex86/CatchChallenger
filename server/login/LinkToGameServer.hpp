@@ -31,6 +31,13 @@ public:
         Logged,
     };
     Stat stat;
+
+    //to delete into the event loop (main-epoll-login-slave.cpp) after unregister for epoll, into the next event loop parse
+    static std::vector<void *> gameLinkToDelete[16];
+    static size_t gameLinkToDeleteSize;
+    static uint8_t gameLinkToDeleteIndex;
+    static std::unordered_set<void *> detectDuplicateGameLinkToDelete;
+
     uint64_t get_lastActivity() const;
     uint64_t lastActivity;
     static uint64_t msFrom1970();//ms from 1970
