@@ -25,6 +25,7 @@ class Node : public QGraphicsItem {
   void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
              QWidget *widget = 0) override;
 
+  virtual void SetSize(const QSizeF &size);
   virtual void SetSize(qreal width, qreal height);
   virtual void SetWidth(qreal w);
   virtual void SetHeight(qreal h);

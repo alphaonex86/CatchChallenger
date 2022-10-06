@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "../../../../general/base/Version.hpp"
+#include "../../Constants.hpp"
 #include "../../action/CallFunc.hpp"
 #include "../../action/Delay.hpp"
 #include "../../action/RepeatForever.hpp"
@@ -17,7 +18,7 @@ using std::placeholders::_1;
 
 Loading* Loading::instance_ = nullptr;
 
-Loading::Loading(): Scene(nullptr) {
+Loading::Loading() : Scene(nullptr) {
   widget = Sprite::Create(":/CC/images/interface/message.png", this);
   teacher = Sprite::Create(":/CC/images/interface/teacher.png", widget);
   info = UI::Label::Create(widget);
@@ -148,17 +149,10 @@ void Loading::OnScreenResize() {
 
   version->SetPos(BoundingRect().width() - version->BoundingRect().width() - 10,
                   5);
-  QFont font = version->GetFont();
-  if (BoundingRect().height() < 500)
-    font.setPixelSize(9);
-  else if (widget->Height() < 800)
-    font.setPixelSize(11);
-  else
-    font.setPixelSize(14);
-  version->SetFont(font);
+  version->SetPixelSize(Constants::TextSmallSize());
 }
 
-void Loading::SetNotifier(ProgressNotifier *notifier) {
+void Loading::SetNotifier(ProgressNotifier* notifier) {
   notifier->SetOnProgress(std::bind(&Loading::Progression, this, _1, _1));
   notifier->SetOnStatusChange(std::bind(&Loading::SetText, this, _1));
 }
@@ -168,6 +162,4 @@ void Loading::OnEnter() {
   RunAction(timer_);
 }
 
-void Loading::OnExit() {
-  timer_->Stop();
-}
+void Loading::OnExit() { timer_->Stop(); }

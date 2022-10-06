@@ -158,6 +158,12 @@ const QPixmap *AssetsLoader::GetImage(const QString &path) {
   return p;
 }
 
+const QPixmap &AssetsLoader::GetTiledImage(const QString &path, int x, int y,
+                                           int width, int height) {
+  auto pixmap = GetImage(path);
+  return pixmap->copy(x, y, width, height);
+}
+
 void AssetsLoader::SetOnDataParsed(std::function<void()> callback) {
   on_data_parsed_ = callback;
 }
@@ -166,5 +172,5 @@ bool AssetsLoader::IsLoaded() {
 #ifndef NOTHREADS
   return is_loaded_;
 #endif
-  return true; 
+  return true;
 }

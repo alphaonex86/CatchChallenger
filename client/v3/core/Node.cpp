@@ -125,11 +125,11 @@ qreal Node::X() const { return x(); }
 
 qreal Node::Y() const { return y(); }
 
+void Node::SetSize(const QSizeF& size) {
+  Node::SetSize(size.width(), size.height());
+}
+
 void Node::SetSize(qreal w, qreal h) {
-  //if (scale_ > 0) {
-    //w = w * scale_;
-    //h = h * scale_;
-  //}
   bounding_rect_.setWidth(w);
   bounding_rect_.setHeight(h);
   OnResize();

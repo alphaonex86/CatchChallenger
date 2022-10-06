@@ -28,12 +28,16 @@ class Globals {
   static UI::InputDialog* GetInputDialog();
   static void ClearAllScenes();
 
+  static bool IsSolo();
+  static void SetSolo(bool is_solo);
+
  private:
   static Scenes::Leading* leading_;
   static Scenes::Map* map_;
   static Scenes::Battle* battle_;
   static UI::MessageDialog *alert_;
   static UI::InputDialog *input_;
+  static bool is_solo_;
 };
 
 #endif  // CLIENT_V3_GLOBALS_HPP_

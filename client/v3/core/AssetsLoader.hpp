@@ -27,6 +27,8 @@ class AssetsLoader : public QObject, public ProgressNotifier {
   QHash<QString, const QByteArray *> musics;
 #endif
   const QPixmap *GetImage(const QString &path);
+  const QPixmap &GetTiledImage(const QString &path, int x, int y, int width,
+                          int height);
 
  protected:
   // only load here internal images, NOT LOAD here datapack images

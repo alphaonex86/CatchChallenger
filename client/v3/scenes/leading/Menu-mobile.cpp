@@ -1,24 +1,26 @@
 // Copyright 2021 <CatchChallenger>
 #include "Menu.hpp"
 
+#include "../../Constants.hpp"
+
 using Scenes::Menu;
 
 void Menu::OnScreenResize() {
   if (!is_loaded_) return;
   int buttonMargin = 10;
   buttonMargin = 30;
-  solo_->SetSize(300, 120);
-  solo_->SetPixelSize(45);
-  multi_->SetSize(300, 120);
-  multi_->SetPixelSize(45);
-  options_->SetSize(90, 95);
-  options_->SetPixelSize(45);
-  debug_->SetSize(90, 95);
-  debug_->SetPixelSize(45);
-  facebook_->SetSize(90, 95);
-  facebook_->SetPixelSize(45);
-  website_->SetSize(90, 95);
-  website_->SetPixelSize(45);
+
+  auto buttonSize = Constants::ButtonMediumSize();
+  auto textSize = Constants::TextLargeSize();
+  auto roundSize = Constants::ButtonRoundMediumSize();
+
+  solo_->SetSize(UI::Button::kRectLarge);
+  multi_->SetSize(UI::Button::kRectMedium);
+  options_->SetSize(UI::Button::kRoundMedium);
+  debug_->SetSize(UI::Button::kRoundMedium);
+  facebook_->SetSize(UI::Button::kRoundMedium);
+  website_->SetSize(UI::Button::kRoundMedium);
+
   int verticalMargin =
       BoundingRect().height() / 2 + multi_->Height() / 2 + buttonMargin;
   if (solo_->IsVisible()) {

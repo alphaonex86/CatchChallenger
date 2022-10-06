@@ -100,6 +100,7 @@ SOURCES += \
     $$PWD/scenes/shared/player/Reputations.cpp \
     $$PWD/scenes/shared/inventory/MonsterItem.cpp \
     $$PWD/scenes/shared/inventory/MonsterBag.cpp \
+    $$PWD/scenes/shared/npctalk/NpcTalk-$${VIEWPORT}.cpp \
     $$PWD/scenes/shared/npctalk/NpcTalk.cpp \
     $$PWD/scenes/shared/crafting/Crafting.cpp \
     $$PWD/scenes/shared/crafting/CraftingItem.cpp \
@@ -336,6 +337,7 @@ android: {
 SOURCES += \
     $$PWD/main.cpp \
     $$PWD/base/ConnectionManager.cpp \
+    $$PWD/Constants-$${VIEWPORT}.cpp \
     $$PWD/Globals.cpp \
     $$PWD/Ultimate.cpp \
     $$PWD/Options.cpp \
@@ -350,6 +352,7 @@ SOURCES += \
 
 HEADERS  += \
     $$PWD/base/ConnectionManager.hpp \
+    $$PWD/Constants.hpp \
     $$PWD/Globals.hpp \
     $$PWD/Ultimate.hpp \
     $$PWD/Options.hpp \

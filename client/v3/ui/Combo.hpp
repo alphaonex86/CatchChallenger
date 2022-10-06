@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "../core/Node.hpp"
+#include "../core/Sprite.hpp"
 #include "Label.hpp"
 
 namespace UI {
@@ -29,6 +30,8 @@ class Combo : public Node {
   int ItemData(uint8_t index, int role);
   void SetItemData(uint8_t index, int role, int value);
   void SetSize(qreal width, qreal height);
+  void SetSize(QSizeF& size);
+  void SetWidth(qreal width);
   void RegisterEvents() override;
   void UnRegisterEvents() override;
   size_t Count() const;
@@ -41,7 +44,7 @@ class Combo : public Node {
   explicit Combo(QString pix, Node *parent = nullptr);
 
  private:
-  QString background_;
+  Sprite *background_;
   uint8_t current_index_;
   std::vector<QString> items_;
   Label *label_;

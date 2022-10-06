@@ -11,7 +11,15 @@
 namespace UI {
 class Button : public Node {
  public:
-  static Button* Create(QString pix, Node *parent = nullptr);
+  enum ButtonSize {
+    kRectSmall,
+    kRectMedium,
+    kRectLarge,
+    kRoundSmall,
+    kRoundMedium,
+    kRoundLarge
+  };
+  static Button *Create(QString pix, Node *parent = nullptr);
   ~Button();
   void SetText(const QString &text);
   void SetIcon(const QString &icon);
@@ -25,6 +33,8 @@ class Button : public Node {
   void SetEnabled(bool enabled);
   void SetCheckable(bool checkable);
   bool IsChecked() const;
+  void SetSize(const ButtonSize &size);
+  void SetSize(const QSizeF &size);
   void SetSize(qreal width, qreal height);
   void SetWidth(qreal width);
   void SetPos(qreal x, qreal y);

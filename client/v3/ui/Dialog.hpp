@@ -25,6 +25,7 @@ class Dialog : public Scene {
   QString Title() const;
   void Close();
   void SetDialogSize(int w, int h);
+  void SetDialogSize(qreal w, qreal h);
   void ShowClose(bool show);
 
   void OnEnter() override;

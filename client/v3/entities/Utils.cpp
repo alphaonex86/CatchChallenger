@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../Constants.hpp"
 #include "../core/SceneManager.hpp"
 #include "../libraries/gifimage/qgifimage.h"
 #include "../ui/Label.hpp"
@@ -40,8 +41,8 @@ NodeParsed Utils::HTML2Node(const QString &html,
     if (line.startsWith("<a")) {
       if (anchor.exactMatch(line)) {
         auto node = UI::GreenButton::Create();
-        node->SetHeight(30);
-        node->SetPixelSize(12);
+        node->SetHeight(Constants::ButtonSmallHeight());
+        node->SetPixelSize(Constants::TextSmallSize());
         node->SetText(anchor.cap(2));
         node->SetData(99, anchor.cap(1).toStdString());
         if (on_click) {
@@ -52,7 +53,7 @@ NodeParsed Utils::HTML2Node(const QString &html,
     } else {
       auto node = UI::Label::Create();
       node->SetText(line);
-      node->SetPixelSize(12);
+      node->SetPixelSize(Constants::TextSmallSize());
       records.push_back(node);
     }
   }

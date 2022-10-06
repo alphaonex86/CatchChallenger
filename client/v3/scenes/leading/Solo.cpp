@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QStandardPaths>
 #include <string>
+#include <iostream>
 
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
@@ -125,6 +126,9 @@ void Solo::Initialize() {
   }
 
   if (Globals::InternalServer != nullptr) {
+    if (!Globals::InternalServer->isStopped()) {
+      Globals::InternalServer->stop();
+    }
     Globals::InternalServer->deleteLater();
     Globals::InternalServer = nullptr;
   }
@@ -285,9 +289,7 @@ void Solo::IsStarted(bool started) {
   QObject::disconnect(Globals::InternalServer,
                       &CatchChallenger::InternalServer::is_started, nullptr,
                       nullptr);
-#ifdef CATCHCHALLENGER_SOLO
   SceneManager::GetInstance()->RegisterInternalServerEvents();
-#endif
   if (started) {
     ConnectionInfo connexionInfo;
     connexionInfo.connexionCounter = 0;
@@ -309,6 +311,8 @@ void Solo::IsStarted(bool started) {
 
 void Solo::ConnectToServer(ConnectionInfo connexionInfo, QString login,
                            QString pass) {
+  Globals::SetSolo(true);
+
   ConnectionManager::ClearInstance();
   if (!subserver_) subserver_ = SubServer::Create();
   static_cast<StackedScene *>(Parent())->PushForeground(subserver_);

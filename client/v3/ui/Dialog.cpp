@@ -5,6 +5,8 @@
 #include <iostream>
 
 #include "../core/EventManager.hpp"
+#include "../core/SceneManager.hpp"
+#include "../Constants.hpp"
 #include "../entities/Utils.hpp"
 
 using std::placeholders::_1;
@@ -67,6 +69,8 @@ Dialog::~Dialog() {
 }
 
 void Dialog::OnScreenResize() {
+  auto roundSize = Constants::ButtonRoundMediumSize();
+
   bool forcedCenter = true;
   int idealW = dialog_size_.width();
   int idealH = dialog_size_.height();
@@ -99,38 +103,30 @@ void Dialog::OnScreenResize() {
   background_->Strech(42, 42, 30, idealW, idealH);
 
   backdrop_->SetSize(bounding_rect_.width(), bounding_rect_.height());
+  title_background_->Strech(36, 13, 13, idealW * 0.7, title_background_->Height());
+  title_background_->SetPos(x_ + (idealW - title_background_->Width()) / 2,
+                            y_ - 36);
+  title_->SetPixelSize(Constants::TextTitleSize());
 
-  unsigned int space = 30;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    title_background_->SetPos(
-        x_ + (idealW - title_background_->Width() / 2) / 2, y_ - 36 / 2);
-    title_->SetPixelSize(30 / 2);
-    space = 10;
-  } else {
-    title_background_->SetPos(x_ + (idealW - title_background_->Width()) / 2,
-                              y_ - 36);
-    title_->SetPixelSize(30);
-  }
-
-  title_->SetPos(x_, y_ - 30);
+  title_->SetPos(x_, y_ - title_->Height() / 2);
   title_->SetWidth(idealW);
 
   content_boundary_ = QRectF(x_ + 30, y_ + 60, idealW - 60, idealH - 120);
   content_plain_boundary_ = QRectF(x_ + 20, y_ + 20, idealW - 40, idealH - 40);
 
-  quit_->SetSize(50, 56);
+  quit_->SetSize(roundSize);
   quit_->SetPos((background_->X() + background_->Width()) - quit_->Width() / 2,
                 background_->Y() - quit_->Height() / 2);
 }
 
 void Dialog::Draw(QPainter *painter) {
-  //painter->fillRect(0, 0, bounding_rect_.width(), bounding_rect_.height(),
-                    //QColor(0, 0, 0, 120));
-  //background_->Paint(painter, nullptr, nullptr);
+  // painter->fillRect(0, 0, bounding_rect_.width(), bounding_rect_.height(),
+  // QColor(0, 0, 0, 120));
+  // background_->Paint(painter, nullptr, nullptr);
 
-  //if (title_->Text().size() > 0) {
-    //title_background_->Paint(painter, nullptr, nullptr);
-    //title_->Paint(painter, nullptr, nullptr);
+  // if (title_->Text().size() > 0) {
+  // title_background_->Paint(painter, nullptr, nullptr);
+  // title_->Paint(painter, nullptr, nullptr);
   //}
 }
 
@@ -199,23 +195,18 @@ void Dialog::RemoveActionButton(Button *action) {
 void Dialog::RecalculateActionButtons() {
   if (actions_->Children().empty()) return;
 
-  unsigned int width = 83;
-  unsigned int height = 94;
+  auto roundSize = Constants::ButtonRoundMediumSize();
   auto content = bounding_rect_;
-  if (content.width() < 600 || content.height() < 480) {
-    width /= 2;
-    height /= 2;
-  }
 
   auto items = actions_->Children();
   for (auto it = begin(items); it != end(items); it++) {
-    (*it)->SetSize(width, height);
+    (*it)->SetSize(roundSize);
   }
   actions_->ReCalculateSize();
 
   auto content_b = ContentBoundary();
   actions_->SetPos(content.width() / 2 - actions_->Width() / 2,
-                   content_b.y() + content_b.height());
+                   y_ + dialog_size_.height() - roundSize.height() / 2);
 }
 
 void Dialog::SetTitle(const QString &text) {
@@ -243,8 +234,13 @@ QRectF Dialog::ContentBoundary() const { return content_boundary_; }
 QRectF Dialog::ContentPlainBoundary() const { return content_plain_boundary_; }
 
 void Dialog::SetDialogSize(int w, int h) {
-  dialog_size_.setHeight(h);
   dialog_size_.setWidth(w);
+  dialog_size_.setHeight(h);
+}
+
+void Dialog::SetDialogSize(qreal w, qreal h) {
+  dialog_size_.setWidth(SceneManager::GetInstance()->width() * w);
+  dialog_size_.setHeight(SceneManager::GetInstance()->height() * h);
 }
 
 void Dialog::ShowClose(bool show) {

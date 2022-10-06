@@ -6,10 +6,11 @@
 
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../Constants.hpp"
 #include "../../FacilityLibClient.hpp"
 #include "../../Globals.hpp"
 #include "../../base/ConnectionManager.hpp"
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../core/SceneManager.hpp"
 #include "../../core/StackedScene.hpp"
 #include "CharacterItem.hpp"
@@ -98,6 +99,12 @@ void CharacterSelector::add_clicked() {
 
 void CharacterSelector::add_finished() {
   if (!addCharacter->isOk()) {
+    // If is solo returns to menu
+    if (Globals::IsSolo()) {
+      static_cast<StackedScene *>(Parent())->PopForegroundUntilIndex(0);
+      return;
+    }
+
     RemoveChild(addCharacter);
     if (characterEntryList->Count() <
         CommonSettingsCommon::commonSettingsCommon.min_character) {
@@ -106,7 +113,8 @@ void CharacterSelector::add_finished() {
     return;
   }
   const std::string &datapackPath = connection_->client->datapackPathBase();
-  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size() > 1)
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size() >
+      1)
     profileIndex = addCharacter->getProfileIndex();
   if (profileIndex >=
       CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size())
@@ -220,32 +228,18 @@ void CharacterSelector::newLanguage() {
 }
 
 void CharacterSelector::OnScreenResize() {
-  unsigned int space = 10;
-  unsigned int fontSize = 20;
+  auto space = Constants::ItemMediumSpacing();
+  auto textSize = Constants::TextMediumSize();
+  auto rectSize = Constants::ButtonMediumSize();
+  auto roundSize = Constants::ButtonRoundMediumSize();
+
   unsigned int multiItemH = 100;
-  if (bounding_rect_.height() > 300) fontSize = bounding_rect_.height() / 6;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 600) {
-    add->SetSize(148, 61);
-    add->SetPixelSize(23);
-    remove->SetSize(56, 62);
-    select->SetSize(56, 62);
-    back->SetSize(56, 62);
-    multiItemH = 50;
-  } else if (bounding_rect_.width() < 900 || bounding_rect_.height() < 600) {
-    add->SetSize(148, 61);
-    add->SetPixelSize(23);
-    remove->SetSize(84, 93);
-    select->SetSize(84, 93);
-    back->SetSize(84, 93);
-    multiItemH = 75;
-  } else {
-    space = 30;
-    add->SetSize(223, 92);
-    add->SetPixelSize(35);
-    remove->SetSize(84, 93);
-    select->SetSize(84, 93);
-    back->SetSize(84, 93);
-  }
+  add->SetSize(rectSize);
+  add->SetPixelSize(textSize);
+  remove->SetSize(roundSize);
+  select->SetSize(roundSize);
+  back->SetSize(roundSize);
+  multiItemH = 50;
 
   unsigned int tWidthTButton = add->Width() + space + remove->Width();
   unsigned int tXTButton = bounding_rect_.width() / 2 - tWidthTButton / 2;
@@ -267,18 +261,17 @@ void CharacterSelector::OnScreenResize() {
       add->Height();
   int height = bounding_rect_.height() - space - select->Height() - space -
                add->Height() - space - space;
-  int width = 0;
-  if ((unsigned int)bounding_rect_.width() < (800 + space * 2)) {
-    width = bounding_rect_.width() - space * 2;
-    wdialog->SetPos(space, space);
-  } else {
-    width = 800;
-    wdialog->SetPos(bounding_rect_.width() / 2 - width / 2, space);
+  int width = bounding_rect_.width() * 0.5;
+  wdialog->SetPos(bounding_rect_.width() / 2 - width / 2, space);
+
+  if (width != wdialog->Width()) {
+    auto border = width * 0.025;
+    auto new_border = wdialog->Strech(46, 46, border, width, height);
+    characterEntryList->SetPos(wdialog->X() + new_border.x(),
+                               wdialog->Y() + new_border.y());
+    characterEntryList->SetSize(wdialog->Width() - new_border.x() * 2,
+                                wdialog->Height() - new_border.y() * 2);
   }
-  wdialog->Strech(46, width, height);
-  characterEntryList->SetPos(wdialog->X() + space, wdialog->Y() + space);
-  characterEntryList->SetSize(wdialog->Width() - space - space,
-                              wdialog->Height() - space - space);
 }
 
 void CharacterSelector::connectToSubServer(

@@ -11,6 +11,7 @@
 
 #include "../../../libqtcatchchallenger/Settings.hpp"
 #include "../../Ultimate.hpp"
+#include "../../Constants.hpp"
 #include "../../core/AssetsLoader.hpp"
 #include "../../core/EventManager.hpp"
 
@@ -87,36 +88,21 @@ AddOrEditServer *AddOrEditServer::Create() {
 
 void AddOrEditServer::OnScreenResize() {
   UI::Dialog::OnScreenResize();
+  auto textSize = Constants::TextMediumSize();
 
-  auto font = serverText->GetFont();
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    font.setPixelSize(30 / 2);
-  } else {
-    font.setPixelSize(30);
-  }
-  serverText->SetFont(font);
-  nameText->SetFont(font);
-  proxyText->SetFont(font);
+  serverText->SetPixelSize(textSize);
+  nameText->SetPixelSize(textSize);
+  proxyText->SetPixelSize(textSize);
 
   unsigned int nameBackgroundNewHeight = 50;
   unsigned int space = 30;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    font.setPixelSize(30 * 0.75 / 2);
-    serverInput->SetFont(font);
-    portInput->SetFont(font);
-    nameInput->SetFont(font);
-    proxyInput->SetFont(font);
-    proxyPortInput->SetFont(font);
-    space = 10;
-    nameBackgroundNewHeight = 50 / 2;
-  } else {
-    font.setPixelSize(30 * 0.75);
-    serverInput->SetFont(font);
-    portInput->SetFont(font);
-    nameInput->SetFont(font);
-    proxyInput->SetFont(font);
-    proxyPortInput->SetFont(font);
-  }
+
+  serverInput->SetPixelSize(textSize);
+  portInput->SetPixelSize(textSize);
+  nameInput->SetPixelSize(textSize);
+  proxyInput->SetPixelSize(textSize);
+  proxyPortInput->SetPixelSize(textSize);
+
   int top = 36;
   int bottom = 94 / 2;
   if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {

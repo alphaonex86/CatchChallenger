@@ -15,6 +15,7 @@ class StackedScene : public Scene {
   void PushForeground(Scene *scene);
   void ReplaceForeground(Scene *previous, Scene *next);
   Scene *PopForeground();
+  Scene *PopForegroundUntilIndex(int index);
   void OnEnter() override;
   void OnExit() override;
 

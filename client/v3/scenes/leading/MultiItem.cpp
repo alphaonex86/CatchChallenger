@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../../Constants.hpp"
 #include "../../base/ConnectionInfo.hpp"
 #include "../../core/AssetsLoader.hpp"
 #include "../../core/Sprite.hpp"
@@ -14,7 +15,7 @@ using Scenes::MultiItem;
 
 MultiItem::MultiItem(const ConnectionInfo &connexionInfo)
     : UI::SelectableItem(), m_connexionInfo(connexionInfo) {
-  SetSize(200, 60);
+  SetSize(200, Constants::ItemMediumHeight());
   FetchName();
 }
 
@@ -32,14 +33,14 @@ void MultiItem::FetchName() {
 #ifdef NOTCPSOCKET
     connexionInfoLabel = m_connexionInfo.ws;
 #else
-  #ifdef NOWEBSOCKET
+#ifdef NOWEBSOCKET
     connexionInfoLabel = m_connexionInfo.host;
-  #else
+#else
     if (!m_connexionInfo.host.isEmpty())
       connexionInfoLabel = m_connexionInfo.host;
     else
       connexionInfoLabel = m_connexionInfo.ws;
-  #endif
+#endif
 #endif
     if (connexionInfoLabel.size() > 32)
       connexionInfoLabel =

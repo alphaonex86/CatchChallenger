@@ -7,12 +7,14 @@
 
 #include "../../entities/BlacklistPassword.hpp"
 #include "../../ui/ThemedButton.hpp"
+#include "../../Constants.hpp"
 
 using Scenes::Login;
 using std::placeholders::_1;
 
 Login::Login(): UI::Dialog(false) {
   validated = false;
+  SetDialogSize(0.65, 0.6);
 
   loginText = UI::Label::Create(this);
   login = UI::Input::Create(this);
@@ -68,8 +70,8 @@ void Login::setLinks(const QString &site_page, const QString &register_page) {
   if (!site_page.isEmpty()) {
     auto btn = UI::GreenButton::Create();
     btn->SetText(tr("Web site"));
-    btn->SetHeight(30);
-    btn->SetPixelSize(12);
+    btn->SetHeight(Constants::ButtonSmallHeight());
+    btn->SetPixelSize(Constants::TextSmallSize());
     btn->SetData(99, site_page.toStdString());
     btn->SetOnClick(std::bind(&Login::OnLinkClick, this, _1));
     htmlText->AddChild(btn);
@@ -77,8 +79,8 @@ void Login::setLinks(const QString &site_page, const QString &register_page) {
   if (!register_page.isEmpty()) {
     auto btn = UI::GreenButton::Create();
     btn->SetText(tr("Register"));
-    btn->SetHeight(30);
-    btn->SetPixelSize(12);
+    btn->SetHeight(Constants::ButtonSmallHeight());
+    btn->SetPixelSize(Constants::TextSmallSize());
     btn->SetData(99, register_page.toStdString());
     btn->SetOnClick(std::bind(&Login::OnLinkClick, this, _1));
     htmlText->AddChild(btn);
@@ -130,28 +132,21 @@ bool Login::isOk() { return validated; }
 
 void Login::OnScreenResize() {
   UI::Dialog::OnScreenResize();
+
   auto inner_rect = ContentBoundary();
 
-  auto font = loginText->GetFont();
-  if (BoundingRect().width() < 600 || BoundingRect().height() < 640) {
-    back->SetSize(83 / 2, 94 / 2);
-    server_select->SetSize(83 / 2, 94 / 2);
-    font.setPixelSize(30 / 2);
-  } else {
-    back->SetSize(83, 94);
-    server_select->SetSize(83, 94);
-    font.setPixelSize(30);
-  }
-  loginText->SetFont(font);
-  passwordText->SetFont(font);
-  rememberText->SetFont(font);
+  auto textSize = Constants::TextSmallSize();
+  auto roundSize = Constants::ButtonRoundMediumSize();
+
+  back->SetSize(roundSize);
+  server_select->SetSize(roundSize);
+  loginText->SetPixelSize(textSize);
+  passwordText->SetPixelSize(textSize);
+  rememberText->SetPixelSize(textSize);
 
   unsigned int productKeyBackgroundNewHeight = 50;
   if (background_->Width() < 600 || background_->Height() < 640) {
-    font.setPixelSize(30 * 0.75 / 2);
     productKeyBackgroundNewHeight = 50 / 2;
-  } else {
-    font.setPixelSize(30 * 0.75);
   }
 
   const QRectF &loginTextRect = loginText->BoundingRect();

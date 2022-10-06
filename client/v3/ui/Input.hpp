@@ -35,6 +35,7 @@ class Input : public Node {
   void Clear();
   void SetPlaceholder(const QString &value);
   void SetFont(const QFont &font);
+  void SetPixelSize(uint8_t size);
   void RegisterEvents() override;
   void UnRegisterEvents() override;
   void SetOnTextChange(std::function<void(std::string)> callback);

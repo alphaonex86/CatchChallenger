@@ -8,6 +8,7 @@
 
 #include "../core/AssetsLoader.hpp"
 #include "../core/EventManager.hpp"
+#include "../Constants.hpp"
 
 using UI::Button;
 
@@ -19,15 +20,57 @@ Button::Button(QString pix, Node *parent) : Node(parent) {
   checked_ = false;
 
   bounding_rect_ = QRectF(0.0, 0.0, 223.0, 92.0);
+
   label_ = Label::Create();
   label_->SetPixelSize(35);
   label_->SetWidth(bounding_rect_.width());
   label_->SetAlignment(Qt::AlignCenter);
+
+  Button::SetSize(kRectMedium);
 }
 
 Button *Button::Create(QString pix, Node *parent) {
   Button *instance = new (std::nothrow) Button(pix, parent);
   return instance;
+}
+
+void Button::SetSize(const ButtonSize& size) {
+  QSizeF buttonSize;
+  int textSize;
+
+  switch (size) {
+    case kRectLarge:
+      buttonSize = Constants::ButtonLargeSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kRectMedium:
+      buttonSize = Constants::ButtonMediumSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kRectSmall:
+      buttonSize = Constants::ButtonSmallSize();
+      textSize = Constants::TextMediumSize();
+      break;
+    case kRoundLarge:
+      buttonSize = Constants::ButtonRoundLargeSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kRoundMedium:
+      buttonSize = Constants::ButtonRoundMediumSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kRoundSmall:
+      buttonSize = Constants::ButtonRoundSmallSize();
+      textSize = Constants::TextMediumSize();
+      break;
+  }
+
+  label_->SetPixelSize(textSize);
+  Button::SetSize(buttonSize.width(), buttonSize.height());
+}
+
+void Button::SetSize(const QSizeF& size) {
+  Button::SetSize(size.width(), size.height());
 }
 
 void Button::SetSize(qreal w, qreal h) {

@@ -21,6 +21,8 @@ UI::MessageDialog *Globals::alert_ = nullptr;
 
 UI::InputDialog *Globals::input_ = nullptr;
 
+bool Globals::is_solo_ = false;
+
 Scenes::Leading *Globals::GetLeadingScene() {
   if (!leading_) {
     leading_ = Scenes::Leading::Create();
@@ -70,4 +72,12 @@ void Globals::ClearAllScenes() {
     delete leading_;
     leading_ = nullptr;
   }
+}
+
+bool Globals::IsSolo() {
+  return is_solo_;
+}
+
+void Globals::SetSolo(bool is_solo) {
+  is_solo_ = is_solo;
 }

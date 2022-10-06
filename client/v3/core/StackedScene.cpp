@@ -65,6 +65,18 @@ Scene *StackedScene::PopForeground() {
   return tmp;
 }
 
+Scene *StackedScene::PopForegroundUntilIndex(int index) {
+  int iter = foreground_.size() - 1;
+  Scene* scene = nullptr;
+
+  while (iter > index) {
+    scene = PopForeground();
+    iter--;
+  }
+
+  return scene;
+}
+
 void StackedScene::OnEnter() {
   Scene::OnEnter();
 

@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../Constants.hpp"
 #include "../core/Node.hpp"
 
 using UI::Label;
@@ -13,7 +14,7 @@ Label::Label(QLinearGradient text_color, QLinearGradient border_color,
     : Node(parent) {
   font_ = new QFont();
   font_->setFamily("Calibri");
-  font_->setPixelSize(25);
+  font_->setPixelSize(Constants::TextMediumSize());
 
   pen_gradient_ = border_color;
   brush_gradient_ = text_color;
@@ -77,7 +78,7 @@ void Label::Draw(QPainter *painter) {
     paint.setRenderHint(QPainter::Antialiasing);
     pen_gradient_.setFinalStop(0, h);
     auto pen_width = GetPenWidth();
-    //TODO(lanstat): investigate why this abort the app
+    // TODO(lanstat): investigate why this abort the app
     QPen pen(pen_gradient_, pen_width, Qt::SolidLine, Qt::RoundCap,
              Qt::RoundJoin);
     paint.setPen(pen);

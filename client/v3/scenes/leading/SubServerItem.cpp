@@ -4,11 +4,12 @@
 #include <iostream>
 
 #include "../../core/Sprite.hpp"
+#include "../../Constants.hpp"
 #include "../../ui/Label.hpp"
 
 using Scenes::SubServerItem;
 
-SubServerItem::SubServerItem() : UI::SelectableItem() { SetSize(200, 70); }
+SubServerItem::SubServerItem() : UI::SelectableItem() { SetSize(200, Constants::ItemMediumHeight()); }
 
 SubServerItem *SubServerItem::Create() {
   return new (std::nothrow) SubServerItem();

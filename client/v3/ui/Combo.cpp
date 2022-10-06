@@ -14,7 +14,9 @@
 using UI::Combo;
 
 Combo::Combo(QString pix, Node *parent) : Node(parent) {
-  background_ = pix;
+  background_ = Sprite::Create();
+  auto pixmap = AssetsLoader::GetInstance()->GetImage(pix);
+  background_->SetPixmap(pixmap->copy(0, 0, 223, 92));
 
   label_ = Label::Create(this);
   label_->SetAlignment(Qt::AlignCenter);
@@ -37,6 +39,7 @@ Combo *Combo::Create(Node *parent) {
 Combo::~Combo() { 
   UnRegisterEvents();
   delete label_; 
+  delete background_;
 }
 
 void Combo::Draw(QPainter *painter) {
@@ -46,23 +49,9 @@ void Combo::Draw(QPainter *painter) {
   auto inner = inner_bounding_rect_;
   qreal scale = inner.height() / init_height;
 
-  auto pixmap = AssetsLoader::GetInstance()->GetImage(background_);
-  auto tmp = pixmap->copy(0, 0, 223, init_height);
-  tmp = tmp.scaled(inner.width(), inner.height(), Qt::IgnoreAspectRatio,
-                   Qt::SmoothTransformation);
-  painter->drawPixmap(0, 0, tmp);
+  background_->Draw(painter);
 
   if (is_menu_open_) {
-    tmp = pixmap->copy(0, 48, 223, 3);
-    tmp = tmp.scaled(inner.width(), bounding_rect_.height() - (scale * 41) - 10,
-                     Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
-    painter->drawPixmap(0, inner.height() / 2, tmp);
-
-    tmp = pixmap->copy(0, 51, 223, 41);
-    tmp = tmp.scaled(inner.width(), scale * 41, Qt::IgnoreAspectRatio,
-                     Qt::SmoothTransformation);
-    painter->drawPixmap(0, bounding_rect_.height() - tmp.height(), tmp);
-
     auto label = UI::Label::Create();
     label->SetFont(label_->GetFont());
     label->SetAlignment(Qt::AlignCenter);
@@ -132,8 +121,11 @@ void Combo::MouseReleaseEvent(const QPointF &p, bool &prev_validated) {
         OpenMenu();
       } else {
         auto y = p.y() - (t.y() + inner_bounding_rect_.height());
-        OnClick(y / label_->Height());
-        CloseMenu();
+        auto index = y / label_->Height();
+        if (index >= 0) {
+          OnClick(index);
+          CloseMenu();
+        }
       }
     }
   }
@@ -181,6 +173,14 @@ void Combo::SetOnSelectChange(std::function<void(uint8_t)> callback) {
   on_select_change_ = callback;
 }
 
+void Combo::SetSize(QSizeF& size) {
+  Combo::SetSize(size.width(), size.height());
+}
+
+void Combo::SetWidth(qreal width) {
+  Combo::SetSize(width, Height());
+}
+
 void Combo::SetSize(qreal width, qreal height) {
   auto bounding = BoundingRect();
   if (width == bounding.width() && height == bounding.height()) return;
@@ -213,6 +213,7 @@ void Combo::SetItemData(uint8_t index, int role, int value) {
 void Combo::OnResize() {
   label_->SetWidth(inner_bounding_rect_.width());
   label_->SetY(inner_bounding_rect_.height() / 2 - label_->Height() / 2);
+    background_->Strech(25, 25, 25, BoundingRect().width(), BoundingRect().height());
 }
 
 void Combo::OpenMenu() {
@@ -220,7 +221,7 @@ void Combo::OpenMenu() {
   last_z_ = ZValue();
   SetZValue(10);
 
-  SetHeight(Height() + (items_.size()) * label_->Height());
+  SetHeight(Height() + (items_.size()) * label_->Height() + Height() * 0.2);
   ReDraw();
 }
 

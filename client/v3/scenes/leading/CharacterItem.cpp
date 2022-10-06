@@ -3,14 +3,14 @@
 
 #include <iostream>
 
+#include "../../Constants.hpp"
 #include "../../core/Sprite.hpp"
 #include "../../ui/Label.hpp"
 
 using Scenes::CharacterItem;
 
-CharacterItem::CharacterItem()
-    : UI::SelectableItem() {
-  SetSize(200, 70);
+CharacterItem::CharacterItem() : UI::SelectableItem() {
+  SetSize(200, Constants::ItemMediumHeight());
 }
 
 CharacterItem *CharacterItem::Create() {
@@ -19,19 +19,21 @@ CharacterItem *CharacterItem::Create() {
 
 void CharacterItem::DrawContent(QPainter *painter) {
   auto image = Sprite::Create(icon_);
-  image->SetPos(10, 0);
-  image->SetSize(image->Width() - 10, 60);
+  auto icon_height = Height() * 0.9;
+  auto icon_width = image->Width() / icon_height * image->Width();
+  image->SetSize(icon_width, icon_height);
+  image->SetPos(Height() / 2 - icon_height / 2, 0);
   image->Render(painter);
 
   auto text = UI::Label::Create(QColor(255, 255, 255), QColor(30, 25, 17));
   text->SetWidth(bounding_rect_.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(title_);
-  text->SetY(5);
+  text->SetY(Constants::ItemSmallSpacing());
   text->Render(painter);
 
   text->SetY(text->Height());
-  text->SetPixelSize(10);
+  text->SetPixelSize(Constants::TextSmallSize());
   text->SetText(subtitle_);
   text->Render(painter);
 
@@ -39,9 +41,7 @@ void CharacterItem::DrawContent(QPainter *painter) {
   delete image;
 }
 
-void CharacterItem::OnResize() {
-  ReDraw();
-}
+void CharacterItem::OnResize() { ReDraw(); }
 
 void CharacterItem::SetIcon(const QString &icon) {
   icon_ = icon;

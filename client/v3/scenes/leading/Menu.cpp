@@ -10,6 +10,7 @@
 #include "../../../general/base/Version.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libqtcatchchallenger/Settings.hpp"
+#include "../../Constants.hpp"
 #include "../../Ultimate.hpp"
 #include "../../core/AssetsLoader.hpp"
 #include "../../core/SceneManager.hpp"
@@ -24,14 +25,9 @@
 #include "../ParallaxForest.hpp"
 #include "Loading.hpp"
 #include "Multi.hpp"
-#ifndef __ANDROID_API__
-  #define TEXT_SIZE 10
-#else
-  #define TEXT_SIZE 30
-#endif
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-  #include "../../core/AudioPlayer.hpp"
+#include "../../core/AudioPlayer.hpp"
 #endif
 
 using Scenes::Menu;
@@ -250,6 +246,10 @@ void Menu::FeedEntryList(const std::vector<FeedNews::FeedEntry> &entryList,
 }
 
 void Menu::UpdateNews() {
+  auto textNormal = Constants::TextMediumSize();
+  auto textSmall = Constants::TextSmallSize();
+  auto buttonSmall = Constants::ButtonSmallHeight();
+
   switch (current_news_type_) {
     case 0:
       if (news_->IsVisible()) news_->SetVisible(false);
@@ -261,8 +261,8 @@ void Menu::UpdateNews() {
         news_list_->Clear();
         if (entry_list_.size() > 1) {
           auto item = UI::YellowButton::Create();
-          item->SetHeight(30);
-          item->SetPixelSize(TEXT_SIZE);
+          item->SetHeight(buttonSmall);
+          item->SetPixelSize(textSmall);
           item->SetText(entry_list_.at(0).title);
           item->SetData(99, entry_list_.at(0).link.toStdString());
           item->SetOnClick(std::bind(&Menu::OnClickLink, this, _1));
@@ -277,12 +277,12 @@ void Menu::UpdateNews() {
       } else {
         news_list_->Clear();
         auto text = UI::Label::Create();
-        text->SetPixelSize(12);
+        text->SetPixelSize(textNormal);
         text->SetText(tr("Latest news:"));
         news_list_->AddItem(text);
         if (entry_list_.size() == 1) {
           auto item = UI::DotItem::Create();
-          item->SetPixelSize(TEXT_SIZE);
+          item->SetPixelSize(textSmall);
           item->SetText(entry_list_.at(0).title);
           item->SetData(99, entry_list_.at(0).link.toStdString());
           item->SetOnClick(std::bind(&Menu::OnClickLink, this, _1));
@@ -291,7 +291,7 @@ void Menu::UpdateNews() {
           unsigned int index = 0;
           while (index < entry_list_.size() && index < 3) {
             auto item = UI::DotItem::Create();
-            item->SetPixelSize(TEXT_SIZE);
+            item->SetPixelSize(textSmall);
             item->SetText(entry_list_.at(index).title);
             item->SetData(99, entry_list_.at(index).link.toStdString());
             item->SetOnClick(std::bind(&Menu::OnClickLink, this, _1));
@@ -324,7 +324,10 @@ void Menu::OpenUpdate() {
 
 void Menu::GoToSolo() {
 #ifndef NOSINGLEPLAYER
-  if (!solo_scene_) solo_scene_ = Solo::Create();
+  if (!solo_scene_) {
+    delete solo_scene_;
+  }
+  solo_scene_ = Solo::Create();
   static_cast<StackedScene *>(Parent())->PushForeground(solo_scene_);
 #endif
 }

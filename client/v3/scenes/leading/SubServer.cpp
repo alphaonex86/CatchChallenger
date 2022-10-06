@@ -8,6 +8,7 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../FacilityLibClient.hpp"
 #include "../../core/StackedScene.hpp"
+#include "../../Constants.hpp"
 #include "Loading.hpp"
 #include "SubServerItem.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
@@ -44,7 +45,7 @@ SubServer *SubServer::Create() { return new (std::nothrow) SubServer(); }
 void SubServer::Initialize() {
   wdialog = Sprite::Create(":/CC/images/interface/message.png", this);
   serverList = UI::ListView::Create(this);
-  serverList->SetItemSpacing(5);
+  serverList->SetItemSpacing(Constants::ItemSmallSpacing());
 
   server_select = UI::Button::Create(":/CC/images/interface/next.png", this);
   back = UI::Button::Create(":/CC/images/interface/back.png", this);
@@ -78,22 +79,13 @@ void SubServer::newLanguage() {}
 void SubServer::OnScreenResize() {
   if (!is_loaded_) return;
   unsigned int space = 10;
-  unsigned int fontSize = 20;
   unsigned int multiItemH = 100;
-  if (BoundingRect().height() > 300) fontSize = BoundingRect().height() / 6;
-  if (BoundingRect().width() < 600 || BoundingRect().height() < 600) {
-    server_select->SetSize(56, 62);
-    back->SetSize(56, 62);
-    multiItemH = 50;
-  } else if (BoundingRect().width() < 900 || BoundingRect().height() < 600) {
-    server_select->SetSize(84, 93);
-    back->SetSize(84, 93);
-    multiItemH = 75;
-  } else {
-    space = 30;
-    server_select->SetSize(84, 93);
-    back->SetSize(84, 93);
-  }
+
+  auto roundSize = Constants::ButtonRoundMediumSize();
+
+  server_select->SetSize(roundSize);
+  back->SetSize(roundSize);
+  multiItemH = 50;
 
   unsigned int tWidthTButton = server_select->Width() + space + back->Width();
   unsigned int y = BoundingRect().height() - space - server_select->Height();
@@ -104,18 +96,18 @@ void SubServer::OnScreenResize() {
   y = BoundingRect().height() - space - server_select->Height();
   int height =
       BoundingRect().height() - space - server_select->Height() - space - space;
-  int width = 0;
-  if ((unsigned int)BoundingRect().width() < (800 + space * 2)) {
-    width = BoundingRect().width() - space * 2;
-    wdialog->SetPos(space, space);
-  } else {
-    width = 800;
-    wdialog->SetPos(BoundingRect().width() / 2 - width / 2, space);
+  int width = bounding_rect_.width() * 0.5;
+
+  wdialog->SetPos(bounding_rect_.width() / 2 - width / 2, space);
+
+  if (width != wdialog->Width()) {
+    auto border = width * 0.025;
+    auto new_border = wdialog->Strech(46, 46, border, width, height);
+    serverList->SetPos(wdialog->X() + new_border.x(),
+                               wdialog->Y() + new_border.y());
+    serverList->SetSize(wdialog->Width() - new_border.x() * 2,
+                                wdialog->Height() - new_border.y() * 2);
   }
-  wdialog->Strech(46, width, height);
-  serverList->SetPos(wdialog->X() + space, wdialog->Y() + space);
-  serverList->SetSize(wdialog->Width() - space - space,
-                      wdialog->Height() - space - space);
 }
 
 void SubServer::OnEnter() {
@@ -252,7 +244,7 @@ void SubServer::addToServerList(CatchChallenger::LogicialGroup &logicialGroup,
   if (level > 0) {
     //TODO(lanstat): investigate why this abort the app
     auto header = UI::Label::Create();
-    header->SetPixelSize(18 - (level - 1) * 4);
+    header->SetPixelSize(Constants::TextMediumSize() - (level - 1) * 4);
     //header->SetText(logicialGroup.name);
     serverList->AddItem(header);
   }

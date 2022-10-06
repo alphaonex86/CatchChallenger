@@ -8,11 +8,12 @@
 #include "../../../../general/base/GeneralVariable.hpp"
 #include "../../../../general/tinyXML2/tinyxml2.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
+#include "../../Constants.hpp"
 
 using Scenes::AddCharacter;
 using std::placeholders::_1;
 
-AddCharacter::AddCharacter(): UI::Dialog(false) {
+AddCharacter::AddCharacter() : UI::Dialog(false) {
   ok = false;
 
   quit = UI::Button::Create(":/CC/images/interface/cancel.png", this);
@@ -21,7 +22,8 @@ AddCharacter::AddCharacter(): UI::Dialog(false) {
   validate->SetOnClick(std::bind(&AddCharacter::OnActionClick, this, _1));
 
   comboBox = UI::Combo::Create(":/CC/images/interface/button.png", this);
-  comboBox->SetSize(200, 30);
+  auto buttonSize = Constants::ButtonMediumSize();
+  comboBox->SetSize(buttonSize);
   description = UI::Label::Create(this);
 
   comboBox->SetOnSelectChange(
@@ -46,37 +48,26 @@ AddCharacter *AddCharacter::Create() {
 
 void AddCharacter::OnScreenResize() {
   Dialog::OnScreenResize();
-  auto font = description->GetFont();
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    quit->SetSize(83 / 2, 94 / 2);
-    validate->SetSize(83 / 2, 94 / 2);
-    font.setPixelSize(30 / 2);
-  } else {
-    quit->SetSize(83, 94);
-    validate->SetSize(83, 94);
-    font.setPixelSize(30);
-  }
-  description->SetFont(font);
+
+  auto roundSize = Constants::ButtonRoundMediumSize();
+  auto textSize = Constants::TextMediumSize();
+
+  quit->SetSize(roundSize);
+  validate->SetSize(roundSize);
+  description->SetPixelSize(textSize);
 
   unsigned int nameBackgroundNewHeight = 50;
   unsigned int space = 30;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    font.setPixelSize(30 * 0.75 / 2);
-    space = 10;
-    nameBackgroundNewHeight = 50 / 2;
-    comboBox->SetWidth(200);
-  } else {
-    font.setPixelSize(30 * 0.75);
-    comboBox->SetWidth(400);
-  }
 
   auto content = ContentBoundary();
 
-  comboBox->SetPos(BoundingRect().width() / 2 - comboBox->Width() / 2,
+  comboBox->SetWidth(content.width() * 0.5);
+  comboBox->SetPos(content.x() + content.width() / 2 - comboBox->Width() / 2,
                    content.y() + 20);
-  description->SetPos(bounding_rect_.width() / 2 - description->Width() / 2,
-                      bounding_rect_.height() / 2 - description->Height() / 2 +
-                          comboBox->Height());
+  description->SetPos(
+      content.x() + content.width() / 2 - description->Width() / 2,
+      content.y() + content.height() / 2 - description->Height() / 2 +
+          comboBox->Height());
 }
 
 void AddCharacter::setDatapack(std::string path) {
@@ -84,7 +75,8 @@ void AddCharacter::setDatapack(std::string path) {
   this->ok = false;
 
   comboBox->Clear();
-  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty()) {
+  if (CatchChallenger::CommonDatapack::commonDatapack.get_profileList()
+          .empty()) {
     description->SetText(tr("No profile selected to start a new game"));
     return;
   }

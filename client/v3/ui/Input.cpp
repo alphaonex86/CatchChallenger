@@ -8,7 +8,7 @@
 #include "../core/Node.hpp"
 
 #ifdef __ANDROID_API__
-  #include "../core/VirtualInput.hpp"
+#include "../core/VirtualInput.hpp"
 #endif
 
 using UI::Input;
@@ -212,3 +212,5 @@ void Input::OnReturnPressed() {
 }
 
 QGraphicsProxyWidget *Input::GetProxy() const { return proxy_; }
+
+void Input::SetPixelSize(uint8_t size) { label_->SetPixelSize(size); }

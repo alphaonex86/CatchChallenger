@@ -14,7 +14,6 @@
 #include <QStandardPaths>
 #include <iostream>
 
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../../general/base/Version.hpp"
@@ -23,7 +22,9 @@
 #include "../../../libcatchchallenger/ClientVariable.hpp"
 #include "../../../libqtcatchchallenger/Language.hpp"
 #include "../../../libqtcatchchallenger/PlatformMacro.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libqtcatchchallenger/Settings.hpp"
+#include "../../Constants.hpp"
 #include "../../Ultimate.hpp"
 #include "../../base/ConnectionManager.hpp"
 #include "../../core/Sprite.hpp"
@@ -72,7 +73,7 @@ Multi::Multi() : reply(nullptr) {
   warning->SetAlignment(Qt::AlignCenter);
   serverEmpty = UI::Label::Create(this);
   scrollZone = UI::ListView::Create(wdialog);
-  scrollZone->SetItemSpacing(5);
+  scrollZone->SetItemSpacing(Constants::ItemSmallSpacing());
 
   server_add->SetOnClick(std::bind(&Multi::server_add_clicked, this));
   server_remove->SetOnClick(std::bind(&Multi::server_remove_clicked, this));
@@ -85,11 +86,10 @@ Multi::Multi() : reply(nullptr) {
   newLanguage();
 
   // need be the last
-  //downloadFile();
+  // downloadFile();
   displayServerList();
   addServer = nullptr;
   subserver_ = nullptr;
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::GetInstance() << std::endl;
 }
 
 Multi::~Multi() {
@@ -133,9 +133,6 @@ void Multi::displayServerList() {
     if (selectedServer.unique_code == connexionInfo.unique_code) {
       server_edit->SetEnabled(connexionInfo.isCustom);
       server_remove->SetEnabled(connexionInfo.isCustom);
-      // newEntry->SetEnabled(true);
-    } else {
-      // newEntry->SetEnabled(false);
     }
 
     scrollZone->AddItem(newEntry);
@@ -809,7 +806,7 @@ void Multi::on_server_refresh_clicked() {
     reply->deleteLater();
     reply = NULL;
   }
-  //downloadFile();
+  // downloadFile();
 }
 
 void Multi::server_select_clicked() {
@@ -888,17 +885,6 @@ void Multi::newLanguage() {
   server_add->SetText(tr("Add"));
   // server_remove->setText(tr("Remove"));
   server_edit->SetText(tr("Edit"));
-  /*
-  warning->setHtml(
-      "<span style=\"background-color: rgb(255, 255, 163);\nborder: 1px solid "
-      "rgb(255, 221, 50);\nborder-radius:5px;\ncolor: rgb(0, 0, 0);\">" +
-      tr("Loading the servers list...") + "</span>");
-  serverEmpty->setHtml(
-      QStringLiteral(
-          "<html><body><p align=\"center\"><span "
-          "style=\"font-size:12pt;color:#a0a0a0;\">%1</span></p></body></html>")
-          .arg(tr("Empty")));
-  */
 }
 
 void Multi::OnScreenSD() {}
@@ -908,40 +894,15 @@ void Multi::OnScreenHD() {}
 void Multi::OnScreenHDR() {}
 
 void Multi::OnScreenResize() {
-  unsigned int space = 10;
-  //    unsigned int fontSize=20;
-  unsigned int multiItemH = 100;
-  if (BoundingRect().width() < 600 || BoundingRect().height() < 600) {
-    server_add->SetSize(148, 61);
-    server_add->SetPixelSize(23);
-    server_remove->SetSize(56, 62);
-    server_edit->SetSize(148, 61);
-    server_edit->SetPixelSize(23);
-    server_refresh->SetSize(56, 62);
-    server_select->SetSize(56, 62);
-    back->SetSize(56, 62);
-    multiItemH = 50;
-  } else if (BoundingRect().width() < 900 || BoundingRect().height() < 600) {
-    server_add->SetSize(148, 61);
-    server_add->SetPixelSize(23);
-    server_remove->SetSize(56, 62);
-    server_edit->SetSize(148, 61);
-    server_edit->SetPixelSize(23);
-    server_refresh->SetSize(56, 62);
-    server_select->SetSize(84, 93);
-    back->SetSize(84, 93);
-    multiItemH = 75;
-  } else {
-    space = 30;
-    server_add->SetSize(223, 92);
-    server_add->SetPixelSize(35);
-    server_remove->SetSize(84, 93);
-    server_edit->SetSize(223, 92);
-    server_edit->SetPixelSize(35);
-    server_refresh->SetSize(84, 93);
-    server_select->SetSize(84, 93);
-    back->SetSize(84, 93);
-  }
+  unsigned int space = Constants::ItemMediumSpacing();
+
+  server_add->SetSize(UI::Button::kRectMedium);
+  server_edit->SetSize(UI::Button::kRectMedium);
+
+  server_remove->SetSize(UI::Button::kRoundMedium);
+  server_refresh->SetSize(UI::Button::kRoundMedium);
+  server_select->SetSize(UI::Button::kRoundMedium);
+  back->SetSize(UI::Button::kRoundMedium);
 
   unsigned int tWidthTButton =
       server_add->Width() + space + server_edit->Width() + space +
@@ -970,21 +931,20 @@ void Multi::OnScreenResize() {
   int border_size = 46;
   int height = BoundingRect().height() - space - server_select->Height() -
                space - server_add->Height() - space - space;
-  int width = 0;
-  if ((unsigned int)BoundingRect().width() < (800 + space * 2)) {
-    width = BoundingRect().width() - space * 2;
-    wdialog->SetPos(space, space);
-  } else {
-    width = 800;
-    wdialog->SetPos(BoundingRect().width() / 2 - width / 2, space);
-  }
-  wdialog->Strech(border_size, width, height);
+  int width = bounding_rect_.width() * 0.5;
+
   warning->SetY(space + wdialog->Height() - border_size - warning->Height());
   warning->SetWidth(bounding_rect_.width());
+  wdialog->SetPos(BoundingRect().width() / 2 - width / 2, space);
 
-  scrollZone->SetSize(wdialog->Width() - border_size,
-                      wdialog->Height() - border_size);
-  scrollZone->SetPos(border_size / 2, border_size / 2);
+  if (width != wdialog->Width()) {
+    auto border = width * 0.025;
+    auto new_border = wdialog->Strech(46, 46, border, width, height);
+    scrollZone->SetPos(new_border.x(),
+                       new_border.y());
+    scrollZone->SetSize(wdialog->Width() - new_border.x() * 2,
+                        wdialog->Height() - new_border.y() * 2);
+  }
 }
 
 void Multi::GoBack() { static_cast<StackedScene *>(Parent())->PopForeground(); }
