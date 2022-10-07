@@ -6,6 +6,10 @@
 
 class Constants {
    public:
+    static QSizeF DialogLargeSize();
+    static QSizeF DialogMediumSize();
+    static QSizeF DialogSmallSize();
+
     static QSizeF ButtonLargeSize();
     static QSizeF ButtonMediumSize();
     static QSizeF ButtonSmallSize();

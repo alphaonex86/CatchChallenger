@@ -3,6 +3,7 @@
 #include "../../general/base/cpp11addition.hpp"
 #include "GlobalServerData.hpp"
 #include "MapServer.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 

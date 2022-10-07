@@ -5,6 +5,15 @@
 #define FONT_SIZE 48 //12
 
 // width = height * 2.5 + 20;
+QSizeF Constants::DialogLargeSize() { return QSizeF(0.85, 0.75); }
+
+// width = height * 2.5 + 20;
+QSizeF Constants::DialogMediumSize() { return QSizeF(0.75, 0.6); }
+
+// width = height * 2.5 + 20;
+QSizeF Constants::DialogSmallSize() { return QSizeF(0.5, 0.5); }
+
+// width = height * 2.5 + 20;
 QSizeF Constants::ButtonLargeSize() { return QSizeF(BLOCK_SIZE * 2.5 + 20, BLOCK_SIZE); }
 
 // width = height * 2.5 + 20;

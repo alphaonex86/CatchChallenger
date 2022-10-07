@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "../Constants.hpp"
+#include "../core/FontManager.hpp"
 #include "../core/Node.hpp"
 
 using UI::Label;
@@ -12,20 +13,20 @@ using UI::Label;
 Label::Label(QLinearGradient text_color, QLinearGradient border_color,
              Node *parent)
     : Node(parent) {
-  font_ = new QFont();
-  font_->setFamily("Calibri");
-  font_->setPixelSize(Constants::TextMediumSize());
+  font_ = FontManager::GetInstance()->GetFont("Calibri",
+                                              Constants::TextMediumSize());
+  font_height_ = FontManager::GetInstance()->GetFontHeight(
+      "Calibri", Constants::TextMediumSize());
 
   pen_gradient_ = border_color;
   brush_gradient_ = text_color;
-  font_height_ = 0;
 
   text_path_ = nullptr;
   alignment_ = Qt::AlignLeft;
   auto_size_ = true;
 }
 
-Label::~Label() { delete font_; }
+Label::~Label() {}
 
 Label *Label::Create(Node *parent) {
   Label *instance = Create(QColor(25, 11, 1), QColor(255, 255, 255), parent);
@@ -109,8 +110,11 @@ QString Label::Text() const { return text_; }
 void Label::SetPixelSize(uint8_t size) {
   int tempsize = size * 1.5;
   if (font_->pixelSize() == tempsize) return;
-  font_height_ = 0;
-  font_->setPixelSize(tempsize);
+
+  font_ = FontManager::GetInstance()->GetFont("Calibri",
+                                              tempsize);
+  font_height_ = FontManager::GetInstance()->GetFontHeight(
+      "Calibri", tempsize);
   UpdateTextPath();
   ReDraw();
 }
@@ -120,15 +124,7 @@ void Label::UpdateTextPath() {
     return;
   }
   if (text_path_ != nullptr) delete text_path_;
-  QPainterPath temp_path;
-  int line_height = 5;
-  if (font_height_ == 0) {
-    temp_path.addText(0, 0, *font_,
-                      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOQPRSTUVWXYZ");
-
-    font_height_ = temp_path.boundingRect().height() + line_height;
-  }
-  temp_path = QPainterPath();
+  QPainterPath temp_path = QPainterPath();
 
   QStringList lines = text_.split("\n");
   text_path_ = new QPainterPath();

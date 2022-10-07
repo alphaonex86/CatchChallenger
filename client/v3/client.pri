@@ -52,6 +52,7 @@ SOURCES += \
     $$PWD/core/Sprite.cpp \
     $$PWD/core/ActionManager.cpp \
     $$PWD/core/EventManager.cpp \
+    $$PWD/core/FontManager.cpp \
     $$PWD/core/Scene.cpp \
     $$PWD/core/SceneManager.cpp \
     $$PWD/core/StackedScene.cpp \
@@ -174,6 +175,7 @@ HEADERS  += \
     $$PWD/core/Sprite.hpp \
     $$PWD/core/ActionManager.hpp \
     $$PWD/core/EventManager.hpp \
+    $$PWD/core/FontManager.hpp \
     $$PWD/core/Scene.hpp \
     $$PWD/core/SceneManager.hpp \
     $$PWD/core/StackedScene.hpp \

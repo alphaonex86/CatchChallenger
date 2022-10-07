@@ -4,6 +4,7 @@
 #include "GlobalServerData.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include <cstring>
 
 using namespace CatchChallenger;
 
