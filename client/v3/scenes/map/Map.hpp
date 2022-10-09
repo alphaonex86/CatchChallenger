@@ -11,6 +11,7 @@ class Map : public StackedScene {
  public:
   static Map* Create();
   ~Map();
+  void Restart() override;
 
  private:
   Map();

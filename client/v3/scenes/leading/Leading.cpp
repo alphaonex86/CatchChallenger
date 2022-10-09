@@ -31,3 +31,7 @@ Leading* Leading::Create() {
   Leading* instance = new (std::nothrow) Leading();
   return instance;
 }
+
+void Leading::Restart() {
+  PopForegroundUntilIndex(0);
+}

@@ -22,10 +22,11 @@ void StackedScene::SetBackground(Scene *scene) {
 
 void StackedScene::PushForeground(Scene *scene) {
   if (!foreground_.empty()) {
-    if (foreground_.back() == scene) {
+    auto tmp = foreground_.back();
+    if (tmp == scene) {
       return;
     }
-    RemoveChild(foreground_.back());
+    RemoveChild(tmp);
   }
 
   scene->SetZValue(0);

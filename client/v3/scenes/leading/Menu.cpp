@@ -324,7 +324,7 @@ void Menu::OpenUpdate() {
 
 void Menu::GoToSolo() {
 #ifndef NOSINGLEPLAYER
-  if (!solo_scene_) {
+  if (solo_scene_) {
     delete solo_scene_;
   }
   solo_scene_ = Solo::Create();
@@ -334,7 +334,10 @@ void Menu::GoToSolo() {
 
 void Menu::GoToMulti() {
   QtDatapackClientLoader::GetInstance();
-  if (!multi_scene_) multi_scene_ = Multi::Create();
+  if (multi_scene_) {
+    delete multi_scene_;
+  }
+  multi_scene_ = Multi::Create();
   static_cast<StackedScene *>(Parent())->PushForeground(multi_scene_);
 }
 
@@ -357,6 +360,7 @@ void Menu::ChangeLanguage() {
 }
 
 void Menu::OnEnter() {
+  Scene::OnEnter();
   if (!is_loaded_) return;
   solo_->RegisterEvents();
   multi_->RegisterEvents();
@@ -368,7 +372,7 @@ void Menu::OnEnter() {
 }
 
 void Menu::OnExit() {
-  if (!is_loaded_) return;
+  Scene::OnExit();
   solo_->UnRegisterEvents();
   multi_->UnRegisterEvents();
   options_->UnRegisterEvents();

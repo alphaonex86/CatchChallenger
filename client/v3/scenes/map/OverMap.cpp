@@ -8,6 +8,9 @@
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libcatchchallenger/ChatParsing.hpp"
 #include "../../Constants.hpp"
+#include "../../core/SceneManager.hpp"
+#include "../leading/Leading.hpp"
+#include "../../core/StackedScene.hpp"
 
 using Scenes::OverMap;
 
@@ -26,6 +29,9 @@ OverMap::OverMap() {
 
   bag = UI::Button::Create(":/CC/images/interface/bag.png", this);
   bagOver = UI::Label::Create(QColor(255, 255, 255), QColor(80, 71, 38), this);
+
+  menu_ = UI::Button::Create(":/CC/images/interface/menu.png", this);
+
   buy = UI::Button::Create(":/CC/images/interface/buy.png", this);
   {
     QLinearGradient gradient1(0, 0, 0, 100);
@@ -51,6 +57,7 @@ OverMap::OverMap() {
   newLanguage();
 
   buy->SetOnClick(std::bind(&OverMap::buyClicked, this));
+  menu_->SetOnClick(std::bind(&OverMap::menuClicked, this));
 }
 
 OverMap::~OverMap() {
@@ -137,6 +144,9 @@ void OverMap::OnScreenResize() {
     }
   }
 
+  menu_->SetSize(UI::Button::kRoundMedium);
+  menu_->SetPos(xRight, bounding_rect_.height() - space * 2 - buy->Height() * 2);
+
   {
     bagOver->SetVisible(physicalDpiX < 200);
     bag->SetSize(UI::Button::kRoundMedium);
@@ -164,6 +174,7 @@ void OverMap::OnScreenResize() {
 
 void OverMap::OnEnter() {
   Scene::OnEnter();
+  menu_->RegisterEvents();
   buy->RegisterEvents();
   tip_->RegisterEvents();
   toast_->RegisterEvents();
@@ -176,6 +187,7 @@ void OverMap::OnEnter() {
 }
 
 void OverMap::OnExit() {
+  menu_->UnRegisterEvents();
   buy->UnRegisterEvents();
   tip_->UnRegisterEvents();
   toast_->UnRegisterEvents();
@@ -186,4 +198,9 @@ void OverMap::OnExit() {
 void OverMap::buyClicked() {
   QDesktopServices::openUrl(tr("https://shop.first-world.info/en/") +
                             "#CatchChallenger");
+}
+
+void OverMap::menuClicked() {
+  SceneManager::GetInstance()->PopScene();
+  static_cast<StackedScene *>(SceneManager::GetInstance()->CurrentScene())->Restart();
 }

@@ -11,6 +11,7 @@ class Leading : public StackedScene {
  public:
   static Leading* Create();
   ~Leading();
+  void Restart() override;
 
  private:
   Leading();

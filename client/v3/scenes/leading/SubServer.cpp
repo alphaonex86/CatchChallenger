@@ -18,7 +18,6 @@ using std::placeholders::_1;
 
 SubServer::SubServer() {
   connection_ = ConnectionManager::GetInstance();
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< QtDatapackClientLoader::GetInstance() << std::endl;
   connection_->SetOnLogged(std::bind(&SubServer::OnLogged, this, _1));
   auto loader = Loading::GetInstance();
   loader->Reset();
@@ -111,6 +110,7 @@ void SubServer::OnScreenResize() {
 }
 
 void SubServer::OnEnter() {
+  Scene::OnEnter();
   if (!is_loaded_) return;
   server_select->RegisterEvents();
   back->RegisterEvents();
@@ -118,10 +118,11 @@ void SubServer::OnEnter() {
 }
 
 void SubServer::OnExit() {
-  if (!is_loaded_) return;
   server_select->UnRegisterEvents();
   back->UnRegisterEvents();
   serverList->UnRegisterEvents();
+
+  Scene::OnExit();
 }
 
 void SubServer::itemSelectionChanged(Node *node) {

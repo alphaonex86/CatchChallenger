@@ -11,11 +11,7 @@ Map::Map() {
   background_ = CCMap::Create();
 
   overmap_ = OverMapLogic::Create();
-  /*
-  if (!connect(overmap, &OverMapLogic::error, this,
-               &ScreenTransition::errorString))
-    abort();*/
-  overmap_->resetAll();
+  //overmap_->resetAll();
   overmap_->setVar(background_);
   overmap_->connectAllSignals();
   SetBackground(background_);
@@ -30,4 +26,8 @@ Map::~Map() {
 Map* Map::Create() {
   Map* instance = new (std::nothrow) Map();
   return instance;
+}
+
+void Map::Restart() {
+
 }

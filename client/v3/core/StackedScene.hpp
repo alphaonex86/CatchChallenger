@@ -18,6 +18,7 @@ class StackedScene : public Scene {
   Scene *PopForegroundUntilIndex(int index);
   void OnEnter() override;
   void OnExit() override;
+  virtual void Restart() = 0;
 
  protected:
   explicit StackedScene(Node *parent = nullptr);

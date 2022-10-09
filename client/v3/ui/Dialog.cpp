@@ -165,6 +165,7 @@ void Dialog::OnExit() {
     quit_->UnRegisterEvents();
   }
   EventManager::GetInstance()->UnLock();
+  Scene::OnExit();
 }
 
 void Dialog::AddActionButton(Button *action) {

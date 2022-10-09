@@ -1,7 +1,6 @@
 // Copyright 2021 CatchChallenger
 #ifndef OverMap_H
 #define OverMap_H
-
 #include <QObject>
 #include <QTimer>
 #include <string>
@@ -43,17 +42,6 @@ class OverMap : public QObject, public Scene {
   virtual void setVar(CCMap *ccmap);
   void newLanguage();
 
-  /*
-  void mousePressEventXY(const QPointF &p, bool &pressValidated,
-                         bool &callParentClass) override;
-  void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,
-                           bool &callParentClass) override;
-  void mouseMoveEventXY(const QPointF &p,
-                        bool &pressValidated,
-                        bool &callParentClass);
-  void keyPressEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
-  void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
-  */
   void buyClicked();
 
   void updatePlayerNumber(const uint16_t &number, const uint16_t &max_players);
@@ -79,6 +67,7 @@ class OverMap : public QObject, public Scene {
   UI::Label *buyOver;
   UI::Button *crafting_btn_;
   Chat *chat_;
+  UI::Button *menu_;
 
   Toast *toast_;
 
@@ -90,6 +79,7 @@ class OverMap : public QObject, public Scene {
   bool haveClanInformations;
 
   void OnScreenResize() override;
+  void menuClicked();
 };
 }  // namespace Scenes
 #endif  // MULTI_H

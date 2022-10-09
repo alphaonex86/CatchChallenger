@@ -126,7 +126,7 @@ void Loading::OnScreenResize() {
   progressbar->SetSize(BoundingRect().width() - 10 - 10, progressBarHeight);
 
 
-  widget->Strech(widget_border, Width() * 0.4, Height() * 0.4);
+  widget->Strech(widget_border, Width() * 0.4, Height() * 0.3);
   widget->SetPos(BoundingRect().width() / 2 - widget->Width() / 2,
                  BoundingRect().height() / 2 - widget->Height() / 2);
 

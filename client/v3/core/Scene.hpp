@@ -29,6 +29,7 @@ class Scene : public Node {
   void KeyReleaseEvent(QKeyEvent *event, bool &event_trigger) override;
   void OnResize() override;
   void OnEnter() override;
+  void OnExit() override;
 
   void PrintError(const char *file, int line, const QString &message);
   void PrintError(const QString &message);

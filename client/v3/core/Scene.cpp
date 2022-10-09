@@ -99,4 +99,9 @@ void Scene::OnResize() {
 
 void Scene::OnEnter() {
   OnResize();
+  //Node::OnEnter();
+}
+
+void Scene::OnExit() {
+  //Node::OnExit();
 }

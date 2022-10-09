@@ -34,6 +34,7 @@ CharacterSelector::CharacterSelector() {
   select = UI::Button::Create(":/CC/images/interface/next.png", this);
   back = UI::Button::Create(":/CC/images/interface/back.png", this);
   select->SetEnabled(false);
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< select << std::endl;
 
   wdialog = Sprite::Create(":/CC/images/interface/message.png", this);
 
@@ -200,6 +201,10 @@ void CharacterSelector::remove_clicked() {
 }
 
 void CharacterSelector::select_clicked() {
+  if (selected_character_ == nullptr) {
+    return;
+  }
+
   connection_->SetOnGoToMap(std::bind(&CharacterSelector::GoToMap, this));
   connection_->selectCharacter(serverSelected, selected_character_->Data(99));
   auto loading = Loading::GetInstance();
@@ -265,7 +270,7 @@ void CharacterSelector::connectToSubServer(
     const int indexSubServer,
     const std::vector<std::vector<CatchChallenger::CharacterEntry> >
         &characterEntryList) {
-  Globals::GetMapScene();
+  //Globals::GetMapScene();
   if (!QObject::connect(
           ConnectionManager::GetInstance()->client,
           &CatchChallenger::Api_protocol_Qt::QtnewCharacterId,
@@ -409,6 +414,9 @@ void CharacterSelector::backSubServer() {
 
 void CharacterSelector::OnEnter() {
   Scene::OnEnter();
+
+  select->SetEnabled(false);
+  selected_character_ = nullptr;
   add->RegisterEvents();
   remove->RegisterEvents();
   select->RegisterEvents();
@@ -417,12 +425,13 @@ void CharacterSelector::OnEnter() {
 }
 
 void CharacterSelector::OnExit() {
-  Node::OnExit();
   add->UnRegisterEvents();
   remove->UnRegisterEvents();
   select->UnRegisterEvents();
   back->UnRegisterEvents();
   characterEntryList->UnRegisterEvents();
+
+  Scene::OnExit();
 }
 
 void CharacterSelector::GoToMap() {

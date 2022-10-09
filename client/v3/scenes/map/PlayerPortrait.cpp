@@ -8,6 +8,7 @@
 #include "../../core/EventManager.hpp"
 #include "../../core/Sprite.hpp"
 #include "../../ui/Label.hpp"
+#include "../../Constants.hpp"
 
 using Scenes::PlayerPortrait;
 using std::placeholders::_1;
@@ -52,6 +53,7 @@ void PlayerPortrait::Draw(QPainter *painter) {
   text->SetPos(sprite->X() + 175, sprite->Y() + 18);
   text->Render(painter);
 
+  text->SetPixelSize(Constants::TextSmallSize());
   text->SetText(cash_);
   text->SetPos(sprite->X() + 230, sprite->Y() + 65);
   text->Render(painter);
