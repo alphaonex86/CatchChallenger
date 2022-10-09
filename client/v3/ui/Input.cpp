@@ -6,6 +6,7 @@
 
 #include "../core/EventManager.hpp"
 #include "../core/Node.hpp"
+#include "../Constants.hpp"
 
 #ifdef __ANDROID_API__
 #include "../core/VirtualInput.hpp"
@@ -30,6 +31,7 @@ Input::Input(Node *parent) : Node(parent) {
   proxy_->setWidget(line_edit_);
   on_text_change_ = nullptr;
   label_ = Label::Create();
+  line_edit_->setFont(label_->GetFont());
   background_ = Sprite::Create(":/CC/images/interface/input.png");
   inner_padding_ = QPointF(14, 11);
   focus_ = false;
@@ -146,9 +148,37 @@ void Input::Draw(QPainter *painter) {
   label_->Render(painter);
 }
 
+void Input::SetSize(const InputSize &size) {
+  QSizeF buttonSize;
+  int textSize;
+
+  switch (size) {
+    case kLarge:
+      buttonSize = Constants::ButtonLargeSize();
+      textSize = Constants::TextMediumSize();
+      break;
+    case kMedium:
+      buttonSize = Constants::ButtonMediumSize();
+      textSize = Constants::TextMediumSize();
+      break;
+    case kSmall:
+      buttonSize = Constants::ButtonSmallSize();
+      textSize = Constants::TextSmallSize();
+      break;
+  }
+
+  label_->SetPixelSize(textSize);
+  line_edit_->setFont(label_->GetFont());
+  Input::SetSize(buttonSize.width(), buttonSize.height());
+}
+
 void Input::SetSize(qreal width, qreal height) {
   if (width == Width() && height == Height()) return;
   Node::SetSize(width, height);
+}
+
+void Input::SetWidth(qreal width) {
+  Input::SetSize(width, Height());
 }
 
 QString Input::Value() const { return line_edit_->text(); }

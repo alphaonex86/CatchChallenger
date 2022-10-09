@@ -14,7 +14,7 @@ using std::placeholders::_1;
 
 Login::Login(): UI::Dialog(false) {
   validated = false;
-  SetDialogSize(0.65, 0.6);
+  SetDialogSize(Constants::DialogMediumSize());
 
   loginText = UI::Label::Create(this);
   login = UI::Input::Create(this);
@@ -66,12 +66,13 @@ void Login::setAuth(const QStringList &list) {
 }
 
 void Login::setLinks(const QString &site_page, const QString &register_page) {
+  auto inner_rect = ContentBoundary();
   htmlText->RemoveAllChildrens();
   if (!site_page.isEmpty()) {
     auto btn = UI::GreenButton::Create();
     btn->SetText(tr("Web site"));
-    btn->SetHeight(Constants::ButtonSmallHeight());
-    btn->SetPixelSize(Constants::TextSmallSize());
+    btn->SetSize(UI::Button::kRectSmall);
+    btn->SetWidth(inner_rect.width() * 0.4);
     btn->SetData(99, site_page.toStdString());
     btn->SetOnClick(std::bind(&Login::OnLinkClick, this, _1));
     htmlText->AddChild(btn);
@@ -79,8 +80,8 @@ void Login::setLinks(const QString &site_page, const QString &register_page) {
   if (!register_page.isEmpty()) {
     auto btn = UI::GreenButton::Create();
     btn->SetText(tr("Register"));
-    btn->SetHeight(Constants::ButtonSmallHeight());
-    btn->SetPixelSize(Constants::TextSmallSize());
+    btn->SetSize(UI::Button::kRectSmall);
+    btn->SetWidth(inner_rect.width() * 0.4);
     btn->SetData(99, register_page.toStdString());
     btn->SetOnClick(std::bind(&Login::OnLinkClick, this, _1));
     htmlText->AddChild(btn);
@@ -135,62 +136,49 @@ void Login::OnScreenResize() {
 
   auto inner_rect = ContentBoundary();
 
-  auto textSize = Constants::TextSmallSize();
-  auto roundSize = Constants::ButtonRoundMediumSize();
+  auto x = inner_rect.left();
+  auto y = inner_rect.top();
+  auto space = Constants::ItemMediumSpacing();
+  qreal column_width = 0;
+  qreal column_x = 0;
+  qreal row_height = 0;
+  auto font_size = Constants::TextMediumSize();
 
-  back->SetSize(roundSize);
-  server_select->SetSize(roundSize);
-  loginText->SetPixelSize(textSize);
-  passwordText->SetPixelSize(textSize);
-  rememberText->SetPixelSize(textSize);
-
-  unsigned int productKeyBackgroundNewHeight = 50;
-  if (background_->Width() < 600 || background_->Height() < 640) {
-    productKeyBackgroundNewHeight = 50 / 2;
-  }
-
-  const QRectF &loginTextRect = loginText->BoundingRect();
-  const QRectF &productKeyTextRect = passwordText->BoundingRect();
-  int maxWidth = loginTextRect.width();
-  if (maxWidth < productKeyTextRect.width())
-    maxWidth = productKeyTextRect.width();
-
-  int border_size = 46;
-  int space = 10;
+  loginText->SetPixelSize(font_size);
+  passwordText->SetPixelSize(font_size);
+  rememberText->SetPixelSize(font_size);
 
   {
-    loginText->SetPos(inner_rect.x() + border_size * 2, inner_rect.y());
-    const unsigned int volumeSliderW = loginText->X() + loginTextRect.width();
-    login->SetPos(volumeSliderW, loginText->Y());
-    login->SetSize(inner_rect.width() - loginTextRect.width() - border_size * 4,
-                   loginTextRect.height() + 5);
+    login->SetSize(UI::Input::kMedium);
+
+    column_x = inner_rect.right() * 0.35;
+    column_width = inner_rect.right() - column_x; 
+    row_height = login->Height();
+
+    loginText->SetPos(x, y);
+    login->SetPos(column_x, y);
+    login->SetWidth(column_width);
+
+    y += row_height + space;
   }
   {
-    passwordText->SetPos(inner_rect.x() + border_size * 2,
-                         loginText->Y() + loginTextRect.height() + space);
-    const unsigned int productKeyBackgroundW =
-        passwordText->X() + productKeyTextRect.width();
-    password->SetPos(
-        productKeyBackgroundW,
-        passwordText->Y() + (productKeyTextRect.height() -
-                             passwordText->BoundingRect().height()) /
-                                2);
-    password->SetSize(
-        inner_rect.width() - passwordText->Width() - border_size * 4,
-        loginTextRect.height() + 5);
+    password->SetSize(UI::Input::kMedium);
+
+    passwordText->SetPos(x, y);
+    password->SetPos(column_x, y);
+    password->SetWidth(column_width);
+
+    y += row_height + space;
   }
   {
-    rememberText->SetPos(
-        inner_rect.x() + border_size * 2,
-        passwordText->Y() + passwordText->BoundingRect().height() + space);
-    remember->SetPos(inner_rect.x() + border_size * 2,
-                     rememberText->Y() +
-                         rememberText->BoundingRect().height() / 2 -
-                         remember->BoundingRect().height() / 2);
+    rememberText->SetPos(x, y);
+    remember->SetPos(rememberText->Right(), y);
+
+    y += row_height + space;
   }
   {
-    htmlText->SetPos(inner_rect.x() + border_size * 2,
-                     rememberText->Y() + rememberText->BoundingRect().height());
+    htmlText->SetPos(x, y);
+    htmlText->SetSize(inner_rect.width(), inner_rect.height() - htmlText->Y());
   }
 }
 

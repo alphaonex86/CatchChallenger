@@ -10,8 +10,8 @@
 #include <iostream>
 
 #include "../../../libqtcatchchallenger/Settings.hpp"
-#include "../../Ultimate.hpp"
 #include "../../Constants.hpp"
+#include "../../Ultimate.hpp"
 #include "../../core/AssetsLoader.hpp"
 #include "../../core/EventManager.hpp"
 
@@ -19,6 +19,8 @@ using Scenes::AddOrEditServer;
 using std::placeholders::_1;
 
 AddOrEditServer::AddOrEditServer() : UI::Dialog(false) {
+  SetDialogSize(Constants::DialogSmallSize());
+
   ok = false;
   edit = false;
 
@@ -28,8 +30,6 @@ AddOrEditServer::AddOrEditServer() : UI::Dialog(false) {
   protocol_ = UI::Combo::Create(this);
   protocol_->AddItem(QString("Tcp"));
   protocol_->AddItem(QString("WS"));
-  serverText = UI::Label::Create(this);
-  serverText->SetVisible(false);
   serverInput = UI::Input::Create(this);
   serverInput->SetPlaceholder("ws://www.server.com:9999/");
   portInput = UI::Input::Create(this);
@@ -64,10 +64,10 @@ AddOrEditServer::AddOrEditServer() : UI::Dialog(false) {
 
 #if defined(NOTCPSOCKET) || defined(NOWEBSOCKET)
   protocol_->SetVisible(false);
-  #if defined(NOTCPSOCKET)
+#if defined(NOTCPSOCKET)
   proxyPortInput->SetVisible(false);
   serverInput->SetPlaceholder("ws://www.server.com:9999/");
-  #endif
+#endif
 #endif
 
   AddActionButton(quit);
@@ -88,105 +88,67 @@ AddOrEditServer *AddOrEditServer::Create() {
 
 void AddOrEditServer::OnScreenResize() {
   UI::Dialog::OnScreenResize();
-  auto textSize = Constants::TextMediumSize();
+  auto inner_rect = ContentBoundary();
 
-  serverText->SetPixelSize(textSize);
-  nameText->SetPixelSize(textSize);
-  proxyText->SetPixelSize(textSize);
+  auto x = inner_rect.left();
+  auto y = inner_rect.top();
+  auto space = Constants::ItemMediumSpacing();
+  qreal column_width = 0;
+  qreal column_x = 0;
+  qreal row_height = 0;
+  auto font_size = Constants::TextMediumSize();
 
-  unsigned int nameBackgroundNewHeight = 50;
-  unsigned int space = 30;
+  {
+    protocol_->SetSize(UI::Combo::kMedium);
+    serverInput->SetSize(UI::Input::kMedium);
+    portInput->SetSize(UI::Input::kMedium);
 
-  serverInput->SetPixelSize(textSize);
-  portInput->SetPixelSize(textSize);
-  nameInput->SetPixelSize(textSize);
-  proxyInput->SetPixelSize(textSize);
-  proxyPortInput->SetPixelSize(textSize);
 
-  int top = 36;
-  int bottom = 94 / 2;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    top /= 2;
-    bottom /= 2;
-  }
+    protocol_->SetPos(x, y);
+    column_width = inner_rect.right() - protocol_->Right();
+    column_x = protocol_->Right();
+    row_height = protocol_->Height();
 
-  const QRectF &serverTextRect = serverText->BoundingRect();
-  const QRectF &nameTextRect = nameText->BoundingRect();
-  const QRectF &proxyTextRect = proxyText->BoundingRect();
-
-  int border_size = 46;
-  int idealW = background_->Width();
-
-  const unsigned int &serverBackgroundNewWidth =
-      idealW - nameTextRect.width() - border_size * 4;
-  const unsigned int &nameBackgroundNewWidth =
-      idealW - nameTextRect.width() - border_size * 4;
-  const unsigned int &proxyBackgroundNewWidth =
-      idealW - nameTextRect.width() - border_size * 4;
-  if ((unsigned int)nameInput->Width() != nameBackgroundNewWidth ||
-      (unsigned int)nameInput->Height() != nameBackgroundNewHeight) {
-    serverInput->SetHeight(nameBackgroundNewHeight);
-    portInput->SetHeight(nameBackgroundNewHeight);
+    serverInput->SetPos(protocol_->Right(), y);
     if (portInput->IsVisible()) {
-      serverInput->SetWidth(serverBackgroundNewWidth * 3 / 4);
-      portInput->SetWidth(serverBackgroundNewWidth * 1 / 4);
+      serverInput->SetWidth(column_width * 0.75);
+      portInput->SetWidth(inner_rect.right() - serverInput->Right());
+      portInput->SetPos(serverInput->Right(), y);
     } else {
-      serverInput->SetWidth(serverBackgroundNewWidth);
+      serverInput->SetWidth(column_width);
     }
-    nameInput->SetSize(nameBackgroundNewWidth, nameBackgroundNewHeight);
-    proxyInput->SetSize(proxyBackgroundNewWidth * 3 / 4,
-                        nameBackgroundNewHeight);
-    proxyPortInput->SetSize(proxyBackgroundNewWidth * 1 / 4,
-                            nameBackgroundNewHeight);
+
+    y += row_height + space;
   }
   {
-    protocol_->SetPos(x_ + border_size * 2, y_ + top * 1.5);
-    // TODO(lanstat): Verify which is the best height for the combo
-    protocol_->SetSize(100, 32);
-    serverText->SetPos(x_ + border_size * 2, y_ + top * 1.5);
-    const unsigned int serverBackgroundW =
-        serverText->X() + serverTextRect.width();
-    serverInput->SetPos(
-        serverBackgroundW,
-        serverText->Y() +
-            (serverTextRect.height() - serverInput->BoundingRect().height()) /
-                2);
-    if (portInput->IsVisible())
-      portInput->SetPos(
-          serverBackgroundW + serverInput->Width(),
-          serverText->Y() +
-              (serverTextRect.height() - serverInput->BoundingRect().height()) /
-                  2);
+    nameText->SetPixelSize(font_size);
+    nameText->SetPos(x, y);
+
+    nameInput->SetSize(UI::Input::kMedium);
+
+    nameInput->SetPos(column_x, y);
+    nameInput->SetWidth(column_width);
+
+    y += row_height + space;
   }
   {
-    nameText->SetPos(x_ + border_size * 2,
-                     serverText->Y() + serverTextRect.height() + space);
-    const unsigned int nameBackgroundW = nameText->X() + nameTextRect.width();
-    nameInput->SetPos(
-        nameBackgroundW,
-        nameText->Y() +
-            (nameTextRect.height() - nameInput->BoundingRect().height()) / 2);
-  }
-  {
-    proxyText->SetPos(x_ + border_size * 2,
-                      nameText->Y() + nameTextRect.height() + space);
-    const unsigned int proxyBackgroundW =
-        proxyText->X() + proxyTextRect.width();
-    proxyInput->SetPos(
-        proxyBackgroundW,
-        proxyText->Y() +
-            (proxyTextRect.height() - proxyInput->BoundingRect().height()) / 2);
-    proxyPortInput->SetPos(
-        proxyBackgroundW + proxyInput->Width(),
-        proxyText->Y() +
-            (proxyTextRect.height() - proxyInput->BoundingRect().height()) / 2);
+    proxyText->SetPixelSize(font_size);
+    proxyText->SetPos(x, y);
+
+    proxyInput->SetSize(UI::Input::kMedium);
+    proxyPortInput->SetSize(UI::Input::kMedium);
+
+    proxyInput->SetPos(column_x, y);
+    proxyInput->SetWidth(column_width * 0.75);
+    proxyPortInput->SetWidth(inner_rect.right() - proxyInput->Right());
+
+    proxyPortInput->SetPos(proxyInput->Right(), y);
   }
 }
 
 void AddOrEditServer::newLanguage() {
   proxyText->SetText(tr("Proxy: "));
   nameText->SetText(tr("Name: "));
-  serverText->SetText(tr("Server: "));
   if (edit)
     SetTitle(tr("EDIT"));
   else
@@ -197,16 +159,16 @@ int AddOrEditServer::type() const {
 #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
   return protocol_->CurrentIndex();
 #else
-  #if defined(NOTCPSOCKET)
+#if defined(NOTCPSOCKET)
   return 1;
-  #else
-    #if defined(NOWEBSOCKET)
+#else
+#if defined(NOWEBSOCKET)
   return 0;
-    #else
-      #error add server but no tcp or web socket defined
+#else
+#error add server but no tcp or web socket defined
   return -1;
-    #endif
-  #endif
+#endif
+#endif
 #endif
 }
 
@@ -214,13 +176,13 @@ void AddOrEditServer::setType(const int &type) {
 #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
   protocol_->SetCurrentIndex(type);
 #else
-  #if defined(NOTCPSOCKET)
+#if defined(NOTCPSOCKET)
   protocol_->SetCurrentIndex(1);
-  #else
-    #if defined(NOWEBSOCKET)
+#else
+#if defined(NOWEBSOCKET)
   protocol_->SetCurrentIndex(0);
-    #endif
-  #endif
+#endif
+#endif
 #endif
 }
 

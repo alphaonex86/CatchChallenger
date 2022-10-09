@@ -51,7 +51,6 @@ class AddOrEditServer : public UI::Dialog {
   UI::Button *validate;
   UI::Combo *protocol_;
 
-  UI::Label *serverText;
   UI::Input *serverInput;
   UI::Input *portInput;
 

@@ -215,7 +215,8 @@ void Label::UpdateTextPath() {
 
 void Label::SetFont(const QFont &font) {
   *this->font_ = font;
-  font_height_ = 0;
+  
+  font_height_ = FontManager::GetInstance()->GetFontHeight(font.family(), font.pixelSize());
   UpdateTextPath();
   ReDraw();
 }

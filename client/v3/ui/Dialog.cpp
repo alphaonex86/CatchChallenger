@@ -243,6 +243,10 @@ void Dialog::SetDialogSize(qreal w, qreal h) {
   dialog_size_.setHeight(SceneManager::GetInstance()->height() * h);
 }
 
+void Dialog::SetDialogSize(QSizeF size) {
+  Dialog::SetDialogSize(size.width(), size.height());
+}
+
 void Dialog::ShowClose(bool show) {
   show_close_ = show;
   quit_->SetVisible(show);

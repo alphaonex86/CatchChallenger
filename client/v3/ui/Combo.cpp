@@ -10,6 +10,7 @@
 
 #include "../core/AssetsLoader.hpp"
 #include "../core/EventManager.hpp"
+#include "../Constants.hpp"
 
 using UI::Combo;
 
@@ -62,7 +63,7 @@ void Combo::Draw(QPainter *painter) {
                      ->GetImage(":/CC/images/interface/check.png")
                      ->scaledToHeight(scale * 46, Qt::SmoothTransformation);
     auto items = items_;
-    qreal offset_y = inner.height();
+    qreal offset_y = inner.height() + 20;
     uint8_t index = 0;
     for (auto item : items) {
       label->SetY(offset_y);
@@ -121,8 +122,8 @@ void Combo::MouseReleaseEvent(const QPointF &p, bool &prev_validated) {
         OpenMenu();
       } else {
         auto y = p.y() - (t.y() + inner_bounding_rect_.height());
-        auto index = y / label_->Height();
-        if (index >= 0) {
+        int index = y / label_->Height();
+        if (index >= 0 && index < items_.size()) {
           OnClick(index);
           CloseMenu();
         }
@@ -173,6 +174,29 @@ void Combo::SetOnSelectChange(std::function<void(uint8_t)> callback) {
   on_select_change_ = callback;
 }
 
+void Combo::SetSize(const ComboSize& size) {
+  QSizeF buttonSize;
+  int textSize;
+
+  switch (size) {
+    case kLarge:
+      buttonSize = Constants::ButtonLargeSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kMedium:
+      buttonSize = Constants::ButtonMediumSize();
+      textSize = Constants::TextLargeSize();
+      break;
+    case kSmall:
+      buttonSize = Constants::ButtonSmallSize();
+      textSize = Constants::TextMediumSize();
+      break;
+  }
+
+  label_->SetPixelSize(textSize);
+  Combo::SetSize(buttonSize.width(), buttonSize.height());
+}
+
 void Combo::SetSize(QSizeF& size) {
   Combo::SetSize(size.width(), size.height());
 }
@@ -221,7 +245,7 @@ void Combo::OpenMenu() {
   last_z_ = ZValue();
   SetZValue(10);
 
-  SetHeight(Height() + (items_.size()) * label_->Height() + Height() * 0.2);
+  SetHeight(Height() + (items_.size()) * label_->Height() + Height() * 0.3);
   ReDraw();
 }
 

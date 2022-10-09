@@ -14,6 +14,11 @@
 namespace UI {
 class Combo : public Node {
  public:
+  enum ComboSize {
+    kSmall,
+    kMedium,
+    kLarge
+  };
   static Combo *Create(QString pix, Node *parent = nullptr);
   static Combo *Create(Node *parent = nullptr);
   ~Combo();
@@ -29,6 +34,7 @@ class Combo : public Node {
   void AddItem(const QString &item);
   int ItemData(uint8_t index, int role);
   void SetItemData(uint8_t index, int role, int value);
+  void SetSize(const ComboSize& size);
   void SetSize(qreal width, qreal height);
   void SetSize(QSizeF& size);
   void SetWidth(qreal width);

@@ -14,6 +14,7 @@ namespace UI {
 class Input : public Node {
  public:
   enum InputMode { kPassword, kDefault, kReadOnly };
+  enum InputSize { kSmall, kMedium, kLarge };
 
   static Input *Create(Node *parent = nullptr);
   ~Input();
@@ -27,7 +28,9 @@ class Input : public Node {
   void MouseMoveEvent(const QPointF &point) override;
   void KeyPressEvent(QKeyEvent *event, bool &event_trigger) override;
   void KeyReleaseEvent(QKeyEvent *event, bool &event_trigger) override;
+  void SetSize(const InputSize &size);
   void SetSize(qreal width, qreal height);
+  void SetWidth(qreal width);
   void SetMode(InputMode mode);
   QString Value() const;
   void SetValue(const QString &value);
