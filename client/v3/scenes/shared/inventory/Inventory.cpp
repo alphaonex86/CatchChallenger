@@ -8,6 +8,7 @@
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../ui/LinkedDialog.hpp"
 #include "InventoryItem.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::Inventory;
 using Scenes::InventoryItem;
@@ -22,7 +23,7 @@ Inventory::Inventory() : Node(nullptr) {
   connexionManager = ConnectionManager::GetInstance();
 
   inventory = UI::GridView::Create(this);
-  inventory->SetItemSpacing(5);
+  inventory->SetItemSpacing(Constants::ItemSmallSpacing());
 
   descriptionBack = Sprite::Create(this);
   inventory_description = UI::Label::Create(this);
@@ -60,7 +61,7 @@ void Inventory::SetVar(const Inventory::ObjectFilter &filter,
       &playerInformations =
           connexionManager->client->get_player_informations_ro();
   itemCount = playerInformations.items.size();
-  UpdateInventory(64, force);
+  UpdateInventory(Constants::ButtonSmallHeight(), force);
 }
 
 void Inventory::UpdateInventory(uint8_t targetSize, bool force) {
@@ -269,12 +270,11 @@ void Inventory::UnRegisterEvents() {
 }
 
 void Inventory::OnResize() {
-  auto font = inventory_description->GetFont();
   int space = 30;
 
-  inventoryDestroy->SetSize(60, 72);
-  inventoryUse->SetSize(60, 72);
-  font.setPixelSize(18);
+  inventoryDestroy->SetSize(UI::Button::kRoundMedium);
+  inventoryUse->SetSize(UI::Button::kRoundMedium);
+  inventory_description->SetPixelSize(Constants::TextSmallSize());
 
   auto bounds = BoundingRect();
   int yTemp = bounds.height() - inventoryDestroy->Height() - 5;
@@ -287,7 +287,7 @@ void Inventory::OnResize() {
   xTemp += inventoryDestroy->Width() + space / 2;
   descriptionBack->SetPos(xTemp, yTemp);
   inventory_description->SetPos(xTemp + 10, yTemp + 10);
-  inventory_description->SetPixelSize(12);
+  inventory_description->SetPixelSize(Constants::TextSmallSize());
   inventoryUse->SetPos(bounds.width() - inventoryUse->Width(), yTemp);
   int pos = inventoryUse->X() - space -
             (inventoryDestroy->X() + inventoryDestroy->Width());

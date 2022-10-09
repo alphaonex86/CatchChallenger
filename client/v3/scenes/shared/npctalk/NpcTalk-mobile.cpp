@@ -25,8 +25,6 @@ void NpcTalk::Draw(QPainter *painter) {
 }
 
 void NpcTalk::OnScreenResize() {
-  SetDialogSize(0.8, 0.75);
-
   UI::Dialog::OnScreenResize();
 
   auto content = ContentPlainBoundary();

@@ -11,6 +11,7 @@
 namespace UI {
 class Checkbox : public Node {
  public:
+  enum CheckSize { kSmall, kMedium, kLarge };
   static Checkbox* Create(Node *parent = nullptr);
   ~Checkbox();
   bool IsChecked() const;
@@ -23,6 +24,7 @@ class Checkbox : public Node {
   void KeyReleaseEvent(QKeyEvent *event, bool &event_trigger) override;
   void RegisterEvents() override;
   void UnRegisterEvents() override;
+  void SetSize(const CheckSize &size);
 
   void Draw(QPainter *painter) override;
 

@@ -22,8 +22,10 @@ Loading::Loading() : Scene(nullptr) {
   widget = Sprite::Create(":/CC/images/interface/message.png", this);
   teacher = Sprite::Create(":/CC/images/interface/teacher.png", widget);
   info = UI::Label::Create(widget);
+  info->SetPixelSize(Constants::TextMediumSize());
   version = UI::Label::Create(this);
   version->SetText(QString::fromStdString(CatchChallenger::Version::str));
+  version->SetPixelSize(Constants::TextSmallSize());
   progressbar = UI::Progressbar::Create(this);
 
   doTheNext = false;
@@ -123,33 +125,17 @@ void Loading::OnScreenResize() {
   progressbar->SetPos(10, BoundingRect().height() - progressBarHeight - 10);
   progressbar->SetSize(BoundingRect().width() - 10 - 10, progressBarHeight);
 
-  if (BoundingRect().width() < 800 || BoundingRect().height() < 600) {
-    int w = BoundingRect().width() - 20;
-    if (w > 500) w = 500;
-    int h = BoundingRect().height() - 40 - progressBarHeight;
-    if (h > 100) h = 100;
-    widget->Strech(widget_border, w, h);
-    widget->SetPos(BoundingRect().width() / 2 - widget->Width() / 2,
-                   (BoundingRect().height() - progressBarHeight) / 2 -
-                       widget->Height() / 2);
 
-    teacher->SetVisible(false);
-    info->SetPos(widget_border, h / 2 - info->BoundingRect().height() / 2);
-  } else {
-    int w = 500;
-    if (BoundingRect().width() < 500 + 20) w = BoundingRect().width() - 20;
-    widget->Strech(widget_border, w, 250);
-    widget->SetPos(BoundingRect().width() / 2 - widget->Width() / 2,
-                   BoundingRect().height() / 2 - widget->Height() / 2);
+  widget->Strech(widget_border, Width() * 0.4, Height() * 0.4);
+  widget->SetPos(BoundingRect().width() / 2 - widget->Width() / 2,
+                 BoundingRect().height() / 2 - widget->Height() / 2);
 
-    teacher->SetVisible(true);
-    teacher->SetPos(24, 19);
-    info->SetPos(24 + teacher->Width() + 10, 120);
-  }
+  teacher->SetVisible(true);
+  teacher->SetPos(24, 19);
+  info->SetPos(24 + teacher->Width() + 10, 120);
 
   version->SetPos(BoundingRect().width() - version->BoundingRect().width() - 10,
                   5);
-  version->SetPixelSize(Constants::TextSmallSize());
 }
 
 void Loading::SetNotifier(ProgressNotifier* notifier) {

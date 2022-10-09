@@ -2,12 +2,14 @@
 #include "LinkedDialog.hpp"
 
 #include <iostream>
+#include "../Constants.hpp"
 
 using std::placeholders::_1;
 using UI::Dialog;
 using UI::LinkedDialog;
 
 LinkedDialog::LinkedDialog(bool show_navigation) : Dialog(true) {
+  SetDialogSize(Constants::DialogLargeSize());
   current_item_ = nullptr;
   on_next_ = nullptr;
   on_back_ = nullptr;

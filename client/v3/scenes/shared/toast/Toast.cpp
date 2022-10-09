@@ -3,6 +3,7 @@
 
 #include <iostream>
 
+#include "../../../Constants.hpp"
 #include "../../../core/EventManager.hpp"
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
@@ -45,13 +46,13 @@ void Toast::SetContent(const std::vector<std::string> &content) {
       auto row = Row::Create();
       row->AddChild(item);
       auto label = BlueLabel::Create();
-      label->SetPixelSize(10);
+      label->SetPixelSize(Constants::TextSmallSize());
       label->SetText(Utils::RemoveHTMLEntities(parts.first()));
       row->AddChild(label);
       content_->AddChild(row);
     } else {
       auto item = BlueLabel::Create();
-      item->SetPixelSize(10);
+      item->SetPixelSize(Constants::TextSmallSize());
       item->SetText(Utils::RemoveHTMLEntities(str));
       content_->AddChild(item);
     }

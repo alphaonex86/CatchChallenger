@@ -7,6 +7,7 @@
 
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libcatchchallenger/ChatParsing.hpp"
+#include "../../Constants.hpp"
 
 using Scenes::OverMap;
 
@@ -46,17 +47,6 @@ OverMap::OverMap() {
 
   tip_ = Tip::Create(this);
   tip_->SetVisible(false);
-
-  persistant_tipBack =
-      Sprite::Create(":/CC/images/interface/chatBackground.png", this);
-  persistant_tip = UI::Label::Create(persistant_tipBack);
-
-  if (false) {
-    {
-      persistant_tipString = "persistant_tip";
-      persistant_tip->SetText(persistant_tipString);
-    }
-  }
 
   newLanguage();
 
@@ -115,13 +105,11 @@ void OverMap::newLanguage() {
 }
 
 void OverMap::OnScreenResize() {
-  unsigned int space = 10;
+  unsigned int space = Constants::ItemMediumSpacing();
+  auto text_size = Constants::TextMediumSize();
 
   player_portrait_->SetPos(space, space);
-
-  int tempx = player_portrait_->X() + player_portrait_->Width();
-
-  monster_thumb_->SetPos(tempx, space);
+  monster_thumb_->SetPos(player_portrait_->Right(), space);
 
   playersCountBack->SetPos(
       bounding_rect_.width() - space - playersCountBack->Width(), space);
@@ -136,37 +124,29 @@ void OverMap::OnScreenResize() {
   // compose from right to left
   unsigned int xRight = bounding_rect_.width() - space;
   if (buy->IsVisible()) {
-    if (bounding_rect_.width() < 800 || bounding_rect_.height() < 600) {
-      buy->SetSize(84 / 2, 93 / 2);
-      buyOver->SetVisible(false);
-    } else {
-      buy->SetSize(84, 93);
-      buyOver->SetVisible(physicalDpiX < 200);
-    }
+    buy->SetSize(UI::Button::kRoundMedium);
+    buyOver->SetVisible(physicalDpiX < 200);
+
     unsigned int buyX = xRight - buy->Width();
     buy->SetPos(buyX, bounding_rect_.height() - space - buy->Height());
     xRight -= buy->Width() + space;
     if (buyOver->IsVisible()) {
-      buyOver->SetPixelSize(18);
+      buyOver->SetPixelSize(text_size);
       buyOver->SetPos(buyX + buy->Width() / 2 - buyOver->Width() / 2,
                       bounding_rect_.height() - space - buyOver->Height());
     }
   }
+
   {
-    if (bounding_rect_.width() < 800 || bounding_rect_.height() < 600) {
-      bag->SetSize(84 / 2, 93 / 2);
-      bagOver->SetVisible(false);
-      crafting_btn_->SetSize(84 / 2, 93 / 2);
-    } else {
-      bag->SetSize(84, 93);
-      bagOver->SetVisible(physicalDpiX < 200);
-      crafting_btn_->SetSize(84, 93);
-    }
+    bagOver->SetVisible(physicalDpiX < 200);
+    bag->SetSize(UI::Button::kRoundMedium);
+    crafting_btn_->SetSize(UI::Button::kRoundMedium);
+
     unsigned int bagX = xRight - bag->Width();
     bag->SetPos(bagX, bounding_rect_.height() - space - bag->Height());
     xRight -= bag->Width() + space;
     if (bagOver->IsVisible()) {
-      bagOver->SetPixelSize(18);
+      bagOver->SetPixelSize(text_size);
       bagOver->SetPos(bagX + bag->Width() / 2 - bagOver->Width() / 2,
                       bounding_rect_.height() - space - bagOver->Height());
     }
@@ -174,21 +154,7 @@ void OverMap::OnScreenResize() {
     crafting_btn_->SetPos(xRight - crafting_btn_->Width(),
                       bounding_rect_.height() - space - crafting_btn_->Height());
   }
-  Q_UNUSED(xRight);
 
-  int yMiddle = bounding_rect_.height() - space;
-
-  persistant_tipBack->SetVisible(!persistant_tipString.isEmpty());
-  persistant_tip->SetVisible(persistant_tipBack->IsVisible());
-  if (persistant_tip->IsVisible()) {
-    const QRectF &f = persistant_tip->BoundingRect();
-    persistant_tipBack->SetSize(f.width() + space * 2, f.height() + space * 2);
-    persistant_tip->SetPos(space, space);
-    persistant_tipBack->SetPos(
-        bounding_rect_.width() / 2 - persistant_tipBack->Width() / 2,
-        yMiddle - persistant_tipBack->Height());
-    yMiddle -= (f.height() + space * 2 + space);
-  }
   tip_->SetY(150);
   toast_->SetY(150);
 

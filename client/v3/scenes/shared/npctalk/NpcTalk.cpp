@@ -5,11 +5,14 @@
 
 #include "../../../core/AssetsLoader.hpp"
 #include "../../../entities/Utils.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::NpcTalk;
 using std::placeholders::_1;
 
 NpcTalk::NpcTalk() {
+  SetDialogSize(Constants::DialogMediumSize());
+
   on_item_click_ = nullptr;
   portrait_ = Sprite::Create(this);
   content_ = UI::ListView::Create(this);

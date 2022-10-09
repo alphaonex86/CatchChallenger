@@ -29,6 +29,7 @@ void CharacterItem::DrawContent(QPainter *painter) {
   text->SetWidth(bounding_rect_.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(title_);
+  text->SetPixelSize(Constants::TextMediumSize());
   text->SetY(Constants::ItemSmallSpacing());
   text->Render(painter);
 

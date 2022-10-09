@@ -15,6 +15,7 @@ using std::placeholders::_1;
 
 AddCharacter::AddCharacter() : UI::Dialog(false) {
   ok = false;
+  SetDialogSize(Constants::DialogSmallSize());
 
   quit = UI::Button::Create(":/CC/images/interface/cancel.png", this);
   quit->SetOnClick(std::bind(&AddCharacter::OnActionClick, this, _1));
@@ -22,8 +23,7 @@ AddCharacter::AddCharacter() : UI::Dialog(false) {
   validate->SetOnClick(std::bind(&AddCharacter::OnActionClick, this, _1));
 
   comboBox = UI::Combo::Create(":/CC/images/interface/button.png", this);
-  auto buttonSize = Constants::ButtonMediumSize();
-  comboBox->SetSize(buttonSize);
+  comboBox->SetSize(UI::Combo::kMedium);
   description = UI::Label::Create(this);
 
   comboBox->SetOnSelectChange(
@@ -57,7 +57,7 @@ void AddCharacter::OnScreenResize() {
   description->SetPixelSize(textSize);
 
   unsigned int nameBackgroundNewHeight = 50;
-  unsigned int space = 30;
+  unsigned int space = Constants::ItemMediumSpacing();
 
   auto content = ContentBoundary();
 
@@ -66,8 +66,7 @@ void AddCharacter::OnScreenResize() {
                    content.y() + 20);
   description->SetPos(
       content.x() + content.width() / 2 - description->Width() / 2,
-      content.y() + content.height() / 2 - description->Height() / 2 +
-          comboBox->Height());
+      comboBox->Bottom() + space);
 }
 
 void AddCharacter::setDatapack(std::string path) {

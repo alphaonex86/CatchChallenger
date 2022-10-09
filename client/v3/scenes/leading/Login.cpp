@@ -244,11 +244,13 @@ void Login::OnEnter() {
   htmlText->RegisterEvents();
   login->RegisterEvents();
   password->RegisterEvents();
+  remember->RegisterEvents();
 }
 
 void Login::OnExit() {
   htmlText->UnRegisterEvents();
   login->UnRegisterEvents();
   password->UnRegisterEvents();
+  remember->UnRegisterEvents();
   UI::Dialog::OnExit();
 }

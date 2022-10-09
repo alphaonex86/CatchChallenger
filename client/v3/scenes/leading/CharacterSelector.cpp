@@ -99,17 +99,8 @@ void CharacterSelector::add_clicked() {
 
 void CharacterSelector::add_finished() {
   if (!addCharacter->isOk()) {
-    // If is solo returns to menu
-    if (Globals::IsSolo()) {
-      static_cast<StackedScene *>(Parent())->PopForegroundUntilIndex(0);
-      return;
-    }
 
     RemoveChild(addCharacter);
-    if (characterEntryList->Count() <
-        CommonSettingsCommon::commonSettingsCommon.min_character) {
-      backSubServer();
-    }
     return;
   }
   const std::string &datapackPath = connection_->client->datapackPathBase();
@@ -143,10 +134,6 @@ void CharacterSelector::add_finished() {
 void CharacterSelector::newGame_finished() {
   if (!newGame->isOk()) {
     RemoveChild(newGame);
-    if (characterEntryList->Count() <
-        CommonSettingsCommon::commonSettingsCommon.min_character) {
-      backSubServer();
-    }
     return;
   }
   const std::vector<CatchChallenger::ServerFromPoolForDisplay>
@@ -394,10 +381,6 @@ void CharacterSelector::newCharacterId(const uint8_t &returnCode,
         serverOrdenedList.at(serverSelected).charactersGroupIndex;
     characterListForSelection[charactersGroupIndex].push_back(characterEntry);
     updateCharacterList(true);
-    /*
-    characterEntryList->item(characterEntryList->Count() - 1)
-        ->setSelected(true);
-    */
     if (characterEntryList->Count() >=
             CommonSettingsCommon::commonSettingsCommon.min_character &&
         characterEntryList->Count() <=
@@ -416,6 +399,11 @@ void CharacterSelector::newCharacterId(const uint8_t &returnCode,
 }
 
 void CharacterSelector::backSubServer() {
+  // If is solo returns to menu
+  if (Globals::IsSolo()) {
+    static_cast<StackedScene *>(Parent())->PopForegroundUntilIndex(0);
+    return;
+  }
   static_cast<StackedScene *>(Parent())->PopForeground();
 }
 

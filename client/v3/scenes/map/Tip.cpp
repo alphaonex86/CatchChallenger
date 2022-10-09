@@ -5,6 +5,7 @@
 
 #include "../../core/EventManager.hpp"
 #include "../../entities/Utils.hpp"
+#include "../../Constants.hpp"
 
 using Scenes::Tip;
 using UI::BlueLabel;
@@ -12,7 +13,7 @@ using UI::BlueLabel;
 Tip::Tip(Node *parent) : Node(parent) {
   background_ = Sprite::Create(":/CC/images/interface/tip.png", this);
   label_ = BlueLabel::Create(this);
-  label_->SetPixelSize(10);
+  label_->SetPixelSize(Constants::TextSmallSize());
   label_->SetX(7);
   SetSize(background_->Width(), background_->Height());
 }

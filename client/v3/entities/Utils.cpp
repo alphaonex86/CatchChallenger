@@ -41,8 +41,7 @@ NodeParsed Utils::HTML2Node(const QString &html,
     if (line.startsWith("<a")) {
       if (anchor.exactMatch(line)) {
         auto node = UI::GreenButton::Create();
-        node->SetHeight(Constants::ButtonSmallHeight());
-        node->SetPixelSize(Constants::TextSmallSize());
+        node->SetSize(UI::Button::kRectSmall);
         node->SetText(anchor.cap(2));
         node->SetData(99, anchor.cap(1).toStdString());
         if (on_click) {

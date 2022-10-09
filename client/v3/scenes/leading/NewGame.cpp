@@ -4,15 +4,18 @@
 #include <iostream>
 #include <vector>
 
-#include "../../../../general/base/cpp11addition.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/GeneralStructures.hpp"
+#include "../../../../general/base/cpp11addition.hpp"
+#include "../../Constants.hpp"
+#include "../../Globals.hpp"
 
 using Scenes::NewGame;
 using std::placeholders::_1;
 
 NewGame::NewGame() : UI::Dialog(false) {
+  SetDialogSize(Constants::DialogSmallSize());
   ok = false;
 
   quit = UI::Button::Create(":/CC/images/interface/cancel.png", this);
@@ -24,10 +27,7 @@ NewGame::NewGame() : UI::Dialog(false) {
   row_ = UI::Row::Create(this);
 
   uipseudo = UI::Input::Create(this);
-  uipseudo->SetSize(200, 40);
-
-  warning = UI::Label::Create(this);
-  warning->SetVisible(false);
+  uipseudo->SetSize(UI::Input::kMedium);
 
   quit->SetOnClick(std::bind(&NewGame::OnActionClick, this, _1));
   previous->SetOnClick(std::bind(&NewGame::OnActionClick, this, _1));
@@ -54,29 +54,14 @@ NewGame *NewGame::Create() { return new (std::nothrow) NewGame(); }
 
 void NewGame::OnScreenResize() {
   UI::Dialog::OnScreenResize();
-  if (bounding_rect_.width() < 800 || bounding_rect_.height() < 600) {
-    quit->SetSize(83 / 2, 94 / 2);
-    validate->SetSize(83 / 2, 94 / 2);
-    previous->SetSize(83, 94);
-    next->SetSize(83, 94);
-  } else {
-    quit->SetSize(83, 94);
-    validate->SetSize(83, 94);
-    previous->SetSize(83, 94);
-    next->SetSize(83, 94);
-  }
 
-  unsigned int space = 30;
-  if (bounding_rect_.width() < 600 || bounding_rect_.height() < 480) {
-    space = 10;
-  }
+  unsigned int space = Constants::ItemMediumSpacing();
+  auto inner_rect = ContentBoundary();
+
+  row_->SetPos(BoundingRect().width() / 2 - row_->Width() / 2, inner_rect.y());
 
   uipseudo->SetPos(BoundingRect().width() / 2 - uipseudo->Width() / 2,
-                   y_ + background_->Height() - uipseudo->Height() - space -
-                       validate->Height() / 2);
-
-  row_->SetPos(BoundingRect().width() / 2 - row_->Width() / 2,
-               uipseudo->Y() - row_->Height() - 30);
+                   row_->Bottom() + space);
 }
 
 void NewGame::newLanguage() { SetTitle(tr("Select")); }
@@ -87,6 +72,7 @@ bool NewGame::haveSkin() const { return skinList.size() > 0; }
 
 void NewGame::OnActionClick(Node *node) {
   if (node == quit) {
+    ok = false;
     Close();
   } else if (node == validate) {
     on_ok_clicked();
@@ -111,7 +97,6 @@ void NewGame::setDatapack(
   this->forcedSkin = forcedSkin;
   this->monsterPath = monsterPath;
   this->monstergroup = monstergroup;
-  ok = true;
   step = Step1;
   currentMonsterGroup = 0;
   if (!monstergroup.empty()) {
@@ -119,7 +104,8 @@ void NewGame::setDatapack(
   }
   this->skinPath = skinPath;
   uint8_t index = 0;
-  while (index < CatchChallenger::CommonDatapack::commonDatapack.get_skins().size()) {
+  while (index <
+         CatchChallenger::CommonDatapack::commonDatapack.get_skins().size()) {
     if (forcedSkin.empty() ||
         vectorcontainsAtLeastOne(forcedSkin, (uint8_t)index)) {
       const std::string &currentPath =
@@ -129,7 +115,8 @@ void NewGame::setDatapack(
           QFile::exists(QString::fromStdString(currentPath + "/front.png")) &&
           QFile::exists(QString::fromStdString(currentPath + "/trainer.png"))) {
         skinList.push_back(
-            CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(index));
+            CatchChallenger::CommonDatapack::commonDatapack.get_skins().at(
+                index));
         skinListId.push_back(index);
       }
     }
@@ -147,8 +134,7 @@ void NewGame::setDatapack(
   updateSkin();
   uipseudo->SetFocus(true);
   if (skinList.empty()) {
-    warning->SetText(tr("No skin to select!"));
-    warning->SetVisible(true);
+    Globals::GetAlertDialog()->Show(tr("No skin to select!"));
     return;
   }
 }
@@ -187,9 +173,8 @@ void NewGame::updateSkin() {
 
       QImage skin = QImage(QString::fromStdString(path));
       if (skin.isNull()) {
-        warning->SetText(tr("But the skin can't be loaded: %1")
-                             .arg(QString::fromStdString(path)));
-        warning->SetVisible(true);
+        Globals::GetAlertDialog()->Show(tr("But the skin can't be loaded: %1")
+                                            .arg(QString::fromStdString(path)));
         return;
       }
       QImage scaledSkin = skin.scaled(160, 160, Qt::IgnoreAspectRatio);
@@ -227,16 +212,13 @@ uint8_t NewGame::monsterGroupId() { return currentMonsterGroup; }
 void NewGame::on_ok_clicked() {
   if (step == Step1) {
     if (uipseudo->Value().isEmpty()) {
-      warning->SetText(tr("Your pseudo can't be empty"));
-      warning->SetVisible(true);
+      Globals::GetAlertDialog()->Show(tr("Your pseudo can't be empty"));
       return;
     }
     if (uipseudo->Value().size() >
         CommonSettingsCommon::commonSettingsCommon.max_pseudo_size) {
-      warning->SetText(
-          tr("Your pseudo can't be greater than %1")
+      Globals::GetAlertDialog()->Show(tr("Your pseudo can't be greater than %1")
               .arg(CommonSettingsCommon::commonSettingsCommon.max_pseudo_size));
-      warning->SetVisible(true);
       return;
     }
     step = Step2;
@@ -244,8 +226,7 @@ void NewGame::on_ok_clicked() {
     updateSkin();
     if (monstergroup.size() < 2) on_ok_clicked();
     if (uipseudo->Value().contains(" ")) {
-      warning->SetText(tr("Your pseudo can't contains space"));
-      warning->SetVisible(true);
+      Globals::GetAlertDialog()->Show(tr("Your pseudo can't contains space"));
       return;
     }
   } else if (step == Step2) {
@@ -295,6 +276,7 @@ void NewGame::on_previous_clicked() {
 
 void NewGame::OnEnter() {
   UI::Dialog::OnEnter();
+  uipseudo->SetVisible(true);
   uipseudo->RegisterEvents();
 }
 

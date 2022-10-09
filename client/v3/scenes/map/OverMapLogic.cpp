@@ -1048,8 +1048,7 @@ void OverMapLogic::updateQueryList() {
     }
     index++;
   }
-  persistant_tipString = queryStringList.join("<br />");
-  persistant_tip->SetText(persistant_tipString);
+  showTip(queryStringList.join("<br />").toStdString());
 }
 
 bool OverMapLogic::stopped_in_front_of_check_bot(

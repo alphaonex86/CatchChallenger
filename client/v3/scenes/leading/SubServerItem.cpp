@@ -3,13 +3,15 @@
 
 #include <iostream>
 
-#include "../../core/Sprite.hpp"
 #include "../../Constants.hpp"
+#include "../../core/Sprite.hpp"
 #include "../../ui/Label.hpp"
 
 using Scenes::SubServerItem;
 
-SubServerItem::SubServerItem() : UI::SelectableItem() { SetSize(200, Constants::ItemMediumHeight()); }
+SubServerItem::SubServerItem() : UI::SelectableItem() {
+  SetSize(200, Constants::ItemMediumHeight());
+}
 
 SubServerItem *SubServerItem::Create() {
   return new (std::nothrow) SubServerItem();
@@ -38,8 +40,7 @@ void SubServerItem::DrawContent(QPainter *painter) {
   if (!star_.isEmpty()) {
     image->SetPixmap(star_);
     image->SetSize(30, 30);
-    image->SetPos(x_pos + 10,
-                  bounding.height() / 2 - image->Height() / 2);
+    image->SetPos(x_pos + 10, bounding.height() / 2 - image->Height() / 2);
     image->Render(painter);
   }
 
@@ -47,11 +48,12 @@ void SubServerItem::DrawContent(QPainter *painter) {
   text->SetWidth(bounding.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(title_);
-  text->SetY(5);
+  text->SetPixelSize(Constants::TextMediumSize());
+  text->SetY(Constants::ItemSmallSpacing());
   text->Render(painter);
 
   text->SetY(text->Height());
-  text->SetPixelSize(10);
+  text->SetPixelSize(Constants::TextSmallSize());
   text->SetText(subtitle_);
   text->Render(painter);
 

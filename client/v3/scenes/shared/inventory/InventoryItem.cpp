@@ -4,6 +4,7 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../../../Constants.hpp"
 #include "../../../core/AssetsLoader.hpp"
 #include "../../../core/Sprite.hpp"
 #include "../../../ui/Label.hpp"
@@ -11,7 +12,7 @@
 using Scenes::InventoryItem;
 
 InventoryItem::InventoryItem() {
-  SetSize(48, 48);
+  SetSize(Constants::ButtonMediumHeight(), Constants::ButtonMediumHeight());
   is_selected_ = false;
 }
 
@@ -46,7 +47,7 @@ void InventoryItem::Draw(QPainter *painter) {
   painter->drawPixmap(0, 0, pixmap_);
 
   auto text = UI::Label::Create();
-  text->SetPixelSize(10);
+  text->SetPixelSize(Constants::TextSmallSize());
   text->SetWidth(size.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(text_);

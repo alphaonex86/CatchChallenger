@@ -43,7 +43,7 @@ int Constants::TextTitleSize() { return FONT_SIZE * 0.8; }
 
 int Constants::TextMediumSize() { return FONT_SIZE * 0.6; }
 
-int Constants::TextSmallSize() { return FONT_SIZE * 0.5; }
+int Constants::TextSmallSize() { return FONT_SIZE * 0.4; }
 
 int Constants::ItemLargeSpacing() { return 15; }
 

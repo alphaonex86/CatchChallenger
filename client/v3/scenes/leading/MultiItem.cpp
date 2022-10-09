@@ -62,8 +62,8 @@ void MultiItem::DrawContent(QPainter *painter) {
   if (m_connexionInfo.connexionCounter > 0) {
     const QPixmap &p = *AssetsLoader::GetInstance()->GetImage(
         ":/CC/images/interface/star.png");
-    const int size = Height() - 20;
-    painter->drawPixmap(10, 10, size, size, p);
+    const int size = Height() * 0.6;
+    painter->drawPixmap(30, Height() / 2 - size / 2, size, size, p);
   }
   text->Render(painter);
 

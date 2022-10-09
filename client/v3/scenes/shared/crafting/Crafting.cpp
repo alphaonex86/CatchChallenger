@@ -14,6 +14,7 @@
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
 #include "../../../ui/ThemedItem.hpp"
+#include "../../../Constants.hpp"
 #include "CraftingItem.hpp"
 
 using Scenes::Crafting;
@@ -22,7 +23,7 @@ using std::placeholders::_2;
 using UI::IconItem;
 
 Crafting::Crafting() {
-  SetDialogSize(1200, 600);
+  SetDialogSize(Constants::DialogMediumSize());
   selected_ = nullptr;
 
   material_ = UI::Label::Create(this);
@@ -125,9 +126,9 @@ void Crafting::OnScreenResize() {
   craft_content_->SetSize(width, content.height());
 
   item_icon_->SetPos(block_2, content.y());
-  item_icon_->SetSize(60, 60);
+  item_icon_->SetSize(Constants::ButtonSmallHeight(), Constants::ButtonSmallHeight());
 
-  details_->SetPixelSize(12);
+  details_->SetPixelSize(Constants::TextSmallSize());
   name_->SetPos(item_icon_->Right() + 10, content.y());
   details_->SetPos(name_->X(), name_->Bottom() + 10);
 

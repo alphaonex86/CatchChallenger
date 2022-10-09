@@ -85,10 +85,6 @@ class OverMap : public QObject, public Scene {
   NpcTalk *npc_talk_;
   Tip *tip_;
 
-  Sprite *persistant_tipBack;
-  UI::Label *persistant_tip;
-  QString persistant_tipString;
-
   std::vector<ActionClan> actionClan;
   std::string clanName;
   bool haveClanInformations;
