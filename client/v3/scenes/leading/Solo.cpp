@@ -329,4 +329,10 @@ void Solo::ConnectToServer(ConnectionInfo connexionInfo, QString login,
   CommonSettingsServer::commonSettingsServer.subDatapackCode = subDatapackCode;
 }
 
-void Solo::OnScreenResize() {}
+void Solo::OnScreenResize() {
+  Loading::GetInstance()->OnResize();
+}
+
+void Solo::OnEnter() {
+  Scene::OnEnter();
+}

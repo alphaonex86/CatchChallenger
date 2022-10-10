@@ -19,6 +19,7 @@ class Solo : public Scene {
   void IsStarted(bool started);
   void ConnectToServer(ConnectionInfo connexionInfo, QString login,
                        QString pass);
+  void OnEnter() override;
 
  protected:
   void OnScreenResize() override;

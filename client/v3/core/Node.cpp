@@ -43,7 +43,7 @@ Node *Node::Parent() {
 }
 
 Node *Node::Root() {
-  if (Parent() == nullptr) return nullptr;
+  if (Parent() == nullptr) return this;
   Node *parent = Parent();
   while (parent->Parent() != nullptr) {
     parent = parent->Parent();
@@ -52,14 +52,13 @@ Node *Node::Root() {
 }
 
 void Node::AddChild(Node *child) {
-  //if (child->Parent() && child->Parent() != this) {
-    //child->Parent()->RemoveChild(child);
-  //}
-  //if (scene() != nullptr) {
-    //scene()->removeItem(child);
-  //}
   child->SetParent(this);
-  child->OnEnter();
+
+  // Only register when the root is the main scene
+  auto current = SceneManager::GetInstance()->CurrentScene();
+  if (current != nullptr && current == Root()) {
+    child->OnEnter();
+  }
 }
 
 void Node::RemoveChild(Node *child) {

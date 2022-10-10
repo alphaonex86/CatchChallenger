@@ -2,14 +2,14 @@
 #include "SceneManager.hpp"
 
 #ifdef CATCHCHALLENGER_SOLO
-  #include <QStandardPaths>
+#include <QStandardPaths>
 #endif
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/Version.hpp"
 #include "../Globals.hpp"
 #include "../Options.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-  #include "AudioPlayer.hpp"
+#include "AudioPlayer.hpp"
 #endif
 #include <QGLWidget>
 #include <QOpenGLWidget>
@@ -21,7 +21,7 @@ using std::placeholders::_1;
 SceneManager *SceneManager::instance_ = nullptr;
 
 #ifdef __ANDROID_API__
-  #include <QtAndroidExtras>
+#include <QtAndroidExtras>
 
 void keep_screen_on(bool on) {
   QtAndroid::runOnAndroidThread([on] {
@@ -49,14 +49,14 @@ void keep_screen_on(bool on) {
 
 SceneManager::SceneManager() : graphic_scene_(new QGraphicsScene(this)) {
   {
-    //QGLWidget *context = new QGLWidget(QGLFormat(QGL::SampleBuffers));
+    // QGLWidget *context = new QGLWidget(QGLFormat(QGL::SampleBuffers));
     QOpenGLWidget *context = new QOpenGLWidget();
     // if OpenGL is present, use it
     if (context->isValid()) {
-       QSurfaceFormat format;
-       format.setSamples(4);
-       format.setSwapInterval(1);
-       context->setFormat(format);
+      QSurfaceFormat format;
+      format.setSamples(4);
+      format.setSwapInterval(1);
+      context->setFormat(format);
 
       setViewport(context);
       setRenderHint(QPainter::Antialiasing, true);
@@ -335,7 +335,8 @@ void SceneManager::UpdateFPS() {
 }
 
 void SceneManager::SetTargetFPS(int targetFPS) {
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< targetFPS << std::endl;
+  std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] " << targetFPS
+            << std::endl;
   if (targetFPS == 0) {
     wait_render_time_ = 0;
   } else {
@@ -372,7 +373,12 @@ void SceneManager::RemoveOverlay() {
   overlay_ = nullptr;
 }
 
-Scene *SceneManager::CurrentScene() { return scene_stack_.back(); }
+Scene *SceneManager::CurrentScene() {
+  if (scene_stack_.empty()) {
+    return nullptr;
+  }
+  return scene_stack_.back();
+}
 
 QGraphicsItem *SceneManager::GetRenderer() { return renderer_; }
 
@@ -388,12 +394,10 @@ void SceneManager::Restart() {
 
 #ifdef CATCHCHALLENGER_SOLO
 void SceneManager::RegisterInternalServerEvents() {
-  connect(Globals::InternalServer,
-    &CatchChallenger::InternalServer::is_started,
-                   this, &SceneManager::IsStarted);
-  connect(Globals::InternalServer,
-                   &CatchChallenger::InternalServer::error,
-                   this, &SceneManager::OnError);
+  connect(Globals::InternalServer, &CatchChallenger::InternalServer::is_started,
+          this, &SceneManager::IsStarted);
+  connect(Globals::InternalServer, &CatchChallenger::InternalServer::error,
+          this, &SceneManager::OnError);
 }
 
 void SceneManager::IsStarted(bool started) {

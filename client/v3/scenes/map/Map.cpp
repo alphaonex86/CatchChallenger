@@ -11,7 +11,7 @@ Map::Map() {
   background_ = CCMap::Create();
 
   overmap_ = OverMapLogic::Create();
-  //overmap_->resetAll();
+  ////overmap_->resetAll();
   overmap_->setVar(background_);
   overmap_->connectAllSignals();
   SetBackground(background_);

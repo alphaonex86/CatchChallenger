@@ -34,7 +34,6 @@ CharacterSelector::CharacterSelector() {
   select = UI::Button::Create(":/CC/images/interface/next.png", this);
   back = UI::Button::Create(":/CC/images/interface/back.png", this);
   select->SetEnabled(false);
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< select << std::endl;
 
   wdialog = Sprite::Create(":/CC/images/interface/message.png", this);
 
@@ -270,7 +269,7 @@ void CharacterSelector::connectToSubServer(
     const int indexSubServer,
     const std::vector<std::vector<CatchChallenger::CharacterEntry> >
         &characterEntryList) {
-  //Globals::GetMapScene();
+  Globals::GetMapScene();
   if (!QObject::connect(
           ConnectionManager::GetInstance()->client,
           &CatchChallenger::Api_protocol_Qt::QtnewCharacterId,
