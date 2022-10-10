@@ -285,18 +285,19 @@ bool LinkToMaster::disconnectClient()
         queryNumberList[index]=index;
         index++;
     }
-    for( const auto& n : selectCharacterClients ) {
+    std::unordered_map<uint8_t/*queryNumber*/,DataForSelectedCharacterReturn> copyOf_selectCharacterClients=selectCharacterClients;
+    for( const auto& n : copyOf_selectCharacterClients ) {
         const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=n.second;
         EpollClientLoginSlave * client=static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client);
-        if(dataForSelectedCharacterReturn.client!=NULL)
+        if(client!=nullptr)
         {
             messageParsingLayer("LinkToMaster::disconnectClient(): connected player: "+std::to_string(client->account_id)+" ("+std::to_string(client->stat)+")");
             if(client->stat!=EpollClientLoginSlave::GameServerConnected)
             {
-                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                ->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
-                static_cast<EpollClientLoginSlave *>(dataForSelectedCharacterReturn.client)
-                ->closeSocket();
+                client->selectCharacter_ReturnFailed(dataForSelectedCharacterReturn.client_query_id,0x04/*Server internal problem*/);
+                /*selectCharacter_ReturnFailed() -> EpollClientLoginSlave::errorParsingLayer() -> disconnectClient()
+                if(dataForSelectedCharacterReturn.client!=NULL)
+                    client->closeSocket();*/
             }
         }
         else
