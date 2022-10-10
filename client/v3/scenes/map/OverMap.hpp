@@ -21,6 +21,7 @@
 #include "MonsterDetails.hpp"
 #include "MonsterThumb.hpp"
 #include "PlayerPortrait.hpp"
+#include "PlayerCounter.hpp"
 #include "Tip.hpp"
 
 namespace Scenes {
@@ -58,16 +59,16 @@ class OverMap : public QObject, public Scene {
   PlayerPortrait *player_portrait_;
   MonsterThumb *monster_thumb_;
 
-  Sprite *playersCountBack;
-  UI::Label *playersCount;
+  PlayerCounter *player_counter_;
 
   UI::Button *bag;
-  UI::Label *bagOver;
   UI::Button *buy;
-  UI::Label *buyOver;
   UI::Button *crafting_btn_;
   Chat *chat_;
   UI::Button *menu_;
+
+  UI::Row *action_buttons_;
+  UI::Row *action_buttons2_;
 
   Toast *toast_;
 

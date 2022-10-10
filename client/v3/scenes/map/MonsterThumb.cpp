@@ -59,7 +59,7 @@ void MonsterThumb::OpenMonster(Node *item) {
     monster_details_ = MonsterDetails::Create();
   }
   monster_details_->SetMonster(m->GetMonster());
-  Parent()->AddChild(monster_details_);
+  Parent()->Parent()->AddChild(monster_details_);
 }
 
 void MonsterThumb::RegisterEvents() {

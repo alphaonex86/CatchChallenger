@@ -5,45 +5,39 @@
 #include <iostream>
 #include <utility>
 
-#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libcatchchallenger/ChatParsing.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../Constants.hpp"
 #include "../../core/SceneManager.hpp"
-#include "../leading/Leading.hpp"
 #include "../../core/StackedScene.hpp"
+#include "../leading/Leading.hpp"
 
 using Scenes::OverMap;
 
 using std::placeholders::_1;
 
 OverMap::OverMap() {
+  action_buttons_ = UI::Row::Create(this);
+  action_buttons2_ = UI::Row::Create(this);
+
   connexionManager = ConnectionManager::GetInstance();
-  monster_thumb_ = MonsterThumb::Create(this);
-
-  player_portrait_ = PlayerPortrait::Create(this);
-  player_portrait_->SetPos(0, 0);
-
-  playersCountBack =
-      Sprite::Create(":/CC/images/interface/multicount.png", this);
-  playersCount = UI::Label::Create(this);
+  player_counter_ = PlayerCounter::Create(this);
 
   bag = UI::Button::Create(":/CC/images/interface/bag.png", this);
-  bagOver = UI::Label::Create(QColor(255, 255, 255), QColor(80, 71, 38), this);
-
   menu_ = UI::Button::Create(":/CC/images/interface/menu.png", this);
-
   buy = UI::Button::Create(":/CC/images/interface/buy.png", this);
-  {
-    QLinearGradient gradient1(0, 0, 0, 100);
-    gradient1.setColorAt(0, QColor(0, 0, 0));
-    gradient1.setColorAt(1, QColor(0, 0, 0));
-    QLinearGradient gradient2(0, 0, 0, 100);
-    gradient2.setColorAt(0, QColor(255, 255, 255));
-    gradient2.setColorAt(0.5, QColor(178, 242, 241));
-    buyOver = UI::Label::Create(gradient1, gradient2, this);
-  }
-
   crafting_btn_ = UI::Button::Create(":/CC/images/interface/gift.png", this);
+
+  action_buttons_->AddChild(crafting_btn_);
+  action_buttons_->AddChild(bag);
+  action_buttons_->AddChild(buy);
+  action_buttons_->AddChild(menu_);
+
+  monster_thumb_ = MonsterThumb::Create(this);
+  player_portrait_ = PlayerPortrait::Create(this);
+
+  action_buttons2_->AddChild(player_portrait_);
+  action_buttons2_->AddChild(monster_thumb_);
 
   toast_ = Toast::Create(this);
   toast_->SetVisible(false);
@@ -54,10 +48,10 @@ OverMap::OverMap() {
   tip_ = Tip::Create(this);
   tip_->SetVisible(false);
 
-  newLanguage();
-
   buy->SetOnClick(std::bind(&OverMap::buyClicked, this));
   menu_->SetOnClick(std::bind(&OverMap::menuClicked, this));
+
+  newLanguage();
 }
 
 OverMap::~OverMap() {
@@ -67,11 +61,18 @@ OverMap::~OverMap() {
   player_portrait_ = nullptr;
   delete chat_;
   chat_ = nullptr;
+
+  delete action_buttons_;
+  action_buttons_ = nullptr;
+
+  delete action_buttons2_;
+  action_buttons2_ = nullptr;
+
+  delete monster_thumb_;
+  monster_thumb_ = nullptr;
 }
 
-void OverMap::resetAll() {
-  monster_thumb_->Reset();
-}
+void OverMap::resetAll() { monster_thumb_->Reset(); }
 
 void OverMap::setVar(CCMap *ccmap) {
   (void)ccmap;
@@ -97,73 +98,32 @@ void OverMap::have_current_player_info(
   monster_thumb_->LoadMonsters(informations);
   std::pair<uint16_t, uint16_t> t =
       connexionManager->client->getLast_number_of_player();
-  playersCount->SetText(QString::number(t.first));
+  player_counter_->UpdateData(t.first, 0);
 }
 
 void OverMap::updatePlayerNumber(const uint16_t &number,
                                  const uint16_t &max_players) {
-  Q_UNUSED(max_players);
-  playersCount->SetText(QString::number(number));
+  player_counter_->UpdateData(number, max_players);
 }
 
-void OverMap::newLanguage() {
-  bagOver->SetText(tr("Bag"));
-  buyOver->SetText(tr("Buy"));
-}
+void OverMap::newLanguage() {}
 
 void OverMap::OnScreenResize() {
   unsigned int space = Constants::ItemMediumSpacing();
-  auto text_size = Constants::TextMediumSize();
 
-  player_portrait_->SetPos(space, space);
-  monster_thumb_->SetPos(player_portrait_->Right(), space);
+  action_buttons2_->SetItemSpacing(space);
+  action_buttons2_->SetPos(space, space);
 
-  playersCountBack->SetPos(
-      bounding_rect_.width() - space - playersCountBack->Width(), space);
-  playersCount->SetPos(bounding_rect_.width() - space - 80, space + 15);
+  player_counter_->SetPos(Width() - player_counter_->Width() - space, space);
 
-  // TODO(lanstat): verificar como obtener este valor
-  // int physicalDpiX = w->physicalDpiX();
-  int physicalDpiX = 300;
-
-  unsigned int xLeft = space;
-
-  // compose from right to left
-  unsigned int xRight = bounding_rect_.width() - space;
-  if (buy->IsVisible()) {
-    buy->SetSize(UI::Button::kRoundMedium);
-    buyOver->SetVisible(physicalDpiX < 200);
-
-    unsigned int buyX = xRight - buy->Width();
-    buy->SetPos(buyX, bounding_rect_.height() - space - buy->Height());
-    xRight -= buy->Width() + space;
-    if (buyOver->IsVisible()) {
-      buyOver->SetPixelSize(text_size);
-      buyOver->SetPos(buyX + buy->Width() / 2 - buyOver->Width() / 2,
-                      bounding_rect_.height() - space - buyOver->Height());
-    }
-  }
-
+  buy->SetSize(UI::Button::kRoundMedium);
   menu_->SetSize(UI::Button::kRoundMedium);
-  menu_->SetPos(xRight, bounding_rect_.height() - space * 2 - buy->Height() * 2);
+  bag->SetSize(UI::Button::kRoundMedium);
+  crafting_btn_->SetSize(UI::Button::kRoundMedium);
 
-  {
-    bagOver->SetVisible(physicalDpiX < 200);
-    bag->SetSize(UI::Button::kRoundMedium);
-    crafting_btn_->SetSize(UI::Button::kRoundMedium);
-
-    unsigned int bagX = xRight - bag->Width();
-    bag->SetPos(bagX, bounding_rect_.height() - space - bag->Height());
-    xRight -= bag->Width() + space;
-    if (bagOver->IsVisible()) {
-      bagOver->SetPixelSize(text_size);
-      bagOver->SetPos(bagX + bag->Width() / 2 - bagOver->Width() / 2,
-                      bounding_rect_.height() - space - bagOver->Height());
-    }
-
-    crafting_btn_->SetPos(xRight - crafting_btn_->Width(),
-                      bounding_rect_.height() - space - crafting_btn_->Height());
-  }
+  action_buttons_->SetItemSpacing(space);
+  action_buttons_->SetPos(Width() - action_buttons_->Width() - space,
+                          Height() - action_buttons_->Height() - space);
 
   tip_->SetY(150);
   toast_->SetY(150);
@@ -180,7 +140,7 @@ void OverMap::OnEnter() {
   toast_->RegisterEvents();
   chat_->RegisterEvents();
   monster_thumb_->RegisterEvents();
-  
+
   if (player_portrait_->IsVisible()) {
     have_current_player_info(PlayerInfo::GetInstance()->GetInformationRO());
   }
@@ -202,5 +162,6 @@ void OverMap::buyClicked() {
 
 void OverMap::menuClicked() {
   SceneManager::GetInstance()->PopScene();
-  static_cast<StackedScene *>(SceneManager::GetInstance()->CurrentScene())->Restart();
+  static_cast<StackedScene *>(SceneManager::GetInstance()->CurrentScene())
+      ->Restart();
 }

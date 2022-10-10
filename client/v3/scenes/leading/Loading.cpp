@@ -129,7 +129,6 @@ void Loading::OnScreenResize() {
   widget->Strech(widget_border, Width() * 0.4, Height() * 0.3);
   widget->SetPos(BoundingRect().width() / 2 - widget->Width() / 2,
                  BoundingRect().height() / 2 - widget->Height() / 2);
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< widget->X() << std::endl;
 
   teacher->SetVisible(true);
   teacher->SetPos(24, 19);

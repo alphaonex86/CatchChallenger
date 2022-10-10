@@ -14,7 +14,7 @@ void Menu::OnScreenResize() {
   auto textSize = Constants::TextLargeSize();
   auto roundSize = Constants::ButtonRoundMediumSize();
 
-  solo_->SetSize(UI::Button::kRectLarge);
+  solo_->SetSize(UI::Button::kRectMedium);
   multi_->SetSize(UI::Button::kRectMedium);
   options_->SetSize(UI::Button::kRoundMedium);
   debug_->SetSize(UI::Button::kRoundMedium);

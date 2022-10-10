@@ -91,6 +91,7 @@ SOURCES += \
     $$PWD/scenes/map/OverMapLogicClan.cpp \
     $$PWD/scenes/map/OverMapLogicTrade.cpp \
     $$PWD/scenes/map/PlayerPortrait.cpp \
+    $$PWD/scenes/map/PlayerCounter.cpp \
     $$PWD/scenes/map/Tip.cpp \
     $$PWD/scenes/map/MonsterThumb.cpp \
     $$PWD/scenes/shared/player/Player.cpp \
@@ -210,6 +211,7 @@ HEADERS  += \
     $$PWD/scenes/map/OverMap.hpp \
     $$PWD/scenes/map/OverMapLogic.hpp \
     $$PWD/scenes/map/PlayerPortrait.hpp \
+    $$PWD/scenes/map/PlayerCounter.hpp \
     $$PWD/scenes/map/MonsterThumb.hpp \
     $$PWD/scenes/map/Tip.hpp \
     $$PWD/scenes/shared/crafting/Crafting.hpp \

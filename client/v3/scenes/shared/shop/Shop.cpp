@@ -12,6 +12,7 @@
 #include "../../../entities/PlayerInfo.hpp"
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
+#include "../../../Constants.hpp"
 #include "ShopItem.hpp"
 
 using Scenes::Shop;
@@ -21,7 +22,7 @@ using std::placeholders::_2;
 Shop::Shop() {
   on_transaction_finish_ = nullptr;
   selected_item_ = nullptr;
-  SetDialogSize(600, 500);
+  SetDialogSize(Constants::DialogMediumSize());
   portrait_ = Sprite::Create(this);
   seller_name_ = UI::Label::Create(this);
   buy_ = UI::Button::Create(":/CC/images/interface/buy.png", this);
@@ -178,7 +179,7 @@ void Shop::OnScreenResize() {
 
   content_->SetPos(content.x() + 190, content.y() + 15);
   content_->SetSize(content.width() - 200, content.height() - 25);
-  content_->SetItemSpacing(5);
+  content_->SetItemSpacing(Constants::ItemSmallSpacing());
   portrait_->SetPos(content.x(), content.y());
   seller_name_->SetPos(content.x(), content.y() + 180);
 }
