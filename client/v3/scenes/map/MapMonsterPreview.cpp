@@ -2,6 +2,7 @@
 #include "MapMonsterPreview.hpp"
 
 #include <QPainter>
+#include <iostream>
 
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/fight/CommonFightEngine.hpp"
@@ -83,7 +84,7 @@ void MapMonsterPreview::DrawContent() {
   painter->drawPixmap(barx, bary, bar_width, bar_height,
                       background);
 
-  qreal percent = monster_.hp / stat.hp;
+  qreal percent = monster_.hp / (float)stat.hp;
   painter->drawPixmap(barx, bary, bar_width * percent, bar_height,
                       bar);
 

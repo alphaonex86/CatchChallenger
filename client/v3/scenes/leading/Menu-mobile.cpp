@@ -2,11 +2,13 @@
 #include "Menu.hpp"
 
 #include "../../Constants.hpp"
+#include "Loading.hpp"
 
 using Scenes::Menu;
 
 void Menu::OnScreenResize() {
   if (!is_loaded_) return;
+  Loading::GetInstance()->OnResize();
   int buttonMargin = 10;
   buttonMargin = 30;
 

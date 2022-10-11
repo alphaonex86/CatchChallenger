@@ -7,11 +7,12 @@
 #include "../../../core/AssetsLoader.hpp"
 #include "../../../core/Sprite.hpp"
 #include "../../../ui/Label.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::WarehouseItem;
 
 WarehouseItem::WarehouseItem() {
-  SetSize(48, 48);
+  SetSize(Constants::ButtonSmallHeight(), Constants::ButtonSmallHeight());
   is_selected_ = false;
 }
 
@@ -48,7 +49,7 @@ void WarehouseItem::Draw(QPainter *painter) {
   painter->drawPixmap(0, 0, pixmap_);
 
   auto text = UI::Label::Create();
-  text->SetPixelSize(10);
+  text->SetPixelSize(Constants::TextSmallSize());
   text->SetWidth(size.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(text_);

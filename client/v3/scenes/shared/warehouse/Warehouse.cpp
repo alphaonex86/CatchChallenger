@@ -13,6 +13,7 @@
 #include "../../../entities/PlayerInfo.hpp"
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
+#include "../../../Constants.hpp"
 #include "WarehouseItem.hpp"
 
 using Scenes::Warehouse;
@@ -21,7 +22,7 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 Warehouse::Warehouse() {
-  SetDialogSize(1200, 600);
+  SetDialogSize(Constants::DialogLargeSize());
   on_transaction_finish_ = nullptr;
   selected_item_ = nullptr;
 
@@ -32,8 +33,6 @@ Warehouse::Warehouse() {
 
   current_mode_ = 0;
 
-  current_mode_ = 0;
-
   mode_ = UI::Combo::Create(this);
   mode_->AddItem(tr("Item"));
   mode_->AddItem(tr("Monster"));
@@ -41,7 +40,9 @@ Warehouse::Warehouse() {
   mode_->SetOnSelectChange(std::bind(&Warehouse::OnModeChange, this, _1));
 
   inventory_content_ = UI::GridView::Create(this);
+  inventory_content_->SetItemSize(Constants::ButtonSmallHeight(), Constants::ButtonSmallHeight());
   storage_content_ = UI::GridView::Create(this);
+  storage_content_->SetItemSize(Constants::ButtonSmallHeight(), Constants::ButtonSmallHeight());
 
   player_cash_ = UI::Label::Create(this);
   storage_cash_ = UI::Label::Create(this);
@@ -221,8 +222,12 @@ void Warehouse::OnAcceptClick() {
 void Warehouse::OnScreenResize() {
   UI::Dialog::OnScreenResize();
 
+  move_left_->SetSize(UI::Button::kRoundSmall);
+  move_right_->SetSize(UI::Button::kRoundSmall);
+
+  auto space = Constants::ItemMediumSpacing();
   auto content = ContentBoundary();
-  qreal content_width = (content.width() / 2) - 40;
+  qreal content_width = (content.width() / 2) - move_left_->Width();
   qreal block_1 = content.x();
   qreal block_2 = content.x() + content.width() - content_width;
 
@@ -231,30 +236,28 @@ void Warehouse::OnScreenResize() {
   storage_name_->SetPos(block_2, player_name_->Y());
   storage_name_->SetWidth(content_width);
 
-  mode_->SetSize(150, 40);
+  mode_->SetSize(UI::Combo::kSmall);
   mode_->SetPos(content.x() + (content.width() / 2) - (mode_->Width() / 2),
                 player_name_->Y());
 
-  inventory_content_->SetPos(block_1, player_name_->Bottom() + 15);
-  inventory_content_->SetSize(content_width, content.height() - 25);
-  inventory_content_->SetItemSpacing(5);
+  inventory_content_->SetPos(block_1, mode_->Bottom() + space);
+  inventory_content_->SetSize(content_width, content.height() - mode_->Height());
+  inventory_content_->SetItemSpacing(space);
 
   player_cash_->SetPos(block_1, player_name_->Bottom() + 15);
   player_cash_->SetWidth(content_width);
 
   storage_content_->SetPos(block_2, inventory_content_->Y());
   storage_content_->SetSize(content_width, inventory_content_->Height());
-  storage_content_->SetItemSpacing(5);
+  storage_content_->SetItemSpacing(space);
 
   storage_cash_->SetPos(block_2, player_cash_->Y());
   storage_cash_->SetWidth(content_width);
 
-  move_left_->SetSize(50, 54);
   move_left_->SetPos(
       content.x() + (content.width() / 2) - (move_left_->Width() / 2),
       inventory_content_->Y());
 
-  move_right_->SetSize(50, 54);
   move_right_->SetPos(move_left_->X(),
                       move_left_->Y() + 15 + move_left_->Height());
 }

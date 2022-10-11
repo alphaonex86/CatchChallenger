@@ -134,8 +134,7 @@ void Crafting::OnScreenResize() {
 
   material_->SetPos(block_2, details_->Y() + 50);
 
-  create_->SetSize(150, 45);
-  create_->SetPixelSize(14);
+  create_->SetSize(UI::Button::kRectSmall);
   create_->SetPos(block_2 + width - create_->Width() / 2,
                   content.bottom() - create_->Height());
 

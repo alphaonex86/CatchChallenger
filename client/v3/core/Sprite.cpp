@@ -274,3 +274,11 @@ void Sprite::UnRegisterEvents() {
 void Sprite::SetTransformationMode(Qt::TransformationMode mode) {
   mode_ = mode;
 }
+
+void Sprite::ScaledToWidth(qreal width) {
+  Sprite::SetSize(width, width / Width() * Height());
+}
+
+void Sprite::ScaledToHeight(qreal height) {
+  Sprite::SetSize(height / Height() * Width(), height);
+}

@@ -8,6 +8,7 @@
 #include "../../../core/Sprite.hpp"
 #include "../../../entities/PlayerInfo.hpp"
 #include "../../../ui/Label.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::IndustryItem;
 
@@ -17,7 +18,7 @@ IndustryItem::IndustryItem(uint16_t object_id, uint32_t quantity,
   object_id_ = object_id;
   quantity_ = quantity;
   price_ = price;
-  SetSize(60, 60);
+  SetSize(60, Constants::ItemSmallHeight());
 }
 
 IndustryItem::~IndustryItem() {}
@@ -47,17 +48,17 @@ void IndustryItem::DrawContent(QPainter *painter) {
   } else {
     icon_ = QtDatapackClientLoader::GetInstance()->defaultInventoryImage();
   }
-  std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
-            << quantity_ << std::endl;
   auto pix = Sprite::Create();
   pix->SetPixmap(icon_);
+  pix->SetTransformationMode(Qt::FastTransformation);
+  pix->ScaledToHeight(Height() * 0.75);
   pix->SetPos(10, Height() / 2 - pix->Height() / 2);
   pix->Render(painter);
 
   auto text = UI::Label::Create(Qt::white, QColor(30, 25, 17));
   text->SetText(text_);
-  text->SetPixelSize(12);
-  text->SetPos(pix->Width() + pix->X() + 10, 5);
+  text->SetPixelSize(Constants::TextSmallSize());
+  text->SetPos(pix->Right() + 10, 5);
   text->Render(painter);
 
   delete pix;

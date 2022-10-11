@@ -45,6 +45,8 @@ class ListView : public Node {
   bool show_slider_;
   qreal content_scale_;
   QRectF content_rect_;
+  QPointF last_point_;
+  QPointF initial_point_;
   QPixmap content_;
   std::vector<Node *> items_;
   bool is_horizontal_;

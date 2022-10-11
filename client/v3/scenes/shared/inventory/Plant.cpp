@@ -12,6 +12,7 @@
 #include "../../../FacilityLibClient.hpp"
 #include "../../../libraries/tiled/tiled_tile.hpp"
 #include "../../../ui/LinkedDialog.hpp"
+#include "../../../Constants.hpp"
 #include "PlantItem.hpp"
 
 using Scenes::Plant;
@@ -136,11 +137,11 @@ void Plant::Draw(QPainter *painter) {
   const QtDatapackClientLoader::QtPlantExtra &contentExtra =
       QtDatapackClientLoader::GetInstance()->getPlantExtra(plant_id);
 
-  const int icon_size = 64;
+  const int icon_size = Constants::ButtonMediumHeight();
 
   if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(item_id) !=
       QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
-    text->SetPixelSize(14);
+    text->SetPixelSize(Constants::TextMediumSize());
     text->SetPos(x_offset, y_offset);
     text->SetWidth(Width() - x_offset);
     text->SetAlignment(Qt::AlignCenter);
@@ -148,7 +149,7 @@ void Plant::Draw(QPainter *painter) {
     text->Render(painter);
     y_offset += text->Height();
 
-    text->SetPixelSize(12);
+    text->SetPixelSize(Constants::TextSmallSize());
     text->SetPos(x_offset, y_offset);
     text->SetText(itemExtra.description);
     text->Render(painter);
@@ -218,12 +219,13 @@ void Plant::Draw(QPainter *painter) {
     icon->SetPos(x_offset + 10, 10);
     icon->Render(painter);
 
-    text->SetPixelSize(12);
+    text->SetPixelSize(Constants::TextSmallSize());
     text->SetPos(x_offset + 20, 10);
     text->Render(painter);
 
     if (contentExtra.tileset != nullptr) {
       icon->SetPixmap(SetCanvas(contentExtra.tileset->tileAt(0)->image(), 48));
+      icon->ScaledToHeight(Constants::ButtonSmallHeight());
       icon->SetPos(x_offset + 40, 10);
       icon->Render(painter);
 

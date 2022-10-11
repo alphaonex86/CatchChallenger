@@ -2,6 +2,7 @@
 #include "ThemedItem.hpp"
 
 #include "../core/Sprite.hpp"
+#include "../Constants.hpp"
 #include "ThemedLabel.hpp"
 
 using UI::DotItem;
@@ -9,8 +10,8 @@ using UI::IconItem;
 
 DotItem::DotItem(): UI::SelectableItem() {
   bg_selected_ = QString();
-  text_size_ = 10;
-  SetHeight(30);
+  text_size_ = Constants::TextSmallSize();
+  SetHeight(Constants::ItemSmallHeight());
 }
 
 DotItem* DotItem::Create() {
@@ -49,8 +50,8 @@ void DotItem::SetPixelSize(uint8_t size) {
 }
 
 IconItem::IconItem(): UI::SelectableItem() {
-  text_size_ = 10;
-  SetHeight(60);
+  text_size_ = Constants::TextSmallSize();
+  SetHeight(Constants::ItemSmallHeight());
 }
 
 IconItem* IconItem::Create() {
@@ -68,8 +69,9 @@ void IconItem::SetText(const QString &text) {
 
 void IconItem::DrawContent(QPainter *painter) {
   Sprite *icon = Sprite::Create();
-  icon->SetSize(30, 30);
+  icon->SetTransformationMode(Qt::FastTransformation);
   icon->SetPixmap(icon_);
+  icon->SetSize(Height() * 0.75, Height() * 0.75);
 
   auto *label = UI::BlueLabel::Create();
   label->SetText(text_);

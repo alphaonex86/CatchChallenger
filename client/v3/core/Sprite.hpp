@@ -29,6 +29,8 @@ class Sprite : public Node, public Stateful {
   QPointF Strech(unsigned int scaled_x, unsigned int scaled_y,
                  unsigned int border_size, int width, int height);
   void SetTransformationMode(Qt::TransformationMode mode);
+  void ScaledToWidth(qreal width);
+  void ScaledToHeight(qreal height);
 
   void MousePressEvent(const QPointF &point, bool &press_validated) override;
   void MouseReleaseEvent(const QPointF &point, bool &prev_validated) override;

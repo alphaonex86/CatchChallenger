@@ -10,6 +10,7 @@
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../core/Sprite.hpp"
 #include "../../../ui/Label.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::PlantItem;
 
@@ -17,7 +18,7 @@ PlantItem::PlantItem(uint16_t plant_id, uint32_t quantity)
     : UI::SelectableItem() {
   plant_id_ = plant_id;
   quantity_ = quantity;
-  SetSize(200, 60);
+  SetSize(200, Constants::ItemSmallHeight());
 }
 
 PlantItem::~PlantItem() {}
@@ -42,7 +43,6 @@ void PlantItem::DrawContent(QPainter *painter) {
     icon->SetPos(10, Height() / 2 - icon->Height() / 2);
     icon->Render(painter);
 
-    text->SetPixelSize(12);
     text->SetText(QString::fromStdString(itemExtra.name) + "\n" +
                   QObject::tr("Quantity: ") + QString::number(quantity_) + " ");
     text->SetPos(Width() / 2 - text->Width() / 2, 5);
@@ -53,7 +53,6 @@ void PlantItem::DrawContent(QPainter *painter) {
     icon->SetPos(10, 10);
     icon->Render(painter);
 
-    text->SetPixelSize(12);
     text->SetPos(20, 10);
     if (quantity_ > 1)
       text->SetText(

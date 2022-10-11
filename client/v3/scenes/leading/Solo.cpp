@@ -330,7 +330,6 @@ void Solo::ConnectToServer(ConnectionInfo connexionInfo, QString login,
 }
 
 void Solo::OnScreenResize() {
-  Loading::GetInstance()->OnResize();
 }
 
 void Solo::OnEnter() {

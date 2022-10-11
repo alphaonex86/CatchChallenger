@@ -270,22 +270,10 @@ void ListView::MousePressEvent(const QPointF &point, bool &press_validated) {
   const QRectF &b2 = BoundingRect();
   const QRectF &t2 = MapRectToScene(b2);
   if (t2.contains(point)) {
-    QPointF tmp = QPointF(point.x() - t2.x(), point.y() - t2.y());
-    if (show_slider_ && slider_rect_.contains(tmp)) {
-      press_validated = true;
-      is_slider_pressed_ = true;
-    } else {
-      QPointF auxiliar = QPointF(content_rect_.x() + point.x() - t2.x(),
-                                 content_rect_.y() + point.y() - t2.y());
-      auto items = items_;
-      has_dirty_items_ = false;
-      for (auto item : items) {
-        if (has_dirty_items_) {
-          break;
-        }
-        item->MousePressEvent(auxiliar, press_validated);
-      }
-    }
+    press_validated = true;
+    is_slider_pressed_ = true;
+    last_point_ = point;
+    initial_point_ = point;
   }
 }
 
@@ -296,6 +284,9 @@ void ListView::MouseReleaseEvent(const QPointF &point, bool &prev_validated) {
   const QRectF &b2 = BoundingRect();
   const QRectF &t2 = MapRectToScene(b2);
   if (t2.contains(point)) {
+    if (point.x() != initial_point_.x() || point.y() != initial_point_.y()) {
+      return;
+    }
     QPointF auxiliar = QPointF(content_rect_.x() + point.x() - t2.x(),
                                content_rect_.y() + point.y() - t2.y());
     auto items = items_;
@@ -304,6 +295,8 @@ void ListView::MouseReleaseEvent(const QPointF &point, bool &prev_validated) {
       if (has_dirty_items_) {
         break;
       }
+      bool prevent_default = false;
+      item->MousePressEvent(auxiliar, prevent_default);
       item->MouseReleaseEvent(auxiliar, prev_validated);
 
       if (prev_validated) {
@@ -314,18 +307,30 @@ void ListView::MouseReleaseEvent(const QPointF &point, bool &prev_validated) {
 }
 
 void ListView::MouseMoveEvent(const QPointF &point) {
-  // TODO(lanstat): Verificar comportamiento cuando se use horizontal
   if (is_slider_pressed_) {
-    const QRectF &b = BoundingRect();
-    const QRectF &t = MapRectToScene(b);
-    int delta = point.y() - t.y();
-    if (delta < 0) {
-      delta = 0;
-    } else if (delta + slider_rect_.height() > BoundingRect().height()) {
-      delta = BoundingRect().height() - slider_rect_.height();
+    int delta = last_point_.y() - point.y();
+    last_point_ = point;
+     
+    if (delta == 0) {
+      return;
     }
-    content_rect_.setY(delta * content_scale_);
-    slider_rect_.moveTop(delta);
+
+    qreal tmp = content_rect_.y() + delta * content_scale_;
+    int end = (int)(content_rect_.height() - bounding_rect_.height());
+ 
+    if (end < 0) {
+      return;
+    }
+
+    if (tmp < 0) {
+      tmp = 0;
+      delta = 0;
+    } else if (tmp > end) {
+      tmp = end;
+      delta = 0;
+    }
+    content_rect_.moveTop(tmp);
+    slider_rect_.moveTop(slider_rect_.y() + delta);
     ReDraw();
   }
 }

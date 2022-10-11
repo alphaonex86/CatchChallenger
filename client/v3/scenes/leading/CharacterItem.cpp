@@ -20,8 +20,8 @@ CharacterItem *CharacterItem::Create() {
 void CharacterItem::DrawContent(QPainter *painter) {
   auto image = Sprite::Create(icon_);
   auto icon_height = Height() * 0.9;
-  auto icon_width = image->Width() / icon_height * image->Width();
-  image->SetSize(icon_width, icon_height);
+  image->SetTransformationMode(Qt::FastTransformation);
+  image->ScaledToHeight(icon_height);
   image->SetPos(Height() / 2 - icon_height / 2, 0);
   image->Render(painter);
 

@@ -9,6 +9,7 @@
 #include "../../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../../general/base/FacilityLib.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../Constants.hpp"
 #include "../../../Globals.hpp"
 #include "../../../Ultimate.hpp"
 #include "../../../core/AssetsLoader.hpp"
@@ -26,7 +27,7 @@ using std::placeholders::_1;
 using std::placeholders::_2;
 
 Industry::Industry() {
-  SetDialogSize(1200, 600);
+  SetDialogSize(Constants::DialogMediumSize());
   selected_product_ = nullptr;
   selected_resource_ = nullptr;
 
@@ -148,10 +149,10 @@ void Industry::OnBuyClick() {
       if (product.item == id) {
         item->SetPrice(FacilityLib::getFactoryProductPrice(
             quantity, product,
-            CommonDatapack::commonDatapack.get_industries().at((
-                CommonDatapack::commonDatapack.get_industriesLink()
-                    .at(industry_id_)
-                    .industry))));
+            CommonDatapack::commonDatapack.get_industries().at(
+                (CommonDatapack::commonDatapack.get_industriesLink()
+                     .at(industry_id_)
+                     .industry))));
         break;
       }
       index++;
@@ -254,42 +255,42 @@ void Industry::OnSellClick() {
 void Industry::OnScreenResize() {
   UI::Dialog::OnScreenResize();
 
+  auto space = Constants::ItemSmallSpacing();
   auto content = ContentBoundary();
+  auto content_plain = ContentPlainBoundary();
   qreal content_width = (content.width() / 2) - 10;
   qreal block_1 = content.x();
   qreal block_2 = content.x() + content.width() - content_width;
 
   products_title_->SetAlignment(Qt::AlignCenter);
-  products_title_->SetPixelSize(14);
+  products_title_->SetPixelSize(Constants::TextMediumSize());
   products_title_->SetWidth(content_width);
   products_title_->SetPos(block_1, content.y());
 
   resources_title_->SetAlignment(Qt::AlignCenter);
-  resources_title_->SetPixelSize(14);
+  resources_title_->SetPixelSize(Constants::TextMediumSize());
   resources_title_->SetWidth(content_width);
   resources_title_->SetPos(block_2, content.y());
+
+  products_buy_->SetSize(UI::Button::kRectSmall);
+  products_buy_->SetPos(
+      block_1 + content_width / 2 - products_buy_->Width() / 2,
+      content_plain.bottom() - products_buy_->Height());
+
+  resources_sell_->SetSize(UI::Button::kRectSmall);
+  resources_sell_->SetPos(
+      block_2 + content_width / 2 - resources_sell_->Width() / 2,
+      content_plain.bottom() - resources_sell_->Height() - space);
 
   products_content_->SetPos(block_1,
                             content.y() + products_title_->Height() + 5);
   products_content_->SetSize(content_width,
-                             content.height() - products_title_->Height() - 25);
-  products_content_->SetItemSpacing(5);
+                             content_plain.bottom() - products_content_->Y() - products_buy_->Height() - space * 2);
+  products_content_->SetItemSpacing(Constants::ItemMediumSpacing());
 
   resources_content_->SetPos(block_2, products_content_->Y());
   resources_content_->SetSize(content_width, products_content_->Height());
-  resources_content_->SetItemSpacing(5);
-
-  products_buy_->SetSize(150, 40);
-  products_buy_->SetPixelSize(14);
-  products_buy_->SetPos(
-      block_1 + content_width / 2 - products_buy_->Width() / 2,
-      products_content_->Bottom() + 5);
-
-  resources_sell_->SetSize(150, 40);
-  resources_sell_->SetPixelSize(14);
-  resources_sell_->SetPos(
-      block_2 + content_width / 2 - resources_sell_->Width() / 2,
-      resources_content_->Bottom() + 5);
+  resources_content_->SetItemSpacing(Constants::ItemMediumSpacing());
 }
 
 void Industry::OnResourceClick(Node *node) {
@@ -585,12 +586,13 @@ void Industry::UpdateFactoryStatProduction(
                  static_cast<uint32_t>(remainingProductionTime / 60))
                   .toStdString();
       }
-          //ui->factoryStatText->setText(tr("In production")+"<br/>"+QString::fromStdString(productionTime));
+      // ui->factoryStatText->setText(tr("In
+      // production")+"<br/>"+QString::fromStdString(productionTime));
     } else {
-      //ui->factoryStatText->setText(tr("In production"));
+      // ui->factoryStatText->setText(tr("In production"));
     }
   } else {
     factoryInProduction = false;
-    //ui->factoryStatText->setText(tr("Production stopped"));
+    // ui->factoryStatText->setText(tr("Production stopped"));
   }
 }
