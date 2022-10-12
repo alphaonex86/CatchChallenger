@@ -1128,7 +1128,7 @@ void Battle::ConfigureFighters() {
   player_->SetPixmap(playerBackImage);
 
   qreal player_x = bounding.width() * 0.1;
-  qreal player_y = bounding.height() - player_->Height() + 50;
+  qreal player_y = bounding.height() - player_->Height() * 0.6 - bounding.height()* 0.3;
   qreal enemy_x = bounding.width() - enemy_->Width() - 50;
   qreal enemy_y = bounding.height() * 0.15;
 
@@ -1348,8 +1348,7 @@ void Battle::OnStatusActionDone() { doNextAction(); }
 
 UI::Button *Battle::CreateSkillButton() {
   auto item = UI::Button::Create(":/CC/images/interface/redbutton.png");
-  item->SetPixelSize(10);
-  item->SetSize(500, 25);
+  item->SetSize(UI::Button::kRectSmall);
   item->SetOnClick(std::bind(&Battle::OnSkillClick, this, _1));
   return item;
 }

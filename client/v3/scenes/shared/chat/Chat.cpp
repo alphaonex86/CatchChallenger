@@ -5,8 +5,11 @@
 #include <QTextDocument>
 #include <iostream>
 
-#include "../../../core/EventManager.hpp"
 #include "../../../../libcatchchallenger/ChatParsing.hpp"
+#include "../../../Constants.hpp"
+#include "../../../core/EventManager.hpp"
+#include "../../../core/SceneManager.hpp"
+#include "../../../core/FontManager.hpp"
 #include "../../../entities/Utils.hpp"
 
 using Scenes::Chat;
@@ -16,7 +19,9 @@ using std::placeholders::_3;
 using std::placeholders::_4;
 
 Chat::Chat(Node *parent) : Node(parent) {
-  input_height_ = 30;
+  log_ = nullptr;
+
+  input_height_ = Constants::ButtonSmallHeight() * 0.75;
 
   proxy_ = new QGraphicsProxyWidget(this, Qt::Widget);
   proxy_->setAutoFillBackground(false);
@@ -31,6 +36,7 @@ Chat::Chat(Node *parent) : Node(parent) {
   palette.setCurrentColorGroup(QPalette::Active);
   palette.setColor(QPalette::Window, Qt::transparent);
   line_edit_->setPalette(palette);
+  line_edit_->setFont(*FontManager::GetInstance()->GetFont("Calibri", Constants::TextSmallSize()));
   proxy_->setWidget(line_edit_);
 
   flood_ = 0;
@@ -38,7 +44,6 @@ Chat::Chat(Node *parent) : Node(parent) {
   pressed_ = false;
   connexionManager = ConnectionManager::GetInstance();
   player_info_ = PlayerInfo::GetInstance();
-  log_ = nullptr;
   stop_flood_.setSingleShot(false);
   stop_flood_.start(1500);
 
@@ -63,6 +68,9 @@ Chat::Chat(Node *parent) : Node(parent) {
                    std::bind(&Chat::OnSystemMessageReceived, this, _1, _2));
   QObject::connect(&stop_flood_, &QTimer::timeout,
                    std::bind(&Chat::RemoveNumberForFlood, this));
+
+  SetSize(SceneManager::GetInstance()->width() * 0.25,
+          SceneManager::GetInstance()->height() * 0.25);
 }
 
 Chat::~Chat() {
@@ -87,7 +95,7 @@ void Chat::Draw(QPainter *painter) {
   qreal inner_height = Height() - input_height_;
   painter->fillRect(0, 0, Width(), Height(), QColor(0, 0, 0, 150));
   painter->fillRect(0, inner_height, Width(), input_height_,
-                    QColor(0, 0, 0, 50));
+                    QColor(1, 1, 1, 50));
   if (log_ == nullptr) {
     DrawContent();
   }
@@ -116,7 +124,7 @@ void Chat::OnResize() {
     delete log_;
   }
   log_ = nullptr;
-  proxy_->setPos(5, Height() - input_height_);
+  proxy_->setPos(0, Height() - input_height_);
   proxy_->setMaximumSize(Width(), input_height_);
   proxy_->setMinimumSize(Width(), input_height_);
   ReDraw();
@@ -349,5 +357,4 @@ void Chat::RemoveNumberForFlood() {
   flood_--;
 }
 
-void Chat::OnReturnPressed() {
-}
+void Chat::OnReturnPressed() {}

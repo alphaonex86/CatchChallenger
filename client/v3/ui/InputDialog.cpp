@@ -4,13 +4,14 @@
 #include <QIntValidator>
 #include <iostream>
 
+#include "../Constants.hpp"
 #include "../Globals.hpp"
 #include "../core/SceneManager.hpp"
 
 using UI::InputDialog;
 
 InputDialog::InputDialog() {
-  SetDialogSize(500, 300);
+  SetDialogSize(Constants::DialogSmallSize());
 
   message_ = UI::Label::Create(this);
   message_->SetAlignment(Qt::AlignCenter);
@@ -41,7 +42,8 @@ void InputDialog::OnScreenResize() {
   message_->SetWidth(content.width());
 
   input_->SetPos(content.x(), content.y() + message_->Height());
-  input_->SetSize(content.width(), 45);
+  input_->SetSize(UI::Input::kSmall);
+  input_->SetWidth(content.width());
 }
 
 void InputDialog::newLanguage() {}

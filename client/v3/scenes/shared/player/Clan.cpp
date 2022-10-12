@@ -14,15 +14,22 @@
 using Scenes::Clan;
 
 Clan::Clan() {
+  action_buttons_ = UI::Row::Create(this);
+
   clan_label_ = UI::Label::Create(this);
   clan_value_ = UI::Label::Create(this);
   admin_label_ = UI::Label::Create(this);
   status_label_ = UI::Label::Create(this);
 
   leave_clan_ = UI::YellowButton::Create(this);
-  invite_clan_ = UI::YellowButton::Create(this);
-  disolve_clan_ = UI::YellowButton::Create(this);
-  expulse_clan_ = UI::YellowButton::Create(this);
+
+  invite_clan_ = UI::YellowButton::Create();
+  disolve_clan_ = UI::YellowButton::Create();
+  expulse_clan_ = UI::YellowButton::Create();
+
+  action_buttons_->AddChild(invite_clan_);
+  action_buttons_->AddChild(disolve_clan_);
+  action_buttons_->AddChild(expulse_clan_);
 
   leave_clan_->SetOnClick([this](Node *) {
     ConnectionManager::GetInstance()->client->leaveClan();
@@ -30,8 +37,7 @@ Clan::Clan() {
   });
   invite_clan_->SetOnClick([this](Node *) {
     Globals::GetInputDialog()->ShowInputText(
-        QString("Invite player"),
-        QString("Player name"),
+        QString("Invite player"), QString("Player name"),
         [this](QString pseudo) {
           if (pseudo.isEmpty()) return;
           ConnectionManager::GetInstance()->client->inviteClan(
@@ -45,8 +51,7 @@ Clan::Clan() {
   });
   expulse_clan_->SetOnClick([this](Node *) {
     Globals::GetInputDialog()->ShowInputText(
-        QString("Eject player"),
-        QString("Player name"),
+        QString("Eject player"), QString("Player name"),
         [this](QString pseudo) {
           if (pseudo.isEmpty()) return;
           ConnectionManager::GetInstance()->client->ejectClan(
@@ -58,7 +63,27 @@ Clan::Clan() {
   newLanguage();
 }
 
-Clan::~Clan() {}
+Clan::~Clan() {
+  delete action_buttons_;
+  delete clan_label_;
+  delete clan_value_;
+  delete admin_label_;
+  delete status_label_;
+  delete leave_clan_;
+  delete invite_clan_;
+  delete disolve_clan_;
+  delete expulse_clan_;
+
+  action_buttons_ = nullptr;
+  clan_label_ = nullptr;
+  clan_value_ = nullptr;
+  admin_label_ = nullptr;
+  status_label_ = nullptr;
+  leave_clan_ = nullptr;
+  invite_clan_ = nullptr;
+  disolve_clan_ = nullptr;
+  expulse_clan_ = nullptr;
+}
 
 Clan *Clan::Create() { return new (std::nothrow) Clan(); }
 
@@ -67,23 +92,17 @@ void Clan::OnResize() {
 
   clan_label_->SetPos(0, 0);
   clan_value_->SetPos(clan_label_->Width(), 0);
-  leave_clan_->SetSize(150, 40);
-  leave_clan_->SetPixelSize(14);
+  leave_clan_->SetSize(UI::Button::kRectSmall);
   leave_clan_->SetPos(bounding.width() - leave_clan_->Width(), 0);
 
   admin_label_->SetPos(bounding.width() / 2 - admin_label_->Width() / 2, 150);
-  invite_clan_->SetPos(bounding.width() / 2 - 235,
-                       admin_label_->Y() + admin_label_->Height() + 10);
-  invite_clan_->SetSize(150, 40);
-  invite_clan_->SetPixelSize(14);
-  disolve_clan_->SetPos(invite_clan_->X() + invite_clan_->Width() + 10,
-                        invite_clan_->Y());
-  disolve_clan_->SetSize(150, 40);
-  disolve_clan_->SetPixelSize(14);
-  expulse_clan_->SetPos(disolve_clan_->X() + disolve_clan_->Width() + 10,
-                        invite_clan_->Y());
-  expulse_clan_->SetSize(150, 40);
-  expulse_clan_->SetPixelSize(14);
+
+  invite_clan_->SetSize(UI::Button::kRectSmall);
+  disolve_clan_->SetSize(UI::Button::kRectSmall);
+  expulse_clan_->SetSize(UI::Button::kRectSmall);
+
+  action_buttons_->SetPos(bounding.width() / 2 - action_buttons_->Width() / 2,
+                          bounding.height() - action_buttons_->Height());
 }
 
 void Clan::newLanguage() {

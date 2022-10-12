@@ -128,8 +128,7 @@ void OverMap::OnScreenResize() {
   tip_->SetY(150);
   toast_->SetY(150);
 
-  chat_->SetPos(10, Height() - 210);
-  chat_->SetSize(400, 200);
+  chat_->SetPos(10, Height() - chat_->Height());
 }
 
 void OverMap::OnEnter() {

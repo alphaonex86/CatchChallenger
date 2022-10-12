@@ -5,6 +5,7 @@
 #include "../../../core/Node.hpp"
 #include "../../../ui/Button.hpp"
 #include "../../../ui/Label.hpp"
+#include "../../../ui/Row.hpp"
 
 namespace Scenes {
 class Clan : public Node {
@@ -29,6 +30,7 @@ class Clan : public Node {
   UI::Button *invite_clan_;
   UI::Button *disolve_clan_;
   UI::Button *expulse_clan_;
+  UI::Row *action_buttons_;
 
   Clan();
 };

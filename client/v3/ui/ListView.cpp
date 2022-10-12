@@ -284,7 +284,11 @@ void ListView::MouseReleaseEvent(const QPointF &point, bool &prev_validated) {
   const QRectF &b2 = BoundingRect();
   const QRectF &t2 = MapRectToScene(b2);
   if (t2.contains(point)) {
-    if (point.x() != initial_point_.x() || point.y() != initial_point_.y()) {
+    if ((point.x() > initial_point_.x() - 10 &&
+         point.x() < initial_point_.x() + 10) &&
+        (point.y() > initial_point_.y() - 10 &&
+         point.y() < initial_point_.y() + 10)) {
+    } else {
       return;
     }
     QPointF auxiliar = QPointF(content_rect_.x() + point.x() - t2.x(),
@@ -310,14 +314,14 @@ void ListView::MouseMoveEvent(const QPointF &point) {
   if (is_slider_pressed_) {
     int delta = last_point_.y() - point.y();
     last_point_ = point;
-     
+
     if (delta == 0) {
       return;
     }
 
     qreal tmp = content_rect_.y() + delta * content_scale_;
     int end = (int)(content_rect_.height() - bounding_rect_.height());
- 
+
     if (end < 0) {
       return;
     }

@@ -6,6 +6,7 @@
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../Constants.hpp"
 #include "../../../FacilityLibClient.hpp"
 #include "../../../Globals.hpp"
 #include "../../../Ultimate.hpp"
@@ -23,14 +24,13 @@ using std::placeholders::_1;
 
 Quests::Quests() {
   quests_ = UI::ListView::Create(this);
-  quests_->SetItemSpacing(5);
+  quests_->SetItemSpacing(Constants::ItemSmallSpacing());
   details_ = UI::ListView::Create(this);
-  details_->SetItemSpacing(5);
+  details_->SetItemSpacing(Constants::ItemSmallSpacing());
   cancel_ = UI::Button::Create(":/CC/images/interface/redbutton.png", this);
   cancel_->SetText(QObject::tr("Cancel"));
   cancel_->SetOnClick(std::bind(&Quests::OnCancel, this));
-  cancel_->SetSize(100, 30);
-  cancel_->SetPixelSize(14);
+  cancel_->SetSize(UI::Button::kRectSmall);
   cancel_->SetVisible(false);
 
   selected_item_ = nullptr;
@@ -69,12 +69,15 @@ void Quests::LoadQuests() {
   auto i = info.quests.begin();
   while (i != info.quests.cend()) {
     const uint16_t questId = i->first;
-    if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(questId) !=
+    if (QtDatapackClientLoader::GetInstance()->get_questsExtra().find(
+            questId) !=
         QtDatapackClientLoader::GetInstance()->get_questsExtra().cend()) {
       if (i->second.step > 0) {
-        auto item = QuestItem::Create(QString::fromStdString(
-            QtDatapackClientLoader::GetInstance()->get_questsExtra().at(questId)
-                .name));
+        auto item = QuestItem::Create(
+            QString::fromStdString(QtDatapackClientLoader::GetInstance()
+                                       ->get_questsExtra()
+                                       .at(questId)
+                                       .name));
         item->SetData(99, questId);
         item->SetOnClick(std::bind(&Quests::OnQuestClick, this, _1));
         quests_->AddItem(item);
@@ -98,7 +101,7 @@ void Quests::OnCancel() {
 }
 
 void Quests::OnQuestItemChanged() {
-  const uint8_t font_size = 12;
+  const uint8_t font_size = Constants::TextSmallSize();
   details_->Clear();
   if (selected_item_ == nullptr) return;
   cancel_->SetVisible(true);
@@ -133,7 +136,8 @@ void Quests::OnQuestItemChanged() {
   {
     std::vector<CatchChallenger::Quest::Item> items =
         CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-            .get_quests().at(questId)
+            .get_quests()
+            .at(questId)
             .steps.at(info.quests.at(questId).step - 1)
             .requirements.items;
 
@@ -151,7 +155,8 @@ void Quests::OnQuestItemChanged() {
         image = QtDatapackClientLoader::GetInstance()
                     ->getItemExtra(items.at(index).item)
                     .image;
-        name = QtDatapackClientLoader::GetInstance()->get_itemsExtra()
+        name = QtDatapackClientLoader::GetInstance()
+                   ->get_itemsExtra()
                    .at(items.at(index).item)
                    .name;
       } else {
@@ -161,7 +166,7 @@ void Quests::OnQuestItemChanged() {
 
       auto row = UI::Row::Create();
       auto sprite = Sprite::Create(row);
-      sprite->SetPixmap(image.scaled(24, 24));
+      sprite->SetPixmap(image.scaledToWidth(Constants::ItemSmallHeight() * 0.6));
       QString item;
 
       if (items.at(index).quantity > 1) {
@@ -190,7 +195,8 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::Quest::Item> items =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .get_quests().at(questId)
+              .get_quests()
+              .at(questId)
               .rewards.items;
       std::vector<std::string> objects;
       unsigned int index = 0;
@@ -203,7 +209,8 @@ void Quests::OnQuestItemChanged() {
           image = QtDatapackClientLoader::GetInstance()
                       ->getItemExtra(items.at(index).item)
                       .image;
-          name = QtDatapackClientLoader::GetInstance()->get_itemsExtra()
+          name = QtDatapackClientLoader::GetInstance()
+                     ->get_itemsExtra()
                      .at(items.at(index).item)
                      .name;
         } else {
@@ -215,7 +222,7 @@ void Quests::OnQuestItemChanged() {
 
         auto row = UI::Row::Create();
         auto sprite = Sprite::Create(row);
-        sprite->SetPixmap(image.scaled(24, 24));
+        sprite->SetPixmap(image.scaledToWidth(Constants::ItemSmallHeight() * 0.6));
         QString item;
 
         if (items.at(index).quantity > 1) {
@@ -241,34 +248,38 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::ReputationRewards> reputationRewards =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .get_quests().at(questId)
+              .get_quests()
+              .at(questId)
               .rewards.reputation;
       unsigned int index = 0;
       while (index < reputationRewards.size()) {
         if (QtDatapackClientLoader::GetInstance()->get_reputationExtra().find(
                 CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                     .at(reputationRewards.at(index).reputationId)
-                    .name) !=
-            QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend()) {
+                    .name) != QtDatapackClientLoader::GetInstance()
+                                  ->get_reputationExtra()
+                                  .cend()) {
           const std::string &reputationName =
               CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
                   .at(reputationRewards.at(index).reputationId)
                   .name;
           if (reputationRewards.at(index).point < 0) {
-            details_->AddItem(CreateLabel(
-                QObject::tr("Less reputation for %1")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::GetInstance()->get_reputationExtra()
-                            .at(reputationName)
-                            .name))));
+            details_->AddItem(
+                CreateLabel(QObject::tr("Less reputation for %1")
+                                .arg(QString::fromStdString(
+                                    QtDatapackClientLoader::GetInstance()
+                                        ->get_reputationExtra()
+                                        .at(reputationName)
+                                        .name))));
           }
           if (reputationRewards.at(index).point > 0) {
-            details_->AddItem(CreateLabel(
-                QObject::tr("More reputation for %1")
-                    .arg(QString::fromStdString(
-                        QtDatapackClientLoader::GetInstance()->get_reputationExtra()
-                            .at(reputationName)
-                            .name))));
+            details_->AddItem(
+                CreateLabel(QObject::tr("More reputation for %1")
+                                .arg(QString::fromStdString(
+                                    QtDatapackClientLoader::GetInstance()
+                                        ->get_reputationExtra()
+                                        .at(reputationName)
+                                        .name))));
           }
         }
         index++;
@@ -280,7 +291,8 @@ void Quests::OnQuestItemChanged() {
     {
       std::vector<CatchChallenger::ActionAllow> allowRewards =
           CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec
-              .get_quests().at(questId)
+              .get_quests()
+              .at(questId)
               .rewards.allow;
       std::vector<std::string> allows;
       unsigned int index = 0;
@@ -307,11 +319,13 @@ void Quests::RegisterEvents() {
   cancel_->SetVisible(false);
   details_->Clear();
   LoadQuests();
+  details_->RegisterEvents();
 }
 
 void Quests::UnRegisterEvents() {
   quests_->UnRegisterEvents();
   cancel_->UnRegisterEvents();
+  details_->UnRegisterEvents();
 }
 
 void Quests::OnQuestClick(Node *node) {
@@ -332,13 +346,13 @@ void Quests::Draw(QPainter *painter) { (void)painter; }
 UI::Label *Quests::CreateLabel(const QString &text) {
   auto label = UI::Label::Create();
   label->SetText(text);
-  label->SetPixelSize(12);
+  label->SetPixelSize(Constants::TextSmallSize());
   return label;
 }
 
 UI::Label *Quests::CreateLabel(const std::string &text) {
   auto label = UI::Label::Create();
   label->SetText(text);
-  label->SetPixelSize(12);
+  label->SetPixelSize(Constants::TextSmallSize());
   return label;
 }

@@ -3,18 +3,17 @@
 
 #include <iostream>
 
+#include "../../../Constants.hpp"
 #include "../../../ui/Label.hpp"
 
 using Scenes::QuestItem;
 
-QuestItem::QuestItem(QString text)
-    : UI::SelectableItem() {
+QuestItem::QuestItem(QString text) : UI::SelectableItem() {
   text_ = text;
-  SetSize(200, 50);
+  SetSize(200, Constants::ItemSmallHeight());
 }
 
-QuestItem::~QuestItem() {
-}
+QuestItem::~QuestItem() {}
 
 QuestItem *QuestItem::Create(QString text) {
   return new (std::nothrow) QuestItem(text);

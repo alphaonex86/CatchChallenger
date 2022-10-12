@@ -14,6 +14,7 @@
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
 #include "../../../ui/ThemedItem.hpp"
+#include "../../../Constants.hpp"
 
 using Scenes::Learn;
 using std::placeholders::_1;
@@ -21,7 +22,7 @@ using std::placeholders::_2;
 
 Learn::Learn() {
   selected_ = nullptr;
-  SetDialogSize(600, 500);
+  SetDialogSize(Constants::DialogMediumSize());
 
   portrait_ = Sprite::Create(this);
 
@@ -36,15 +37,15 @@ Learn::Learn() {
   content_ = UI::ListView::Create(this);
 
   sp_ = UI::Label::Create(this);
-  sp_->SetPixelSize(14);
+  sp_->SetPixelSize(Constants::TextMediumSize());
   sp_->SetAlignment(Qt::AlignCenter);
 
   info_ = UI::Label::Create(this);
-  info_->SetPixelSize(14);
+  info_->SetPixelSize(Constants::TextMediumSize());
   info_->SetAlignment(Qt::AlignCenter);
 
   description_ = UI::Label::Create(this);
-  description_->SetPixelSize(14);
+  description_->SetPixelSize(Constants::TextMediumSize());
   description_->SetAlignment(Qt::AlignCenter);
 
   // if (!QObject::connect(connexionManager->client,
@@ -60,8 +61,21 @@ Learn::Learn() {
 Learn::~Learn() {
   delete portrait_;
   portrait_ = nullptr;
+
   delete content_;
   content_ = nullptr;
+
+  delete monster_selector_;
+  monster_selector_ = nullptr;
+
+  delete sp_;
+  sp_ = nullptr;
+
+  delete info_;
+  info_ = nullptr;
+
+  delete description_;
+  description_ = nullptr;
 }
 
 Learn *Learn::Create() { return new (std::nothrow) Learn(); }
@@ -117,7 +131,7 @@ void Learn::OnScreenResize() {
 
   content_->SetPos(content.x() + width, content.y() + 15);
   content_->SetSize(width, content.height() - 25);
-  content_->SetItemSpacing(5);
+  content_->SetItemSpacing(Constants::ItemSmallSpacing());
 
   sp_->SetPos(content.x(), content.y());
   sp_->SetWidth(width);
@@ -126,7 +140,7 @@ void Learn::OnScreenResize() {
   portrait_->SetPos((sp_->X() + width / 2) - portrait_->Width() / 2,
                     sp_->Bottom() + 5);
 
-  monster_selector_->SetSize(width - 80, 40);
+  monster_selector_->SetSize(UI::Button::kRectSmall);
   monster_selector_->SetPos(
       (sp_->X() + width / 2) - monster_selector_->Width() / 2,
       portrait_->Bottom() + 5);
