@@ -1,5 +1,5 @@
-// Copyright 2021 CatchChallenger
-#include "Chat.hpp"
+// Copyright 2022 CatchChallenger
+#include "ChatDialog.hpp"
 
 #include <QPainter>
 #include <QTextDocument>
@@ -8,36 +8,35 @@
 #include "../../../../libcatchchallenger/ChatParsing.hpp"
 #include "../../../Constants.hpp"
 #include "../../../core/EventManager.hpp"
-#include "../../../core/SceneManager.hpp"
 #include "../../../core/FontManager.hpp"
+#include "../../../core/SceneManager.hpp"
 #include "../../../entities/Utils.hpp"
 
-using Scenes::Chat;
+using Scenes::ChatDialog;
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
 using std::placeholders::_4;
 
-Chat::Chat(Node *parent) : Node(parent) {
+ChatDialog::ChatDialog() {
+  SetDialogSize(Constants::DialogMediumSize());
   log_ = nullptr;
-
-  input_height_ = Constants::ButtonSmallHeight() * 0.75;
-
-  proxy_ = new QGraphicsProxyWidget(this, Qt::Widget);
-  proxy_->setAutoFillBackground(false);
-  proxy_->setAttribute(Qt::WA_NoSystemBackground);
-  line_edit_ = new QLineEdit();
-  line_edit_->setAutoFillBackground(false);
-  line_edit_->setAttribute(Qt::WA_NoSystemBackground);
-  QPalette palette;
-  palette.setColor(QPalette::Base, Qt::transparent);
-  palette.setColor(QPalette::Text, QColor(255, 255, 255));
-  palette.setColor(QPalette::Window, Qt::transparent);
-  palette.setCurrentColorGroup(QPalette::Active);
-  palette.setColor(QPalette::Window, Qt::transparent);
-  line_edit_->setPalette(palette);
-  line_edit_->setFont(*FontManager::GetInstance()->GetFont("Calibri", Constants::TextSmallSize()));
-  proxy_->setWidget(line_edit_);
+  log_container_ = UI::Backdrop::Create(
+      [&](QPainter *painter) {
+        painter->fillRect(5, -5, Width(), inner_height_, QColor(0, 0, 0));
+        if (log_ != nullptr) {
+          painter->drawPixmap(5, -5, Width(), inner_height_, *log_, 0,
+                              log_->height() - inner_height_, log_->width(),
+                              inner_height_);
+        }
+      },
+      this);
+  input_ = UI::Input::Create(this);
+  input_->SetSize(UI::Input::kMedium);
+  input_->SetOnTextChange([&](std::string text) {
+    SendMessage(text);
+    input_->Clear();
+  });
 
   flood_ = 0;
   focus_ = false;
@@ -47,67 +46,40 @@ Chat::Chat(Node *parent) : Node(parent) {
   stop_flood_.setSingleShot(false);
   stop_flood_.start(1500);
 
-#ifdef __ANDROID_API__
-  mobile_mode_ = true;
-#else
-  mobile_mode_ = false;
-#endif
-
-  if (mobile_mode_) {
-    button_ = UI::Button::Create(":/CC/images/interface/chat.png");
-  }
-
   QObject::connect(connexionManager->client,
                    &CatchChallenger::Api_client_real::QtlastReplyTime,
-                   std::bind(&Chat::LastReplyTime, this, _1));
-  QObject::connect(connexionManager->client,
-                   &CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,
-                   std::bind(&Chat::OnChatTextReceived, this, _1, _2, _3, _4));
-  QObject::connect(connexionManager->client,
-                   &CatchChallenger::Api_protocol_Qt::Qtnew_system_text,
-                   std::bind(&Chat::OnSystemMessageReceived, this, _1, _2));
+                   std::bind(&ChatDialog::LastReplyTime, this, _1));
+  QObject::connect(
+      connexionManager->client,
+      &CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,
+      std::bind(&ChatDialog::OnChatTextReceived, this, _1, _2, _3, _4));
+  QObject::connect(
+      connexionManager->client,
+      &CatchChallenger::Api_protocol_Qt::Qtnew_system_text,
+      std::bind(&ChatDialog::OnSystemMessageReceived, this, _1, _2));
   QObject::connect(&stop_flood_, &QTimer::timeout,
-                   std::bind(&Chat::RemoveNumberForFlood, this));
-
-  SetSize(SceneManager::GetInstance()->width() * 0.25,
-          SceneManager::GetInstance()->height() * 0.25);
+                   std::bind(&ChatDialog::RemoveNumberForFlood, this));
+  SetTitle(tr("Chat"));
 }
 
-Chat::~Chat() {
+ChatDialog::~ChatDialog() {
   if (log_ != nullptr) {
     delete log_;
     log_ = nullptr;
   }
-  delete proxy_;
-  proxy_ = nullptr;
 
-  delete line_edit_;
-  line_edit_ = nullptr;
+  delete input_;
+  input_ = nullptr;
 }
 
-Chat *Chat::Create(Node *parent) { return new (std::nothrow) Chat(parent); }
+ChatDialog *ChatDialog::Create() { return new (std::nothrow) ChatDialog(); }
 
-void Chat::Draw(QPainter *painter) {
-  if (BoundingRect().isEmpty()) return;
-  if (!focus_) {
-    painter->setOpacity(0.75);
-  }
-  qreal inner_height = Height() - input_height_;
-  painter->fillRect(0, 0, Width(), Height(), QColor(0, 0, 0, 150));
-  painter->fillRect(0, inner_height, Width(), input_height_,
-                    QColor(1, 1, 1, 50));
-  if (log_ == nullptr) {
-    DrawContent();
-  }
-  painter->drawPixmap(5, -5, Width(), inner_height, *log_, 0,
-                      log_->height() - inner_height, log_->width(),
-                      inner_height);
-}
-
-void Chat::DrawContent() {
+void ChatDialog::DrawContent() {
+  auto inner = ContentBoundary();
   QTextDocument doc;
   doc.setHtml(log_content_);
-  QImage buffer = QImage(Width() - 10, 1000, QImage::Format_ARGB32);
+
+  QImage buffer = QImage(inner.width() - 10, 1000, QImage::Format_ARGB32);
   buffer.fill(Qt::transparent);
   auto painter = new QPainter(&buffer);
   painter->setRenderHint(QPainter::Antialiasing);
@@ -117,29 +89,11 @@ void Chat::DrawContent() {
   delete painter;
   log_ = new QPixmap(
       QPixmap::fromImage(Utils::CropToContent(buffer, QColor(0, 255, 224))));
+
+  log_container_->ReDraw();
 }
 
-void Chat::OnResize() {
-  if (log_) {
-    delete log_;
-  }
-  log_ = nullptr;
-  proxy_->setPos(0, Height() - input_height_);
-  proxy_->setMaximumSize(Width(), input_height_);
-  proxy_->setMinimumSize(Width(), input_height_);
-  ReDraw();
-}
-
-void Chat::RegisterEvents() {
-  EventManager::GetInstance()->AddMouseListener(this);
-  EventManager::GetInstance()->AddKeyboardListener(this);
-}
-
-void Chat::UnRegisterEvents() {
-  EventManager::GetInstance()->RemoveListener(this);
-}
-
-void Chat::SendMessage(std::string message) {
+void ChatDialog::SendMessage(std::string message) {
   auto &playerInformations =
       connexionManager->client->get_player_informations();
   QString text = QString::fromStdString(message);
@@ -182,13 +136,13 @@ void Chat::SendMessage(std::string message) {
     // switch (chatType->ItemData(chatType->CurrentIndex(), 99)) {
     // default:
     // case 0:
-    // chat_type = CatchChallenger::Chat_type_all;
+    // chat_type = CatchChallenger::ChatDialog_type_all;
     // break;
     // case 1:
-    // chat_type = CatchChallenger::Chat_type_local;
+    // chat_type = CatchChallenger::ChatDialog_type_local;
     // break;
     // case 2:
-    // chat_type = CatchChallenger::Chat_type_clan;
+    // chat_type = CatchChallenger::ChatDialog_type_clan;
     // break;
     //}
     connexionManager->client->sendChatText(chat_type, text.toStdString());
@@ -241,7 +195,7 @@ void Chat::SendMessage(std::string message) {
   RefreshChat();
 }
 
-void Chat::RefreshChat() {
+void ChatDialog::RefreshChat() {
   const std::vector<CatchChallenger::Api_protocol::ChatEntry> &chat_list =
       connexionManager->client->getChatContent();
   if (chat_list.empty()) return;
@@ -270,91 +224,55 @@ void Chat::RefreshChat() {
   log_content_.append(QString(
       "<div style=\"background-color: #00ffe0;width: 100%;height: 2px\"/>"));
   ReDrawContent();
-  ReDraw();
+  DrawContent();
 }
 
-void Chat::OnSystemMessageReceived(const CatchChallenger::Chat_type &type,
-                                   const std::string &message) {
+void ChatDialog::OnSystemMessageReceived(const CatchChallenger::Chat_type &type,
+                                         const std::string &message) {
   RefreshChat();
 }
 
-void Chat::OnChatTextReceived(CatchChallenger::Chat_type chat_type,
-                              std::string text, std::string pseudo,
-                              CatchChallenger::Player_type player_type) {
+void ChatDialog::OnChatTextReceived(CatchChallenger::Chat_type chat_type,
+                                    std::string text, std::string pseudo,
+                                    CatchChallenger::Player_type player_type) {
   RefreshChat();
 }
 
-void Chat::ReDrawContent() {
+void ChatDialog::ReDrawContent() {
   if (log_) {
     delete log_;
   }
   log_ = nullptr;
 }
 
-void Chat::LastReplyTime(const uint32_t &time) { RefreshChat(); }
+void ChatDialog::LastReplyTime(const uint32_t &time) { RefreshChat(); }
 
-void Chat::MousePressEvent(const QPointF &point, bool &press_validated) {
-  if (focus_) {
-    ReDraw();
-  }
-  focus_ = false;
-  proxy_->clearFocus();
-  if (press_validated) return;
-  if (pressed_) return;
-  if (!IsVisible()) return;
-  if (!IsEnabled()) return;
+void ChatDialog::OnEnter() {
+  UI::Dialog::OnEnter();
 
-  const QRectF &b = BoundingRect();
-  const QRectF &t = MapRectToScene(b);
-  if (t.contains(point)) {
-    press_validated = true;
-    pressed_ = true;
-  }
+  input_->RegisterEvents();
 }
 
-void Chat::MouseReleaseEvent(const QPointF &point, bool &prev_validated) {
-  if (prev_validated) {
-    pressed_ = false;
-    focus_ = false;
-    proxy_->clearFocus();
-    ReDraw();
-    return;
-  }
-  if (!pressed_) return;
-  if (!IsEnabled()) return;
-  const QRectF &b = BoundingRect();
-  const QRectF &t = MapRectToScene(b);
-  pressed_ = false;
-  if (!prev_validated && IsVisible()) {
-    if (t.contains(point)) {
-      prev_validated = true;
-      focus_ = true;
-      proxy_->setFocus();
-      ReDraw();
-    }
-  }
+void ChatDialog::OnExit() {
+  input_->UnRegisterEvents();
+
+  UI::Dialog::OnExit();
 }
 
-void Chat::MouseMoveEvent(const QPointF &point) { (void)point; }
+void ChatDialog::OnScreenResize() {
+  UI::Dialog::OnScreenResize();
 
-void Chat::KeyPressEvent(QKeyEvent *event, bool &event_trigger) {
-  if (!focus_) return;
+  auto inner_rect = ContentPlainBoundary();
 
-  if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
-    SendMessage(line_edit_->text().toStdString());
-    line_edit_->clear();
-  }
-  ReDraw();
+  inner_height_ = inner_rect.height() - input_->Height() - 50;
+  log_container_->SetPos(inner_rect.x(), inner_rect.y() + 40);
+  log_container_->SetSize(inner_rect.width(), inner_height_);
+
+  input_->SetPos(inner_rect.x(), inner_rect.bottom() - input_->Height());
+  input_->SetWidth(inner_rect.width());
 }
 
-void Chat::KeyReleaseEvent(QKeyEvent *event, bool &event_trigger) {
-  (void)event;
-  (void)event_trigger;
-}
-
-void Chat::RemoveNumberForFlood() {
+void ChatDialog::RemoveNumberForFlood() {
   if (flood_ <= 0) return;
   flood_--;
 }
-
-void Chat::OnReturnPressed() {}

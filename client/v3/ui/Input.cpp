@@ -4,9 +4,9 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../Constants.hpp"
 #include "../core/EventManager.hpp"
 #include "../core/Node.hpp"
-#include "../Constants.hpp"
 
 #ifdef __ANDROID_API__
 #include "../core/VirtualInput.hpp"
@@ -177,9 +177,7 @@ void Input::SetSize(qreal width, qreal height) {
   Node::SetSize(width, height);
 }
 
-void Input::SetWidth(qreal width) {
-  Input::SetSize(width, Height());
-}
+void Input::SetWidth(qreal width) { Input::SetSize(width, Height()); }
 
 QString Input::Value() const { return line_edit_->text(); }
 
@@ -237,7 +235,7 @@ void Input::OnResize() {
 
 void Input::OnReturnPressed() {
   if (on_text_change_) {
-    on_text_change_(text_.toStdString());
+    on_text_change_(line_edit_->text().toStdString());
   }
 }
 

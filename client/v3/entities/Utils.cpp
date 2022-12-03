@@ -81,11 +81,12 @@ QString Utils::RemoveHTMLEntities(const QString &html) {
 
 QImage Utils::CropToContent(const QImage &buffer, QColor stop) {
   int pivot = 0;
+  int end = buffer.height() - 1;
   QColor aux;
   do {
     pivot++;
     aux = buffer.pixel(10, pivot);
-  } while (aux != stop && pivot < buffer.height());
+  } while (aux != stop && pivot < end);
   return buffer.copy(0, 0, buffer.width(), pivot);
 }
 

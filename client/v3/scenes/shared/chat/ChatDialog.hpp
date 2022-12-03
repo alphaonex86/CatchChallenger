@@ -1,6 +1,6 @@
 // Copyright 2021 CatchChallenger
-#ifndef CLIENT_V3_SCENES_SHARED_CHAT_CHAT_HPP_
-#define CLIENT_V3_SCENES_SHARED_CHAT_CHAT_HPP_
+#ifndef CLIENT_V3_SCENES_SHARED_CHAT_CHATDIALOG_HPP_
+#define CLIENT_V3_SCENES_SHARED_CHAT_CHATDIALOG_HPP_
 
 #include <QGraphicsProxyWidget>
 #include <QLineEdit>
@@ -9,32 +9,28 @@
 
 #include "../../../../../general/base/GeneralStructures.hpp"
 #include "../../../base/ConnectionManager.hpp"
-#include "../../../core/Node.hpp"
 #include "../../../entities/PlayerInfo.hpp"
 #include "../../../ui/Button.hpp"
+#include "../../../ui/Dialog.hpp"
+#include "../../../ui/Input.hpp"
 #include "../../../ui/Label.hpp"
-#include "ChatDialog.hpp"
+#include "../../../ui/Backdrop.hpp"
 
 namespace Scenes {
-class Chat : public Node {
+class ChatDialog : public UI::Dialog {
  public:
-  ~Chat();
-  static Chat *Create(Node *parent);
-  void Draw(QPainter *painter) override;
-  void RegisterEvents() override;
-  void UnRegisterEvents() override;
-  void OnResize() override;
-  void MousePressEvent(const QPointF &point, bool &press_validated) override;
-  void MouseReleaseEvent(const QPointF &point, bool &prev_validated) override;
-  void MouseMoveEvent(const QPointF &point) override;
-  void KeyPressEvent(QKeyEvent *event, bool &event_trigger) override;
-  void KeyReleaseEvent(QKeyEvent *event, bool &event_trigger) override;
+  ~ChatDialog();
+  static ChatDialog *Create();
+
+  void OnEnter() override;
+  void OnExit() override;
+  void OnScreenResize() override;
 
  private:
   std::string last_message_;
   ConnectionManager *connexionManager;
   PlayerInfo *player_info_;
-  uint16_t input_height_;
+  uint16_t inner_height_;
   QPixmap *log_;
   QString log_content_;
   uint8_t flood_;
@@ -42,13 +38,10 @@ class Chat : public Node {
   bool pressed_;
   bool focus_;
   QTimer stop_flood_;
-  UI::Button *button_;
-  bool mobile_mode_;
+  UI::Input *input_;
+  UI::Backdrop *log_container_;
 
-  QGraphicsProxyWidget *proxy_;
-  ChatDialog *dialog_;
-
-  Chat(Node *parent);
+  ChatDialog();
   void SendMessage(std::string message);
   void RefreshChat();
   void OnSystemMessageReceived(const CatchChallenger::Chat_type &type,
@@ -58,7 +51,6 @@ class Chat : public Node {
                           CatchChallenger::Player_type player_type);
   void LastReplyTime(const uint32_t &time);
   void RemoveNumberForFlood();
-  void OnReturnPressed();
   void DrawContent();
   void ReDrawContent();
 };
