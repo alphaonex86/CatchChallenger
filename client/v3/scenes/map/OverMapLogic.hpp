@@ -5,6 +5,7 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../../entities/Map_client.hpp"
+#include "../../entities/CommonTypes.hpp"
 #include "../../entities/render/MapVisualiserPlayer.hpp"
 #include "../../ui/LinkedDialog.hpp"
 #include "../shared/crafting/Crafting.hpp"
@@ -304,8 +305,8 @@ class OverMapLogic : public OverMap {
   void OnInventoryNav(std::string id);
   void CreateInventoryTabs();
   void CreatePlayerTabs();
-  void OnUseItem(Inventory::ObjectType type, const uint16_t &item_id,
-                 const uint32_t &quantity);
+  void OnUseItem(ObjectCategory type, const uint16_t &item_id,
+                 const uint32_t &quantity, const uint8_t &monster);
   void ShowPlantDialog();
   void TeleportTo(const uint32_t &mapId, const uint16_t &x, const uint16_t &y,
                   const CatchChallenger::Direction &direction);

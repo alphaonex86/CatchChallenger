@@ -5,6 +5,7 @@
 #include "../../../base/ConnectionManager.hpp"
 #include "../../../core/Node.hpp"
 #include "../../../core/Sprite.hpp"
+#include "../../../ui/Backdrop.hpp"
 #include "../../../ui/Button.hpp"
 #include "../../../ui/Label.hpp"
 
@@ -12,17 +13,16 @@ namespace Scenes {
 class Player : public Node {
  public:
   ~Player();
-  static Player* Create();
+  static Player *Create();
 
   void newLanguage();
 
   void RegisterEvents() override;
   void UnRegisterEvents() override;
   void OnResize() override;
-  void Draw(QPainter *painter) override; 
+  void Draw(QPainter *painter) override;
 
  private:
-
   UI::Label *name_label;
   UI::Label *name_value;
   UI::Label *cash_label;
@@ -30,6 +30,7 @@ class Player : public Node {
   UI::Label *type_label;
   UI::Label *type_value;
   Sprite *preview_;
+  UI::Backdrop *backdrop_;
 
   Player();
   ConnectionManager *connexionManager;

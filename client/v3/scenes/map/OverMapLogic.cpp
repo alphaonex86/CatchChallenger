@@ -1,8 +1,8 @@
 ﻿// Copyright 2021 CatchChallenger
 #include "OverMapLogic.hpp"
 
-#include <iostream>
 #include <QBuffer>
+#include <iostream>
 
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/FacilityLib.hpp"
@@ -14,8 +14,8 @@
 #include "../../core/SceneManager.hpp"
 #include "../../entities/PlayerInfo.hpp"
 #include "../shared/inventory/Inventory.hpp"
-#include "../shared/inventory/MonsterBag.hpp"
 #include "../shared/inventory/Plant.hpp"
+#include "../shared/monster/MonsterBag.hpp"
 #include "../shared/player/Clan.hpp"
 #include "../shared/player/FinishedQuests.hpp"
 #include "../shared/player/Player.hpp"
@@ -28,6 +28,7 @@ using Scenes::OverMapLogic;
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
+using std::placeholders::_4;
 
 OverMapLogic::OverMapLogic() : OverMap() {
   CreatePlayerTabs();
@@ -866,8 +867,7 @@ void OverMapLogic::currentMapLoaded() {
         }
       }
     // general sound
-    if (QtDatapackClientLoader::GetInstance()->get_audioAmbiance().find(
-            type) !=
+    if (QtDatapackClientLoader::GetInstance()->get_audioAmbiance().find(type) !=
         QtDatapackClientLoader::GetInstance()->get_audioAmbiance().cend()) {
       const std::string &backgroundsound =
           QtDatapackClientLoader::GetInstance()->get_audioAmbiance().at(type);
@@ -906,15 +906,15 @@ void OverMapLogic::currentMapLoaded() {
     if (visualCategory != type) {
       visualCategory = type;
       if (QtDatapackClientLoader::GetInstance()->get_visualCategories().find(
-              type) !=
-          QtDatapackClientLoader::GetInstance()->get_visualCategories()
-              .cend()) {
+              type) != QtDatapackClientLoader::GetInstance()
+                           ->get_visualCategories()
+                           .cend()) {
         const std::vector<
             QtDatapackClientLoader::VisualCategory::VisualCategoryCondition>
-            &conditions =
-                QtDatapackClientLoader::GetInstance()->get_visualCategories()
-                    .at(type)
-                    .conditions;
+            &conditions = QtDatapackClientLoader::GetInstance()
+                              ->get_visualCategories()
+                              .at(type)
+                              .conditions;
         unsigned int index = 0;
         while (index < conditions.size()) {
           const QtDatapackClientLoader::VisualCategory::VisualCategoryCondition
@@ -938,7 +938,8 @@ void OverMapLogic::currentMapLoaded() {
         }
         if (index == conditions.size()) {
           QtDatapackClientLoader::CCColor defaultColor =
-              QtDatapackClientLoader::GetInstance()->get_visualCategories()
+              QtDatapackClientLoader::GetInstance()
+                  ->get_visualCategories()
                   .at(type)
                   .defaultColor;
           ccmap->mapController.setColor(QColor(defaultColor.r, defaultColor.g,
@@ -1237,9 +1238,9 @@ void OverMapLogic::add_to_inventory(
       std::string name;
       if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(item) !=
           QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
-        image =
-            QtDatapackClientLoader::GetInstance()->getItemExtra(item).image;
-        name = QtDatapackClientLoader::GetInstance()->get_itemsExtra()
+        image = QtDatapackClientLoader::GetInstance()->getItemExtra(item).image;
+        name = QtDatapackClientLoader::GetInstance()
+                   ->get_itemsExtra()
                    .at(item)
                    .name;
       } else {
@@ -1845,10 +1846,10 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
         QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend())
       showTip(
           tr("You have better reputation into %1")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::GetInstance()->get_reputationExtra()
-                      .at(reputationCodeName)
-                      .name))
+              .arg(QString::fromStdString(QtDatapackClientLoader::GetInstance()
+                                              ->get_reputationExtra()
+                                              .at(reputationCodeName)
+                                              .name))
               .toStdString());
     else
       showTip(
@@ -1859,10 +1860,10 @@ void OverMapLogic::appendReputationPoint(const std::string &type,
         QtDatapackClientLoader::GetInstance()->get_reputationExtra().cend())
       showTip(
           tr("You have worse reputation into %1")
-              .arg(QString::fromStdString(
-                  QtDatapackClientLoader::GetInstance()->get_reputationExtra()
-                      .at(reputationCodeName)
-                      .name))
+              .arg(QString::fromStdString(QtDatapackClientLoader::GetInstance()
+                                              ->get_reputationExtra()
+                                              .at(reputationCodeName)
+                                              .name))
               .toStdString());
     else
       showTip(tr("You have worse reputation into %1").arg("???").toStdString());
@@ -2353,11 +2354,12 @@ void OverMapLogic::CreateInventoryTabs() {
   inventory_tabs_ = UI::LinkedDialog::Create();
 
   auto item = Inventory::Create();
-  item->SetOnUseItem(std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3));
+  item->SetOnUseItem(std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));
   inventory_tabs_->AddItem(item, "inventory");
   inventory_tabs_->AddItem(MonsterBag::Create(), "monsters");
   auto plant = Plant::Create();
-  plant->SetOnUseItem(std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3));
+  plant->SetOnUseItem(
+      std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));
   inventory_tabs_->AddItem(plant, "plants");
   inventory_tabs_->SetOnBack(
       std::bind(&OverMapLogic::OnInventoryNav, this, _1));
@@ -2375,14 +2377,14 @@ void OverMapLogic::CreatePlayerTabs() {
   player_tabs_->AddItem(Clan::Create(), "clan");
 }
 
-void OverMapLogic::OnUseItem(Inventory::ObjectType type,
-                             const uint16_t &item_id,
-                             const uint32_t &quantity) {
+void OverMapLogic::OnUseItem(ObjectCategory type, const uint16_t &item_id,
+                             const uint32_t &quantity,
+                             const uint8_t &monster_index) {
   CatchChallenger::Player_private_and_public_informations &playerInformations =
       connexionManager->client->get_player_informations();
   auto info = PlayerInfo::GetInstance();
   switch (type) {
-    case Inventory::kSeed: {
+    case ObjectCategory::kSeed: {
       if (QtDatapackClientLoader::GetInstance()->get_itemToPlants().find(
               item_id) ==
           QtDatapackClientLoader::GetInstance()->get_itemToPlants().cend()) {
@@ -2393,8 +2395,7 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
         return;
       }
       const uint8_t &plant_id =
-          QtDatapackClientLoader::GetInstance()->get_itemToPlants().at(
-              item_id);
+          QtDatapackClientLoader::GetInstance()->get_itemToPlants().at(item_id);
       if (!connexionManager->client->haveReputationRequirements(
               CatchChallenger::CommonDatapack::commonDatapack.get_plants()
                   .at(plant_id)
@@ -2447,13 +2448,107 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
                   .at(plant_id)
                   .fruits_seconds));
     } break;
-    case Inventory::kRecipe:
+    case ObjectCategory::kRecipe:
       connexionManager->client->useObject(item_id);
       connexionManager->client->addRecipe(
           CatchChallenger::CommonDatapack::commonDatapack
               .get_itemToCraftingRecipes()
               .at(item_id));
       break;
+    case ObjectCategory::kItemOnMonster: {
+      // objectInUsing.erase(objectInUsing.cbegin());
+      const CatchChallenger::PlayerMonster *const monster =
+          connexionManager->client->monsterByPosition(monster_index);
+      if (monster == NULL) {
+        if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                .item.find(item_id) !=
+            CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                .item.cend())
+          if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                  .item.at(item_id)
+                  .consumeAtUse)
+            add_to_inventory(item_id, 1, false);
+        return;
+      }
+      const CatchChallenger::Monster &monsterInformations =
+          CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
+              monster->monster);
+      const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra =
+          QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(
+              monster->monster);
+
+      // Verify if the item is a evolution item
+      if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+              .evolutionItem.find(item_id) !=
+          CatchChallenger::CommonDatapack::commonDatapack.get_items()
+              .evolutionItem.cend()) {
+        uint8_t monsterEvolutionPostion = 0;
+        const CatchChallenger::Monster &monsterInformationsEvolution =
+            CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(
+                CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                    .evolutionItem.at(item_id)
+                    .at(monster->monster));
+        const QtDatapackClientLoader::MonsterExtra
+            &monsterInformationsEvolutionExtra =
+                QtDatapackClientLoader::GetInstance()->get_monsterExtra().at(
+                    CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                        .evolutionItem.at(item_id)
+                        .at(monster->monster));
+
+        // create animation widget
+        connexionManager->client->useObjectOnMonsterByPosition(item_id,
+                                                               monster_index);
+        if (!connexionManager->client->useObjectOnMonsterByPosition(
+                item_id, monster_index)) {
+          std::cerr << "fightEngine.useObjectOnMonsterByPosition() Bug at "
+                    << __FILE__ << ":" << __LINE__ << std::endl;
+        }
+        return;
+      } else {
+        std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
+                  << (int)monster_index << std::endl;
+        if (connexionManager->client->useObjectOnMonsterByPosition(
+                item_id, monster_index)) {
+          std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
+                    << "asdasd" << std::endl;
+          showTip(
+              tr("Using <b>%1</b> on <b>%2</b>")
+                  .arg(QString::fromStdString(
+                      QtDatapackClientLoader::GetInstance()
+                          ->get_itemsExtra()
+                          .at(item_id)
+                          .name))
+                  .arg(QString::fromStdString(monsterInformationsExtra.name))
+                  .toStdString());
+          connexionManager->client->useObjectOnMonsterByPosition(item_id,
+                                                                 monster_index);
+          std::cout << "LAN_[" << __FILE__ << ":" << __LINE__ << "] "
+                    << "asdasd" << std::endl;
+          // Verify to evolution
+          // checkEvolution();
+        } else {
+          showTip(
+              tr("Failed to use <b>%1</b> on <b>%2</b>")
+                  .arg(QString::fromStdString(
+                      QtDatapackClientLoader::GetInstance()
+                          ->get_itemsExtra()
+                          .at(item_id)
+                          .name))
+                  .arg(QString::fromStdString(monsterInformationsExtra.name))
+                  .toStdString());
+          if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                  .item.find(item_id) !=
+              CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                  .item.cend()) {
+            if (CatchChallenger::CommonDatapack::commonDatapack.get_items()
+                    .item.at(item_id)
+                    .consumeAtUse) {
+              add_to_inventory(item_id, 1, false);
+            }
+          }
+        }
+      }
+    } break;
       // case Inventory::ObjectType_ItemEvolutionOnMonster:
       // case Inventory::ObjectType_ItemLearnOnMonster:
       // case Inventory::ObjectType_ItemOnMonster:
@@ -2471,127 +2566,6 @@ void OverMapLogic::OnUseItem(Inventory::ObjectType type,
       //.consumeAtUse)
       // add_to_inventory(item, 1, false);
       // break;
-      //}
-      // const CatchChallenger::PlayerMonster *const monster =
-      // connexionManager->client->monsterByPosition(monsterPosition);
-      // if (monster == NULL) {
-      // if (CatchChallenger::CommonDatapack::commonDatapack.items.item.find(
-      // item) !=
-      // CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
-      // if (CatchChallenger::CommonDatapack::commonDatapack.items.item[item]
-      //.consumeAtUse)
-      // add_to_inventory(item, 1, false);
-      // break;
-      //}
-      // const CatchChallenger::Monster &monsterInformations =
-      // CatchChallenger::CommonDatapack::commonDatapack.monsters.at(
-      // monster->monster);
-      // const QtDatapackClientLoader::MonsterExtra &monsterInformationsExtra =
-      // QtDatapackClientLoader::GetInstance()->monsterExtra.at(
-      // monster->monster);
-      // if (CatchChallenger::CommonDatapack::commonDatapack.items.evolutionItem
-      //.find(item) != CatchChallenger::CommonDatapack::commonDatapack
-      //.items.evolutionItem.cend()) {
-      // uint8_t monsterEvolutionPostion = 0;
-      // const CatchChallenger::Monster &monsterInformationsEvolution =
-      // CatchChallenger::CommonDatapack::commonDatapack.monsters.at(
-      // CatchChallenger::CommonDatapack::commonDatapack.items
-      //.evolutionItem.at(item)
-      //.at(monster->monster));
-      // const QtDatapackClientLoader::MonsterExtra
-      //&monsterInformationsEvolutionExtra =
-      // QtDatapackClientLoader::GetInstance()->monsterExtra.at(
-      // CatchChallenger::CommonDatapack::commonDatapack.items
-      //.evolutionItem.at(item)
-      //.at(monster->monster));
-      // abort();
-      //// create animation widget
-      // if (animationWidget != NULL) delete animationWidget;
-      // if (qQuickViewContainer != NULL) delete qQuickViewContainer;
-      // animationWidget = new QQuickView();
-      // qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-      // qQuickViewContainer->setMinimumSize(QSize(800, 600));
-      // qQuickViewContainer->setMaximumSize(QSize(800, 600));
-      // qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
-      // ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
-      //// show the animation
-      // ui->stackedWidget->setCurrentWidget(ui->page_animation);
-      // previousAnimationWidget = ui->page_map;
-      // if (baseMonsterEvolution != NULL) delete baseMonsterEvolution;
-      // if (targetMonsterEvolution != NULL) delete targetMonsterEvolution;
-      // baseMonsterEvolution = new QmlMonsterGeneralInformations(
-      // monsterInformations, monsterInformationsExtra);
-      // targetMonsterEvolution = new QmlMonsterGeneralInformations(
-      // monsterInformationsEvolution, monsterInformationsEvolutionExtra);
-      // if (evolutionControl != NULL) delete evolutionControl;
-      // evolutionControl = new EvolutionControl(
-      // monsterInformations, monsterInformationsExtra,
-      // monsterInformationsEvolution, monsterInformationsEvolutionExtra);
-      // animationWidget->rootContext()->setContextProperty("animationControl",
-      //&animationControl);
-      // animationWidget->rootContext()->setContextProperty("evolutionControl",
-      // evolutionControl);
-      // animationWidget->rootContext()->setContextProperty("canBeCanceled",
-      // QVariant(false));
-      // animationWidget->rootContext()->setContextProperty(
-      //"itemEvolution",
-      // QUrl::fromLocalFile(QString::fromStdString(
-      // QtDatapackClientLoader::GetInstance()->itemsExtra.at(item)
-      //.imagePath)));
-      // animationWidget->rootContext()->setContextProperty(
-      //"baseMonsterEvolution", baseMonsterEvolution);
-      // animationWidget->rootContext()->setContextProperty(
-      //"targetMonsterEvolution", targetMonsterEvolution);
-      // const std::string datapackQmlFile =
-      // client->datapackPathBase() + "qml/evolution-animation.qml";
-      // if (QFile(QString::fromStdString(datapackQmlFile)).exists())
-      // animationWidget->setSource(
-      // QUrl::fromLocalFile(QString::fromStdString(datapackQmlFile)));
-      // else
-      // animationWidget->setSource(
-      // QStringLiteral("qrc:/qml/evolution-animation.qml"));
-      // client->useObjectOnMonsterByPosition(item, monsterPosition);
-      // if (!fightEngine.useObjectOnMonsterByPosition(item, monsterPosition)) {
-      // std::cerr << "fightEngine.useObjectOnMonsterByPosition() Bug at "
-      //<< __FILE__ << ":" << __LINE__ << std::endl;
-      //#ifdef CATCHCHALLENGER_EXTRA_CHECK abort();
-      //#endif
-      //}
-      // load_monsters();
-      // return;
-      //} else {
-      // abort();
-      // ui->stackedWidget->setCurrentWidget(ui->page_inventory);
-      // ui->inventoryUse->setText(tr("Select"));
-      // if (fightEngine.useObjectOnMonsterByPosition(item, monsterPosition)) {
-      // showTip(
-      // tr("Using <b>%1</b> on <b>%2</b>")
-      //.arg(QString::fromStdString(
-      // QtDatapackClientLoader::GetInstance()->itemsExtra
-      //.at(item)
-      //.name))
-      //.arg(QString::fromStdString(monsterInformationsExtra.name))
-      //.toStdString());
-      // client->useObjectOnMonsterByPosition(item, monsterPosition);
-      // load_monsters();
-      // checkEvolution();
-      //} else {
-      // showTip(
-      // tr("Failed to use <b>%1</b> on <b>%2</b>")
-      //.arg(QString::fromStdString(
-      // QtDatapackClientLoader::GetInstance()->itemsExtra
-      //.at(item)
-      //.name))
-      //.arg(QString::fromStdString(monsterInformationsExtra.name))
-      //.toStdString());
-      // if (CatchChallenger::CommonDatapack::commonDatapack.items.item.find(
-      // item) !=
-      // CatchChallenger::CommonDatapack::commonDatapack.items.item.cend())
-      // if (CatchChallenger::CommonDatapack::commonDatapack.items.item[item]
-      //.consumeAtUse)
-      // add_to_inventory(item, 1, false);
-      //}
-      //}
       //}
   }
   RemoveChild(inventory_tabs_);

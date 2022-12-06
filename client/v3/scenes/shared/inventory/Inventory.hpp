@@ -6,6 +6,7 @@
 #include "../../../core/Node.hpp"
 #include "../../../core/Sprite.hpp"
 #include "../../../entities/PlayerInfo.hpp"
+#include "../../../entities/CommonTypes.hpp"
 #include "../../../ui/Button.hpp"
 #include "../../../ui/GridView.hpp"
 #include "../../../ui/Label.hpp"
@@ -34,12 +35,6 @@ class Inventory : public Node {
     ObjectFilter_UseInFight
   };
 
-  enum ObjectType {
-    kSeed,
-    kMonsterEvolution,
-    kRecipe
-  };
-
   void SetVar(const ObjectFilter &filter, const bool inSelection,
               const int lastItemSelected = -1);
 
@@ -51,7 +46,7 @@ class Inventory : public Node {
   void OnResize() override;
   void Draw(QPainter *painter) override;
   void SetOnUseItem(
-      std::function<void(ObjectType, uint16_t, uint32_t)> callback);
+      std::function<void(ObjectCategory, uint16_t, uint32_t, uint8_t)> callback);
   void SetOnDeleteItem(std::function<void(uint16_t)> callback);
 
  private:
@@ -68,7 +63,7 @@ class Inventory : public Node {
   uint8_t lastItemSize;
   uint8_t itemCount;
   int lastItemSelected;
-  std::function<void(ObjectType, uint16_t, uint32_t)> on_use_item_;
+  std::function<void(ObjectCategory, uint16_t, uint32_t, uint8_t)> on_use_item_;
   std::function<void(uint16_t)> on_delete_item_;
 
   Inventory();

@@ -17,8 +17,24 @@ public class Client extends org.qtproject.qt5.android.bindings.QtActivity
         context = getApplicationContext();
     }
 
+    //@Override
+    //public void onResume() 
+    //{
+
+    //}
+
+    //@Override
+    //public void onPause() 
+    //{
+
+    //}
+
     public static Context getContext()
     {
         return context;
     }
+
+    //public native void onResumeApplication();
+
+    //public native void onPauseApplication();
 }

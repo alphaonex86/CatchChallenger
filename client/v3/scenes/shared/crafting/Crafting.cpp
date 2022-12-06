@@ -3,10 +3,11 @@
 
 #include <iostream>
 
-#include "../../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../../general/base/CommonDatapack.hpp"
+#include "../../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../Constants.hpp"
 #include "../../../Globals.hpp"
 #include "../../../core/AssetsLoader.hpp"
 #include "../../../core/Logger.hpp"
@@ -14,7 +15,6 @@
 #include "../../../entities/Utils.hpp"
 #include "../../../ui/Row.hpp"
 #include "../../../ui/ThemedItem.hpp"
-#include "../../../Constants.hpp"
 #include "CraftingItem.hpp"
 
 using Scenes::Crafting;
@@ -25,6 +25,23 @@ using UI::IconItem;
 Crafting::Crafting() {
   SetDialogSize(Constants::DialogMediumSize());
   selected_ = nullptr;
+
+  sections_ = UI::Backdrop::Create(
+      [&](QPainter *painter) {
+        auto b2 = Sprite::Create(":/CC/images/interface/b2.png");
+
+        b2->Strech(24, 22, 20, craft_content_->Width() + 10, craft_content_->Height() + 10);
+        b2->SetPos(craft_content_->X() - 5, craft_content_->Y() - 5);
+        b2->Render(painter);
+        
+        b2->Strech(24, 22, 20, materials_content_->Width() + 10, materials_content_->Height() + 10);
+        b2->SetPos(materials_content_->X() - 5, materials_content_->Y() - 5);
+        b2->Render(painter);
+
+        delete b2;
+      },
+      this);
+  sections_->SetSize(Width(), Height());
 
   material_ = UI::Label::Create(this);
   name_ = UI::Label::Create(this);
@@ -79,8 +96,8 @@ void Crafting::OnCreateClick() {
   auto current = static_cast<CraftingItem *>(selected_);
 
   const CatchChallenger::CraftingRecipe &content =
-      CatchChallenger::CommonDatapack::commonDatapack
-          .get_craftingRecipes().at(current->Recipe());
+      CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(
+          current->Recipe());
 
   QStringList mIngredients;
   // load the materials
@@ -120,13 +137,14 @@ void Crafting::OnScreenResize() {
   auto content = ContentBoundary();
   qreal width = content.width() / 3;
   qreal block_1 = content.x();
-  qreal block_2 = content.x() + width + 20;
+  qreal block_2 = content.x() + width + 25;
 
   craft_content_->SetPos(block_1, content.y());
   craft_content_->SetSize(width, content.height());
 
   item_icon_->SetPos(block_2, content.y());
-  item_icon_->SetSize(Constants::ButtonSmallHeight(), Constants::ButtonSmallHeight());
+  item_icon_->SetSize(Constants::ButtonSmallHeight(),
+                      Constants::ButtonSmallHeight());
 
   details_->SetPixelSize(Constants::TextSmallSize());
   name_->SetPos(item_icon_->Right() + 10, content.y());
@@ -143,6 +161,8 @@ void Crafting::OnScreenResize() {
                               content.height() -
                                   (materials_content_->Y() - content.y()) -
                                   create_->Height() - 20);
+
+  sections_->ReDraw();
 }
 
 void Crafting::OnItemClick(Node *node) {
@@ -202,10 +222,11 @@ void Crafting::LoadMaterials() {
     if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
             content.materials.at(index).item) !=
         QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
-      nameMaterials = QString::fromStdString(
-          QtDatapackClientLoader::GetInstance()
-              ->get_itemsExtra().at(content.materials.at(index).item)
-              .name);
+      nameMaterials =
+          QString::fromStdString(QtDatapackClientLoader::GetInstance()
+                                     ->get_itemsExtra()
+                                     .at(content.materials.at(index).item)
+                                     .name);
       item->SetIcon(QtDatapackClientLoader::GetInstance()
                         ->getItemExtra(content.materials.at(index).item)
                         .image);
@@ -256,18 +277,21 @@ void Crafting::LoadRecipes() {
           CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes()
               .cend()) {
         const uint16_t &itemId = CatchChallenger::CommonDatapack::commonDatapack
-                                     .get_craftingRecipes().at(recipe)
+                                     .get_craftingRecipes()
+                                     .at(recipe)
                                      .doItemId;
         auto item = CraftingItem::Create();
         if (QtDatapackClientLoader::GetInstance()->get_itemsExtra().find(
                 itemId) !=
             QtDatapackClientLoader::GetInstance()->get_itemsExtra().cend()) {
-          item->SetIcon(
-              QtDatapackClientLoader::GetInstance()->getItemExtra(itemId)
-                  .image);
-          item->SetName(QString::fromStdString(
-              QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(itemId)
-                  .name));
+          item->SetIcon(QtDatapackClientLoader::GetInstance()
+                            ->getItemExtra(itemId)
+                            .image);
+          item->SetName(
+              QString::fromStdString(QtDatapackClientLoader::GetInstance()
+                                         ->get_itemsExtra()
+                                         .at(itemId)
+                                         .name));
         } else {
           item->SetIcon(
               QtDatapackClientLoader::GetInstance()->defaultInventoryImage());

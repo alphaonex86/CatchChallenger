@@ -8,7 +8,7 @@
 #include "../../base/ConnectionManager.hpp"
 #include "../../core/SceneManager.hpp"
 #include "../../entities/Shapes.hpp"
-#include "../shared/inventory/MonsterItem.hpp"
+#include "../shared/monster/MonsterItem.hpp"
 
 using CatchChallenger::PlayerMonster;
 using Scenes::MonsterSwap;

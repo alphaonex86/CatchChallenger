@@ -38,10 +38,10 @@ class LinkedDialog : public Dialog {
   std::function<void(std::string)> on_back_;
   std::function<void(uint16_t)> on_use_item_;
 
-  LinkedDialog(bool show_navigation);
   uint8_t GetIndexById(std::string id);
 
  protected:
+  LinkedDialog(bool show_navigation);
   void OnActionClick(Node *node);
 };
 }  // namespace UI

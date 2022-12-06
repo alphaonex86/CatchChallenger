@@ -41,16 +41,17 @@ void InventoryItem::Draw(QPainter *painter) {
     painter->drawPixmap(0, 0, size.width(), size.height(), background, 0, 0,
                         114, 117);
   } else {
-    painter->drawPixmap(0, 0, size.width(), size.height(), background, 0, 117,
-                        114, 117);
+    //painter->drawPixmap(0, 0, size.width(), size.height(), background, 0, 117,
+                        //114, 117);
   }
   painter->drawPixmap(0, 0, pixmap_);
 
   auto text = UI::Label::Create();
-  text->SetPixelSize(Constants::TextSmallSize());
+  text->SetPixelSize(Constants::TextExtraSmallSize());
   text->SetWidth(size.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(text_);
+  text->SetPos(0, pixmap_.height() - 20);
   text->Render(painter);
 
   delete text;

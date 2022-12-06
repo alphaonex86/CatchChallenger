@@ -5,6 +5,7 @@
 #include <QDirIterator>
 #include <iostream>
 
+#include "../../../general/base/CommonDatapack.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../Constants.hpp"
 #include "../core/SceneManager.hpp"
@@ -152,4 +153,25 @@ std::vector<QPixmap> Utils::GetSkillAnimation(const uint16_t &id) {
     frames.push_back(buffer);
   }
   return frames;
+}
+
+ObjectCategory Utils::GetObjectCategory(const int &item_id) {
+  bool is_true =
+      CatchChallenger::CommonDatapack::commonDatapack
+          .get_itemToCraftingRecipes()
+          .find(item_id) != CatchChallenger::CommonDatapack::commonDatapack
+                                .get_itemToCraftingRecipes()
+                                .cend();
+  if (is_true) {
+    return ObjectCategory::kRecipe;
+  }
+
+  is_true =
+      QtDatapackClientLoader::GetInstance()->get_itemToPlants().find(item_id) !=
+      QtDatapackClientLoader::GetInstance()->get_itemToPlants().cend();
+  if (is_true) {
+    return ObjectCategory::kSeed;
+  }
+
+  return ObjectCategory::kItemOnMonster;
 }

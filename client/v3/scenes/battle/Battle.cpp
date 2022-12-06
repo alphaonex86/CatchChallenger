@@ -21,7 +21,7 @@
 #include "../../core/Logger.hpp"
 #include "../../core/SceneManager.hpp"
 #include "../../entities/Utils.hpp"
-#include "../shared/inventory/MonsterBag.hpp"
+#include "../shared/monster/MonsterBag.hpp"
 #include "BattleActions.hpp"
 
 using Scenes::Battle;
@@ -46,6 +46,7 @@ Battle::Battle() : Scene(nullptr) {
 
   player_background_ = Sprite::Create(":/CC/images/interface/b1.png", this);
   player_name_ = UI::Label::Create(player_background_);
+  player_lvl_ = UI::Label::Create(player_background_);
   player_hp_bar_ = UI::Progressbar::Create(player_background_);
   player_exp_bar_ = UI::Progressbar::Create(player_background_);
   player_exp_bar_->SetOnIncrementDone(
@@ -359,6 +360,7 @@ void Battle::PlayerMonsterInitialize(PlayerMonster *fight_monster) {
         QtDatapackClientLoader::GetInstance()->get_monsterExtra()
             .at(fight_monster->monster)
             .name));
+    player_lvl_->SetText("Lvl. " + QString::number(fight_monster->level));
     Monster::Stat fight_stat =
         client_->getStat(CommonDatapack::commonDatapack.get_monsters().at(
                              fight_monster->monster),
@@ -1070,7 +1072,7 @@ void Battle::ShowBagDialog() {
   AddChild(linked_);
 }
 
-void Battle::UseBagItem(Inventory::ObjectType type, uint16_t item,
+void Battle::UseBagItem(ObjectCategory type, uint16_t item,
                         uint32_t quantity) {
   RemoveChild(linked_);
 

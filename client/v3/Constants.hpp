@@ -30,6 +30,7 @@ class Constants {
     static int TextTitleSize();
     static int TextMediumSize();
     static int TextSmallSize();
+    static int TextExtraSmallSize();
 
     static int ItemLargeSpacing();
     static int ItemMediumSpacing();

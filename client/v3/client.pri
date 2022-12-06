@@ -100,8 +100,9 @@ SOURCES += \
     $$PWD/scenes/shared/player/Quests.cpp \
     $$PWD/scenes/shared/player/QuestItem.cpp \
     $$PWD/scenes/shared/player/Reputations.cpp \
-    $$PWD/scenes/shared/inventory/MonsterItem.cpp \
-    $$PWD/scenes/shared/inventory/MonsterBag.cpp \
+    $$PWD/scenes/shared/monster/MonsterItem.cpp \
+    $$PWD/scenes/shared/monster/MonsterBag.cpp \
+    $$PWD/scenes/shared/monster/MonsterPicker.cpp \
     $$PWD/scenes/shared/npctalk/NpcTalk-$${VIEWPORT}.cpp \
     $$PWD/scenes/shared/npctalk/NpcTalk.cpp \
     $$PWD/scenes/shared/crafting/Crafting.cpp \
@@ -223,8 +224,9 @@ HEADERS  += \
     $$PWD/scenes/shared/player/Quests.hpp \
     $$PWD/scenes/shared/player/QuestItem.hpp \
     $$PWD/scenes/shared/player/Reputations.hpp \
-    $$PWD/scenes/shared/inventory/MonsterItem.hpp \
-    $$PWD/scenes/shared/inventory/MonsterBag.hpp \
+    $$PWD/scenes/shared/monster/MonsterItem.hpp \
+    $$PWD/scenes/shared/monster/MonsterBag.hpp \
+    $$PWD/scenes/shared/monster/MonsterPicker.hpp \
     $$PWD/scenes/shared/npctalk/NpcTalk.hpp \
     $$PWD/scenes/shared/inventory/Inventory.hpp \
     $$PWD/scenes/shared/inventory/InventoryItem.hpp \
@@ -309,6 +311,7 @@ HEADERS  += \
     $$PWD/entities/ActionUtils.hpp \
     $$PWD/entities/Shapes.hpp \
     $$PWD/entities/Utils.hpp
+    $$PWD/entities/CommonTypes.hpp
 
 wasm: {
     DEFINES += NOTCPSOCKET

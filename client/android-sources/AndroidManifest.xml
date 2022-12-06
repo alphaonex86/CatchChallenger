@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<manifest package="org.catchchallenger.client" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.0" android:versionCode="1" android:installLocation="auto">
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28"/>
+<manifest package="org.catchchallenger.client" xmlns:android="http://schemas.android.com/apk/res/android" android:versionName="1.002" android:versionCode="3" android:installLocation="auto">
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="31"/>
 
     <!-- The following comment will be replaced upon deployment with default permissions based on the dependencies of the application.
          Remove the comment if you do not require these default permissions. -->
@@ -25,7 +25,7 @@
     </compatible-screens>
 
     <application android:hardwareAccelerated="true" android:name="org.qtproject.qt5.android.bindings.QtApplication" android:label="catchchallenger" android:icon="@mipmap/icon" android:extractNativeLibs="true">
-        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.catchchallenger.client.Client" android:label="catchchallenger" android:launchMode="singleTop" android:screenOrientation="landscape">
+        <activity android:configChanges="orientation|uiMode|screenLayout|screenSize|smallestScreenSize|layoutDirection|locale|fontScale|keyboard|keyboardHidden|navigation|mcc|mnc|density" android:name="org.catchchallenger.client.Client" android:label="catchchallenger" android:launchMode="singleTop" android:screenOrientation="landscape" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

@@ -12,6 +12,7 @@
 #include "../../../ui/Label.hpp"
 #include "../../../ui/ListView.hpp"
 #include "../../../ui/ThemedButton.hpp"
+#include "../../../ui/Backdrop.hpp"
 
 namespace Scenes {
 class Crafting : public UI::Dialog {
@@ -31,6 +32,7 @@ class Crafting : public UI::Dialog {
   Sprite *item_icon_;
   UI::ListView *craft_content_;
   UI::ListView *materials_content_;
+  UI::Backdrop *sections_;
   Node *selected_;
   std::vector<std::vector<std::pair<uint16_t, uint32_t>>>
       materialOfRecipeInUsing;

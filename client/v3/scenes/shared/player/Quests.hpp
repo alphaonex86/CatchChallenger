@@ -6,6 +6,7 @@
 #include "../../../ui/Button.hpp"
 #include "../../../ui/Label.hpp"
 #include "../../../ui/ListView.hpp"
+#include "../../../ui/Backdrop.hpp"
 #include "QuestItem.hpp"
 
 namespace Scenes {
@@ -22,6 +23,7 @@ class Quests : public Node {
   UI::ListView *quests_;
   UI::ListView *details_;
   UI::Button *cancel_;
+  UI::Backdrop *backdrop_;
   Node *selected_item_;
 
   Quests();

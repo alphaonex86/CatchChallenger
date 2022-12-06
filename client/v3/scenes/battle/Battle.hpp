@@ -19,6 +19,7 @@
 #include "../../core/Scene.hpp"
 #include "../../core/Sprite.hpp"
 #include "../../entities/Map_client.hpp"
+#include "../../entities/CommonTypes.hpp"
 #include "../../ui/Button.hpp"
 #include "../../ui/Label.hpp"
 #include "../../ui/LinkedDialog.hpp"
@@ -127,6 +128,7 @@ class Battle : public QObject, public Scene {
   UI::ListView *player_buff_;
   Sprite *player_background_;
   UI::Label *player_name_;
+  UI::Label *player_lvl_;
 
   // Enemy
   Sprite *enemy_;
@@ -243,7 +245,7 @@ class Battle : public QObject, public Scene {
   void ShowMessageDialog(const QString &title, const QString &message);
   void ShowBagDialog();
   void ShowMonsterDialog(bool show_close);
-  void UseBagItem(Scenes::Inventory::ObjectType type, uint16_t item,
+  void UseBagItem(ObjectCategory type, uint16_t item,
                   uint32_t quantity);
   void newError(std::string error, std::string detailedError);
   void error(std::string error);

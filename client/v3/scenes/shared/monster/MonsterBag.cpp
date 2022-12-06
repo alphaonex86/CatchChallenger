@@ -15,6 +15,7 @@ using Scenes::MonsterBag;
 using std::placeholders::_1;
 
 MonsterBag::MonsterBag(Mode mode) {
+  selected_item_ = nullptr;
   on_select_monster_ = nullptr;
   monster_list_ = UI::ListView::Create(this);
   monster_list_->SetItemSpacing(10);
@@ -78,12 +79,11 @@ void MonsterBag::OnSelectItem(Node *node) {
 }
 
 void MonsterBag::OnAcceptClicked() {
-  if (selected_item_->Data(99) == client_->getCurrentMonster()->monster) {
-    ShowMessageDialog(QObject::tr("Warning"),
-                      QObject::tr("The monster selected is already on battle"));
+  if (selected_item_ == nullptr) {
     return;
   }
   on_select_monster_(selected_item_->Data(98));
+  static_cast<UI::LinkedDialog *>(Parent())->Close();
 }
 
 void MonsterBag::ClearSelection() {}
@@ -95,7 +95,7 @@ void MonsterBag::ShowMessageDialog(const QString &title,
 }
 
 void MonsterBag::RegisterEvents() {
-  auto linked = static_cast<UI::LinkedDialog *>(Parent());
+  auto linked = dynamic_cast<UI::LinkedDialog *>(Parent());
   linked->SetTitle(QObject::tr("MONSTERS"));
   LoadMonster();
   monster_list_->RegisterEvents();

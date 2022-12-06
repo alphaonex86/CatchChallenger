@@ -48,8 +48,8 @@ Plant *Plant::Create() { return new (std::nothrow) Plant(); }
 void Plant::OnResize() {
   unsigned int space = 20;
 
-  plantList->SetPos(0, 0);
-  plantList->SetSize(Width() / 3, Height());
+  plantList->SetPos(10, 10);
+  plantList->SetSize((Width() / 3) - 20, Height() - 20);
 }
 
 void Plant::NewLanguage() {}
@@ -83,7 +83,7 @@ void Plant::updatePlant() {
 
 void Plant::inventoryUse_slot() {
   if (lastItemSelected == -1) return;
-  on_use_item_(Inventory::kSeed, lastItemSelected, 1);
+  on_use_item_(ObjectCategory::kSeed, lastItemSelected, 1, 0);
 }
 
 void Plant::OnSelectItem(Node *selected) {
@@ -110,6 +110,7 @@ void Plant::RegisterEvents() {
   linked->ShowNavigation(!is_selection_mode_);
   linked->RecalculateActionButtons();
   plantList->RegisterEvents();
+  ReDraw();
 }
 
 void Plant::UnRegisterEvents() {
@@ -119,6 +120,14 @@ void Plant::UnRegisterEvents() {
 }
 
 void Plant::Draw(QPainter *painter) {
+  auto b2 = Sprite::Create(":/CC/images/interface/b2.png");
+
+  b2->Strech(24, 22, 20, plantList->Width() + 10, plantList->Height() + 10);
+  b2->SetPos(plantList->X() - 5, plantList->Y() - 5);
+  b2->Render(painter);
+
+  delete b2;
+
   if (lastItemSelected == -1) return;
   int item_id = lastItemSelected;
 
@@ -127,6 +136,7 @@ void Plant::Draw(QPainter *painter) {
 
   int x_offset = (Width() / 3) + 10;
   int y_offset = 10;
+  
 
   const DatapackClientLoader::ItemExtra &itemExtra =
       QtDatapackClientLoader::GetInstance()->get_itemsExtra().at(item_id);
@@ -304,6 +314,6 @@ QPixmap Plant::SetCanvas(const QImage &image, unsigned int size) {
 }
 
 void Plant::SetOnUseItem(
-    std::function<void(Inventory::ObjectType, uint16_t, uint32_t)> callback) {
+    std::function<void(ObjectCategory, uint16_t, uint32_t, uint8_t)> callback) {
   on_use_item_ = callback;
 }

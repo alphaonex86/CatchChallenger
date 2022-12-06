@@ -3,6 +3,7 @@
 #define CLIENT_V3_ENTITIES_UTILS_HPP_
 
 #include "../core/Scene.hpp"
+#include "CommonTypes.hpp"
 
 struct NodeParsed {
   std::vector<Node*> nodes;
@@ -21,6 +22,7 @@ class Utils {
   static void MoveDatapackFolder(const QString& origin, const QString& dest);
   static void MoveFile(const QString& origin, const QString& folder,
                        const QString& name);
-  static std::vector<QPixmap> GetSkillAnimation(const uint16_t &skillId);
+  static std::vector<QPixmap> GetSkillAnimation(const uint16_t& skillId);
+  static ObjectCategory GetObjectCategory(const int& item_id);
 };
 #endif  // CLIENT_V3_ENTITIES_UTILS_HPP_

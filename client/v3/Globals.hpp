@@ -10,8 +10,9 @@
 #include "scenes/battle/Battle.hpp"
 #include "scenes/leading/Leading.hpp"
 #include "scenes/map/Map.hpp"
-#include "ui/MessageDialog.hpp"
+#include "scenes/shared/monster/MonsterPicker.hpp"
 #include "ui/InputDialog.hpp"
+#include "ui/MessageDialog.hpp"
 
 class Globals {
  public:
@@ -24,6 +25,7 @@ class Globals {
   static Scenes::Leading* GetLeadingScene();
   static Scenes::Map* GetMapScene();
   static Scenes::Battle* GetBattleScene();
+  static Scenes::MonsterPicker* GetMonsterPicker();
   static UI::MessageDialog* GetAlertDialog();
   static UI::InputDialog* GetInputDialog();
   static void ClearAllScenes();
@@ -35,9 +37,10 @@ class Globals {
   static Scenes::Leading* leading_;
   static Scenes::Map* map_;
   static Scenes::Battle* battle_;
-  static UI::MessageDialog *alert_;
-  static UI::InputDialog *input_;
+  static UI::MessageDialog* alert_;
+  static UI::InputDialog* input_;
   static bool is_solo_;
+  static Scenes::MonsterPicker* monster_picker_;
 };
 
 #endif  // CLIENT_V3_GLOBALS_HPP_

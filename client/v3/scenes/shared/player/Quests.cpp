@@ -23,6 +23,21 @@ using Scenes::Quests;
 using std::placeholders::_1;
 
 Quests::Quests() {
+  backdrop_ = UI::Backdrop::Create(
+      [&](QPainter *painter) {
+        auto b2 = Sprite::Create(":/CC/images/interface/b2.png");
+
+        b2->Strech(24, 22, 20, quests_->Width() + 10, quests_->Height() + 10);
+        b2->SetPos(quests_->X() - 5, quests_->Y() - 5);
+        b2->Render(painter);
+        
+        b2->Strech(24, 22, 20, details_->Width() + 10, details_->Height() + 10);
+        b2->SetPos(details_->X() - 5, details_->Y() - 5);
+        b2->Render(painter);
+
+        delete b2;
+      },
+      this);
   quests_ = UI::ListView::Create(this);
   quests_->SetItemSpacing(Constants::ItemSmallSpacing());
   details_ = UI::ListView::Create(this);
@@ -50,17 +65,19 @@ Quests::~Quests() {
 Quests *Quests::Create() { return new (std::nothrow) Quests(); }
 
 void Quests::OnResize() {
+  backdrop_->SetSize(Width(), Height());
   const auto &bounding = BoundingRect();
   const int width = bounding.width() / 2;
 
-  quests_->SetPos(0, 0);
-  quests_->SetSize(width, bounding.height());
+  quests_->SetPos(5, 5);
+  quests_->SetSize(width - 20, bounding.height() - 10);
 
-  details_->SetPos(width + 10, 0);
-  details_->SetSize(width, bounding.height() - cancel_->Height());
+  details_->SetPos(width + 10, 5);
+  details_->SetSize(width - 20, bounding.height() - cancel_->Height() - 15);
 
   cancel_->SetPos(bounding.x() + width + (width / 2) - (cancel_->Width() / 2),
                   bounding.height() - cancel_->Height());
+  backdrop_->ReDraw();
 }
 
 void Quests::LoadQuests() {

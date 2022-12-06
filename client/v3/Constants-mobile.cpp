@@ -45,6 +45,8 @@ int Constants::TextMediumSize() { return FONT_SIZE * 0.6; }
 
 int Constants::TextSmallSize() { return FONT_SIZE * 0.4; }
 
+int Constants::TextExtraSmallSize() { return FONT_SIZE * 0.3; }
+
 int Constants::ItemLargeSpacing() { return 15; }
 
 int Constants::ItemMediumSpacing() { return 10; }

@@ -23,6 +23,8 @@ UI::InputDialog *Globals::input_ = nullptr;
 
 bool Globals::is_solo_ = false;
 
+Scenes::MonsterPicker *Globals::monster_picker_ = nullptr;
+
 Scenes::Leading *Globals::GetLeadingScene() {
   if (!leading_) {
     leading_ = Scenes::Leading::Create();
@@ -56,6 +58,13 @@ UI::InputDialog *Globals::GetInputDialog() {
     input_ = UI::InputDialog::Create();
   }
   return input_;
+}
+
+Scenes::MonsterPicker *Globals::GetMonsterPicker() {
+  if (!monster_picker_) {
+    monster_picker_ = Scenes::MonsterPicker::Create();
+  }
+  return monster_picker_;
 }
 
 void Globals::ClearAllScenes() {

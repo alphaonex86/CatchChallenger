@@ -34,6 +34,7 @@ void Battle::OnScreenResize() {
       BoundingRect().height() - player_background_->Height() - 10 -
           action_background_->Height());
   player_name_->SetPos(20, 20);
+  player_lvl_->SetPos(player_background_->Width() - 100, 20);
   player_hp_bar_->SetPos(20, 60);
   player_hp_bar_->SetSize(player_background_->Width() - 40, 44);
   player_exp_bar_->SetPos(20, 110);
