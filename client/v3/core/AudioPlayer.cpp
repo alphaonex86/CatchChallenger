@@ -131,6 +131,7 @@ std::string AudioPlayer::StartAmbiance(const std::string &soundPath) {
      if(QAudioDeviceInfo::availableDevices(QAudioPlayer::AudioOutput).isEmpty())
           return "No audio device found!";*/
 
+  last_sound_path = soundPath;
   const QString QtsoundPath = QString::fromStdString(soundPath);
   if (!QtsoundPath.startsWith(":/")) {
     StopCurrentAmbiance();
@@ -197,5 +198,9 @@ void AudioPlayer::StopCurrentAmbiance() {
     ambiance_player_ = nullptr;
     ambiance_data_.clear();
   }
+}
+
+void AudioPlayer::StartLastAmbiance() {
+  StartAmbiance(last_sound_path);
 }
 #endif

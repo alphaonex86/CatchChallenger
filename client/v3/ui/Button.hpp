@@ -52,6 +52,8 @@ class Button : public Node {
  protected:
   explicit Button(QString pix, Node *parent = nullptr);
 
+  virtual QPixmap ScaleBackground(QPixmap pixmap, qreal width, qreal height);
+
  private:
   QString background_;
   bool pressed_;

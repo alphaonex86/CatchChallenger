@@ -25,12 +25,14 @@ class AudioPlayer {
 
   // if already playing ambiance then call stopCurrentAmbiance
   std::string StartAmbiance(const std::string &sound_path);
+  void StartLastAmbiance();
   void StopCurrentAmbiance();
 
  private:
   static AudioPlayer *instance_;
   AudioPlayer();
   std::vector<QAudioOutput *> player_list_;
+  std::string last_sound_path;
 
  protected:
   QAudioFormat format_;

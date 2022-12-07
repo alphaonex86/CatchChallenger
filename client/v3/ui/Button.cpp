@@ -6,9 +6,9 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../Constants.hpp"
 #include "../core/AssetsLoader.hpp"
 #include "../core/EventManager.hpp"
-#include "../Constants.hpp"
 
 using UI::Button;
 
@@ -34,7 +34,7 @@ Button *Button::Create(QString pix, Node *parent) {
   return instance;
 }
 
-void Button::SetSize(const ButtonSize& size) {
+void Button::SetSize(const ButtonSize &size) {
   QSizeF buttonSize;
   int textSize;
 
@@ -69,7 +69,7 @@ void Button::SetSize(const ButtonSize& size) {
   Button::SetSize(buttonSize.width(), buttonSize.height());
 }
 
-void Button::SetSize(const QSizeF& size) {
+void Button::SetSize(const QSizeF &size) {
   Button::SetSize(size.width(), size.height());
 }
 
@@ -116,9 +116,9 @@ void Button::Draw(QPainter *painter) {
         temp.copy(0, temp.height() / 3, temp.width(), temp.height() / 3);
   else
     scaled_background = temp.copy(0, 0, temp.width(), temp.height() / 3);
-  scaled_background =
-      scaled_background.scaled(bounding_rect_.width(), bounding_rect_.height(),
-                               Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+  scaled_background = ScaleBackground(scaled_background, bounding_rect_.width(),
+                                      bounding_rect_.height());
+
   paint.drawPixmap(0, 0, bounding_rect_.width(), bounding_rect_.height(),
                    scaled_background);
 
@@ -250,3 +250,8 @@ void Button::SetIcon(const QString &icon) {}
 void Button::SetIcon(const QPixmap &icon) {}
 
 void Button::SetIcon(const QIcon &icon) {}
+
+QPixmap Button::ScaleBackground(QPixmap pixmap, qreal width, qreal height) {
+  return pixmap.scaled(width, height, Qt::IgnoreAspectRatio,
+                       Qt::SmoothTransformation);
+}

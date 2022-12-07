@@ -9,12 +9,18 @@ class GreenButton : public UI::Button {
  public:
   static GreenButton *Create(Node *parent = nullptr);
 
+ protected:
+  QPixmap ScaleBackground(QPixmap pixmap, qreal width, qreal height) override;
+
  private:
   GreenButton(Node *parent = nullptr);
 };
 class YellowButton : public UI::Button {
  public:
   static YellowButton *Create(Node *parent = nullptr);
+
+ protected:
+  QPixmap ScaleBackground(QPixmap pixmap, qreal width, qreal height) override;
 
  private:
   YellowButton(Node *parent = nullptr);

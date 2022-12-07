@@ -47,4 +47,6 @@ public class JniMessenger {
 
         //return outDir + "datapack/";
     }
+
+    public static native void onEventApplication(String event);
 }

@@ -8,9 +8,9 @@
 #include <QPainter>
 #include <iostream>
 
+#include "../Constants.hpp"
 #include "../core/AssetsLoader.hpp"
 #include "../core/EventManager.hpp"
-#include "../Constants.hpp"
 
 using UI::Combo;
 
@@ -37,9 +37,9 @@ Combo *Combo::Create(Node *parent) {
   return instance;
 }
 
-Combo::~Combo() { 
+Combo::~Combo() {
   UnRegisterEvents();
-  delete label_; 
+  delete label_;
   delete background_;
 }
 
@@ -174,7 +174,7 @@ void Combo::SetOnSelectChange(std::function<void(uint8_t)> callback) {
   on_select_change_ = callback;
 }
 
-void Combo::SetSize(const ComboSize& size) {
+void Combo::SetSize(const ComboSize &size) {
   QSizeF buttonSize;
   int textSize;
 
@@ -197,13 +197,11 @@ void Combo::SetSize(const ComboSize& size) {
   Combo::SetSize(buttonSize.width(), buttonSize.height());
 }
 
-void Combo::SetSize(QSizeF& size) {
+void Combo::SetSize(QSizeF &size) {
   Combo::SetSize(size.width(), size.height());
 }
 
-void Combo::SetWidth(qreal width) {
-  Combo::SetSize(width, Height());
-}
+void Combo::SetWidth(qreal width) { Combo::SetSize(width, Height()); }
 
 void Combo::SetSize(qreal width, qreal height) {
   auto bounding = BoundingRect();
@@ -237,7 +235,8 @@ void Combo::SetItemData(uint8_t index, int role, int value) {
 void Combo::OnResize() {
   label_->SetWidth(inner_bounding_rect_.width());
   label_->SetY(inner_bounding_rect_.height() / 2 - label_->Height() / 2);
-    background_->Strech(25, 25, 25, BoundingRect().width(), BoundingRect().height());
+  background_->Strech(25, 25, 25, BoundingRect().width(),
+                      BoundingRect().height());
 }
 
 void Combo::OpenMenu() {

@@ -17,6 +17,8 @@ using Scenes::OverMap;
 using std::placeholders::_1;
 
 OverMap::OverMap() {
+  map_menu_ = nullptr;
+
   action_buttons_ = UI::Row::Create(this);
   action_buttons2_ = UI::Row::Create(this);
 
@@ -26,7 +28,7 @@ OverMap::OverMap() {
   bag = UI::Button::Create(":/CC/images/interface/bag.png", this);
   menu_ = UI::Button::Create(":/CC/images/interface/menu.png", this);
   buy = UI::Button::Create(":/CC/images/interface/buy.png", this);
-  crafting_btn_ = UI::Button::Create(":/CC/images/interface/gift.png", this);
+  crafting_btn_ = UI::Button::Create(":/CC/images/interface/crafting.png", this);
 
   action_buttons_->AddChild(crafting_btn_);
   action_buttons_->AddChild(bag);
@@ -160,7 +162,8 @@ void OverMap::buyClicked() {
 }
 
 void OverMap::menuClicked() {
-  SceneManager::GetInstance()->PopScene();
-  static_cast<StackedScene *>(SceneManager::GetInstance()->CurrentScene())
-      ->Restart();
+  if (map_menu_ == nullptr) {
+    map_menu_ = Scenes::MapMenu::Create();
+  }
+  AddChild(map_menu_);
 }

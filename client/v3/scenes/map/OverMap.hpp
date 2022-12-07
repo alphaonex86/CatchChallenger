@@ -23,6 +23,7 @@
 #include "PlayerPortrait.hpp"
 #include "PlayerCounter.hpp"
 #include "Tip.hpp"
+#include "MapMenu.hpp"
 
 namespace Scenes {
 class OverMap : public QObject, public Scene {
@@ -66,6 +67,7 @@ class OverMap : public QObject, public Scene {
   UI::Button *crafting_btn_;
   Chat *chat_;
   UI::Button *menu_;
+  MapMenu *map_menu_;
 
   UI::Row *action_buttons_;
   UI::Row *action_buttons2_;

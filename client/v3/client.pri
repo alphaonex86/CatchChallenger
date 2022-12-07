@@ -93,6 +93,7 @@ SOURCES += \
     $$PWD/scenes/map/PlayerPortrait.cpp \
     $$PWD/scenes/map/PlayerCounter.cpp \
     $$PWD/scenes/map/Tip.cpp \
+    $$PWD/scenes/map/MapMenu.cpp \
     $$PWD/scenes/map/MonsterThumb.cpp \
     $$PWD/scenes/shared/player/Player.cpp \
     $$PWD/scenes/shared/player/Clan.cpp \
@@ -122,6 +123,7 @@ SOURCES += \
     $$PWD/scenes/shared/zonecatch/ZoneCatch.cpp \
     $$PWD/scenes/shared/chat/Chat-$${VIEWPORT}.cpp \
     $$PWD/scenes/shared/chat/ChatDialog.cpp \
+    $$PWD/scenes/shared/options/Options.cpp \
     $$PWD/scenes/test/Test.cpp \
     $$PWD/scenes/test/TestItem.cpp \
     $$PWD/scenes/leading/Leading.cpp \
@@ -136,7 +138,6 @@ SOURCES += \
     $$PWD/scenes/leading/AddCharacter.cpp \
     $$PWD/scenes/leading/CharacterSelector.cpp \
     $$PWD/scenes/leading/CharacterItem.cpp \
-    $$PWD/scenes/leading/Options.cpp \
     $$PWD/scenes/leading/Debug.cpp \
     $$PWD/scenes/leading/Menu-$${VIEWPORT}.cpp \
     $$PWD/scenes/leading/Menu.cpp
@@ -216,6 +217,7 @@ HEADERS  += \
     $$PWD/scenes/map/PlayerCounter.hpp \
     $$PWD/scenes/map/MonsterThumb.hpp \
     $$PWD/scenes/map/Tip.hpp \
+    $$PWD/scenes/map/MapMenu.hpp \
     $$PWD/scenes/shared/crafting/Crafting.hpp \
     $$PWD/scenes/shared/crafting/CraftingItem.hpp \
     $$PWD/scenes/shared/player/Player.hpp \
@@ -243,6 +245,7 @@ HEADERS  += \
     $$PWD/scenes/shared/zonecatch/ZoneCatch.hpp \
     $$PWD/scenes/shared/chat/Chat.hpp \
     $$PWD/scenes/shared/chat/ChatDialog.hpp \
+    $$PWD/scenes/shared/options/Options.hpp \
     $$PWD/scenes/test/Test.hpp \
     $$PWD/scenes/test/TestItem.hpp \
     $$PWD/scenes/leading/Leading.hpp \
@@ -257,7 +260,6 @@ HEADERS  += \
     $$PWD/scenes/leading/AddCharacter.hpp \
     $$PWD/scenes/leading/CharacterSelector.hpp \
     $$PWD/scenes/leading/CharacterItem.hpp \
-    $$PWD/scenes/leading/Options.hpp \
     $$PWD/scenes/leading/Debug.hpp \
     $$PWD/scenes/leading/Menu.hpp
 
@@ -335,7 +337,7 @@ android: {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android-sources
     include(../openssl/openssl.pri)
     SOURCES += \
-        $$PWD/entities/JniMessenger.cpp
+        $$PWD/entities/JniMessenger.cpp 
     HEADERS  += \
         $$PWD/entities/JniMessenger.hpp
 }

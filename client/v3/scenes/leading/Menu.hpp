@@ -12,7 +12,7 @@
 #include "../../ui/ListView.hpp"
 #include "Debug.hpp"
 #include "Multi.hpp"
-#include "Options.hpp"
+#include "../shared/options/Options.hpp"
 #ifndef NOSINGLEPLAYER
 #include "Solo.hpp"
 #endif

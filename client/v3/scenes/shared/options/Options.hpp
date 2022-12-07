@@ -1,6 +1,6 @@
 // Copyright 2021 CatchChallenger
-#ifndef CLIENT_V3_SCENES_LEADING_OPTIONS_HPP_
-#define CLIENT_V3_SCENES_LEADING_OPTIONS_HPP_
+#ifndef CLIENT_V3_SCENES_SHARED_OPTIONS_OPTIONS_HPP_
+#define CLIENT_V3_SCENES_SHARED_OPTIONS_OPTIONS_HPP_
 
 #include <string>
 #include <vector>
@@ -45,4 +45,4 @@ class Options : public UI::Dialog {
 };
 }  // namespace Scenes
 
-#endif  // CLIENT_QTOPENGL_SCENES_LEADING_ADDCHARACTER_HPP_
+#endif  // CLIENT_V3_SCENES_SHARED_OPTIONS_OPTIONS_HPP_

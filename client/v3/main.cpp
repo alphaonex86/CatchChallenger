@@ -23,6 +23,7 @@
 
 #ifdef __ANDROID_API__
   #include <android/log.h>
+  #include "entities/JniMessenger.hpp"
 
 class androidbuf : public std::streambuf {
  public:
@@ -101,6 +102,10 @@ int main(int argc, char *argv[]) {
   a.setOrganizationName("CatchChallenger");
   a.setStyle(QStyleFactory::create("Fusion"));
   a.setQuitOnLastWindowClosed(false);
+
+#ifdef __ANDROID_API__
+  JniMessenger *jni = new JniMessenger(&a);
+#endif
 
   qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
   qRegisterMetaType<QList<QUrl>>("QList<QUrl>");
