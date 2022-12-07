@@ -25,5 +25,15 @@ class YellowButton : public UI::Button {
  private:
   YellowButton(Node *parent = nullptr);
 };
+class RedButton : public UI::Button {
+ public:
+  static RedButton *Create(Node *parent = nullptr);
+
+ protected:
+  QPixmap ScaleBackground(QPixmap pixmap, qreal width, qreal height) override;
+
+ private:
+  RedButton(Node *parent = nullptr);
+};
 }  // namespace UI
 #endif  // CLIENT_V3_UI_THEMEDBUTTON_HPP_

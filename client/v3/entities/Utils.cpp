@@ -61,12 +61,6 @@ NodeParsed Utils::HTML2Node(const QString &html,
   return response;
 }
 
-QPixmap Utils::B64Png2Pixmap(const QString &b64) {
-  QByteArray by = QByteArray::fromBase64(b64.toUtf8());
-  QImage image = QImage::fromData(by, "PNG");
-  return QPixmap::fromImage(image);
-}
-
 QString Utils::RemoveHTMLEntities(const QString &html) {
   QString tmp = html;
   tmp.replace(QString("<ul>"), QString(""))
@@ -78,17 +72,6 @@ QString Utils::RemoveHTMLEntities(const QString &html) {
       .replace(QString("<b>"), QString(""))
       .replace(QString("</b>"), QString(""));
   return tmp;
-}
-
-QImage Utils::CropToContent(const QImage &buffer, QColor stop) {
-  int pivot = 0;
-  int end = buffer.height() - 1;
-  QColor aux;
-  do {
-    pivot++;
-    aux = buffer.pixel(10, pivot);
-  } while (aux != stop && pivot < end);
-  return buffer.copy(0, 0, buffer.width(), pivot);
 }
 
 bool Utils::IsActiveInScene(Node *node) {
@@ -171,6 +154,14 @@ ObjectCategory Utils::GetObjectCategory(const int &item_id) {
       QtDatapackClientLoader::GetInstance()->get_itemToPlants().cend();
   if (is_true) {
     return ObjectCategory::kSeed;
+  }
+
+  is_true =
+      CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.find(
+          item_id) !=
+      CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.cend();
+  if (is_true) {
+    return ObjectCategory::kTrap;
   }
 
   return ObjectCategory::kItemOnMonster;

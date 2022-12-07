@@ -10,7 +10,7 @@
 #include "../../../core/EventManager.hpp"
 #include "../../../core/FontManager.hpp"
 #include "../../../core/SceneManager.hpp"
-#include "../../../entities/Utils.hpp"
+#include "../../../entities/PixmapUtils.hpp"
 
 using Scenes::ChatDialog;
 using std::placeholders::_1;
@@ -88,7 +88,7 @@ void ChatDialog::DrawContent() {
   painter->end();
   delete painter;
   log_ = new QPixmap(
-      QPixmap::fromImage(Utils::CropToContent(buffer, QColor(0, 255, 224))));
+      QPixmap::fromImage(PixmapUtils::CropToContent(buffer, QColor(0, 255, 224))));
 
   log_container_->ReDraw();
 }

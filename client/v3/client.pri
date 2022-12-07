@@ -289,6 +289,7 @@ SOURCES += \
     $$PWD/entities/PlayerInfo.cpp \
     $$PWD/entities/ActionUtils.cpp \
     $$PWD/entities/Shapes.cpp \
+    $$PWD/entities/PixmapUtils.cpp \
     $$PWD/entities/Utils.cpp
 HEADERS  += \
     $$PWD/entities/render/MapController.hpp \
@@ -312,7 +313,8 @@ HEADERS  += \
     $$PWD/entities/PlayerInfo.hpp \
     $$PWD/entities/ActionUtils.hpp \
     $$PWD/entities/Shapes.hpp \
-    $$PWD/entities/Utils.hpp
+    $$PWD/entities/PixmapUtils.hpp \
+    $$PWD/entities/Utils.hpp \
     $$PWD/entities/CommonTypes.hpp
 
 wasm: {

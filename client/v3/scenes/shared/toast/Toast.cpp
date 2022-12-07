@@ -6,6 +6,7 @@
 #include "../../../Constants.hpp"
 #include "../../../core/EventManager.hpp"
 #include "../../../entities/Utils.hpp"
+#include "../../../entities/PixmapUtils.hpp"
 #include "../../../ui/Row.hpp"
 
 using Scenes::Toast;
@@ -42,7 +43,7 @@ void Toast::SetContent(const std::vector<std::string> &content) {
       auto parts = str.split("<img src=\"");
       str = parts.last().split("\"").first();
       auto item = Sprite::Create();
-      item->SetPixmap(Utils::B64Png2Pixmap(str.split("base64,").last()));
+      item->SetPixmap(PixmapUtils::B64Png2Pixmap(str.split("base64,").last()));
       auto row = Row::Create();
       row->AddChild(item);
       auto label = BlueLabel::Create();

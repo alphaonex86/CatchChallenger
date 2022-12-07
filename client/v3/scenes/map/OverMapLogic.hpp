@@ -84,11 +84,7 @@ class OverMapLogic : public OverMap {
   void objectSelection(const bool &ok, const uint16_t &itemId = 0,
                        const uint32_t &quantity = 1);
   void bag_open();
-  void inventoryNext();
-  void inventoryBack();
   void player_open();
-  void playerNext();
-  void playerBack();
 
   void pathFindingNotFound();
   void repelEffectIsOver();

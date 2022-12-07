@@ -21,6 +21,7 @@
 #include "../../core/Logger.hpp"
 #include "../../core/SceneManager.hpp"
 #include "../../entities/Utils.hpp"
+#include "../../ui/ThemedButton.hpp"
 #include "../shared/monster/MonsterBag.hpp"
 #include "BattleActions.hpp"
 
@@ -31,6 +32,7 @@ using CatchChallenger::PublicPlayerMonster;
 using std::placeholders::_1;
 using std::placeholders::_2;
 using std::placeholders::_3;
+using std::placeholders::_4;
 
 Battle::Battle() : Scene(nullptr) {
   labelFightBackground = Sprite::Create(this);
@@ -98,7 +100,7 @@ Battle::Battle() : Scene(nullptr) {
   linked_->AddItem(monster, "monsters");
   auto inventory = Inventory::Create();
   inventory->SetVar(Inventory::ObjectFilter_UseInFight, true);
-  inventory->SetOnUseItem(std::bind(&Battle::UseBagItem, this, _1, _2, _3));
+  inventory->SetOnUseItem(std::bind(&Battle::UseBagItem, this, _1, _2, _3, _4));
   linked_->AddItem(inventory, "inventory");
 
   trap_ = nullptr;
@@ -1073,7 +1075,7 @@ void Battle::ShowBagDialog() {
 }
 
 void Battle::UseBagItem(ObjectCategory type, uint16_t item,
-                        uint32_t quantity) {
+                        uint32_t quantity, uint8_t monster_index) {
   RemoveChild(linked_);
 
   const CatchChallenger::Player_private_and_public_informations
@@ -1098,7 +1100,8 @@ void Battle::UseBagItem(ObjectCategory type, uint16_t item,
       client_->isInFightWithWild()) {
     UseTrap(item);
   } else {  // else it's to use on current monster
-    const uint8_t &monsterPosition = client_->getCurrentSelectedMonsterNumber();
+    //const uint8_t &monsterPosition = client_->getCurrentSelectedMonsterNumber();
+    const uint8_t &monsterPosition = monster_index;
     if (client_->useObjectOnMonsterByPosition(item, monsterPosition)) {
       client_->remove_to_inventory({{item, 1}});
       if (CommonDatapack::commonDatapack.get_items().monsterItemEffect.find(
@@ -1349,7 +1352,7 @@ void Battle::OnEnemyDeadDone() {
 void Battle::OnStatusActionDone() { doNextAction(); }
 
 UI::Button *Battle::CreateSkillButton() {
-  auto item = UI::Button::Create(":/CC/images/interface/redbutton.png");
+  auto item = UI::RedButton::Create();
   item->SetSize(UI::Button::kRectSmall);
   item->SetOnClick(std::bind(&Battle::OnSkillClick, this, _1));
   return item;

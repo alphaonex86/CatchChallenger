@@ -246,7 +246,7 @@ class Battle : public QObject, public Scene {
   void ShowBagDialog();
   void ShowMonsterDialog(bool show_close);
   void UseBagItem(ObjectCategory type, uint16_t item,
-                  uint32_t quantity);
+                  uint32_t quantity, uint8_t monster_index);
   void newError(std::string error, std::string detailedError);
   void error(std::string error);
   void TeleportToSlot(const uint32_t &mapId, const uint16_t &x,
