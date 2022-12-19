@@ -9,6 +9,7 @@
 
 #include "EventManager.hpp"
 #include "Node.hpp"
+#include "../Globals.hpp"
 #include "SceneManager.hpp"
 
 Scene::Scene(Node *parent) : Node(parent) {
@@ -64,11 +65,11 @@ void Scene::PrintError(const char *file, int line, const QString &message) {
 }
 
 void Scene::PrintError(const QString &message) {
-  PrintError(message.toStdString());
+  Globals::GetAlertDialog()->Show(message);
 }
 
 void Scene::PrintError(const std::string &message) {
-  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< message << std::endl;
+  PrintError(QString::fromStdString(message));
 }
 
 void Scene::OnScreenSD() {}

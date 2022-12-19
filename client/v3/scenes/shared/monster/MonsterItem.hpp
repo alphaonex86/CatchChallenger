@@ -22,6 +22,7 @@ class MonsterItem : public UI::SelectableItem {
   CatchChallenger::Api_protocol_Qt *client_;
   QString name_;
   Sprite *icon_;
+  uint32_t max_hp_;
 
   MonsterItem(CatchChallenger::PlayerMonster monster);
   void LoadMonster();

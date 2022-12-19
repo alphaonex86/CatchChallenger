@@ -806,7 +806,7 @@ void Multi::on_server_refresh_clicked() {
     reply->deleteLater();
     reply = NULL;
   }
-  // downloadFile();
+  downloadFile();
 }
 
 void Multi::server_select_clicked() {

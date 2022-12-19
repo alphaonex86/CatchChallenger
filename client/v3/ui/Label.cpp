@@ -121,6 +121,9 @@ void Label::SetPixelSize(uint8_t size) {
 
 void Label::UpdateTextPath() {
   if (text_.isEmpty()) {
+    if (Height() == 0) {
+      Node::SetSize(Width(), (GetPenWidth() * 2) + 10 + font_height_);
+    }
     return;
   }
   if (text_path_ != nullptr) delete text_path_;
@@ -129,6 +132,7 @@ void Label::UpdateTextPath() {
   QStringList lines = text_.split("\n");
   text_path_ = new QPainterPath();
   auto pen_width = GetPenWidth() * 2;
+  auto pen_height = pen_width + 10;
 
   if (auto_size_) {
     QRectF rect = temp_path.boundingRect();
@@ -145,7 +149,7 @@ void Label::UpdateTextPath() {
       max_height += font_height_;
       text_path_->addText((pen_width / 2) - 2, max_height, *font_, (*iter));
     }
-    Node::SetSize(max_width + pen_width, max_height + pen_width);
+    Node::SetSize(max_width + pen_width, max_height + pen_height);
   } else {
     int max_height = 0;
     auto bounding = BoundingRect();
@@ -209,7 +213,7 @@ void Label::UpdateTextPath() {
         }
       }
     }
-    Node::SetHeight(max_height + pen_width);
+    Node::SetHeight(max_height + pen_height);
   }
 }
 

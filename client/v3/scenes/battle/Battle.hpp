@@ -143,6 +143,7 @@ class Battle : public QObject, public Scene {
   UI::ListView *enemy_buff_;
   Sprite *enemy_background_;
   UI::Label *enemy_name_;
+  UI::Label *enemy_lvl_;
 
   // Attack
   Sprite *attack_;

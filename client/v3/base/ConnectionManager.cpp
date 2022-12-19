@@ -311,6 +311,7 @@ void ConnectionManager::disconnected(std::string reason) {
 
 void ConnectionManager::newError(const std::string &error,
                                  const std::string &detailedError) {
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdasd" << std::endl;
   if (on_error_) on_error_(error + "\n" + detailedError);
   if (socket != nullptr) socket->disconnectFromHost();
   if (client != nullptr) {

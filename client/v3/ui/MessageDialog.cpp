@@ -14,6 +14,9 @@ MessageDialog::MessageDialog() {
   message_->SetAlignment(Qt::AlignCenter);
 
   newLanguage();
+  SetOnClose([&](){
+    SceneManager::GetInstance()->RemoveOverlay();
+  });
 }
 
 MessageDialog::~MessageDialog() {

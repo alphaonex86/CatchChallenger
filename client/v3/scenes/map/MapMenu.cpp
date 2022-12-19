@@ -9,7 +9,7 @@
 using Scenes::MapMenu;
 
 MapMenu::MapMenu() : UI::Dialog() {
-  SetDialogSize(Constants::DialogSmallSize());
+  SetDialogSize(Constants::DialogSmallSize().width(), 0.7);
   SetTitle("Menu");
 
   options_dialog_ = nullptr;
@@ -35,6 +35,13 @@ MapMenu::MapMenu() : UI::Dialog() {
         ->Restart();
   });
   buttons_->AddChild(go_to_main_);
+
+  open_to_lan_ = UI::GreenButton::Create();
+  open_to_lan_->SetText(tr("Open to LAN"));
+  open_to_lan_->SetOnClick([&](Node *node) {
+
+  });
+  buttons_->AddChild(open_to_lan_);
 
   exit_ = UI::GreenButton::Create();
   exit_->SetText(tr("Exit Catchchallenger"));
@@ -69,4 +76,5 @@ void MapMenu::OnScreenResize() {
   go_to_main_->SetWidth(content.width());
   exit_->SetWidth(content.width());
   options_->SetWidth(content.width());
+  open_to_lan_->SetWidth(content.width());
 }

@@ -1,8 +1,8 @@
 // Copyright 2021 CatchChallenger
 #include "LinkedDialog.hpp"
-
 #include <iostream>
 #include "../Constants.hpp"
+#include "../core/SceneManager.hpp"
 
 using std::placeholders::_1;
 using UI::Dialog;
@@ -113,6 +113,8 @@ void LinkedDialog::OnEnter() {
   if (current_item_ != nullptr) {
     current_item_->RegisterEvents();
   }
+  UnRegisterActionButtons();
+  RegisterActionButtons();
 }
 
 void LinkedDialog::OnExit() {
@@ -130,7 +132,7 @@ void LinkedDialog::SetCurrentItem(std::string id) {
   current_index_ = GetIndexById(id);
   current_item_ = items_.at(current_index_);
   // Only register if linkeddialog is showed
-  if (Parent() != nullptr) {
+  if (Parent() != nullptr || SceneManager::GetInstance()->IsOverlay(this)) {
     current_item_->RegisterEvents();
   }
   AddChild(current_item_);

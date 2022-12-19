@@ -1962,7 +1962,7 @@ void OverMapLogic::CreateInventoryTabs() {
   auto item = Inventory::Create();
   item->SetOnUseItem(std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));
   inventory_tabs_->AddItem(item, "inventory");
-  inventory_tabs_->AddItem(MonsterBag::Create(), "monsters");
+  inventory_tabs_->AddItem(MonsterBag::Create(MonsterBag::kDefault), "monsters");
   auto plant = Plant::Create();
   plant->SetOnUseItem(
       std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));

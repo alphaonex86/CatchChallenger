@@ -358,19 +358,25 @@ void SceneManager::OnDisconnect() {
 }
 
 void SceneManager::ShowOverlay(Node *overlay) {
-  auto current = scene_stack_.back();
   if (overlay_ && overlay_ != overlay) {
-    current->RemoveChild(overlay_);
+    graphic_scene_->removeItem(overlay_);
   }
+  overlay->SetZValue(1000);
+  overlay->OnEnter();
   overlay_ = overlay;
-  current->AddChild(overlay_);
+  graphic_scene_->addItem(overlay_);
 }
 
 void SceneManager::RemoveOverlay() {
   if (overlay_) {
-    overlay_->Parent()->RemoveChild(overlay_);
+    overlay_->OnExit();
+    graphic_scene_->removeItem(overlay_);
   }
   overlay_ = nullptr;
+}
+
+bool SceneManager::IsOverlay(Node *overlay) {
+  return overlay_ == overlay;
 }
 
 Scene *SceneManager::CurrentScene() {

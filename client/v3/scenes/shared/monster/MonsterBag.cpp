@@ -17,6 +17,8 @@ using std::placeholders::_1;
 MonsterBag::MonsterBag(Mode mode) {
   selected_item_ = nullptr;
   on_select_monster_ = nullptr;
+  show_select_ = true;
+
   monster_list_ = UI::ListView::Create(this);
   monster_list_->SetItemSpacing(10);
 

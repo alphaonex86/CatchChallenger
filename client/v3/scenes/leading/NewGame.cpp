@@ -8,6 +8,7 @@
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../../general/base/cpp11addition.hpp"
+#include "../../core/EventManager.hpp"
 #include "../../Constants.hpp"
 #include "../../Globals.hpp"
 
@@ -71,6 +72,7 @@ bool NewGame::isOk() const { return ok; }
 bool NewGame::haveSkin() const { return skinList.size() > 0; }
 
 void NewGame::OnActionClick(Node *node) {
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdas" << std::endl;
   if (node == quit) {
     ok = false;
     Close();
@@ -278,6 +280,7 @@ void NewGame::OnEnter() {
   UI::Dialog::OnEnter();
   uipseudo->SetVisible(true);
   uipseudo->RegisterEvents();
+  std::cout<< "LAN_[" << __FILE__ << ":" << __LINE__ << "] "<< "asdasd" << std::endl;
 }
 
 void NewGame::OnExit() {

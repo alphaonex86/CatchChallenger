@@ -93,14 +93,13 @@ void CharacterSelector::add_clicked() {
     addCharacter = AddCharacter::Create();
     addCharacter->SetOnClose(std::bind(&CharacterSelector::add_finished, this));
   }
-  addCharacter->setDatapack(connection_->client->datapackPathBase());
   AddChild(addCharacter);
+  addCharacter->setDatapack(connection_->client->datapackPathBase());
 }
 
 void CharacterSelector::add_finished() {
+  RemoveChild(addCharacter);
   if (!addCharacter->isOk()) {
-
-    RemoveChild(addCharacter);
     return;
   }
   const std::string &datapackPath = connection_->client->datapackPathBase();

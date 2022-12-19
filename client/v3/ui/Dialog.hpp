@@ -48,6 +48,8 @@ class Dialog : public Scene {
   void Draw(QPainter *painter) override;
   QRectF ContentBoundary() const;
   QRectF ContentPlainBoundary() const;
+  void RegisterActionButtons();
+  void UnRegisterActionButtons();
 
  private:
   Row *actions_;

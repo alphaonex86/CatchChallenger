@@ -26,12 +26,26 @@ SubServer::SubServer() {
 
   is_loaded_ = false;
   character_selector_ = nullptr;
+
+  wdialog = nullptr;
+  server_select = nullptr;
+  back = nullptr;
 }
 
 SubServer::~SubServer() {
-  delete wdialog;
-  delete server_select;
-  delete back;
+  if (wdialog) {
+    delete wdialog;
+    wdialog = nullptr;
+  }
+  if (server_select) {
+    delete server_select;
+    server_select = nullptr;
+  }
+
+  if (back) {
+    delete back;
+    back = nullptr;
+  }
 
   if (character_selector_) {
     delete character_selector_;

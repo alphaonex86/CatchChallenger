@@ -31,7 +31,7 @@ void PlayerCounter::Draw(QPainter *painter) {
 
   playersCountBack->SetPos(
       bounding_rect_.width() - space - playersCountBack->Width(), space);
-  playersCount->SetPos(bounding_rect_.width() - space - 80, (Height() / 2 - playersCount->Height() / 2) - 16 );
+  playersCount->SetPos(bounding_rect_.width() - space - 80, (Height() / 2 - playersCount->Height() / 2) - 8);
 }
 
 void PlayerCounter::OnEnter() {}

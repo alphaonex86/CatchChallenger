@@ -16,6 +16,9 @@ MonsterPicker::MonsterPicker(): LinkedDialog(false) {
   AddItem(bag_, "monsters");
 
   SetCurrentItem("monsters");
+  SetOnClose([&](){
+    SceneManager::GetInstance()->RemoveOverlay();
+  });
 }
 
 MonsterPicker* MonsterPicker::Create() {

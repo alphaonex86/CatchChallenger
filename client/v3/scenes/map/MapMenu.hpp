@@ -24,6 +24,7 @@ class MapMenu : public UI::Dialog {
   UI::Button *go_to_main_;
   UI::Button *exit_;
   UI::Button *options_;
+  UI::Button *open_to_lan_;
   Options *options_dialog_;
   UI::Column *buttons_;
 

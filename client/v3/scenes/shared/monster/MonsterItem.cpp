@@ -3,13 +3,18 @@
 
 #include <iostream>
 
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../Constants.hpp"
 #include "../../../core/EventManager.hpp"
 #include "../../../core/Node.hpp"
 #include "../../../ui/Label.hpp"
 
 using CatchChallenger::PlayerMonster;
+using CatchChallenger::PublicPlayerMonster;
 using Scenes::MonsterItem;
+using namespace CatchChallenger;
 
 MonsterItem::MonsterItem(CatchChallenger::PlayerMonster monster)
     : UI::SelectableItem() {
@@ -17,6 +22,11 @@ MonsterItem::MonsterItem(CatchChallenger::PlayerMonster monster)
   icon_ = Sprite::Create(this);
   connection_manager_ = ConnectionManager::GetInstance();
   client_ = connection_manager_->client;
+  Monster::Stat fight_stat = client_->getStat(
+      CommonDatapack::commonDatapack.get_monsters().at(monster_.monster),
+      monster_.level);
+
+  max_hp_ = fight_stat.hp;
 
   icon_->SetSize(60, 60);
   SetSize(200, 80);
@@ -26,9 +36,7 @@ MonsterItem::MonsterItem(CatchChallenger::PlayerMonster monster)
   LoadMonster();
 }
 
-MonsterItem::~MonsterItem() {
-  delete icon_;
-}
+MonsterItem::~MonsterItem() { delete icon_; }
 
 MonsterItem *MonsterItem::Create(CatchChallenger::PlayerMonster monster) {
   return new (std::nothrow) MonsterItem(monster);
@@ -39,9 +47,19 @@ void MonsterItem::DrawContent(QPainter *painter) {
   text->SetWidth(bounding_rect_.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(name_);
-  text->SetPos(0, Height() / 2 - text->Height() / 2);
+  text->SetPos(0, 10);
+  text->Render(painter);
 
-  text->Draw(painter);
+  text->SetPixelSize(Constants::TextExtraSmallSize());
+  text->SetText("HP " + QString::number(monster_.hp) + "/" + QString::number(max_hp_));
+  text->SetPos(0, text->Bottom() - 10);
+  text->Render(painter);
+
+  text->SetAlignment(Qt::AlignRight);
+  text->SetText("Lvl. " + QString::number(monster_.level));
+  text->SetPos(-10, Height() / 2 - text->Height() / 2);
+  text->Render(painter);
+
 
   delete text;
 }

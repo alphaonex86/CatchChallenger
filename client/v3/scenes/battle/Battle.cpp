@@ -57,6 +57,7 @@ Battle::Battle() : Scene(nullptr) {
   enemy_background_ = Sprite::Create(":/CC/images/interface/b1.png", this);
   enemy_name_ = UI::Label::Create(enemy_background_);
   enemy_hp_bar_ = UI::Progressbar::Create(enemy_background_);
+  enemy_lvl_ = UI::Label::Create(enemy_background_);
 
   labelFightPlateformBottom = Sprite::Create(this);
   labelFightPlateformTop = Sprite::Create(this);
@@ -339,6 +340,7 @@ bool Battle::WildFightInitialize(Map_client *map, const uint8_t &x,
     // emit error("NULL pointer for other monster at wildFightCollision()");
     return false;
   }
+  enemy_lvl_->SetVisible(true);
   battleStep = BattleStep_PresentationMonster;
   battleType = BattleType_Wild;
   resetPosition(true, false, true);
@@ -501,6 +503,7 @@ void Battle::updateOtherMonsterInformation() {
         QtDatapackClientLoader::GetInstance()->get_monsterExtra()
             .at(otherMonster->monster)
             .name));
+    enemy_lvl_->SetText("Lvl. " + QString::number(otherMonster->level));
     Monster::Stat otherStat = client_->getStat(
         CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),
         otherMonster->level);
@@ -1236,6 +1239,8 @@ void Battle::ConfigureCommons() {
       Delay::Create(500),
       CallFunc::Create(std::bind(&Battle::BotFightFullDiffered, this)),
       nullptr);
+
+  enemy_lvl_->SetVisible(false);
 }
 
 void Battle::OnPlayerEnterDone() {
@@ -2288,6 +2293,7 @@ void Battle::UseTrap(const uint16_t &item_id) {
         CallFunc::Create(std::bind(&Battle::OnTrapCatchDone, this)), nullptr);
     trap_->SetSize(100, 100);
   }
+  trap_->SetPos(0, BoundingRect().height());
 
   ShowStatusMessage(
       QStringLiteral("Try catch the wild %1")

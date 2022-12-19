@@ -54,6 +54,7 @@ void MultiItem::DrawContent(QPainter *painter) {
   if (Width() == 0 || Height() == 0) return;
 
   auto text = UI::Label::Create(QColor(255, 255, 255), QColor(30, 25, 17));
+  text->TestMode();
   text->SetWidth(bounding_rect_.width());
   text->SetAlignment(Qt::AlignCenter);
   text->SetText(name_);

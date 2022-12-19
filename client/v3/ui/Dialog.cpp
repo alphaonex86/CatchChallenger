@@ -34,6 +34,7 @@ Dialog::Dialog(bool show_close) {
   title_ = UI::Label::Create(gradient2, gradient1, this);
   title_->SetAlignment(Qt::AlignCenter);
   title_->SetVisible(false);
+  title_->SetPixelSize(Constants::TextTitleSize());
 
   quit_ = Button::Create(":/CC/images/interface/closedialog.png");
   show_close_ = show_close;
@@ -106,7 +107,6 @@ void Dialog::OnScreenResize() {
   title_background_->Strech(36, 13, 13, idealW * 0.7, title_background_->Height());
   title_background_->SetPos(x_ + (idealW - title_background_->Width()) / 2,
                             y_ - 36);
-  title_->SetPixelSize(Constants::TextTitleSize());
 
   title_->SetPos(x_, y_ - title_->Height() / 2);
   title_->SetWidth(idealW);
@@ -128,6 +128,7 @@ void Dialog::Draw(QPainter *painter) {
   // title_background_->Paint(painter, nullptr, nullptr);
   // title_->Paint(painter, nullptr, nullptr);
   //}
+  //
 }
 
 void Dialog::OnScreenSD() {}
@@ -147,25 +148,34 @@ void Dialog::OnEnter() {
   if (show_close_) {
     quit_->RegisterEvents();
   }
-  auto items = actions_->Children();
-  for (auto it = begin(items); it != end(items); it++) {
-    (*it)->RegisterEvents();
-  }
+
+  RegisterActionButtons();
 
   RecalculateActionButtons();
 }
 
 void Dialog::OnExit() {
-  auto items = actions_->Children();
-  for (auto it = begin(items); it != end(items); it++) {
-    (*it)->UnRegisterEvents();
-  }
+  UnRegisterActionButtons();
 
   if (show_close_) {
     quit_->UnRegisterEvents();
   }
   EventManager::GetInstance()->UnLock();
   Scene::OnExit();
+}
+
+void Dialog::RegisterActionButtons() {
+  auto items = actions_->Children();
+  for (auto it = begin(items); it != end(items); it++) {
+    (*it)->RegisterEvents();
+  }
+}
+
+void Dialog::UnRegisterActionButtons() {
+  auto items = actions_->Children();
+  for (auto it = begin(items); it != end(items); it++) {
+    (*it)->UnRegisterEvents();
+  }
 }
 
 void Dialog::AddActionButton(Button *action) {

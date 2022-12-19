@@ -43,6 +43,7 @@ void Battle::OnScreenResize() {
   enemy_background_->Strech(28, 400, 120);
   enemy_background_->SetPos(padding, padding);
   enemy_name_->SetPos(20, 20);
+  enemy_lvl_->SetPos(enemy_background_->Width() - 100, 20);
   enemy_hp_bar_->SetPos(20, 60);
   enemy_hp_bar_->SetSize(enemy_background_->Width() - 40, 44);
 
