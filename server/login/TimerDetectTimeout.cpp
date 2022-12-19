@@ -36,7 +36,7 @@ void TimerDetectTimeout::exec()
             }
             index++;
         }
-        std::cout << "Overload: ";
+        std::cout << "Overload 1): ";
         index=0;
         for( const std::pair<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> n : countByStat )
         {
@@ -60,7 +60,7 @@ void TimerDetectTimeout::exec()
                 std::cout << "Logged";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoggedStatClient:
-                std::cout << "LoggedStatClient";
+                std::cout << "LoggedStatClient ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoginInProgress:
                 std::cout << "LoginInProgress";
@@ -119,24 +119,36 @@ void TimerDetectTimeout::exec()
         if(client->stat==CatchChallenger::EpollClientLoginSlave::GameServerConnected)
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
+            {
+                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
+            }
         }
         else
         {
             if((client->get_lastActivity()+1*60*1000)<timeCurrent)
+            {
+                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
+            }
         }
         if(client->linkToGameServer!=nullptr)
         {
             if(client->linkToGameServer->stat==CatchChallenger::LinkToGameServer::Logged)
             {
                 if((client->linkToGameServer->get_lastActivity()+10*60*1000)<timeCurrent)
+                {
+                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
+                }
             }
             else
             {
                 if((client->linkToGameServer->get_lastActivity()+1*60*1000)<timeCurrent)
+                {
+                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
+                }
             }
         }
         index++;
@@ -166,7 +178,7 @@ void TimerDetectTimeout::exec()
             }
             index++;
         }
-        std::cout << "Overload: ";
+        std::cout << "Overload 2): ";
         index=0;
         for( const std::pair<CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat,uint64_t> n : countByStat )
         {
@@ -175,34 +187,34 @@ void TimerDetectTimeout::exec()
             switch(n.first)
             {
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelected:
-                std::cout << "CharacterSelected";
+                std::cout << "CharacterSelected ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::CharacterSelecting:
-                std::cout << "CharacterSelecting";
+                std::cout << "CharacterSelecting ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnected:
-                std::cout << "GameServerConnected";
+                std::cout << "GameServerConnected ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::GameServerConnecting:
-                std::cout << "GameServerConnecting";
+                std::cout << "GameServerConnecting ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::Logged:
-                std::cout << "Logged";
+                std::cout << "Logged ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoggedStatClient:
                 std::cout << "LoggedStatClient";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::LoginInProgress:
-                std::cout << "LoginInProgress";
+                std::cout << "LoginInProgress ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::None:
-                std::cout << "None";
+                std::cout << "None ERROR";
                 break;
             case CatchChallenger::EpollClientLoginSlave::EpollClientLoginStat::ProtocolGood:
-                std::cout << "ProtocolGood";
+                std::cout << "ProtocolGood ERROR";
                 break;
             default:
-                std::cout << "stat " << std::to_string(n.first);
+                std::cout << "stat " << std::to_string(n.first) << " ERROR";
                 break;
             }
             std::cout << ": " << std::to_string(n.second);
@@ -249,24 +261,36 @@ void TimerDetectTimeout::exec()
         if(client->stat==CatchChallenger::EpollClientLoginSlave::GameServerConnected)
         {
             if((client->get_lastActivity()+10*60*1000)<timeCurrent)
+            {
+                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
+            }
         }
         else
         {
-            if((client->get_lastActivity()+1*60*1000)<timeCurrent)
+/*            if((client->get_lastActivity()+1*60*1000)<timeCurrent)
+            {
+                std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                 client->disconnectClient();
+            }*/
         }
         if(client->linkToGameServer!=nullptr)
         {
             if(client->linkToGameServer->stat==CatchChallenger::LinkToGameServer::Logged)
             {
                 if((client->linkToGameServer->get_lastActivity()+10*60*1000)<timeCurrent)
+                {
+                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
+                }
             }
             else
             {
                 if((client->linkToGameServer->get_lastActivity()+1*60*1000)<timeCurrent)
+                {
+                    std::cerr << client << " (" << (int)client->stat << ") disconnect due to last Activity: " << client->get_lastActivity() << " (" << timeCurrent << ") " << __FILE__ << ":" << __LINE__ << std::endl;
                     client->linkToGameServer->disconnectClient();
+                }
             }
         }
         index++;
