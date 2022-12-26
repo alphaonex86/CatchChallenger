@@ -178,7 +178,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
         return false;
     if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
     {
-        errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range");
+        //errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range"); -> bug is TP in colision
         /// no fight in this zone
         return false;
     }
