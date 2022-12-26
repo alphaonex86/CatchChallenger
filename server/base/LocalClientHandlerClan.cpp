@@ -132,7 +132,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             #endif
-            const std::vector<Client *> &players=clanList.at(public_and_private_informations.clan)->players;
+            const std::vector<Client *> copyOf_players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -141,9 +141,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             //update the db
             unsigned int index=0;
-            while(index<players.size())
+            while(index<copyOf_players.size())
             {
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(players.at(index)->getPlayerId())});
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(copyOf_players.at(index)->getPlayerId())});
                 index++;
             }
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
@@ -164,15 +164,18 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
             #endif
             index=0;
-            while(index<players.size())
+            while(index<copyOf_players.size())
             {
-                if(players.at(index)==this)
+                if(copyOf_players.at(index)!=nullptr)
                 {
-                    public_and_private_informations.clan=0;
-                    clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
+                    if(copyOf_players.at(index)==this)
+                    {
+                        public_and_private_informations.clan=0;
+                        clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
+                    }
+                    else
+                        copyOf_players.at(index)->dissolvedClan();
                 }
-                else
-                    players.at(index)->dissolvedClan();
                 index++;
             }
 

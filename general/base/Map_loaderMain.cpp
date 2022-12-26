@@ -179,11 +179,15 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                             else if(object_x>map_to_send_temp.width || object_y>map_to_send_temp.height)
                                 std::cerr << "Object out of the map: child->Name(): " << SubChild->Name()
                                             << ", file: " << file << std::endl;
-                            else if(SubChild->Attribute("type")==nullptr)
+                            else if(SubChild->Attribute("type")==nullptr && SubChild->Attribute("class")==nullptr)
                                 std::cerr << "Missing attribute type missing: SubChild->Name(): " << SubChild->Name() << ", file: " << file << std::endl;
                             else
                             {
-                                const std::string type(SubChild->Attribute("type"));
+                                std::string type;
+                                if(SubChild->Attribute("type")!=nullptr)
+                                    type=std::string(SubChild->Attribute("type"));
+                                else
+                                    type=std::string(SubChild->Attribute("class"));
 
                                 std::unordered_map<std::string,std::string> property_text;
                                 const tinyxml2::XMLElement *prop=SubChild->FirstChildElement("properties");
