@@ -183,7 +183,7 @@ void SocialChat::loadPlayerInformation()
     }
 
     //front image
-    if(playerInformations.public_informations.skinId<QtDatapackClientLoader::datapackLoader->skins.size())
+    if(playerInformations.public_informations.skinId<QtDatapackClientLoader::datapackLoader->get_skins().size())
         ui->labelImageAvatar->setPixmap(getFrontSkin(playerInformations.public_informations.skinId));
 
     {
@@ -239,8 +239,8 @@ QPixmap SocialChat::getFrontSkin(const QString &skinName)
 
 QPixmap SocialChat::getFrontSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
-        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->get_skins().size())
+        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_skins().at(skinId)));
     else
         return getFrontSkin(QString());
 }
@@ -264,8 +264,8 @@ QPixmap SocialChat::getBackSkin(const QString &skinName)
 
 QPixmap SocialChat::getBackSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
-        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->get_skins().size())
+        return getFrontSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_skins().at(skinId)));
     else
         return getFrontSkin(QString());
 }
@@ -289,8 +289,8 @@ QPixmap SocialChat::getTrainerSkin(const QString &skinName)
 
 QPixmap SocialChat::getTrainerSkin(const uint32_t &skinId)
 {
-    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->skins.size())
-        return getTrainerSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->skins.at(skinId)));
+    if(skinId<(uint32_t)QtDatapackClientLoader::datapackLoader->get_skins().size())
+        return getTrainerSkin(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_skins().at(skinId)));
     else
         return getTrainerSkin(QString());
 }

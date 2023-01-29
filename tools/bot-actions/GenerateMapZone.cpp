@@ -1,7 +1,6 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLib.hpp"
@@ -577,13 +576,13 @@ void BotTargetList::updatePlayerStep()
                         {
                             bool haveSeedToPlant=false;
                             const uint32_t &itemId=BotTargetList::getSeedToPlant(api,&haveSeedToPlant);
-                            if(QtDatapackClientLoader::datapackLoader->itemToPlants.find(itemId)==QtDatapackClientLoader::datapackLoader->itemToPlants.cend())
+                            if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
                                 abort();
-                            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(itemId);
-                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+                            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
+                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
                                 abort();
                             const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &mapS=
-                                    QtDatapackClientLoader::datapackLoader->plantOnMap.at(mapQtString);
+                                    QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(mapQtString);
                             if(mapS.find(p)==mapS.cend())
                                 abort();
                             const uint16_t &indexOnMapPlant=mapS.at(p);
@@ -598,7 +597,7 @@ void BotTargetList::updatePlayerStep()
                                 //std::cout << api->getPseudo().toStdString() << ", useSeed(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 api->useSeed(plant);
                                 CatchChallenger::PlayerPlant playerPlant;
-                                playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.plants.at(plant).fruits_seconds;
+                                playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant).fruits_seconds;
                                 playerPlant.plant=plant;
                                 playerInformations.plantOnMap[indexOnMapPlant]=playerPlant;
                             }
@@ -609,10 +608,10 @@ void BotTargetList::updatePlayerStep()
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         {
                             //const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(player.target.extra/*itemUsed*/);
-                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
                                 abort();
                             const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &pS=
-                                    QtDatapackClientLoader::datapackLoader->plantOnMap.at(mapQtString);
+                                    QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(mapQtString);
                             if(pS.find(p)==pS.cend())
                                 abort();
                             const uint16_t &indexOnMapPlant=pS.at(p);
@@ -622,7 +621,7 @@ void BotTargetList::updatePlayerStep()
                                 abort();
                             std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->collectMaturePlant();
-                            if(QtDatapackClientLoader::datapackLoader->plantOnMap.find(mapQtString)==QtDatapackClientLoader::datapackLoader->plantOnMap.cend())
+                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
                                 abort();
                             playerInformations.plantOnMap.erase(indexOnMapPlant);
                         }
@@ -649,13 +648,13 @@ void BotTargetList::updatePlayerStep()
                                 player.api->stopMove();
                                 player.api->requestFight(fightId);
                                 std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
-                                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
+                                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).monsters;
                                 unsigned int index=0;
                                 while(index<monsters.size())
                                 {
                                     botFightMonstersTransformed.push_back(CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
-                                         monsters.at(index),CatchChallenger::ClientFightEngine::getStat(
-                                              CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),monsters.at(index).level)));
+                                         monsters.at(index),CatchChallenger::CommonFightEngine::getStat(
+                                              CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsters.at(index).id),monsters.at(index).level)));
                                     index++;
                                 }
                                 player.api->setBotMonster(botFightMonstersTransformed,fightId);
@@ -717,7 +716,7 @@ void BotTargetList::updatePlayerStep()
                             std::cerr << ", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+"NULL pointer at updateCurrentMonsterInformation()" << std::endl;
                             continue;
                         }
-                        const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::ClientFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster),othermonster->level);
+                        const CatchChallenger::Monster::Stat &wildMonsterStat=CatchChallenger::CommonFightEngine::getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(othermonster->monster),othermonster->level);
 
                         //try capture
                         bool tryCaptureWithItem=false;
@@ -736,9 +735,9 @@ void BotTargetList::updatePlayerStep()
                                         while(index<othermonster->buffs.size())
                                         {
                                             const CatchChallenger::PlayerBuff &playerBuff=othermonster->buffs.at(index);
-                                            if(CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.cend())
+                                            if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().find(playerBuff.buff)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().cend())
                                             {
-                                                const CatchChallenger::Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.monsterBuffs.at(playerBuff.buff);
+                                                const CatchChallenger::Buff &buff=CatchChallenger::CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff);
                                                 if(playerBuff.level>0 && playerBuff.level<=buff.level.size())
                                                     bonusStat+=buff.level.at(playerBuff.level-1).capture_bonus;
                                                 else
@@ -760,13 +759,13 @@ void BotTargetList::updatePlayerStep()
                                     for(const auto& n:playerInformations.items) {
                                         const CATCHCHALLENGER_TYPE_ITEM &item=n.first;
                                         const uint32_t &quantity=n.second;
-                                        if(CatchChallenger::CommonDatapack::commonDatapack.items.trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.items.trap.cend())
+                                        if(CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.find(item)!=CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.cend())
                                         {
                                             const uint32_t maxTempRate=12;
                                             const uint32_t minTempRate=5;
                                             //const uint32_t tryCapture=4;
-                                            const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.items.trap.at(item);
-                                            const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.monsters.at(othermonster->monster).catch_rate;
+                                            const CatchChallenger::Trap &trap=CatchChallenger::CommonDatapack::commonDatapack.get_items().trap.at(item);
+                                            const uint32_t catch_rate=(uint32_t)CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(othermonster->monster).catch_rate;
                                             uint32_t tempRate=(catch_rate*(wildMonsterStat.hp*maxTempRate-othermonster->hp*minTempRate)*bonusStat*trap.bonus_rate)/(wildMonsterStat.hp*maxTempRate);
                                             bool valid=false;
                                             if(quantity>20)
@@ -824,7 +823,7 @@ void BotTargetList::updatePlayerStep()
                                 const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
                                 if(skill.endurance>0)
                                 {
-                                    const CatchChallenger::Skill &skillDatapack=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.at(skill.skill);
+                                    const CatchChallenger::Skill &skillDatapack=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(skill.skill);
                                     const CatchChallenger::Skill::SkillList &skillList=skillDatapack.level.at(skill.level-1);
                                     unsigned int tempSkillPoint=0;
                                     unsigned int skillIndex=0;
@@ -853,7 +852,7 @@ void BotTargetList::updatePlayerStep()
                             }
                             if(useTheRescueSkill)
                             {
-                                if(CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.find(0)!=CatchChallenger::CommonDatapack::commonDatapack.monsterSkills.cend())
+                                if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(0)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
                                     player.api->useSkill(0);
                                 else
                                 {
@@ -913,7 +912,7 @@ void BotTargetList::updatePlayerStep()
                                     CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
                                     if(monster!=NULL)
                                     {
-                                        const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+                                        const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
                                         unsigned int index=0;
                                         while(index<monsterInformations.evolutions.size())
                                         {
@@ -951,7 +950,7 @@ void BotTargetList::updatePlayerStep()
                             CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
                             if(monster!=NULL)
                             {
-                                const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+                                const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
                                 unsigned int index=0;
                                 while(index<monsterInformations.evolutions.size())
                                 {

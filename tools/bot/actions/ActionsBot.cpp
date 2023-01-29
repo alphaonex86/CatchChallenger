@@ -1,5 +1,6 @@
 #include "ActionsAction.h"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include <iostream>
@@ -100,7 +101,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
-                                else if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.find(shop)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.shops.end())
+                                else if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shop)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().end())
                                         std::cerr << "shop number is not valid shop: for bot id: "
                                                   << bot_Semi.id
                                                   << " ("
@@ -296,7 +297,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                                   << std::to_string(i->first)
                                                   << std::endl;
                                     #endif
-                                    mapServer->zonecapture[pairpoint]=QtDatapackClientLoader::datapackLoader->zonesExtra.at(step->Attribute("zone")).id;
+                                    mapServer->zonecapture[pairpoint]=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(step->Attribute("zone")).id;
                                     zonecapturepoint_number++;
                                 }
                             }
@@ -325,7 +326,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     fightid=stringtouint32(std::string(step->Attribute("fightid")),&ok);
                                 if(ok)
                                 {
-                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.end())
+                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().end())
                                     {
                                         if(bot_Semi.property_text.find("lookAt")!=bot_Semi.property_text.end())
                                         {
@@ -524,11 +525,11 @@ void ActionsAction::loadBotFile(const std::string &mapfile,const std::string &fi
     botFiles[file];//create the entry
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
-    if(CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile.cend())
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(file)!=CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
     else
     {
-        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.xmlLoadedFile[file];
+        domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw()[file];
         #else
         domDocument=new CATCHCHALLENGER_XMLDOCUMENT();
         #endif
