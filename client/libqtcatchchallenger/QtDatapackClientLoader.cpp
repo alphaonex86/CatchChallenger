@@ -60,6 +60,11 @@ void QtDatapackClientLoader::run()
 
 void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
 {
+    if(Settings::settings==nullptr)
+    {
+        qDebug() << QStringLiteral("Settings::settings==nullptr");
+        abort();
+    }
     qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack()");
     if(inProgress)
     {

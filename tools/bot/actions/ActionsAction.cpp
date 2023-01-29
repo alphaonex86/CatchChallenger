@@ -4,7 +4,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
+#include "../../general/fight/CommonFightEngine.hpp"
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
 #include "../bot-actions/BotTargetList.h"
 #include <iostream>
@@ -206,12 +206,12 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol_Qt  *api, const std:
     while(index<botplayer.events.size())
     {
         const std::pair<uint8_t,uint8_t> event=events.at(index);
-        if(event.first>=CatchChallenger::CommonDatapack::commonDatapack.events.size())
+        if(event.first>=CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
         {
             std::cerr << "ActionsAction::setEvents() event out of range" << std::endl;
             break;
         }
-        if(event.second>=CatchChallenger::CommonDatapack::commonDatapack.events.at(event.first).values.size())
+        if(event.second>=CatchChallenger::CommonDatapack::commonDatapack.get_events().at(event.first).values.size())
         {
             std::cerr << "ActionsAction::setEvents() event value out of range" << std::endl;
             break;
@@ -221,10 +221,10 @@ void ActionsAction::setEvents(CatchChallenger::Api_protocol_Qt  *api, const std:
         botplayer.events[event.first]=event.second;
         index++;
     }
-    while((uint32_t)botplayer.events.size()<CatchChallenger::CommonDatapack::commonDatapack.events.size())
+    while((uint32_t)botplayer.events.size()<CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
         botplayer.events.push_back(0);
-    if((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
-        while((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.events.size())
+    if((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
+        while((uint32_t)botplayer.events.size()>CatchChallenger::CommonDatapack::commonDatapack.get_events().size())
             botplayer.events.pop_back();
     index=0;
     while(index<botplayer.events.size())
@@ -546,7 +546,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
-            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.monstersCollision.at(monstersCollisionValue.walkOn.at(index));
+            const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || player.items.find(monstersCollision.item)!=player.items.cend())
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
@@ -706,14 +706,14 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                 player.canMoveOnMap=false;
                 player.api->stopMove();
                 std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
-                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId).monsters;
+                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).monsters;
                 unsigned int index=0;
                 while(index<monsters.size())
                 {
                     botFightMonstersTransformed.push_back(
                                 CatchChallenger::FacilityLib::botFightMonsterToPlayerMonster(
-                                    monsters.at(index),CatchChallenger::ClientFightEngine::getStat(
-                                        CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monsters.at(index).id),
+                                    monsters.at(index),CatchChallenger::CommonFightEngine::getStat(
+                                        CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsters.at(index).id),
                                         monsters.at(index).level)
                                     )
                                 );
@@ -1207,7 +1207,7 @@ void ActionsAction::teleportTo(const uint32_t &mapId,const uint16_t &x,const uin
         CatchChallenger::PlayerMonster *monster=player.api->evolutionByLevelUp();
         if(monster!=NULL)
         {
-            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.monsters.at(monster->monster);
+            const CatchChallenger::Monster &monsterInformations=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
             unsigned int index=0;
             while(index<monsterInformations.evolutions.size())
             {
