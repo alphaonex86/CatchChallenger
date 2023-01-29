@@ -79,7 +79,8 @@ bool ActionsAction::preload_post_subdatapack()
     }
     minitemprice=0;
     maxitemprice=1;
-    for( const auto& n : CatchChallenger::CommonDatapack::commonDatapack.items.item ) {
+    const CatchChallenger::ItemFull &items=CatchChallenger::CommonDatapack::commonDatapack.get_items();
+    for( const auto& n : items.item ) {
         const CatchChallenger::Item &item=n.second;
         if(maxitemprice==0 || maxitemprice<item.price)
             if(item.price>0)

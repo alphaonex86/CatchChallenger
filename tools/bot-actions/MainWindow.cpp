@@ -5,7 +5,7 @@
 #include "../../general/base/FacilityLib.hpp"
 #include "../bot/actions/ActionsAction.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
+#include "../../client/libqtcatchchallenger/Settings.hpp"
 
 #include <QNetworkProxy>
 #include <QMessageBox>
@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    Settings::settings=new QSettings();
     QtDatapackClientLoader::datapackLoader=new QtDatapackClientLoader();
     internalId=0;
     srand(time(0));

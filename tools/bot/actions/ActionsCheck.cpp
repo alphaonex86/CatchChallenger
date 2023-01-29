@@ -25,7 +25,7 @@ void ActionsAction::appendReputationRewards(CatchChallenger::Api_protocol_Qt *ap
     while(index<reputationList.size())
     {
         const CatchChallenger::ReputationRewards &reputationRewards=reputationList.at(index);
-        appendReputationPoint(api,CatchChallenger::CommonDatapack::commonDatapack.reputation.at(reputationRewards.reputationId).name,
+        appendReputationPoint(api,CatchChallenger::CommonDatapack::commonDatapack.get_reputation().at(reputationRewards.reputationId).name,
                 reputationRewards.point);
         index++;
     }

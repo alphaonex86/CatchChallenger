@@ -1,7 +1,6 @@
 #include "BotTargetList.h"
 #include "ui_BotTargetList.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "MapBrowse.h"
 
 std::string BotTargetList::graphStepNearMap(const MultipleBotConnection::CatchChallengerClient * const client,const MapServerMini::BlockObject * const currentNearBlock,const unsigned int &depth)
@@ -492,7 +491,7 @@ BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchCha
         while(index<botsFightList.size())
         {
             const uint32_t &fightId=botsFightList.at(index);
-            const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.botFights.at(fightId);
+            const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId);
             uint8_t maxFightLevel=0;
             {
                 unsigned int sub_index=0;
