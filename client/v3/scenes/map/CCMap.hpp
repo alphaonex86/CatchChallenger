@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "../../core/Scene.hpp"
-#include "../../entities/render/MapController.hpp"
+#include "../../../qtmaprender/MapController.hpp"
 
 namespace Scenes {
 class CCMap : public QObject, public Scene {
@@ -52,7 +52,7 @@ class CCMap : public QObject, public Scene {
   void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x,
                           const uint8_t &y);
   void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x,
-                         const uint8_t &y, const uint16_t &fightId);
+                         const uint8_t &y);
   void currentMapLoaded();
   void errorWithTheCurrentMap();
   void error(const std::string &error);

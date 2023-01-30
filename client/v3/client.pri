@@ -264,52 +264,12 @@ HEADERS  += \
     $$PWD/scenes/leading/Menu.hpp
 
 SOURCES += \
-    $$PWD/entities/render/MapController.cpp \
-    $$PWD/entities/render/MapControllerCrafting.cpp \
-    $$PWD/entities/render/MapControllerMP.cpp \
-    $$PWD/entities/render/MapControllerMPAPI.cpp \
-    $$PWD/entities/render/MapControllerMPMove.cpp \
-    $$PWD/entities/render/MapDoor.cpp \
-    $$PWD/entities/render/MapItem.cpp \
-    $$PWD/entities/render/MapMark.cpp \
-    $$PWD/entities/render/MapObjectItem.cpp \
-    $$PWD/entities/render/MapVisualiser-map.cpp \
-    $$PWD/entities/render/MapVisualiser.cpp \
-    $$PWD/entities/render/MapVisualiserOrder.cpp \
-    $$PWD/entities/render/MapVisualiserPlayer.cpp \
-    $$PWD/entities/render/MapVisualiserPlayerWithFight.cpp \
-    $$PWD/entities/render/MapVisualiserThread.cpp \
-    $$PWD/entities/render/ObjectGroupItem.cpp \
-    $$PWD/entities/render/PathFinding.cpp \
-    $$PWD/entities/render/PreparedLayer.cpp \
-    $$PWD/entities/render/TemporaryTile.cpp \
-    $$PWD/entities/render/TileLayerItem.cpp \
-    $$PWD/entities/render/TriggerAnimation.cpp \
-    $$PWD/entities/Map_client.cpp \
     $$PWD/entities/PlayerInfo.cpp \
     $$PWD/entities/ActionUtils.cpp \
     $$PWD/entities/Shapes.cpp \
     $$PWD/entities/PixmapUtils.cpp \
     $$PWD/entities/Utils.cpp
 HEADERS  += \
-    $$PWD/entities/render/MapController.hpp \
-    $$PWD/entities/render/MapControllerMP.hpp \
-    $$PWD/entities/render/MapDoor.hpp \
-    $$PWD/entities/render/MapItem.hpp \
-    $$PWD/entities/render/MapMark.hpp \
-    $$PWD/entities/render/MapObjectItem.hpp \
-    $$PWD/entities/render/MapVisualiser.hpp \
-    $$PWD/entities/render/MapVisualiserOrder.hpp \
-    $$PWD/entities/render/MapVisualiserPlayer.hpp \
-    $$PWD/entities/render/MapVisualiserPlayerWithFight.hpp \
-    $$PWD/entities/render/MapVisualiserThread.hpp \
-    $$PWD/entities/render/ObjectGroupItem.hpp \
-    $$PWD/entities/render/PathFinding.hpp \
-    $$PWD/entities/render/PreparedLayer.hpp \
-    $$PWD/entities/render/TemporaryTile.hpp \
-    $$PWD/entities/render/TileLayerItem.hpp \
-    $$PWD/entities/render/TriggerAnimation.hpp \
-    $$PWD/entities/Map_client.hpp \
     $$PWD/entities/PlayerInfo.hpp \
     $$PWD/entities/ActionUtils.hpp \
     $$PWD/entities/Shapes.hpp \

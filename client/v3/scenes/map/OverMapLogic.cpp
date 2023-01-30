@@ -984,13 +984,43 @@ void OverMapLogic::wildFightCollision(CatchChallenger::Map_client *map,
 }
 
 void OverMapLogic::botFightCollision(CatchChallenger::Map_client *map,
-                                     const uint8_t &x, const uint8_t &y,
-                                     const uint16_t &fightId) {
+                                     const uint8_t &x, const uint8_t &y) {
   std::cerr << "OverMapLogic::botFightCollision " << std::endl;
+  if (map->bots.find(std::pair<uint8_t, uint8_t>(x, y)) == map->bots.cend()) {
+    PrintError(QString("Bot trigged but no bot at this place"));
+    return;
+  }
 
+  uint8_t step=1;
+  auto actualBot = map->bots.at(std::pair<uint8_t, uint8_t>(x, y));
   auto battle = Globals::GetBattleScene();
-  battle->BotFightInitialize(map, x, y, fightId);
-  SceneManager::GetInstance()->PushScene(battle);
+
+  if (actualBot.step.find(step) == actualBot.step.cend()) {
+    PrintError(QString("Bot trigged but no step found"));
+    return;
+  }
+  const tinyxml2::XMLElement *stepXml = actualBot.step.at(step);
+  if (stepXml->Attribute("type") == NULL) return;
+  if (strcmp(stepXml->Attribute("type"), "fight") == 0) {
+    if (stepXml->Attribute("fightid") == NULL) {
+      showTip(tr("Bot step missing data error, repport this error please")
+                  .toStdString());
+      return;
+    }
+    bool ok;
+    const uint16_t fightId = stringtouint16(stepXml->Attribute("fightid"), &ok);
+    if (!ok) {
+      showTip(tr("Bot step wrong data type error, repport this error please")
+                  .toStdString());
+      return;
+    }
+    battle->BotFightInitialize(map, x, y, fightId);
+    SceneManager::GetInstance()->PushScene(battle);
+    return;
+  } else {
+    PrintError(QString("Bot trigged but not found"));
+    return;
+  }
 }
 
 void OverMapLogic::BattleFinished() {}
@@ -1962,7 +1992,8 @@ void OverMapLogic::CreateInventoryTabs() {
   auto item = Inventory::Create();
   item->SetOnUseItem(std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));
   inventory_tabs_->AddItem(item, "inventory");
-  inventory_tabs_->AddItem(MonsterBag::Create(MonsterBag::kDefault), "monsters");
+  inventory_tabs_->AddItem(MonsterBag::Create(MonsterBag::kDefault),
+                           "monsters");
   auto plant = Plant::Create();
   plant->SetOnUseItem(
       std::bind(&OverMapLogic::OnUseItem, this, _1, _2, _3, _4));

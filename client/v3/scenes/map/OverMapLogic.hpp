@@ -4,9 +4,9 @@
 
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/DisplayStructures.hpp"
-#include "../../entities/Map_client.hpp"
+#include "../../../qtmaprender/Map_client.hpp"
 #include "../../entities/CommonTypes.hpp"
-#include "../../entities/render/MapVisualiserPlayer.hpp"
+#include "../../../qtmaprender/MapVisualiserPlayer.hpp"
 #include "../../ui/LinkedDialog.hpp"
 #include "../shared/crafting/Crafting.hpp"
 #include "../shared/industry/Industry.hpp"
@@ -230,7 +230,7 @@ class OverMapLogic : public OverMap {
   void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x,
                           const uint8_t &y);
   void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x,
-                         const uint8_t &y, const uint16_t &fightId);
+                         const uint8_t &y);
   void BattleFinished();
 
  signals:

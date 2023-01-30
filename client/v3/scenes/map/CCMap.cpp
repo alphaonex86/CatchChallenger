@@ -14,7 +14,7 @@
 #include "../../base/ConnectionManager.hpp"
 #include "../../core/EventManager.hpp"
 #include "../../core/Logger.hpp"
-#include "../../entities/render/TileLayerItem.hpp"
+#include "../../../qtmaprender/TileLayerItem.hpp"
 
 using Scenes::CCMap;
 
@@ -79,8 +79,8 @@ void CCMap::PaintChildItems(std::vector<Node *> childItems, qreal parentX,
     auto child = childItems.at(index);
     qreal x = child->X() + parentX;
     qreal y = child->Y() + parentY;
-    MapObjectItem::x = x;
-    MapObjectItem::y = y;
+    //MapObjectItem::x = x;
+    //MapObjectItem::y = y;
     painter->translate(x, y);
     child->Draw(painter);
     painter->translate(-x, -y);
@@ -102,18 +102,16 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
   zoomFinal *=
       CatchChallenger::CommonDatapack::commonDatapack.get_layersOptions().zoom;
   scale = ceil(zoomFinal);
-  MapObjectItem::scale = scale;
-  MapObjectItem::playerObject = mapController.getPlayerMapObject();
-  painter->scale(scale, scale);
+  //MapObjectItem::scale = scale;
+  //MapObjectItem::playerObject = mapController.getPlayerMapObject();
+  //painter->scale(scale, scale);
 
-  const Tiled::MapObject *p = mapController.getPlayerMapObject();
-  x = (widget->width() / 2 / scale - (p->x() * 16 + p->width() / 2));
-  y = (widget->height() / 2 / scale - ((p->y() - 1) * 16 + p->height() / 2));
-  PaintChildItems(mapController.mapItem->Children(), x, y, painter, option,
-                  widget);
+  //const Tiled::MapObject *p = mapController.getPlayerMapObject();
+  //x = (widget->width() / 2 / scale - (p->x() * 16 + p->width() / 2));
+  //y = (widget->height() / 2 / scale - ((p->y() - 1) * 16 + p->height() / 2));
+  //PaintChildItems(mapController.mapItem->Children(), x, y, painter, option,
+                  //widget);
   painter->restore();
-  // mapController.Paint(painter, option, widget);
-  // mapController.Draw(painter);
 }
 
 void CCMap::MousePressEvent(const QPointF &p, bool &press_validated) {
@@ -128,7 +126,7 @@ void CCMap::MouseReleaseEvent(const QPointF &p, bool &press_validated) {
   if (!clicked) return;
   clicked = false;
   press_validated = true;
-  mapController.keyPressReset();
+  //mapController.keyPressReset();
 
   // convert pixel scaled -> pixel -> tile
   qreal diffX = (p.x() / scale - x) / 16;
@@ -165,9 +163,9 @@ void CCMap::MouseReleaseEvent(const QPointF &p, bool &press_validated) {
             diffY <= (map->relative_y + map->logicalMap.height)) {
           std::cout << "click on " << map->logicalMap.map_file << " " << diffX
                     << "," << diffY << std::endl;
-          mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick, map,
-                                   (int)floor(diffX) - map->relative_x,
-                                   (int)floor(diffY) - map->relative_y);
+          //mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick, map,
+                                   //(int)floor(diffX) - map->relative_x,
+                                   //(int)floor(diffY) - map->relative_y);
           return;
         }
     }

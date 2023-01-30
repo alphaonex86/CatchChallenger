@@ -18,7 +18,7 @@
 #include "../../core/Node.hpp"
 #include "../../core/Scene.hpp"
 #include "../../core/Sprite.hpp"
-#include "../../entities/Map_client.hpp"
+#include "../../../qtmaprender/Map_client.hpp"
 #include "../../entities/CommonTypes.hpp"
 #include "../../ui/Button.hpp"
 #include "../../ui/Label.hpp"
