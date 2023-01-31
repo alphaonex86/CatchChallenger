@@ -447,6 +447,95 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             emit useSeed(plantId);
             //if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true)
             {
+                //debug
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+                {
+                    std::unordered_set<int> detectDuplicate;
+                    Map_full * m=mapController->getMap(seedInWaiting.map);
+                    std::cerr << "debug: seedInWaiting.map: " << seedInWaiting.map << " mapController->getMap(seedInWaiting.map)->logicalMap.id: " << m->logicalMap.id << std::endl;
+                    std::cerr << "debug: map list: " << std::endl;
+                    unsigned int index=0;
+                    while(index<QtDatapackClientLoader::datapackLoader->get_maps().size())
+                    {
+                        const std::string m=QtDatapackClientLoader::datapackLoader->getDatapackPath()+QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+QtDatapackClientLoader::datapackLoader->get_maps().at(index);
+                        if(mapController->all_map.find(m)!=mapController->all_map.cend())
+                        {
+                            if(detectDuplicate.find(mapController->all_map.at(m)->logicalMap.id)!=detectDuplicate.cend())
+                            {
+                                std::cerr << "duplicate: " << mapController->all_map.at(m)->logicalMap.id << std::endl;
+                                std::cerr << "need match id mapController->all_map: " << std::endl;
+                                for (auto& it: mapController->all_map)
+                                {
+                                    const Map_full * m2=it.second;
+                                    std::cout << it.first << ": " << m2->logicalMap.id << std::endl;
+                                }
+                                std::cerr << "need match id QtDatapackClientLoader::datapackLoader->get_maps(): " << std::endl;
+                                unsigned int index=0;
+                                while(index<QtDatapackClientLoader::datapackLoader->get_maps().size())
+                                {
+                                    std::cout << QtDatapackClientLoader::datapackLoader->get_maps().at(index) << ": " << index << std::endl;
+                                    index++;
+                                }
+                                abort();
+                            }
+                            detectDuplicate.insert(mapController->all_map.at(m)->logicalMap.id);
+
+                            if(mapController->all_map.find(m)==mapController->all_map.cend())
+                            {
+                                std::cerr << "all_map.find(m)==all_map.cend() with: " << m << std::endl;
+                                for (auto& it: mapController->all_map)
+                                    std::cout << it.first << ": " << it.second << std::endl;
+                                abort();
+                            }
+                            if(index!=mapController->all_map.at(m)->logicalMap.id)
+                            {
+                                std::cerr << "index!=all_map.at(m)->logicalMap.id with: " << m << ", " << index << ", " << mapController->all_map.at(m)->logicalMap.id << std::endl;
+                                std::cerr << "need match id mapController->all_map: " << std::endl;
+                                for (auto& it: mapController->all_map)
+                                {
+                                    const Map_full * m2=it.second;
+                                    std::cout << it.first << ": " << m2->logicalMap.id << std::endl;
+                                }
+                                std::cerr << "need match id QtDatapackClientLoader::datapackLoader->get_maps(): " << std::endl;
+                                unsigned int index=0;
+                                while(index<QtDatapackClientLoader::datapackLoader->get_maps().size())
+                                {
+                                    std::cout << QtDatapackClientLoader::datapackLoader->get_maps().at(index) << ": " << index << std::endl;
+                                    index++;
+                                }
+                                abort();
+                            }
+                            std::cerr << m << " " << __FILE__ << ":" << __LINE__ << std::endl;
+                        }
+                        else
+                            std::cerr << m << " not into loaded map! " << __FILE__ << ":" << __LINE__ << std::endl;
+                        index++;
+                    }
+                }
+                if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(seedInWaiting.map)!=QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
+                {
+                    if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(seedInWaiting.map)!=mapController->getMap(seedInWaiting.map)->logicalMap.id)
+                    {
+                        std::cerr << __FILE__ << ":" << __LINE__ << " data corrupted (abort)" << std::endl;
+                        abort();
+                    }
+                }
+                else
+                {
+                    //check duplicate
+                    std::unordered_set<int> detectDuplicate;
+                    for (auto& it: mapController->all_map)
+                    {
+                        const Map_full * m2=it.second;
+                        if(detectDuplicate.find(m2->logicalMap.id)!=detectDuplicate.cend())
+                        {
+                            std::cerr << "duplicate mapController->all_map to use as id" << std::endl;
+                            abort();
+                        }
+                        detectDuplicate.insert(m2->logicalMap.id);
+                    }
+                }
+                #endif
                 client->seed_planted(true);
                 client->insert_plant(mapController->getMap(seedInWaiting.map)->logicalMap.id,
                                      seedInWaiting.x,seedInWaiting.y,plantId,

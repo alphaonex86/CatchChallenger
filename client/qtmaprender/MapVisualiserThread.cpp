@@ -192,11 +192,10 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         delete tempMapObject;
         return NULL;
     }
-    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(resolvedFileName);
-    #else
-    tempMapObject->logicalMap.id                                    = 1;
     #endif
-
+    /* this id need be set, is used into plants (colect+seed), and other map interaction
+     * NEVER use default value, disable full var via define */
+    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(resolvedFileName);
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
