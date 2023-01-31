@@ -2,6 +2,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
+#include <iostream>
 #include <QDebug>
 #include <QFileInfo>
 
@@ -22,6 +23,15 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
+        if(!mHaveTheDatapack && !player_informations_is_set)
+            qDebug() << "MapController::insert_plant() !mHaveTheDatapack && !player_informations_is_set";
+        else
+        {
+            if(!mHaveTheDatapack)
+                qDebug() << "MapController::insert_plant() !mHaveTheDatapack";
+            else
+                qDebug() << "MapController::insert_plant() !player_informations_is_set";
+        }
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
@@ -40,7 +50,29 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId))).absoluteFilePath().toStdString();
     if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap))
     {
-        qDebug() << QString("map (%1) not show or not loaded, delay it").arg(QString::fromStdString(map));
+        qDebug() << QString("map (%1,%2) not show or not loaded, delay it").arg(QString::fromStdString(map)).arg(mapId);
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        {
+            std::cerr << "debug: map list: " << std::endl;
+            unsigned int index=0;
+            while(index<QtDatapackClientLoader::datapackLoader->get_maps().size())
+            {
+                const std::string m=QtDatapackClientLoader::datapackLoader->getDatapackPath()+QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+QtDatapackClientLoader::datapackLoader->get_maps().at(index);
+                if(all_map.find(m)==all_map.cend())
+                {
+                    std::cerr << "all_map.find(m)==all_map.cend() with: " << m << std::endl;
+                    abort();
+                }
+                if(index!=all_map.at(m)->logicalMap.id)
+                {
+                    std::cerr << "index!=all_map.at(m)->logicalMap.id with: " << m << ", " << index << ", " << all_map.at(m)->logicalMap.id << std::endl;
+                    abort();
+                }
+                std::cerr << m << std::endl;
+                index++;
+            }
+        }
+        #endif
         DelayedPlantInsert tempItem;
         tempItem.mapId=mapId;
         tempItem.x=x;
