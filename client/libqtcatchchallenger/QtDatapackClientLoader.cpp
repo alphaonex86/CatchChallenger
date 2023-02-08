@@ -68,7 +68,13 @@ QPixmap QtDatapackClientLoader::defaultInventoryImage() {
 void QtDatapackClientLoader::run() { exec(); }
 #endif
 
-void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath) {
+void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
+{
+    if(Settings::settings==nullptr)
+    {
+        qDebug() << QStringLiteral("Settings::settings==nullptr");
+        abort();
+    }
     qDebug() << QStringLiteral("QtDatapackClientLoader::parseDatapack()");
     if (inProgress) {
         qDebug() << QStringLiteral("already in progress");

@@ -2,7 +2,6 @@
 #include "SocialChat.h"
 #include "ui_BotTargetList.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../client/libqtcatchchallenger/ClientFightEngine.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "MapBrowse.h"
 #include "TargetFilter.h"
