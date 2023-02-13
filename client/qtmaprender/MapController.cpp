@@ -74,12 +74,12 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
         {
-            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(fileName)!=
-                    QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
+            if(QtDatapackClientLoader::GetInstance()->get_plantOnMap().find(fileName)!=
+                    QtDatapackClientLoader::GetInstance()->get_plantOnMap().cend())
             {
                 if(plantOnMap==NULL)
                     abort();
-                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(fileName);
+                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plantCoor=QtDatapackClientLoader::GetInstance()->get_plantOnMap().at(fileName);
                 for (const auto &n : plantCoor) {
                     const uint16_t indexOfMap=n.second;
                     if(plantOnMap->size()>1000000)
@@ -92,12 +92,12 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
                         uint32_t seconds_to_mature=0;
                         if(playerPlant.mature_at>(uint64_t)QDateTime::currentMSecsSinceEpoch()/1000)
                             seconds_to_mature=static_cast<uint32_t>(playerPlant.mature_at-QDateTime::currentMSecsSinceEpoch()/1000);
-                        if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(fileName)!=
-                                QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
-                            insert_plant(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(fileName),
+                        if(QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().find(fileName)!=
+                                QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().cend())
+                            insert_plant(QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().at(fileName),
                             static_cast<uint8_t>(x),static_cast<uint8_t>(y),playerPlant.plant,static_cast<uint16_t>(seconds_to_mature));
                         else
-                            qDebug() << "!QtDatapackClientLoader::datapackLoader->fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
+                            qDebug() << "!QtDatapackClientLoader::GetInstance->fullMapPathToId.contains(plantIndexContent.map) for CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer";
                     }
                 }
             }

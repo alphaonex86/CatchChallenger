@@ -398,7 +398,7 @@ bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
         tempItem.direction=direction;
         delayedTeleportTo.push_back(tempItem);
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::GetInstance().maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
         return true;
     }
@@ -575,7 +575,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Insert:
                 if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
-                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(
+                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::GetInstance()->get_maps().at(
                                                              delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();
                     if(all_map.find(mapPath)!=all_map.cend())
                     {

@@ -156,12 +156,12 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             newItem.item=item.item;
             newItem.tileObject=NULL;
             newItem.indexOfItemOnMap=0;
-            if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(resolvedFileName)!=
-                    QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend())
+            if(QtDatapackClientLoader::GetInstance()->get_itemOnMap().find(resolvedFileName)!=
+                    QtDatapackClientLoader::GetInstance()->get_itemOnMap().cend())
             {
-                if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
-                        QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).cend())
-                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName)
+                if(QtDatapackClientLoader::GetInstance()->get_itemOnMap().at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
+                        QtDatapackClientLoader::GetInstance()->get_itemOnMap().at(resolvedFileName).cend())
+                    newItem.indexOfItemOnMap=QtDatapackClientLoader::GetInstance()->get_itemOnMap().at(resolvedFileName)
                             .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
                 else
                     qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
@@ -169,7 +169,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
             else
             {
                 QStringList keys;
-                for(auto kv : QtDatapackClientLoader::datapackLoader->get_itemOnMap())
+                for(auto kv : QtDatapackClientLoader::GetInstance()->get_itemOnMap())
                     keys.push_back(QString::fromStdString(kv.first));
                 qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
                             .arg(QString::fromStdString(resolvedFileName))
@@ -180,19 +180,19 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         }
     }
     #if defined(CATCHCHALLENGER_EXTRA_CHECK) && ! defined(MAPVISUALISER)
-    if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(resolvedFileName)==
-            QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
+    if(QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().find(resolvedFileName)==
+            QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().cend())
     {
         mLastError="Map id unresolved "+resolvedFileName;
         QStringList keys;
-        for(auto kv : QtDatapackClientLoader::datapackLoader->get_fullMapPathToId())
+        for(auto kv : QtDatapackClientLoader::GetInstance()->get_fullMapPathToId())
             keys.push_back(QString::fromStdString(kv.first));
         qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
         delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
-    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(resolvedFileName);
+    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::GetInstance()->get_fullMapPathToId().at(resolvedFileName);
     #else
     tempMapObject->logicalMap.id                                    = 1;
     #endif
@@ -756,8 +756,8 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                             else
                                                             {
                                                                 const char * const zoneString=step->Attribute("zone");
-                                                                if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zoneString)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
-                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zoneString).id;
+                                                                if(QtDatapackClientLoader::GetInstance()->get_zonesExtra().find(zoneString)!=QtDatapackClientLoader::GetInstance()->get_zonesExtra().cend())
+                                                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=QtDatapackClientLoader::GetInstance()->get_zonesExtra().at(zoneString).id;
                                                                 else
                                                                     qDebug() << (QStringLiteral("zoneString not resolved: for bot id: %1 (%2)")
                                                                         .arg(botId).arg(QString::fromStdString(botFile)));
