@@ -136,12 +136,13 @@
         #include <endian.h>
         #ifdef __BYTE_ORDER
         #if __BYTE_ORDER == __BIG_ENDIAN //if both are not defined it is TRUE!
-            #define be16toh(a) a
+            /* already set on debian 10 mips big endian
+             * #define be16toh(a) a
             #define be32toh(a) a
             #define be64toh(a) a
             #define htobe16(a) a
             #define htobe32(a) a
-            #define htobe64(a) a
+            #define htobe64(a) a*/
         #elif __BYTE_ORDER == __LITTLE_ENDIAN
         #elif __BYTE_ORDER == __PDP_ENDIAN
         #else
