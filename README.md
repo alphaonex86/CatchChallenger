@@ -63,9 +63,9 @@ Dependency:
   * curl to download datapack via http
   
 ### Linux distro
-**Ubuntu**: apt-get install build-essential gcc automake qt5-qmake qt5-default libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
+**Ubuntu**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default libqt5sql5-psql libqt5websockets5-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
+**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
 ### Gui server
 ```sh
@@ -86,7 +86,7 @@ git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack data
 ### Epoll server (linux only, high performance)
 **Ubuntu**: apt-get install libzstd-dev zlib1g-dev libssl-dev libpq-dev
 
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default
+**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev
 
 ```sh
 cd server/
@@ -98,7 +98,7 @@ chmod a+x catchchallenger-server-cli-epoll
 ```
 
 ### Client
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qt5-default qtdeclarative5-dev qtscript5-dev
+**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qtdeclarative5-dev qtscript5-dev
 
 ```sh
 cd client/
