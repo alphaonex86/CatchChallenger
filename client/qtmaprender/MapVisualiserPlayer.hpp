@@ -18,6 +18,10 @@ public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,
                                  const bool &useCache=true, const bool &openGL=false);
     ~MapVisualiserPlayer();
+    std::pair<uint8_t,uint8_t> getPos() const;
+    const Tiled::MapObject * getPlayerMapObject() const;
+    bool isInMove() const;
+    CatchChallenger::Direction getDirection() const;
     virtual bool haveMapInMemory(const std::string &mapPath);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
@@ -175,10 +179,6 @@ protected slots:
     virtual bool insert_player_internal(const CatchChallenger::Player_public_informations &player, const uint32_t &mapId,
                                      const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction,
                                      const std::vector<std::string> &skinFolderList);
-    const Tiled::MapObject * getPlayerMapObject() const;
-    std::pair<uint8_t,uint8_t> getPos() const;
-    bool isInMove() const;
-    CatchChallenger::Direction getDirection() const;
     void stopMove();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);

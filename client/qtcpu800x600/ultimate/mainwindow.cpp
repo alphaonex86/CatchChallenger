@@ -1,12 +1,12 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
-#include "../base/InternetUpdater.h"
-#include "../base/BlacklistPassword.h"
+#include "../../libqtcatchchallenger/InternetUpdater.hpp"
+#include "../../libcatchchallenger/BlacklistPassword.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
 #include "../../../general/base/CompressionProtocol.hpp"
-#include "../base/Ultimate.h"
+#include "../../libqtcatchchallenger/Ultimate.hpp"
 #include <QStandardPaths>
 #include <QNetworkProxy>
 #include <QCoreApplication>
@@ -46,7 +46,7 @@
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../libqtcatchchallenger/Api_client_virtual.hpp"
 #include "../base/SslCert.h"
-#include "../base/LanBroadcastWatcher.h"
+#include "../../libqtcatchchallenger/LanBroadcastWatcher.hpp"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),

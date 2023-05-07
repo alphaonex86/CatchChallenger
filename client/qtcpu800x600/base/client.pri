@@ -43,12 +43,8 @@ SOURCES += \
     $$PWD/QmlInterface/AnimationControl.cpp \
     $$PWD/Options.cpp \
     $$PWD/LanguagesSelect.cpp \
-    $$PWD/InternetUpdater.cpp \
-    $$PWD/ExtraSocket.cpp \
-    $$PWD/LocalListener.cpp \
     $$PWD/CachedString.cpp \
-    $$PWD/FacilityLibClient.cpp \
-    $$PWD/Ultimate.cpp
+    $$PWD/FacilityLibClient.cpp
 
 HEADERS  += \
     $$PWD/interface/BaseWindow.h \
@@ -64,12 +60,8 @@ HEADERS  += \
     $$PWD/QmlInterface/AnimationControl.h \
     $$PWD/LanguagesSelect.h \
     $$PWD/CachedString.h \
-    $$PWD/InternetUpdater.h \
-    $$PWD/ExtraSocket.h \
-    $$PWD/LocalListener.h \
     $$PWD/Options.h \
-    $$PWD/FacilityLibClient.h \
-    $$PWD/Ultimate.h
+    $$PWD/FacilityLibClient.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \
     $$PWD/interface/Chat.ui \

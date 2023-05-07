@@ -1,5 +1,5 @@
-include(qtcpu800x600/qtcpu800x600.pro)
+include(qtopengl/catchchallenger-qtopengl.pro)
 #DEFINES += DEBUG_PROTOCOLPARSING_RAW_NETWORK
 #DEFINES += DEBUG_MESSAGE_CLIENT_SQL
 DEFINES += CATCHCHALLENGER_CACHE_HPS
-QMAKE_LFLAGS += -fuse-ld=mold
+linux:QMAKE_LFLAGS += -fuse-ld=mold

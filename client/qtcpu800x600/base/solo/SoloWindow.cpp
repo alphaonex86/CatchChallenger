@@ -16,7 +16,7 @@
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/Version.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
-#include "../InternetUpdater.h"
+#include "../../libqtcatchchallenger/InternetUpdater.hpp"
 #include "../FacilityLibClient.h"
 
 const QString SoloWindow::text_savegame_version=QStringLiteral("savegame_version");
