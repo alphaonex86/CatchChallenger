@@ -13,6 +13,12 @@ HEADERS  += \
     $$PWD/PlatformMacro.hpp \
     $$PWD/Settings.hpp \
     $$PWD/ClientVariableAudio.hpp \
+    $$PWD/FeedNews.hpp \
+    $$PWD/InternetUpdater.hpp \
+    $$PWD/Ultimate.hpp \
+    $$PWD/LanBroadcastWatcher.hpp \
+    $$PWD/LocalListener.hpp \
+    $$PWD/ExtraSocket.hpp \
     $$PWD/ConnectedSocket.hpp
 
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {

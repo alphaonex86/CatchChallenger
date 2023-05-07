@@ -2,6 +2,7 @@
 #include "Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
 #include "../VariableServer.hpp"
+#include <string.h>
 #include "../../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;

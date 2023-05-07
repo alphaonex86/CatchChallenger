@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include <string.h>
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "GlobalServerData.hpp"
