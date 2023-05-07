@@ -20,6 +20,12 @@ SOURCES += \
     $$PWD/QZstdDecodeThread.cpp \
     $$PWD/Language.cpp \
     $$PWD/Settings.cpp \
+    $$PWD/FeedNews.cpp \
+    $$PWD/InternetUpdater.cpp \
+    $$PWD/Ultimate.cpp \
+    $$PWD/LanBroadcastWatcher.cpp \
+    $$PWD/LocalListener.cpp \
+    $$PWD/ExtraSocket.cpp \
     $$PWD/ConnectedSocket.cpp
 
 DEFINES += CATCHCHALLENGERLIB

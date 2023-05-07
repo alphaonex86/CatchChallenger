@@ -166,6 +166,8 @@ private:
     std::vector<PathResolved> pathList;
 
     CatchChallenger::Api_protocol_Qt * client;
+public:
+    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y);
 private slots:
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
@@ -173,7 +175,6 @@ private slots:
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
     virtual void destroyMap(Map_full *map);
-    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y);
     CatchChallenger::Direction moveFromPath();
     //virtual std::unordered_set<std::string> loadMap(Map_full *map,const bool &display);
     void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster);

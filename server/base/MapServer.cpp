@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "VariableServer.hpp"
 #include "Client.hpp"
+#include <string.h>
 #include "../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
