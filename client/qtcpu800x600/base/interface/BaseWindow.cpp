@@ -2,7 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../libcatchchallenger/ClientVariable.hpp"
-#include "../Ultimate.h"
+#include "../../../libqtcatchchallenger/Ultimate.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"

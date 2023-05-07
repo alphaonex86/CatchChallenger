@@ -44,10 +44,11 @@ public:
     std::string current_map;
     std::unordered_map<std::string,Map_full *> all_map,old_all_map;
     std::unordered_map<std::string,QDateTime> old_all_map_time;
+    //put to protected again:
+    MapItem* mapItem;
 protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
-    MapItem* mapItem;
 
     Tiled::Tileset * markPathFinding;
     int tagTilesetIndex;

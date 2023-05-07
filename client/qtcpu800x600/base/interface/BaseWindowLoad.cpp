@@ -6,7 +6,7 @@
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../Ultimate.h"
+#include "../../../libqtcatchchallenger/Ultimate.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"

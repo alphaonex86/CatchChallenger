@@ -3,7 +3,7 @@
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../Ultimate.h"
+#include "../../../libqtcatchchallenger/Ultimate.hpp"
 
 #include <QInputDialog>
 #include <iostream>

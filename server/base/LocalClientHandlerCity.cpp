@@ -2,6 +2,7 @@
 #include "PreparedDBQuery.hpp"
 #include "MapServer.hpp"
 #include "GlobalServerData.hpp"
+#include <string.h>
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 

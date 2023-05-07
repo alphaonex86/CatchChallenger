@@ -25,7 +25,7 @@
 #include "../../libcatchchallenger/ChatParsing.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/base/ConnectedSocket.hpp"
-#include "../base/FeedNews.h"
+#include "../../libqtcatchchallenger/FeedNews.hpp"
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../qtmaprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
