@@ -2,6 +2,7 @@
 #include "../../../general/base/Version.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include <QWidget>
+#include "../GameLoader.hpp"
 
 LoadingScreen::LoadingScreen()
 {
@@ -21,7 +22,7 @@ LoadingScreen::LoadingScreen()
     version->setFont(font);
     progressbar=new CCprogressbar(this);
 
-    /*if(GameLoader::gameLoader==nullptr)
+    if(GameLoader::gameLoader==nullptr)
     {
         GameLoader::gameLoader=new GameLoader();
         if(!QObject::connect(GameLoader::gameLoader,&GameLoader::progression,this,&LoadingScreen::progression))
@@ -30,7 +31,7 @@ LoadingScreen::LoadingScreen()
             abort();
         if(!connect(&Language::language,&Language::newLanguage,this,&LoadingScreen::newLanguage,Qt::QueuedConnection))
             abort();
-    }*/
+    }
 
     timer.setSingleShot(true);
     if(!QObject::connect(&timer,&QTimer::timeout,this,&LoadingScreen::canBeChanged))
