@@ -53,6 +53,8 @@ SOURCES += \
     $$PWD/above/player/FinishedQuests.cpp \
     $$PWD/QGraphicsPixmapItemClick.cpp \
     $$PWD/above/MonsterDetails.cpp \
+    $$PWD/GameLoader.cpp \
+    $$PWD/GameLoaderThread.cpp \
     $$PWD/ProgressBarPixel.cpp
 HEADERS  += \
     $$PWD/CCGraphicsTextItem.hpp \
@@ -92,6 +94,8 @@ HEADERS  += \
     $$PWD/above/player/FinishedQuests.hpp \
     $$PWD/QGraphicsPixmapItemClick.hpp \
     $$PWD/above/MonsterDetails.hpp \
+    $$PWD/GameLoader.hpp \
+    $$PWD/GameLoaderThread.hpp \
     $$PWD/ProgressBarPixel.hpp
 
 
