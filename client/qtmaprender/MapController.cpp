@@ -204,6 +204,10 @@ void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
     if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected))
         abort();
     #endif
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,this,&MapController::datapackParsed,Qt::QueuedConnection))
+        abort();
+    if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,this,&MapController::datapackParsedMainSub,Qt::QueuedConnection))
+        abort();
 }
 
 void MapController::resetAll()

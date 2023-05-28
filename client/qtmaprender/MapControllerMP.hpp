@@ -164,8 +164,6 @@ private:
     static QPixmap *imgForPseudoDev;
     static QPixmap *imgForPseudoPremium;
     std::vector<PathResolved> pathList;
-
-    CatchChallenger::Api_protocol_Qt * client;
 public:
     void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, uint8_t x, uint8_t y);
 private slots:
