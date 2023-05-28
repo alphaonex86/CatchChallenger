@@ -45,8 +45,10 @@ void CCMap::setVar(ConnexionManager *connexionManager)
 {
     mapController.resetAll();
     mapController.connectAllSignals(connexionManager->client);
+    /* need be call after select the char:
+    mapController.setDatapackPath(connexionManager->client->datapackPathBase(),connexionManager->client->mainDatapackCode());
     mapController.datapackParsed();
-    mapController.datapackParsedMainSub();
+    mapController.datapackParsedMainSub();*/
     clicked=false;
     scale=1.0;
     x=0.0;
