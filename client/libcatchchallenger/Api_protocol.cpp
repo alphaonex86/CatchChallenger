@@ -113,7 +113,7 @@ std::map<uint8_t,uint64_t> Api_protocol::getQuerySendTimeList() const
     return querySendTime;
 }
 
-std::vector<uint8_t> Api_protocol::getEvents()
+std::vector<uint8_t> &Api_protocol::getEvents()
 {
     return events;
 }

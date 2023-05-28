@@ -182,9 +182,12 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     if(!connect(this,                                   &ConnexionManager::parseDatapackMainSub,                      QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::parseDatapackMainSub,Qt::QueuedConnection))
         abort();
 
+    bool haveTryConnect=false;
     #ifndef NOTCPSOCKET
     if(realSslSocket!=nullptr)
     {
+        haveTryConnect=true;
+        std::cout << "try connect TCP on: " << connexionInfo.host.toStdString() << ": " << connexionInfo.port << std::endl;
         if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),  this,&ConnexionManager::sslErrors,Qt::QueuedConnection))
             abort();
         if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::QueuedConnection))
@@ -198,6 +201,8 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     #ifndef NOWEBSOCKET
     if(realWebSocket!=nullptr)
     {
+        haveTryConnect=true;
+        std::cout << "try connect WebSocket on: " << connexionInfo.host.toStdString() << ": " << connexionInfo.port << std::endl;
         if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
             abort();
         if(!connect(realWebSocket,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
@@ -212,6 +217,8 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
     #ifdef CATCHCHALLENGER_SOLO
     if(fakeSocket!=nullptr)
     {
+        haveTryConnect=true;
+        std::cout << "try connect Internal on: " << connexionInfo.host.toStdString() << ": " << connexionInfo.port << std::endl;
         if(!connect(fakeSocket,&QFakeSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
             abort();
         if(!connect(fakeSocket,static_cast<void(QFakeSocket::*)(QAbstractSocket::SocketError)>(&QFakeSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
@@ -220,6 +227,8 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         fakeSocket->connectToHost();
     }
     #endif
+    if(haveTryConnect==false)
+        newError("Internal error","Unable to determine the socket to use");
 }
 
 void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)

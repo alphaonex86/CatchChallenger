@@ -38,6 +38,9 @@ LinkToMaster::LinkToMaster(
             ),
         stat(Stat::Connected)
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "LinkToMaster::LinkToMaster()" << std::endl;
+    #endif
     flags|=0x08;
     queryNumberList.resize(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     unsigned int index=0;
@@ -52,6 +55,9 @@ LinkToMaster::LinkToMaster(
 
 LinkToMaster::~LinkToMaster()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    std::cerr << "LinkToMaster::~LinkToMaster()" << std::endl;
+    #endif
     memset(LinkToMaster::private_token_master,0x00,sizeof(LinkToMaster::private_token_master));
     closeSocket();
 }

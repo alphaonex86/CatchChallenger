@@ -42,12 +42,10 @@ EpollClientLoginSlave::EpollClientLoginSlave(
 {
     client_list.push_back(this);
     lastActivity=LinkToGameServer::msFrom1970();
-    std::cerr << "EpollClientLoginSlave::EpollClientLoginSlave() " << this << std::endl;
 }
 
 EpollClientLoginSlave::~EpollClientLoginSlave()
 {
-    std::cerr << "EpollClientLoginSlave::~EpollClientLoginSlave() " << this << " (" << infd << ")" << std::endl;
     disconnectClient();
 }
 
@@ -58,7 +56,9 @@ uint64_t EpollClientLoginSlave::get_lastActivity() const
 
 bool EpollClientLoginSlave::disconnectClient()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cerr << "EpollClientLoginSlave::disconnectClient() " << this << " (" << infd << ")" << std::endl;
+    #endif
 
     if(detectDuplicateClientToDelete.find(this)==detectDuplicateClientToDelete.cend())
     {
@@ -197,6 +197,7 @@ bool EpollClientLoginSlave::disconnectClient()
 
         //crash with heap-buffer-overflow if not flush before the end of destructor
     }
+    std::cerr << "Error test case " << __FILE__ << ":" << __LINE__ << std::endl;
     return true;
 }
 
@@ -275,6 +276,8 @@ ssize_t EpollClientLoginSlave::write(const char * const data, const size_t &size
 
 void EpollClientLoginSlave::closeSocket()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::cerr << "EpollClientLoginSlave::closeSocket(): " << this << " (" << infd << ")" << std::endl;
+    #endif
     disconnectClient();
 }
