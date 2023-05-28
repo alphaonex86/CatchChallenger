@@ -15,6 +15,7 @@
 #include "../../libqtcatchchallenger/Ultimate.hpp"
 #include "../../libcatchchallenger/ClientVariable.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
+#include "../../libqtcatchchallenger/LanBroadcastWatcher.hpp"
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
 #include "../above/Login.hpp"
@@ -34,6 +35,7 @@ Multi::Multi() :
     temp_customConnexionInfoList=loadConfigConnexionInfoList();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     selectedServer.unique_code.clear();
     selectedServer.isCustom=false;
@@ -70,6 +72,9 @@ Multi::Multi() :
 
     //need be the last
     downloadFile();
+    LanBroadcastWatcher::lanBroadcastWatcher=new LanBroadcastWatcher();
+    if(!connect(LanBroadcastWatcher::lanBroadcastWatcher,&LanBroadcastWatcher::newServer,this,&Multi::newLanServer))
+        abort();
     displayServerList();
     addServer=nullptr;
 }
@@ -137,6 +142,49 @@ void Multi::server_add_clicked()
     emit setAbove(addServer);
 }
 
+void Multi::newLanServer()
+{
+    const QList<LanBroadcastWatcher::ServerEntry> &listLan=LanBroadcastWatcher::lanBroadcastWatcher->getLastServerList();
+    temp_lanConnexionInfoList.clear();
+    {
+        int index=0;
+        while(index<listLan.size())
+        {
+            ConnexionInfo e;
+            const LanBroadcastWatcher::ServerEntry &l=listLan.at(index);
+            e.unique_code=l.uniqueKey;
+            e.name=l.name;
+
+            //hightest priority
+            e.host=l.server.toString();
+            e.port=l.port;
+            //lower priority
+            e.ws=QString();
+
+            e.connexionCounter=0;
+            e.lastConnexion=0;
+
+            e.register_page=QString();
+            e.lost_passwd_page=QString();
+            e.site_page=QString();
+
+            e.proxyHost=QString();
+            e.proxyPort=0;
+
+            e.lan=true;
+
+            temp_lanConnexionInfoList.push_back(e);
+            index++;
+        }
+    }
+    serverConnexion.clear();
+    mergedConnexionInfoList=temp_customConnexionInfoList;
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
+    std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
+    displayServerList();
+}
+
 void Multi::server_add_finished()
 {
     emit setAbove(nullptr);
@@ -153,6 +201,7 @@ void Multi::server_add_finished()
     std::cerr << "AddOrEditServer returned" <<  std::endl;
     #endif
     ConnexionInfo connexionInfo;
+    connexionInfo.lan=false;
     connexionInfo.connexionCounter=0;
     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
 
@@ -182,6 +231,7 @@ void Multi::server_add_finished()
     temp_customConnexionInfoList.push_back(connexionInfo);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
@@ -288,6 +338,7 @@ void Multi::server_edit_finished()
     }
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
@@ -314,6 +365,7 @@ void Multi::server_remove_clicked()
     }
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());
     saveConnexionInfoList();
     displayServerList();
@@ -374,6 +426,7 @@ void Multi::httpFinished()
     temp_xmlConnexionInfoList=loadXmlConnexionInfoList(content);
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
+    mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());
     std::cout << "mergedConnexionInfoList.size(): " << mergedConnexionInfoList.size() << std::endl;
     std::sort(mergedConnexionInfoList.begin(),mergedConnexionInfoList.end());//qSort(mergedConnexionInfoList);
     displayServerList();

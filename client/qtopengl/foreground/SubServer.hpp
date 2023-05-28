@@ -11,7 +11,6 @@
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
 
-class ListEntryEnvolued;
 class AddOrEditServer;
 class Login;
 class MultiItem;

@@ -12,7 +12,6 @@
 #include "../ConnexionInfo.hpp"
 #include "../CCScrollZone.hpp"
 
-class ListEntryEnvolued;
 class AddOrEditServer;
 class Login;
 class MultiItem;
@@ -32,6 +31,7 @@ public:
     explicit Multi();
     ~Multi();
     void displayServerList();
+    void newLanServer();
     void server_add_clicked();
     void server_add_finished();
     void server_edit_clicked();
@@ -53,7 +53,7 @@ public:
     void mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass) override;
     void mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass) override;
 private:
-    std::vector<ConnexionInfo> temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
+    std::vector<ConnexionInfo> temp_lanConnexionInfoList,temp_customConnexionInfoList,temp_xmlConnexionInfoList,mergedConnexionInfoList;
     QList<MultiItem *> serverConnexion;
     SelectedServer selectedServer;//no selected if unique_code empty
     AddOrEditServer *addServer;
