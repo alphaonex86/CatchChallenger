@@ -3,6 +3,7 @@
 
 #include "MapVisualiser.hpp"
 #include "../../general/base/GeneralStructures.hpp"
+#include "../libqtcatchchallenger/Api_protocol_Qt.hpp"
 #include "../../general/base/lib.h"
 
 #include <QSet>
@@ -94,6 +95,7 @@ private:
     uint8_t monster_x,monster_y;
 
 protected:
+    CatchChallenger::Api_protocol_Qt * client;
     //datapack
     bool mHaveTheDatapack;
     std::string datapackPath;

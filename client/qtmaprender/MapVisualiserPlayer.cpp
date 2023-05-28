@@ -1585,6 +1585,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
     //current player
     if(player.simplifiedId==player_informations.public_informations.simplifiedId)
     {
+        std::cout << "MapVisualiserPlayer::insert_player_internal() player.simplifiedId==player_informations.public_informations.simplifiedId" << std::endl;
         //ignore to improve the performance server because can reinsert all player of map using the overall client list
         if(!current_map.empty())
         {
@@ -1593,6 +1594,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         }
         /// \todo do a player cache here
         //the player skin
+        std::cerr << "set playerTileset here from: " << (int)player.skinId << std::endl;
         if(player.skinId<skinFolderList.size())
         {
             playerSkinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId);
@@ -1602,12 +1604,24 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             {
                 if(!playerTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                     abort();
+                if(playerTileset->tileCount()<12)
+                {
+                    std::cerr << "ERROR: playerTileset->tileCount()<12 at " << imagePath << " (abort)" << std::endl;
+                    abort();
+                }
+                if(playerTileset->tileAt(1)!=nullptr)
+                    std::cout << "correctly loaded at " << imagePath << std::endl;
+                else
+                {
+                    std::cerr << "ERROR: playerTileset->tileCount()<12 at " << imagePath << " (abort)" << std::endl;
+                    abort();
+                }
             }
             else
-                qDebug() << "Unable to load the player tilset: "+QString::fromStdString(imagePath);
+                qDebug() << "ERROR: Unable to load the player tilset: "+QString::fromStdString(imagePath);
         }
         else
-            qDebug() << "The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
+            qDebug() << "ERROR: The skin id: "+QString::number(player.skinId)+", into a list of: "+QString::number(skinFolderList.size())+" item(s) info MapControllerMP::insert_player()";
 
         //the direction
         this->direction=direction;
@@ -1622,6 +1636,12 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             default:
             break;
         }
+        if(playerTileset==nullptr)
+        {
+            std::cerr << "set playerTileset nullptr into cell.tile (abort)" << std::endl;
+            abort();
+        }
+        std::cout << "MapVisualiserPlayer::insert_player_internal() direction: " << (int)direction << " lastTileset: " << lastTileset << std::endl;
         switch(direction)
         {
             case CatchChallenger::Direction_look_at_top:
@@ -1629,6 +1649,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             {
                 Tiled::Cell cell=playerMapObject->cell();
                 cell.tile=playerTileset->tileAt(1);
+                if(cell.tile==nullptr)
+                {
+                    std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
+                    abort();
+                }
                 playerMapObject->setCell(cell);
             }
             break;
@@ -1637,6 +1662,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             {
                 Tiled::Cell cell=playerMapObject->cell();
                 cell.tile=playerTileset->tileAt(4);
+                if(cell.tile==nullptr)
+                {
+                    std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
+                    abort();
+                }
                 playerMapObject->setCell(cell);
             }
             break;
@@ -1645,6 +1675,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             {
                 Tiled::Cell cell=playerMapObject->cell();
                 cell.tile=playerTileset->tileAt(7);
+                if(cell.tile==nullptr)
+                {
+                    std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
+                    abort();
+                }
                 playerMapObject->setCell(cell);
             }
             break;
@@ -1653,6 +1688,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             {
                 Tiled::Cell cell=playerMapObject->cell();
                 cell.tile=playerTileset->tileAt(10);
+                if(cell.tile==nullptr)
+                {
+                    std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
+                    abort();
+                }
                 playerMapObject->setCell(cell);
             }
             break;
@@ -1674,6 +1714,8 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
     }
+    else
+        std::cout << "MapVisualiserPlayer::insert_player_internal() other player" << std::endl;
     return true;
 }
 
@@ -2007,6 +2049,7 @@ CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
 //the datapack
 void MapVisualiserPlayer::setDatapackPath(const std::string &path,const std::string &mainDatapackCode)
 {
+    std::cout << "MapVisualiserPlayer::setDatapackPath(" << path << "," << mainDatapackCode << ")" << std::endl;
     #ifdef DEBUG_CLIENT_LOAD_ORDER
     qDebug() << QStringLiteral("MapControllerMP::setDatapackPath()");
     #endif

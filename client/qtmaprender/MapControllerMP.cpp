@@ -69,6 +69,7 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
 
 void MapControllerMP::resetAll()
 {
+    std::cout << "MapControllerMP::resetAll()" << std::endl;
     unloadPlayerFromCurrentMap();
     current_map.clear();
     pathList.clear();
@@ -467,9 +468,24 @@ void MapControllerMP::datapackParsed()
 
 void MapControllerMP::datapackParsedMainSub()
 {
+    std::cout << "MapControllerMP::datapackParsedMainSub()" << std::endl;
+    setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+    /*datapackParsed();
+    datapackParsedMainSub();*/
+
+    if(datapackPath.empty())
+    {
+        std::cout << "MapControllerMP::datapackParsedMainSub() datapackPath can't be empty! You never call MapVisualiserPlayer::setDatapackPath()? (abort)" << std::endl;
+        abort();
+    }
     MapVisualiserPlayer::datapackParsedMainSub();
 
     skinFolderList=CatchChallenger::FacilityLibGeneral::skinIdList(datapackPath+DATAPACK_BASE_PATH_SKIN);
+    if(skinFolderList.empty())
+    {
+        std::cout << "MapControllerMP::datapackParsedMainSub() skinFolderList can't be empty at " << datapackPath << "+" << DATAPACK_BASE_PATH_SKIN << "! (abort)" << std::endl;
+        abort();
+    }
 
     if(player_informations_is_set)
         reinject_signals();
