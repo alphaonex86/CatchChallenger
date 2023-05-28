@@ -227,7 +227,10 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
             //messageParsingLayer("selected (0xBE: 190)");
             if(selectCharacterClients.find(queryNumber)!=selectCharacterClients.cend())
             {
-                const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.at(queryNumber);
+                //const DataForSelectedCharacterReturn &dataForSelectedCharacterReturn=selectCharacterClients.at(queryNumber);
+                //reference generate bug when error on client and need be disconnected
+                DataForSelectedCharacterReturn dataForSelectedCharacterReturn=selectCharacterClients.at(queryNumber);
+
                 if(dataForSelectedCharacterReturn.client!=NULL)
                 {
                     if(size==CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)

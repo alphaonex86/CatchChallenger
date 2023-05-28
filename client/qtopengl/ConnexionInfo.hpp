@@ -26,6 +26,8 @@ public:
     QString proxyHost;
     uint16_t proxyPort;
 
+    bool lan;
+
     bool operator<(const ConnexionInfo &connexionInfo) const;
 };
 

@@ -673,6 +673,11 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
 {
+    if(itemOnMap==nullptr)
+    {
+        std::cerr << "MapVisualiserPlayer::asyncMapLoaded() itemOnMap==nullptr, not called MapVisualiserPlayer::setInformations()?, this is wrong (abort)" << std::endl;
+        abort();
+    }
     if(current_map.empty())
         return false;
     if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
@@ -799,6 +804,7 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * 
 
 void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t> *items, std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap, std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap)
 {
+    std::cout << "MapVisualiserPlayer::setInformations()" << std::endl;
     this->events=events;
     this->items=items;
     this->quests=quests;
@@ -871,6 +877,7 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
 
 void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
 {
+    std::cout << "MapVisualiserPlayer::finalPlayerStep()" << std::endl;
     if(all_map.find(current_map)==all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
@@ -976,9 +983,17 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                         }
                         {
                             Tiled::Cell cell=playerMapObject->cell();
-                            int tileId=cell.tile->id();
-                            cell.tile=playerTileset->tileAt(tileId);
-                            playerMapObject->setCell(cell);
+                            if(cell.tile!=nullptr)
+                            {
+                                int tileId=cell.tile->id();
+                                cell.tile=playerTileset->tileAt(tileId);
+                                playerMapObject->setCell(cell);
+                            }
+                            else
+                            {
+                                std::cerr << "ERROR Unable to load the player tilset, cell.tile=nullptr (abort)" << std::endl;
+                                abort();
+                            }
                         }
                     }
                     break;
@@ -1551,6 +1566,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
        const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,
                                               const std::vector<std::string> &skinFolderList)
 {
+    std::cout << "MapVisualiserPlayer::insert_player_internal()" << std::endl;
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         emit error("MapVisualiserPlayer::insert_player_final(): !mHaveTheDatapack || !player_informations_is_set");
@@ -1649,6 +1665,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         updatePlayerMonsterTile(player.monsterId);
 
         current_map=QtDatapackClientLoader::datapackLoader->get_maps().at(mapId);
+        if(datapackMapPathSpec.empty())
+        {
+            std::cout << "datapackMapPathSpec can't be empty at this point " << __FILE__ << ":" << __LINE__ << " MapVisualiserPlayer::setDatapackPath() was not called (abort)" << std::endl;
+            abort();
+        }
         loadPlayerMap(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
         setSpeed(player.speed);
@@ -1989,6 +2010,16 @@ void MapVisualiserPlayer::setDatapackPath(const std::string &path,const std::str
     #ifdef DEBUG_CLIENT_LOAD_ORDER
     qDebug() << QStringLiteral("MapControllerMP::setDatapackPath()");
     #endif
+    if(mainDatapackCode.find("/")!=std::string::npos)
+    {
+        std::cerr << "mainDatapackCode is not Path, forbiden / detected (abort)" << std::endl;
+        abort();
+    }
+    if(mainDatapackCode=="[main]")
+    {
+        std::cerr << "mainDatapackCode is the default value, forbiden [main] detected (abort)" << std::endl;
+        abort();
+    }
 
     if(stringEndsWith(path,'/') || stringEndsWith(path,'\\'))
         datapackPath=path;
@@ -2122,6 +2153,7 @@ void MapVisualiserPlayer::stopMove()
 
 bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
+    std::cout << "MapVisualiserPlayer::teleportTo()" << std::endl;
     if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
@@ -2196,6 +2228,7 @@ bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
 
 bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathList,const CatchChallenger::Direction &direction)//true if have step
 {
+    std::cout << "MapVisualiserPlayer::nextPathStepInternal()" << std::endl;
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &x=pos.first;
     const uint8_t &y=pos.second;
@@ -2327,6 +2360,7 @@ void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &p
 // for /tools/map-visualiser/
 void MapVisualiserPlayer::forcePlayerTileset(QString path)
 {
+    std::cout << "MapVisualiserPlayer::forcePlayerTileset(): " << path.toStdString() << std::endl;
     QString externalFile=QCoreApplication::applicationDirPath()+"/"+path;
     if(QFile::exists(externalFile))
     {

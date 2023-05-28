@@ -95,7 +95,7 @@ public:
     bool getIsLogged() const;
     bool getCaracterSelected() const;
     std::map<uint8_t,uint64_t> getQuerySendTimeList() const;
-    std::vector<uint8_t> getEvents();
+    std::vector<uint8_t> &getEvents();
 
     //to manipulate the monsters
     Player_private_and_public_informations player_informations;
