@@ -8,6 +8,16 @@
 
 void MapControllerMP::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
 {
+    if(client==nullptr)
+    {
+        std::cerr << "MapControllerMP::insert_player( call but client == nullptr, this will crash all (abort)" << std::endl;
+        abort();
+    }
+    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
+    setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
+    std::vector<uint8_t> &events=client->getEvents();
+    setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
+    setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     insert_player_final(player,mapId,x,y,direction,false);
 }
 

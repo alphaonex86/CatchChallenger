@@ -337,7 +337,16 @@ int main(int argc, char *argv[])
                         continue;
                     }
                     //ready to read
+                    #ifdef PROTOCOLPARSINGINPUTOUTPUTDEBUG
+                    std::cerr << __FILE__ << ":" << __LINE__ << " this bug: " << client << std::endl;
+                    #endif
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    std::cerr << "master parseIncommingData start: " << events[i].events << std::endl;
+                    #endif
                     client->parseIncommingData();
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    std::cerr << "master parseIncommingData stop: " << events[i].events << std::endl;
+                    #endif
                     if(events[i].events & EPOLLRDHUP)
                     {
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK

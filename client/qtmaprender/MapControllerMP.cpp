@@ -230,6 +230,7 @@ void MapControllerMP::resetOtherMonsterTile(OtherPlayer &tempPlayer)
 //call after enter on new map
 void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,const bool &display)
 {
+    std::cout << "MapControllerMP::loadOtherPlayerFromMap();" << std::endl;
     Q_UNUSED(display);
     //remove the player tile if needed
     Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
@@ -267,6 +268,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
         removeUnusedMap();
     }*/
     /// \todo temp fix, do a better fix
+    std::cout << "playerMapObject=getPlayerMapObject();" << std::endl;
     const Tiled::MapObject * playerMapObject=getPlayerMapObject();
     if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
         centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));

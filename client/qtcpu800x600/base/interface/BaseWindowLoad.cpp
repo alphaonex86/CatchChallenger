@@ -188,10 +188,10 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
 {
     this->multiplayer=multiplayer;
     this->client=client;
-    if(client!=NULL)
+    /*if(client!=NULL)
         mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     else
-        abort();
+        abort();*/
     chat->setClient(client);
     chat->setMultiPlayer(multiplayer);
     ui->openToLan->setEnabled(true);
