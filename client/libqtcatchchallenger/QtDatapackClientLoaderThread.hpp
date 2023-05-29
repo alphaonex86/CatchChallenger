@@ -3,8 +3,9 @@
 
 #include <QThread>
 #include <unordered_map>
+#include "../../general/base/lib.h"
 
-class QtDatapackClientLoaderThread : public QThread
+class DLL_PUBLIC QtDatapackClientLoaderThread : public QThread
 {
     Q_OBJECT
 public:

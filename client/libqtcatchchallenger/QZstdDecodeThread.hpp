@@ -7,9 +7,10 @@
 #include <QObject>
 #endif
 #include "../libcatchchallenger/ZstdDecode.hpp"
+#include "../../general/base/lib.h"
 
 /// \brief to decode the xz via a thread
-class QZstdDecodeThread :
+class DLL_PUBLIC QZstdDecodeThread :
         #ifndef NOTHREADS
         public QThread
         #else

@@ -4,7 +4,9 @@
 #include <QUdpSocket>
 #include <QTimer>
 
-class LanBroadcastWatcher : public QObject
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC LanBroadcastWatcher : public QObject
 {
     Q_OBJECT
 public:

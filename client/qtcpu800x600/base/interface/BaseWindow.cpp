@@ -204,7 +204,6 @@ BaseWindow::BaseWindow() :
 
     mapController=new MapController(true,false,true);
     chat=new Chat(mapController);
-    mapController->fightEngine=nullptr;
     client=NULL;
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
@@ -2085,6 +2084,22 @@ void CatchChallenger::BaseWindow::on_listAllItem_itemActivated(QListWidgetItem *
 void BaseWindow::on_openToLan_clicked()
 {
     ui->openToLan->setEnabled(false);
+    ui->toolButtonLan->setEnabled(false);
+    const Player_private_and_public_informations &informations=client->get_player_informations_ro();
+    emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
+}
+
+
+void BaseWindow::on_toolButtonLan_triggered(QAction *arg1)
+{
+}
+
+
+void BaseWindow::on_toolButtonLan_clicked()
+{
+    ui->openToLan->setEnabled(false);
+    ui->toolButtonLan->setEnabled(false);
+    ui->toolButtonLan->setVisible(false);
     const Player_private_and_public_informations &informations=client->get_player_informations_ro();
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
 }
