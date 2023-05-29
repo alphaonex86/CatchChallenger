@@ -7,6 +7,7 @@
 #define EXTRASOCKET_H
 
 #include <QString>
+#include "../../general/base/lib.h"
 
 #if defined(__unix__) || defined(Q_OS_UNIX) || !defined(Q_OS_WIN32)
     #include <unistd.h>
@@ -19,7 +20,7 @@
 #endif
 
 /** \brief class to have general socket options */
-class ExtraSocket
+class DLL_PUBLIC ExtraSocket
 {
 public:
     /** \brief class to return always the same socket resolution */

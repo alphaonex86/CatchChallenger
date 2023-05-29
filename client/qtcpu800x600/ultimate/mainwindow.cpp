@@ -2048,7 +2048,7 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     baseWindow->setMultiPlayer(false,this->client);
     baseWindow->connectAllSignals();//need always be after setMultiPlayer()
     client->setDatapackPath(datapackPath.toStdString());
-    baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
+    //baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(baseWindow);
     timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();

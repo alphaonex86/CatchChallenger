@@ -214,8 +214,6 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
         abort();*/
     /*if(!connect(client,&CatchChallenger::Api_client_real::Qtrandom_seeds,client,&ClientFightEngine::newRandomNumber))
        abort();*/
-
-    mapController->fightEngine=this->client;
 }
 
 void BaseWindow::disconnected(std::string reason)

@@ -9,7 +9,9 @@
 #include <QObject>
 #include <QLocalServer>
 
-class LocalListener : public QObject
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC LocalListener : public QObject
 {
     Q_OBJECT
 public:

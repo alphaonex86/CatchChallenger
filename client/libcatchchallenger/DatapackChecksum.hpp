@@ -4,9 +4,10 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class DatapackChecksum
+class DLL_PUBLIC DatapackChecksum
 {
 public:
     explicit DatapackChecksum();

@@ -5,9 +5,10 @@
 #include <string>
 #include <QThread>
 #include "../libcatchchallenger/DatapackChecksum.hpp"
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
-class QtDatapackChecksum :
+class DLL_PUBLIC QtDatapackChecksum :
         #if ! defined(QT_NO_EMIT) && ! defined(EPOLLCATCHCHALLENGERSERVER) && !defined(NOTHREADS)
         public QThread
         #else

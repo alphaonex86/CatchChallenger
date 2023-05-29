@@ -3,9 +3,10 @@
 
 #include <vector>
 #include <string>
+#include "../../general/base/lib.h"
 
 /// \brief to decode the xz via a thread
-class ZstdDecode
+class DLL_PUBLIC ZstdDecode
 {
         public:
                 ZstdDecode();

@@ -8,7 +8,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-class InternetUpdater : public QObject
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC InternetUpdater : public QObject
 {
     Q_OBJECT
 public:

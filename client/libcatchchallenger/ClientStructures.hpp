@@ -4,6 +4,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "../../general/base/lib.h"
 
 namespace CatchChallenger {
 enum MapEvent
@@ -11,7 +12,7 @@ enum MapEvent
     MapEvent_DoubleClick,
     MapEvent_SimpleClick
 };
-class ServerFromPoolForDisplay
+class DLL_PUBLIC ServerFromPoolForDisplay
 {
 public:
     //connect info

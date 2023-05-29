@@ -8,9 +8,10 @@
 
 #include <vector>
 #include <string>
+#include "../../general/base/lib.h"
 
 /// \brief read the raw tar data, and organize it into data structure
-class TarDecode
+class DLL_PUBLIC TarDecode
 {
     public:
         TarDecode();

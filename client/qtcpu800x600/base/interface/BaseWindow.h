@@ -486,6 +486,10 @@ private slots:
     void on_listNearPlayer_itemActivated(QListWidgetItem *item);
     void on_listAllItem_itemActivated(QListWidgetItem *item);
     void on_openToLan_clicked();
+    void on_toolButtonLan_triggered(QAction *arg1);
+
+    void on_toolButtonLan_clicked();
+
 protected slots:
     //datapack
     void datapackParsed();
