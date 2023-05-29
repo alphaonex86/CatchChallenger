@@ -8,9 +8,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-#include "../../../general/tinyXML2/tinyxml2.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
+#include "../../general/base/lib.h"
 
-class FeedNews : public QObject
+class DLL_PUBLIC FeedNews : public QObject
 {
     Q_OBJECT
 public:

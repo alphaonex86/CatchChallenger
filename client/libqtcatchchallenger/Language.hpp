@@ -5,7 +5,9 @@
 #include <QObject>
 #include <QTranslator>
 
-class Language : public QObject
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC Language : public QObject
 {
     Q_OBJECT
 public:

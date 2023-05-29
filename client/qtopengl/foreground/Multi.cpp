@@ -177,7 +177,6 @@ void Multi::newLanServer()
             index++;
         }
     }
-    serverConnexion.clear();
     mergedConnexionInfoList=temp_customConnexionInfoList;
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_xmlConnexionInfoList.begin(),temp_xmlConnexionInfoList.end());
     mergedConnexionInfoList.insert(mergedConnexionInfoList.end(),temp_lanConnexionInfoList.begin(),temp_lanConnexionInfoList.end());

@@ -62,6 +62,7 @@
         <file>images/colorflags/2.png</file>
         <file>images/colorflags/3.png</file>
         <file>images/interface/option-admin.png</file>
+        <file>images/interface/option-lan.png</file>
     </qresource>
         <qresource prefix="/CC/">
         <file>images/catchchallenger.png</file>
@@ -126,5 +127,6 @@
         <file>images/colorflags/2.png</file>
         <file>images/colorflags/3.png</file>
         <file>images/interface/option-admin.png</file>
+        <file>images/interface/option-lan.png</file>
     </qresource>
 </RCC>

@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>14</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -135,7 +135,6 @@
                 <property name="font">
                  <font>
                   <pointsize>15</pointsize>
-                  <weight>75</weight>
                   <bold>true</bold>
                  </font>
                 </property>
@@ -1039,6 +1038,37 @@ background-position:left bottom;
 }
 QToolButton { 
 background-image: url(:/images/interface/option-admin.png);
+border-image: url(:/images/empty.png);
+}</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QToolButton" name="toolButtonLan">
+                <property name="minimumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>28</width>
+                  <height>25</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Open to Lan</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QToolButton::hover {
+background-position:left center;
+}
+QToolButton::pressed {
+background-position:left bottom;
+}
+QToolButton { 
+background-image: url(:/images/interface/option-lan.png);
 border-image: url(:/images/empty.png);
 }</string>
                 </property>
@@ -2206,7 +2236,6 @@ border-image: url(:/images/empty.png);
             </property>
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -2837,7 +2866,6 @@ border-image: url(:/images/empty.png);
           <property name="font">
            <font>
             <pointsize>13</pointsize>
-            <weight>50</weight>
             <bold>false</bold>
            </font>
           </property>

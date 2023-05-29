@@ -4,7 +4,9 @@
 #include <array>
 #include <string>
 
-class BlacklistPassword
+#include "../../general/base/lib.h"
+
+class DLL_PUBLIC BlacklistPassword
 {
 public:
     static std::array<std::string, 375> list;

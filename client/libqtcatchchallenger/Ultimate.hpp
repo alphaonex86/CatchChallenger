@@ -2,8 +2,9 @@
 #define ULTIMATE_H
 
 #include <string>
+#include "../../general/base/lib.h"
 
-class Ultimate
+class DLL_PUBLIC Ultimate
 {
 public:
     Ultimate();
