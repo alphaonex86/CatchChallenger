@@ -30,6 +30,5 @@ LIBS += -fuse-ld=lld -flto=thin -Wl,--thinlto-jobs=16
 
 LIBS += -L../build-qtcatchchallengerclient-Desktop-Debug/ -lqtcatchchallengerclient
 
-
 # CATCHCHALLENGER_CACHE_HPS -> include hps.pri
 TARGET = catchchallenger
