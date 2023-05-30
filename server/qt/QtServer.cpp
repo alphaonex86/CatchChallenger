@@ -189,6 +189,7 @@ bool QtServer::isStopped()
 
 void QtServer::stop()
 {
+    std::cerr << "QtServer::stop()" << std::endl;
     try_stop_server();
 }
 
@@ -368,6 +369,7 @@ void QtServer::load_next_city_capture()
 
 bool QtServer::check_if_now_stopped()
 {
+    std::cerr << "QtServer::check_if_now_stopped()" << std::endl;
     if(client_list.size()!=0)
         return false;
     if(stat!=InDown)
@@ -440,20 +442,38 @@ bool QtServer::check_if_now_stopped()
 //call by normal stop
 void QtServer::stop_internal_server()
 {
+    std::cerr << "QtServer::stop_internal_server()" << std::endl;
     moveToThread(QThread::currentThread());
+    std::cerr << "QtServer::stop_internal_server() moveToThread(QThread::currentThread())" << std::endl;
     if(stat!=Up && stat!=InDown)
     {
+        std::cerr << "QtServer::stop_internal_server() stat!=Up && stat!=InDown: " << stat << std::endl;
         if(stat!=Down)
             qDebug() << ("Is in wrong stat for stopping: "+QString::number((int)stat));
+        if(stat!=InDown)
+        {
+            std::cerr << "QtServer::stop_internal_server() emit stop_internal_server_signal(): " << isRunning() << std::endl;
+            if(isRunning())
+                emit stop_internal_server_signal();
+            else if(stat==Down)
+            {
+                stop_internal_server_slot();
+                is_started(false);
+            }
+            else
+                stop_internal_server_slot();
+        }
         return;
     }
     qDebug() << ("Try stop");
     stat=InDown;
+    std::cerr << "QtServer::stop_internal_server() emit stop_internal_server_signal()" << std::endl;
     emit stop_internal_server_signal();
 }
 
 void QtServer::stop_internal_server_slot()
 {
+    std::cerr << "QtServer::stop_internal_server_slot()" << std::endl;
     //#ifndef CATCHCHALLENGER_SOLO
     auto i=client_list.begin();
     while(i!=client_list.cend())
