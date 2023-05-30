@@ -19,3 +19,8 @@ SOURCES += \
     $$PWD/LinkToMasterStaticVar.cpp \
     $$PWD/timer/PlayerUpdaterToMaster.cpp \
     $$PWD/../epoll/timer/TimerPurgeTokenAuthList.cpp
+
+#linux:LIBS += -fuse-ld=mold
+#precompile_header:!isEmpty(PRECOMPILED_HEADER) {
+#DEFINES += USING_PCH
+#

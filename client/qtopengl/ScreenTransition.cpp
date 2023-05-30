@@ -252,12 +252,16 @@ void ScreenTransition::closeEvent(QCloseEvent *event)
     #ifdef CATCHCHALLENGER_SOLO
     if(internalServer!=nullptr)
     {
-        hide();
-        if(connexionManager!=nullptr)
-            if(connexionManager->client!=nullptr)
-                connexionManager->client->disconnectFromHost();
-        ///internalServer->stop();
-        event->accept();
+        if(!internalServer->isFinished())
+        {
+            std::cout << "ScreenTransition::closeEvent): internalServer!=nullptr" << std::endl;
+            hide();
+            if(connexionManager!=nullptr)
+                if(connexionManager->client!=nullptr)
+                    connexionManager->client->disconnectFromHost();
+            ///internalServer->stop();
+            event->accept();
+        }
         return;
     }
     #endif
@@ -624,6 +628,7 @@ void ScreenTransition::openSolo()
 
 void ScreenTransition::is_started(bool started)
 {
+    std::cout << "ScreenTransition::is_started(" << started << ")" << std::endl;
     #ifdef CATCHCHALLENGER_SOLO
     if(started)
     {
@@ -643,6 +648,7 @@ void ScreenTransition::is_started(bool started)
             delete internalServer;
             internalServer=nullptr;
         }
+        std::cout << "ScreenTransition::is_started(" << started << ") isVisible(): " << isVisible() << std::endl;
         if(!isVisible())
             QCoreApplication::quit();
     }
@@ -817,6 +823,16 @@ void ScreenTransition::disconnectedFromServer()
 void ScreenTransition::errorString(std::string error)
 {
     inGame=false;
+    if(connexionManager!=nullptr)
+        if(connexionManager->client!=nullptr)
+            connexionManager->client->disconnectFromHost();
+    #ifdef CATCHCHALLENGER_SOLO
+    if(internalServer!=nullptr)
+    {
+        std::cerr << "ScreenTransition::errorString(): internalServer!=nullptr" << std::endl;
+        internalServer->stop();
+    }
+    #endif
     if(!error.empty())
     {
         std::cerr << "ScreenTransition::errorString(" << error << ")" << std::endl;
