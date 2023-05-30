@@ -151,12 +151,12 @@ DEFINES += CATCHCHALLENGER_MULTI
 DEFINES += CATCHCHALLENGER_CLASS_CLIENT
 
 #commented to workaround to compil under wine
-win32:RC_FILE += $$PWD/../resources/resources-windows.rc
-ICON = $$PWD/../resources/client.icns
+win32:RC_FILE += $$PWD/resources/resources-windows.rc
+ICON = $$PWD/resources/client.icns
 
-RESOURCES += $$PWD/../resources/client-resources.qrc
+RESOURCES += $$PWD/resources/client-resources.qrc
 
-TRANSLATIONS    = $$PWD/../resources/languages/en/translation.ts \
+TRANSLATIONS    = $$PWD/resources/languages/en/translation.ts \
     $$PWD/../languages/fr/translation.ts
 
 
