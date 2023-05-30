@@ -11,7 +11,7 @@
 #include "../../CCSliderH.hpp"
 #include "../../LineEdit.hpp"
 #include "../../SpinBox.hpp"
-#include "../../../general/base/GeneralStructures.hpp"
+#include "../../../../general/base/GeneralStructures.hpp"
 
 class ConnexionManager;
 

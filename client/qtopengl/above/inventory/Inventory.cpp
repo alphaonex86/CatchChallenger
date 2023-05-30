@@ -1,9 +1,9 @@
 #include "Inventory.hpp"
-#include "../../libqtcatchchallenger/Language.hpp"
+#include "../../../libqtcatchchallenger/Language.hpp"
 #include "../../ConnexionManager.hpp"
 #include "../../FacilityLibClient.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include <QPainter>
 #include <iostream>
 
