@@ -1,11 +1,11 @@
 #include "Quests.hpp"
-#include "../../libqtcatchchallenger/Language.hpp"
+#include "../../../libqtcatchchallenger/Language.hpp"
 #include "../../ConnexionManager.hpp"
 #include "../../FacilityLibClient.hpp"
-#include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../libqtcatchchallenger/Ultimate.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../../libqtcatchchallenger/Ultimate.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
+#include "../../../../general/base/CommonDatapackServerSpec.hpp"
 #include <QPainter>
 #include <QBuffer>
 #include <iostream>

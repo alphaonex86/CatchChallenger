@@ -34,4 +34,3 @@ linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -W
 linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
 
 # CATCHCHALLENGER_CACHE_HPS -> include hps.pri
-TARGET = catchchallenger

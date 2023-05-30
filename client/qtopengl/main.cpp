@@ -10,7 +10,7 @@
 #include <iostream>
 #include <QFontDatabase>
 #include <QStyleFactory>
-#include "../../libqtcatchchallenger/QtDatapackChecksum.hpp"
+#include "../libqtcatchchallenger/QtDatapackChecksum.hpp"
 #include <QStandardPaths>
 #include <QScreen>
 #include "../libqtcatchchallenger/Language.hpp"
