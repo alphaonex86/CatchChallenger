@@ -10,6 +10,7 @@ class CustomButton : public QObject, public QGraphicsItem
 public:
     CustomButton(QString pix, QGraphicsItem *parent = nullptr);
     ~CustomButton();
+    void setImage(QString pix);
     void setText(const QString &text);
     void setOutlineColor(const QColor &color);
     void setFont(const QFont &font);

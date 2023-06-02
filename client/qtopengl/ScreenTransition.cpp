@@ -248,12 +248,14 @@ void ScreenTransition::mouseMoveEvent(QMouseEvent *event)
 
 void ScreenTransition::closeEvent(QCloseEvent *event)
 {
+    std::cout << " ScreenTransition::closeEvent()" << std::endl;
     inGame=false;
     #ifdef CATCHCHALLENGER_SOLO
     if(internalServer!=nullptr)
     {
         if(!internalServer->isFinished())
         {
+            //wait the server need be terminated
             std::cout << "ScreenTransition::closeEvent): internalServer!=nullptr" << std::endl;
             hide();
             if(connexionManager!=nullptr)
@@ -261,8 +263,10 @@ void ScreenTransition::closeEvent(QCloseEvent *event)
                     connexionManager->client->disconnectFromHost();
             ///internalServer->stop();
             event->accept();
+            return;
         }
-        return;
+        else
+            std::cout << "ScreenTransition::closeEvent: internalServer->isFinished()" << std::endl;
     }
     #endif
     QWidget::closeEvent(event);
