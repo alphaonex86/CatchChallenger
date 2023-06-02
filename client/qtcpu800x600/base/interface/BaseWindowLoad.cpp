@@ -196,6 +196,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
     chat->setMultiPlayer(multiplayer);
     ui->openToLan->setEnabled(true);
     ui->openToLan->setVisible(!multiplayer);
+    ui->toolButtonLan->setVisible(!multiplayer);
     chat->show();
     chat->raise();
     //client->setClient(client);

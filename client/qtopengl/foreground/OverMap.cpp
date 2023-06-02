@@ -602,7 +602,90 @@ void OverMap::lineEdit_chat_text_returnPressed()
     numberForFlood++;
     lastMessageSend=text.toStdString();
     chatInput->setText(QString());
-    if(!text.startsWith("/pm "))
+    if(text=="/clan_leave")
+    {
+        actionClan.push_back(ActionClan_Leave);
+        connexionManager->client->leaveClan();
+    }
+    else if(text=="/clan_dissolve")
+    {
+        actionClan.push_back(ActionClan_Dissolve);
+        connexionManager->client->dissolveClan();
+    }
+    else if(text.startsWith("/clan_invite "))
+    {
+        text.remove(0,std::string("/clan_invite ").size());
+        if(!text.isEmpty())
+        {
+            actionClan.push_back(ActionClan_Invite);
+            connexionManager->client->inviteClan(text.toStdString());
+        }
+    }
+    else if(text.startsWith("/clan_eject "))
+    {
+        text.remove(0,std::string("/clan_eject ").size());
+        if(!text.isEmpty())
+        {
+            actionClan.push_back(ActionClan_Eject);
+            connexionManager->client->ejectClan(text.toStdString());
+        }
+    }
+    else if(text.startsWith("/add_to_inventory "))
+    {
+        text.remove(0,std::string("/add_to_inventory ").size());
+        if(!text.isEmpty())
+        {
+            std::vector<std::pair<uint16_t,uint32_t> > items;
+            QStringList listItem = text.split(' ', Qt::SkipEmptyParts);
+            int index=0;
+            while(index<listItem.size())
+            {
+                QStringList listItemSpec = listItem.at(index).split(':', Qt::SkipEmptyParts);
+                if(listItemSpec.size()==2)
+                {
+                    bool ok=false;
+                    uint16_t item=listItemSpec.first().toUInt(&ok);
+                    bool ok2=false;
+                    uint16_t quantity=listItemSpec.first().toUInt(&ok2);
+                    if(ok && ok2)
+                        items.push_back(std::pair<uint16_t,uint32_t>(item,quantity));
+                }
+                index++;
+            }
+            if(items.size()>0)
+                add_to_inventory(items,true);
+        }
+    }
+    else if(text.startsWith("/showTip "))
+    {
+        text.remove(0,std::string("/showTip ").size());
+        if(!text.isEmpty())
+            showTip(text.toStdString());
+    }
+    else if(text.startsWith("/showPlace "))
+    {
+        text.remove(0,std::string("/showPlace ").size());
+        if(!text.isEmpty())
+            showPlace(text.toStdString());
+    }
+    else if(text=="/clan_informations")
+    {
+        if(!haveClanInformations)
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan information");
+        else if(clanName.empty() || playerInformations.clan==0)
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan");
+        else
+            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"Name: "+clanName);
+    }
+    else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
+    {
+        QString pseudo=text;
+        pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
+        text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
+        connexionManager->client->sendPM(text.toStdString(),pseudo.toStdString());
+        connexionManager->client->add_chat_text(CatchChallenger::Chat_type_pm,text.toStdString(),tr("To: ").toStdString()+pseudo.toStdString(),CatchChallenger::Player_type_normal);
+    }
+    else
     {
         CatchChallenger::Chat_type chat_type;
         switch(chatType->itemData(chatType->currentIndex(),99).toUInt())
@@ -623,51 +706,6 @@ void OverMap::lineEdit_chat_text_returnPressed()
             connexionManager->client->add_chat_text(chat_type,text.toStdString(),connexionManager->client->player_informations.public_informations.pseudo,
                  connexionManager->client->player_informations.public_informations.type);
     }
-    else if(text=="/clan_leave")
-    {
-        actionClan.push_back(ActionClan_Leave);
-        connexionManager->client->leaveClan();
-    }
-    else if(text=="/clan_dissolve")
-    {
-        actionClan.push_back(ActionClan_Dissolve);
-        connexionManager->client->dissolveClan();
-    }
-    else if(!text.startsWith("/clan_invite "))
-    {
-        text.remove(0,std::string("/clan_invite ").size());
-        if(!text.isEmpty())
-        {
-            actionClan.push_back(ActionClan_Invite);
-            connexionManager->client->inviteClan(text.toStdString());
-        }
-    }
-    else if(!text.startsWith("/clan_eject "))
-    {
-        text.remove(0,std::string("/clan_eject ").size());
-        if(!text.isEmpty())
-        {
-            actionClan.push_back(ActionClan_Eject);
-            connexionManager->client->ejectClan(text.toStdString());
-        }
-    }
-    else if(text=="/clan_informations")
-    {
-        if(!haveClanInformations)
-            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan information");
-        else if(clanName.empty() || playerInformations.clan==0)
-            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"No clan");
-        else
-            connexionManager->client->add_system_text(CatchChallenger::Chat_type::Chat_type_system,"Name: "+clanName);
-    }
-    else if(text.contains(QRegularExpression("^/pm [^ ]+ .+$")))
-    {
-        QString pseudo=text;
-        pseudo.replace(QRegularExpression("^/pm ([^ ]+) .+$"), "\\1");
-        text.replace(QRegularExpression("^/pm [^ ]+ (.+)$"), "\\1");
-        connexionManager->client->sendPM(text.toStdString(),pseudo.toStdString());
-        connexionManager->client->add_chat_text(CatchChallenger::Chat_type_pm,text.toStdString(),tr("To: ").toStdString()+pseudo.toStdString(),CatchChallenger::Player_type_normal);
-    }
     updateChat();
 }
 
@@ -675,16 +713,22 @@ void OverMap::comboBox_chat_type_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     updateChat();
+    if(chat->isChecked())
+        chat->setImage(":/CC/images/interface/chat.png");
 }
 
 void OverMap::new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text)
 {
     updateChat();
+    if(!chat->isChecked())
+        chat->setImage(":/CC/images/interface/chatnew.png");
 }
 
 void OverMap::new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
 {
     updateChat();
+    if(!chat->isChecked())
+        chat->setImage(":/CC/images/interface/chatnew.png");
 }
 
 void OverMap::updateChat()

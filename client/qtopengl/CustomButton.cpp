@@ -27,6 +27,16 @@ CustomButton::CustomButton(QString pix,QGraphicsItem *parent) :
     m_boundingRect=QRectF(0.0,0.0,223.0,92.0);
 }
 
+void CustomButton::setImage(QString pix)
+{
+    if(background==pix)
+        return;
+    if(cache!=nullptr)
+        delete cache;
+    cache=nullptr;
+    background=pix;
+}
+
 void CustomButton::setSize(uint16_t w,uint16_t h)
 {
     if(m_boundingRect.width()==w && m_boundingRect.height()==h)

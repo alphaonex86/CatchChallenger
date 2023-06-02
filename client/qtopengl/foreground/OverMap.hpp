@@ -53,6 +53,11 @@ public:
     void openMonster();
     void updatePlayerNumber(const uint16_t &number,const uint16_t &max_players);
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
+
+    //to call from chat to do test
+    virtual void add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain) = 0;
+    virtual void showTip(const std::string &tip) = 0;
+    virtual void showPlace(const std::string &place) = 0;
 protected:
     QTimer stopFlood;
     int numberForFlood;
