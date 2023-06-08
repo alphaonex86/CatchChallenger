@@ -2108,7 +2108,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
 
     formatedServerSettings.automatic_account_creation=true;
     formatedServerSettings.max_players=99;//> 1 to allow open to lan
-    formatedServerSettings.sendPlayerNumber = false;
+    formatedServerSettings.sendPlayerNumber = true;// to work with open to lan
     //formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
     formatedServerSettings.compressionType=CompressionProtocol::CompressionType::Zstandard;// to allow open to lan
     formatedServerSettings.everyBodyIsRoot                                      = true;

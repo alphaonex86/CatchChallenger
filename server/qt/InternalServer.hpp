@@ -14,6 +14,7 @@ class DLL_PUBLIC InternalServer : public QtServer
     Q_OBJECT
 public:
     /// \param settings ref is destroyed after this call
+    static InternalServer *internalServer;
     explicit InternalServer();
     virtual ~InternalServer();
     virtual void run();

@@ -544,9 +544,10 @@ void ScreenTransition::openSolo()
         CommonSettingsCommon::commonSettingsCommon.min_character=1;
 
         formatedServerSettings.automatic_account_creation=true;
-        formatedServerSettings.max_players=1;
-        formatedServerSettings.sendPlayerNumber = false;
-        formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
+        formatedServerSettings.max_players=99;//> 1 to allow open to lan
+        formatedServerSettings.sendPlayerNumber = true;// to work with open to lan
+        //formatedServerSettings.compressionType=CompressionProtocol::CompressionType::None;
+        formatedServerSettings.compressionType=CompressionProtocol::CompressionType::Zstandard;// to allow open to lan
         formatedServerSettings.everyBodyIsRoot                                      = true;
         formatedServerSettings.teleportIfMapNotFoundOrOutOfMap                       = true;
 
@@ -558,7 +559,8 @@ void ScreenTransition::openSolo()
         formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
         formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
         formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
-        formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
+        //formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
+        formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_Simple;// to allow open to lan
         formatedServerSettings.datapack_basePath=datapackPathBase;
 
         {

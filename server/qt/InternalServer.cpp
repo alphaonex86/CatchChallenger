@@ -9,6 +9,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QDebug>
+#include <iostream>
 
 #include "InternalServer.hpp"
 #include "../base/GlobalServerData.hpp"
@@ -17,11 +18,18 @@
 #include "../../general/base/FacilityLib.hpp"
 
 using namespace CatchChallenger;
+InternalServer *InternalServer::internalServer=nullptr;
 
 /// \param settings ref is destroyed after this call
 InternalServer::InternalServer() :
     QtServer()
 {
+    if(InternalServer::internalServer!=nullptr)
+    {
+        std::cerr << "ERROR, delete the previous InternalServer before create a new! (abort)" << std::endl;
+        abort();
+    }
+    InternalServer::internalServer=this;
     if(!connect(this,&QtServer::need_be_started,this,&InternalServer::start_internal_server,Qt::QueuedConnection))
         abort();
     const QString &currentDate=QDateTime::currentDateTime().toString("ddMMyyyy");
@@ -69,6 +77,7 @@ class Client;
  * \warning this function is thread safe because it quit all thread before remove */
 InternalServer::~InternalServer()
 {
+    InternalServer::internalServer=nullptr;
 }
 
 //////////////////////////////////////////// server starting //////////////////////////////////////

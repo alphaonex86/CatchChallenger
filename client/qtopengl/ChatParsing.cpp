@@ -1,4 +1,5 @@
 #include "ChatParsing.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 
@@ -14,16 +15,16 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
         case Chat_type_all://all
         break;
         case Chat_type_clan://clan
-            returned_html+="color:#AA7F00;";
+            //returned_html+="color:#AA7F00;";
         break;
         case Chat_type_pm://to player
-            returned_html+="color:#5C255F;";
+            //returned_html+="color:#5C255F;";
         break;
         case Chat_type_system://system
             returned_html+="color:#707070;font-style:italic;font-size:small;";
         break;
         case Chat_type_system_important://system importance: hight
-            returned_html+="color:#60BF20;";
+            returned_html+="";
         break;
         default:
         break;
@@ -44,6 +45,23 @@ std::string ChatParsing::new_chat_message(const std::string &pseudo, const Playe
         break;
     }
     returned_html+="\">";
+    switch(chat_type)
+    {
+        case Chat_type_clan://clan
+            returned_html+="<img src=\":/CC/images/chat/clan.png\" alt\"\" />";
+        break;
+        case Chat_type_pm://to player
+            returned_html+="<img src=\":/CC/images/chat/pm.png\" alt\"\" />";
+        break;
+        case Chat_type_system://system
+            //returned_html+="<img src=\":/CC/images/chat/sys.png\" alt\"\" />";
+        break;
+        case Chat_type_system_important://system importance: hight
+            returned_html+="<img src=\":/CC/images/chat/sysimportant.png\" alt\"\" />";
+        break;
+        default:
+        break;
+    }
     switch(player_type)
     {
         case Player_type_normal://normal player
