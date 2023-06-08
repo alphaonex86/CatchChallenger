@@ -28,6 +28,7 @@ SOURCES += \
     $$PWD/foreground/Multi.cpp \
     $$PWD/foreground/CharacterList.cpp \
     $$PWD/foreground/SubServer.cpp \
+    $$PWD/foreground/QGraphicsTextItemOutline.cpp \
     $$PWD/above/AddCharacter.cpp \
     $$PWD/above/NewGame.cpp \
     $$PWD/FacilityLibClient.cpp \
@@ -54,6 +55,7 @@ SOURCES += \
     $$PWD/QGraphicsPixmapItemClick.cpp \
     $$PWD/above/MonsterDetails.cpp \
     $$PWD/GameLoader.cpp \
+    $$PWD/ChatParsing.cpp \
     $$PWD/GameLoaderThread.cpp \
     $$PWD/ProgressBarPixel.cpp
 HEADERS  += \
@@ -74,6 +76,7 @@ HEADERS  += \
     $$PWD/foreground/Multi.hpp \
     $$PWD/foreground/CharacterList.hpp \
     $$PWD/foreground/SubServer.hpp \
+    $$PWD/foreground/QGraphicsTextItemOutline.hpp \
     $$PWD/above/AddCharacter.hpp \
     $$PWD/above/NewGame.hpp \
     $$PWD/FacilityLibClient.hpp \
@@ -95,6 +98,7 @@ HEADERS  += \
     $$PWD/QGraphicsPixmapItemClick.hpp \
     $$PWD/above/MonsterDetails.hpp \
     $$PWD/GameLoader.hpp \
+    $$PWD/ChatParsing.hpp \
     $$PWD/GameLoaderThread.hpp \
     $$PWD/ProgressBarPixel.hpp
 

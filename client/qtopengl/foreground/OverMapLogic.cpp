@@ -15,6 +15,9 @@
 #include "../../../general/base/CommonDatapack.hpp"
 #include "Battle.hpp"
 #include <iostream>
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+#include "../../../server/qt/InternalServer.hpp"
+#endif
 
 OverMapLogic::OverMapLogic()
 {
@@ -89,6 +92,11 @@ void OverMapLogic::setVar(CCMap *ccmap, ConnexionManager *connexionManager)
         abort();
     if(!connect(playerBackground,&QGraphicsPixmapItemClick::clicked,this,&OverMapLogic::player_open))
         abort();
+    if(!connect(opentolan,&CustomButton::clicked,this,&OverMapLogic::opentolan_open))
+        abort();
+    if(CatchChallenger::InternalServer::internalServer!=nullptr)
+        if(!connect(CatchChallenger::InternalServer::internalServer,&CatchChallenger::InternalServer::emitLanPort,this,&OverMapLogic::displayLanPort))
+            abort();
 }
 
 void OverMapLogic::resetAll()
@@ -513,6 +521,19 @@ void OverMapLogic::bag_open()
     inventory->setVar(connexionManager,Inventory::ObjectType::ObjectType_All,false);
     setAbove(inventory);
     inventoryIndex=0;
+}
+
+void OverMapLogic::displayLanPort(uint16_t port)
+{
+    showTip(tr("Open to lan on port %1").arg(port).toStdString());
+    connexionManager->client->add_system_text(CatchChallenger::Chat_type_system_important,tr("Open to lan on port %1").arg(port).toStdString());
+    new_system_text(CatchChallenger::Chat_type_system_important,tr("Open to lan on port %1").arg(port).toStdString());
+}
+
+void OverMapLogic::opentolan_open()
+{
+    if(CatchChallenger::InternalServer::internalServer!=nullptr)
+        CatchChallenger::InternalServer::internalServer->openToLan(tr("%1's server").arg(QString::fromStdString(connexionManager->client->getPseudo())),true);
 }
 
 void OverMapLogic::inventoryNext()

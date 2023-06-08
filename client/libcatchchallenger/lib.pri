@@ -1,7 +1,6 @@
 DEFINES += CATCHCHALLENGER_CLIENT
 
 SOURCES += \
-    $$PWD/ChatParsing.cpp \
     $$PWD/BlacklistPassword.cpp \
     $$PWD/Api_protocol.cpp \
     $$PWD/Api_protocol_loadchar.cpp \

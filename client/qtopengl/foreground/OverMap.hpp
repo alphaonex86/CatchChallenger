@@ -43,6 +43,7 @@ public:
     void keyPressEvent(QKeyEvent * event, bool &eventTriggerGeneral) override;
     void keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral) override;
     void lineEdit_chat_text_returnPressed();
+    void updateShowChat();
     void buyClicked();
     void IG_dialog_close();
     void comboBox_chat_type_currentIndexChanged(int index);
@@ -87,6 +88,8 @@ protected:
 
     CustomButton *bag;
     CustomText *bagOver;
+    CustomButton *opentolan;
+    CustomText *opentolanOver;
     CustomButton *buy;
     CustomText *buyOver;
 

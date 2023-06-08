@@ -47,11 +47,13 @@ QtServer::QtServer()
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     if(!connect(&server,&QTcpServer::newConnection,this,&QtServer::newConnection,Qt::QueuedConnection))
     {
         std::cerr << "aborted at " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
         abort();
     }
+    #endif
     #endif
     if(!connect(this,&QtServer::try_stop_server,this,&QtServer::stop_internal_server))
     {
@@ -297,6 +299,7 @@ void QtServer::newConnection()
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection()");
     }
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     while(server.hasPendingConnections())
     {
         QTcpSocket *socket = server.nextPendingConnection();
@@ -327,6 +330,7 @@ void QtServer::newConnection()
         else
             qDebug() << ("NULL CatchChallenger::QtClient at BaseServer::newConnection() TCP socket");
     }
+    #endif
     #endif
 }
 
@@ -549,7 +553,7 @@ void QtServer::unload_the_events()
 {
 }
 
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
 void QtServer::openToLan(QString name, bool allowInternet)
 {
     server.listen();
@@ -570,6 +574,11 @@ void QtServer::openToLan(QString name, bool allowInternet)
     //formatedServerSettings.sendPlayerNumber = true;//> not work because connected_players is blocked to 1
     formatedServerSettings.everyBodyIsRoot                                      = false;
     setSettings(formatedServerSettings);
+}
+
+bool QtServer::openIsOpenToLan()
+{
+    return server.isListening();
 }
 
 void QtServer::sendBroadcastServer()
