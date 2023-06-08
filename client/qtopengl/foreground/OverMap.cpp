@@ -1,6 +1,9 @@
 #include "OverMap.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+#include "../../../server/qt/InternalServer.hpp"
+#endif
 #include "../ConnexionManager.hpp"
 #include "../ChatParsing.hpp"
 #include "../CustomText.hpp"
@@ -57,6 +60,16 @@ OverMap::OverMap()
         gradient2.setColorAt( 0, QColor(80,71,38));
         gradient2.setColorAt( 1, QColor(80,71,38));
         bagOver=new CustomText(gradient1,gradient2,this);
+    }
+    opentolan=new CustomButton(":/CC/images/interface/opentolan.png",this);
+    {
+        QLinearGradient gradient1( 0, 0, 0, 100 );
+        gradient1.setColorAt( 0, QColor(255,255,255));
+        gradient1.setColorAt( 1, QColor(255,255,255));
+        QLinearGradient gradient2( 0, 0, 0, 100 );
+        gradient2.setColorAt( 0, QColor(80,71,38));
+        gradient2.setColorAt( 1, QColor(80,71,38));
+        opentolanOver=new CustomText(gradient1,gradient2,this);
     }
     buy=new CustomButton(":/CC/images/interface/buy.png",this);
     {
@@ -120,6 +133,8 @@ OverMap::OverMap()
     if(!connect(chatType,static_cast<void(ComboBox::*)(int)>(&ComboBox::currentIndexChanged),this,&OverMap::comboBox_chat_type_currentIndexChanged))
         abort();
     if(!connect(chatInput,&LineEdit::returnPressed,this,&OverMap::lineEdit_chat_text_returnPressed))
+        abort();
+    if(!connect(chat,&CustomButton::clicked,this,&OverMap::updateShowChat))
         abort();
     if(!connect(IG_dialog_quit,&CustomButton::clicked,this,&OverMap::IG_dialog_close))
         abort();
@@ -213,6 +228,7 @@ void OverMap::newLanguage()
     //name->setHtml(tr(""));
     chatOver->setText(tr("Chat"));
     bagOver->setText(tr("Bag"));
+    opentolanOver->setText(tr("Open"));
     buyOver->setText(tr("Buy"));
     chatType->setItemText(0,tr("All"));
     chatType->setItemText(1,tr("Local"));
@@ -384,6 +400,44 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
             bagOver->setPos(bagX+bag->width()/2-bagOver->boundingRect().width()/2,w->height()-space-bagOver->boundingRect().height());
         }
     }
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+    if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
+    {
+        if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
+        {
+            opentolan->setVisible(true);
+            opentolanOver->setVisible(true);
+            if(w->width()<800 || w->height()<600)
+            {
+                opentolan->setSize(84/2,93/2);
+                opentolanOver->setVisible(false);
+            }
+            else
+            {
+                opentolan->setSize(84,93);
+                opentolanOver->setVisible(physicalDpiX<200);
+            }
+            unsigned int opentolanX=xRight-opentolan->width();
+            opentolan->setPos(opentolanX,w->height()-space-opentolan->height());
+            xRight-=opentolan->width()+space;
+            if(opentolanOver->isVisible())
+            {
+                opentolanOver->setPixelSize(18);
+                opentolanOver->setPos(opentolanX+opentolan->width()/2-opentolanOver->boundingRect().width()/2,w->height()-space-opentolanOver->boundingRect().height());
+            }
+        }
+        else
+        {
+            opentolan->setVisible(false);
+            opentolanOver->setVisible(false);
+        }
+    }
+    else
+    {
+        opentolan->setVisible(false);
+        opentolanOver->setVisible(false);
+    }
+    #endif
     Q_UNUSED(xRight);
 
     gainBack->setVisible(!gainString.isEmpty());
@@ -469,6 +523,9 @@ void OverMap::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &call
     chat->mousePressEventXY(p,pressValidated);
     buy->mousePressEventXY(p,pressValidated);
     bag->mousePressEventXY(p,pressValidated);
+    if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
+        if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
+            opentolan->mousePressEventXY(p,pressValidated);
     QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
     if(IG_dialog_textBack->isVisible() && f.contains(p))
     {
@@ -512,6 +569,9 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     chat->mouseReleaseEventXY(p,pressValidated);
     buy->mouseReleaseEventXY(p,pressValidated);
     bag->mouseReleaseEventXY(p,pressValidated);
+    if(connexionManager->isLocalGame() && CatchChallenger::InternalServer::internalServer!=nullptr)
+        if(!CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
+            opentolan->mouseReleaseEventXY(p,pressValidated);
     QRectF f(IG_dialog_textBack->x(),IG_dialog_textBack->y(),IG_dialog_textBack->width(),IG_dialog_textBack->height());
     if(IG_dialog_textBack->isVisible() && f.contains(p))
     {
@@ -561,6 +621,12 @@ void OverMap::mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true th
 void OverMap::IG_dialog_close()
 {
     IG_dialog_textString.clear();
+}
+
+void OverMap::updateShowChat()
+{
+    if(chat->isChecked())
+        chat->setImage(":/CC/images/interface/chat.png");
 }
 
 void OverMap::lineEdit_chat_text_returnPressed()
@@ -713,12 +779,11 @@ void OverMap::comboBox_chat_type_currentIndexChanged(int index)
 {
     Q_UNUSED(index)
     updateChat();
-    if(chat->isChecked())
-        chat->setImage(":/CC/images/interface/chat.png");
 }
 
 void OverMap::new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text)
 {
+    //argument not used, see Api_protocol::add_system_text()
     updateChat();
     if(!chat->isChecked())
         chat->setImage(":/CC/images/interface/chatnew.png");
@@ -726,6 +791,7 @@ void OverMap::new_system_text(const CatchChallenger::Chat_type &chat_type,const 
 
 void OverMap::new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
 {
+    //argument not used, see Api_protocol::add_system_text()
     updateChat();
     if(!chat->isChecked())
         chat->setImage(":/CC/images/interface/chatnew.png");

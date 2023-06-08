@@ -1,7 +1,6 @@
 #ifndef CHAT_H
 #define CHAT_H
 
-#include "../../../libcatchchallenger/ChatParsing.hpp"
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
 

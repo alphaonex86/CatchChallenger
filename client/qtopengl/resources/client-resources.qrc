@@ -31,6 +31,10 @@
         <file>images/chat/admin.png</file>
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
+        <file>images/chat/sys.png</file>
+        <file>images/chat/sysimportant.png</file>
+        <file>images/chat/clan.png</file>
+        <file>images/chat/pm.png</file>
         <file>images/colorflags/0.png</file>
         <file>images/colorflags/1.png</file>
         <file>images/colorflags/2.png</file>
@@ -169,6 +173,10 @@
         <file>images/chat/admin.png</file>
         <file>images/chat/developer.png</file>
         <file>images/chat/premium.png</file>
+        <file>images/chat/sys.png</file>
+        <file>images/chat/sysimportant.png</file>
+        <file>images/chat/clan.png</file>
+        <file>images/chat/pm.png</file>
         <file>images/colorflags/0.png</file>
         <file>images/colorflags/1.png</file>
         <file>images/colorflags/2.png</file>

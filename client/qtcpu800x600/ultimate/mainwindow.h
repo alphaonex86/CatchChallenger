@@ -22,7 +22,6 @@
 #include "../../libqtcatchchallenger/Audio.hpp"
 #endif
 
-#include "../../libcatchchallenger/ChatParsing.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #include "../../../general/base/ConnectedSocket.hpp"
 #include "../../libqtcatchchallenger/FeedNews.hpp"

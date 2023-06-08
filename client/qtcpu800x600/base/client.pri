@@ -42,6 +42,7 @@ SOURCES += \
     $$PWD/../fight/interface/BaseWindowFightNextAction.cpp \
     $$PWD/QmlInterface/AnimationControl.cpp \
     $$PWD/Options.cpp \
+    $$PWD/ChatParsing.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/CachedString.cpp \
     $$PWD/FacilityLibClient.cpp
@@ -61,6 +62,7 @@ HEADERS  += \
     $$PWD/LanguagesSelect.h \
     $$PWD/CachedString.h \
     $$PWD/Options.h \
+    $$PWD/ChatParsing.hpp \
     $$PWD/FacilityLibClient.h
 
 FORMS    += $$PWD/interface/BaseWindow.ui \

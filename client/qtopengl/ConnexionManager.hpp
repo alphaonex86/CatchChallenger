@@ -19,6 +19,7 @@ public:
     void connectToServer(ConnexionInfo connexionInfo,QString login,QString pass);
     void selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter);
     CatchChallenger::Api_protocol_Qt *client;
+    bool isLocalGame();
 signals:
     void errorString(std::string error);
     void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);

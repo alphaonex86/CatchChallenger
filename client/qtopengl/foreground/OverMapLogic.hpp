@@ -88,6 +88,8 @@ public slots:
     void objectSelection(const bool &ok, const uint16_t &itemId=0, const uint32_t &quantity=1);
     void lastReplyTime(const uint32_t &time);
     void bag_open();
+    void displayLanPort(uint16_t port);
+    void opentolan_open();
     void inventoryNext();
     void inventoryBack();
     void player_open();

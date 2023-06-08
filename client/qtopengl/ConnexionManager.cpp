@@ -231,6 +231,11 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         newError("Internal error","Unable to determine the socket to use");
 }
 
+bool ConnexionManager::isLocalGame()
+{
+    return fakeSocket!=nullptr;
+}
+
 void ConnexionManager::selectCharacter(const uint32_t indexSubServer, const uint32_t indexCharacter)
 {
     if(!client->selectCharacter(indexSubServer,indexCharacter))

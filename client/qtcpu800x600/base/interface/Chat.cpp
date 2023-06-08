@@ -1,5 +1,6 @@
 #include "Chat.h"
 #include "ui_Chat.h"
+#include "../ChatParsing.hpp"
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../../qtmaprender/MapController.hpp"
 

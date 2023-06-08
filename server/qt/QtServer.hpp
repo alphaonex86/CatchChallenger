@@ -6,7 +6,7 @@
 #else
 #include <QObject>
 #endif
-#if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+#if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
 #include <QTcpServer>
 #include <QUdpSocket>
 #include <QTimer>
@@ -49,11 +49,12 @@ public:
     void preload_the_visibility_algorithm() override;
     void unload_the_visibility_algorithm() override;
     void unload_the_events() override;
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     void openToLan(QString name,bool allowInternet=true);//for now internet filter not implemented
+    bool openIsOpenToLan();
     #endif
 signals:
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     void emitLanPort(uint16_t port);
     #endif
     void try_initAll() const;
@@ -67,7 +68,7 @@ signals:
     void haveQuitForCriticalDatabaseQueryFailed();
 private:
     std::unordered_set<CatchChallenger::Client *> client_list;
-    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
     QTcpServer server;
     QUdpSocket broadcastLan;
     QTimer broadcastLanTimer;
