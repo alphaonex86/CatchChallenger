@@ -2,6 +2,7 @@ QT       += gui network core widgets
 QT       += qml quick opengl
 
 DEFINES += CATCHCHALLENGER_CLIENT
+DEFINES += CATCHCHALLENGER_DB_SQLITE
 
 wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
