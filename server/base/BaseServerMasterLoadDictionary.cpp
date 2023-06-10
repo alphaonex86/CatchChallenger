@@ -26,6 +26,7 @@ void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 
 void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(databaseBaseBase->databaseType())
     {
@@ -53,6 +54,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_dictionary_reputation_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServerMasterLoadDictionary::preload_dictionary_reputation_static(void *object)
@@ -73,6 +79,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     }
     std::unordered_set<std::string> foundReputation;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     {
         bool ok;
@@ -98,6 +105,10 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         }
     }
     databaseBaseBase->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.get_reputation().size())
     {
@@ -128,11 +139,16 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
                 break;
                 #endif
             }
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             while(dictionary_reputation_database_to_internal.size()<=lastId)
                 dictionary_reputation_database_to_internal.push_back(-1);
             dictionary_reputation_database_to_internal[lastId]=index;
@@ -149,6 +165,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
 
 void BaseServerMasterLoadDictionary::preload_dictionary_skin()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(databaseBaseBase->databaseType())
     {
@@ -176,6 +193,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_dictionary_skin_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServerMasterLoadDictionary::preload_dictionary_skin_static(void *object)
@@ -195,6 +217,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     }
     std::unordered_set<std::string> foundSkin;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     {
         bool ok;
@@ -220,6 +243,10 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         }
     }
     databaseBaseBase->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     auto i=BaseServerMasterSendDatapack::skinList.begin();
     while(i!=BaseServerMasterSendDatapack::skinList.end())
     {
@@ -250,11 +277,16 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
                 break;
                 #endif
             }
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             while(dictionary_skin_database_to_internal.size()<lastId)
                 dictionary_skin_database_to_internal.push_back(0);
             dictionary_skin_database_to_internal.push_back(i->second);
@@ -271,6 +303,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
 
 void BaseServerMasterLoadDictionary::preload_dictionary_starter()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(databaseBaseBase->databaseType())
     {
@@ -298,6 +331,11 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
         std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
         abort();//stop because can't resolv the name
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_dictionary_starter_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServerMasterLoadDictionary::preload_dictionary_starter_static(void *object)
@@ -327,6 +365,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     }
     std::unordered_set<std::string> foundstarter;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     {
         bool ok;
@@ -352,6 +391,10 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         }
     }
     databaseBaseBase->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     unsigned int index=0;
     while(index<CommonDatapack::commonDatapack.get_profileList().size())
     {
@@ -382,11 +425,16 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
                 abort();
                 break;
             }
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
                 abort();//stop because can't resolv the name
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             while(dictionary_starter_database_to_internal.size()<lastId)
                 dictionary_starter_database_to_internal.push_back(0);
             dictionary_starter_database_to_internal.push_back(static_cast<uint8_t>(index));

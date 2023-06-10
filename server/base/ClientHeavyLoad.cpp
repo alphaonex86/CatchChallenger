@@ -173,7 +173,12 @@ void Client::dbQueryWriteLogin(const std::string &queryText)
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput("Do db_login write: "+queryText);
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_login->asyncWrite(queryText);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 #endif
 
@@ -194,7 +199,12 @@ void Client::dbQueryWriteCommon(const std::string &queryText)
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput("Do db_common write: "+queryText);
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->asyncWrite(queryText);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::dbQueryWriteServer(const std::string &queryText)
@@ -214,7 +224,12 @@ void Client::dbQueryWriteServer(const std::string &queryText)
     #ifdef DEBUG_MESSAGE_CLIENT_SQL
     normalOutput("Do db_server write: "+queryText);
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server->asyncWrite(queryText);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 /*void Client::loadReputation()
