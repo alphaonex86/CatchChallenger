@@ -27,6 +27,7 @@ void BaseServer::load_sql_monsters_max_id()
 
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
@@ -53,6 +54,11 @@ void BaseServer::load_sql_monsters_max_id()
         abort();//stop because can't do the first db access
         //load_clan_max_id();->abort
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    load_clan_max_id();
+    #else
+    #error Define what do here
+    #endif
     return;
 }
 
@@ -63,6 +69,7 @@ void BaseServer::load_monsters_max_id_static(void *object)
 
 void BaseServer::load_monsters_max_id_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
@@ -76,6 +83,10 @@ void BaseServer::load_monsters_max_id_return()
             if(maxMonsterId>=GlobalServerData::serverPrivateVariables.maxMonsterId)
                 GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId+1;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     load_clan_max_id();
 }
 #endif

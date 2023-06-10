@@ -130,6 +130,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
         position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -145,6 +146,10 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         #if defined(CATCHCHALLENGER_EXTRA_CHECK)
         if(sizeof(raw_skill)==0)
         {
@@ -158,6 +163,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
         position=static_cast<int>(public_and_private_informations.playerMonster.size());
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -173,6 +179,10 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         #if defined(CATCHCHALLENGER_EXTRA_CHECK)
         if(sizeof(raw_skill)==0)
         {

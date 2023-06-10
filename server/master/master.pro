@@ -133,7 +133,8 @@ SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2c.cpp
 
-#linux:LIBS += -fuse-ld=mold
+linux:QMAKE_LFLAGS += -fuse-ld=mold
+linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #

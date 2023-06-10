@@ -52,31 +52,34 @@ bool BaseServer::initialize_the_database()
         }
     #endif
     #endif
-    if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
-    {
-        std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
-                  << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
-        GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
-    }
-    if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
-    {
-        std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
-                  << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
-        GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
-    }
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
-    {
-        std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
-                  << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
-        GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
-    }
-    if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
-    {
-        std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
-                  << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
-        GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
-    }
+
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        if(GlobalServerData::serverPrivateVariables.db_server->isConnected())
+        {
+            std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_server->databaseType())
+                      << " at " << GlobalServerData::serverSettings.database_server.host << std::endl;
+            GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
+        }
+        if(GlobalServerData::serverPrivateVariables.db_common->isConnected())
+        {
+            std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType())
+                      << " at " << GlobalServerData::serverSettings.database_common.host << std::endl;
+            GlobalServerData::serverPrivateVariables.db_common->syncDisconnect();
+        }
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            if(GlobalServerData::serverPrivateVariables.db_login->isConnected())
+            {
+                std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_login->databaseType())
+                          << " at " << GlobalServerData::serverSettings.database_login.host << std::endl;
+                GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+            }
+            if(GlobalServerData::serverPrivateVariables.db_base->isConnected())
+            {
+                std::cout << "Disconnected to " << DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_base->databaseType())
+                          << " at " << GlobalServerData::serverSettings.database_base.host << std::endl;
+                GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
+            }
+        #endif
     #endif
 
 
@@ -140,11 +143,13 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_login->asyncWrite("SELECT * FROM account"))
     {
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_login->errorMessage() << std::endl;
         return false;
     }
+    #endif
 
     switch(GlobalServerData::serverSettings.database_base.tryOpenType)
     {
@@ -205,11 +210,13 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_base->asyncWrite("SELECT * FROM dictionary_reputation"))
     {
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_base->errorMessage() << std::endl;
         return false;
     }
+    #endif
     #endif
 
     switch(GlobalServerData::serverSettings.database_common.tryOpenType)
@@ -271,11 +278,13 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_common->asyncWrite("SELECT * FROM character"))
     {
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         return false;
     }
+    #endif
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         default:
@@ -334,11 +343,13 @@ bool BaseServer::initialize_the_database()
         break;
         #endif
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_server->asyncWrite("SELECT * FROM character_forserver"))
     {
         std::cerr << "Basic test failed: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         return false;
     }
+    #endif
 
     initialize_the_database_prepared_query();
     return true;

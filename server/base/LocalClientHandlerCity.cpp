@@ -523,22 +523,41 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->capturedCity].clan=0;
                         }
+                        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
                         CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->capturedCity)
                         });
+                        #elif CATCHCHALLENGER_DB_BLACKHOLE
+                        #else
+                        #error Define what do here
+                        #endif
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan->captureCityInProgress)
                             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
 
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.at(clan->captureCityInProgress).clan!=0)
+                        {
+                            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_city_clan.asyncWrite({
                                         clan->captureCityInProgress,
                                         std::to_string(clan->clanId)
                                         });
+                            #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #else
+                            #error Define what do here
+                            #endif
+                        }
                         else
+                        {
+                            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_city.asyncWrite({
                                         std::to_string(clan->clanId),
                                         CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->captureCityInProgress)
                                         });
+                            #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #else
+                            #error Define what do here
+                            #endif
+                        }
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;

@@ -14,9 +14,11 @@ DatabaseBase::~DatabaseBase()
 {
 }
 
+#ifndef CATCHCHALLENGER_DB_BLACKHOLE
 void DatabaseBase::clear()
 {
 }
+#endif
 
 const std::string DatabaseBase::databaseTypeToString(const DatabaseBase::DatabaseType &type)
 {
@@ -38,6 +40,11 @@ const std::string DatabaseBase::databaseTypeToString(const DatabaseBase::Databas
         #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::PostgreSQL:
             return "PostgreSQL";
+        break;
+        #endif
+        #ifdef CATCHCHALLENGER_DB_BLACKHOLE
+        case DatabaseBase::DatabaseType::BlackHole:
+            return "BlackHole";
         break;
         #endif
     }

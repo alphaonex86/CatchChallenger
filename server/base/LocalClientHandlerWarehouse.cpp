@@ -51,10 +51,15 @@ void Client::addWarehouseCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.warehouse_cash+=cash;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_warehouse_cash.asyncWrite({
                 std::to_string(public_and_private_informations.warehouse_cash),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::removeWarehouseCash(const uint64_t &cash)
@@ -63,10 +68,15 @@ void Client::removeWarehouseCash(const uint64_t &cash)
         return;
     public_and_private_informations.warehouse_cash-=cash;
     public_and_private_informations.warehouse_cash+=cash;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_warehouse_cash.asyncWrite({
                 std::to_string(public_and_private_informations.warehouse_cash),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
@@ -156,6 +166,7 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
             saveMonsterStat(public_and_private_informations.playerMonster.back());
         {
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             unsigned int index=lowerMonsterPos;
             while(index<public_and_private_informations.playerMonster.size())
             {
@@ -166,8 +177,13 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
                             );
                 index++;
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
         }
         {
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             unsigned int index=lowerWarehouseMonsterPos;
             while(index<public_and_private_informations.warehouse_playerMonster.size())
             {
@@ -178,6 +194,10 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
                             );
                 index++;
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
         }
     }
     if(!withdrawItems.empty() || !depositeItems.empty())

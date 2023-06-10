@@ -20,7 +20,8 @@ SOURCES += \
     $$PWD/timer/PlayerUpdaterToMaster.cpp \
     $$PWD/../epoll/timer/TimerPurgeTokenAuthList.cpp
 
-#linux:LIBS += -fuse-ld=mold
+linux:QMAKE_LFLAGS += -fuse-ld=mold
+linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #

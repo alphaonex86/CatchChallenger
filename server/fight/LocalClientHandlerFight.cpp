@@ -84,6 +84,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     //save into the db
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
     {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(CommonSettingsServer::commonSettingsServer.useSP)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                         std::to_string(monster.hp),
@@ -99,6 +100,10 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
                         std::to_string(monster.level),
                         std::to_string(monster.id)
                         });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         /*auto i = deferedEndurance.begin();
         while (i != deferedEndurance.cend())
         {
@@ -181,14 +186,24 @@ void Client::healAllMonsters()
             if(public_and_private_informations.playerMonster.at(index).hp!=stat.hp)
             {
                 public_and_private_informations.playerMonster[index].hp=stat.hp;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                             std::to_string(public_and_private_informations.playerMonster.at(index).hp),
                             std::to_string(public_and_private_informations.playerMonster.at(index).id)
                             });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
             }
             if(!public_and_private_informations.playerMonster.at(index).buffs.empty())
             {
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.playerMonster.at(index).id)});
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
                 public_and_private_informations.playerMonster[index].buffs.clear();
             }
             bool endurance_have_change=false;
@@ -358,6 +373,7 @@ bool Client::giveXPSP(int xp,int sp)
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         auto currentMonster=getCurrentMonster();
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(haveChangeOfLevel)
@@ -390,6 +406,11 @@ bool Client::giveXPSP(int xp,int sp)
                             std::to_string(currentMonster->id)
                             });
         }
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        (void)currentMonster;
+        #else
+        #error Define what do here
+        #endif
     }
     return haveChangeOfLevel;
 }
@@ -562,10 +583,15 @@ bool Client::moveDownMonster(const uint8_t &number)
 
 void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monsterPosition)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_position.asyncWrite({
                 std::to_string(monsterPosition),
                 std::to_string(monsterId)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
@@ -722,11 +748,16 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &m
         }
     #endif
     CommonFightEngine::confirmEvolutionTo(playerMonster,monster);
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_and_hp.asyncWrite({
                 std::to_string(playerMonster->hp),
                 std::to_string(playerMonster->monster),
                 std::to_string(playerMonster->id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     if(addToEncyclopedia(playerMonster->monster))
         updateMonsterInDatabaseEncyclopedia();
 }
@@ -840,21 +871,31 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
         }
     }
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                 std::to_string(newHpValue),
                 std::to_string(currentMonster->id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
 {
     if(!CommonFightEngine::addLevel(monster,numberOfLevel))
         return false;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_and_level.asyncWrite({
                 std::to_string(monster->hp),
                 std::to_string(monster->level),
                 std::to_string(monster->id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     return true;
 }
 

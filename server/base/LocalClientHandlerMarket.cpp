@@ -176,20 +176,30 @@ void Client::buyMarketObject(const uint8_t &query_id,const uint32_t &marketObjec
             //apply the buy
             if(marketItem.quantity==quantity)
             {
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_item_market.asyncWrite({
                             std::to_string(marketItem.item),
                             std::to_string(marketItem.player)
                             });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
             }
             else
             {
                 GlobalServerData::serverPrivateVariables.marketItemList[index].quantity=marketItem.quantity-quantity;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market.asyncWrite({
                             std::to_string(marketItem.quantity-quantity),
                             std::to_string(marketItem.item),
                             std::to_string(marketItem.player)
                             });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
             }
             removeCash(quantity*marketItem.price);
             if(playerById.find(marketItem.player)!=playerById.cend())
@@ -197,10 +207,15 @@ void Client::buyMarketObject(const uint8_t &query_id,const uint32_t &marketObjec
                 if(!playerById.at(marketItem.player)->addMarketCashWithoutSave(quantity*marketItem.price))
                     normalOutput("Problem at market cash adding");
             }
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_charaters_market_cash.asyncWrite({
                         std::to_string(quantity*marketItem.price),
                         std::to_string(marketItem.player)
                         });
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             addObject(marketItem.item,quantity);
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -260,10 +275,15 @@ void Client::buyMarketMonster(const uint8_t &query_id,const uint32_t &marketMons
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             removeCash(marketPlayerMonster.price);
             //entry created at first server connexion
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_charaters_market_cash.asyncWrite({
                         std::to_string(marketPlayerMonster.price),
                         std::to_string(marketPlayerMonster.player)
                         });
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             if(playerById.find(marketPlayerMonster.player)!=playerById.cend())
             {
                 if(!playerById.at(marketPlayerMonster.player)->addMarketCashWithoutSave(marketPlayerMonster.price))
@@ -271,6 +291,7 @@ void Client::buyMarketMonster(const uint8_t &query_id,const uint32_t &marketMons
             }
             addPlayerMonster(marketPlayerMonster.monster);
 
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_monster_market_price.asyncWrite({
                         std::to_string(marketPlayerMonster.monster.id)
                         });
@@ -279,6 +300,10 @@ void Client::buyMarketMonster(const uint8_t &query_id,const uint32_t &marketMons
                         std::to_string(getPlayerMonster().size()),
                         std::to_string(marketPlayerMonster.monster.id)
                         });
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
@@ -343,12 +368,17 @@ void Client::putMarketObject(const uint8_t &query_id,const uint16_t &objectId,co
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market_and_price.asyncWrite({
                         std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity),
                         std::to_string(price),
                         std::to_string(objectId),
                         std::to_string(character_id)
                         });
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             return;
         }
         index++;
@@ -365,12 +395,17 @@ void Client::putMarketObject(const uint8_t &query_id,const uint16_t &objectId,co
     }
     //append to the market
     removeObject(objectId,quantity);
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_item_market.asyncWrite({
                 std::to_string(objectId),
                 std::to_string(character_id),
                 std::to_string(quantity),
                 std::to_string(price)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     MarketItem marketItem;
     marketItem.price=price;
     marketItem.item=objectId;
@@ -424,19 +459,29 @@ void Client::putMarketMonster(const uint8_t &query_id, const uint8_t &monsterPos
     marketPlayerMonster.price=price;
     marketPlayerMonster.monster=playerMonster;
     marketPlayerMonster.player=character_id;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_place.asyncWrite({
                            "3",
                            std::to_string(marketPlayerMonster.monster.id)
                        });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
     GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.push_back(marketPlayerMonster);
     //save the player drop monster
     //updateMonsterInDatabase();
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_monster_market_price.asyncWrite({
             std::to_string(marketPlayerMonster.monster.id),
             std::to_string(price)
             });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
@@ -468,9 +513,14 @@ void Client::withdrawMarketCash(const uint8_t &query_id)
     {
         addCash(market_cash);
         market_cash=0;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_get_market_cash.asyncWrite({
                     std::to_string(character_id)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -532,17 +582,27 @@ void Client::withdrawMarketObject(const uint8_t &query_id,const uint16_t &object
             {
                 marketObjectUniqueIdList.push_back(marketItem.marketObjectUniqueId);
                 GlobalServerData::serverPrivateVariables.marketItemList.erase(GlobalServerData::serverPrivateVariables.marketItemList.begin()+index);
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_item_market.asyncWrite({
                                 std::to_string(objectId),
                                 std::to_string(character_id)
                             });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
             }
             else
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_item_market.asyncWrite({
                                 std::to_string(GlobalServerData::serverPrivateVariables.marketItemList.at(index).quantity),
                                 std::to_string(objectId),
                                 std::to_string(character_id)
                             });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
             addObject(objectId,quantity);
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
@@ -605,11 +665,20 @@ void Client::withdrawMarketMonster(const uint8_t &query_id,const uint32_t &monst
                 sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                 return;
             }
-
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_monster_market_price.asyncWrite({std::to_string(marketPlayerMonster.monster.id)});
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.erase(GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.begin()+index);
             addPlayerMonster(marketPlayerMonster.monster);
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_place.asyncWrite({"1",std::to_string(marketPlayerMonster.monster.id)});
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
