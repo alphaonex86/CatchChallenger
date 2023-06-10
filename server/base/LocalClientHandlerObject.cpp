@@ -242,6 +242,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         posOutput+=1;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         //add into db, bit to save
         {
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_recipe.asyncWrite({
@@ -249,6 +250,10 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
                         std::to_string(character_id)
                         });
         }
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
     //use trap into fight
     else if(CommonDatapack::commonDatapack.get_items().trap.find(itemId)!=CommonDatapack::commonDatapack.get_items().trap.cend())

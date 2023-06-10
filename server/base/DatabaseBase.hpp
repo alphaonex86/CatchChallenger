@@ -41,9 +41,13 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
             #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
             PostgreSQL=0x03,
             #endif
+            #ifdef CATCHCHALLENGER_DB_BLACKHOLE
+            BlackHole=0x04,
+            #endif
         };
         DatabaseBase();
         virtual ~DatabaseBase();
+        #ifndef CATCHCHALLENGER_DB_BLACKHOLE
         virtual bool syncConnect(const std::string &host, const std::string &dbname, const std::string &user, const std::string &password) = 0;
         virtual void syncDisconnect() = 0;
         virtual DatabaseBaseCallBack * asyncRead(const std::string &query,void * returnObject,CallBackDatabase method) = 0;
@@ -53,11 +57,12 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
         virtual const std::string value(const int &value) const = 0;
         virtual bool isConnected() const = 0;
         virtual bool epollEvent(const uint32_t &events) = 0;
+        virtual void clear();
+        #endif
         //sync mode then prefer tryInterval*considerDownAfterNumberOfTry < 20s
         unsigned int tryInterval;//second
         unsigned int considerDownAfterNumberOfTry;
         DatabaseType databaseType() const;
-        virtual void clear();
         static const std::string databaseTypeToString(const DatabaseType &type);
         virtual bool setBlocking(const bool &val);//return true if success
         virtual bool setMaxDbQueries(const unsigned int &maxDbQueries);

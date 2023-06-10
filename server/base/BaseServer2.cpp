@@ -246,6 +246,7 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
 
 void BaseServer::closeDB()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_server!=NULL)
         GlobalServerData::serverPrivateVariables.db_server->syncDisconnect();
     if(GlobalServerData::serverPrivateVariables.db_common!=NULL)
@@ -255,6 +256,7 @@ void BaseServer::closeDB()
         GlobalServerData::serverPrivateVariables.db_base->syncDisconnect();
     if(GlobalServerData::serverPrivateVariables.db_login!=NULL)
         GlobalServerData::serverPrivateVariables.db_login->syncDisconnect();
+    #endif
     #endif
 }
 

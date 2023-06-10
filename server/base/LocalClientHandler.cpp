@@ -215,10 +215,15 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
     if(cash==0 && !forceSave)
         return;
     public_and_private_informations.cash+=cash;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::removeCash(const uint64_t &cash)
@@ -226,10 +231,15 @@ void Client::removeCash(const uint64_t &cash)
     if(cash==0)
         return;
     public_and_private_informations.cash-=cash;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
@@ -363,10 +373,15 @@ bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
         abort();
     }
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_gift.asyncWrite({
                 std::to_string(timeRangeEventTimestamps),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     const uint32_t &randomNumber=rand();
     unsigned int index=0;

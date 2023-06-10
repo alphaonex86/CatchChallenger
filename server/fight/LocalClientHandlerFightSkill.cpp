@@ -41,10 +41,15 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                         return false;
                     }
                     public_and_private_informations.playerMonster[index].sp-=sp;
+                    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_sp_only.asyncWrite({
                                 std::to_string(public_and_private_informations.playerMonster.at(index).sp),
                                 std::to_string(public_and_private_informations.playerMonster.at(index).id)
                                 });
+                    #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #else
+                    #error Define what do here
+                    #endif
                 }
                 if(learn.learnSkillLevel==1)
                 {

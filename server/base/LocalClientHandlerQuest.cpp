@@ -247,10 +247,15 @@ void Client::syncDatabaseQuest()
             pos+=1;
             ++i;
         }
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(quest_raw,pos),
                     std::to_string(character_id)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
     else
     {
@@ -289,10 +294,15 @@ void Client::syncDatabaseQuest()
             pos+=1;
             ++i;
         }
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,pos),
                     std::to_string(character_id)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
 }
 

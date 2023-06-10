@@ -160,10 +160,15 @@ bool Client::syncDatabasePlant()
 
             ++i;
         }
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_plant.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
                     std::to_string(character_id)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         return true;
     }
 }

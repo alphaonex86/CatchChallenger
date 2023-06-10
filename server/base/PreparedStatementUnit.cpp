@@ -105,6 +105,7 @@ std::string PreparedStatementUnit::queryText() const
     return query.originalQuery();
 }
 
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 DatabaseBaseCallBack *PreparedStatementUnit::asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values)
 {
     if(database==NULL)
@@ -155,6 +156,10 @@ bool PreparedStatementUnit::asyncWrite(const std::vector<std::string> &values)
         return database->asyncWrite(query.compose(values));
     #endif
 }
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#else
+#error Define what do here
+#endif
 
 PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other) // copy constructor
 {

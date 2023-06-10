@@ -28,6 +28,7 @@ void BaseServer::preload_dictionary_map()
         std::cerr << "preload_dictionary_map() already call" << std::endl;
         abort();
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -57,6 +58,11 @@ void BaseServer::preload_dictionary_map()
     }
     else
         std::cout << "wait database dictionary_map query" << std::endl;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_dictionary_map_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_dictionary_map_static(void *object)
@@ -75,6 +81,7 @@ void BaseServer::preload_dictionary_map_return()
     std::unordered_set<std::string> foundMap;
     unsigned int maxDatabaseMapId=0;
     unsigned int obsoleteMap=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
@@ -101,6 +108,10 @@ void BaseServer::preload_dictionary_map_return()
             obsoleteMap++;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
         std::cerr << "Only obsolete map!" << std::endl;
@@ -117,6 +128,7 @@ void BaseServer::preload_dictionary_map_return()
         if(foundMap.find(map)==foundMap.end())
         {
             maxDatabaseMapId=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size())+1;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
             {
@@ -144,6 +156,10 @@ void BaseServer::preload_dictionary_map_return()
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
             DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
@@ -171,6 +187,7 @@ void BaseServer::preload_industries()
     }
     preload_industries_call=true;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -198,6 +215,11 @@ void BaseServer::preload_industries()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_finish();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_industries_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_industries_static(void *object)
@@ -207,6 +229,7 @@ void BaseServer::preload_industries_static(void *object)
 
 void BaseServer::preload_industries_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         IndustryStatus industryStatus;
@@ -338,6 +361,10 @@ void BaseServer::preload_industries_return()
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
     std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     if(out_file!=nullptr)
@@ -468,6 +495,7 @@ void BaseServer::preload_market_items_static(void *object)
 
 void BaseServer::preload_market_items_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     //parse the result
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -506,6 +534,10 @@ void BaseServer::preload_market_items_return()
         Client::marketObjectUniqueIdList.erase(Client::marketObjectUniqueIdList.begin());
         GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.automatic_account_creation)
         load_account_max_id();
@@ -521,6 +553,7 @@ void BaseServer::load_clan_max_id()
 {
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxClanId=1;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
@@ -548,6 +581,11 @@ void BaseServer::load_clan_max_id()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_industries();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    load_clan_max_id_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::load_clan_max_id_static(void *object)
@@ -559,6 +597,7 @@ void BaseServer::load_clan_max_id_return()
 {
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxClanId=1;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
@@ -572,11 +611,18 @@ void BaseServer::load_clan_max_id_return()
             continue;
         }
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     preload_industries();
 }
 
 void BaseServer::load_account_max_id()
 {
+    //start to 0 due to pre incrementation before use
+    GlobalServerData::serverPrivateVariables.maxAccountId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_login->databaseType())
     {
@@ -607,8 +653,11 @@ void BaseServer::load_account_max_id()
         else
             baseServerMasterLoadDictionaryLoad();
     }
-    //start to 0 due to pre incrementation before use
-    GlobalServerData::serverPrivateVariables.maxAccountId=0;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    load_account_max_id_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::load_account_max_id_static(void *object)
@@ -618,6 +667,7 @@ void BaseServer::load_account_max_id_static(void *object)
 
 void BaseServer::load_account_max_id_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_login->next())
     {
         bool ok;
@@ -631,6 +681,10 @@ void BaseServer::load_account_max_id_return()
             continue;
         }
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
@@ -639,6 +693,9 @@ void BaseServer::load_account_max_id_return()
 
 void BaseServer::load_character_max_id()
 {
+    //start to 0 due to pre incrementation before use
+    GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
@@ -666,8 +723,11 @@ void BaseServer::load_character_max_id()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         baseServerMasterLoadDictionaryLoad();
     }
-    //start to 0 due to pre incrementation before use
-    GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    load_character_max_id_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::load_character_max_id_static(void *object)
@@ -677,6 +737,7 @@ void BaseServer::load_character_max_id_static(void *object)
 
 void BaseServer::load_character_max_id_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         bool ok;
@@ -690,6 +751,10 @@ void BaseServer::load_character_max_id_return()
             continue;
         }
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     baseServerMasterLoadDictionaryLoad();
 }
 #endif

@@ -469,10 +469,16 @@ void Client::setRights(const Player_type& type)
     public_and_private_informations.public_informations.type=type;
     const int &newType=type/0x10-1;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_change_right.asyncWrite({
                 std::to_string(newType),
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    (void)newType;
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::timeRangeEvent(const uint64_t &timestamps)

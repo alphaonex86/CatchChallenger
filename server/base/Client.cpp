@@ -155,6 +155,7 @@ bool Client::disconnectClient()
     if(character_id!=0)
         normalOutput("Disconnected client");
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     /// \warning global clear from client call?
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_login->clear();
@@ -162,6 +163,10 @@ bool Client::disconnectClient()
     #endif
     GlobalServerData::serverPrivateVariables.db_common->clear();
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected=false;
     /*if(socket!=NULL)
@@ -255,6 +260,7 @@ bool Client::disconnectClient()
         const uint64_t &addTime=sFrom1970()-connectedSince;
         if(addTime>5)
         {
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_played_time.asyncWrite({
                         std::to_string(addTime),
                         character_id_string
@@ -266,6 +272,10 @@ bool Client::disconnectClient()
                         character_id_string
                         });
             #endif
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
         }
         //save the monster
         if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle && isInFight())
@@ -276,6 +286,7 @@ bool Client::disconnectClient()
             while(index<public_and_private_informations.playerMonster.size())
             {
                 const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 if(CommonSettingsServer::commonSettingsServer.useSP)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                                 std::to_string(playerMonster.hp),
@@ -291,6 +302,10 @@ bool Client::disconnectClient()
                                 std::to_string(playerMonster.level),
                                 std::to_string(playerMonster.id)
                                 });
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
                 syncMonsterSkillAndEndurance(playerMonster);
                 index++;
             }

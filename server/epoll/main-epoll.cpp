@@ -389,6 +389,7 @@ int main(int argc, char *argv[])
         break;
     }
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                 GlobalServerData::serverSettings.database_login.host,
@@ -428,6 +429,10 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     server->initialize_the_database_prepared_query();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEpoll();
     TimerCityCapture timerCityCapture;
@@ -867,6 +872,7 @@ int main(int argc, char *argv[])
                     static_cast<EpollTimer *>(events[i].data.ptr)->validateTheTimer();
                 }
                 break;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 case BaseClassSwitch::EpollObjectType::Database:
                 {
                     EpollDatabase * const db=static_cast<EpollDatabase *>(events[i].data.ptr);
@@ -890,6 +896,10 @@ int main(int argc, char *argv[])
                     //std::cerr << "epoll database type return not supported: " << CatchChallenger::DatabaseBase::databaseTypeToString(static_cast<CatchChallenger::DatabaseBase *>(events[i].data.ptr)->databaseType()) << " for " << events[i].data.ptr << std::endl;
                 }
                 break;
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
                 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
                 case BaseClassSwitch::EpollObjectType::MasterLink:
                 {

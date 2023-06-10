@@ -41,6 +41,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 else
                 {
                     dictionary_pointOnMap_maxId_plant++;
+                    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                     std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
@@ -81,6 +82,10 @@ void BaseServer::preload_map_semi_after_db_id()
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
+                    #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #else
+                    #error Define what do here
+                    #endif
                     DictionaryServer::dictionary_pointOnMap_plant_internal_to_database[sortFileName]
                             [std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=static_cast<uint16_t>(dictionary_pointOnMap_maxId_plant);
                     pointOnMapDbCode=static_cast<uint16_t>(dictionary_pointOnMap_maxId_plant);
@@ -138,6 +143,7 @@ void BaseServer::preload_map_semi_after_db_id()
                 else
                 {
                     dictionary_pointOnMap_maxId_item++;
+                    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                     std::string queryText;
                     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
                     {
@@ -178,6 +184,10 @@ void BaseServer::preload_map_semi_after_db_id()
                         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
+                    #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #else
+                    #error Define what do here
+                    #endif
                     DictionaryServer::dictionary_pointOnMap_item_internal_to_database[sortFileName]
                             [std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=static_cast<uint16_t>(dictionary_pointOnMap_maxId_item);
                     pointOnMapDbCode=static_cast<uint16_t>(dictionary_pointOnMap_maxId_item);

@@ -176,11 +176,16 @@ void Client::transferExistingMonster(std::vector<PlayerMonster> tradeMonster)
     unsigned int index=0;
     while(index<tradeMonster.size())
     {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_owner.asyncWrite({
                     std::to_string(character_id),
                     std::to_string(positionsList.at(index)),
                     std::to_string(tradeMonster.at(index).id)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         index++;
     }
 }

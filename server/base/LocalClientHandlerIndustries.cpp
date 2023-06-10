@@ -32,21 +32,31 @@ void Client::saveIndustryStatus(const FACTORY_TYPE &factoryId,const IndustryStat
     //save in db
     if(GlobalServerData::serverPrivateVariables.industriesStatus.find(factoryId)==GlobalServerData::serverPrivateVariables.industriesStatus.cend())
     {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_factory.asyncWrite({
                     std::to_string(factoryId),
                     stringimplode(resourcesStringList,';'),
                     stringimplode(productsStringList,';'),
                     std::to_string(industryStatus.last_update)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
     else
     {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_factory.asyncWrite({
                     stringimplode(resourcesStringList,';'),
                     stringimplode(productsStringList,';'),
                     std::to_string(industryStatus.last_update),
                     std::to_string(factoryId)
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
     GlobalServerData::serverPrivateVariables.industriesStatus[factoryId]=industryStatus;
 }

@@ -36,6 +36,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     stat=ClientStat::CharacterSelecting;
     //std::cout << "Client::selectCharacter(), Try select character " << characterId << " with account " << account_id << "..." << std::endl;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.asyncRead(this,&Client::selectCharacter_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
@@ -53,6 +54,16 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
         #endif
         callbackRegistred.push(callback);
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    paramToPassToCallBack.push(selectCharacterParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("SelectCharacterParam");
+    #endif
+    callbackRegistred.push(nullptr);
+    selectCharacter_object();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectCharacter_static(void *object)
@@ -78,7 +89,12 @@ void Client::selectCharacter_object()
     selectCharacter_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
     paramToPassToCallBack.pop();
     delete selectCharacterParam;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &characterId)
@@ -98,7 +114,12 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     encyclopedia_monster(15),encyclopedia_item(16),achievements(17),blob_version(18),date(19)*/
 
     callbackRegistred.pop();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
         std::cerr << "Via: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", callback list size: " << paramToPassToCallBack.size() << std::endl;
@@ -113,6 +134,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     public_and_private_informations.clan=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
     if(!ok)
@@ -577,4 +599,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
     Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
