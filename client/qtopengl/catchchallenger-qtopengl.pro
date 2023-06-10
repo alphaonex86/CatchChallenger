@@ -10,7 +10,7 @@ DEFINES += CATCHCHALLENGER_DB_SQLITE
 #DEFINES+=PROTOCOLPARSINGDEBUG
 DEFINES += CATCHCHALLENGER_CLASS_QT
 !contains(DEFINES, NOSINGLEPLAYER) {
-include(base/solo.pri)
+#include(base/solo.pri)
     INCLUDEPATH += -I/usr/include/
     include(../../server/catchchallenger-server.pri)
     include(../../server/catchchallenger-serverheader.pri)
