@@ -316,6 +316,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         {
             normalOutput("First client of the clan: "+std::to_string(public_and_private_informations.clan)+", get the info");
             //do the query
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.asyncRead(this,&Client::selectClan_static,{std::to_string(public_and_private_informations.clan)});
             if(callback==NULL)
             {
@@ -325,6 +326,12 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             }
             else
                 callbackRegistred.push(callback);
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            callbackRegistred.push(nullptr);
+            selectClan_return();
+            #else
+            #error Define what do here
+            #endif
         }
     }
     else
@@ -345,12 +352,18 @@ void Client::selectClan_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->selectClan_return();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectClan_return()
 {
     callbackRegistred.pop();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     //parse the result
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -368,6 +381,10 @@ void Client::selectClan_return()
         public_and_private_informations.clan=0;
         normalOutput("Warning: clan linked: %1 is not found into db");
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     loadMonsters();
 }
 

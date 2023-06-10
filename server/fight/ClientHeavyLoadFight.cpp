@@ -20,6 +20,8 @@ void Client::loadMonsters()
     }
     #endif
     //don't filter by place, dispatched in internal, market volume should be low
+
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(static_cast<Client *>(this),&Client::loadMonsters_static,{std::to_string(character_id)});
     if(callback==NULL)
     {
@@ -29,6 +31,12 @@ void Client::loadMonsters()
     }
     else
         callbackRegistred.push(callback);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    callbackRegistred.push(nullptr);
+    loadMonsters_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::loadMonsters_static(void *object)
@@ -45,6 +53,7 @@ void Client::loadMonsters_return()
      * id(0),character(1),place(2),hp(3),monster(4),level(5),xp(6),captured_with(7),gender(8),egg_step(9),character_origin(10),buffs(11),skills(12),skills_endurance(13),sp(14)
      */
     callbackRegistred.pop();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -62,6 +71,10 @@ void Client::loadMonsters_return()
                 public_and_private_informations.warehouse_playerMonster.push_back(playerMonster);
         }
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     characterIsRightFinalStep();
 }
 
@@ -70,6 +83,7 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
     ok=true;
     PlayerMonster playerMonster;
     Monster monster;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     playerMonster.id=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(0),&ok);
     if(!ok)
         std::cerr << "monsterId: " << GlobalServerData::serverPrivateVariables.db_common->value(0) << " is not a number" << std::endl;
@@ -216,6 +230,20 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
             playerMonster.hp=stat.hp;
         }
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    playerMonster.catched_with=0;
+    playerMonster.character_origin=0;
+    playerMonster.egg_step=0;
+    playerMonster.gender=Gender_Unknown;
+    playerMonster.hp=0;
+    playerMonster.id=0;
+    playerMonster.level=0;
+    playerMonster.monster=0;
+    playerMonster.remaining_xp=0;
+    playerMonster.sp=0;
+    #else
+    #error Define what do here
+    #endif
     return playerMonster;
 }
 

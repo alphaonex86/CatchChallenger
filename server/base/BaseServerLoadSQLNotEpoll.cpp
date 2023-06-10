@@ -24,6 +24,7 @@ void BaseServer::preload_zone_static(void *object)
 
 void BaseServer::preload_zone_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         bool ok;
@@ -46,6 +47,10 @@ void BaseServer::preload_zone_return()
             std::cerr << "clan id is failed to convert to number for city status" << std::endl;
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     entryListIndex++;
     preload_market_monsters_prices_sql();
 }
@@ -62,7 +67,6 @@ void BaseServer::preload_zone_sql()
         {
             std::string zoneCodeName=entryListZone.at(entryListIndex).name;
             stringreplaceOne(zoneCodeName,".xml","");
-            std::string queryText;
             if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
             {
                 std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
@@ -78,6 +82,8 @@ void BaseServer::preload_zone_sql()
                 }
                 indexZone++;
             }
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+            std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
                 default:
@@ -109,6 +115,11 @@ void BaseServer::preload_zone_sql()
             }
             else
                 return;
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            preload_zone_return();
+            #else
+            #error Define what do here
+            #endif
         }
         preload_market_monsters_sql();
     }

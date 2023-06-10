@@ -10,6 +10,7 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_pointOnMap_item_sql()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -48,6 +49,11 @@ void BaseServer::preload_pointOnMap_item_sql()
         //start SQL load
         preload_pointOnMap_plant_sql();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_pointOnMap_item_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_pointOnMap_item_static(void *object)
@@ -65,8 +71,9 @@ void BaseServer::preload_pointOnMap_item_return()
 
     unsigned int itemCount=0;
     unsigned int itemValidatedCount=0;
-    bool ok;
     dictionary_pointOnMap_maxId_item=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    bool ok;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         itemCount++;
@@ -144,8 +151,11 @@ void BaseServer::preload_pointOnMap_item_return()
             }
         }
     }
-
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         #ifdef CATCHCHALLENGER_CACHE_HPS
         if(serialBuffer!=nullptr)
@@ -170,6 +180,7 @@ void BaseServer::preload_pointOnMap_item_return()
 
 void BaseServer::preload_pointOnMap_plant_sql()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -208,6 +219,11 @@ void BaseServer::preload_pointOnMap_plant_sql()
         //start SQL load
         preload_map_semi_after_db_id();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_pointOnMap_plant_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_pointOnMap_plant_static(void *object)
@@ -230,6 +246,7 @@ void BaseServer::preload_pointOnMap_plant_return()
     unsigned int plantValidatedCount=0;
     bool ok;
     dictionary_pointOnMap_maxId_plant=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
         plantCount++;
@@ -319,6 +336,10 @@ void BaseServer::preload_pointOnMap_plant_return()
         }
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         #ifdef CATCHCHALLENGER_CACHE_HPS
         if(serialBuffer!=nullptr)
@@ -347,6 +368,7 @@ void BaseServer::preload_market_monsters_prices_sql()
     preload_market_monsters_prices_call=true;
     std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industrie loaded" << std::endl;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -374,6 +396,11 @@ void BaseServer::preload_market_monsters_prices_sql()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
         preload_market_monsters_sql();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_market_monsters_prices_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_market_monsters_prices_static(void *object)
@@ -383,6 +410,7 @@ void BaseServer::preload_market_monsters_prices_static(void *object)
 
 void BaseServer::preload_market_monsters_prices_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     {
@@ -403,6 +431,10 @@ void BaseServer::preload_market_monsters_prices_return()
         if(ok)
             monsterSemiMarketList.push_back(monsterSemi);
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     preload_market_monsters_sql();
 }
@@ -421,8 +453,8 @@ void BaseServer::preload_market_monsters_sql()
         return;
     }
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
-
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
     {
         default:
@@ -475,6 +507,11 @@ void BaseServer::preload_market_monsters_sql()
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         preload_market_items();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_market_monsters_return();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_market_monsters_static(void *object)
@@ -484,6 +521,7 @@ void BaseServer::preload_market_monsters_static(void *object)
 
 void BaseServer::preload_market_monsters_return()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -522,6 +560,11 @@ void BaseServer::preload_market_monsters_return()
         loadMonsterBuffs(0);
     else*/
         preload_market_items();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_market_items();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void BaseServer::preload_market_items()
@@ -543,6 +586,7 @@ void BaseServer::preload_market_items()
         index++;
     }*/
     //do the query
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
     {
@@ -577,4 +621,9 @@ void BaseServer::preload_market_items()
         #endif
         baseServerMasterLoadDictionaryLoad();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_market_items_return();
+    #else
+    #error Define what do here
+    #endif
 }

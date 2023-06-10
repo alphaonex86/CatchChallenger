@@ -21,6 +21,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     selectCharacterParam->query_id=query_id;
     selectCharacterParam->characterId=characterId;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.asyncRead(this,&Client::selectCharacterServer_static,{std::to_string(characterId)});
     if(callback==NULL)
     {
@@ -39,13 +40,30 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
         #endif
         callbackRegistred.push(callback);
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    characterCreationDateList[characterId]=characterCreationDate;
+
+    paramToPassToCallBack.push(selectCharacterParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("SelectCharacterParam");
+    #endif
+    callbackRegistred.push(nullptr);
+    selectCharacterServer_object();
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectCharacterServer_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->selectCharacterServer_object();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectCharacterServer_object()
@@ -65,7 +83,12 @@ void Client::selectCharacterServer_object()
     selectCharacterServer_return(selectCharacterParam->query_id,selectCharacterParam->characterId);
     paramToPassToCallBack.pop();
     delete selectCharacterParam;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t &characterId)
@@ -85,7 +108,12 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     callbackRegistred.pop();
     const auto &characterIdString=std::to_string(characterId);
     const auto &sFrom1970String=std::to_string(sFrom1970());
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         if(profileIndex>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
         {
@@ -96,6 +124,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         serverProfileInternal.preparedQueryAddCharacterForServer.asyncWrite({
                                characterIdString,
                                sFrom1970String
@@ -104,6 +133,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     sFrom1970String,
                     characterIdString
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
 
         characterIsRightWithParsedRescue(query_id,
             characterId,
@@ -125,6 +158,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         characterCreationDateList.erase(characterId);
         return;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     else
     {
         bool ok;
@@ -598,4 +632,8 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             GlobalServerData::serverPrivateVariables.db_server->value(10),
             GlobalServerData::serverPrivateVariables.db_server->value(11)
     );
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }

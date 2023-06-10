@@ -38,6 +38,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::askLogin_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
@@ -54,13 +55,29 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
         callbackRegistred.push(callback);
         return true;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    paramToPassToCallBack.push(askLoginParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("AskLoginParam");
+    #endif
+    callbackRegistred.push(nullptr);
+    askLogin_object();
+    return true;
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::askLogin_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->askLogin_object();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_login->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     //delete askLoginParam; -> not here because need reuse later
 }
 
@@ -100,8 +117,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     #endif
     callbackRegistred.pop();
     {
-        bool ok;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         {
             //return creation query to client
             if(GlobalServerData::serverSettings.automatic_account_creation)
@@ -128,8 +149,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
             }
         }
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         else
         {
+            bool ok;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
@@ -236,7 +259,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 stat=ClientStat::Logged;
             }
         }
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id)});
     if(callback==NULL)
     {
@@ -253,6 +281,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #endif
         callbackRegistred.push(callback);
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
@@ -281,6 +313,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     CatchChallenger::DatabaseBaseCallBack *callback=PreparedDBQueryLogin::db_query_login.asyncRead(this,&Client::createAccount_static,{binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)});
     if(callback==NULL)
     {
@@ -299,13 +332,30 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
         callbackRegistred.push(callback);
         return true;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    number_of_character++;
+    paramToPassToCallBack.push(askLoginParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("AskLoginParam");
+    #endif
+    callbackRegistred.push(nullptr);
+    createAccount_object();
+    return true;
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::createAccount_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->createAccount_object();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_login->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::createAccount_object()
@@ -343,7 +393,12 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     paramToPassToCallBackType.pop();
     #endif
     callbackRegistred.pop();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_login->next())
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         //network send
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -351,12 +406,17 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #endif
         GlobalServerData::serverPrivateVariables.maxAccountId++;
         account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
                     std::to_string(account_id),
                     binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
                     binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
                     std::to_string(sFrom1970())
                     });
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
 
         //send the network reply
         removeFromQueryReceived(askLoginParam->query_id);
@@ -374,8 +434,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
 
         stat=ClientStat::ProtocolGood;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     else
         loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::character_list_static(void *object)
@@ -434,8 +499,9 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     uint32_t posOutput=0;
 
     {
-        const auto &current_time=sFrom1970();
         std::vector<CharacterEntry> characterEntryList;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        const auto &current_time=sFrom1970();
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
         {
@@ -505,6 +571,10 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
             else
                 normalOutput("Character id is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" for "+std::to_string(account_id));
         }
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
         {
             loginIsWrong(query_id,0x05,"Can't create character and don't have character");

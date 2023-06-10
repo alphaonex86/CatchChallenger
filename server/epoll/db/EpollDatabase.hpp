@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
 #ifndef CATCHCHALLENGER_EpollDatabase_H
 #define CATCHCHALLENGER_EpollDatabase_H
 
@@ -8,4 +9,5 @@ class EpollDatabase : public BaseClassSwitch, public CatchChallenger::DatabaseBa
 {
 };
 
+#endif
 #endif

@@ -39,10 +39,15 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
         raw_buff[sub_index*3+2]=buff.remainingNumberOfTurn;
         sub_index++;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_buff.asyncWrite({
                 binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
                 std::to_string(monster.id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
@@ -88,11 +93,16 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
 
         sub_index++;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_skill_and_endurance.asyncWrite({
                 binarytoHexa(skills,static_cast<uint32_t>(sizeof(skills))),
                 binarytoHexa(skills_endurance,static_cast<uint32_t>(sizeof(skills_endurance))),
                 std::to_string(monster.id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::syncMonsterEndurance(const PlayerMonster &monster)
@@ -114,10 +124,15 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
 
         sub_index++;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_update_endurance.asyncWrite({
                 binarytoHexa(skills_endurance,static_cast<uint32_t>(sizeof(skills_endurance))),
                 std::to_string(monster.id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::saveAllMonsterPosition()
@@ -167,8 +182,14 @@ void Client::saveStat()
     }
     #endif
     const PlayerMonster * const monster=getCurrentMonster();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                 std::to_string(monster->hp),
                 std::to_string(monster->id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    (void)monster;
+    #else
+    #error Define what do here
+    #endif
 }

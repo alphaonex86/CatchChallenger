@@ -53,6 +53,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             clanActionParam->action=action;
             clanActionParam->text=text;
 
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             CatchChallenger::DatabaseBaseCallBack *callback=
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_clan_by_name
                     .asyncRead(this,&Client::addClan_static,{
@@ -83,6 +84,10 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 #endif
                 callbackRegistred.push(callback);
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             return;
         }
         break;
@@ -107,8 +112,13 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             //update the db
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
         }
         break;
         /// \todo: where is the code is resolv when the clan is dissolved but player not connected?
@@ -139,6 +149,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             //update the db
             unsigned int index=0;
             while(index<copyOf_players.size())
@@ -147,6 +158,10 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 index++;
             }
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
             #ifndef EPOLLCATCHCHALLENGERSERVER
             {
                 if(CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().size()>clan->capturedCity)
@@ -163,20 +178,22 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
             #endif
-            index=0;
-            while(index<copyOf_players.size())
             {
-                if(copyOf_players.at(index)!=nullptr)
+                unsigned int index=0;
+                while(index<copyOf_players.size())
                 {
-                    if(copyOf_players.at(index)==this)
+                    if(copyOf_players.at(index)!=nullptr)
                     {
-                        public_and_private_informations.clan=0;
-                        clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
+                        if(copyOf_players.at(index)==this)
+                        {
+                            public_and_private_informations.clan=0;
+                            clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
+                        }
+                        else
+                            copyOf_players.at(index)->dissolvedClan();
                     }
-                    else
-                        copyOf_players.at(index)->dissolvedClan();
+                    index++;
                 }
-                index++;
             }
 
             //after all
@@ -266,7 +283,12 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             if(!isFound)
             {
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
                 return;
             }
             else if(isIntoTheClan)
@@ -283,7 +305,12 @@ void Client::addClan_static(void *object)
 {
     if(object!=NULL)
         static_cast<Client *>(object)->addClan_object();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::addClan_object()
@@ -321,6 +348,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -329,6 +357,10 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     bool ok;
     const uint32_t clanId=getClanId(&ok);
     if(!ok)
@@ -351,6 +383,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     posOutput+=4;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     //add into db
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_clan.asyncWrite({
                 std::to_string(clanId),
                 #ifdef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
@@ -360,6 +393,10 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 #endif
                 std::to_string(sFrom1970())
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     insertIntoAClan(clanId);
 }
 
@@ -496,11 +533,16 @@ void Client::insertIntoAClan(const uint32_t &clanId)
         else
             clan_leader=StaticText::text_false;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_and_leader.asyncWrite({
                 std::to_string(clanId),
                 clan_leader,
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     sendClanInfo();
     clanChangeWithoutDb(public_and_private_informations.clan);
 }
@@ -508,9 +550,14 @@ void Client::insertIntoAClan(const uint32_t &clanId)
 void Client::ejectToClan()
 {
     dissolvedClan();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({
                 std::to_string(character_id)
                 });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 uint32_t Client::getClanId() const
