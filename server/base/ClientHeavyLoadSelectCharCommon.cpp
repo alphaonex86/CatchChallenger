@@ -13,6 +13,7 @@ using namespace CatchChallenger;
 
 void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterId)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.empty())
     {
@@ -29,6 +30,10 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
         errorOutput("selectCharacter() Query db_query_update_character_time_to_delete is empty, bug");
         return;
     }*/
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;
@@ -59,7 +64,6 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
-    callbackRegistred.push(nullptr);
     selectCharacter_object();
     #else
     #error Define what do here
@@ -113,8 +117,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     allow(10),item(11),item_warehouse(12),recipes(13),reputations(14),
     encyclopedia_monster(15),encyclopedia_item(16),achievements(17),blob_version(18),date(19)*/
 
-    callbackRegistred.pop();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
@@ -122,6 +126,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #endif
     {
         std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         std::cerr << "Via: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", callback list size: " << paramToPassToCallBack.size() << std::endl;
         std::cerr << "Maybe connected on another db than login server: " <<  DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()) << " at ";
         if(GlobalServerData::serverSettings.database_common.host=="localhost")
@@ -129,6 +134,10 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         else
             std::cerr << GlobalServerData::serverSettings.database_common.host/* << ":" << GlobalServerData::serverSettings.database_common.port*/;
         std::cerr << " on " << GlobalServerData::serverSettings.database_common.db << std::endl;
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         character_id=characterId;
         characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;

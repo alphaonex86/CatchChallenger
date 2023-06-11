@@ -148,7 +148,12 @@ protected:
     ClientStat stat;
     uint64_t lastdaillygift;//datalocallity with ClientStat stat
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::queue<CatchChallenger::DatabaseBaseCallBack *> callbackRegistred;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     struct ClanActionParam
     {

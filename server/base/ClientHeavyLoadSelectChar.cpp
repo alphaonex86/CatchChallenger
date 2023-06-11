@@ -83,6 +83,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
                   const std::string &unvalidated_rescue_map, const std::string &unvalidated_rescue_x, const std::string &unvalidated_rescue_y, const std::string &unvalidated_rescue_orientation
                                              )
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     bool ok;
     const uint32_t &rescue_map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(rescue_map,&ok);
     if(!ok)
@@ -236,6 +237,10 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
                                  rescue_map_final,rescue_new_x,rescue_new_y,rescue_new_orientation,
                                  unvalidated_rescue_map_final,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void Client::characterIsRight(const uint8_t &query_id,uint32_t characterId, CommonMap *map, const uint8_t &x, const uint8_t &y, const Orientation &orientation)
@@ -248,6 +253,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                   CommonMap *unvalidated_rescue_map, const uint8_t &unvalidated_rescue_x, const uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                   )
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_clan.empty())
     {
@@ -255,6 +261,11 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         return;
     }
     #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
+
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:
@@ -327,7 +338,6 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             else
                 callbackRegistred.push(callback);
             #elif CATCHCHALLENGER_DB_BLACKHOLE
-            callbackRegistred.push(nullptr);
             selectClan_return();
             #else
             #error Define what do here
@@ -362,8 +372,8 @@ void Client::selectClan_static(void *object)
 
 void Client::selectClan_return()
 {
-    callbackRegistred.pop();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
     //parse the result
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
