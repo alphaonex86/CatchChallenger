@@ -138,7 +138,13 @@ void BaseServer::preload_other()
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
         {
             std::cerr << "CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28 into BaseServer::preload_other()" << std::endl;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             abort();
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(28);
+            #else
+            #error Define what do here
+            #endif
         }
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size());
         posOutput+=CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size();
@@ -258,7 +264,13 @@ void BaseServer::preload_other()
         if(CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28)
         {
             std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerMain.size()!=28" << std::endl;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             abort();
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(28);
+            #else
+            #error Define what do here
+            #endif
         }
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
         {
@@ -274,7 +286,13 @@ void BaseServer::preload_other()
             if(CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28)
             {
                 std::cerr << "CommonSettingsServer::commonSettingsServer.datapackHashServerSub.size()!=28" << std::endl;
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 abort();
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(28);
+                #else
+                #error Define what do here
+                #endif
             }
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,CommonSettingsServer::commonSettingsServer.datapackHashServerSub.data(),28);
             posOutput+=28;

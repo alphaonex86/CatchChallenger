@@ -59,6 +59,7 @@ void BaseServer::loadAndFixSettings()
     GlobalServerData::serverPrivateVariables.server_blobversion_datapack*=16;
     GlobalServerData::serverPrivateVariables.server_blobversion_datapack|=CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.database_login.tryInterval<1)
     {
@@ -128,6 +129,10 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.database_server.tryInterval=5;
         GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     if(CommonSettingsServer::commonSettingsServer.mainDatapackCode.size()==0)
     {
@@ -360,6 +365,7 @@ void BaseServer::loadAndFixSettings()
         }
     }
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -434,6 +440,11 @@ void BaseServer::loadAndFixSettings()
             abort();
         break;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
+    
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         case CatchChallenger::MapVisibilityAlgorithmSelection_None:

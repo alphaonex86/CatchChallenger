@@ -200,6 +200,7 @@ void send_settings(
     CommonSettingsServer::commonSettingsServer.chat_allow_clan		= stringtobool(settings->value("allow-clan"));
     settings->endGroup();
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     settings->beginGroup("db-login");
     if(settings->value("type")=="mysql")
@@ -207,7 +208,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
         #else
-        std::cerr << "mysql support disabled" << std::endl;
+        std::cerr << "mysql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -216,7 +217,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
         #else
-        std::cerr << "SQLite support disabled" << std::endl;
+        std::cerr << "SQLite support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -225,7 +226,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
         #else
-        std::cerr << "postgresql support disabled" << std::endl;
+        std::cerr << "postgresql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -265,14 +266,20 @@ void send_settings(
     formatedServerSettings.database_login.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_login.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::BlackHole;
+    #else
+    #error Define what do here
+    #endif
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-base");
     if(settings->value("type")=="mysql")
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::Mysql;
         #else
-        std::cerr << "mysql support disabled" << std::endl;
+        std::cerr << "mysql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -281,7 +288,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::SQLite;
         #else
-        std::cerr << "SQLite support disabled" << std::endl;
+        std::cerr << "SQLite support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -290,7 +297,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_base.tryOpenType                   = DatabaseBase::DatabaseType::PostgreSQL;
         #else
-        std::cerr << "postgresql support disabled" << std::endl;
+        std::cerr << "postgresql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -331,14 +338,19 @@ void send_settings(
     formatedServerSettings.database_base.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
     #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-common");
     if(settings->value("type")=="mysql")
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
         #else
-        std::cerr << "mysql support disabled" << std::endl;
+        std::cerr << "mysql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -347,7 +359,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
         #else
-        std::cerr << "sqlite support disabled" << std::endl;
+        std::cerr << "sqlite support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -356,7 +368,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_common.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
         #else
-        std::cerr << "postgresql support disabled" << std::endl;
+        std::cerr << "postgresql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -389,14 +401,19 @@ void send_settings(
     formatedServerSettings.database_common.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_common.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-server");
     if(settings->value("type")=="mysql")
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::Mysql;
         #else
-        std::cerr << "mysql support disabled" << std::endl;
+        std::cerr << "mysql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -405,7 +422,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::SQLite;
         #else
-        std::cerr << "sqlite support disabled" << std::endl;
+        std::cerr << "sqlite support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -414,7 +431,7 @@ void send_settings(
         #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
         formatedServerSettings.database_server.tryOpenType					= DatabaseBase::DatabaseType::PostgreSQL;
         #else
-        std::cerr << "postgresql support disabled" << std::endl;
+        std::cerr << "postgresql support disabled (abort)" << std::endl;
         abort();
         #endif
     }
@@ -450,6 +467,10 @@ void send_settings(
     formatedServerSettings.database_server.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_server.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     settings->beginGroup("db");
     if(settings->value("db_fight_sync")=="FightSync_AtEachTurn")

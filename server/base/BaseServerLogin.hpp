@@ -4,6 +4,8 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "VariableServer.hpp"
 #include "DatabaseBase.hpp"
+#include <stdio.h>
+#include <cstdint>
 
 namespace CatchChallenger {
 class BaseServerLogin
@@ -25,8 +27,13 @@ public:
     static uint32_t tokenForAuthSize;
     #endif
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_LOGIN
     DatabaseBase *databaseBaseLogin;
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
 protected:
     void preload_the_randomData();

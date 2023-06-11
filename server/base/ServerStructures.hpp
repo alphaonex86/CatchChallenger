@@ -107,6 +107,7 @@ public:
     bool positionTeleportSync;
     uint32_t secondToPositionSync;//0 is disabled
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     class Database
     {
     public:
@@ -139,6 +140,10 @@ public:
     #endif
     Database database_common;
     Database database_server;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     uint8_t common_blobversion_datapack;
     uint8_t server_blobversion_datapack;
@@ -288,12 +293,17 @@ void serialize(B& buf) const {
     buf << positionTeleportSync;
     buf << secondToPositionSync;//0 is disabled
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     buf << database_login;
     buf << database_base;
     #endif
     buf << database_common;
     buf << database_server;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     buf << common_blobversion_datapack;
     buf << server_blobversion_datapack;
@@ -347,12 +357,17 @@ void parse(B& buf) {
     buf >> positionTeleportSync;
     buf >> secondToPositionSync;//0 is disabled
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     buf >> database_login;
     buf >> database_base;
     #endif
     buf >> database_common;
     buf >> database_server;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     buf >> common_blobversion_datapack;
     buf >> server_blobversion_datapack;
@@ -429,6 +444,7 @@ struct ServerProfileInternal
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     struct PreparedStatementForCreationMonsterGroup
     {
@@ -448,11 +464,17 @@ struct ServerProfileInternal
     #endif
 
     PreparedStatementUnit preparedQueryAddCharacterForServer;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    #else
+    #error Define what do here
+    #endif
     bool valid;
 };
 
 struct ServerPrivateVariables
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     //bd
     #if defined(CATCHCHALLENGER_CLASS_LOGIN) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryCommonForLogin preparedDBQueryCommonForLogin;
@@ -464,9 +486,15 @@ struct ServerPrivateVariables
     #if defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT) || defined(CATCHCHALLENGER_CLASS_ALLINONESERVER) || defined(CATCHCHALLENGER_CLASS_QT)
     PreparedDBQueryServer preparedDBQueryServer;
     #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    #else
+    #error Define what do here
+    #endif
 
     PlayerUpdaterBase *player_updater;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     //bd
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     CatchChallenger::DatabaseBase *db_login;
@@ -474,6 +502,10 @@ struct ServerPrivateVariables
     #endif
     CatchChallenger::DatabaseBase *db_common;
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     std::vector<ServerProfileInternal> serverProfileInternalList;
 

@@ -10,12 +10,17 @@ using namespace CatchChallenger;
 
 void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &characterId, const uint64_t &characterCreationDate)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_character_server_by_id.empty())
     {
         characterSelectionIsWrong(query_id,0x04,"selectCharacterServer() Query is empty, bug");
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
     selectCharacterParam->query_id=query_id;
@@ -47,7 +52,6 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
-    callbackRegistred.push(nullptr);
     selectCharacterServer_object();
     #else
     #error Define what do here
@@ -105,10 +109,10 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
     market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),date(17),plants(18)*/
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     const auto &characterIdString=std::to_string(characterId);
     const auto &sFrom1970String=std::to_string(sFrom1970());
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else

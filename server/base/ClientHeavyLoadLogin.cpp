@@ -18,6 +18,7 @@ using namespace CatchChallenger;
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
@@ -29,6 +30,10 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
         errorOutput("askLogin() Query inset login is empty, bug");
         return false;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     AskLoginParam *askLoginParam=new AskLoginParam;
     SHA224 ctx = SHA224();
@@ -60,7 +65,6 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
-    callbackRegistred.push(nullptr);
     askLogin_object();
     return true;
     #else
@@ -115,7 +119,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     }
     paramToPassToCallBackType.pop();
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
@@ -289,6 +298,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 
 bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
@@ -305,6 +315,11 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
         errorOutput("createAccount() Creation account not premited");
         return false;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    #else
+    #error Define what do here
     #endif
     /// \note No SHA224 because already double hashed before
     AskLoginParam *askLoginParam=new AskLoginParam;
@@ -338,7 +353,6 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("AskLoginParam");
     #endif
-    callbackRegistred.push(nullptr);
     createAccount_object();
     return true;
     #else
@@ -392,8 +406,8 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     }
     paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.pop();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_login->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
@@ -490,7 +504,12 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     }
     paramToPassToCallBackType.pop();
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     //send signals into the server
     #ifndef SERVERBENCHMARK
     //normalOutput("Logged the account "+std::to_string(account_id));

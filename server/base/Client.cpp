@@ -123,6 +123,7 @@ Client::~Client()
     #endif*/
     //SQL
     {
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         while(!callbackRegistred.empty())
         {
             callbackRegistred.front()->object=NULL;
@@ -131,6 +132,10 @@ Client::~Client()
         //crash with heap-buffer-overflow if not flush before the end of destructor
         while(!callbackRegistred.empty())
             callbackRegistred.pop();
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         while(!paramToPassToCallBack.empty())
             paramToPassToCallBack.pop();
     }
@@ -541,12 +546,17 @@ void Client::disconnectClientById(const uint32_t &characterId)
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(PreparedDBQueryLogin::db_query_login.empty())
     {
         errorParsingLayer("askLogin() Query login is empty, bug");
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

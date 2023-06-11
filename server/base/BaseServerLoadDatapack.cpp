@@ -484,6 +484,7 @@ void BaseServer::preload_the_gift()
         //itemidnumber,percentluck
         if(entryList.size()==2)
         {
+            std::cout << "GlobalServerData::serverSettings.daillygift: " << entryList.at(0) << std::endl;
             const uint16_t &item=stringtouint16(entryList.at(0),&ok);
             if(ok)
             {

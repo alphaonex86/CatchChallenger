@@ -112,15 +112,25 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverSettings.database_login.tryInterval=5;
     GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
     GlobalServerData::serverSettings.database_base.tryInterval=5;
     GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
+    #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverSettings.database_common.tryInterval=5;
     GlobalServerData::serverSettings.database_common.considerDownAfterNumberOfTry=3;
     GlobalServerData::serverSettings.database_server.tryInterval=5;
     GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     in_file=nullptr;
@@ -336,6 +346,7 @@ void BaseServer::preload_finish()
     preload_industries_call=false;
     preload_market_items_call=false;
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -378,4 +389,8 @@ void BaseServer::preload_finish()
         default:
         break;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }

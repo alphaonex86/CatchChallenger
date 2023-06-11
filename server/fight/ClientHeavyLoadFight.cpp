@@ -12,12 +12,17 @@ using namespace CatchChallenger;
 
 void Client::loadMonsters()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.empty())
     {
         errorOutput("loadMonsters() Query is empty, bug");
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     //don't filter by place, dispatched in internal, market volume should be low
 
@@ -32,7 +37,6 @@ void Client::loadMonsters()
     else
         callbackRegistred.push(callback);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    callbackRegistred.push(nullptr);
     loadMonsters_return();
     #else
     #error Define what do here
@@ -52,8 +56,8 @@ void Client::loadMonsters_return()
      * SP:
      * id(0),character(1),place(2),hp(3),monster(4),level(5),xp(6),captured_with(7),gender(8),egg_step(9),character_origin(10),buffs(11),skills(12),skills_endurance(13),sp(14)
      */
-    callbackRegistred.pop();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
     bool ok;
     while(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -251,8 +255,14 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
 {
     if(dataHexa.empty())
         return true;
-    bool ok;
+    bool ok=true;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    const std::vector<char> buffs;
+    #else
+    #error Define what do here
+    #endif
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
     const char * const raw_buffs=buffs.data();
     #endif
@@ -335,8 +345,14 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
 {
     if(dataHexa.empty())
         return true;
-    bool ok;
+    bool ok=true;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::vector<char> &skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    const std::vector<char> skills;
+    #else
+    #error Define what do here
+    #endif
     const char * const raw_skills=skills.data();
     if(!ok)
         std::cerr << "monster skills: "+dataHexa+" is not a hexa" << std::endl;
@@ -393,8 +409,14 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
 
 bool Client::loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &playerMonster)
 {
-    bool ok;
+    bool ok=true;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::vector<char> &skills_endurance=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    const std::vector<char> skills_endurance;
+    #else
+    #error Define what do here
+    #endif
     #ifndef CATCHCHALLENGER_EXTRA_CHECK
     const char * const raw_skills_endurance=skills_endurance.data();
     #endif

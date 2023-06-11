@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #include "PreparedStatementUnit.hpp"
 #if defined(CATCHCHALLENGER_DB_POSTGRESQL) && defined(EPOLLCATCHCHALLENGERSERVER)
 #include <postgresql/libpq-fe.h>
@@ -16,13 +17,19 @@ std::unordered_map<CatchChallenger::DatabaseBase *,uint16_t> PreparedStatementUn
 #endif
 
 PreparedStatementUnit::PreparedStatementUnit()
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     : database(NULL)
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     uniqueName[0]=0;
     #endif
 }
 
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChallenger::DatabaseBase * const database)
     : database(database)
 {
@@ -34,18 +41,32 @@ PreparedStatementUnit::PreparedStatementUnit(const std::string &query, CatchChal
     if(!query.empty())
         setQuery(query);
 }
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#else
+#error Define what do here
+#endif
 
 PreparedStatementUnit::~PreparedStatementUnit()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     database=NULL;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 bool PreparedStatementUnit::setQuery(const std::string &query)
 {
     if(query.empty())
         return false;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(database==NULL)
         return false;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     this->query=query;
     if(this->query.empty())
     {
@@ -198,11 +219,21 @@ PreparedStatementUnit::PreparedStatementUnit(const PreparedStatementUnit& other)
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     this->database=other.database;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : // move constructor
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     database(other.database),
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
       query(other.query)
 {
     #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
@@ -229,7 +260,12 @@ PreparedStatementUnit::PreparedStatementUnit(PreparedStatementUnit&& other) : //
     #else
     (void)other;
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     this->database=other.database;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementUnit& other) // copy assignment
@@ -269,7 +305,12 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(const PreparedStatementU
     #else
     (void)other;
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     this->database=other.database;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     return *this;
 }
 
@@ -301,6 +342,16 @@ PreparedStatementUnit& PreparedStatementUnit::operator=(PreparedStatementUnit&& 
     memcpy(this->uniqueName,other.uniqueName,sizeof(uniqueName));
     #else
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     this->database=other.database;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     return *this;
 }
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
+#else
+#error Define what do here
+#endif

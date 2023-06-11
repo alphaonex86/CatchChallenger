@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
-    const bool save=argc==2 && strcmp(argv[1],"save")==0;
+    const bool save=argc==2 && (strcmp(argv[1],"save")==0 || strcmp(argv[1],"--save")==0);
     if(save)
     {
         const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin.tmp";
@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         {
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             if(
                     true
@@ -292,6 +293,10 @@ int main(int argc, char *argv[])
                 settings->endGroup();
                 return EXIT_FAILURE;
             }
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #else
+            #error Define what do here
+            #endif
         }
 
 
@@ -346,6 +351,7 @@ int main(int argc, char *argv[])
     server->initTheDatabase();
     server->loadAndFixSettings();
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -389,7 +395,6 @@ int main(int argc, char *argv[])
         break;
     }
 
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!GlobalServerData::serverPrivateVariables.db_login->syncConnect(
                 GlobalServerData::serverSettings.database_login.host,
@@ -430,6 +435,8 @@ int main(int argc, char *argv[])
     }
     server->initialize_the_database_prepared_query();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    server->preload_the_data();
+    datapack_loaded=true;
     #else
     #error Define what do here
     #endif
