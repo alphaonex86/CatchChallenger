@@ -32,7 +32,6 @@ bool Client::server_list()
         return true;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    callbackRegistred.push(nullptr);
     server_list_object();
     return true;
     #else
@@ -73,7 +72,12 @@ void Client::server_list_object()
 
 void Client::server_list_return(const uint8_t &query_id, const char * const characterOutputData, const uint32_t &characterOutputDataSize)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     //send signals into the server
 
     //0x44 and 0x40, logical block and server list
@@ -172,6 +176,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
 
 void Client::deleteCharacterNow(const uint32_t &characterId)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_character.empty())
     {
@@ -183,6 +188,10 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
         std::cerr << "deleteCharacterNow() Query db_query_delete_monster_by_id is empty, bug" << std::endl;
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -198,6 +207,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
 
 void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_character_by_pseudo.empty())
     {
@@ -209,6 +219,10 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         errorOutput("addCharacter() Query db_query_insert_monster is empty, bug");
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     if(GlobalServerData::serverPrivateVariables.skinList.empty())
     {
@@ -301,6 +315,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         abort();
         return;
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(monsterGroupId>=GlobalServerData::serverPrivateVariables.serverProfileInternalList.at(profileIndex).preparedStatementForCreationByCommon.type.monsterGroup.size())
     {
         errorOutput("out of bound");
@@ -315,6 +330,10 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         abort();
         return;
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     AddCharacterParam *addCharacterParam=new AddCharacterParam();
     addCharacterParam->query_id=query_id;
     addCharacterParam->profileIndex=profileIndex;
@@ -365,7 +384,6 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("AddCharacterParam");
     #endif
-    callbackRegistred.push(nullptr);
     addCharacter_object();
     #else
     #error Define what do here
@@ -419,8 +437,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     paramToPassToCallBackType.pop();
     #endif
-    callbackRegistred.pop();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
     //if character already exist then return error
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
@@ -466,6 +484,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     int monster_position=1;
 
     const std::vector<Profile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId)
     {
         std::cerr << "serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId " << __FILE__ << __LINE__ << std::endl;
@@ -515,7 +534,6 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         }
     }
 
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(!character_insert.asyncWrite({
                 characterIdString,
                 std::to_string(account_id),
@@ -570,12 +588,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
 void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &characterId)
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_account_time_to_delete_character_by_id.empty())
     {
         std::cerr << "removeCharacter() Query is empty, bug" << std::endl;
         return;
     }
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
     #endif
     RemoveCharacterParam *removeCharacterParam=new RemoveCharacterParam;
     removeCharacterParam->query_id=query_id;
@@ -612,7 +635,6 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
         #endif
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    callbackRegistred.push(nullptr);
     paramToPassToCallBack.push(removeCharacterParam);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     paramToPassToCallBackType.push("RemoveCharacterParam");

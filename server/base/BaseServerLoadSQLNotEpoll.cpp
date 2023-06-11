@@ -58,6 +58,7 @@ void BaseServer::preload_zone_return()
 //call before load map
 void BaseServer::preload_zone_sql()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     uint16_t indexZone=0;
     if(entryListZone.empty())
         preload_market_monsters_prices_sql();
@@ -82,7 +83,6 @@ void BaseServer::preload_zone_sql()
                 }
                 indexZone++;
             }
-            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
             {
@@ -115,12 +115,12 @@ void BaseServer::preload_zone_sql()
             }
             else
                 return;
-            #elif CATCHCHALLENGER_DB_BLACKHOLE
-            preload_zone_return();
-            #else
-            #error Define what do here
-            #endif
         }
         preload_market_monsters_sql();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_zone_return();
+    #else
+    #error Define what do here
+    #endif
 }

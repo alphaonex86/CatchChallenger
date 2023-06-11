@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #ifndef PREPAREDSTATEMENTUNIT_H
 #define PREPAREDSTATEMENTUNIT_H
 
@@ -14,6 +15,7 @@ class PreparedStatementUnit
 {
 public:
     PreparedStatementUnit();
+
     PreparedStatementUnit(const std::string &query,CatchChallenger::DatabaseBase * const database);
     virtual ~PreparedStatementUnit();
 
@@ -23,13 +25,8 @@ public:
     PreparedStatementUnit& operator=(PreparedStatementUnit&& other);// move assignment
 
     bool setQuery(const std::string &query);
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     virtual DatabaseBaseCallBack * asyncRead(void * returnObject,CallBackDatabase method,const std::vector<std::string> &values);
     virtual bool asyncWrite(const std::vector<std::string> &values);
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #else
-    #error Define what do here
-    #endif
     bool empty() const;
     std::string queryText() const;
 private:
@@ -47,3 +44,8 @@ private:
 }
 
 #endif // PREPAREDSTATEMENTUNIT_H
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
+#else
+#error Define what do here
+#endif

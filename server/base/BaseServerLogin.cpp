@@ -15,7 +15,12 @@ uint32_t BaseServerLogin::tokenForAuthSize=0;
 
 BaseServerLogin::BaseServerLogin()
     #ifndef CATCHCHALLENGER_CLASS_LOGIN
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     : databaseBaseLogin(NULL)
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     #endif
 {
 }

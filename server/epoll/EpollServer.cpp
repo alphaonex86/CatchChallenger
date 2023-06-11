@@ -21,16 +21,22 @@ EpollServer::EpollServer()
     //normalServerSettings.server_ip
     normalServerSettings.server_port    = 42489;
     normalServerSettings.useSsl         = true;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server=NULL;
     GlobalServerData::serverPrivateVariables.db_common=NULL;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.db_base=NULL;
     GlobalServerData::serverPrivateVariables.db_login=NULL;
     #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void EpollServer::initTheDatabase()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     switch(GlobalServerData::serverSettings.database_login.tryOpenType)
     {
@@ -97,11 +103,16 @@ void EpollServer::initTheDatabase()
             std::cerr << "database type wrong " << DatabaseBase::databaseTypeToString(GlobalServerData::serverSettings.database_server.tryOpenType) << std::endl;
         abort();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 
 EpollServer::~EpollServer()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     switch(GlobalServerData::serverSettings.database_server.tryOpenType)
     {
         #ifdef CATCHCHALLENGER_DB_POSTGRESQL
@@ -164,9 +175,10 @@ EpollServer::~EpollServer()
         break;
     }
     #endif
-
-
-
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 
 void EpollServer::preload_finish()

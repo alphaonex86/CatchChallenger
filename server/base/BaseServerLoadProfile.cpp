@@ -48,9 +48,14 @@ void BaseServer::preload_profile()
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.clear();
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const DatabaseBase::DatabaseType &databaseType=GlobalServerData::serverPrivateVariables.db_common->databaseType();
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
     const uint8_t &common_blobversion_datapack=GlobalServerData::serverPrivateVariables.common_blobversion_datapack;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     #endif
 
     //if reallocate query, los pointer, it's why reserved/allocted before all
@@ -178,20 +183,40 @@ void BaseServer::preload_profile()
             reputations=binarytoHexa(reputation_raw,static_cast<uint32_t>(sizeof(reputation_raw)));
         }
 
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         ServerProfileInternal::PreparedStatementForCreation &preparedStatementForCreation=serverProfileInternal.preparedStatementForCreationByCommon;
         ServerProfileInternal::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type;
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
+        #else
+        #error Define what do here
+        #endif
         //assume here all is the same type
         {
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(preparedStatementForCreationType.monsterGroup.size()!=profile.monstergroup.size())
                 preparedStatementForCreationType.monsterGroup.resize(profile.monstergroup.size());
+            #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
+            #else
+            #error Define what do here
+            #endif
 
             unsigned int monsterGroupIndex=0;
             while(monsterGroupIndex<profile.monstergroup.size())
             {
                 const auto &monsters=profile.monstergroup.at(monsterGroupIndex);
+
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 ServerProfileInternal::PreparedStatementForCreationMonsterGroup &preparedStatementForCreationMonsterGroup=preparedStatementForCreationType.monsterGroup[monsterGroupIndex];
                 if(preparedStatementForCreationMonsterGroup.monster_insert.size()!=monsters.size())
                     preparedStatementForCreationMonsterGroup.monster_insert.resize(monsters.size());
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
+                #else
+                #error Define what do here
+                #endif
+
                 std::vector<uint16_t> monsterForEncyclopedia;
                 unsigned int monsterIndex=0;
                 while(monsterIndex<monsters.size())
@@ -223,9 +248,11 @@ void BaseServer::preload_profile()
                     }
                     //dynamic part
                     {
+                        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                         //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
                         if(monsterDatapack.ratio_gender!=-1)
                         {
+                            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                             const std::string &queryText=PreparedDBQueryCommon::db_query_insert_monster.compose({
                                     "%1",
                                     "%2",
@@ -241,6 +268,10 @@ void BaseServer::preload_profile()
                                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
                             preparedStatementForCreationMonsterGroup.monster_insert[monsterIndex]=PreparedStatementUnit(queryText,database);
+                            #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #else
+                            #error Define what do here
+                            #endif
                         }
                         else
                         {
@@ -258,8 +289,18 @@ void BaseServer::preload_profile()
                                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
                                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                                     });
+                            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                             preparedStatementForCreationMonsterGroup.monster_insert[monsterIndex]=PreparedStatementUnit(queryText,database);
+                            #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #else
+                            #error Define what do here
+                            #endif
                         }
+                    #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #elif CATCHCHALLENGER_DB_FILE
+                    #else
+                    #error Define what do here
+                    #endif
                     }
                     monsterForEncyclopedia.push_back(monster.id);
                     monsterIndex++;
@@ -276,6 +317,7 @@ void BaseServer::preload_profile()
                     bitlist[bittoUp/8]|=(1<<(7-bittoUp%8));
                     monsterIndex++;
                 }
+                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 switch(databaseType)
                 {
                     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
@@ -341,11 +383,16 @@ void BaseServer::preload_profile()
                     abort();
                     break;
                 }
+                #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #else
+                #error Define what do here
+                #endif
 
                 monsterGroupIndex++;
             }
         }
         #endif
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
                 ","+
                 std::to_string(serverProfileInternal.x)+
@@ -396,6 +443,10 @@ void BaseServer::preload_profile()
             #endif
         }
         #endif
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         serverProfileInternal.valid=true;
 
         index++;
@@ -416,6 +467,7 @@ void BaseServer::preload_profile()
             return;
         }
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         unsigned int profileIndex=0;
         while(profileIndex<GlobalServerData::serverPrivateVariables.serverProfileInternalList.size())
         {
@@ -446,6 +498,10 @@ void BaseServer::preload_profile()
             }
             profileIndex++;
         }
+        #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #else
+        #error Define what do here
+        #endif
         #endif
     }
     #endif

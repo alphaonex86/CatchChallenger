@@ -338,7 +338,12 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     }
     paramToPassToCallBackType.pop();
     #endif
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 
     //send the network reply
     removeFromQueryReceived(query_id);

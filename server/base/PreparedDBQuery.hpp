@@ -1,12 +1,10 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #ifndef CATCHCHALLENGER_SERVER_PREPAREDDBQUERY_H
 #define CATCHCHALLENGER_SERVER_PREPAREDDBQUERY_H
 
 #include "DatabaseBase.hpp"
 #include "PreparedStatementUnit.hpp"
 #include <string>
-
-#if defined(CATCHCHALLENGER_DB_POSTGRESQL)
-#endif
 
 namespace CatchChallenger {
 
@@ -199,4 +197,9 @@ public:
 
 }
 
+#endif
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
+#else
+#error Define what do here
 #endif

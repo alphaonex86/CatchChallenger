@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #ifndef DATABASEBASE_H
 #define DATABASEBASE_H
 
@@ -72,3 +73,8 @@ class DatabaseBase : public CatchChallenger::DatabaseFunction
 }
 
 #endif // DATABASEBASE_H
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
+#else
+#error Define what do here
+#endif

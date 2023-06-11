@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #include "PreparedDBQuery.hpp"
 #include <iostream>
 
@@ -103,4 +104,8 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         #endif
     }
 }
+#endif
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#else
+#error Define what do here
 #endif

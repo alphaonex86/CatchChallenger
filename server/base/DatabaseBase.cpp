@@ -1,3 +1,4 @@
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 #include "DatabaseBase.hpp"
 #include <iostream>
 
@@ -66,3 +67,7 @@ bool DatabaseBase::setMaxDbQueries(const unsigned int &maxDbQueries)
     (void)maxDbQueries;
     return true;
 }
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#else
+#error Define what do here
+#endif
