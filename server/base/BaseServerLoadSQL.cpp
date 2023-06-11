@@ -13,11 +13,16 @@ using namespace CatchChallenger;
 
 void BaseServer::preload_dictionary_map()
 {
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_server==NULL)
     {
         std::cerr << "GlobalServerData::serverPrivateVariables.db_server==NULL" << std::endl;
         abort();
     }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
     if(GlobalServerData::serverPrivateVariables.map_list.size()==0)
     {
         std::cerr << "No map to list" << std::endl;
@@ -477,7 +482,13 @@ void BaseServer::preload_industries_return()
 void BaseServer::baseServerMasterLoadDictionaryLoad()
 {
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_dictionary_reputation();
+    #else
+    #error Define what do here
+    #endif
 #else
     preload_profile();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

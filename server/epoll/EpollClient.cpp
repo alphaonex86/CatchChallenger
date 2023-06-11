@@ -36,7 +36,7 @@ void EpollClient::reopen(const int &infd)
 
 void EpollClient::close()
 {
-    std::cerr << "EpollClient::close infd: " << infd << std::endl;
+    //std::cerr << "EpollClient::close infd: " << infd << std::endl;
     if(infd!=-1)
     {
         char tempBuffer[4096];

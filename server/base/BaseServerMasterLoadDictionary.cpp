@@ -9,8 +9,13 @@
 
 using namespace CatchChallenger;
 
-BaseServerMasterLoadDictionary::BaseServerMasterLoadDictionary() :
-    databaseBaseBase(NULL)
+BaseServerMasterLoadDictionary::BaseServerMasterLoadDictionary()
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    : databaseBaseBase(NULL)
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 {
 }
 
@@ -18,11 +23,16 @@ BaseServerMasterLoadDictionary::~BaseServerMasterLoadDictionary()
 {
 }
 
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
 {
     this->databaseBaseBase=databaseBase;
     preload_dictionary_reputation();
 }
+#elif CATCHCHALLENGER_DB_BLACKHOLE
+#else
+#error Define what do here
+#endif
 
 void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
 {
@@ -117,6 +127,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(databaseBaseBase->databaseType())
             {
@@ -139,7 +150,6 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
                 break;
                 #endif
             }
-            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
@@ -255,6 +265,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(databaseBaseBase->databaseType())
             {
@@ -277,7 +288,6 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
                 break;
                 #endif
             }
-            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
@@ -403,6 +413,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             lastId++;
+            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(databaseBaseBase->databaseType())
             {
@@ -425,7 +436,6 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
                 abort();
                 break;
             }
-            #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             if(!databaseBaseBase->asyncWrite(queryText))
             {
                 std::cerr << "Sql error for: " << queryText << ", error: " << databaseBaseBase->errorMessage() << std::endl;
@@ -456,6 +466,12 @@ void BaseServerMasterLoadDictionary::unload()
     dictionary_skin_database_to_internal.clear();
     dictionary_skin_internal_to_database.clear();
     dictionary_reputation_database_to_internal.clear();
+
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase=NULL;
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
 }
 #endif
