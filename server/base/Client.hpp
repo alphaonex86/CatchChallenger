@@ -152,7 +152,6 @@ protected:
     std::queue<CatchChallenger::DatabaseBaseCallBack *> callbackRegistred;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     struct ClanActionParam

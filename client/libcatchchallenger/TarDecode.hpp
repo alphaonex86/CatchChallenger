@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "../../general/base/lib.h"
 
 /// \brief read the raw tar data, and organize it into data structure

@@ -1,0 +1,29 @@
+dictionary_allow -> static
+
+dictionary_reputation (level text to int):
+  * uint8_t
+  * string
+
+dictionary_skin:
+  * uint8_t
+  * string
+
+dictionary_pointonmap_plant:
+  * uint16_t id
+  * uint32_t map id
+  * uint8_t x
+  * uint8_t y
+
+dictionary_pointonmap_item:
+  * uint16_t
+  * uint32_t map id
+  * uint8_t x
+  * uint8_t y
+
+dictionary_starter:
+ * uint8_t
+ * string
+
+dictionary_map:
+  * uint32_t map id
+  * string map path without .tmx 

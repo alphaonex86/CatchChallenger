@@ -1,6 +1,23 @@
 #ifndef CATCHCHALLENGER_SERVER_STRUCTURES_H
 #define CATCHCHALLENGER_SERVER_STRUCTURES_H
 
+#if defined(CATCHCHALLENGER_DB_FILE)
+    #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
+        #error for CATCHCHALLENGER_DB_FILE you need enable CATCHCHALLENGER_CLASS_ALLINONESERVER
+    #endif
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        #error for CATCHCHALLENGER_DB_FILE you need disable CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    #endif
+    #if defined(CATCHCHALLENGER_DB_BLACKHOLE)
+        #error for CATCHCHALLENGER_DB_FILE you need disable CATCHCHALLENGER_DB_BLACKHOLE
+    #endif
+#endif
+#if defined(CATCHCHALLENGER_DB_BLACKHOLE)
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
+        #error for CATCHCHALLENGER_DB_BLACKHOLE you need disable: CATCHCHALLENGER_DB_MYSQL, CATCHCHALLENGER_DB_POSTGRESQL, CATCHCHALLENGER_DB_SQLITE, CATCHCHALLENGER_DB_FILE
+    #endif
+#endif
+
 #include <vector>
 #include <string>
 #include <unordered_set>
@@ -142,7 +159,6 @@ public:
     Database database_server;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     uint8_t common_blobversion_datapack;
@@ -302,7 +318,6 @@ void serialize(B& buf) const {
     buf << database_server;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     buf << common_blobversion_datapack;
@@ -366,7 +381,6 @@ void parse(B& buf) {
     buf >> database_server;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     buf >> common_blobversion_datapack;
@@ -504,7 +518,6 @@ struct ServerPrivateVariables
     CatchChallenger::DatabaseBase *db_server;//pointer to don't change the code for below preprocessor code
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     std::vector<ServerProfileInternal> serverProfileInternalList;
