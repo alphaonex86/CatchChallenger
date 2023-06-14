@@ -266,13 +266,7 @@ void send_settings(
     formatedServerSettings.database_login.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_login.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    formatedServerSettings.database_login.tryOpenType					= DatabaseBase::DatabaseType::BlackHole;
-    #else
-    #error Define what do here
-    #endif
 
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-base");
     if(settings->value("type")=="mysql")
     {
@@ -338,12 +332,7 @@ void send_settings(
     formatedServerSettings.database_base.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
     #endif
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #else
-    #error Define what do here
-    #endif
 
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-common");
     if(settings->value("type")=="mysql")
     {
@@ -401,12 +390,7 @@ void send_settings(
     formatedServerSettings.database_common.tryInterval       = stringtouint32(settings->value("tryInterval"));
     formatedServerSettings.database_common.considerDownAfterNumberOfTry = stringtouint32(settings->value("considerDownAfterNumberOfTry"));
     settings->endGroup();
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #else
-    #error Define what do here
-    #endif
 
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db-server");
     if(settings->value("type")=="mysql")
     {

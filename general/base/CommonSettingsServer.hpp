@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "lib.h"
 
 class DLL_PUBLIC CommonSettingsServer

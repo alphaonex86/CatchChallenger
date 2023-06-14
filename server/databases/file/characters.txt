@@ -1,0 +1,62 @@
+into characters/
+you have: characters/XXXXXXXXXXXX-YYYYYYYYY where XXXXXXXXXXXX is the login hash sha224 in hexa and YYYYYYYYYYYY is the password hash sha224 in hexa
+contain list of:
+  * ZZZZZZZZZZZZZZ, where ZZZZZZZZZZZZZZ is the character name in hexa
+  * uint64_t played_time
+  * uint64_t last_connect
+  * uint64_t time_to_delete
+
+you have: characters/ZZZZZZZZZZZZZZ where ZZZZZZZZZZZZZZ is the character name in hexa
+
+  * uint8_t skin
+  * uint8_t type
+  * uint32_t clan
+  * uint8_t clan_leader
+  * uint64_t date
+  * uint64_t cash
+  * uint64_t warehouse_cash
+  * string allow
+  * string item
+  * string item_warehouse
+  * string recipes
+  * string reputations
+  * string encyclopedia_monster
+  * string encyclopedia_item
+  * uint64_t lastdaillygift
+  * uint16_t map
+  * uint8_t x
+  * uint8_t y
+  * uint8_t orientation
+  * uint16_t rescue_map
+  * uint8_t rescue_x
+  * uint8_t rescue_y
+  * uint8_t rescue_orientation
+  * uint16_t unvalidated_rescue_map
+  * uint8_t unvalidated_rescue_x
+  * uint8_t unvalidated_rescue_y
+  * uint8_t unvalidated_rescue_orientation
+  * uint64_t market_cash bigint
+  * string botfight_id bytea
+  * string itemonmap bytea
+  * string quest bytea
+
+List:
+  * uint8_t pointOnMap
+  * uint8_t plant
+  * uint64_t plant_timestamps
+
+List:
+  * uint8_t place
+  * uint16_t hp
+  * uint16_t monster
+  * uint8_t level
+  * uint32_t xp
+  * uint32_t sp
+  * uint16_t captured_with
+  * uint8_t gender
+  * uint32_t egg_step
+  * uint32_t character_origin
+  * uint8_t position
+  * string buffs
+  * string skills
+  * string skills_endurance

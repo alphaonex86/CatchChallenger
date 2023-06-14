@@ -16,14 +16,12 @@ public:
     void load(CatchChallenger::DatabaseBase * const databaseBase);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 public:
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     DatabaseBase *databaseBaseBase;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     std::vector<int> dictionary_reputation_database_to_internal;//negative == not found
@@ -35,7 +33,6 @@ public:
 private:
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
     void preload_dictionary_reputation();
 private:

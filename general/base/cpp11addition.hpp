@@ -7,6 +7,7 @@
 #include <regex>
 #include <unordered_map>
 #include <unordered_set>
+#include <cstdint>
 
 #include "lib.h"
 
