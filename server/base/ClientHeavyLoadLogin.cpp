@@ -67,6 +67,9 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     #endif
     askLogin_object();
     return true;
+    #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "Client::askLogin() (abort)" << std::endl;
+    abort();
     #else
     #error Define what do here
     #endif
@@ -318,6 +321,8 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "Client::createAccount() (abort)" << std::endl;
+    abort();
     #else
     #error Define what do here
     #endif

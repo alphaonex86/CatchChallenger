@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 #include "lib.h"
 
 namespace CatchChallenger {

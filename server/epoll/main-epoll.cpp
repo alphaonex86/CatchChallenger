@@ -544,7 +544,15 @@ int main(int argc, char *argv[])
                 unsigned int index=0;
                 while(index<elementsToDeleteSub.size())
                 {
-                    delete static_cast<Client *>(elementsToDeleteSub.at(index));
+                    Client * c=static_cast<Client *>(elementsToDeleteSub.at(index));
+                    #ifdef CATCHCHALLENGER_DB_FILE
+                    #error define where save
+                    std::ofstream *out_file=new std::ofstream(file, std::ofstream::binary);
+                    if(out_file->good() && out_file->is_open())
+                        out_file << c;
+                    delete out_file;
+                    #endif
+                    delete c;
                     index++;
                 }
             }

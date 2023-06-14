@@ -214,6 +214,17 @@ protected:
     hps::StreamInputBuffer *serialBuffer;
     std::ofstream *out_file;
     #endif
+
+    #ifdef CATCHCHALLENGER_DB_FILE
+    //mostly static
+    std::ifstream *dictionary_in_file;
+    hps::StreamInputBuffer *dictionary_serialBuffer;
+    std::ofstream *dictionary_out_file;
+    //mostly dynamic
+    std::ifstream *server_in_file;
+    hps::StreamInputBuffer *server_serialBuffer;
+    std::ofstream *server_out_file;
+    #endif
 };
 }
 

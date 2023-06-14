@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace CatchChallenger {
 class DatabaseFunction

@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <string>
+#include <cstdint>
 
 namespace CatchChallenger {
 class BaseServerMasterSendDatapack

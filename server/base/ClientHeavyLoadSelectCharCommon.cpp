@@ -32,7 +32,9 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     }*/
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #else
+    #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "Client::selectCharacter() (abort)" << std::endl;
+    abort();
     #error Define what do here
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
