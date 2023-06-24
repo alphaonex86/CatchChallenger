@@ -130,6 +130,7 @@ void BaseServer::loadAndFixSettings()
         GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -441,6 +442,7 @@ void BaseServer::loadAndFixSettings()
         break;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

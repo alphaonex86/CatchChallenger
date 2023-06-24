@@ -488,15 +488,6 @@ private:
     bool captureCityInProgress();
     void fightOrBattleFinish(const bool &win, const uint16_t &fightId);//fightId == 0 if is in battle
     void moveMonster(const bool &up,const uint8_t &number);
-    //market
-    void getMarketList(const uint8_t &query_id);
-    void buyMarketObject(const uint8_t &query_id,const uint32_t &marketObjectId,const uint32_t &quantity);
-    void buyMarketMonster(const uint8_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
-    void putMarketObject(const uint8_t &query_id, const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price);
-    void putMarketMonster(const uint8_t &query_id, const uint8_t &monsterPosition, const uint64_t &price);
-    void withdrawMarketCash(const uint8_t &query_id);
-    void withdrawMarketObject(const uint8_t &query_id,const uint16_t &objectId,const uint32_t &quantity);
-    void withdrawMarketMonster(const uint8_t &query_id, const uint32_t &marketMonsterUniqueId/*To ident even if the position have changed, imply search at server*/);
 
     Player_private_and_public_informations &get_public_and_private_informations() override;
     const Player_private_and_public_informations &get_public_and_private_informations_ro() const override;

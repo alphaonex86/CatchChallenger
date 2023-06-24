@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
-    const bool save=argc==2 && (strcmp(argv[1],"save")==0 || strcmp(argv[1],"--save")==0);
+    const bool save=argc==2 && (strcmp(argv[1],"save")==0 || strcmp(argv[1],"--save")==0 || strcmp(argv[1],"-s")==0);
     if(save)
     {
         const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin.tmp";

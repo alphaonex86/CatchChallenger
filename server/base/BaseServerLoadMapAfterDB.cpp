@@ -83,6 +83,8 @@ void BaseServer::preload_map_semi_after_db_id()
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #elif CATCHCHALLENGER_DB_FILE
+                    dictionary_haveChange=true;
                     #else
                     #error Define what do here
                     #endif
@@ -185,6 +187,8 @@ void BaseServer::preload_map_semi_after_db_id()
                         criticalDatabaseQueryFailed();abort();//stop because can't resolv the name
                     }
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #elif CATCHCHALLENGER_DB_FILE
+                    dictionary_haveChange=true;
                     #else
                     #error Define what do here
                     #endif

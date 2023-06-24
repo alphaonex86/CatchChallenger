@@ -131,6 +131,10 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
             postReplyData(queryNumber,NULL,0);
         }
         break;
+        //Ping (used to not flood for map visibility and see if player remain connected)
+        case 0xE3:
+            postReplyData(queryNumber,NULL,0);
+        break;
         //Another player request a trade
         case 0xE0:
         {

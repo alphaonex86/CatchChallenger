@@ -53,6 +53,7 @@ void BaseServer::preload_profile()
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
     const uint8_t &common_blobversion_datapack=GlobalServerData::serverPrivateVariables.common_blobversion_datapack;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -384,6 +385,7 @@ void BaseServer::preload_profile()
                     break;
                 }
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif
@@ -444,9 +446,11 @@ void BaseServer::preload_profile()
         }
         #endif
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
+
         serverProfileInternal.valid=true;
 
         index++;
@@ -499,6 +503,7 @@ void BaseServer::preload_profile()
             profileIndex++;
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

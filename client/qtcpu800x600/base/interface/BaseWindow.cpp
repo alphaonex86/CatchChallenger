@@ -149,15 +149,6 @@ BaseWindow::BaseWindow() :
     characterSelected=false;
     fightId=0;
 
-    //market buy
-    marketBuyCashInSuspend=0;
-    marketBuyInSuspend=false;
-    //market put
-    marketPutCashInSuspend=0;
-    marketPutInSuspend=false;
-    //market withdraw
-    marketWithdrawInSuspend=false;
-
     //player items
     inSelection=false;
 
@@ -593,23 +584,6 @@ void BaseWindow::connectAllSignals()
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::QtsendBattleReturn,           this,&BaseWindow::sendBattleReturn))
         abort();
-    //market
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketList,                 this,&BaseWindow::marketList))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketBuy,                  this,&BaseWindow::marketBuy))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketBuyMonster,           this,&BaseWindow::marketBuyMonster))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketPut,                  this,&BaseWindow::marketPut))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketGetCash,              this,&BaseWindow::marketGetCash))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawCanceled,     this,&BaseWindow::marketWithdrawCanceled))
-       abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawObject,       this,&BaseWindow::marketWithdrawObject))
-       abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::QtmarketWithdrawMonster,      this,&BaseWindow::marketWithdrawMonster))
-       abort();
     //datapack
     if(!connect(client,&CatchChallenger::Api_client_real::QtdatapackSizeBase,this,&BaseWindow::datapackSize))
        abort();

@@ -12,14 +12,13 @@ you have: characters/ZZZZZZZZZZZZZZ where ZZZZZZZZZZZZZZ is the character name i
   * uint8_t type
   * uint32_t clan
   * uint8_t clan_leader
-  * uint64_t date
   * uint64_t cash
   * uint64_t warehouse_cash
-  * string allow
-  * string item
-  * string item_warehouse
+  * std::set<ActionAllow> allow
+  * std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items
+  * std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> item_warehouse
   * string recipes
-  * string reputations
+  * std::map<uint8_t/*internal id*/,PlayerReputation> reputation
   * string encyclopedia_monster
   * string encyclopedia_item
   * uint64_t lastdaillygift
@@ -36,9 +35,9 @@ you have: characters/ZZZZZZZZZZZZZZ where ZZZZZZZZZZZZZZ is the character name i
   * uint8_t unvalidated_rescue_y
   * uint8_t unvalidated_rescue_orientation
   * uint64_t market_cash bigint
-  * string botfight_id bytea
-  * string itemonmap bytea
-  * string quest bytea
+  * string botfight_id
+  * std::set<uint16_t> itemonmap
+  * std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quest
 
 List:
   * uint8_t pointOnMap
@@ -57,6 +56,5 @@ List:
   * uint32_t egg_step
   * uint32_t character_origin
   * uint8_t position
-  * string buffs
-  * string skills
-  * string skills_endurance
+  * std::vector<PlayerBuff> buffs
+  * std::vector<PlayerSkill> skills

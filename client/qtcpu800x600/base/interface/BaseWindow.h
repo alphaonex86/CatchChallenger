@@ -66,10 +66,8 @@ public:
         ObjectType_All,
         ObjectType_Seed,
         ObjectType_Sell,
-        ObjectType_SellToMarket,
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
-        ObjectType_MonsterToTradeToMarket,
         ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
@@ -359,16 +357,6 @@ private slots:
     void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void captureCityWin();
 
-    //market
-    void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList);
-    void addOwnMonster(const MarketMonster &marketMonster);
-    void marketBuy(const bool &success);
-    void marketBuyMonster(const PlayerMonster &playerMonster);
-    void marketPut(const bool &success);
-    void marketGetCash(const uint64_t &cash);
-    void marketWithdrawCanceled();
-    void marketWithdrawObject(const uint16_t &objectId, const uint32_t &quantity);
-    void marketWithdrawMonster(const PlayerMonster &playerMonster);
     void IG_dialog_text_linkActivated(const std::string &rawlink);
 
     //autoconnect
@@ -438,15 +426,6 @@ private slots:
     void on_monsterListMoveUp_clicked();
     void on_monsterListMoveDown_clicked();
     void on_monsterList_itemSelectionChanged();
-    void on_marketQuit_clicked();
-    void on_marketWithdraw_clicked();
-    void updateMarketObject(QListWidgetItem *item,const MarketObject &marketObject);
-    void on_marketObject_itemActivated(QListWidgetItem *item);
-    void on_marketOwnObject_itemActivated(QListWidgetItem *item);
-    void on_marketMonster_itemActivated(QListWidgetItem *item);
-    void on_marketOwnMonster_itemActivated(QListWidgetItem *item);
-    void on_marketPutObject_clicked();
-    void on_marketPutMonster_clicked();
     void on_audioVolume_valueChanged(int value);
     void newProfileFinished();
     void updateCharacterList();
@@ -594,21 +573,6 @@ private:
     bool haveDatapack,haveDatapackMainSub,haveCharacterPosition,haveCharacterInformation,haveInventory,datapackIsParsed,mainSubDatapackIsParsed;
     bool characterSelected;
     uint16_t fightId;
-
-    //market buy
-    std::vector<std::pair<uint16_t,uint32_t> > marketBuyObjectList;
-    uint32_t marketBuyCashInSuspend;
-    bool marketBuyInSuspend;
-    //market put
-    uint32_t marketPutCashInSuspend;
-    std::vector<std::pair<uint16_t,uint32_t> > marketPutObjectInSuspendList;
-    std::vector<CatchChallenger::PlayerMonster> marketPutMonsterList;
-    std::vector<uint8_t> marketPutMonsterPlaceList;
-    bool marketPutInSuspend;
-    //market withdraw
-    bool marketWithdrawInSuspend;
-    std::vector<MarketObject> marketWithdrawObjectList;
-    std::vector<MarketMonster> marketWithdrawMonsterList;
 
     //player items
     std::unordered_map<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
