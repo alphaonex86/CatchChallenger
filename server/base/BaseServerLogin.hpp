@@ -33,7 +33,6 @@ public:
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 protected:
     void preload_the_randomData();

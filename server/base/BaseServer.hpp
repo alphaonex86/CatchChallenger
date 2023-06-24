@@ -110,9 +110,6 @@ protected:
     void preload_the_ddos();
     bool preload_zone();
     void preload_industries();
-    void preload_market_monsters_prices_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
-    void preload_market_monsters_sql();//unique table due to linked datas like skills/buffers product need of id, to be accruate on max id
-    void preload_market_items();
     void baseServerMasterLoadDictionaryLoad();
     bool preload_the_city_capture();
     bool preload_the_map();
@@ -137,11 +134,6 @@ protected:
     void preload_zone_return();
     static void preload_industries_static(void *object);
     void preload_industries_return();
-    static void preload_market_items_static(void *object);
-    void preload_market_items_return();
-    static void preload_market_monsters_static(void *object);
-    void preload_market_monsters_return();
-    static void preload_market_monsters_prices_static(void *object);
     void preload_market_monsters_prices_return();
     void preload_pointOnMap_item_return();
     static void preload_pointOnMap_item_static(void *object);
@@ -219,11 +211,10 @@ protected:
     //mostly static
     std::ifstream *dictionary_in_file;
     hps::StreamInputBuffer *dictionary_serialBuffer;
-    std::ofstream *dictionary_out_file;
+    bool dictionary_haveChange;
     //mostly dynamic
     std::ifstream *server_in_file;
     hps::StreamInputBuffer *server_serialBuffer;
-    std::ofstream *server_out_file;
     #endif
 };
 }

@@ -1,5 +1,4 @@
 clan max id (if destructed clan then not reset player clan, just at loading the clan folder is missing)
-monster max id
 
 item_market:
   * uint16_t item
