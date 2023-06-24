@@ -196,7 +196,6 @@ void BaseServer::preload_the_skin()
 void BaseServer::preload_the_players()
 {
     Client::simplifiedIdList.clear();
-    Client::marketObjectUniqueIdList.reserve(GlobalServerData::serverSettings.max_players);
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
     {
         default:

@@ -55,16 +55,6 @@ CREATE TABLE plant (
 );
 CREATE UNIQUE INDEX "plant_unqiue" on plant (pointOnMap ASC, character ASC);
 CREATE INDEX "plant_by_char" on plant (character ASC);
-CREATE TABLE "item_market" (
-    "item" INTEGER,
-    "character" INTEGER,
-    "quantity" INTEGER,
-    "market_price" INTEGER
-);
-CREATE TABLE monster_market_price (
-    "id" INTEGER,
-    "market_price" INTEGER
-, "character" INTEGER);
 CREATE TABLE character_forserver (
     "character" INTEGER,
     "x" INTEGER,
@@ -80,7 +70,6 @@ CREATE TABLE character_forserver (
     "unvalidated_rescue_y" INTEGER,
     "unvalidated_rescue_orientation" INTEGER,
     "date" INTEGER,
-    "market_cash" INTEGER,
     "botfight_id" BLOB,
     "itemonmap" BLOB,
     "plants" BLOB,

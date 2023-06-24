@@ -166,7 +166,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     else
     {
         bool ok;
-        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
+        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
         if(!ok || server_date<characterCreationDateList.at(characterId))
         {
             //drop before re-add
@@ -229,7 +229,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         break;
     }
 
-    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
+    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
     if(!ok)
     {
         characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
@@ -241,16 +241,9 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         return;
     }
 
-    market_cash=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
-    if(!ok)
-    {
-        characterSelectionIsWrong(query_id,0x04,"Market cash wrong: "+GlobalServerData::serverPrivateVariables.db_server->value(12));
-        return;
-    }
-
     //botfight_id
     {
-        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
+        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
         if(!ok)
         {
             characterSelectionIsWrong(query_id,0x04,"botfight_id not in hexa");
@@ -271,20 +264,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     }
     //itemonmap
     {
-        const std::vector<char> &itemonmap=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
+        const std::vector<char> &itemonmap=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
         const char * const raw_itemonmap=itemonmap.data();
         #endif
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"itemonmap: "+GlobalServerData::serverPrivateVariables.db_server->value(14)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"itemonmap: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
             return;
         }
         else
         {
             if(itemonmap.size()%(2)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"item on map missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(14));
+                characterSelectionIsWrong(query_id,0x04,"item on map missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(13));
                 return;
             }
             else
@@ -340,18 +333,18 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
     }
     {
-        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(18),&ok);
+        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
         const char * const raw_plants=plants.data();
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(17)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(16)+" is not a hexa");
             return;
         }
         else
         {
             if(plants.size()%(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(17));
+                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(16));
                 return;
             }
             else
@@ -427,20 +420,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     }
     //quest
     {
-        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
+        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
         const char * const raw_quests=quests.data();
         #endif
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(15)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(14)+" is not a hexa");
             return;
         }
         else
         {
             if(quests.size()%(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(15));
+                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(14));
                 return;
             }
             else
