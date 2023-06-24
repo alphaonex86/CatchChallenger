@@ -34,7 +34,6 @@ CREATE TABLE character_forserver (
     unvalidated_rescue_y smallint NOT NULL,
     unvalidated_rescue_orientation smallint NOT NULL,
     date bigint NOT NULL,
-    market_cash bigint NOT NULL,
     botfight_id bytea NOT NULL,
     itemonmap bytea NOT NULL,
     plants bytea,
@@ -97,31 +96,6 @@ CREATE TABLE factory (
 );
 
 
-
---
--- Name: item_market; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE item_market (
-    item smallint NOT NULL,
-    "character" integer NOT NULL,
-    quantity integer NOT NULL,
-    market_price bigint NOT NULL
-);
-
-
-
---
--- Name: monster_market_price; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE monster_market_price (
-    id integer NOT NULL,
-    market_price integer NOT NULL
-);
-
-
-
 --
 -- Name: plant; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
@@ -169,14 +143,6 @@ ALTER TABLE ONLY factory
 
 
 --
--- Name: monster_market_price_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
---
-
-ALTER TABLE ONLY monster_market_price
-    ADD CONSTRAINT monster_market_price_pkey PRIMARY KEY (id);
-
-
---
 -- Name: plant_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -194,12 +160,6 @@ CREATE UNIQUE INDEX plant_unique ON plant USING btree ("character", "pointOnMap"
 --
 
 CREATE INDEX character_character_forserver_index ON character_forserver USING btree ("character");
-
---
--- Name: item_market_uniqueindex; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX item_market_uniqueindex ON item_market USING btree ("character", item);
 
 
 --

@@ -44,7 +44,6 @@ const unsigned char Client::protocolHeaderToMatch[] = PROTOCOL_HEADER_GAMESERVER
 DdosBuffer<uint16_t,3> Client::generalChatDrop;
 DdosBuffer<uint16_t,3> Client::clanChatDrop;
 DdosBuffer<uint16_t,3> Client::privateChatDrop;
-std::vector<uint32_t> Client::marketObjectUniqueIdList;
 
 std::vector<uint8_t> Client::selectCharacterQueryId;
 std::vector<uint16_t> Client::simplifiedIdList;

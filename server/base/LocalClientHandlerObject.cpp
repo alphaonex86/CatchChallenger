@@ -157,12 +157,6 @@ uint32_t Client::objectQuantity(const uint16_t &item) const
         return 0;
 }
 
-bool Client::addMarketCashWithoutSave(const uint64_t &cash)
-{
-    market_cash+=cash;
-    return true;
-}
-
 void Client::destroyObject(const uint16_t &itemId,const uint32_t &quantity)
 {
     normalOutput("The player have destroy them self "+std::to_string(quantity)+" item(s) with id: "+std::to_string(itemId));
