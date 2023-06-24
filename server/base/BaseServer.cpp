@@ -353,6 +353,7 @@ bool BaseServer::initialize_the_database()
 
     initialize_the_database_prepared_query();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -378,6 +379,7 @@ void BaseServer::initialize_the_database_prepared_query()
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.initDatabaseQueryCommonWithSP(GlobalServerData::serverPrivateVariables.db_common->databaseType(),CommonSettingsServer::commonSettingsServer.useSP,GlobalServerData::serverPrivateVariables.db_common);
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.initDatabaseQueryServer(GlobalServerData::serverPrivateVariables.db_server->databaseType(),GlobalServerData::serverPrivateVariables.db_server);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

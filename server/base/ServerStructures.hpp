@@ -5,6 +5,9 @@
     #ifndef CATCHCHALLENGER_CLASS_ALLINONESERVER
         #error for CATCHCHALLENGER_DB_FILE you need enable CATCHCHALLENGER_CLASS_ALLINONESERVER
     #endif
+    #ifndef CATCHCHALLENGER_CACHE_HPS
+        #error for CATCHCHALLENGER_DB_FILE you need enable CATCHCHALLENGER_CACHE_HPS
+    #endif
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         #error for CATCHCHALLENGER_DB_FILE you need disable CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     #endif
@@ -536,8 +539,14 @@ struct ServerPrivateVariables
     std::vector<uint32_t> maxClanId;
     #else
     //for the single player
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    unsigned int maxClanId;
+    unsigned int maxMonsterId;
+    #else
+    //why use std::atomic?
     std::atomic<unsigned int> maxClanId;
     std::atomic<unsigned int> maxMonsterId;
+    #endif
     #endif
     //to the zone id, see GlobalServerData::serverPrivateVariables.zoneToId
     std::vector<std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;

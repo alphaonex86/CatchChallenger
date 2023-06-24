@@ -145,7 +145,7 @@ struct Player_public_informations
     std::string pseudo;
     Player_type type;
     uint8_t skinId;
-    uint16_t monsterId;
+    uint16_t monsterId;//the monster follow the player on map, other player can see it
     SPEED_TYPE speed;
 };
 

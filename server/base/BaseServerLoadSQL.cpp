@@ -20,6 +20,7 @@ void BaseServer::preload_dictionary_map()
         abort();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -65,6 +66,8 @@ void BaseServer::preload_dictionary_map()
         std::cout << "wait database dictionary_map query" << std::endl;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_dictionary_map_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_dictionary_map_return();
     #else
     #error Define what do here
     #endif
@@ -86,33 +89,50 @@ void BaseServer::preload_dictionary_map_return()
     std::unordered_set<std::string> foundMap;
     unsigned int maxDatabaseMapId=0;
     unsigned int obsoleteMap=0;
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    while(GlobalServerData::serverPrivateVariables.db_server->next())
-    {
-        bool ok;
-        const uint32_t &databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
-        if(databaseMapId>maxDatabaseMapId)
-            maxDatabaseMapId=databaseMapId;
-        const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
-        if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        while(GlobalServerData::serverPrivateVariables.db_server->next())
+        #else
+        size_t s=0;
+        *dictionary_serialBuffer >> s;
+        for (size_t i = 0; i < s; i++)
+        #endif
         {
-            unsigned int index=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size());
-            while(index<=databaseMapId)
+            #ifdef CATCHCHALLENGER_DB_FILE
+            uint32_t databaseMapId=0;
+            *dictionary_serialBuffer >> databaseMapId;
+            std::string map;
+            *dictionary_serialBuffer >> map;
+            #else
+            bool ok;
+            const uint32_t &databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+            if(!ok)
+                std::cerr << "BaseServer::preload_dictionary_map_return() stringtouint32 wrong" << std::endl;
+            const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
+            #endif
+            if(databaseMapId>maxDatabaseMapId)
+                maxDatabaseMapId=databaseMapId;
+            if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
             {
-                DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
-                index++;
+                unsigned int index=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size());
+                while(index<=databaseMapId)
+                {
+                    DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
+                    index++;
+                }
             }
+            if(GlobalServerData::serverPrivateVariables.map_list.find(map)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            {
+                DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map));
+                foundMap.insert(map);
+                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->reverse_db_id=databaseMapId;
+            }
+            else
+                obsoleteMap++;
         }
-        if(GlobalServerData::serverPrivateVariables.map_list.find(map)!=GlobalServerData::serverPrivateVariables.map_list.end())
-        {
-            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map));
-            foundMap.insert(map);
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->reverse_db_id=databaseMapId;
-        }
-        else
-            obsoleteMap++;
-    }
-    GlobalServerData::serverPrivateVariables.db_server->clear();
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        GlobalServerData::serverPrivateVariables.db_server->clear();
+        #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #error Define what do here
@@ -162,6 +182,8 @@ void BaseServer::preload_dictionary_map_return()
                 criticalDatabaseQueryFailed();return;//stop because can't resolv the name
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
+            dictionary_haveChange=true;
             #else
             #error Define what do here
             #endif
@@ -222,6 +244,8 @@ void BaseServer::preload_industries()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_industries_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_industries_return();
     #else
     #error Define what do here
     #endif
@@ -234,12 +258,23 @@ void BaseServer::preload_industries_static(void *object)
 
 void BaseServer::preload_industries_return()
 {
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
+    #ifdef CATCHCHALLENGER_DB_FILE
+    size_t s=0;
+    *dictionary_serialBuffer >> s;
+    for (size_t i = 0; i < s; i++)
+    #else
     while(GlobalServerData::serverPrivateVariables.db_server->next())
+    #endif
     {
         IndustryStatus industryStatus;
-        bool ok;
+        bool ok=true;
+        #ifdef CATCHCHALLENGER_DB_FILE
+        std::uint16_t id;
+        *dictionary_serialBuffer >> s;
+        #else
         uint16_t id=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        #endif
         if(!ok)
             std::cerr << "preload_industries: id is not a number" << std::endl;
         if(ok)
@@ -252,7 +287,12 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
+            #ifdef CATCHCHALLENGER_DB_FILE
+            std::vector<std::string> resourcesStringList;
+            *dictionary_serialBuffer >> resourcesStringList;
+            #else
             const std::vector<std::string> &resourcesStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(1),';');
+            #endif
             unsigned int index=0;
             while(index<resourcesStringList.size())
             {
@@ -306,7 +346,12 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
+            #ifdef CATCHCHALLENGER_DB_FILE
+            std::vector<std::string> productsStringList;
+            *dictionary_serialBuffer >> productsStringList;
+            #else
             const std::vector<std::string> &productsStringList=stringsplit(GlobalServerData::serverPrivateVariables.db_server->value(2),';');
+            #endif
             unsigned int index=0;
             while(index<productsStringList.size())
             {
@@ -358,7 +403,11 @@ void BaseServer::preload_industries_return()
         }
         if(ok)
         {
+            #ifdef CATCHCHALLENGER_DB_FILE
+            *dictionary_serialBuffer >> industryStatus.last_update;
+            #else
             industryStatus.last_update=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
+            #endif
             if(!ok)
                 std::cerr << "preload_industries: last_update is not a number" << std::endl;
         }
@@ -486,6 +535,8 @@ void BaseServer::baseServerMasterLoadDictionaryLoad()
     BaseServerMasterLoadDictionary::load(GlobalServerData::serverPrivateVariables.db_base);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_dictionary_reputation();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_dictionary_reputation();
     #else
     #error Define what do here
     #endif
@@ -497,66 +548,6 @@ void BaseServer::baseServerMasterLoadDictionaryLoad()
     preload_industries();
     #endif
 #endif
-}
-
-void BaseServer::preload_market_items_static(void *object)
-{
-    static_cast<BaseServer *>(object)->preload_market_items_return();
-}
-
-void BaseServer::preload_market_items_return()
-{
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    bool ok;
-    //parse the result
-    while(GlobalServerData::serverPrivateVariables.db_server->next())
-    {
-        MarketItem marketItem;
-        marketItem.item=stringtouint16(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
-        if(!ok)
-        {
-            std::cerr << "item id is not a number, skip" << std::endl;
-            continue;
-        }
-        marketItem.quantity=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
-        if(!ok)
-        {
-            std::cerr << "quantity is not a number, skip" << std::endl;
-            continue;
-        }
-        marketItem.player=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
-        if(!ok)
-        {
-            std::cerr << "player id is not a number, skip" << std::endl;
-            continue;
-        }
-        marketItem.price=stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
-        if(!ok)
-        {
-            std::cerr << "cash is not a number, skip" << std::endl;
-            continue;
-        }
-        if(Client::marketObjectUniqueIdList.size()==0)
-        {
-            std::cerr << "not more marketObjectId into the list, skip" << std::endl;
-            return;
-        }
-        marketItem.marketObjectUniqueId=Client::marketObjectUniqueIdList.at(0);
-        Client::marketObjectUniqueIdList.erase(Client::marketObjectUniqueIdList.begin());
-        GlobalServerData::serverPrivateVariables.marketItemList.push_back(marketItem);
-    }
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #else
-    #error Define what do here
-    #endif
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    if(GlobalServerData::serverSettings.automatic_account_creation)
-        load_account_max_id();
-    else if(CommonSettingsCommon::commonSettingsCommon.max_character)
-        load_character_max_id();
-    else
-    #endif
-    baseServerMasterLoadDictionaryLoad();
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -594,6 +585,8 @@ void BaseServer::load_clan_max_id()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_clan_max_id_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    load_clan_max_id_return();
     #else
     #error Define what do here
     #endif
@@ -623,6 +616,8 @@ void BaseServer::load_clan_max_id_return()
         }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    *server_serialBuffer >> GlobalServerData::serverPrivateVariables.maxClanId;
     #else
     #error Define what do here
     #endif
@@ -666,6 +661,8 @@ void BaseServer::load_account_max_id()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_account_max_id_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    load_account_max_id_return();
     #else
     #error Define what do here
     #endif
@@ -693,6 +690,7 @@ void BaseServer::load_account_max_id_return()
         }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -736,6 +734,8 @@ void BaseServer::load_character_max_id()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_character_max_id_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    load_character_max_id_return();
     #else
     #error Define what do here
     #endif
@@ -763,6 +763,7 @@ void BaseServer::load_character_max_id_return()
         }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

@@ -163,11 +163,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[0x8A]=2;
             packetFixedSize[0x8B]=2*2+2*4;
             packetFixedSize[0x8C]=2*2+2*4;
-            packetFixedSize[0x8D]=0;
-            packetFixedSize[0x8E]=0xFE;
-            packetFixedSize[0x8F]=0xFE;
-            packetFixedSize[0x90]=0;
-            packetFixedSize[0x91]=0xFE;
             packetFixedSize[0x92]=0xFE;
             packetFixedSize[0x93]=CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER;
             packetFixedSize[0xA0]=5;
@@ -192,6 +187,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[0xE0]=0xFE;
             packetFixedSize[0xE1]=0xFE;
             packetFixedSize[0xE2]=2;
+            packetFixedSize[0xE3]=0;
             packetFixedSize[0xF8]=4+4;
             packetFixedSize[0xF9]=0;
 
@@ -209,11 +205,6 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[128+0x8A]=0xFE;
             packetFixedSize[128+0x8B]=0xFE;
             packetFixedSize[128+0x8C]=0xFE;
-            packetFixedSize[128+0x8D]=0xFE;
-            packetFixedSize[128+0x8E]=0xFE;
-            packetFixedSize[128+0x8F]=0xFE;
-            packetFixedSize[128+0x90]=0xFE;
-            packetFixedSize[128+0x91]=0xFE;
             packetFixedSize[128+0x92]=0xFE;
             packetFixedSize[128+0x93]=0xFE;
             packetFixedSize[128+0xA0]=0xFE;
@@ -238,6 +229,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[128+0xE0]=1;
             packetFixedSize[128+0xE1]=0;
             packetFixedSize[128+0xE2]=0;
+            packetFixedSize[128+0xE3]=0;
             packetFixedSize[128+0xF8]=0xFE;
             packetFixedSize[128+0xF9]=0;
 

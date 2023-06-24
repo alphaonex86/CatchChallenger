@@ -15,7 +15,7 @@ SOURCES += \
     $$PWD/base/BaseServerLoadBot.cpp \
     $$PWD/base/BaseServerLoadSQL.cpp \
     $$PWD/base/BaseServerLoadSQLNotEpoll.cpp \
-    $$PWD/base/BaseServerLoadSQLPointAndMarket.cpp \
+    $$PWD/base/BaseServerLoadSQLPoint.cpp \
     $$PWD/base/BaseServerUnload.cpp \
     $$PWD/base/BaseServerMasterLoadDictionary.cpp \
     $$PWD/base/BaseServerMasterSendDatapack.cpp \
@@ -30,7 +30,6 @@ SOURCES += \
     $$PWD/base/LocalClientHandlerIndustries.cpp \
     $$PWD/base/LocalClientHandlerShop.cpp \
     $$PWD/base/LocalClientHandlerClan.cpp \
-    $$PWD/base/LocalClientHandlerMarket.cpp \
     $$PWD/base/LocalClientHandlerCity.cpp \
     $$PWD/base/LocalClientHandlerWithoutSender.cpp \
     $$PWD/base/LocalClientHandlerQuest.cpp \

@@ -23,6 +23,16 @@ void Client::removeFromClan()
     clanChangeWithoutDb(0);
 }
 
+Player_private_and_public_informations &Client::get_public_and_private_informations()
+{
+    return public_and_private_informations;
+}
+
+const Player_private_and_public_informations &Client::get_public_and_private_informations_ro() const
+{
+    return public_and_private_informations;
+}
+
 std::string Client::directionToStringToSave(const Direction &direction)
 {
     switch(direction)

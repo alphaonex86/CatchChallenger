@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <iostream>
 
@@ -48,11 +49,19 @@ void BaseServer::preload_zone_return()
     }
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
     entryListIndex++;
-    preload_market_monsters_prices_sql();
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    if(GlobalServerData::serverSettings.automatic_account_creation)
+        load_account_max_id();
+    else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+        load_character_max_id();
+    else
+    #endif
+    baseServerMasterLoadDictionaryLoad();
 }
 
 //call before load map
@@ -61,7 +70,16 @@ void BaseServer::preload_zone_sql()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     uint16_t indexZone=0;
     if(entryListZone.empty())
-        preload_market_monsters_prices_sql();
+    {
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        if(GlobalServerData::serverSettings.automatic_account_creation)
+            load_account_max_id();
+        else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+            load_character_max_id();
+        else
+        #endif
+        baseServerMasterLoadDictionaryLoad();
+    }
     else
     {
         while(entryListIndex<entryListZone.size())
@@ -110,15 +128,32 @@ void BaseServer::preload_zone_sql()
                 std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
                 criticalDatabaseQueryFailed();return;//stop because can't do the first db access
                 entryListIndex++;
-                preload_market_monsters_sql();
+
+                #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+                if(GlobalServerData::serverSettings.automatic_account_creation)
+                    load_account_max_id();
+                else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+                    load_character_max_id();
+                else
+                #endif
+                baseServerMasterLoadDictionaryLoad();
                 return;
             }
             else
                 return;
         }
-        preload_market_monsters_sql();
+        #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+        if(GlobalServerData::serverSettings.automatic_account_creation)
+            load_account_max_id();
+        else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+            load_character_max_id();
+        else
+        #endif
+        baseServerMasterLoadDictionaryLoad();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    preload_zone_return();
+    #elif CATCHCHALLENGER_DB_FILE
     preload_zone_return();
     #else
     #error Define what do here

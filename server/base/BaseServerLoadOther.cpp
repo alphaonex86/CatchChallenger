@@ -142,6 +142,8 @@ void BaseServer::preload_other()
             abort();
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             CommonSettingsCommon::commonSettingsCommon.datapackHashBase.resize(28);
+            #elif CATCHCHALLENGER_DB_FILE
+            abort();
             #else
             #error Define what do here
             #endif
@@ -268,6 +270,8 @@ void BaseServer::preload_other()
             abort();
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             CommonSettingsServer::commonSettingsServer.datapackHashServerMain.resize(28);
+            #elif CATCHCHALLENGER_DB_FILE
+            abort();
             #else
             #error Define what do here
             #endif
@@ -290,6 +294,8 @@ void BaseServer::preload_other()
                 abort();
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
                 CommonSettingsServer::commonSettingsServer.datapackHashServerSub.resize(28);
+                #elif CATCHCHALLENGER_DB_FILE
+                abort();
                 #else
                 #error Define what do here
                 #endif

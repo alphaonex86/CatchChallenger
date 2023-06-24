@@ -27,7 +27,6 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             displaySellList();
         break;
         case ObjectType_MonsterToTrade:
-        case ObjectType_MonsterToTradeToMarket:
         case ObjectType_MonsterToLearn:
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
@@ -39,7 +38,6 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             ui->stackedWidget->setCurrentWidget(ui->page_monster);
             load_monsters();
         break;
-        case ObjectType_SellToMarket:
         case ObjectType_All:
         case ObjectType_Trade:
             ui->inventoryUse->setText(tr("Select"));
@@ -205,40 +203,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_plant_inventory();
         }
         break;
-        case ObjectType_SellToMarket:
-        {
-            ui->inventoryUse->setText(tr("Select"));
-            ui->stackedWidget->setCurrentWidget(ui->page_market);
-            if(!ok)
-                break;
-            if(playerInformations.items.find(itemId)==playerInformations.items.cend())
-            {
-                qDebug() << "item id is not into the inventory";
-                break;
-            }
-            if(playerInformations.items.at(itemId)<quantity)
-            {
-                qDebug() << "item id have not the quantity";
-                break;
-            }
-            uint32_t suggestedPrice=50;
-            if(CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
-                suggestedPrice=CommonDatapack::commonDatapack.get_items().item.at(itemId).price;
-            GetPrice getPrice(this,suggestedPrice);
-            getPrice.exec();
-            if(!getPrice.isOK())
-                break;
-            client->putMarketObject(itemId,quantity,getPrice.price());
-            marketPutCashInSuspend=getPrice.price();
-            remove_to_inventory(itemId,quantity);
-            std::pair<uint16_t,uint32_t> pair;
-            pair.first=itemId;
-            pair.second=quantity;
-            marketPutObjectInSuspendList.push_back(pair);
-            load_inventory();
-            load_plant_inventory();
-        }
-        break;
         case ObjectType_Trade:
             ui->inventoryUse->setText(tr("Select"));
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
@@ -323,37 +287,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             battleStep=BattleStep_Presentation;
             monsterBeforeMoveForChangeInWaiting=true;
             moveFightMonsterBottom();
-        }
-        break;
-        case ObjectType_MonsterToTradeToMarket:
-        {
-            ui->inventoryUse->setText(tr("Select"));
-            ui->stackedWidget->setCurrentWidget(ui->page_market);
-            load_monsters();
-            if(!ok)
-                break;
-            std::vector<PlayerMonster> playerMonster=client->getPlayerMonster();
-            if(playerMonster.size()<=1)
-            {
-                QMessageBox::warning(this,tr("Warning"),tr("You can't trade your last monster"));
-                break;
-            }
-            const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
-            if(!client->remainMonstersToFightWithoutThisMonster(monsterPosition))
-            {
-                QMessageBox::warning(this,tr("Warning"),tr("You don't have more monster valid"));
-                break;
-            }
-            //get the right monster
-            GetPrice getPrice(this,15000);
-            getPrice.exec();
-            if(!getPrice.isOK())
-                break;
-            marketPutMonsterList.push_back(playerMonster.at(monsterPosition));
-            marketPutMonsterPlaceList.push_back(monsterPosition);
-            client->removeMonsterByPosition(monsterPosition);
-            client->putMarketMonsterByPosition(monsterPosition,getPrice.price());
-            marketPutCashInSuspend=getPrice.price();
         }
         break;
         case ObjectType_MonsterToTrade:
@@ -627,7 +560,6 @@ void BaseWindow::on_inventory_itemActivated(QListWidgetItem *item)
         {
             case ObjectType_Sell:
             case ObjectType_Trade:
-            case ObjectType_SellToMarket:
                 if(playerInformations.items.at(itemId)>1)
                     tempQuantitySelected=QInputDialog::getInt(this,tr("Quantity"),tr("Select a quantity"),1,1,playerInformations.items.at(itemId),1,&ok);
                 else

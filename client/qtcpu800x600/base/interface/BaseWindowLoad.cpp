@@ -104,16 +104,6 @@ void BaseWindow::resetAll()
     buffToGraphicalItemTop.clear();
     buffToGraphicalItemBottom.clear();
     zonecatch=false;
-    marketBuyInSuspend=false;
-    marketBuyObjectList.clear();
-    marketBuyCashInSuspend=0;
-    marketPutMonsterList.clear();
-    marketPutMonsterPlaceList.clear();
-    marketPutInSuspend=false;
-    marketPutCashInSuspend=0;
-    marketWithdrawInSuspend=false;
-    marketWithdrawObjectList.clear();
-    marketWithdrawMonsterList.clear();
     datapackDownloadedCount=0;
     datapackDownloadedSize=0;
     escape=false;
