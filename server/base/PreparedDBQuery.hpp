@@ -88,7 +88,7 @@ public:
     PreparedStatementUnit db_query_update_monster_place;
     PreparedStatementUnit db_query_update_monster_and_hp;
     PreparedStatementUnit db_query_update_monster_hp_and_level;
-    PreparedStatementUnit db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal, market volume should be low
+    PreparedStatementUnit db_query_select_monsters_by_player_id;//don't filter by place, dispatched in internal
     PreparedStatementUnit db_query_update_monster_move_to_new_player;
     PreparedStatementUnit db_query_update_monster_owner;
     PreparedStatementUnit db_query_update_gift;
@@ -116,7 +116,6 @@ public:
 
     PreparedStatementUnit db_query_update_monster_move_to_player;
     PreparedStatementUnit db_query_update_monster_move_to_warehouse;
-    PreparedStatementUnit db_query_update_monster_move_to_market;
     PreparedStatementUnit db_query_insert_monster_full;
     PreparedStatementUnit db_query_insert_warehouse_monster_full;
     PreparedStatementUnit db_query_insert_monster_skill;
@@ -157,16 +156,6 @@ public:
     PreparedStatementUnit db_query_delete_city;
     PreparedStatementUnit db_query_update_city_clan;
     PreparedStatementUnit db_query_insert_city;
-    PreparedStatementUnit db_query_insert_monster_market_price;
-    PreparedStatementUnit db_query_delete_monster_market_price;
-    PreparedStatementUnit db_query_delete_all_item_market;
-    PreparedStatementUnit db_query_insert_item_market;
-    PreparedStatementUnit db_query_delete_item_market;
-    PreparedStatementUnit db_query_update_item_market;
-    PreparedStatementUnit db_query_update_item_market_and_price;
-    PreparedStatementUnit db_query_update_charaters_market_cash;
-    PreparedStatementUnit db_query_get_market_cash;
-    PreparedStatementUnit db_query_insert_monster_market;
     PreparedStatementUnit db_query_update_character_quests;
     PreparedStatementUnit db_query_character_server_by_id;
     PreparedStatementUnit db_query_delete_character_server_by_id;

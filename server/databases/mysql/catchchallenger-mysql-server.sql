@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
-  `market_cash` bigint(20) unsigned NOT NULL,
   `botfight_id` mediumblob NOT NULL,
   `itemonmap` tinyblob NOT NULL,
   `plants` blob NOT NULL,
@@ -92,32 +91,6 @@ CREATE TABLE IF NOT EXISTS `factory` (
   `resources` text NOT NULL,
   `products` text NOT NULL,
   `last_update` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `item_market`
---
-
-CREATE TABLE IF NOT EXISTS `item_market` (
-  `item` smallint(6) NOT NULL,
-  `character` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `market_price` bigint(20) NOT NULL,
-  UNIQUE KEY `item` (`item`,`character`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `monster_market_price`
---
-
-CREATE TABLE IF NOT EXISTS `monster_market_price` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `market_price` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 

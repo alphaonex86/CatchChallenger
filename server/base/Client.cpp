@@ -32,7 +32,6 @@ Client::Client() :
     lastdaillygift(0),
     account_id(0),
     character_id(0),
-    market_cash(0),
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected(true),
     #endif

@@ -79,7 +79,6 @@ public:
     static DdosBuffer<uint16_t,3> generalChatDrop;
     static DdosBuffer<uint16_t,3> clanChatDrop;
     static DdosBuffer<uint16_t,3> privateChatDrop;
-    static std::vector<uint32_t> marketObjectUniqueIdList;//this is not the item id
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
@@ -199,7 +198,6 @@ private:
     //-------------------
     uint32_t account_id;//0 if not logged
     uint32_t character_id;
-    uint64_t market_cash;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
     #endif
@@ -401,7 +399,6 @@ private:
     void updateObjectInDatabaseAndEncyclopedia();
     void updateMonsterInDatabaseEncyclopedia();
     uint32_t objectQuantity(const uint16_t &item) const;
-    bool addMarketCashWithoutSave(const uint64_t &cash);
     void addCash(const uint64_t &cash,const bool &forceSave=false);
     void removeCash(const uint64_t &cash);
     void addWarehouseCash(const uint64_t &cash,const bool &forceSave=false);
