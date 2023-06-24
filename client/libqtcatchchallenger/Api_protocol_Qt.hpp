@@ -173,18 +173,6 @@ public:
     void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count) override;
     void captureCityWin() override;
 
-    //market
-    void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,
-                    const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,
-                    const std::vector<MarketMonster> &marketOwnMonsterList) override;
-    void marketBuy(const bool &success) override;
-    void marketBuyMonster(const PlayerMonster &playerMonster) override;
-    void marketPut(const bool &success) override;
-    void marketGetCash(const uint64_t &cash) override;
-    void marketWithdrawCanceled() override;
-    void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) override;
-    void marketWithdrawMonster(const PlayerMonster &playerMonster) override;
-
     void error(const std::string &error);
 signals:
     void QtnewError(const std::string &error,const std::string &detailedError);
@@ -304,19 +292,6 @@ signals:
     void QtcaptureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
     void QtcaptureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
     void QtcaptureCityWin();
-
-    //market
-    void QtmarketList(const uint64_t &price,const std::vector<CatchChallenger::MarketObject> &marketObjectList,
-                      const std::vector<CatchChallenger::MarketMonster> &marketMonsterList,
-                      const std::vector<CatchChallenger::MarketObject> &marketOwnObjectList,
-                      const std::vector<CatchChallenger::MarketMonster> &marketOwnMonsterList);
-    void QtmarketBuy(const bool &success);
-    void QtmarketBuyMonster(const CatchChallenger::PlayerMonster &playerMonster);
-    void QtmarketPut(const bool &success);
-    void QtmarketGetCash(const uint64_t &cash);
-    void QtmarketWithdrawCanceled();
-    void QtmarketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity);
-    void QtmarketWithdrawMonster(const CatchChallenger::PlayerMonster &playerMonster);
 
 public:
     std::string getLanguage() const override;

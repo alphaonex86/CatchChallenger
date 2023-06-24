@@ -362,16 +362,6 @@ public:
     virtual void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId) = 0;
     virtual void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count) = 0;
     virtual void captureCityWin() = 0;
-
-    //market
-    virtual void marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList) = 0;
-    virtual void marketBuy(const bool &success) = 0;
-    virtual void marketBuyMonster(const PlayerMonster &playerMonster) = 0;
-    virtual void marketPut(const bool &success) = 0;
-    virtual void marketGetCash(const uint64_t &cash) = 0;
-    virtual void marketWithdrawCanceled() = 0;
-    virtual void marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity) = 0;
-    virtual void marketWithdrawMonster(const PlayerMonster &playerMonster) = 0;
 public:
     virtual std::string getLanguage() const = 0;
 public:
@@ -456,16 +446,6 @@ public:
     void ejectClan(const std::string &pseudo);
     void inviteAccept(const bool &accept);
     void waitingForCityCapture(const bool &cancel);
-
-    //market
-    void getMarketList();
-    void buyMarketObject(const uint32_t &marketObjectId,const uint32_t &quantity=1);
-    void buyMarketMonster(const uint32_t &monsterMarketId);
-    void putMarketObject(const uint16_t &objectId, const uint32_t &quantity, const uint64_t &price);
-    void putMarketMonsterByPosition(const uint8_t &monsterPosition,const uint64_t &price);
-    void recoverMarketCash();
-    void withdrawMarketObject(const uint16_t &objectPosition, const uint32_t &quantity=1);
-    void withdrawMarketMonster(const uint32_t &monsterMarketId);
 
     //warehouse
     void addPlayerMonsterWarehouse(const PlayerMonster &playerMonster);

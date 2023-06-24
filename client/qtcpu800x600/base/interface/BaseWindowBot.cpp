@@ -347,18 +347,6 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         updateTheWareHouseContent();
         return;
     }
-    else if(strcmp(stepXml->Attribute("type"),"market")==0)
-    {
-        ui->marketMonster->clear();
-        ui->marketObject->clear();
-        ui->marketOwnMonster->clear();
-        ui->marketOwnObject->clear();
-        ui->marketWithdraw->setVisible(false);
-        ui->marketStat->setText(tr("In waiting of market list"));
-        client->getMarketList();
-        ui->stackedWidget->setCurrentWidget(ui->page_market);
-        return;
-    }
     else if(strcmp(stepXml->Attribute("type"),"industry")==0)
     {
         if(stepXml->Attribute("industry")==NULL)

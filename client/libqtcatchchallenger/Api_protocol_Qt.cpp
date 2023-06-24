@@ -836,40 +836,6 @@ void Api_protocol_Qt::captureCityWin()
     emit QtcaptureCityWin();
 }
 
-//market
-void Api_protocol_Qt::marketList(const uint64_t &price,const std::vector<MarketObject> &marketObjectList,const std::vector<MarketMonster> &marketMonsterList,const std::vector<MarketObject> &marketOwnObjectList,const std::vector<MarketMonster> &marketOwnMonsterList)
-{
-    emit QtmarketList(price,marketObjectList,marketMonsterList,marketOwnObjectList,marketOwnMonsterList);
-}
-void Api_protocol_Qt::marketBuy(const bool &success)
-{
-    emit QtmarketBuy(success);
-}
-void Api_protocol_Qt::marketBuyMonster(const PlayerMonster &playerMonster)
-{
-    emit QtmarketBuyMonster(playerMonster);
-}
-void Api_protocol_Qt::marketPut(const bool &success)
-{
-    emit QtmarketPut(success);
-}
-void Api_protocol_Qt::marketGetCash(const uint64_t &cash)
-{
-    emit QtmarketGetCash(cash);
-}
-void Api_protocol_Qt::marketWithdrawCanceled()
-{
-    emit QtmarketWithdrawCanceled();
-}
-void Api_protocol_Qt::marketWithdrawObject(const uint32_t &objectId,const uint32_t &quantity)
-{
-    emit QtmarketWithdrawObject(objectId,quantity);
-}
-void Api_protocol_Qt::marketWithdrawMonster(const PlayerMonster &playerMonster)
-{
-    emit QtmarketWithdrawMonster(playerMonster);
-}
-
 std::string Api_protocol_Qt::getLanguage() const
 {
     #ifndef CATCHCHALLENGER_BOT

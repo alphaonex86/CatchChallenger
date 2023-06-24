@@ -14,6 +14,16 @@ BaseServer::BaseServer() :
     stat(Down),
     dataLoaded(false)
 {
+    #ifdef CATCHCHALLENGER_DB_FILE
+    //mostly static
+    dictionary_in_file=nullptr;
+    dictionary_serialBuffer=nullptr;
+    dictionary_haveChange=false;
+    //mostly dynamic
+    server_in_file=nullptr;
+    server_serialBuffer=nullptr;
+    #endif
+
     ProtocolParsing::initialiseTheVariable();
     timeDatapack=0;
     entryListIndex=0;
@@ -119,7 +129,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.database_base.considerDownAfterNumberOfTry=3;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
     #endif
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -129,7 +138,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.database_server.considerDownAfterNumberOfTry=3;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
-    #error Define what do here
     #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -304,7 +312,7 @@ void BaseServer::SQL_common_load_finish()
 }
 #endif
 
-void BaseServer::preload_finish()
+void BaseServer::preload_finish()//call after preload_industries_return(), after SQL, preload_industries_return() save the cache/and db file
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()==0)
@@ -390,7 +398,7 @@ void BaseServer::preload_finish()
         break;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
-    #error Define what do here
     #endif
 }
