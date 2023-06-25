@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_the_datapack()
+void BaseServer::preload_6_sync_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     std::vector<std::string> extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED)+";"+std::string(CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
@@ -466,7 +466,7 @@ void BaseServer::preload_the_datapack()
               << " hash for datapack loaded sub" << std::endl;
 }
 
-void BaseServer::preload_the_gift()
+void BaseServer::preload_10_sync_the_gift()
 {
     if(CommonDatapack::commonDatapack.get_items().item.empty())
     {

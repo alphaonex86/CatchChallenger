@@ -29,7 +29,7 @@ BaseServerLogin::~BaseServerLogin()
 {
 }
 
-void BaseServerLogin::preload_the_randomData()
+void BaseServerLogin::preload_2_sync_the_randomData()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     BaseServerLogin::tokenForAuthSize=0;

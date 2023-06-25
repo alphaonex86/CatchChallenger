@@ -271,7 +271,7 @@ void NormalServer::start_internal_server()
         is_started(false);
         return;
     }
-    preload_the_data();
+    preload_1_the_data();
     stat=Up;
     oneInstanceRunning=true;
     is_started(true);

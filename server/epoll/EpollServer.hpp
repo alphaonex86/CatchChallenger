@@ -15,7 +15,7 @@ public:
     ~EpollServer();
     void initTheDatabase();
     bool tryListen();
-    void preload_the_data();
+    void preload_1_the_data();
     void unload_the_data();
     void setNormalSettings(const NormalServerSettings &settings);
     NormalServerSettings getNormalSettings() const;

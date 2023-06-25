@@ -498,7 +498,7 @@ bool EpollServerLoginSlave::tryListen()
         const bool &returnedValue=tryListenInternal(server_ip.c_str(), server_port.c_str());
     #endif
 
-    preload_the_randomData();
+    preload_2_sync_the_randomData();
     preload_profile();
 
     if(server_port.empty())

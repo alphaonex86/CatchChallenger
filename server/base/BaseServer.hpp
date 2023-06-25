@@ -51,7 +51,7 @@ public:
     #endif
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    void load_clan_max_id();
+    void preload_20_async_clan_max_id();
     static void load_clan_max_id_static(void *object);
     void load_clan_max_id_return();
 
@@ -95,34 +95,28 @@ protected:
         Map_semi_border border;
         Map_to_send old_map;
     };
-    struct Monster_Semi_Market
-    {
-        //conversion x,y to position: x+y*width
-        uint32_t id;
-        uint64_t price;
-    };
 
     virtual void setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start) = 0;
-    void preload_randomBlock();
-    void preload_other();
-    void preload_the_data();
-    void preload_the_events();
-    void preload_the_ddos();
+    void preload_4_sync_randomBlock();
+    void preload_30_sync_other();
+    void preload_1_the_data();
+    void preload_5_sync_the_events();
+    void preload_3_sync_the_ddos();
     bool preload_zone();
-    void preload_industries();
-    void baseServerMasterLoadDictionaryLoad();
+    void preload_21_async_industries();
+    void preload_17_async_baseServerMasterLoadDictionaryLoad();
     bool preload_the_city_capture();
-    bool preload_the_map();
-    void preload_the_skin();
-    void preload_the_datapack();
-    void preload_the_gift();
-    void preload_the_players();
-    void preload_profile();
+    bool preload_9_sync_the_map();
+    void preload_7_sync_the_skin();
+    void preload_6_sync_the_datapack();
+    void preload_10_sync_the_gift();
+    void preload_11_sync_the_players();
+    void preload_18_sync_profile();
     virtual void preload_the_visibility_algorithm();
     void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
-    void preload_monsters_drops();
-    void load_sql_monsters_max_id();
+    void preload_8_sync_monsters_drops();
+    void preload_19_async_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
     virtual void criticalDatabaseQueryFailed();
@@ -130,27 +124,25 @@ protected:
 
     static void preload_zone_static(void *object);
     bool preload_zone_init();
-    void preload_zone_sql();
+    void preload_16_async_zone_sql();
     void preload_zone_return();
     static void preload_industries_static(void *object);
     void preload_industries_return();
-    void preload_market_monsters_prices_return();
     void preload_pointOnMap_item_return();
     static void preload_pointOnMap_item_static(void *object);
-    void preload_pointOnMap_item_sql();
+    void preload_13_async_pointOnMap_item_sql();
     void preload_pointOnMap_plant_return();
     static void preload_pointOnMap_plant_static(void *object);
-    void preload_pointOnMap_plant_sql();
-    void preload_dictionary_map();
+    void preload_14_async_pointOnMap_plant_sql();
+    void preload_12_async_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
-    void preload_map_semi_after_db_id();
+    void preload_15_async_map_semi_after_db_id();
 
     void unload_other();
     void unload_randomBlock();
     void unload_industries();
     void unload_zone();
-    void unload_market();
     void unload_the_city_capture();
     void unload_the_bots();
     void unload_the_data();
@@ -188,7 +180,6 @@ protected:
     uint64_t timeDatapack;
     unsigned int dictionary_pointOnMap_maxId_item,dictionary_pointOnMap_maxId_plant;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
-    std::vector<Monster_Semi_Market> monsterSemiMarketList;
 
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     unsigned int entryListIndex;
@@ -197,9 +188,7 @@ protected:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif
-    bool preload_market_monsters_prices_call;
     bool preload_industries_call;
-    bool preload_market_items_call;
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     std::ifstream *in_file;

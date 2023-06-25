@@ -61,11 +61,11 @@ void BaseServer::preload_zone_return()
         load_character_max_id();
     else
     #endif
-    baseServerMasterLoadDictionaryLoad();
+    preload_17_async_baseServerMasterLoadDictionaryLoad();
 }
 
 //call before load map
-void BaseServer::preload_zone_sql()
+void BaseServer::preload_16_async_zone_sql()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     uint16_t indexZone=0;
@@ -78,7 +78,7 @@ void BaseServer::preload_zone_sql()
             load_character_max_id();
         else
         #endif
-        baseServerMasterLoadDictionaryLoad();
+        preload_17_async_baseServerMasterLoadDictionaryLoad();
     }
     else
     {
@@ -136,7 +136,7 @@ void BaseServer::preload_zone_sql()
                     load_character_max_id();
                 else
                 #endif
-                baseServerMasterLoadDictionaryLoad();
+                preload_17_async_baseServerMasterLoadDictionaryLoad();
                 return;
             }
             else
@@ -149,7 +149,7 @@ void BaseServer::preload_zone_sql()
             load_character_max_id();
         else
         #endif
-        baseServerMasterLoadDictionaryLoad();
+        preload_17_async_baseServerMasterLoadDictionaryLoad();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_zone_return();
