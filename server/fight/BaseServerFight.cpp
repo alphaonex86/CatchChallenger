@@ -52,10 +52,10 @@ void BaseServer::preload_19_async_sql_monsters_max_id()
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
         abort();//stop because can't do the first db access
-        //load_clan_max_id();->abort
+        //preload_20_async_clan_max_id();->abort
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    load_clan_max_id();
+    preload_20_async_clan_max_id();
     #else
     #error Define what do here
     #endif

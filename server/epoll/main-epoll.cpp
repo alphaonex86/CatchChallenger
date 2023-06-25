@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
     }
     server->initialize_the_database_prepared_query();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
-    server->preload_the_data();
+    server->preload_1_the_data();
     datapack_loaded=true;
     #else
     #error Define what do here

@@ -96,6 +96,7 @@ public:
     static unsigned char protocolReplyServerFull[7];
     static unsigned char *characterIsRightFinalStepHeader;
     static uint32_t characterIsRightFinalStepHeaderSize;
+    bool mapSyncMiss;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     /// \todo group all reply in one
     static unsigned char protocolReplyCompressionNone[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
@@ -107,7 +108,6 @@ public:
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
-    bool mapSyncMiss;
 private:
     static unsigned char *protocolMessageLogicalGroupAndServerList;
     static uint16_t protocolMessageLogicalGroupAndServerListSize;
