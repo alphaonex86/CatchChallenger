@@ -14,23 +14,21 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_the_data()
+void BaseServer::preload_1_the_data()
 {
     std::cout << "Preload data for server version " << CatchChallenger::Version::str << std::endl;
 
     if(dataLoaded)
         return;
     dataLoaded=true;
-    preload_market_monsters_prices_call=false;
     preload_industries_call=false;
-    preload_market_items_call=false;
     GlobalServerData::serverPrivateVariables.stopIt=false;
-    preload_the_randomData();
+    preload_2_sync_the_randomData();
 
     std::cout << "Datapack, base: " << GlobalServerData::serverSettings.datapack_basePath
               << std::endl;
-    preload_the_ddos();
-    preload_randomBlock();
+    preload_3_sync_the_ddos();
+    preload_4_sync_randomBlock();
 
     //load from cache here
     #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -202,11 +200,11 @@ void BaseServer::preload_the_data()
         }
         timeDatapack = msFrom1970();
         const auto &now = msFrom1970();
-        preload_the_events();
-        preload_the_datapack();
-        preload_the_skin();
-        preload_monsters_drops();
-        preload_the_map();
+        preload_5_sync_the_events();
+        preload_6_sync_the_datapack();
+        preload_7_sync_the_skin();
+        preload_8_sync_monsters_drops();
+        preload_9_sync_the_map();
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
@@ -242,18 +240,15 @@ void BaseServer::preload_the_data()
         #endif
     }
 
-    preload_the_gift();
-    preload_the_players();
-    preload_dictionary_map();
+    preload_10_sync_the_gift();
+    preload_11_sync_the_players();
+    preload_12_async_dictionary_map();
 
     /*
      * Load order:
     preload_pointOnMap_sql();
     preload_map_semi_after_db_id();
     preload_zone_sql();
-
-    preload_market_monsters_sql();
-    preload_market_items();
 
     if(GlobalServerData::serverSettings.automatic_account_creation)
         load_account_max_id();

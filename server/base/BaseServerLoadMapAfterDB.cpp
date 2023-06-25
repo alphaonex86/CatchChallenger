@@ -4,7 +4,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_map_semi_after_db_id()
+void BaseServer::preload_15_async_map_semi_after_db_id()
 {
     if(DictionaryServer::dictionary_map_database_to_internal.size()==0)
     {
@@ -230,5 +230,5 @@ void BaseServer::preload_map_semi_after_db_id()
 
     semi_loaded_map.clear();
     plant_on_the_map=0;
-    preload_zone_sql();
+    preload_16_async_zone_sql();
 }

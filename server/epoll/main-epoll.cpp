@@ -897,7 +897,7 @@ int main(int argc, char *argv[])
                         if(db->isConnected())
                         {
                             std::cout << "datapack_loaded not loaded: start preload data " << std::endl;
-                            server->preload_the_data();
+                            server->preload_1_the_data();
                             datapack_loaded=true;
                         }
                         else

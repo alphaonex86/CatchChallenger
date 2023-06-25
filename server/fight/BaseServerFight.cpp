@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_monsters_drops()
+void BaseServer::preload_8_sync_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops=DatapackGeneralLoader::loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS,CommonDatapack::commonDatapack.get_items().item,CommonDatapack::commonDatapack.get_monsters());
 
@@ -19,7 +19,7 @@ void BaseServer::preload_monsters_drops()
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-void BaseServer::load_sql_monsters_max_id()
+void BaseServer::preload_19_async_sql_monsters_max_id()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVER
     std::cout << GlobalServerData::serverPrivateVariables.cityStatusList.size() << " SQL city loaded" << std::endl;
@@ -87,6 +87,6 @@ void BaseServer::load_monsters_max_id_return()
     #else
     #error Define what do here
     #endif
-    load_clan_max_id();
+    preload_20_async_clan_max_id();
 }
 #endif

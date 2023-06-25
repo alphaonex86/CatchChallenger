@@ -28,9 +28,7 @@ BaseServer::BaseServer() :
     timeDatapack=0;
     entryListIndex=0;
     plant_on_the_map=0;
-    preload_market_monsters_prices_call=false;
     preload_industries_call=false;
-    preload_market_items_call=false;
 
     dictionary_pointOnMap_maxId_item=0;
     dictionary_pointOnMap_maxId_plant=0;
@@ -303,9 +301,9 @@ void BaseServer::SQL_common_load_finish()
     DictionaryLogin::dictionary_starter_database_to_internal=this->dictionary_starter_database_to_internal;
     DictionaryLogin::dictionary_starter_internal_to_database=this->dictionary_starter_internal_to_database;
 
-    preload_profile();
+    preload_18_sync_profile();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    load_sql_monsters_max_id();
+    preload_19_async_sql_monsters_max_id();
     #else
     preload_industries();
     #endif
@@ -336,7 +334,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     const auto &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
-    preload_other();
+    preload_30_sync_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
 
     //delete content of Map_loader::getXmlCondition()
@@ -350,9 +348,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     CommonSettingsCommon::commonSettingsCommon.datapackHashBase.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerMain.clear();
     CommonSettingsServer::commonSettingsServer.datapackHashServerSub.clear();
-    preload_market_monsters_prices_call=false;
     preload_industries_call=false;
-    preload_market_items_call=false;
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

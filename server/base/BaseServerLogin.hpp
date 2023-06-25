@@ -35,7 +35,7 @@ public:
     #else
     #endif
 protected:
-    void preload_the_randomData();
+    void preload_2_sync_the_randomData();
     void unload();
     void unload_the_randomData();
 };
