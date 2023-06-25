@@ -454,6 +454,11 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         case 0xE2:
             removeFirstEventInQueue();
         break;
+        //Ping for map
+        case 0xE3:
+        if(pingInProgress>0)
+            pingInProgress--;
+        break;
         //Another player request a trade
         case 0xE0:
         {

@@ -76,6 +76,9 @@ public:
 
     bool sendRawBlock(const char * const data,const unsigned int &size);
 
+    void sendPing();
+    uint8_t pingCountInProgress() const;
+
     static DdosBuffer<uint16_t,3> generalChatDrop;
     static DdosBuffer<uint16_t,3> clanChatDrop;
     static DdosBuffer<uint16_t,3> privateChatDrop;
@@ -104,6 +107,7 @@ public:
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
+    bool mapSyncMiss;
 private:
     static unsigned char *protocolMessageLogicalGroupAndServerList;
     static uint16_t protocolMessageLogicalGroupAndServerListSize;
@@ -194,6 +198,7 @@ protected:
     {
         uint32_t index;
     };
+    uint8_t pingInProgress;
 private:
     //-------------------
     uint32_t account_id;//0 if not logged
