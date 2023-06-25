@@ -25,11 +25,13 @@ Client::Client() :
         PacketModeTransmission_Server
         #endif
         ),
+    mapSyncMiss(false),
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     stat_client(false),
     #endif
     stat(ClientStat::None),
     lastdaillygift(0),
+    pingInProgress(0),
     account_id(0),
     character_id(0),
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -675,3 +677,28 @@ void Client::breakNeedMoreData()
     #endif
 }
 
+void Client::sendPing()
+{
+    if(queryNumberList.empty())
+    {
+        errorOutput("Sorry, no free query number to send this query of teleportation");
+        return;
+    }
+
+    if(pingInProgress<255)
+        pingInProgress++;
+
+    //send the network reply
+    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE3;
+    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
+    registerOutputQuery(queryNumberList.back(),0xE3);
+
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,2);
+
+    queryNumberList.pop_back();
+}
+
+uint8_t Client::pingCountInProgress() const
+{
+    return pingInProgress;
+}
