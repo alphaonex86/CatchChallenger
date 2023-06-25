@@ -23,7 +23,6 @@ Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_S
 }
 
 //buffer overflow check via buffer usage at player insert, per map if player are visible
-
 void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -32,6 +31,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(): have_change==false" << std::endl;
     }
     #endif
+    // START for hysteresis
     have_change=false;
     if(send_drop_all)
     {
@@ -41,7 +41,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         {
             MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients[index];
             //clientdropAllClients();
-            client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
+            if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
+            else
+                client->mapSyncMiss=true;
             index++;
         }
         send_drop_all=false;
@@ -105,7 +108,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     {
                         MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
                         client->to_send_insert=false;
-                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        else
+                            client->mapSyncMiss=true;
                         ++index;
                     }
                 }
@@ -117,18 +123,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 {
                     MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
 
-                    uint32_t posOutputSub=posOutput;
                     unsigned int indexSub=0;
                     while(indexSub<clients.size())
                     {
                         if(index!=indexSub)
-                            posOutputSub+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                            posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                         ++indexSub;
                     }
 
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutputSub-1-4);//set the dynamic size
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                     client->to_send_insert=false;
-                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutputSub);
+                    if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    else
+                        client->mapSyncMiss=true;
 
                     ++index;
                 }
@@ -136,8 +144,16 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         }
 
         send_reinsert_all=false;
+        unsigned int index=0;
+        while(index<clients.size())
+        {
+            MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+            client->sendPing();
+            index++;
+        }
         return;
     }
+    // STOP for hysteresis
 
     if(clients.size()<=1 && to_send_remove.empty())
         return;
@@ -222,7 +238,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         }
                         else
                         {
-                            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                            if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                            else
+                                client->mapSyncMiss=true;
                             clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
                             clientsToSendDataSizeOldClients++;
                         }
@@ -323,7 +342,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-                    clients.at(index)->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    if(clients.at(index)->pingCountInProgress()<=0 && clients.at(index)->mapSyncMiss==false)
+                        clients.at(index)->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    else
+                        clients.at(index)->mapSyncMiss=true;
                 }
                 index++;
             }
@@ -366,7 +388,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    if(clientsToSendDataOldClients[index_subindex]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index_subindex]->mapSyncMiss==false)
+                        clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    else
+                        clientsToSendDataOldClients[index_subindex]->mapSyncMiss=true;
                     index_subindex++;
                 }
             }
@@ -393,7 +418,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 index_subindex=0;
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    if(clientsToSendDataOldClients[index_subindex]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index_subindex]->mapSyncMiss==false)
+                        clientsToSendDataOldClients[index_subindex]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    else
+                        clientsToSendDataOldClients[index_subindex]->mapSyncMiss=true;
                     index_subindex++;
                 }
             }
@@ -476,7 +504,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     unsigned int index=0;
                     while(index<clientsToSendDataSizeOldClients)
                     {
-                        clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        if(clientsToSendDataOldClients[index]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index]->mapSyncMiss==false)
+                            clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        else
+                            clientsToSendDataOldClients[index]->mapSyncMiss=true;
                         index++;
                     }
                 }
@@ -541,7 +572,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                     index_subindex++;
                                 }
                                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                if(clientsToSendDataOldClients[index]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index]->mapSyncMiss==false)
+                                    clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                else
+                                    clientsToSendDataOldClients[index]->mapSyncMiss=true;
                                 posOutput=1+4;
                             }
                             index++;
@@ -573,7 +607,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                                     index_subindex++;
                                 }
                                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-                                clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                if(clientsToSendDataOldClients[index]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index]->mapSyncMiss==false)
+                                    clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                                else
+                                    clientsToSendDataOldClients[index]->mapSyncMiss=true;
                                 posOutput=1+4;
                             }
                             index++;
@@ -589,12 +626,76 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     }
     //purge
     {
+        //send the network message
+        uint32_t posOutput=0;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
+        posOutput+=1+4;
+        //prepare the data
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+        posOutput+=1;
+        if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
+            posOutput+=1;
+        }
+        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+        {
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
+            posOutput+=2;
+        }
+        else
+        {
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
+            posOutput+=4;
+        }
+        if(GlobalServerData::serverSettings.max_players<=255)
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size()-1);
+            posOutput+=1;
+        }
+        else
+        {
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
+            posOutput+=2;
+        }
+        if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
+        {
+            unsigned int indexSub=0;
+            while(indexSub<clients.size())
+            {
+                MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(indexSub);
+                posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                ++indexSub;
+            }
+        }
+
         unsigned int index_subindex=0;
         while(index_subindex<clients.size())
         {
             MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
             client->to_send_insert=false;
             client->haveNewMove=false;
+            if(client->mapSyncMiss==true && client->pingCountInProgress()<=0)
+            {
+                if(!GlobalServerData::serverSettings.mapVisibility.simple.reemit)
+                {
+                    unsigned int indexSub=0;
+                    while(indexSub<clients.size())
+                    {
+                        if(client!=clients.at(indexSub))
+                            posOutput+=playerToFullInsert(clients.at(indexSub),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                        ++indexSub;
+                    }
+                }
+
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                client->to_send_insert=false;
+                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+                client->mapSyncMiss=false;
+            }
+            if(client->pingCountInProgress()<=0)
+                client->sendPing();
             ++index_subindex;
         }
         to_send_remove.clear();
