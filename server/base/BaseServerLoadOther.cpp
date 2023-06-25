@@ -7,7 +7,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_other()
+void BaseServer::preload_30_sync_other()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     //game server only, the server data message

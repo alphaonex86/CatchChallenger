@@ -13,7 +13,7 @@ using namespace CatchChallenger;
 /**
  * into the BaseServerLogin
  * */
-void BaseServer::preload_profile()
+void BaseServer::preload_18_sync_profile()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::cout << DictionaryLogin::dictionary_skin_database_to_internal.size() << " SQL skin dictionary" << std::endl;

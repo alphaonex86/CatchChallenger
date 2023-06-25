@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_randomBlock()
+void BaseServer::preload_4_sync_randomBlock()
 {
     //don't use BaseServerLogin::fpRandomFile to prevent lost entropy
     GlobalServerData::serverPrivateVariables.randomData.resize(CATCHCHALLENGER_SERVER_RANDOM_INTERNAL_SIZE);
@@ -20,7 +20,7 @@ void BaseServer::preload_randomBlock()
     }
 }
 
-void BaseServer::preload_the_events()
+void BaseServer::preload_5_sync_the_events()
 {
     GlobalServerData::serverPrivateVariables.events.clear();
     unsigned int index=0;
@@ -84,7 +84,7 @@ void BaseServer::preload_the_events()
     }
 }
 
-void BaseServer::preload_the_ddos()
+void BaseServer::preload_3_sync_the_ddos()
 {
     unload_the_ddos();
     Client::generalChatDrop.reset();
@@ -180,7 +180,7 @@ bool BaseServer::preload_the_city_capture()
     return load_next_city_capture();
 }
 
-void BaseServer::preload_the_skin()
+void BaseServer::preload_7_sync_the_skin()
 {
     std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
     unsigned int index=0;
@@ -193,7 +193,7 @@ void BaseServer::preload_the_skin()
     std::cout << skinFolderList.size() << " skin(s) loaded" << std::endl;
 }
 
-void BaseServer::preload_the_players()
+void BaseServer::preload_11_sync_the_players()
 {
     Client::simplifiedIdList.clear();
     switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)

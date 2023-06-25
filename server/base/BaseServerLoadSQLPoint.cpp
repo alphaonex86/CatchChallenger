@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_pointOnMap_item_sql()
+void BaseServer::preload_13_async_pointOnMap_item_sql()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
@@ -47,7 +47,7 @@ void BaseServer::preload_pointOnMap_item_sql()
         timeDatapack=now;
 
         //start SQL load
-        preload_pointOnMap_plant_sql();
+        preload_14_async_pointOnMap_plant_sql();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_pointOnMap_item_return();
@@ -204,11 +204,11 @@ void BaseServer::preload_pointOnMap_item_return()
         timeDatapack=now;
 
         //start SQL load
-        preload_pointOnMap_plant_sql();
+        preload_14_async_pointOnMap_plant_sql();
     }
 }
 
-void BaseServer::preload_pointOnMap_plant_sql()
+void BaseServer::preload_14_async_pointOnMap_plant_sql()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
@@ -247,7 +247,7 @@ void BaseServer::preload_pointOnMap_plant_sql()
         timeDatapack=now;
 
         //start SQL load
-        preload_map_semi_after_db_id();
+        preload_15_async_map_semi_after_db_id();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_pointOnMap_plant_return();
@@ -418,6 +418,6 @@ void BaseServer::preload_pointOnMap_plant_return()
         timeDatapack=now;
 
         //start SQL load
-        preload_map_semi_after_db_id();
+        preload_15_async_map_semi_after_db_id();
     }
 }
