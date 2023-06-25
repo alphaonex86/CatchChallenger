@@ -214,9 +214,9 @@ void EpollServer::quitForCriticalDatabaseQueryFailed()
     abort();
 }
 
-void EpollServer::preload_the_data()
+void EpollServer::preload_1_the_data()
 {
-    BaseServer::preload_the_data();
+    BaseServer::preload_1_the_data();
 }
 
 void EpollServer::unload_the_data()

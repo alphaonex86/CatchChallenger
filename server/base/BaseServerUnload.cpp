@@ -21,7 +21,6 @@ void BaseServer::unload_the_data()
     GlobalServerData::serverPrivateVariables.stopIt=true;
 
     unload_dictionary();
-    unload_market();
     unload_industries();
     unload_zone();
     unload_the_city_capture();
@@ -65,13 +64,7 @@ void BaseServer::unload_the_static_data()
 void BaseServer::unload_zone()
 {
     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.clear();
-}
-
-void BaseServer::unload_market()
-{
     GlobalServerData::serverPrivateVariables.tradedMonster.clear();
-    GlobalServerData::serverPrivateVariables.marketPlayerMonsterList.clear();
-    GlobalServerData::serverPrivateVariables.marketItemList.clear();
 }
 
 void BaseServer::unload_industries()

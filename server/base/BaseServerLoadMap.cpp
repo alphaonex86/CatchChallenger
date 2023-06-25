@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-bool BaseServer::preload_the_map()
+bool BaseServer::preload_9_sync_the_map()
 {
     GlobalServerData::serverPrivateVariables.datapack_mapPath=GlobalServerData::serverSettings.datapack_basePath+
             DATAPACK_BASE_PATH_MAPMAIN+

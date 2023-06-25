@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-void BaseServer::preload_dictionary_map()
+void BaseServer::preload_12_async_dictionary_map()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(GlobalServerData::serverPrivateVariables.db_server==NULL)
@@ -199,10 +199,10 @@ void BaseServer::preload_dictionary_map_return()
         std::cerr << obsoleteMap << " SQL obsolete map dictionary" << std::endl;
     std::cout << DictionaryServer::dictionary_map_database_to_internal.size() << " SQL map dictionary" << std::endl;
 
-    preload_pointOnMap_item_sql();
+    preload_13_async_pointOnMap_item_sql();
 }
 
-void BaseServer::preload_industries()
+void BaseServer::preload_21_async_industries()
 {
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     std::cout << GlobalServerData::serverPrivateVariables.maxClanId << " SQL clan max id" << std::endl;
@@ -528,7 +528,7 @@ void BaseServer::preload_industries_return()
     preload_finish();
 }
 
-void BaseServer::baseServerMasterLoadDictionaryLoad()
+void BaseServer::preload_17_async_baseServerMasterLoadDictionaryLoad()
 {
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -541,17 +541,13 @@ void BaseServer::baseServerMasterLoadDictionaryLoad()
     #error Define what do here
     #endif
 #else
-    preload_profile();
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    load_sql_monsters_max_id();
-    #else
-    preload_industries();
-    #endif
+    preload_18_sync_profile();
+    preload_21_async_industries();
 #endif
 }
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-void BaseServer::load_clan_max_id()
+void BaseServer::preload_20_async_clan_max_id()
 {
     //start to 0 due to pre incrementation before use
     GlobalServerData::serverPrivateVariables.maxClanId=1;
@@ -581,7 +577,7 @@ void BaseServer::load_clan_max_id()
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_clan_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        preload_industries();
+        preload_21_async_industries();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_clan_max_id_return();
@@ -621,7 +617,7 @@ void BaseServer::load_clan_max_id_return()
     #else
     #error Define what do here
     #endif
-    preload_industries();
+    preload_21_async_industries();
 }
 
 void BaseServer::load_account_max_id()
@@ -657,7 +653,7 @@ void BaseServer::load_account_max_id()
         if(CommonSettingsCommon::commonSettingsCommon.max_character)
             load_character_max_id();
         else
-            baseServerMasterLoadDictionaryLoad();
+            preload_17_async_baseServerMasterLoadDictionaryLoad();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_account_max_id_return();
@@ -697,7 +693,7 @@ void BaseServer::load_account_max_id_return()
     if(CommonSettingsCommon::commonSettingsCommon.max_character)
         load_character_max_id();
     else
-        baseServerMasterLoadDictionaryLoad();
+        preload_17_async_baseServerMasterLoadDictionaryLoad();
 }
 
 void BaseServer::load_character_max_id()
@@ -730,7 +726,7 @@ void BaseServer::load_character_max_id()
     if(GlobalServerData::serverPrivateVariables.db_common->asyncRead(queryText,this,&BaseServer::load_character_max_id_static)==NULL)
     {
         std::cerr << "Sql error for: " << queryText << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        baseServerMasterLoadDictionaryLoad();
+        preload_17_async_baseServerMasterLoadDictionaryLoad();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     load_character_max_id_return();
@@ -767,6 +763,6 @@ void BaseServer::load_character_max_id_return()
     #else
     #error Define what do here
     #endif
-    baseServerMasterLoadDictionaryLoad();
+    preload_17_async_baseServerMasterLoadDictionaryLoad();
 }
 #endif
