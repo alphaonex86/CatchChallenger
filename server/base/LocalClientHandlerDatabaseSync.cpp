@@ -17,6 +17,7 @@ void Client::updateObjectInDatabase()
             std::to_string(character_id)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -60,6 +61,7 @@ void Client::updateObjectInDatabase()
             std::to_string(character_id)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -109,6 +111,7 @@ void Client::updateObjectInWarehouseDatabase()
             std::to_string(character_id)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -152,6 +155,7 @@ void Client::updateObjectInWarehouseDatabase()
             std::to_string(character_id)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -236,6 +240,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         std::to_string(character_id)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -250,6 +255,7 @@ void Client::updateMonsterInDatabaseEncyclopedia()
         std::to_string(character_id)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -272,6 +278,7 @@ void Client::syncDatabaseAllow()
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -331,6 +338,7 @@ void Client::syncDatabaseReputation()
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -341,17 +349,13 @@ void Client::syncDatabaseReputation()
 
 void Client::syncBotAlreadyBeaten()
 {
-    if(public_and_private_informations.bot_already_beaten==NULL)
-    {
-        std::cerr << "bot_already_beaten==NULL at syncBotAlreadyBeaten()" << std::endl;
-        return;
-    }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
                 binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1),
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -393,6 +397,7 @@ void Client::savePosition()
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

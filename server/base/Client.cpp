@@ -10,6 +10,15 @@
 
 #include "BaseServerLogin.hpp"
 
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <fstream>
+#include <string>
+#include "../../general/hps/hps.h"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "DictionaryServer.hpp"
+#endif
+
 #include <chrono>
 #include <cstring>
 
@@ -73,10 +82,6 @@ Client::Client() :
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
     public_and_private_informations.repel_step=0;
-    public_and_private_informations.recipes=NULL;
-    public_and_private_informations.encyclopedia_monster=NULL;
-    public_and_private_informations.encyclopedia_item=NULL;
-    public_and_private_informations.bot_already_beaten=NULL;
     queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     {
         uint8_t index=0;
@@ -94,21 +99,6 @@ Client::~Client()
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=NULL;
     #endif
-    if(public_and_private_informations.recipes!=NULL)
-    {
-        delete public_and_private_informations.recipes;
-        public_and_private_informations.recipes=NULL;
-    }
-    if(public_and_private_informations.encyclopedia_monster!=NULL)
-    {
-        delete public_and_private_informations.encyclopedia_monster;
-        public_and_private_informations.encyclopedia_monster=NULL;
-    }
-    if(public_and_private_informations.encyclopedia_item!=NULL)
-    {
-        delete public_and_private_informations.encyclopedia_item;
-        public_and_private_informations.encyclopedia_item=NULL;
-    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     //normalOutput("Destroyed client");
     #endif
@@ -134,6 +124,7 @@ Client::~Client()
         while(!callbackRegistred.empty())
             callbackRegistred.pop();
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -170,6 +161,7 @@ bool Client::disconnectClient()
     GlobalServerData::serverPrivateVariables.db_common->clear();
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -279,6 +271,7 @@ bool Client::disconnectClient()
                         });
             #endif
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -309,6 +302,7 @@ bool Client::disconnectClient()
                                 std::to_string(playerMonster.id)
                                 });
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif
@@ -556,6 +550,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -702,3 +697,135 @@ uint8_t Client::pingCountInProgress() const
 {
     return pingInProgress;
 }
+
+#ifdef CATCHCHALLENGER_DB_FILE
+#ifdef CATCHCHALLENGER_CACHE_HPS
+void Client::serialize(hps::StreamOutputBuffer& buf) const {
+    std::string recipesS(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+    std::string encyclopedia_monsterS(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+    std::string encyclopedia_itemS(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
+    std::string bot_already_beatenS(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+    buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
+        << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
+        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
+        << public_and_private_informations.plantOnMap << public_and_private_informations.quests << public_and_private_informations.reputation
+        << public_and_private_informations.items << public_and_private_informations.warehouse_items << public_and_private_informations.allow.size();
+    std::set<ActionAllow>::iterator it;
+    for (it = public_and_private_informations.allow.begin(); it != public_and_private_informations.allow.end(); ++it) {
+        buf << (uint8_t)*it;
+    }
+
+    buf << ableToFight;
+    buf << wildMonsters;
+    buf << botFightMonsters;
+    buf << account_id << character_id << randomIndex << randomSize << number_of_character;
+    buf << questsDrop << connectedSince << profileIndex << queryNumberList;
+    buf << botFightCash << botFightId << isInCityCapture;
+
+    const uint32_t &map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
+    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
+    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
+    buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
+    buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
+}
+
+template <class B>
+void Client::parse(B& buf) {
+    size_t tallow;
+    std::string recipesS;
+    std::string encyclopedia_monsterS;
+    std::string encyclopedia_itemS;
+    std::string bot_already_beatenS;
+    buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash >> public_and_private_informations.warehouse_cash
+        >> recipesS >> public_and_private_informations.playerMonster >> public_and_private_informations.warehouse_playerMonster
+        >> encyclopedia_monsterS >> encyclopedia_itemS
+        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> bot_already_beatenS >> public_and_private_informations.allow
+        >> public_and_private_informations.itemOnMap >> public_and_private_informations.plantOnMap >> public_and_private_informations.quests
+        >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items >> tallow;
+    public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+    memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+    size_t min=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
+    if(min>recipesS.size())
+        min=recipesS.size();
+    memcpy(public_and_private_informations.recipes,recipesS.data(),min);
+    public_and_private_informations.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+    memset(public_and_private_informations.encyclopedia_monster,0x00,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+    min=CommonDatapack::commonDatapack.get_monstersMaxId()/8+1;
+    if(min>encyclopedia_monsterS.size())
+        min=encyclopedia_monsterS.size();
+    memcpy(public_and_private_informations.encyclopedia_monster,encyclopedia_monsterS.data(),min);
+    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.item.size()/8+1);
+    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.item.size()/8+1);
+    min=CommonDatapack::commonDatapack.items.item.size()/8+1;
+    if(min>encyclopedia_itemS.size())
+        min=encyclopedia_itemS.size();
+    memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);
+    public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+    memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+    min=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1;
+    if(min>bot_already_beatenS.size())
+        min=bot_already_beatenS.size();
+    memcpy(public_and_private_informations.bot_already_beaten,bot_already_beatenS.data(),min);
+    for (size_t i=0; i < tallow; i++) {
+        uint8_t small;
+        buf >> small;
+        ActionAllow t=(ActionAllow)small;
+        public_and_private_informations.allow.insert(t);
+    }
+
+    buf >> ableToFight;
+    buf >> wildMonsters;
+    buf >> botFightMonsters;
+    buf >> account_id >> character_id >> randomIndex >> randomSize >> number_of_character;
+    buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
+    buf >> botFightCash >> botFightId >> isInCityCapture;
+
+    uint8_t value=0;
+    const uint32_t &map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
+    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
+    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    buf >> map_file_database_id >> map_entry.x >> map_entry.y >> value;
+    map_entry.orientation=(Orientation)value;
+    buf >> rescue_map_file_database_id >> rescue.x >> rescue.y >> value;
+    rescue.orientation=(Orientation)value;
+    buf >> unvalidated_rescue_map_file_database_id >> unvalidated_rescue.x >> unvalidated_rescue.y >> value;
+    unvalidated_rescue.orientation=(Orientation)value;
+
+    CommonMap *t=nullptr;
+    if(map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id));
+    if(t==nullptr)
+    {
+        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    if(rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id));
+    if(t==nullptr)
+    {
+        std::cerr << "rescue_map_file_database_id have not reverse: " << std::to_string(rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    if(unvalidated_rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "unvalidated_rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id));
+    if(t==nullptr)
+    {
+        std::cerr << "unvalidated_rescue_map_file_database_id have not reverse: " << std::to_string(unvalidated_rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+}
+#endif
+#endif

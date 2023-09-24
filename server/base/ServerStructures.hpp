@@ -76,8 +76,9 @@ enum QuestAction : uint8_t
     QuestAction_NextStep
 };
 
-struct PlayerOnMap
+class PlayerOnMap
 {
+public:
     CommonMap* map;
     COORD_TYPE x;
     COORD_TYPE y;
