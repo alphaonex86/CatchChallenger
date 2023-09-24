@@ -3,6 +3,9 @@
 #include "BaseServerMasterSendDatapack.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE
+#include "BaseServer.hpp"
+#endif
 
 #include <regex>
 #include <iostream>
@@ -13,6 +16,7 @@ BaseServerMasterLoadDictionary::BaseServerMasterLoadDictionary()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     : databaseBaseBase(NULL)
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -30,6 +34,7 @@ void BaseServerMasterLoadDictionary::load(DatabaseBase * const databaseBase)
     preload_dictionary_reputation();
 }
 #elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
 #else
 #error Define what do here
 #endif
@@ -66,6 +71,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_dictionary_reputation_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_dictionary_reputation_return();
     #else
     #error Define what do here
     #endif
@@ -89,14 +96,29 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     }
     std::unordered_set<std::string> foundReputation;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
+    #else
+    size_t s=0;
+    *BaseServer::dictionary_serialBuffer >> s;
+    for (size_t i = 0; i < s; i++)
+    #endif
     {
-        bool ok;
+        #ifdef CATCHCHALLENGER_DB_FILE
+        uint32_t tempId;
+        *BaseServer::dictionary_serialBuffer >> tempId;
+        std::string reputation;
+        *BaseServer::dictionary_serialBuffer >> reputation;
+        #else
+        bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(!ok)
+            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_reputation_return() " << __FILE__ << ":" << __LINE__ << std::endl;
+        const std::string &reputation=std::string(databaseBaseBase->value(1));
+        #endif
         if(tempId>lastId)
             lastId=tempId;
-        const std::string &reputation=std::string(databaseBaseBase->value(1));
         if(dictionary_reputation_database_to_internal.size()<=tempId)
         {
             unsigned int index=static_cast<unsigned int>(dictionary_reputation_database_to_internal.size());
@@ -114,7 +136,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             CommonDatapack::commonDatapack.get_reputation_rw()[internalId].reverse_database_id=tempId;
         }
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
+    #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #error Define what do here
@@ -156,6 +180,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
                 abort();//stop because can't resolv the name
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
+            BaseServer::dictionary_haveChange=true;
             #else
             #error Define what do here
             #endif
@@ -205,6 +231,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_dictionary_skin_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_dictionary_skin_return();
     #else
     #error Define what do here
     #endif
@@ -227,14 +255,29 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     }
     std::unordered_set<std::string> foundSkin;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
+    #else
+    size_t s=0;
+    *BaseServer::dictionary_serialBuffer >> s;
+    for (size_t i = 0; i < s; i++)
+    #endif
     {
-        bool ok;
+        #ifdef CATCHCHALLENGER_DB_FILE
+        uint32_t tempId;
+        *BaseServer::dictionary_serialBuffer >> tempId;
+        std::string skin;
+        *BaseServer::dictionary_serialBuffer >> skin;
+        #else
+        bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(!ok)
+            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_reputation_return() " << __FILE__ << ":" << __LINE__ << std::endl;
+        const std::string &skin=databaseBaseBase->value(1);
+        #endif
         if(tempId>lastId)
             lastId=tempId;
-        const std::string &skin=databaseBaseBase->value(1);
         if(dictionary_skin_database_to_internal.size()<=tempId)
         {
             unsigned int index=static_cast<uint32_t>(dictionary_skin_database_to_internal.size());
@@ -252,7 +295,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             foundSkin.insert(skin);
         }
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
+    #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #error Define what do here
@@ -294,6 +339,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
                 abort();//stop because can't resolv the name
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
+            BaseServer::dictionary_haveChange=true;
             #else
             #error Define what do here
             #endif
@@ -343,6 +390,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_dictionary_starter_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_dictionary_starter_return();
     #else
     #error Define what do here
     #endif
@@ -375,14 +424,29 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     }
     std::unordered_set<std::string> foundstarter;
     unsigned int lastId=0;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
+    #else
+    size_t s=0;
+    *BaseServer::dictionary_serialBuffer >> s;
+    for (size_t i = 0; i < s; i++)
+    #endif
     {
-        bool ok;
+        #ifdef CATCHCHALLENGER_DB_FILE
+        uint32_t tempId;
+        *BaseServer::dictionary_serialBuffer >> tempId;
+        std::string starter;
+        *BaseServer::dictionary_serialBuffer >> starter;
+        #else
+        bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
+        if(!ok)
+            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_reputation_return() " << __FILE__ << ":" << __LINE__ << std::endl;
+        const std::string &starter=std::string(databaseBaseBase->value(1));
+        #endif
         if(tempId>lastId)
             lastId=tempId;
-        const std::string &starter=std::string(databaseBaseBase->value(1));
         if(dictionary_starter_database_to_internal.size()<=tempId)
         {
             uint8_t index=static_cast<uint8_t>(dictionary_starter_database_to_internal.size());
@@ -400,7 +464,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             foundstarter.insert(CommonDatapack::commonDatapack.get_profileList().at(internalValue).databaseId);
         }
     }
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
+    #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #error Define what do here
@@ -442,6 +508,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
                 abort();//stop because can't resolv the name
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
+            BaseServer::dictionary_haveChange=true;
             #else
             #error Define what do here
             #endif
@@ -470,6 +538,7 @@ void BaseServerMasterLoadDictionary::unload()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase=NULL;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

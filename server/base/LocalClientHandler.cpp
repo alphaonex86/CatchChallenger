@@ -231,6 +231,7 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -247,6 +248,7 @@ void Client::removeCash(const uint64_t &cash)
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -389,6 +391,7 @@ bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

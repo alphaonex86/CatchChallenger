@@ -108,6 +108,7 @@ void PreparedDBQueryCommonForLogin::initDatabaseQueryCommonForLogin(const Databa
 }
 #endif
 #elif CATCHCHALLENGER_DB_BLACKHOLE
+#elif CATCHCHALLENGER_DB_FILE
 #else
 #error Define what do here
 #endif

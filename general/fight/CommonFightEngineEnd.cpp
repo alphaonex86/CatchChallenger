@@ -118,8 +118,6 @@ void CommonFightEngine::healAllMonsters()
 
 bool CommonFightEngine::haveBeatBot(const uint16_t &botFightId) const
 {
-    if(get_public_and_private_informations_ro().bot_already_beaten==NULL)
-        abort();
     return get_public_and_private_informations_ro().bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8));
 }
 

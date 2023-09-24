@@ -15,6 +15,12 @@
 #include <queue>
 #include <iostream>
 
+#ifdef CATCHCHALLENGER_DB_FILE
+#ifdef CATCHCHALLENGER_CACHE_HPS
+#include "../../general/hps/hps.h"
+#endif
+#endif
+
 #ifdef EPOLLCATCHCHALLENGERSERVER
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
         #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
@@ -44,6 +50,13 @@ void recordDisconnectByServer(void * client);
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
 public:
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    void serialize(hps::StreamOutputBuffer& buf) const;
+    template <class B>
+    void parse(B& buf);
+    #endif
+    #endif
     friend class BaseServer;
     friend class PlayerUpdaterBase;
     explicit Client();
@@ -223,6 +236,18 @@ private:
         };
         uint64_t time;
         std::vector<OldEventEntry> oldEventList;
+        #ifdef CATCHCHALLENGER_DB_FILE
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << oldEventList << time;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> oldEventList >> time;
+        }
+        #endif
+        #endif
     };
     OldEvents oldEvents;
 

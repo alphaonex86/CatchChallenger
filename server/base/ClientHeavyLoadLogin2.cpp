@@ -34,6 +34,9 @@ bool Client::server_list()
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     server_list_object();
     return true;
+    #elif CATCHCHALLENGER_DB_FILE
+    server_list_object();
+    return true;
     #else
     #error Define what do here
     #endif
@@ -75,6 +78,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -142,6 +146,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         validServerCount++;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -161,6 +166,7 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
                         });
         #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -190,6 +196,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -200,6 +207,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_delete_monster_by_character.asyncWrite({characterIdString});
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)characterId;
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -221,6 +229,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -331,6 +340,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
         return;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -385,6 +395,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     paramToPassToCallBackType.push("AddCharacterParam");
     #endif
     addCharacter_object();
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -397,6 +408,7 @@ void Client::addCharacter_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -422,6 +434,7 @@ void Client::addCharacter_object()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -464,6 +477,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)pseudo;
     (void)skinId;
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -566,6 +580,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         return;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -597,6 +612,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -640,6 +656,7 @@ void Client::removeCharacterLater(const uint8_t &query_id, const uint32_t &chara
     paramToPassToCallBackType.push("RemoveCharacterParam");
     #endif
     removeCharacterLater_object();
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -652,6 +669,7 @@ void Client::removeCharacterLater_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -690,6 +708,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)characterId;
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -738,6 +757,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
