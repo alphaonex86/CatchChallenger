@@ -45,6 +45,7 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
                 std::to_string(monster.id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -100,6 +101,7 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
                 std::to_string(monster.id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -130,6 +132,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
                 std::to_string(monster.id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -189,6 +192,7 @@ void Client::saveStat()
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)monster;
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

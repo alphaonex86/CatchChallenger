@@ -101,6 +101,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
                         std::to_string(monster.id)
                         });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -192,6 +193,7 @@ void Client::healAllMonsters()
                             std::to_string(public_and_private_informations.playerMonster.at(index).id)
                             });
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif
@@ -201,6 +203,7 @@ void Client::healAllMonsters()
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.playerMonster.at(index).id)});
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif
@@ -408,6 +411,7 @@ bool Client::giveXPSP(int xp,int sp)
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         (void)currentMonster;
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -589,6 +593,7 @@ void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monste
                 std::to_string(monsterId)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -755,6 +760,7 @@ void Client::confirmEvolutionTo(PlayerMonster * playerMonster, const uint16_t &m
                 std::to_string(playerMonster->id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -877,6 +883,7 @@ void Client::hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue
                 std::to_string(currentMonster->id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -893,6 +900,7 @@ bool Client::addLevel(PlayerMonster * monster, const uint8_t &numberOfLevel)
                 std::to_string(monster->id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

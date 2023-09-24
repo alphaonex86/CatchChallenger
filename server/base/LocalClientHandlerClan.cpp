@@ -85,6 +85,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 callbackRegistred.push(callback);
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -116,6 +117,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             //update the db
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -159,6 +161,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -286,6 +289,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif
@@ -308,6 +312,7 @@ void Client::addClan_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -341,6 +346,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -363,6 +369,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         return;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -399,6 +406,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 std::to_string(sFrom1970())
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -545,6 +553,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -560,6 +569,7 @@ void Client::ejectToClan()
                 std::to_string(character_id)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

@@ -294,6 +294,7 @@ int main(int argc, char *argv[])
                 return EXIT_FAILURE;
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -437,6 +438,9 @@ int main(int argc, char *argv[])
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     server->preload_1_the_data();
     datapack_loaded=true;
+    #elif CATCHCHALLENGER_DB_FILE
+    server->preload_1_the_data();
+    datapack_loaded=true;
     #else
     #error Define what do here
     #endif
@@ -545,13 +549,13 @@ int main(int argc, char *argv[])
                 while(index<elementsToDeleteSub.size())
                 {
                     Client * c=static_cast<Client *>(elementsToDeleteSub.at(index));
-                    #ifdef CATCHCHALLENGER_DB_FILE
-                    #error define where save
-                    std::ofstream *out_file=new std::ofstream(file, std::ofstream::binary);
-                    if(out_file->good() && out_file->is_open())
-                        out_file << c;
-                    delete out_file;
-                    #endif
+#ifdef CATCHCHALLENGER_DB_FILE
+const std::string &hexa=binarytoHexa(c->public_and_private_informations.public_informations.pseudo.c_str(),
+                                     c->public_and_private_informations.public_informations.pseudo.size());
+std::ofstream out_file("characters/"+hexa, std::ofstream::binary);
+
+hps::to_stream(*c, out_file);
+#endif
                     delete c;
                     index++;
                 }
@@ -912,6 +916,7 @@ int main(int argc, char *argv[])
                 }
                 break;
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
+                #elif CATCHCHALLENGER_DB_FILE
                 #else
                 #error Define what do here
                 #endif

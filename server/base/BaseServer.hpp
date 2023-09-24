@@ -197,10 +197,11 @@ protected:
     #endif
 
     #ifdef CATCHCHALLENGER_DB_FILE
+public:
     //mostly static
-    std::ifstream *dictionary_in_file;
-    hps::StreamInputBuffer *dictionary_serialBuffer;
-    bool dictionary_haveChange;
+    static std::ifstream *dictionary_in_file;
+    static hps::StreamInputBuffer *dictionary_serialBuffer;
+    static bool dictionary_haveChange;
     //mostly dynamic
     std::ifstream *server_in_file;
     hps::StreamInputBuffer *server_serialBuffer;

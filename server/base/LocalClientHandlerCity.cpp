@@ -528,6 +528,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                         CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->capturedCity)
                         });
                         #elif CATCHCHALLENGER_DB_BLACKHOLE
+                        #elif CATCHCHALLENGER_DB_FILE
                         #else
                         #error Define what do here
                         #endif
@@ -542,6 +543,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                                         std::to_string(clan->clanId)
                                         });
                             #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #elif CATCHCHALLENGER_DB_FILE
                             #else
                             #error Define what do here
                             #endif
@@ -554,6 +556,7 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                                         CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->captureCityInProgress)
                                         });
                             #elif CATCHCHALLENGER_DB_BLACKHOLE
+                            #elif CATCHCHALLENGER_DB_FILE
                             #else
                             #error Define what do here
                             #endif

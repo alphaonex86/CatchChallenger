@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 using namespace CatchChallenger;
 
@@ -53,12 +54,7 @@ void Client::addObject(const uint16_t &item, const uint32_t &quantity, bool data
         stringreplaceOne(queryText,"%3",std::to_string(quantity));
         dbQueryWriteCommon(queryText);*/
         public_and_private_informations.items[item]=quantity;
-        if(public_and_private_informations.encyclopedia_item==NULL)
-        {
-            if(databaseSync)
-                updateObjectInDatabase();
-        }
-        else if(!(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8))))
+        if(!(public_and_private_informations.encyclopedia_item[item/8] & (1<<(7-item%8))))
         {
             public_and_private_informations.encyclopedia_item[item/8]|=(1<<(7-item%8));
             if(databaseSync)
@@ -245,6 +241,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
                         });
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

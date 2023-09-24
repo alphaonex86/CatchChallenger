@@ -84,7 +84,7 @@ std::vector<std::string> stringregexsplit(const std::string& input, const std::r
     return {first, last};
 }
 
-std::vector<std::string> stringsplit(const std::string &s, char delim)
+std::vector<std::string> stringsplit(const std::string &s, const char delim)
 {
     std::vector<std::string> elems;
 

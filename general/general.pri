@@ -16,7 +16,8 @@ android: {
 INCLUDEPATH += /opt/android-sdk/ndk-r18b/platforms/android-21/arch-arm/usr/include
 }
 
-SOURCES += $$PWD/base/ProtocolParsingGeneral.cpp \
+SOURCES += $$PWD/base/GeneralStructures.cpp \
+    $$PWD/base/ProtocolParsingGeneral.cpp \
     $$PWD/base/CompressionProtocol.cpp \
     $$PWD/base/ProtocolParsingInput.cpp \
     $$PWD/base/ProtocolParsingOutput.cpp \

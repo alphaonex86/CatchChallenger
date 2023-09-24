@@ -238,6 +238,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
                                  unvalidated_rescue_map_final,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -262,6 +263,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -339,6 +341,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
                 callbackRegistred.push(callback);
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             selectClan_return();
+            #elif CATCHCHALLENGER_DB_FILE
             #else
             #error Define what do here
             #endif
@@ -365,6 +368,7 @@ void Client::selectClan_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -392,6 +396,7 @@ void Client::selectClan_return()
         normalOutput("Warning: clan linked: %1 is not found into db");
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

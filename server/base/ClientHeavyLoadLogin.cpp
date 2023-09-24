@@ -10,6 +10,12 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include <cstring>
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <sys/stat.h>
+#include <fstream>
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#endif
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -32,6 +38,7 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -82,6 +89,7 @@ void Client::askLogin_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_login->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -125,6 +133,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -132,6 +141,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -272,6 +282,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -294,6 +305,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         callbackRegistred.push(callback);
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -360,6 +372,7 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #endif
     createAccount_object();
     return true;
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -372,6 +385,7 @@ void Client::createAccount_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_login->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -416,7 +430,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     if(!GlobalServerData::serverPrivateVariables.db_login->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    if(::stat("char/file")!=0)
+    const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
+                                         public_and_private_informations.public_informations.pseudo.size());
+    struct stat sb;
+    if(::stat(("characters/"+hexa).c_str(), &sb)!=0)
     #else
     #error Define what do here
     #endif
@@ -437,62 +454,61 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-#error inject real data
             //do file here ready to copy for each profile
-            const std::string &profileFile=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/profile-"+std::to_string(index);
-            struct stat sb;
-            if(stat(profileFile.c_str(), &sb)==-1)
+            std::ofstream out_file(("characters/"+hexa), std::ofstream::binary);
+            if(!out_file.good() || !out_file.is_open())
             {
-                std::ofstream out_file(profileFile, std::ofstream::binary);
-                if(!out_file.good() || !out_file.is_open())
-                {
-                    std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                    return;
-                }
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                Player_private_and_public_informations playerForProfile;
-                playerForProfile.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                ::memset(playerForProfile.bot_already_beaten,0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                playerForProfile.cash=profile.cash;
-                playerForProfile.clan=0;
-                playerForProfile.clan_leader=false;
-                playerForProfile.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-                ::memset(playerForProfile.encyclopedia_item,0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                for(unsigned int i = 0; i < profile.items.size(); i++)
-                {
-                    const Item &item=profile.items.at(i);
-                    playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
-                    playerForProfile.items[item.id]=item.quantity;
-                }
-                playerForProfile.encyclopedia_monster=(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
-                ::memset(playerForProfile.encyclopedia_monster,0,(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1));
-                playerForProfile.public_informations.monsterId=0;
-                playerForProfile.public_informations.simplifiedId=0;
-                playerForProfile.public_informations.skinId=0;
-                playerForProfile.public_informations.speed=0;
-                playerForProfile.public_informations.type=Player_type_normal;
-                playerForProfile.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-                ::memset(playerForProfile.recipes,0,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-                playerForProfile.repel_step=0;
-                playerForProfile.warehouse_cash=0;
-                hps::to_stream(playerForProfile, out_file);
-                out_file.close();
+                std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
             }
+            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
+            {
+                std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
+            {
+                std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
+            {
+                std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+/*            Player_private_and_public_informations playerForProfile;
+            playerForProfile.bot_already_beaten.resize(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+            ::memset(playerForProfile.bot_already_beaten.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+            playerForProfile.cash=profile.cash;
+            playerForProfile.clan=0;
+            playerForProfile.clan_leader=false;
+            playerForProfile.encyclopedia_item.resize(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+            ::memset(playerForProfile.encyclopedia_item.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+            for(unsigned int i = 0; i < profile.items.size(); i++)
+            {
+                const Item &item=profile.items.at(i);
+                playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
+                playerForProfile.items[item.id]=item.quantity;
+            }
+            playerForProfile.encyclopedia_monster.resize(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+            ::memset(playerForProfile.encyclopedia_monster.data(),0,(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1));
+            playerForProfile.public_informations.monsterId=0;
+            playerForProfile.public_informations.simplifiedId=0;
+            playerForProfile.public_informations.skinId=0;
+            playerForProfile.public_informations.speed=0;
+            playerForProfile.public_informations.type=Player_type_normal;
+            playerForProfile.recipes.resize(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+            ::memset(playerForProfile.recipes.data(),0,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+            playerForProfile.repel_step=0;
+            playerForProfile.warehouse_cash=0;
+            hps::to_stream(playerForProfile, out_file);
+            out_file.close();
+
+            const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
+                                                 public_and_private_informations.public_informations.pseudo.size());
+            std::ofstream out_file("characters/"+hexa, std::ofstream::binary);
+            hps::to_stream(*this, out_file);*/
         }
         #else
         #error Define what do here
@@ -518,6 +534,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
     else
         loginIsWrong(askLoginParam->query_id,0x02,"Login already used: "+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE));
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -573,6 +590,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -657,6 +675,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                 normalOutput("Character id is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" for "+std::to_string(account_id));
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

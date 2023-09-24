@@ -147,6 +147,21 @@ struct Player_public_informations
     uint8_t skinId;
     uint16_t monsterId;//the monster follow the player on map, other player can see it
     SPEED_TYPE speed;
+
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << simplifiedId << pseudo << (uint8_t)type << skinId << monsterId << speed;
+    }
+    template <class B>
+    void parse(B& buf) {
+        uint8_t t;
+        buf >> simplifiedId >> pseudo >> t >> skinId >> monsterId >> speed;
+        type=(Player_type)t;
+    }
+    #endif
+    #endif
 };
 
 enum Gender : uint8_t
@@ -160,6 +175,18 @@ struct PlayerBuff
     uint8_t buff;
     uint8_t level;
     uint8_t remainingNumberOfTurn;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << buff << level << remainingNumberOfTurn;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> buff >> level >> remainingNumberOfTurn;
+    }
+    #endif
+    #endif
 };
 
 class PublicPlayerMonster
@@ -171,6 +198,18 @@ class PublicPlayerMonster
     uint16_t catched_with;
     Gender gender;
     std::vector<PlayerBuff> buffs;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << monster << level << hp << catched_with << gender << buffs;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> monster >> level >> hp >> catched_with >> gender >> buffs;
+    }
+    #endif
+    #endif
 };
 
 class PlayerMonster : public PublicPlayerMonster
@@ -202,42 +241,96 @@ class PlayerMonster : public PublicPlayerMonster
     uint32_t id;//id into the db, only on server part, but no way to leave from here with risk of structure problem
     #endif
     uint32_t character_origin;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << monster << level << hp << catched_with << (uint8_t)gender << buffs << remaining_xp << sp << egg_step << skills << character_origin;
+    }
+    template <class B>
+    void parse(B& buf) {
+        uint8_t value=0;
+        buf >> monster >> level >> hp >> catched_with >> value >> buffs >> remaining_xp >> sp >> egg_step >> skills >> character_origin;
+        gender=(Gender)value;
+    }
+    #endif
+    #endif
 };
 
 bool operator!=(const PlayerMonster &monster1,const PlayerMonster &monster2);
 
-struct PlayerQuest
+class PlayerQuest
 {
+public:
     uint8_t step;
     bool finish_one_time;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << step << finish_one_time;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> step >> finish_one_time;
+    }
+    #endif
+    #endif
 };
 
-struct PlayerReputation
+class PlayerReputation
 {
+public:
     int8_t level;
     int32_t point;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << level << point;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> level >> point;
+    }
+    #endif
+    #endif
 };
 
-struct PlayerPlant
+class PlayerPlant
 {
+public:
     uint8_t plant;//plant id
     uint64_t mature_at;//timestamp when is mature in second
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << plant << mature_at;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> plant >> mature_at;
+    }
+    #endif
+    #endif
 };
 
-struct Player_private_and_public_informations
+class Player_private_and_public_informations
 {
+public:
     Player_public_informations public_informations;
     uint64_t cash,warehouse_cash;
     //crafting
-    char * recipes;
+    char * recipes;//CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1, if store with HFS then store CommonDatapack::commonDatapack.get_craftingRecipesMaxId() as header
     /// max monster 255 inventory, 255 storage
     std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
     CLAN_ID_TYPE clan;//0 == no clan
-    char * encyclopedia_monster;
-    char * encyclopedia_item;//should be: CommonDatapack::commonDatapack.items.item.size()/8+1
+    char * encyclopedia_monster;//CommonDatapack::commonDatapack.get_monstersMaxId()/8+1, if store with HFS then store get_monstersMaxId() as header
+    char * encyclopedia_item;//CommonDatapack::commonDatapack.items.item.size()/8+1, if store with HFS then store CommonDatapack::commonDatapack.items.item.size() as header
     uint32_t repel_step;
     bool clan_leader;
-    char * bot_already_beaten;//should be: CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1
+    char * bot_already_beaten;//CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1, if store with HFS then store CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId as header
 
     /* item and plant is keep under database format to keep the dataintegrity and save quickly the data
      * More memory usage by 2x, but improve the code maintenance because the id in memory is id in database

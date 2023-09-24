@@ -131,11 +131,6 @@ bool Client::singleMove(const Direction &direction)
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {
-                    if(public_and_private_informations.bot_already_beaten==NULL)
-                    {
-                        errorOutput("Need have public_and_private_informations.bot_already_beaten!=NULL to use this teleporter: "+std::to_string(teleporter.condition.data.fightBot)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
-                        return false;
-                    }
                     const auto &fightId=teleporter.condition.data.fightBot;
                     if(!(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8))))
                     {

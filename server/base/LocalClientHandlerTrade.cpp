@@ -183,6 +183,7 @@ void Client::transferExistingMonster(std::vector<PlayerMonster> tradeMonster)
                     std::to_string(tradeMonster.at(index).id)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

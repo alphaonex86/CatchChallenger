@@ -8,6 +8,12 @@
 
 using namespace CatchChallenger;
 
+#ifdef CATCHCHALLENGER_DB_FILE
+std::ifstream *BaseServer::dictionary_in_file=nullptr;
+hps::StreamInputBuffer *BaseServer::dictionary_serialBuffer=nullptr;
+bool BaseServer::dictionary_haveChange=false;
+#endif
+
 //clean this, it's done before the main epoll loop
 bool BaseServer::load_next_city_capture()
 {

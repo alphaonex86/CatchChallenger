@@ -209,11 +209,6 @@ void Client::requestFight(const uint16_t &fightId)
         return;
     }
     #endif
-    if(public_and_private_informations.bot_already_beaten==NULL)
-    {
-        errorOutput("You can't beat this fighter, public_and_private_informations.bot_already_beaten==NULL");
-        return;
-    }
     if(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
     {
         errorOutput("You can't rebeat this fighter");

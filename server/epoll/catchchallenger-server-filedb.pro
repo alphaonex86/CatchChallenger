@@ -10,8 +10,8 @@ include(../../general/hps/hps.pri)
 QT       -= gui widgets network sql
 QT       -= core xml
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
+#linux:QMAKE_LFLAGS += -fuse-ld=mold
+#linux:LIBS += -fuse-ld=mold
 
 #QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations  -fno-rtti"
 #QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -faggressive-loop-optimizations -funsafe-loop-optimizations -std=c++0x  -fno-rtti"
@@ -93,6 +93,8 @@ HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp
+
+SOURCES += $$PWD/../../general/base/GeneralStructures.hpp
 
 #linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
