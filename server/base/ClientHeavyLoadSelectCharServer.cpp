@@ -19,6 +19,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -53,6 +54,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
     selectCharacterServer_object();
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -65,6 +67,7 @@ void Client::selectCharacterServer_static(void *object)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -90,6 +93,7 @@ void Client::selectCharacterServer_object()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -115,6 +119,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     const auto &sFrom1970String=std::to_string(sFrom1970());
     if(!GlobalServerData::serverPrivateVariables.db_server->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -138,6 +143,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                     characterIdString
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -630,6 +636,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             GlobalServerData::serverPrivateVariables.db_server->value(11)
     );
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

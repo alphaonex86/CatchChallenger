@@ -35,6 +35,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     #elif CATCHCHALLENGER_DB_FILE
     std::cerr << "Client::selectCharacter() (abort)" << std::endl;
     abort();
+    #else
     #error Define what do here
     #endif
     SelectCharacterParam *selectCharacterParam=new SelectCharacterParam;
@@ -67,6 +68,7 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     paramToPassToCallBackType.push("SelectCharacterParam");
     #endif
     selectCharacter_object();
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -98,6 +100,7 @@ void Client::selectCharacter_object()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.db_common->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -123,6 +126,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     callbackRegistred.pop();
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -137,6 +141,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             std::cerr << GlobalServerData::serverSettings.database_common.host/* << ":" << GlobalServerData::serverSettings.database_common.port*/;
         std::cerr << " on " << GlobalServerData::serverSettings.database_common.db << std::endl;
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -611,6 +616,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

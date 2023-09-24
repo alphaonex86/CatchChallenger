@@ -47,6 +47,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                                 std::to_string(public_and_private_informations.playerMonster.at(index).id)
                                 });
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
+                    #elif CATCHCHALLENGER_DB_FILE
                     #else
                     #error Define what do here
                     #endif

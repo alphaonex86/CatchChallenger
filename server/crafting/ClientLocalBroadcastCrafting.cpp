@@ -166,6 +166,7 @@ bool Client::syncDatabasePlant()
                     std::to_string(character_id)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

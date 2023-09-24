@@ -21,6 +21,7 @@ void Client::loadMonsters()
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -37,6 +38,8 @@ void Client::loadMonsters()
     else
         callbackRegistred.push(callback);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    loadMonsters_return();
+    #elif CATCHCHALLENGER_DB_FILE
     loadMonsters_return();
     #else
     #error Define what do here
@@ -76,6 +79,7 @@ void Client::loadMonsters_return()
         }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -245,6 +249,17 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
     playerMonster.monster=0;
     playerMonster.remaining_xp=0;
     playerMonster.sp=0;
+    #elif CATCHCHALLENGER_DB_FILE
+    playerMonster.catched_with=0;
+    playerMonster.character_origin=0;
+    playerMonster.egg_step=0;
+    playerMonster.gender=Gender_Unknown;
+    playerMonster.hp=0;
+    playerMonster.id=0;
+    playerMonster.level=0;
+    playerMonster.monster=0;
+    playerMonster.remaining_xp=0;
+    playerMonster.sp=0;
     #else
     #error Define what do here
     #endif
@@ -259,6 +274,8 @@ bool Client::loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMons
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::vector<char> &buffs=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    const std::vector<char> buffs;
+    #elif CATCHCHALLENGER_DB_FILE
     const std::vector<char> buffs;
     #else
     #error Define what do here
@@ -350,6 +367,8 @@ bool Client::loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMon
     const std::vector<char> &skills=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     const std::vector<char> skills;
+    #elif CATCHCHALLENGER_DB_FILE
+    const std::vector<char> skills;
     #else
     #error Define what do here
     #endif
@@ -413,6 +432,8 @@ bool Client::loadSkillEnduranceBlock(const std::string &dataHexa,PlayerMonster &
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::vector<char> &skills_endurance=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(dataHexa,&ok);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    const std::vector<char> skills_endurance;
+    #elif CATCHCHALLENGER_DB_FILE
     const std::vector<char> skills_endurance;
     #else
     #error Define what do here

@@ -56,6 +56,8 @@ void BaseServer::preload_19_async_sql_monsters_max_id()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_20_async_clan_max_id();
+    #elif CATCHCHALLENGER_DB_FILE
+    preload_20_async_clan_max_id();
     #else
     #error Define what do here
     #endif
@@ -84,6 +86,7 @@ void BaseServer::load_monsters_max_id_return()
                 GlobalServerData::serverPrivateVariables.maxMonsterId=maxMonsterId+1;
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

@@ -29,6 +29,7 @@ EpollServer::EpollServer()
     GlobalServerData::serverPrivateVariables.db_login=NULL;
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -104,6 +105,7 @@ void EpollServer::initTheDatabase()
         abort();
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif
@@ -176,6 +178,7 @@ EpollServer::~EpollServer()
     }
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
     #else
     #error Define what do here
     #endif

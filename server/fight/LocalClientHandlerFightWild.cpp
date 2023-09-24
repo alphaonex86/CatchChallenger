@@ -147,6 +147,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -180,6 +181,7 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     binarytoHexa(raw_skill_endurance,static_cast<uint32_t>(sizeof(raw_skill_endurance)))
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif

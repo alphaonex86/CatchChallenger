@@ -40,6 +40,7 @@ void Client::saveIndustryStatus(const FACTORY_TYPE &factoryId,const IndustryStat
                     std::to_string(industryStatus.last_update)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -54,6 +55,7 @@ void Client::saveIndustryStatus(const FACTORY_TYPE &factoryId,const IndustryStat
                     std::to_string(factoryId)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
+        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
