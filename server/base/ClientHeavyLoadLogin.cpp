@@ -75,8 +75,12 @@ bool Client::askLogin(const uint8_t &query_id,const char *rawdata)
     askLogin_object();
     return true;
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "Client::askLogin() (abort)" << std::endl;
-    abort();
+    paramToPassToCallBack.push(askLoginParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("AskLoginParam");
+    #endif
+    askLogin_object();
+    return true;
     #else
     #error Define what do here
     #endif
@@ -134,6 +138,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "Client::askLogin() mode DB, code to do for login " << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+    abort();
     #else
     #error Define what do here
     #endif

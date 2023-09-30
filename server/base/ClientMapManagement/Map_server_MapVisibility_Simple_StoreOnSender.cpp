@@ -4,6 +4,16 @@
 #include "../Client.hpp"
 
 /// \todo optimise: preserialize, filter streaming to send + filter
+/** How use SIMD and better performance:
+ *  Compose the full list with size-1
+ *  char data[]
+ *  int index=0;
+ *  while()
+ *    current client=list.at(index)
+ *    sendRaw(data+0,data+pos)
+ *    //skip current client pos
+ *    sendRaw(data+pos+offset,size-offet-pos)
+ *    */
 
 using namespace CatchChallenger;
 
