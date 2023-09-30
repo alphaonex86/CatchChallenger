@@ -101,7 +101,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     while(databaseBaseBase->next())
     #else
     size_t s=0;
-    *BaseServer::dictionary_serialBuffer >> s;
+    if(BaseServer::dictionary_serialBuffer!=nullptr)
+        *BaseServer::dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #endif
     {
@@ -260,7 +261,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     while(databaseBaseBase->next())
     #else
     size_t s=0;
-    *BaseServer::dictionary_serialBuffer >> s;
+    if(BaseServer::dictionary_serialBuffer!=nullptr)
+        *BaseServer::dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #endif
     {
@@ -429,7 +431,8 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     while(databaseBaseBase->next())
     #else
     size_t s=0;
-    *BaseServer::dictionary_serialBuffer >> s;
+    if(BaseServer::dictionary_serialBuffer!=nullptr)
+        *BaseServer::dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #endif
     {

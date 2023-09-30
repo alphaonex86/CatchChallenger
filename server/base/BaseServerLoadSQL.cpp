@@ -94,6 +94,7 @@ void BaseServer::preload_dictionary_map_return()
         while(GlobalServerData::serverPrivateVariables.db_server->next())
         #else
         size_t s=0;
+        if(dictionary_serialBuffer!=nullptr)
         *dictionary_serialBuffer >> s;
         for (size_t i = 0; i < s; i++)
         #endif
@@ -261,7 +262,8 @@ void BaseServer::preload_industries_return()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
     #ifdef CATCHCHALLENGER_DB_FILE
     size_t s=0;
-    *dictionary_serialBuffer >> s;
+    if(dictionary_serialBuffer!=nullptr)
+        *dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #else
     while(GlobalServerData::serverPrivateVariables.db_server->next())
@@ -613,7 +615,8 @@ void BaseServer::load_clan_max_id_return()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    *server_serialBuffer >> GlobalServerData::serverPrivateVariables.maxClanId;
+    if(server_serialBuffer!=nullptr)
+        *server_serialBuffer >> GlobalServerData::serverPrivateVariables.maxClanId;
     #else
     #error Define what do here
     #endif

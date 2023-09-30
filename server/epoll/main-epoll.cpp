@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <sys/stat.h>
+#warning dictionary_serialBuffer and server_serialBuffer not open as DB
+#endif
 #include "../base/ServerStructures.hpp"
 #include "../base/TinyXMLSettings.hpp"
 #include "../base/GlobalServerData.hpp"
@@ -133,7 +137,15 @@ int main(int argc, char *argv[])
 
     srand(static_cast<unsigned int>(time(NULL)));
 
+    #ifdef CATCHCHALLENGER_DB_FILE
+    ::mkdir("database",0700);
+    #endif
+
+    #ifndef CATCHCHALLENGER_DB_BLACKHOLE
+    #ifndef CATCHCHALLENGER_DB_FILE
     bool datapack_loaded=false;
+    #endif
+    #endif
 
     #ifdef SERVERSSL
     server=new EpollSslServer();
@@ -437,10 +449,8 @@ int main(int argc, char *argv[])
     server->initialize_the_database_prepared_query();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     server->preload_1_the_data();
-    datapack_loaded=true;
     #elif CATCHCHALLENGER_DB_FILE
     server->preload_1_the_data();
-    datapack_loaded=true;
     #else
     #error Define what do here
     #endif
