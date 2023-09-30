@@ -80,7 +80,8 @@ void BaseServer::preload_pointOnMap_item_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     #else
     size_t s=0;
-    *dictionary_serialBuffer >> s;
+    if(dictionary_serialBuffer!=nullptr)
+        *dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #endif
     {
@@ -283,7 +284,8 @@ void BaseServer::preload_pointOnMap_plant_return()
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     #else
     size_t s=0;
-    *dictionary_serialBuffer >> s;
+    if(dictionary_serialBuffer!=nullptr)
+        *dictionary_serialBuffer >> s;
     for (size_t i = 0; i < s; i++)
     #endif
     {

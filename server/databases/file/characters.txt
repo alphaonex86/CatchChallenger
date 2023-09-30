@@ -1,11 +1,3 @@
-into characters/
-you have: characters/XXXXXXXXXXXX-YYYYYYYYY where XXXXXXXXXXXX is the login hash sha224 in hexa and YYYYYYYYYYYY is the password hash sha224 in hexa
-contain list of:
-  * ZZZZZZZZZZZZZZ, where ZZZZZZZZZZZZZZ is the character name in hexa
-  * uint64_t played_time
-  * uint64_t last_connect
-  * uint64_t time_to_delete
-
 you have: characters/ZZZZZZZZZZZZZZ where ZZZZZZZZZZZZZZ is the character name in hexa
 
   * uint8_t skin
