@@ -1,0 +1,9 @@
+into account/
+you have: account/XXXXXXXXXXXX where XXXXXXXXXXXX is the login hash sha224 in hexa
+
+YYYYYYYYYYYY is the password hash sha224 in hexa
+contain list of:
+  * ZZZZZZZZZZZZZZ, where ZZZZZZZZZZZZZZ is the character name in hexa
+  * uint64_t played_time
+  * uint64_t last_connect
+  * uint64_t time_to_delete 
