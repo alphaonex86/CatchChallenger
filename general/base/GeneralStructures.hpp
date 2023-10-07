@@ -355,8 +355,9 @@ public:
     #endif
 };
 
-struct CharacterEntry
+class CharacterEntry
 {
+public:
     uint32_t character_id;
     std::string pseudo;
     uint8_t charactersGroupIndex;
@@ -364,6 +365,18 @@ struct CharacterEntry
     uint32_t delete_time_left;
     uint32_t played_time;
     uint64_t last_connect;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << character_id << pseudo << charactersGroupIndex << skinId << delete_time_left << played_time << last_connect;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> character_id >> pseudo >> charactersGroupIndex >> skinId >> delete_time_left >> played_time >> last_connect;
+    }
+    #endif
+    #endif
 };
 
 /* map related */

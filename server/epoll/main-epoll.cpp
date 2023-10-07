@@ -139,6 +139,9 @@ int main(int argc, char *argv[])
 
     #ifdef CATCHCHALLENGER_DB_FILE
     ::mkdir("database",0700);
+    ::mkdir("database/accounts",0700);
+    ::mkdir("database/characters",0700);
+    ::mkdir("database/clans",0700);
     #endif
 
     #ifndef CATCHCHALLENGER_DB_BLACKHOLE
@@ -564,7 +567,8 @@ const std::string &hexa=binarytoHexa(c->public_and_private_informations.public_i
                                      c->public_and_private_informations.public_informations.pseudo.size());
 std::ofstream out_file("characters/"+hexa, std::ofstream::binary);
 
-hps::to_stream(*c, out_file);
+if(c->getPlayerId()>0)
+    hps::to_stream(*c, out_file);
 #endif
                     delete c;
                     index++;
