@@ -1,4 +1,5 @@
 clan max id (if destructed clan then not reset player clan, just at loading the clan folder is missing)
+account_id max id
 
 factory:
   * uint32_t id
