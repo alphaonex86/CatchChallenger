@@ -1,9 +1,13 @@
-into account/
-you have: account/XXXXXXXXXXXX where XXXXXXXXXXXX is the login hash sha224 in hexa
+into accounts/
+you have: accounts/XXXXXXXXXXXX where XXXXXXXXXXXX is the login hash sha224 in hexa
 
-YYYYYYYYYYYY is the password hash sha224 in hexa
-contain list of:
-  * ZZZZZZZZZZZZZZ, where ZZZZZZZZZZZZZZ is the character name in hexa
-  * uint64_t played_time
-  * uint64_t last_connect
-  * uint64_t time_to_delete 
+YYYYYYYYYYYY is the password hash sha224 in hexa, stored in std::vector<char>
+uint32_t account_id
+contain list of (see data type CharacterEntry):
+  * uint32_t character_id;
+  * std::string pseudo;
+  * uint8_t charactersGroupIndex;
+  * uint8_t skinId;
+  * uint32_t delete_time_left;
+  * uint32_t played_time;
+  * uint64_t last_connect;

@@ -138,8 +138,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "Client::askLogin() mode DB, code to do for login " << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
-    abort();
+    std::cerr << "askLogin_return for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
     #else
     #error Define what do here
     #endif
@@ -148,6 +147,8 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         if(!GlobalServerData::serverPrivateVariables.db_login->next())
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
+        struct stat sb;
+        if(::stat(("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)).c_str(),&sb)!=0)
         #else
         #error Define what do here
         #endif
@@ -177,10 +178,23 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 return;
             }
         }
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
         else
         {
-            bool ok;
+            #ifdef CATCHCHALLENGER_DB_FILE
+            std::ifstream in_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ifstream::binary);
+            if(!in_file.good() || !in_file.is_open())
+            {
+                std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                abort();
+                return;
+            }
+            hps::StreamInputBuffer s(in_file);
+            #endif
+
+            #ifndef CATCHCHALLENGER_DB_FILE
+            bool ok=false;
+            #endif
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             std::vector<char> tempAddedToken;
             std::vector<char> secretTokenBinary;
@@ -192,16 +206,26 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     const BaseServerLogin::TokenLink &tokenLink=BaseServerLogin::tokenForAuth[tokenForAuthIndex];
                     if(tokenLink.client==this)
                     {
+                        #ifdef CATCHCHALLENGER_DB_FILE
+                        std::vector<char> secretTokenBinary;
+                        s >> secretTokenBinary;
+                        if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                        {
+                            std::cerr << "convertion to binary for pass failed for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                            abort();
+                        }
+                        #else
                         const std::string &secretToken(GlobalServerData::serverPrivateVariables.db_login->value(1));
                         #ifndef CATCHCHALLENGER_EXTRA_CHECK
                         std::vector<char> secretTokenBinary;
                         #endif
-                        secretTokenBinary=GlobalServerData::serverPrivateVariables.db_login->hexatoBinary(secretToken);
+                        secretTokenBinary=hexatoBinary(secretToken);
                         if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
                             std::cerr << "convertion to binary for pass failed for: " << GlobalServerData::serverPrivateVariables.db_login->value(1) << std::endl;
                             abort();
                         }
+                        #endif
                         secretTokenBinary.resize(secretTokenBinary.size()+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
                         memcpy(secretTokenBinary.data()+CATCHCHALLENGER_SHA224HASH_SIZE,tokenLink.value,TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT);
 
@@ -272,6 +296,54 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             }
             else
             {
+                #ifdef CATCHCHALLENGER_DB_FILE
+                s >> account_id;
+                flags|=0x08;
+
+                std::vector<CharacterEntry> characterEntryList;
+                s >> characterEntryList;
+                if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
+                {
+                    loginIsWrong(askLoginParam->query_id,0x05,"Can't create character and don't have character");
+                    return;
+                }
+
+                uint32_t posOutput=0;
+                char * data=ProtocolParsingBase::tempBigBufferForOutput;
+
+                data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
+                posOutput+=1;
+
+                number_of_character=static_cast<uint8_t>(characterEntryList.size());
+                data[posOutput]=static_cast<uint8_t>(characterEntryList.size());
+                posOutput+=1;
+                unsigned int index=0;
+                while(index<characterEntryList.size())
+                {
+                    const CharacterEntry &characterEntry=characterEntryList.at(index);
+                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
+                    posOutput+=4;
+                    {
+                        {
+                            const std::string &text=characterEntry.pseudo;
+                            data[posOutput]=static_cast<uint8_t>(text.size());
+                            posOutput+=1;
+                            memcpy(data+posOutput,text.data(),text.size());
+                            posOutput+=text.size();
+                        }
+                    }
+                    data[posOutput]=characterEntry.skinId;
+                    posOutput+=1;
+                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
+                    posOutput+=4;
+                    /// \todo optimise by simple suming here, not SQL query
+                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
+                    posOutput+=4;
+                    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
+                    posOutput+=4;
+                    index++;
+                }
+                #else
                 account_id=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
                 if(!ok)
                 {
@@ -284,11 +356,27 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 {
                     flags|=0x08;
                 }
+                #endif
                 stat=ClientStat::Logged;
+
+                askLoginParam->characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
+                if(askLoginParam->characterOutputDataSize!=0)
+                {
+                    std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
+                    return;
+                }
+
+#error do this part
+                askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
+                memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
+                //re use
+                //delete askLoginParam;
+                if(server_list())
+                    paramToPassToCallBack.push(askLoginParam);
+
             }
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
-        #elif CATCHCHALLENGER_DB_FILE
         #else
         #error Define what do here
         #endif
@@ -339,15 +427,14 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "Client::createAccount() (abort)" << std::endl;
-    abort();
     #else
     #error Define what do here
     #endif
     /// \note No SHA224 because already double hashed before
     AskLoginParam *askLoginParam=new AskLoginParam;
+    askLoginParam->characterOutputData=nullptr;
+    askLoginParam->characterOutputDataSize=0;
     memcpy(askLoginParam->login,rawdata,CATCHCHALLENGER_SHA224HASH_SIZE);
-    askLoginParam->query_id=query_id;
     memcpy(askLoginParam->pass,rawdata+CATCHCHALLENGER_SHA224HASH_SIZE,CATCHCHALLENGER_SHA224HASH_SIZE);
     askLoginParam->query_id=query_id;
 
@@ -379,6 +466,13 @@ bool Client::createAccount(const uint8_t &query_id, const char *rawdata)
     createAccount_object();
     return true;
     #elif CATCHCHALLENGER_DB_FILE
+    number_of_character++;
+    paramToPassToCallBack.push(askLoginParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("AskLoginParam");
+    #endif
+    createAccount_object();
+    return true;
     #else
     #error Define what do here
     #endif
@@ -460,61 +554,88 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            //do file here ready to copy for each profile
-            std::ofstream out_file(("characters/"+hexa), std::ofstream::binary);
-            if(!out_file.good() || !out_file.is_open())
             {
-                std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-                return;
-            }
-            if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
-            {
-                std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-            }
-            if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
-            {
-                std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-            }
-            if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
-            {
-                std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-            }
-/*            Player_private_and_public_informations playerForProfile;
-            playerForProfile.bot_already_beaten.resize(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-            ::memset(playerForProfile.bot_already_beaten.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-            playerForProfile.cash=profile.cash;
-            playerForProfile.clan=0;
-            playerForProfile.clan_leader=false;
-            playerForProfile.encyclopedia_item.resize(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-            ::memset(playerForProfile.encyclopedia_item.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-            for(unsigned int i = 0; i < profile.items.size(); i++)
-            {
-                const Item &item=profile.items.at(i);
-                playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
-                playerForProfile.items[item.id]=item.quantity;
-            }
-            playerForProfile.encyclopedia_monster.resize(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
-            ::memset(playerForProfile.encyclopedia_monster.data(),0,(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1));
-            playerForProfile.public_informations.monsterId=0;
-            playerForProfile.public_informations.simplifiedId=0;
-            playerForProfile.public_informations.skinId=0;
-            playerForProfile.public_informations.speed=0;
-            playerForProfile.public_informations.type=Player_type_normal;
-            playerForProfile.recipes.resize(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-            ::memset(playerForProfile.recipes.data(),0,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-            playerForProfile.repel_step=0;
-            playerForProfile.warehouse_cash=0;
-            hps::to_stream(playerForProfile, out_file);
-            out_file.close();
+                std::ofstream out_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
+                if(!out_file.good() || !out_file.is_open())
+                {
+                    std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                    abort();
+                    return;
+                }
 
-            const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
-                                                 public_and_private_informations.public_informations.pseudo.size());
-            std::ofstream out_file("characters/"+hexa, std::ofstream::binary);
-            hps::to_stream(*this, out_file);*/
+                std::vector<char> secretTokenBinary;
+                secretTokenBinary.resize(CATCHCHALLENGER_SHA224HASH_SIZE);
+                memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE);
+                if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
+                {
+                    std::cerr << "convertion to binary for pass failed for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                    abort();
+                }
+                hps::to_stream(secretTokenBinary, out_file);
+                hps::to_stream(account_id, out_file);
+
+                std::vector<CharacterEntry> characterEntryList;
+                hps::to_stream(characterEntryList, out_file);
+
+                std::cerr << "createAccount_return) for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
+            }
+            /*{
+                //do file here ready to copy for each profile
+                std::ofstream out_file(("database/characters/"+hexa), std::ofstream::binary);
+                if(!out_file.good() || !out_file.is_open())
+                {
+                    std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
+                {
+                    std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
+                {
+                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
+                {
+                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                Player_private_and_public_informations playerForProfile;
+                playerForProfile.bot_already_beaten.resize(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+                ::memset(playerForProfile.bot_already_beaten.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+                playerForProfile.cash=profile.cash;
+                playerForProfile.clan=0;
+                playerForProfile.clan_leader=false;
+                playerForProfile.encyclopedia_item.resize(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+                ::memset(playerForProfile.encyclopedia_item.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+                for(unsigned int i = 0; i < profile.items.size(); i++)
+                {
+                    const Item &item=profile.items.at(i);
+                    playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
+                    playerForProfile.items[item.id]=item.quantity;
+                }
+                playerForProfile.encyclopedia_monster.resize(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+                ::memset(playerForProfile.encyclopedia_monster.data(),0,(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1));
+                playerForProfile.public_informations.monsterId=0;
+                playerForProfile.public_informations.simplifiedId=0;
+                playerForProfile.public_informations.skinId=0;
+                playerForProfile.public_informations.speed=0;
+                playerForProfile.public_informations.type=Player_type_normal;
+                playerForProfile.recipes.resize(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+                ::memset(playerForProfile.recipes.data(),0,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+                playerForProfile.repel_step=0;
+                playerForProfile.warehouse_cash=0;
+                hps::to_stream(playerForProfile, out_file);
+                out_file.close();
+
+                const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
+                                                     public_and_private_informations.public_informations.pseudo.size());
+                std::ofstream out_file("database/characters/"+hexa, std::ofstream::binary);
+                hps::to_stream(*this, out_file);
+            }*/
         }
         #else
         #error Define what do here
@@ -583,6 +704,49 @@ void Client::character_list_object()
         paramToPassToCallBack.push(askLoginParam);
 }
 
+uint32_t Client::send_characterEntryList(std::vector<CharacterEntry> characterEntryList,char * data,const uint8_t &query_id)
+{
+    if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
+    {
+        loginIsWrong(query_id,0x05,"Can't create character and don't have character");
+        return 0;
+    }
+
+    data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
+    posOutput+=1;
+
+    number_of_character=static_cast<uint8_t>(characterEntryList.size());
+    data[posOutput]=static_cast<uint8_t>(characterEntryList.size());
+    posOutput+=1;
+    unsigned int index=0;
+    while(index<characterEntryList.size())
+    {
+        const CharacterEntry &characterEntry=characterEntryList.at(index);
+        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
+        posOutput+=4;
+        {
+            {
+                const std::string &text=characterEntry.pseudo;
+                data[posOutput]=static_cast<uint8_t>(text.size());
+                posOutput+=1;
+                memcpy(data+posOutput,text.data(),text.size());
+                posOutput+=text.size();
+            }
+        }
+        data[posOutput]=characterEntry.skinId;
+        posOutput+=1;
+        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
+        posOutput+=4;
+        /// \todo optimise by simple suming here, not SQL query
+        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
+        posOutput+=4;
+        *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
+        posOutput+=4;
+        index++;
+    }
+    return posOutput;
+}
+
 uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -596,7 +760,11 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    (void)data;
+    (void)query_id;
     #elif CATCHCHALLENGER_DB_FILE
+    (void)data;
+    (void)query_id;
     #else
     #error Define what do here
     #endif
@@ -605,11 +773,10 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
     //normalOutput("Logged the account "+std::to_string(account_id));
     #endif
     //send the network reply
-    uint32_t posOutput=0;
 
     {
-        std::vector<CharacterEntry> characterEntryList;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        std::vector<CharacterEntry> characterEntryList;
         const auto &current_time=sFrom1970();
         bool ok;
         while(GlobalServerData::serverPrivateVariables.db_common->next() && characterEntryList.size()<CommonSettingsCommon::commonSettingsCommon.max_character)
@@ -685,46 +852,18 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
         #else
         #error Define what do here
         #endif
-        if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
+
+        #ifndef CATCHCHALLENGER_DB_FILE
+        const uint32_t posOutput=send_characterEntryList(characterEntryList,data,query_id);
+        if(posOutput!=0)
         {
-            loginIsWrong(query_id,0x05,"Can't create character and don't have character");
+            std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
             return 0;
         }
-
-        data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
-        posOutput+=1;
-
-        number_of_character=static_cast<uint8_t>(characterEntryList.size());
-        data[posOutput]=static_cast<uint8_t>(characterEntryList.size());
-        posOutput+=1;
-        unsigned int index=0;
-        while(index<characterEntryList.size())
-        {
-            const CharacterEntry &characterEntry=characterEntryList.at(index);
-            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.character_id);
-            posOutput+=4;
-            {
-                {
-                    const std::string &text=characterEntry.pseudo;
-                    data[posOutput]=static_cast<uint8_t>(text.size());
-                    posOutput+=1;
-                    memcpy(data+posOutput,text.data(),text.size());
-                    posOutput+=text.size();
-                }
-            }
-            data[posOutput]=characterEntry.skinId;
-            posOutput+=1;
-            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.delete_time_left);
-            posOutput+=4;
-            /// \todo optimise by simple suming here, not SQL query
-            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.played_time);
-            posOutput+=4;
-            *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(characterEntry.last_connect);
-            posOutput+=4;
-            index++;
-        }
+        return posOutput;
+        #endif
     }
 
-    return posOutput;
+    return 0;
 }
 #endif
