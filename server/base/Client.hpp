@@ -338,7 +338,7 @@ private:
     void askLogin_return(AskLoginParam *askLoginParam);
     static void character_list_static(void *object);
     void character_list_object();
-    bool send_characterEntryList(std::vector<CharacterEntry> characterEntryList);
+    uint32_t send_characterEntryList(const std::vector<CharacterEntry> &characterEntryList,char * data,const uint8_t &query_id);
     uint32_t character_list_return(char *data, const uint8_t &query_id);
     bool server_list();
     static void server_list_static(void *object);

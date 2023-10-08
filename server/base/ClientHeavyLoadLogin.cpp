@@ -360,20 +360,17 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 stat=ClientStat::Logged;
 
                 askLoginParam->characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
-                if(askLoginParam->characterOutputDataSize!=0)
+                if(askLoginParam->characterOutputDataSize==0)
                 {
                     std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
                     return;
                 }
 
-#error do this part
                 askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
                 memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
                 //re use
                 //delete askLoginParam;
-                if(server_list())
-                    paramToPassToCallBack.push(askLoginParam);
-
+                server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
             }
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -704,7 +701,7 @@ void Client::character_list_object()
         paramToPassToCallBack.push(askLoginParam);
 }
 
-uint32_t Client::send_characterEntryList(std::vector<CharacterEntry> characterEntryList,char * data,const uint8_t &query_id)
+uint32_t Client::send_characterEntryList(const std::vector<CharacterEntry> &characterEntryList,char * data,const uint8_t &query_id)
 {
     if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
     {
@@ -712,6 +709,7 @@ uint32_t Client::send_characterEntryList(std::vector<CharacterEntry> characterEn
         return 0;
     }
 
+    uint32_t posOutput=0;
     data[posOutput]=0x01;//Number of characters group, characters group 0, all in one server
     posOutput+=1;
 
@@ -855,7 +853,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
 
         #ifndef CATCHCHALLENGER_DB_FILE
         const uint32_t posOutput=send_characterEntryList(characterEntryList,data,query_id);
-        if(posOutput!=0)
+        if(posOutput==0)
         {
             std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
             return 0;
