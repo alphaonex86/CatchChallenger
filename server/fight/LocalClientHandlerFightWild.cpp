@@ -48,7 +48,11 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
 {
     int position=999999;
     bool ok;
+    #ifndef CATCHCHALLENGER_DB_FILE
     const uint32_t monster_id=getMonsterId(&ok);
+    #else
+    const uint32_t monster_id=9999;
+    #endif
     if(!ok)
     {
         errorFightEngine("No more monster id: getMonsterId(&ok) failed");

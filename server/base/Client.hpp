@@ -631,7 +631,9 @@ private:
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
     bool otherPlayerIsInRange(Client * otherPlayer);
 
+    #ifndef CATCHCHALLENGER_DB_FILE
     static uint32_t getMonsterId(bool * const ok);
+    #endif
     static uint32_t getClanId(bool * const ok);
     bool getInTrade() const;
     void registerTradeRequest(Client * otherPlayerTrade);
