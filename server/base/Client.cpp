@@ -473,6 +473,7 @@ char *Client::addAuthGetToken(const uint32_t &characterId, const uint32_t &accou
     return newEntry.token;
 }
 
+#ifndef CATCHCHALLENGER_DB_FILE
 uint32_t Client::getMonsterId(bool * const ok)
 {
     if(GlobalServerData::serverPrivateVariables.maxMonsterId.size()==0)
@@ -489,6 +490,7 @@ uint32_t Client::getMonsterId(bool * const ok)
         LinkToMaster::linkToMaster->askMoreMaxMonsterId();
     return monsterId;
 }
+#endif
 
 uint32_t Client::getClanId(bool * const ok)
 {
@@ -507,6 +509,7 @@ uint32_t Client::getClanId(bool * const ok)
     return clanId;
 }
 #else
+#ifndef CATCHCHALLENGER_DB_FILE
 uint32_t Client::getMonsterId(bool * const ok)
 {
     *ok=true;
@@ -514,6 +517,7 @@ uint32_t Client::getMonsterId(bool * const ok)
     GlobalServerData::serverPrivateVariables.maxMonsterId++;
     return monsterId;
 }
+#endif
 
 uint32_t Client::getClanId(bool * const ok)
 {
@@ -701,10 +705,20 @@ uint8_t Client::pingCountInProgress() const
 #ifdef CATCHCHALLENGER_DB_FILE
 #ifdef CATCHCHALLENGER_CACHE_HPS
 void Client::serialize(hps::StreamOutputBuffer& buf) const {
-    std::string recipesS(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-    std::string encyclopedia_monsterS(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
-    std::string encyclopedia_itemS(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
-    std::string bot_already_beatenS(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+    /// \warning use dictionary
+
+    std::string recipesS;
+    if(public_and_private_informations.recipes!=nullptr)
+        recipesS=std::string(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+    std::string encyclopedia_monsterS;
+    if(public_and_private_informations.encyclopedia_monster!=nullptr)
+        encyclopedia_monsterS=std::string(public_and_private_informations.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+    std::string encyclopedia_itemS;
+    if(public_and_private_informations.encyclopedia_item!=nullptr)
+        encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
+    std::string bot_already_beatenS;
+    if(public_and_private_informations.bot_already_beaten!=nullptr)
+        bot_already_beatenS=std::string(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
         << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
@@ -732,6 +746,8 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
 
 template <class B>
 void Client::parse(B& buf) {
+    /// \warning use dictionary
+
     size_t tallow;
     std::string recipesS;
     std::string encyclopedia_monsterS;

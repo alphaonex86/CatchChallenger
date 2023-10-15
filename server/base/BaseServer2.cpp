@@ -119,7 +119,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    #ifndef CATCHCHALLENGER_DB_FILE
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    #endif
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverSettings.database_login.tryInterval=5;
     GlobalServerData::serverSettings.database_login.considerDownAfterNumberOfTry=3;
