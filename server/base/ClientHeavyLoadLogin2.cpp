@@ -10,6 +10,9 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <sys/stat.h>
+#endif
 
 /// \todo solve disconnecting/destroy during the SQL loading
 
@@ -230,6 +233,7 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "Client::addCharacter() for file" << std::endl;
     #else
     #error Define what do here
     #endif
@@ -396,6 +400,11 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #endif
     addCharacter_object();
     #elif CATCHCHALLENGER_DB_FILE
+    paramToPassToCallBack.push(addCharacterParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("AddCharacterParam");
+    #endif
+    addCharacter_object();
     #else
     #error Define what do here
     #endif
@@ -450,12 +459,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     paramToPassToCallBackType.pop();
     #endif
+    if(pseudo.size()<1)
+    {
+        std::cerr << "Client::addCharacter_return() pseudo.size()<1 abort() " << __FILE__ << __LINE__ << std::endl;
+        abort();
+    }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     //if character already exist then return error
     if(GlobalServerData::serverPrivateVariables.db_common->next())
     {
-        std::cerr << "character already exist then return error " << __FILE__ << __LINE__ << std::endl;
+        std::cerr << "Client::addCharacter_return() character already exist then return error " << __FILE__ << " " << __LINE__ << std::endl;
 
         //send the network reply
         removeFromQueryReceived(query_id);
@@ -478,12 +492,48 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     (void)pseudo;
     (void)skinId;
     #elif CATCHCHALLENGER_DB_FILE
+
+    const std::string hexa=binarytoHexa(pseudo.c_str(),pseudo.size());
+    if(hexa.size()<1)
+    {
+        std::cerr << "hexa.size()<1 abort() " << __FILE__ << __LINE__ << std::endl;
+        abort();
+    }
+    {
+        struct stat sb;
+        if(::stat(("database/characters/"+hexa).c_str(),&sb)==0)
+        {
+            std::cerr << "Client::addCharacter_return() character already exist " << hexa << " then return error " << __FILE__ << " " << __LINE__ << std::endl;
+
+            //send the network reply
+            removeFromQueryReceived(query_id);
+            uint32_t posOutput=0;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CATCHCHALLENGER_PROTOCOL_REPLY_SERVER_TO_CLIENT;
+            posOutput+=1;
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
+            posOutput+=1;
+
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+            posOutput+=1;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0x00000000;
+            posOutput+=4;
+
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+
+            return;
+        }
+    }
+    {
+        std::cerr << "save GlobalServerData::serverPrivateVariables.maxCharacterId++; for DB FILE" << std::endl;
+        abort();
+    }
     #else
     #error Define what do here
     #endif
 
     number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
+    const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
 
     const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
     if(GlobalServerData::serverPrivateVariables.serverProfileInternalList.size()<=profileIndex)
@@ -493,12 +543,12 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
 
-    const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
+    const std::vector<Profile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
+
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const std::string &characterIdString=std::to_string(characterId);
     int monster_position=1;
 
-    const std::vector<Profile::Monster> &monsterGroup=profile.monstergroup.at(monsterGroupId);
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     if(serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId)
     {
         std::cerr << "serverProfileInternal.preparedStatementForCreationByCommon.type.monsterGroup.size()<=monsterGroupId " << __FILE__ << __LINE__ << std::endl;
@@ -512,7 +562,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         unsigned int index=0;
         while(index<monsters.size())
         {
-            const auto &monster=monsterGroup.at(index);
+            const Profile::Monster &monster=monsterGroup.at(index);
             const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
             PreparedStatementUnit &monsterQuery=monsters.at(index);
 
@@ -581,6 +631,252 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        {
+            //add into the char list
+            std::vector<CharacterEntry> characterEntryList;
+
+            {
+                std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                if(!in_file.good() || !in_file.is_open())
+                {
+                    std::cerr << "Unable to open data base file " << "database/accounts/" << account_id << " (abort)" << std::endl;
+                    abort();
+                    return;
+                }
+                hps::StreamInputBuffer s(in_file);
+                s >> characterEntryList;
+            }
+
+            CharacterEntry newChar;
+            newChar.charactersGroupIndex=profileIndex;
+            newChar.character_id=characterId;
+            newChar.delete_time_left=0;
+            newChar.last_connect=0;
+            newChar.played_time=0;
+            newChar.pseudo=pseudo;
+            newChar.skinId=skinId;//use dictionary here
+            characterEntryList.push_back(newChar);
+
+            {
+                std::ofstream out_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                if(!out_file.good() || !out_file.is_open())
+                {
+                    std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                hps::to_stream(characterEntryList, out_file);
+            }
+        }
+
+        //do file here ready to copy for each profile
+        std::ofstream out_file(("database/characters/"+hexa), std::ofstream::binary);
+        if(!out_file.good() || !out_file.is_open())
+        {
+            std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
+        {
+            std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
+        {
+            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
+        {
+            std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        /*Player_private_and_public_informations playerForProfile;
+        std::string bot_already_beatenS;
+        std::string encyclopedia_itemS;
+        std::string encyclopedia_monsterS;
+        std::string recipesS;
+        bot_already_beatenS=std::string(playerForProfile.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+        playerForProfile.cash=profile.cash;
+        playerForProfile.clan=0;
+        playerForProfile.clan_leader=false;
+        encyclopedia_itemS=std::string(playerForProfile.encyclopedia_item,CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
+        for(unsigned int i = 0; i < profile.items.size(); i++)
+        {
+            const Profile::Item &item=profile.items.at(i);
+            playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
+            playerForProfile.items[item.id]=item.quantity;
+        }
+        encyclopedia_monsterS=std::string(playerForProfile.encyclopedia_monster,CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
+        playerForProfile.public_informations.monsterId=0;
+        playerForProfile.public_informations.simplifiedId=0;
+        playerForProfile.public_informations.skinId=0;
+        playerForProfile.public_informations.speed=0;
+        playerForProfile.public_informations.type=Player_type_normal;
+        recipesS=std::string(playerForProfile.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
+        playerForProfile.repel_step=0;
+        playerForProfile.warehouse_cash=0;*/
+
+        //the internal profile
+        map=(CommonMap *)serverProfileInternal.map;
+        last_direction=(Direction)serverProfileInternal.orientation;
+        x=serverProfileInternal.x;
+        y=serverProfileInternal.y;
+
+        PlayerOnMap temp;
+        temp.map=(CommonMap *)serverProfileInternal.map;
+        temp.orientation=serverProfileInternal.orientation;
+        temp.x=serverProfileInternal.x;
+        temp.y=serverProfileInternal.y;
+
+        map_entry=temp;
+        rescue=temp;
+        unvalidated_rescue=temp;
+
+        //the general profile
+        this->public_and_private_informations.cash=profile.cash;
+        {
+            this->public_and_private_informations.items.clear();
+            unsigned int index=0;
+            while(index<profile.items.size())
+            {
+                const Profile::Item item=profile.items.at(index);
+                this->public_and_private_informations.items[item.id]=item.quantity;
+                index++;
+            }
+        }
+        {
+            this->public_and_private_informations.reputation.clear();
+            unsigned int index=0;
+            while(index<profile.reputations.size())
+            {
+                const Profile::Reputation reputation=profile.reputations.at(index);
+                PlayerReputation r;
+                r.level=reputation.level;
+                r.point=reputation.point;
+                this->public_and_private_informations.reputation[reputation.internalIndex]=r;
+                index++;
+            }
+        }
+        this->public_and_private_informations.public_informations.skinId=skinId;
+        this->public_and_private_informations.public_informations.type=Player_type::Player_type_normal;
+
+        {
+            unsigned int index=0;
+            while(index<monsterGroup.size())
+            {
+                const Profile::Monster &monster=monsterGroup.at(index);
+                const Monster &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
+                const Monster::Stat &stat=getStat(monsterDatapack,monster.level);
+                PlayerMonster m;
+                m.catched_with=monster.captured_with;
+                m.character_origin=characterId;
+                m.egg_step=0;
+                if(monsterDatapack.ratio_gender>0 && monsterDatapack.ratio_gender<100)
+                {
+                    int8_t temp_ratio=random()%101;
+                    if(temp_ratio<monsterDatapack.ratio_gender)
+                        m.gender=Gender_Male;
+                    else
+                        m.gender=Gender_Female;
+                }
+                else
+                {
+                    switch(monsterDatapack.ratio_gender)
+                    {
+                        case 0:
+                            m.gender=Gender_Male;
+                        break;
+                        case 100:
+                            m.gender=Gender_Female;
+                        break;
+                        default:
+                            m.gender=Gender_Unknown;
+                        break;
+                    }
+                }
+                m.hp=stat.hp;
+                m.id=index;
+                m.level=monster.level;
+                m.monster=monster.id;
+                m.remaining_xp=0;
+                m.sp=0;
+                m.skills=CommonFightEngine::generateWildSkill(monsterDatapack,monster.level);
+                #ifdef CATCHCHALLENGER_DEBUG_FIGHT
+                {
+                    if(m.skills.empty())
+                    {
+                        if(monsterDef.learn.empty())
+                            messageFightEngine("no skill to learn for random monster");
+                        else
+                        {
+                            messageFightEngine("no skill for random monster, but skill to learn:");
+                            unsigned int index=0;
+                            while(index<monsterDef.learn.size())
+                            {
+                                messageFightEngine(std::to_string(monsterDef.learn.at(index).learnSkill)+" level "+
+                                                   std::to_string(monsterDef.learn.at(index).learnSkillLevel)+" for monster at level "+
+                                                   std::to_string(monsterDef.learn.at(index).learnAtLevel));
+                                index++;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        unsigned int index=0;
+                        while(index<m.skills.size())
+                        {
+                            messageFightEngine("skill for random monster: "+std::to_string(m.skills.at(index).skill)+" level "+std::to_string(m.skills.at(index).level));
+                            index++;
+                        }
+                    }
+                    messageFightEngine("random monster id: "+std::to_string(playerMonster.monster));
+                }
+                #endif
+                this->public_and_private_informations.playerMonster.push_back(m);
+                index++;
+            }
+        }
+
+        //should be not needed
+        if(public_and_private_informations.recipes!=nullptr)
+            std::cerr << "strange public_and_private_informations.recipes!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
+        public_and_private_informations.recipes=nullptr;
+        if(public_and_private_informations.encyclopedia_monster!=nullptr)
+            std::cerr << "strange public_and_private_informations.encyclopedia_monster!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
+        public_and_private_informations.encyclopedia_monster=nullptr;
+        if(public_and_private_informations.encyclopedia_item!=nullptr)
+            std::cerr << "strange public_and_private_informations.encyclopedia_item!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
+        public_and_private_informations.encyclopedia_item=nullptr;
+        if(public_and_private_informations.bot_already_beaten!=nullptr)
+            std::cerr << "strange public_and_private_informations.bot_already_beaten!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
+        public_and_private_informations.bot_already_beaten=nullptr;
+
+        hps::to_stream(*this, out_file);
+        out_file.close();
+
+        //reset all the variables
+        map=nullptr;
+        last_direction=Direction_look_at_bottom;
+        x=0;
+        y=0;
+        PlayerOnMap tempEmpty;
+        tempEmpty.map=nullptr;
+        tempEmpty.orientation=Orientation_bottom;
+        tempEmpty.x=0;
+        tempEmpty.y=0;
+        map_entry=tempEmpty;
+        rescue=tempEmpty;
+        unvalidated_rescue=tempEmpty;
+        this->public_and_private_informations.cash=0;
+        this->public_and_private_informations.items.clear();
+        this->public_and_private_informations.reputation.clear();
+        this->public_and_private_informations.public_informations.skinId=0;
+        this->public_and_private_informations.public_informations.type=Player_type::Player_type_normal;
+        this->public_and_private_informations.playerMonster.clear();
+    }
     #else
     #error Define what do here
     #endif

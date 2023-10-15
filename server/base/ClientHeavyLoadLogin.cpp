@@ -301,12 +301,23 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 flags|=0x08;
 
                 std::vector<CharacterEntry> characterEntryList;
-                s >> characterEntryList;
-                if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
                 {
-                    loginIsWrong(askLoginParam->query_id,0x05,"Can't create character and don't have character");
-                    return;
+                    std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                    if(!in_file.good() || !in_file.is_open())
+                    {
+                        std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                        abort();
+                        return;
+                    }
+                    hps::StreamInputBuffer s(in_file);
+                    s >> characterEntryList;
+                    if(CommonSettingsCommon::commonSettingsCommon.max_character==0 && characterEntryList.empty())
+                    {
+                        loginIsWrong(askLoginParam->query_id,0x05,"Can't create character and don't have character");
+                        return;
+                    }
                 }
+
 
                 uint32_t posOutput=0;
                 char * data=ProtocolParsingBase::tempBigBufferForOutput;
@@ -343,6 +354,21 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     posOutput+=4;
                     index++;
                 }
+
+                stat=ClientStat::Logged;
+
+                askLoginParam->characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
+                if(askLoginParam->characterOutputDataSize==0)
+                {
+                    std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
+                    return;
+                }
+
+                askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
+                memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
+                //re use
+                //delete askLoginParam;
+                server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
                 #else
                 account_id=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
                 if(!ok)
@@ -358,19 +384,6 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 }
                 #endif
                 stat=ClientStat::Logged;
-
-                askLoginParam->characterOutputDataSize=send_characterEntryList(characterEntryList,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->query_id);
-                if(askLoginParam->characterOutputDataSize==0)
-                {
-                    std::cerr << "send_characterEntryList(characterEntryList) wrong" << std::endl;
-                    return;
-                }
-
-                askLoginParam->characterOutputData=(char *)malloc(askLoginParam->characterOutputDataSize);
-                memcpy(askLoginParam->characterOutputData,ProtocolParsingBase::tempBigBufferForOutput,askLoginParam->characterOutputDataSize);
-                //re use
-                //delete askLoginParam;
-                server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
             }
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -550,6 +563,8 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
+        std::cerr << "error save max account For DB FILE via seek + write" << std::endl;
+        abort();
         {
             {
                 std::ofstream out_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
@@ -570,69 +585,21 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 }
                 hps::to_stream(secretTokenBinary, out_file);
                 hps::to_stream(account_id, out_file);
+            }
+            {
+                std::ofstream out_file("database/accounts/"+std::to_string(account_id), std::ofstream::binary);
+                if(!out_file.good() || !out_file.is_open())
+                {
+                    std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                    abort();
+                    return;
+                }
 
                 std::vector<CharacterEntry> characterEntryList;
                 hps::to_stream(characterEntryList, out_file);
 
                 std::cerr << "createAccount_return) for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
             }
-            /*{
-                //do file here ready to copy for each profile
-                std::ofstream out_file(("database/characters/"+hexa), std::ofstream::binary);
-                if(!out_file.good() || !out_file.is_open())
-                {
-                    std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                    return;
-                }
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                if(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()<=0)
-                {
-                    std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                Player_private_and_public_informations playerForProfile;
-                playerForProfile.bot_already_beaten.resize(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                ::memset(playerForProfile.bot_already_beaten.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                playerForProfile.cash=profile.cash;
-                playerForProfile.clan=0;
-                playerForProfile.clan_leader=false;
-                playerForProfile.encyclopedia_item.resize(CommonDatapack::commonDatapack.get_items().itemMaxId/8+1);
-                ::memset(playerForProfile.encyclopedia_item.data(),0,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                for(unsigned int i = 0; i < profile.items.size(); i++)
-                {
-                    const Item &item=profile.items.at(i);
-                    playerForProfile.encyclopedia_item[item.id/8]|=(1<<(7-item.id%8));
-                    playerForProfile.items[item.id]=item.quantity;
-                }
-                playerForProfile.encyclopedia_monster.resize(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1);
-                ::memset(playerForProfile.encyclopedia_monster.data(),0,(char *)malloc(CommonDatapack::commonDatapack.get_monstersMaxId()/8+1));
-                playerForProfile.public_informations.monsterId=0;
-                playerForProfile.public_informations.simplifiedId=0;
-                playerForProfile.public_informations.skinId=0;
-                playerForProfile.public_informations.speed=0;
-                playerForProfile.public_informations.type=Player_type_normal;
-                playerForProfile.recipes.resize(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-                ::memset(playerForProfile.recipes.data(),0,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
-                playerForProfile.repel_step=0;
-                playerForProfile.warehouse_cash=0;
-                hps::to_stream(playerForProfile, out_file);
-                out_file.close();
-
-                const std::string &hexa=binarytoHexa(public_and_private_informations.public_informations.pseudo.c_str(),
-                                                     public_and_private_informations.public_informations.pseudo.size());
-                std::ofstream out_file("database/characters/"+hexa, std::ofstream::binary);
-                hps::to_stream(*this, out_file);
-            }*/
         }
         #else
         #error Define what do here

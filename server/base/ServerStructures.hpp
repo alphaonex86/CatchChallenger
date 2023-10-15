@@ -542,7 +542,9 @@ struct ServerPrivateVariables
     //for the single player
     #ifdef EPOLLCATCHCHALLENGERSERVER
     unsigned int maxClanId;
-    unsigned int maxMonsterId;
+        #ifndef CATCHCHALLENGER_DB_FILE
+            unsigned int maxMonsterId;
+        #endif
     #else
     //why use std::atomic?
     std::atomic<unsigned int> maxClanId;

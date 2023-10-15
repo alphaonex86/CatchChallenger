@@ -26,7 +26,9 @@ void BaseServer::preload_19_async_sql_monsters_max_id()
     #endif
 
     //start to 0 due to pre incrementation before use
+    #ifndef CATCHCHALLENGER_DB_FILE
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
+    #endif
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     std::string queryText;
     switch(GlobalServerData::serverPrivateVariables.db_common->databaseType())
