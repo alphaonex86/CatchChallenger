@@ -2,6 +2,10 @@
 #include "GlobalServerData.hpp"
 #include "DictionaryLogin.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <sys/stat.h>
+#include <fstream>
+#endif
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
@@ -33,8 +37,6 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "Client::selectCharacter() (abort)" << std::endl;
-    abort();
     #else
     #error Define what do here
     #endif
@@ -69,6 +71,11 @@ void Client::selectCharacter(const uint8_t &query_id, const uint32_t &characterI
     #endif
     selectCharacter_object();
     #elif CATCHCHALLENGER_DB_FILE
+    paramToPassToCallBack.push(selectCharacterParam);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    paramToPassToCallBackType.push("SelectCharacterParam");
+    #endif
+    selectCharacter_object();
     #else
     #error Define what do here
     #endif
@@ -127,6 +134,45 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    std::string hexa;
+    {
+        std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+        if(!in_file.good() || !in_file.is_open())
+        {
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+            character_id=0;
+            characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+            return;
+        }
+        std::vector<CharacterEntry> characterEntryList;
+        hps::StreamInputBuffer s(in_file);
+        s >> characterEntryList;
+        unsigned int index=0;
+        while(index<characterEntryList.size())
+        {
+            const CharacterEntry &c=characterEntryList.at(index);
+            if(c.character_id==characterId)
+            {
+                hexa=binarytoHexa(c.pseudo.c_str(),c.pseudo.size());
+                break;
+            }
+            index++;
+        }
+        if(index>=characterEntryList.size())
+        {
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+            character_id=0;
+            characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+            return;
+        }
+    }
+    if(hexa.empty())
+    {
+        std::cerr << "Client::selectCharacter_return() hexa.empty() can't be empty at this point " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    struct stat sb;
+    if(::stat(("database/characters/"+hexa).c_str(),&sb)!=0)
     #else
     #error Define what do here
     #endif
@@ -145,7 +191,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         #else
         #error Define what do here
         #endif
-        character_id=characterId;
+        character_id=0;
         characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;
     }
@@ -617,6 +663,18 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        std::ifstream in_file("database/characters/"+hexa, std::ifstream::binary);
+        if(!in_file.good() || !in_file.is_open())
+        {
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+            character_id=0;
+            characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
+            return;
+        }
+        hps::StreamInputBuffer s(in_file);
+        s >> *this;
+    }
     #else
     #error Define what do here
     #endif
