@@ -563,8 +563,14 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
-        std::cerr << "error save max account For DB FILE via seek + write" << std::endl;
-        abort();
+        {
+            FILE *fp=fopen("database/server","r+");
+            if(fp==NULL) {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+            if(fseek(fp,sizeof(GlobalServerData::serverPrivateVariables.maxClanId),SEEK_SET)!=0)
+            {std::cerr << "error to open in write seek the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+            fwrite(&GlobalServerData::serverPrivateVariables.maxAccountId,sizeof(GlobalServerData::serverPrivateVariables.maxAccountId),1,fp);
+            fclose(fp);
+        }
         {
             {
                 std::ofstream out_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
