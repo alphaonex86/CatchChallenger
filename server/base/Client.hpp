@@ -53,8 +53,7 @@ public:
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void serialize(hps::StreamOutputBuffer& buf) const;
-    template <class B>
-    void parse(B& buf);
+    void parse(hps::StreamInputBuffer& buf);
     #endif
     #endif
     friend class BaseServer;
