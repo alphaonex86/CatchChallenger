@@ -397,6 +397,44 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        {
+            #ifdef CATCHCHALLENGER_DB_FILE
+            std::ifstream in_file("database/server", std::ifstream::binary);
+            if(!in_file.good() || !in_file.is_open())
+            {
+                GlobalServerData::serverPrivateVariables.maxClanId=0;
+                GlobalServerData::serverPrivateVariables.maxAccountId=0;
+                GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+            }
+            else
+            {
+                hps::StreamInputBuffer s(in_file);
+                s >> GlobalServerData::serverPrivateVariables.maxClanId;
+                s >> GlobalServerData::serverPrivateVariables.maxAccountId;
+                s >> GlobalServerData::serverPrivateVariables.maxCharacterId;
+                s >> GlobalServerData::serverPrivateVariables.industriesStatus;
+                s >> GlobalServerData::serverSettings.city;
+            }
+            #endif
+        }
+        {
+            std::ofstream out_file("database/server", std::ofstream::binary);
+            if(!out_file.good() || !out_file.is_open())
+            {
+                std::cerr << "Unable to open data base file " << "database/server (abort)" << std::endl;
+                abort();
+                return;
+            }
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.industriesStatus, out_file);
+            hps::to_stream(GlobalServerData::serverSettings.city, out_file);
+
+            std::cerr << "createAccount_return) for: database/server" << std::endl;
+        }
+    }
     #else
     #endif
 }

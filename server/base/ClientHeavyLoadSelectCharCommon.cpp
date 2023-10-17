@@ -663,6 +663,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    std::cerr << "select char into FILE DB " << __FILE__ << ":" << __LINE__ << std::endl;
     {
         std::ifstream in_file("database/characters/"+hexa, std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
@@ -675,6 +676,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         hps::StreamInputBuffer s(in_file);
         s >> *this;
     }
+    if(this->map==NULL)
+    {
+        std::cerr << "select char into FILE DB this->map==NULL (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+        return;
+    }
+    characterIsRightFinalStep();
     #else
     #error Define what do here
     #endif

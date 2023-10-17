@@ -754,6 +754,11 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
     buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
     buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
+
+    uint32_t map_id=0;
+    if(map!=nullptr)
+        map_id=static_cast<MapServer *>(map)->reverse_db_id;
+    buf << map_id << x << y << (uint8_t)last_direction;
 }
 
 void Client::parse(hps::StreamInputBuffer& buf) {
@@ -824,16 +829,23 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> unvalidated_rescue_map_file_database_id >> unvalidated_rescue.x >> unvalidated_rescue.y >> value;
     unvalidated_rescue.orientation=(Orientation)value;
 
-    CommonMap *t=nullptr;
     if(map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id));
-    if(t==nullptr)
+    map_entry.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id));
+    if(map_entry.map==nullptr)
     {
-        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        unsigned int index=0;
+        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
+            if(s!=nullptr)
+                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
+            index++;
+        }
         abort();
     }
     if(rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
@@ -841,10 +853,18 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id));
-    if(t==nullptr)
+    rescue.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id));
+    if(rescue.map==nullptr)
     {
-        std::cerr << "rescue_map_file_database_id have not reverse: " << std::to_string(rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << "rescue_map_file_database_id have not reverse: " << std::to_string(rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        unsigned int index=0;
+        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
+            if(s!=nullptr)
+                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
+            index++;
+        }
         abort();
     }
     if(unvalidated_rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
@@ -852,10 +872,41 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "unvalidated_rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    t=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id));
-    if(t==nullptr)
+    unvalidated_rescue.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id));
+    if(unvalidated_rescue.map==nullptr)
     {
-        std::cerr << "unvalidated_rescue_map_file_database_id have not reverse: " << std::to_string(unvalidated_rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode" << __FILE__ << ":" << __LINE__ << std::endl;
+        std::cerr << "unvalidated_rescue_map_file_database_id have not reverse: " << std::to_string(unvalidated_rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        unsigned int index=0;
+        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
+            if(s!=nullptr)
+                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
+            index++;
+        }
+        abort();
+    }
+
+    uint32_t map_id=0;
+    uint8_t temp_direction=0;
+    buf >> map_id >> x >> y >> temp_direction;
+    if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_id));
+    if(map==nullptr)
+    {
+        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        unsigned int index=0;
+        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
+            if(s!=nullptr)
+                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
+            index++;
+        }
         abort();
     }
 }
