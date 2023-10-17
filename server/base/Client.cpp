@@ -91,6 +91,10 @@ Client::Client() :
             index++;
         }
     }
+    public_and_private_informations.recipes=nullptr;
+    public_and_private_informations.encyclopedia_monster=nullptr;
+    public_and_private_informations.encyclopedia_item=nullptr;
+    public_and_private_informations.bot_already_beaten=nullptr;
 }
 
 //need be call after isReadyToDelete() emited
@@ -723,7 +727,9 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
         << public_and_private_informations.plantOnMap << public_and_private_informations.quests << public_and_private_informations.reputation
-        << public_and_private_informations.items << public_and_private_informations.warehouse_items << public_and_private_informations.allow.size();
+        << public_and_private_informations.items << public_and_private_informations.warehouse_items;
+    const uint8_t allowSize=public_and_private_informations.allow.size();
+    buf << allowSize;
     std::set<ActionAllow>::iterator it;
     for (it = public_and_private_informations.allow.begin(); it != public_and_private_informations.allow.end(); ++it) {
         buf << (uint8_t)*it;
@@ -732,23 +738,27 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << ableToFight;
     buf << wildMonsters;
     buf << botFightMonsters;
-    buf << account_id << character_id << randomIndex << randomSize << number_of_character;
+    buf << character_id << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
     buf << botFightCash << botFightId << isInCityCapture;
 
-    const uint32_t &map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
-    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
-    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    uint32_t map_file_database_id=0;
+    uint32_t rescue_map_file_database_id=0;
+    uint32_t unvalidated_rescue_map_file_database_id=0;
+    if(map_entry.map!=nullptr)
+        map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
+    if(rescue.map!=nullptr)
+        rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
+    if(unvalidated_rescue.map!=nullptr)
+        unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
     buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
     buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
     buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
 }
 
-template <class B>
-void Client::parse(B& buf) {
+void Client::parse(hps::StreamInputBuffer& buf) {
     /// \warning use dictionary
 
-    size_t tallow;
     std::string recipesS;
     std::string encyclopedia_monsterS;
     std::string encyclopedia_itemS;
@@ -756,9 +766,21 @@ void Client::parse(B& buf) {
     buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash >> public_and_private_informations.warehouse_cash
         >> recipesS >> public_and_private_informations.playerMonster >> public_and_private_informations.warehouse_playerMonster
         >> encyclopedia_monsterS >> encyclopedia_itemS
-        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> bot_already_beatenS >> public_and_private_informations.allow
-        >> public_and_private_informations.itemOnMap >> public_and_private_informations.plantOnMap >> public_and_private_informations.quests
-        >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items >> tallow;
+        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> bot_already_beatenS;
+    buf >> public_and_private_informations.itemOnMap >> public_and_private_informations.plantOnMap >> public_and_private_informations.quests
+        >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items;
+    uint8_t allowSize=0;
+    buf >> allowSize;
+    {
+        unsigned int index=0;
+        while(index<allowSize)
+        {
+            uint8_t t=0;
+            buf >> t;
+            public_and_private_informations.allow.insert((ActionAllow)t);
+            index++;
+        }
+    }
     public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     size_t min=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
@@ -771,36 +793,30 @@ void Client::parse(B& buf) {
     if(min>encyclopedia_monsterS.size())
         min=encyclopedia_monsterS.size();
     memcpy(public_and_private_informations.encyclopedia_monster,encyclopedia_monsterS.data(),min);
-    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.items.item.size()/8+1);
-    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.items.item.size()/8+1);
-    min=CommonDatapack::commonDatapack.items.item.size()/8+1;
+    public_and_private_informations.encyclopedia_item=(char *)malloc(CommonDatapack::commonDatapack.get_items().item.size()/8+1);
+    memset(public_and_private_informations.encyclopedia_item,0x00,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
+    min=CommonDatapack::commonDatapack.get_items().item.size()/8+1;
     if(min>encyclopedia_itemS.size())
         min=encyclopedia_itemS.size();
     memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);
     public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
     memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-    min=CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1;
+    min=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1;
     if(min>bot_already_beatenS.size())
         min=bot_already_beatenS.size();
     memcpy(public_and_private_informations.bot_already_beaten,bot_already_beatenS.data(),min);
-    for (size_t i=0; i < tallow; i++) {
-        uint8_t small;
-        buf >> small;
-        ActionAllow t=(ActionAllow)small;
-        public_and_private_informations.allow.insert(t);
-    }
 
     buf >> ableToFight;
     buf >> wildMonsters;
     buf >> botFightMonsters;
-    buf >> account_id >> character_id >> randomIndex >> randomSize >> number_of_character;
+    buf >> character_id >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
     buf >> botFightCash >> botFightId >> isInCityCapture;
 
     uint8_t value=0;
-    const uint32_t &map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
-    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
-    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    uint32_t map_file_database_id=0;
+    uint32_t rescue_map_file_database_id=0;
+    uint32_t unvalidated_rescue_map_file_database_id=0;
     buf >> map_file_database_id >> map_entry.x >> map_entry.y >> value;
     map_entry.orientation=(Orientation)value;
     buf >> rescue_map_file_database_id >> rescue.x >> rescue.y >> value;
