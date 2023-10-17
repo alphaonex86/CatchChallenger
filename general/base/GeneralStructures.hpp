@@ -505,6 +505,18 @@ struct IndustryStatus
     uint64_t last_update;
     std::unordered_map<uint32_t,uint32_t> resources;
     std::unordered_map<uint32_t,uint32_t> products;
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << last_update << resources << products;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> last_update >> resources >> products;
+    }
+    #endif
+    #endif
 };
 
 enum MonstersCollisionType : uint8_t

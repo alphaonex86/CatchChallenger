@@ -1,7 +1,8 @@
-clan max id (if destructed clan then not reset player clan, just at loading the clan folder is missing)
-account_id max id
+GlobalServerData::serverPrivateVariables.maxClanId (if destructed clan then not reset player clan, just at loading the clan folder is missing)
+GlobalServerData::serverPrivateVariables.maxAccountId
 GlobalServerData::serverPrivateVariables.maxCharacterId
 
+std::unordered_map<uint32_t,IndustryStatus> industriesStatus;
 factory:
   * uint32_t id
   * uint8_t resources list size
