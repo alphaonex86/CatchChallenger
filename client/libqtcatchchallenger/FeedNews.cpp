@@ -2,7 +2,7 @@
 #include "PlatformMacro.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include "../../../general/base/Version.hpp"
-#include "../../libcatchchallenger/ClientVariable.hpp"
+#include "../libcatchchallenger/ClientVariable.hpp"
 #include "InternetUpdater.hpp"
 #include "Ultimate.hpp"
 

@@ -20,6 +20,7 @@ TEMPLATE = app
 DEFINES += BOTACTIONS CATCHCHALLENGER_BOT MAXIMIZEPERFORMANCEOVERDATABASESIZE
 
 SOURCES += main.cpp\
+    ../../client/qtcpu800x600/base/ChatParsing.cpp \
     GenerateMapZone.cpp \
         MainWindow.cpp \
     ../bot/MultipleBotConnection.cpp \
@@ -37,6 +38,7 @@ SOURCES += main.cpp\
     MultipleBotConnectionAction.cpp \
     DatabaseBot.cpp
 HEADERS  += MainWindow.h \
+    ../../client/qtcpu800x600/base/ChatParsing.hpp \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \
     ../bot/BotInterface.h \
