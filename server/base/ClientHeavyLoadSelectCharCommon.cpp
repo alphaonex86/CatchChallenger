@@ -675,6 +675,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         }
         hps::StreamInputBuffer s(in_file);
         s >> *this;
+        selectCharacterQueryId.push_back(query_id);
     }
     if(this->map==NULL)
     {

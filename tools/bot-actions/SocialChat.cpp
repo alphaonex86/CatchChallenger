@@ -2,7 +2,7 @@
 #include "ui_SocialChat.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../client/libqtcatchchallenger/Api_client_real.hpp"
-#include "../../client/libcatchchallenger/ChatParsing.hpp"
+#include "../../client/qtcpu800x600/base/ChatParsing.hpp"
 #include "DatabaseBot.h"
 
 #include <QListWidget>
