@@ -423,7 +423,7 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
                     {
                         if(!returnedList.empty())
                             returnedList+=",";
-                        returnedList+="["+std::to_string(index)+"]="+std::to_string(outputQueryNumberToPacketCode[index]);
+                        returnedList+="["+std::to_string(index)+"]="+std::to_string((unsigned int)outputQueryNumberToPacketCode[index]);
                     }
                     index++;
                 }

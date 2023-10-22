@@ -32,7 +32,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
     //std::cout << " EpollClientLoginSlave::parseInputBeforeLogin(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in login before parse: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
         return false;
     }
     otherPacketKick.incrementLastValue();
@@ -235,7 +235,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         case 0x02:
             if(movePacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
-                parseNetworkReadError("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITMOVE));
+                parseNetworkReadError("Too many move in sort time, check DDOS limit: ("+std::to_string(movePacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITMOVE)+" "+movePacketKick.dump());
                 return false;
             }
             movePacketKick.incrementLastValue();
@@ -243,7 +243,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         case 0x03:
             if(chatPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITMOVE)
             {
-                parseNetworkReadError("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITCHAT));
+                parseNetworkReadError("Too many chat in sort time, check DDOS limit: ("+std::to_string(chatPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITCHAT)+" "+chatPacketKick.dump());
                 return false;
             }
             chatPacketKick.incrementLastValue();
@@ -251,7 +251,7 @@ bool EpollClientLoginSlave::parseMessage(const uint8_t &mainCodeType, const char
         default:
             if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
             {
-                parseNetworkReadError("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
+                parseNetworkReadError("Too many packet in sort time, check DDOS limit: ("+std::to_string(otherPacketKick.total())+")>=CATCHCHALLENGER_DDOS_KICKLIMITCHAT:"+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
                 return false;
             }
             otherPacketKick.incrementLastValue();
@@ -313,7 +313,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
     //std::cout << " EpollClientLoginSlave::parseQuery(" << std::to_string(mainCodeType) << "," << std::to_string(queryNumber) << "," << binarytoHexa(data,size) << ")" << std::endl;
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in login query: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
         return false;
     }
     otherPacketKick.incrementLastValue();
@@ -491,7 +491,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
     }
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in login reply: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER)+" "+otherPacketKick.dump());
         return false;
     }
     otherPacketKick.incrementLastValue();

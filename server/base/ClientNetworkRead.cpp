@@ -119,7 +119,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     if(otherPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
-        errorOutput("Too many packet in sort time, check DDOS limit");
+        errorOutput("Too many packet in sort time, check DDOS limit in server before parse: "+std::to_string(otherPacketKick.total())+">="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther)+" "+otherPacketKick.dump());
         return false;
     }
     otherPacketKick.incrementLastValue();
@@ -401,12 +401,13 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         return false;
     }
     #ifdef CATCHCHALLENGER_DDOS_FILTER
+    /* you are into the server, if server emit too many query, then fix the emit, not the reply
     if(otherPacketKick.total()>=GlobalServerData::serverSettings.ddos.kickLimitOther)
     {
-        errorOutput("Too many packet in sort time, check DDOS limit");
+        errorOutput("Too many packet in sort time, check DDOS limit in server reply: "+std::to_string(otherPacketKick.total())+">="+std::to_string(GlobalServerData::serverSettings.ddos.kickLimitOther)+" "+otherPacketKick.dump());
         return false;
     }
-    otherPacketKick.incrementLastValue();
+    otherPacketKick.incrementLastValue();*/
     #endif
     //do the work here
     #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK

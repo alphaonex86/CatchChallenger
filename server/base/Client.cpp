@@ -711,6 +711,7 @@ uint8_t Client::pingCountInProgress() const
 void Client::serialize(hps::StreamOutputBuffer& buf) const {
     /// \warning use dictionary
 
+    buf << character_id;
     std::string recipesS;
     if(public_and_private_informations.recipes!=nullptr)
         recipesS=std::string(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
@@ -738,7 +739,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << ableToFight;
     buf << wildMonsters;
     buf << botFightMonsters;
-    buf << character_id << randomIndex << randomSize << number_of_character;
+    buf << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
     buf << botFightCash << botFightId << isInCityCapture;
 
@@ -764,6 +765,8 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
 void Client::parse(hps::StreamInputBuffer& buf) {
     /// \warning use dictionary
 
+    auto temp_character_id=character_id;
+    buf >> temp_character_id;
     std::string recipesS;
     std::string encyclopedia_monsterS;
     std::string encyclopedia_itemS;
@@ -814,7 +817,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> ableToFight;
     buf >> wildMonsters;
     buf >> botFightMonsters;
-    buf >> character_id >> randomIndex >> randomSize >> number_of_character;
+    buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
     buf >> botFightCash >> botFightId >> isInCityCapture;
 
