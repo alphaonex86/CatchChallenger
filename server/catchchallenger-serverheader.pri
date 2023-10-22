@@ -25,6 +25,7 @@ HEADERS += \
     $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp \
     $$PWD/base/ClientMapManagement/MapBasicMove.hpp \
     $$PWD/base/DictionaryLogin.hpp \
+    $$PWD/base/DdosBuffer.hpp \
     $$PWD/base/DictionaryServer.hpp \
     $$PWD/base/PreparedDBQuery.hpp \
     $$PWD/base/DatabaseBase.hpp \

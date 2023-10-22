@@ -28,7 +28,7 @@ bool EpollClientLoginSlave::parseInputBeforeLogin(const uint8_t &mainCodeType,co
 {
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in gateway parse before input: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
         return false;
     }
     otherPacketKick.incrementLastValue();
@@ -181,7 +181,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
 {
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in gateway query: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
         return false;
     }
     otherPacketKick.incrementLastValue();
@@ -493,7 +493,7 @@ bool EpollClientLoginSlave::parseReplyData(const uint8_t &mainCodeType,const uin
     }
     if(otherPacketKick.total()>=CATCHCHALLENGER_DDOS_KICKLIMITOTHER)
     {
-        parseNetworkReadError("Too many packet in sort time, check DDOS limit");
+        parseNetworkReadError("Too many packet in sort time, check DDOS limit in gateway reply: "+std::to_string(otherPacketKick.total())+">="+std::to_string(CATCHCHALLENGER_DDOS_KICKLIMITOTHER));
         return false;
     }
     otherPacketKick.incrementLastValue();
