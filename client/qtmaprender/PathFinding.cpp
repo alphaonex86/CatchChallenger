@@ -151,7 +151,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.left.map.empty())
+            if(!mapObject.border.left.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.left.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.left.map;
@@ -181,7 +181,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.right.map.empty())
+            if(!mapObject.border.right.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.right.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.right.map;
@@ -211,7 +211,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.top.map.empty())
+            if(!mapObject.border.top.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.top.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.top.map;
@@ -241,7 +241,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.bottom.map.empty())
+            if(!mapObject.border.bottom.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.bottom.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.bottom.map;
