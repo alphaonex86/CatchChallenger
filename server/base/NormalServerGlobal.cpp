@@ -280,6 +280,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->endGroup();
     }
 
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     settings->beginGroup("db");
     if(!settings->contains("db_fight_sync"))
         settings->setValue("db_fight_sync","FightSync_AtTheEndOfBattle");
@@ -390,7 +391,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("tryInterval"))
         settings->setValue("tryInterval",5);
     settings->endGroup();
-
+    #endif
 
     settings->beginGroup("city");
     if(!settings->contains("capture_frequency"))

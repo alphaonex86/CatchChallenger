@@ -14,7 +14,8 @@ void ClientNetworkReadWithoutSender::doDDOSAction()
         unsigned int index=0;
         while(index<size)
         {
-            Client::clientBroadCastList.at(index)->doDDOSCompute();
+            Client *c=Client::clientBroadCastList.at(index);
+            c->doDDOSCompute();
             index++;
         }
     }
