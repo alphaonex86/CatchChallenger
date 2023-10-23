@@ -1,6 +1,7 @@
 #include "OverMap.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libqtcatchchallenger/Ultimate.hpp"
 #if defined(CATCHCHALLENGER_SOLO) && ! defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
 #include "../../../server/qt/InternalServer.hpp"
 #endif
@@ -842,5 +843,5 @@ void OverMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 
 void OverMap::buyClicked()
 {
-    QDesktopServices::openUrl(tr("https://shop.first-world.info/en/")+"#CatchChallenger");
+    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buy())));
 }

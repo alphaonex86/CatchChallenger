@@ -333,11 +333,16 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
 void MapControllerMP::unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer)
 {
     //unload the player sprite
-    if(ObjectGroupItem::objectGroupLink.find(otherPlayer.playerMapObject->objectGroup())!=ObjectGroupItem::objectGroupLink.cend())
-        ObjectGroupItem::objectGroupLink.at(otherPlayer.playerMapObject->objectGroup())->removeObject(otherPlayer.playerMapObject);
+    if(otherPlayer.playerMapObject!=nullptr)
+    {
+        if(ObjectGroupItem::objectGroupLink.find(otherPlayer.playerMapObject->objectGroup())!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(otherPlayer.playerMapObject->objectGroup())->removeObject(otherPlayer.playerMapObject);
+        else
+            qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
+    }
     else
-        qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), ObjectGroupItem::objectGroupLink not contains otherPlayer.playerMapObject->objectGroup()");
-    if(otherPlayer.labelMapObject!=NULL)
+        qDebug() << QStringLiteral("unloadOtherPlayerFromMap(), otherPlayer.playerMapObject is null");
+    if(otherPlayer.labelMapObject!=nullptr)
     {
         //unload the player sprite
         if(ObjectGroupItem::objectGroupLink.find(otherPlayer.labelMapObject->objectGroup())!=ObjectGroupItem::objectGroupLink.cend())
@@ -580,7 +585,9 @@ void MapControllerMP::reinject_signals_on_valid_map()
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): mHaveTheDatapack && player_informations_is_set");
         #endif
         index=0;
-        const unsigned int delayedActions_size=delayedActions.size();
+        std::vector<DelayedMultiplex> delayedActions=this->delayedActions;//work on copy fix cash for corruption
+        std::vector<size_t> toDelete;
+        const unsigned int delayedActions_size=this->delayedActions.size();
         while(index<delayedActions.size())
         {
             if(index>50000)
@@ -593,14 +600,47 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Insert:
                 if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
+                    if(delayedActions.size()>delayedActions_size)
+                    {
+                        size_t sizenow=delayedActions.size();
+                        qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                        abort();
+                    }
                     const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(
                                                              delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();
+                    if(delayedActions.size()>delayedActions_size)
+                    {
+                        size_t sizenow=delayedActions.size();
+                        qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                        abort();
+                    }
                     if(all_map.find(mapPath)!=all_map.cend())
                     {
+                        if(delayedActions.size()>delayedActions_size)
+                        {
+                            size_t sizenow=delayedActions.size();
+                            qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                            abort();
+                        }
                         if(insert_player_final(delayedActions.at(index).insert.player,delayedActions.at(index).insert.mapId,
                                                delayedActions.at(index).insert.x,delayedActions.at(index).insert.y,
                                                delayedActions.at(index).insert.direction,true))
+                        {
+                            if(delayedActions.size()>delayedActions_size)
+                            {
+                                size_t sizenow=delayedActions.size();
+                                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                                abort();
+                            }
                             delayedActions.erase(delayedActions.cbegin()+index);
+                            toDelete.push_back(index);
+                            if(delayedActions.size()>delayedActions_size)
+                            {
+                                size_t sizenow=delayedActions.size();
+                                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                                abort();
+                            }
+                        }
                         index--;
                     }
                 }
@@ -608,8 +648,29 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 case DelayedType_Move:
                     if(otherPlayerList.find(delayedActions.at(index).move.id)!=otherPlayerList.cend())
                     {
+                        if(delayedActions.size()>delayedActions_size)
+                        {
+                            size_t sizenow=delayedActions.size();
+                            qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                            abort();
+                        }
                         if(move_player_final(delayedActions.at(index).move.id,delayedActions.at(index).move.movement,true))
+                        {
+                            if(delayedActions.size()>delayedActions_size)
+                            {
+                                size_t sizenow=delayedActions.size();
+                                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                                abort();
+                            }
                             delayedActions.erase(delayedActions.cbegin()+index);
+                            toDelete.push_back(index);
+                            if(delayedActions.size()>delayedActions_size)
+                            {
+                                size_t sizenow=delayedActions.size();
+                                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
+                                abort();
+                            }
+                        }
                         index--;
                     }
                 break;
@@ -618,11 +679,15 @@ void MapControllerMP::reinject_signals_on_valid_map()
             }
             if(delayedActions.size()>delayedActions_size)
             {
-                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions");
+                size_t sizenow=delayedActions.size();
+                qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
                 abort();
             }
             index++;
         }
+        if(delayedActions_size<this->delayedActions.size())
+            delayedActions.insert(delayedActions.end(),this->delayedActions.cbegin()+(this->delayedActions.size()-delayedActions_size),this->delayedActions.cend());
+        this->delayedActions=delayedActions;
     }
     else
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): should not pass here because all is not previously loaded");

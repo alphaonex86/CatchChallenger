@@ -8,6 +8,7 @@
 #include "../AudioGL.hpp"
 #endif
 #include "../../libqtcatchchallenger/Language.hpp"
+#include "../../libqtcatchchallenger/Ultimate.hpp"
 #include <QDesktopServices>
 #include <QLineEdit>
 
@@ -265,7 +266,7 @@ void OptionsDialog::newLanguage()
 
 void OptionsDialog::openBuy()
 {
-    QDesktopServices::openUrl(QUrl(tr("https://shop.first-world.info/en/")));
+    QDesktopServices::openUrl(QUrl(QString::fromStdString(Ultimate::buy())));
 }
 
 void OptionsDialog::keyPressEvent(QKeyEvent * event)
