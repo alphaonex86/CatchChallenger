@@ -2,6 +2,7 @@
 
 #include <QCryptographicHash>
 #include <QString>
+#include <QObject>
 
 Ultimate Ultimate::ultimate;
 
@@ -25,4 +26,9 @@ bool Ultimate::setKey(const std::string &key)
 bool Ultimate::isUltimate() const
 {
     return m_ultimate;
+}
+
+std::string Ultimate::buy()
+{
+    return QObject::tr("https://catchchallenger.herman-brule.com/#buy").toStdString();
 }

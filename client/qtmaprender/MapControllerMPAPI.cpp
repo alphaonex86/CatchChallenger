@@ -810,20 +810,23 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
     otherPlayerListByTimer.erase(otherPlayer.oneStepMore);
     otherPlayerListByAnimationTimer.erase(otherPlayer.moveAnimationTimer);
 
-    Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
-    if(currentGroup!=NULL)
+    if(otherPlayer.playerMapObject!=nullptr)
     {
-        if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
+        Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
+        if(currentGroup!=NULL)
         {
-            ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(otherPlayer.playerMapObject);
+            if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            {
+                ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(otherPlayer.playerMapObject);
+                if(otherPlayer.labelMapObject!=NULL)
+                    ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(otherPlayer.labelMapObject);
+            }
+            if(currentGroup!=otherPlayer.presumed_map->objectGroup)
+                qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
+            currentGroup->removeObject(otherPlayer.playerMapObject);
             if(otherPlayer.labelMapObject!=NULL)
-                ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(otherPlayer.labelMapObject);
+                currentGroup->removeObject(otherPlayer.labelMapObject);
         }
-        if(currentGroup!=otherPlayer.presumed_map->objectGroup)
-            qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
-        currentGroup->removeObject(otherPlayer.playerMapObject);
-        if(otherPlayer.labelMapObject!=NULL)
-            currentGroup->removeObject(otherPlayer.labelMapObject);
     }
 
     /*delete otherPlayer.playerMapObject;
