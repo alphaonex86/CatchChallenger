@@ -515,6 +515,7 @@ void MultipleBotConnectionImplForGui::newError(const std::string &error, const s
 
 void MultipleBotConnectionImplForGui::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
+    qDebug() << QString("MultipleBotConnectionImplFoprGui::have_current_player_info() start");
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(sender());
     if(senderObject==NULL)
     {

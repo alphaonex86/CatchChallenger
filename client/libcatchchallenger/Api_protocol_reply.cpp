@@ -568,6 +568,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
         break;
         //get the character selection return
         case 0xAC:
+        std::cout << "Api_protocol::selectCharacter() reply for 0xAC " << this << " " << __FILE__ << ":" << __LINE__ << std::endl;
         //get the character selection return on game server
         case 0x93:
         {
