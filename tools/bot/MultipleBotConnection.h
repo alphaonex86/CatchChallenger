@@ -19,6 +19,23 @@ public:
     ~MultipleBotConnection();
 
     BotInterface *botInterface;
+    enum Status
+    {
+        Status_None,
+        Status_Connecting,
+        Status_Connected,
+        Status_WaitProtocol,
+        Status_WaitLogin,
+        Status_Logged,
+        Status_WaitDataPack,
+        Status_HaveDatapack,
+        Status_CreatingCharacter,
+        Status_CreatedCharacter,
+        Status_SelectingCharacter,
+        Status_SelectingCharacterAfterCreation,
+        Status_SelectedCharacter,
+        Status_OnMap
+    };
     struct CatchChallengerClient
     {
         QSslSocket *sslSocket;
@@ -44,7 +61,9 @@ public:
             unsigned int wild;
         };
         Preferences preferences;
+        Status stat;
     };
+
     QHash<CatchChallenger::Api_client_real *,CatchChallengerClient *> apiToCatchChallengerClient;
     QHash<CatchChallenger::ConnectedSocket *,CatchChallengerClient *> connectedSocketToCatchChallengerClient;
     QHash<QSslSocket *,CatchChallengerClient *> sslSocketToCatchChallengerClient;
@@ -61,6 +80,10 @@ protected:
     QSet<quint32> characterOnMap;//protect mutual call: characterSelectForFirstCharacter(), logged_with_client(), haveTheDatapack_with_client()
     quint16 numberOfBotConnected;
     quint16 numberOfSelectedCharacter;
+    quint16 numberOfStartSelectingCharacter;
+    quint16 numberOfHaveDatapackCharacter;
+    quint16 numberOfStartCreatingCharacter;
+    quint16 numberOfStartCreatedCharacter;
     bool mHaveAnError;
     uint8_t charactersGroupIndex;
     int64_t/*to have -1*/ serverUniqueKey;
@@ -118,6 +141,11 @@ protected:
 signals:
     void emit_numberOfBotConnected(quint16 numberOfBotConnected);
     void emit_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);
+    void emit_numberOfStartSelectingCharacter(quint16 numberOfStartSelectingCharacter);
+    void emit_numberOfHaveDatapackCharacter(quint16 numberOfHaveDatapackCharacter);
+    void emit_numberOfStartCreatingCharacter(quint16 numberOfStartCreatingCharacter);
+    void emit_numberOfStartCreatedCharacter(quint16 numberOfStartCreatedCharacter);
+    void updateClientListStatus();
     void emit_lastReplyTime(const quint32 &time);
     void emit_all_player_connected();
     void emit_all_player_on_map();

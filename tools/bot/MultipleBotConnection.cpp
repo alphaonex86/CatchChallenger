@@ -29,6 +29,10 @@ MultipleBotConnection::MultipleBotConnection() :
     numberToChangeLoginForMultipleConnexion=1;
     numberOfBotConnected=0;
     numberOfSelectedCharacter=0;
+    numberOfStartSelectingCharacter=0;
+    numberOfHaveDatapackCharacter=0;
+    numberOfStartCreatingCharacter=0;
+    numberOfStartCreatedCharacter=0;
     mHaveAnError=false;
 }
 
@@ -175,12 +179,16 @@ void MultipleBotConnection::protocol_is_good_with_client(CatchChallengerClient *
         std::cerr << "protocol_is_good_with_client client->api==NULL" << std::endl;
         abort();
     }
+    client->stat=Status_WaitLogin;
+    updateClientListStatus();
     client->api->tryLogin(client->login.toStdString(),client->pass.toStdString());
 }
 
 //quint32,QString,quint16,quint16,quint8,quint16
 void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
 {
+    client->stat=Status_OnMap;
+    updateClientListStatus();
     Q_UNUSED(mapId);
     Q_UNUSED(x);
     Q_UNUSED(y);
@@ -192,6 +200,36 @@ void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *cli
 
 void MultipleBotConnection::haveCharacter()
 {
+    CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
+    if(senderObject==NULL)
+    {
+        std::cerr << "MultipleBotConnection::haveCharacter() but sender not resolved" << std::endl;
+        return;
+    }
+    if(!apiToCatchChallengerClient.contains(senderObject))
+    {
+        std::cerr << "MultipleBotConnection::haveCharacter() but !apiToCatchChallengerClient.contains(senderObject)" << std::endl;
+        return;
+    }
+    CatchChallengerClient *client=apiToCatchChallengerClient.value(senderObject);
+    qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
+    client->selectedCharacter=true;
+    numberOfSelectedCharacter++;
+    emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
+    client->stat=Status_SelectedCharacter;
+    updateClientListStatus();
+
+    if(multipleConnexion())
+    {
+        if(numberOfBotConnected>=numberOfSelectedCharacter)
+        {
+            const quint32 &diff=numberOfBotConnected-numberOfSelectedCharacter;
+            if(diff==0 && numberOfSelectedCharacter>=connexionCountTarget())
+                emit emit_all_player_on_map();
+        }
+    }
+    else
+        emit emit_all_player_on_map();
 }
 
 std::string MultipleBotConnection::getNewPseudo()
@@ -206,6 +244,8 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
         qDebug() << "!serverIsSelected";
         return;
     }
+    client->stat=Status_Logged;
+    updateClientListStatus();
     if(client->api==NULL)
     {
         std::cerr << "logged_with_client client->api==NULL" << std::endl;
@@ -231,6 +271,10 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                     skinId=rand()%skinsList.size();
                 uint8_t monstergroupId=rand()%profile.monstergroup.size();
                 client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
+                numberOfStartCreatingCharacter++;
+                emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
+                client->stat=Status_CreatingCharacter;
+                updateClientListStatus();
             }
         }
         return;
@@ -246,6 +290,10 @@ void MultipleBotConnection::logged_with_client(CatchChallengerClient *client)
                     qDebug() << "Unable to do automatic character selection:" << character_id;
                 else
                 {
+                    numberOfStartSelectingCharacter++;
+                    emit_numberOfStartSelectingCharacter(numberOfStartSelectingCharacter);
+                    client->stat=Status_SelectingCharacter;
+                    updateClientListStatus();
                     //if not the first bot
                     if(!tempMapList.empty())
                     {
@@ -270,6 +318,8 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
         std::cerr << "haveTheDatapack_with_client client->api==NULL" << std::endl;
         abort();
     }
+    numberOfHaveDatapackCharacter++;
+    emit_numberOfHaveDatapackCharacter(numberOfHaveDatapackCharacter);
     if(botInterface!=NULL)
         qDebug() << "MultipleBotConnection::haveTheDatapack_with_client(): Bot version:" << botInterface->name() << botInterface->version();
     //load the profil list
@@ -309,6 +359,10 @@ void MultipleBotConnection::haveTheDatapack_with_client(CatchChallengerClient *c
                     skinId=rand()%skinsList.size();
                 uint8_t monstergroupId=rand()%profile.monstergroup.size();
                 client->api->addCharacter(charactersGroupIndex,profileIndex,pseudo.toStdString(),monstergroupId,skinId);
+                numberOfStartCreatingCharacter++;
+                emit_numberOfStartCreatingCharacter(numberOfStartCreatingCharacter);
+                client->stat=Status_CreatingCharacter;
+                updateClientListStatus();
             }
         }
         else
@@ -432,10 +486,13 @@ void MultipleBotConnection::ifMultipleConnexionStartCreation()
     {
         if(!connectTimer.isActive())
         {
-            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): start the multiple timer co";
-            if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot))
+            if(!connect(&connectTimer,&QTimer::timeout,this,&MultipleBotConnection::connectTimerSlot,Qt::UniqueConnection))
                 abort();
-            connectTimer.start(1000/connectBySeconds());
+            unsigned int temp_ms=1000/connectBySeconds();
+            if(temp_ms<1)
+                temp_ms=1;
+            connectTimer.start(temp_ms);
+            qDebug() << "MultipleBotConnection::ifMultipleConnexionStartCreation(): start the multiple timer co" << temp_ms;
             return;
         }
         else
@@ -496,13 +553,21 @@ void MultipleBotConnection::newCharacterId_with_client(MultipleBotConnection::Ca
         return;
     }
 
+    numberOfStartCreatedCharacter++;
+    emit_numberOfStartCreatedCharacter(numberOfStartCreatedCharacter);
+    client->stat=Status_CreatedCharacter;
+    updateClientListStatus();
     if(!characterOnMap.contains(characterId))
     {
         if(!client->api->selectCharacter(charactersGroupIndex,serverUniqueKey,characterId))
             qDebug() << "Unable to select character after creation:" << characterId;
         else
         {
-            qDebug() << "add character on map: " << characterId << " at " << __FILE__ << ":" << __LINE__;
+            numberOfStartSelectingCharacter++;
+            emit_numberOfStartSelectingCharacter(numberOfStartSelectingCharacter);
+            client->stat=Status_SelectingCharacterAfterCreation;
+            updateClientListStatus();
+            qDebug() << "add character on map: " << characterId << " " << client << " api: " << client->api << " at " << __FILE__ << ":" << __LINE__;
             characterOnMap << characterId;
             qDebug() << "Select new character created after creation:" << characterId;
             ifMultipleConnexionStartCreation();
@@ -516,10 +581,14 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
 {
     if(client->selectedCharacter==true)
         return;
+    qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
     client->selectedCharacter=true;
     numberOfSelectedCharacter++;
     emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
+    client->stat=Status_SelectedCharacter;
+    updateClientListStatus();
 
+    /*moved to MultipleBotConnection::haveCharacter() to work after createCharacter
     if(multipleConnexion())
     {
         if(numberOfBotConnected>=numberOfSelectedCharacter)
@@ -530,7 +599,7 @@ void MultipleBotConnection::have_current_player_info_with_client(CatchChallenger
         }
     }
     else
-        emit emit_all_player_on_map();
+        emit emit_all_player_on_map();*/
 
     Q_UNUSED(informations);
     //std::cout << "MultipleBotConnection::have_current_player_info() pseudo: " << informations.public_informations.pseudo << std::endl;
@@ -593,6 +662,8 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     client->preferences.fight=100;
     client->preferences.shop=100;
     client->preferences.wild=100;
+    client->stat=Status_None;
+    updateClientListStatus();
 
     if(!connect(sslSocket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),this,&MultipleBotConnection::sslErrors,Qt::QueuedConnection))
         abort();
@@ -607,6 +678,8 @@ MultipleBotConnection::CatchChallengerClient * MultipleBotConnection::createClie
     qDebug() << "Try connect on: " << host() << ":" << port();
     #endif
     sslSocket->connectToHost(host(),port());
+    client->stat=Status_Connecting;
+    updateClientListStatus();
     connectTheExternalSocket(client);
     return client;
 }

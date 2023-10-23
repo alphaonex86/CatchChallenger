@@ -48,6 +48,11 @@ private slots:
     void statusError(QString error);
     void display_numberOfBotConnected(quint16 numberOfBotConnected);
     void display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter);
+    void display_numberOfStartSelectingCharacter(quint16 numberOfStartSelectingCharacter);
+    void display_numberOfHaveDatapackCharacter(quint16 numberOfHaveDatapackCharacter);
+    void display_numberOfStartCreatingCharacter(quint16 numberOfStartCreatingCharacter);
+    void display_numberOfStartCreatedCharacter(quint16 numberOfStartCreatedCharacter);
+    void updateClientListStatus();
     void on_serverList_activated(const QModelIndex &index);
     void on_serverListSelect_clicked();
     void updateServerList(CatchChallenger::Api_client_real *senderObject);
