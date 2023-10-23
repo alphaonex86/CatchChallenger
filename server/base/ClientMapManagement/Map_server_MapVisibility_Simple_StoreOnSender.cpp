@@ -13,7 +13,8 @@
  *    sendRaw(data+0,data+pos)
  *    //skip current client pos
  *    sendRaw(data+pos+offset,size-offet-pos)
- *    */
+ * see line 560, after if(!GlobalServerData::serverSettings.mapVisibility.simple.reemit)
+*/
 
 using namespace CatchChallenger;
 
