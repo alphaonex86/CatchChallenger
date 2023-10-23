@@ -184,6 +184,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
         abort();*/
     chat->setClient(client);
     chat->setMultiPlayer(multiplayer);
+    ui->label_ultimate->setText(QString::fromStdString(Ultimate::buy()));
     ui->openToLan->setEnabled(true);
     ui->openToLan->setVisible(!multiplayer);
     ui->toolButtonLan->setVisible(!multiplayer);
