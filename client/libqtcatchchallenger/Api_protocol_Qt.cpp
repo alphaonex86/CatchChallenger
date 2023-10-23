@@ -622,6 +622,7 @@ void Api_protocol_Qt::new_system_text(const CatchChallenger::Chat_type &chat_typ
 //player info
 void Api_protocol_Qt::have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations)
 {
+    std::cerr << "Api_protocol_Qt::have_current_player_info()" << std::endl;
     emit Qthave_current_player_info(informations);
     updateCanDoFight();
 }

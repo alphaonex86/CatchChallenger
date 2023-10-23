@@ -637,7 +637,7 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
     memcpy(buffer+1+4,&characterIdLittleEndian,sizeof(characterIdLittleEndian));
     is_logged=packOutcommingQuery(0xAC,queryNumber(),buffer,sizeof(buffer));
     this->selectedServerIndex=serverIndex;
-    //std::cout << "this: " << this << ", socket: " << socket << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
+    std::cout << "Api_protocol::selectCharacter(): " << this << ", select char: " << characterId << ", charactersGroupIndex: " << (uint32_t)charactersGroupIndex << ", serverUniqueKey: " << serverUniqueKey << ", line: " << __FILE__ << ": " << __LINE__ << std::endl;
     return true;
 }
 

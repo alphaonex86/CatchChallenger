@@ -83,6 +83,16 @@ MainWindow::MainWindow(QWidget *parent) :
         abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfSelectedCharacter,this,&MainWindow::display_numberOfSelectedCharacter,Qt::QueuedConnection))
         abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartSelectingCharacter,this,&MainWindow::display_numberOfStartSelectingCharacter,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfHaveDatapackCharacter,this,&MainWindow::display_numberOfHaveDatapackCharacter,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartCreatingCharacter,this,&MainWindow::display_numberOfStartCreatingCharacter,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfStartCreatedCharacter,this,&MainWindow::display_numberOfStartCreatedCharacter,Qt::QueuedConnection))
+        abort();
+    if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::updateClientListStatus,this,&MainWindow::updateClientListStatus,Qt::QueuedConnection))
+        abort();
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_numberOfBotConnected,this,&MainWindow::display_numberOfBotConnected))
         abort();//,Qt::QueuedConnection
     if(!connect(&multipleBotConnexion,&MultipleBotConnectionImplForGui::emit_detectSlowDown,this,&MainWindow::detectSlowDown,Qt::QueuedConnection))
@@ -342,6 +352,84 @@ void MainWindow::display_numberOfBotConnected(quint16 numberOfBotConnected)
 void MainWindow::display_numberOfSelectedCharacter(quint16 numberOfSelectedCharacter)
 {
     ui->numberOfSelectedCharacter->setText(tr("Selected character: %1").arg(numberOfSelectedCharacter));
+}
+
+void MainWindow::display_numberOfStartSelectingCharacter(quint16 numberOfStartSelectingCharacter)
+{
+    ui->numberOfSelectingCharacter->setText(tr("Selecting character: %1").arg(numberOfStartSelectingCharacter));
+}
+
+void MainWindow::display_numberOfHaveDatapackCharacter(quint16 numberOfHaveDatapackCharacter)
+{
+    ui->numberOfHaveDatapackCharacter->setText(tr("numberOfHaveDatapackCharacter: %1").arg(numberOfHaveDatapackCharacter));
+}
+
+void MainWindow::display_numberOfStartCreatingCharacter(quint16 numberOfStartCreatingCharacter)
+{
+    ui->numberOfStartCreatingCharacter->setText(tr("numberOfStartCreatingCharacter: %1").arg(numberOfStartCreatingCharacter));
+}
+
+void MainWindow::display_numberOfStartCreatedCharacter(quint16 numberOfStartCreatedCharacter)
+{
+    ui->numberOfStartCreatedCharacter->setText(tr("numberOfStartCreatedCharacter: %1").arg(numberOfStartCreatedCharacter));
+}
+
+void MainWindow::updateClientListStatus()
+{
+    ui->listClients->clear();
+    for (auto i = multipleBotConnexion.apiToCatchChallengerClient.cbegin(), end = multipleBotConnexion.apiToCatchChallengerClient.cend(); i != end; ++i)
+    {
+        const CatchChallenger::Api_client_real * const key=i.key();
+        (void)key;
+        const MultipleBotConnectionAction::CatchChallengerClient * const value=i.value();
+        switch(value->stat)
+        {
+        case MultipleBotConnectionAction::Status_None:
+            ui->listClients->addItem("Status_None");
+            break;
+        case MultipleBotConnectionAction::Status_Connecting:
+            ui->listClients->addItem("Status_Connecting");
+            break;
+        case MultipleBotConnectionAction::Status_Connected:
+            ui->listClients->addItem("Status_Connected");
+            break;
+        case MultipleBotConnectionAction::Status_WaitProtocol:
+            ui->listClients->addItem("Status_WaitProtocol");
+            break;
+        case MultipleBotConnectionAction::Status_WaitLogin:
+            ui->listClients->addItem("Status_WaitLogin");
+            break;
+        case MultipleBotConnectionAction::Status_Logged:
+            ui->listClients->addItem("Status_Logged");
+            break;
+        case MultipleBotConnectionAction::Status_WaitDataPack:
+            ui->listClients->addItem("Status_WaitDataPack");
+            break;
+        case MultipleBotConnectionAction::Status_HaveDatapack:
+            ui->listClients->addItem("Status_HaveDatapack");
+            break;
+        case MultipleBotConnectionAction::Status_CreatingCharacter:
+            ui->listClients->addItem("Status_CreatingCharacter");
+            break;
+        case MultipleBotConnectionAction::Status_CreatedCharacter:
+            ui->listClients->addItem("Status_CreatedCharacter");
+            break;
+        case MultipleBotConnectionAction::Status_SelectingCharacter:
+            ui->listClients->addItem("Status_SelectingCharacter");
+            break;
+        case MultipleBotConnectionAction::Status_SelectingCharacterAfterCreation:
+            ui->listClients->addItem("Status_SelectingCharacterAfterCreation");
+            break;
+        case MultipleBotConnectionAction::Status_SelectedCharacter:
+            ui->listClients->addItem("Status_SelectedCharacter");
+            break;
+        case MultipleBotConnectionAction::Status_OnMap:
+            ui->listClients->addItem("Status_OnMap");
+            break;
+        default:
+            ui->listClients->addItem("???");
+        }
+    }
 }
 
 void MainWindow::on_serverList_activated(const QModelIndex &index)
