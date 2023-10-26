@@ -55,6 +55,7 @@ void Client::selectCharacterServer(const uint8_t &query_id, const uint32_t &char
     #endif
     selectCharacterServer_object();
     #elif CATCHCHALLENGER_DB_FILE
+    (void)characterCreationDate;
     #else
     #error Define what do here
     #endif

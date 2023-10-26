@@ -392,15 +392,21 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
             errorParsingLayer("cursor==0, don't have read the header?"
                               ", data: "+binarytoHexa(commonBuffer,size)+
                               ", cursor: "+std::to_string(cursor));
+            #ifdef CATCHCHALLENGER_ABORTIFERROR
+            abort();
+            #endif
             return -1;
         }
         #endif
         cursor+=sizeof(uint8_t);
         if(Q_UNLIKELY(queryNumber>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)))
         {
-            errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)+
+            errorParsingLayer("query number >"+std::to_string(CATCHCHALLENGER_MAXPROTOCOLQUERY-1)+": "+std::to_string(queryNumber)+
                               ", data: "+binarytoHexa(commonBuffer,size)+
                               ", cursor: "+std::to_string(cursor));
+            #ifdef CATCHCHALLENGER_ABORTIFERROR
+            abort();
+            #endif
             return -1;
         }
         //set this parsing step is done
@@ -445,6 +451,9 @@ int8_t ProtocolParsingBase::parseQueryNumber(const char * const commonBuffer,con
                 if(!(flags & 0x08))
                 {
                     errorParsingLayer("dynamic size blocked (query number)");
+                    #ifdef CATCHCHALLENGER_ABORTIFERROR
+                    abort();
+                    #endif
                     return -1;
                 }
             }

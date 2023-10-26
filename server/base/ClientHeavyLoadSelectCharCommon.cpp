@@ -134,6 +134,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    if(simplifiedIdList.size()<1)
+    {
+        std::cerr << "Need more simplifiedIdList entry to log the character " << characterId << " (" << account_id << ")" << std::endl;
+        character_id=0;
+        characterSelectionIsWrong(query_id,0x04,"Need more simplifiedIdList entry to log the character");
+        return;
+    }
     std::string hexa;
     {
         std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
@@ -663,7 +670,6 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     Client::selectCharacterServer(query_id,characterId,commonCharacterDate);
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "select char into FILE DB " << __FILE__ << ":" << __LINE__ << std::endl;
     {
         std::ifstream in_file("database/characters/"+hexa, std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
@@ -675,6 +681,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         }
         hps::StreamInputBuffer s(in_file);
         s >> *this;
+        public_and_private_informations.public_informations.simplifiedId=simplifiedIdList.back();
+        simplifiedIdList.pop_back();
         selectCharacterQueryId.push_back(query_id);
     }
     if(this->map==NULL)

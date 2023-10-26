@@ -120,6 +120,7 @@ void send_settings(
 
 int main(int argc, char *argv[])
 {
+    memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
     /* Catch Signal Handler SIGPIPE */
     if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)
     {

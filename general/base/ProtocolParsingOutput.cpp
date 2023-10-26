@@ -42,6 +42,17 @@ bool ProtocolParsingBase::internalPackOutcommingData(const char * const data,con
         std::cerr << "ProtocolParsingInputOutput::internalPackOutcommingData size is null: " << __LINE__ << std::endl;
         abort();
     }
+    if(size>1)
+    {
+        if((uint8_t)(data[0x00])==0xE3)
+        {
+            if(data[0x01]>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
+            {
+                std::cerr << "ProtocolParsingBase::internalPackOutcommingData() query number " << data[0x01] << " wrong: " << __LINE__ << std::endl;
+                abort();
+            }
+        }
+    }
     #endif
     #ifdef PROTOCOLPARSINGDEBUG
     messageParsingLayer("internalPackOutcommingData(): start");
@@ -103,6 +114,17 @@ bool ProtocolParsingBase::internalSendRawSmallPacket(const char * const data,con
     std::cout << "Sended packet size: " << size << ": " << binarytoHexa(data,size) << std::endl;
     #endif // DEBUG_PROTOCOLPARSING_RAW_NETWORK
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(size>1)
+    {
+        if((uint8_t)(data[0x00])==0xE3)
+        {
+            if(data[0x01]>(CATCHCHALLENGER_MAXPROTOCOLQUERY-1))
+            {
+                std::cerr << "ProtocolParsingBase::internalPackOutcommingData() query number " << data[0x01] << " wrong: " << __LINE__ << std::endl;
+                //abort();
+            }
+        }
+    }
     if(size>CATCHCHALLENGER_MAX_PACKET_SIZE)
     {
         errorParsingLayer("ProtocolParsingInputOutput::sendRawSmallPacket(): Packet to big: "+std::to_string(size));

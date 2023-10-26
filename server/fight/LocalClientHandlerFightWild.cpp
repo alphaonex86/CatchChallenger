@@ -46,18 +46,18 @@ void Client::wildDrop(const uint16_t &monster)
 
 uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonster)
 {
+    #ifndef CATCHCHALLENGER_DB_FILE
     int position=999999;
     bool ok;
-    #ifndef CATCHCHALLENGER_DB_FILE
     const uint32_t monster_id=getMonsterId(&ok);
-    #else
-    const uint32_t monster_id=9999;
-    #endif
     if(!ok)
     {
         errorFightEngine("No more monster id: getMonsterId(&ok) failed");
         return 0;
     }
+    #else
+    const uint32_t monster_id=9999;
+    #endif
 
     char raw_skill_endurance[newMonster.skills.size()*(1)];
     char raw_skill[newMonster.skills.size()*(2+1)];
@@ -133,8 +133,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
         public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
-        position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -152,6 +152,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
+        (void)raw_skill_endurance;
+        (void)raw_buff;
         #else
         #error Define what do here
         #endif
@@ -167,8 +169,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     {
         public_and_private_informations.playerMonster.push_back(newMonster);
         public_and_private_informations.playerMonster.back().id=monster_id;
-        position=static_cast<int>(public_and_private_informations.playerMonster.size());
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        position=static_cast<int>(public_and_private_informations.playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
                     std::to_string(character_id),
@@ -186,6 +188,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
+        (void)raw_skill_endurance;
+        (void)raw_buff;
         #else
         #error Define what do here
         #endif

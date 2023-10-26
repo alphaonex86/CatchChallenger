@@ -224,7 +224,6 @@ void BaseServer::preload_18_sync_profile()
                 {
                     const auto &monster=monsters.at(monsterIndex);
                     const auto &monsterDatapack=CommonDatapack::commonDatapack.get_monsters().at(monster.id);
-                    const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
                     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills_list=CommonFightEngineBase::generateWildSkill(monsterDatapack,monster.level);
                     if(skills_list.empty())
                     {
@@ -250,6 +249,7 @@ void BaseServer::preload_18_sync_profile()
                     //dynamic part
                     {
                         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+                        const Monster::Stat &monsterStat=CommonFightEngineBase::getStat(monsterDatapack,monster.level);
                         //id,character,place,hp,monster,level,xp,sp,captured_with,gender,egg_step,character_origin,position,skills,skills_endurance
                         if(monsterDatapack.ratio_gender!=-1)
                         {
@@ -299,6 +299,8 @@ void BaseServer::preload_18_sync_profile()
                         }
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
                     #elif CATCHCHALLENGER_DB_FILE
+                    (void)raw_skill;
+                    (void)raw_skill_endurance;
                     #else
                     #error Define what do here
                     #endif

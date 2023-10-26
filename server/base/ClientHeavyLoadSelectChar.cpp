@@ -239,6 +239,20 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
             );
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)query_id;
+    (void)characterId;
+    (void)map;
+    (void)x;
+    (void)y;
+    (void)orientation;
+    (void)rescue_map;
+    (void)rescue_x;
+    (void)rescue_y;
+    (void)rescue_orientation;
+    (void)unvalidated_rescue_map;
+    (void)unvalidated_rescue_x;
+    (void)unvalidated_rescue_y;
+    (void)unvalidated_rescue_orientation;
     #else
     #error Define what do here
     #endif

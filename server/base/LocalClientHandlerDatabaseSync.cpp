@@ -279,6 +279,7 @@ void Client::syncDatabaseAllow()
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)allowflat;
     #else
     #error Define what do here
     #endif

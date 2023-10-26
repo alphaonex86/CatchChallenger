@@ -3,6 +3,9 @@
 #include "VariableServer.hpp"
 #include "Client.hpp"
 #include <string.h>
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+#include <vector>
+#endif
 #include "../../general/base/CommonSettingsServer.hpp"
 
 using namespace CatchChallenger;
@@ -27,6 +30,266 @@ MapServer::MapServer() :
     border.left.map=nullptr;
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }
+
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+void MapServer::check6B(const char * const data,const unsigned int size)
+{
+    int pos=0;
+    if((size-pos)<(unsigned int)sizeof(uint8_t))
+    {
+        std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+        return;
+    }
+    std::vector<Player_public_informations> playerinsertList;
+    uint8_t mapListSize=data[pos];
+    pos+=sizeof(uint8_t);
+    int index=0;
+    while(index<mapListSize)
+    {
+        uint32_t mapId;
+        if(GlobalServerData::serverPrivateVariables.map_list.size()==0)
+        {
+            std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
+        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+        {
+            if((size-pos)<(unsigned int)sizeof(uint8_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint8_t mapTempId=data[pos];
+            pos+=sizeof(uint8_t);
+            mapId=mapTempId;
+        }
+        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+        {
+            if((size-pos)<(unsigned int)sizeof(uint16_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
+            mapId=mapTempId;
+        }
+        else
+        {
+            if((size-pos)<(unsigned int)sizeof(uint32_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+            pos+=sizeof(uint32_t);
+        }
+        (void)mapId;
+
+        uint16_t playerSizeList;
+        if(GlobalServerData::serverSettings.max_players<=255)
+        {
+            if((size-pos)<(unsigned int)sizeof(uint8_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint8_t numberOfPlayer=data[pos];
+            pos+=sizeof(uint8_t);
+            playerSizeList=numberOfPlayer;
+        }
+        else
+        {
+            if((size-pos)<(unsigned int)sizeof(uint16_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            playerSizeList=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
+        }
+        if(playerSizeList>GlobalServerData::serverSettings.max_players)
+        {
+            std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+            return;
+        }
+        int index_sub_loop=0;
+        while(index_sub_loop<playerSizeList)
+        {
+            //player id
+            Player_public_informations public_informations;
+            if(GlobalServerData::serverSettings.max_players<=255)
+            {
+                if((size-pos)<(unsigned int)sizeof(uint8_t))
+                {
+                    std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                uint8_t playerSmallId=data[pos];
+                pos+=sizeof(uint8_t);
+                public_informations.simplifiedId=playerSmallId;
+            }
+            else
+            {
+                if((size-pos)<(unsigned int)sizeof(uint16_t))
+                {
+                    std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                public_informations.simplifiedId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
+            }
+
+            //x and y
+            if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint8_t x=data[pos];
+            (void)x;
+            pos+=sizeof(uint8_t);
+            uint8_t y=data[pos];
+            (void)y;
+            pos+=sizeof(uint8_t);
+
+            //direction and player type
+            if((size-pos)<(unsigned int)sizeof(uint8_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint8_t directionAndPlayerType=data[pos];
+            pos+=sizeof(uint8_t);
+            uint8_t directionInt,playerTypeInt;
+            directionInt=directionAndPlayerType & 0x0F;
+            playerTypeInt=directionAndPlayerType & 0xF0;
+            if(directionInt<1 || directionInt>8)
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            Direction direction=(Direction)directionInt;
+            (void)direction;
+            Player_type playerType=(Player_type)playerTypeInt;
+            if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            public_informations.type=playerType;
+
+            //the speed
+            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
+            {
+                if((size-pos)<(unsigned int)sizeof(uint8_t))
+                {
+                    std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                public_informations.speed=data[pos];
+                pos+=sizeof(uint8_t);
+            }
+            else
+                public_informations.speed=CommonSettingsServer::commonSettingsServer.forcedSpeed;
+
+            if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
+            {
+                //the pseudo
+                if((size-pos)<(unsigned int)sizeof(uint8_t))
+                {
+                    std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                    return;
+                }
+                uint8_t pseudoSize=data[pos];
+                pos+=sizeof(uint8_t);
+                if(pseudoSize>0)
+                {
+                    if((size-pos)<(unsigned int)pseudoSize)
+                    {
+                        std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                        return;
+                    }
+                    public_informations.pseudo=std::string(data+pos,pseudoSize);
+                    pos+=pseudoSize;
+                    if(public_informations.pseudo.empty())
+                    {
+                        std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                        return;
+                    }
+                }
+            }
+            else
+                public_informations.pseudo.clear();
+
+            //the skin
+            if((size-pos)<(unsigned int)sizeof(uint8_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint8_t skinId=data[pos];
+            pos+=sizeof(uint8_t);
+            public_informations.skinId=skinId;
+
+            //the following monster id to show
+            if((size-pos)<(unsigned int)sizeof(uint16_t))
+            {
+                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+                return;
+            }
+            uint16_t monsterId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
+            public_informations.monsterId=monsterId;
+
+            playerinsertList.push_back(public_informations);
+            //std::cerr << "insert_player(public_informations,mapId,x,y,direction);" << std::endl;
+            index_sub_loop++;
+        }
+        index++;
+    }
+    if((size-pos)!=0)
+    {
+        std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") playerinsertList: " << playerinsertList.size() << " error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
+        unsigned int index=0;
+        while(index<playerinsertList.size())
+        {
+            Player_public_informations temp=playerinsertList.at(index);
+            std::cerr << std::string("- player:") +
+                        " " + std::to_string((int)temp.monsterId) +
+                        " \"" + temp.pseudo +
+                        "\" " + std::to_string((int)temp.simplifiedId) +
+                        " " + std::to_string((int)temp.skinId) +
+                        " " + std::to_string((int)temp.speed) +
+                        " " + std::to_string((int)temp.type)
+                      << std::endl;
+            index++;
+        }
+        abort();
+        return;
+    }
+}
+#endif
 
 void MapServer::doDDOSLocalChat()
 {
