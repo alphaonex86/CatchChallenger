@@ -120,7 +120,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
                         client->to_send_insert=false;
                         if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                        {
+                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                            MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
+                            #endif
                             client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        }
                         else
                             client->mapSyncMiss=true;
                         ++index;
@@ -145,7 +150,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                     client->to_send_insert=false;
                     if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                    {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
+                        #endif
                         client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
                     else
                         client->mapSyncMiss=true;
 
@@ -250,7 +260,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         else
                         {
                             if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
+                            {
+                                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                                MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
+                                #endif
                                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                            }
                             else
                                 client->mapSyncMiss=true;
                             clientsToSendDataOldClients[clientsToSendDataSizeOldClients]=client;
@@ -350,11 +365,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                         ++index_subindex;
                     }
 
-
                     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
                     if(clients.at(index)->pingCountInProgress()<=0 && clients.at(index)->mapSyncMiss==false)
+                    {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
+                        #endif
                         clients.at(index)->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
                     else
                         clients.at(index)->mapSyncMiss=true;
                 }
@@ -640,37 +659,150 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
         //send the network message
         uint32_t posOutput=0;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+        {
+            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        #endif
         posOutput+=1+4;
         //prepare the data
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+        {
+            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        #endif
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+        {
+            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        #endif
+
+        //mapId
         if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
             posOutput+=1;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
         else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
             posOutput+=2;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
             posOutput+=4;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
+
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        const size_t clientSize=clients.size();
+        (void)clientSize;
+        #endif
+        //player count for this map
         if(GlobalServerData::serverSettings.max_players<=255)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clients.size()-1);
             posOutput+=1;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
         else
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
             posOutput+=2;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+        {
+            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        #endif
         if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
         {
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             unsigned int indexSub=0;
             while(indexSub<clients.size())
             {
@@ -678,35 +810,148 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
                 posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                 ++indexSub;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
         }
 
+        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+        {
+            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        #endif
+        const uint32_t initPos=posOutput;
         unsigned int index_subindex=0;
         while(index_subindex<clients.size())
         {
+            posOutput=initPos;//reset the pos for each client
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
             client->to_send_insert=false;
             client->haveNewMove=false;
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             if(client->mapSyncMiss==true && client->pingCountInProgress()<=0)
             {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                //std::cerr << "start client " << posOutput << " " << __FILE__ << ":" << __LINE__ << std::endl;
+                if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                {
+                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                #endif
                 if(!GlobalServerData::serverSettings.mapVisibility.simple.reemit)
                 {
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                    {
+                        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
+                    #endif
                     unsigned int indexSub=0;
                     while(indexSub<clients.size())
                     {
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                        {
+                            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                            abort();
+                        }
+                        //std::cerr << "before add " << posOutput << " " << __FILE__ << ":" << __LINE__ << std::endl;
+                        #endif
                         if(client!=clients.at(indexSub))
                             posOutput+=playerToFullInsert(clients.at(indexSub),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        //std::cerr << "after add " << posOutput << " " << __FILE__ << ":" << __LINE__ << std::endl;
+                        if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                        {
+                            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                            abort();
+                        }
+                        #endif
                         ++indexSub;
                     }
+                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                    if(indexSub>clientSize)
+                    {
+                        std::cerr << "corrupted buffer indexSub!=(clientSize-1) into " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
+                    if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                    {
+                        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                        abort();
+                    }
+                    #endif
                 }
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                {
+                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                #endif
 
                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
                 client->to_send_insert=false;
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
+                #endif
                 client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
                 client->mapSyncMiss=false;
             }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             if(client->pingCountInProgress()<=0)
+            {
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                {
+                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                #endif
                 client->sendPing();
+                #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+                {
+                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                    abort();
+                }
+                #endif
+            }
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            if(ProtocolParsingBase::tempBigBufferForOutput[0x00]!=0x6b)
+            {
+                std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+                abort();
+            }
+            #endif
             ++index_subindex;
         }
         to_send_remove.clear();

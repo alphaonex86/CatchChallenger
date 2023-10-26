@@ -22,6 +22,12 @@ ssize_t MapVisibilityAlgorithm_NoneEpoll::read(char * data, const size_t &size)
 
 ssize_t MapVisibilityAlgorithm_NoneEpoll::write(const char * const data, const size_t &size)
 {
+    const size_t s=ProtocolParsingInputOutput::write(data,size);
+    if(s!=size)
+    {
+        std::cerr << "MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll::write()" << std::endl;
+        abort();
+    }
     return CatchChallenger::EpollClient::write(data,size);
 }
 
@@ -47,6 +53,12 @@ ssize_t MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll::read(char * data, 
 
 ssize_t MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll::write(const char * const data, const size_t &size)
 {
+    const size_t s=ProtocolParsingInputOutput::write(data,size);
+    if(s!=size)
+    {
+        std::cerr << "MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll::write()" << std::endl;
+        abort();
+    }
     return CatchChallenger::EpollClient::write(data,size);
 }
 
@@ -72,5 +84,11 @@ ssize_t MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll::read(char * data, cons
 
 ssize_t MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll::write(const char * const data, const size_t &size)
 {
+    const size_t s=ProtocolParsingInputOutput::write(data,size);
+    if(s!=size)
+    {
+        std::cerr << "MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll::write()" << std::endl;
+        abort();
+    }
     return CatchChallenger::EpollClient::write(data,size);
 }

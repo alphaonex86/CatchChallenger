@@ -477,6 +477,7 @@ void Client::setRights(const Player_type& type)
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)newType;
     #elif CATCHCHALLENGER_DB_FILE
+    (void)newType;
     #else
     #error Define what do here
     #endif

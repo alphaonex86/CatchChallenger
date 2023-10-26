@@ -554,6 +554,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)clanId;
     #else
     #error Define what do here
     #endif

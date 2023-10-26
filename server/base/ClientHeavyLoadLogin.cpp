@@ -138,7 +138,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "askLogin_return for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
+//    std::cerr << "askLogin_return for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
     #else
     #error Define what do here
     #endif
@@ -604,7 +604,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 std::vector<CharacterEntry> characterEntryList;
                 hps::to_stream(characterEntryList, out_file);
 
-                std::cerr << "createAccount_return) for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
+                //std::cerr << "createAccount_return) for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
             }
         }
         #else

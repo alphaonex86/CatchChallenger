@@ -277,10 +277,10 @@ void BaseServer::preload_pointOnMap_plant_return()
 
     unsigned int plantCount=0;
     unsigned int plantValidatedCount=0;
-    bool ok;
     dictionary_pointOnMap_maxId_plant=0;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    bool ok=false;
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     #else
     size_t s=0;

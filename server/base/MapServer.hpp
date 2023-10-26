@@ -33,6 +33,9 @@ public:
     int reverse_db_id;
     //the next variable is related to GlobalServerData::serverPrivateVariables.idToZone
     uint16_t zone;//65535 if no zone
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    void check6B(const char * const data,const unsigned int size);
+    #endif
 
     //at last to improve the other variable cache
     std::vector<Client *> clientsForBroadcast;//frequent remove/insert due to map change
