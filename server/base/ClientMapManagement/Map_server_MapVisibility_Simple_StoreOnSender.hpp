@@ -19,6 +19,19 @@ public:
     void purgeBuffer();
     std::vector<MapVisibilityAlgorithm_Simple_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
+    void send_dropAll();
+    void send_reinsertAll();
+    void send_pingAll();
+    void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
+    void send_insert_exclude();
+    void send_remove(unsigned int &clientsToSendDataSizeOldClients);
+    void send_samllreinsert_reemit(unsigned int &clientsToSendDataSizeOldClients);
+    void send_samllreinsert(unsigned int &clientsToSendDataSizeOldClients);
+    void send_insertcompose_header(char *buffer,int &posOutput);
+    void send_insertcompose_map(char *buffer,int &posOutput);
+    void send_insertcompose_playercount(char *buffer,int &posOutput);
+    void send_insertcompose_content_and_send(char *buffer,int &posOutput);
+
     //mostly less remove than don't remove
     std::vector<uint16_t> to_send_remove;
     int to_send_remove_size;
