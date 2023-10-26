@@ -375,8 +375,8 @@ bool Client::giveXPSP(int xp,int sp)
     const bool &haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
-        auto currentMonster=getCurrentMonster();
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        auto currentMonster=getCurrentMonster();
         if(CommonSettingsServer::commonSettingsServer.useSP)
         {
             if(haveChangeOfLevel)
@@ -594,6 +594,8 @@ void Client::saveMonsterPosition(const uint32_t &monsterId,const uint8_t &monste
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)monsterId;
+    (void)monsterPosition;
     #else
     #error Define what do here
     #endif

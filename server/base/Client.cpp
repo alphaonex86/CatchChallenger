@@ -680,6 +680,7 @@ void Client::breakNeedMoreData()
     #endif
 }
 
+//Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
 void Client::sendPing()
 {
     if(queryNumberList.empty())
@@ -692,11 +693,12 @@ void Client::sendPing()
         pingInProgress++;
 
     //send the network reply
-    ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE3;
-    ProtocolParsingBase::tempBigBufferForOutput[0x01]=queryNumberList.back();
+    char buffer[2];//Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
+    buffer[0x00]=0xE3;
+    buffer[0x01]=queryNumberList.back();
     registerOutputQuery(queryNumberList.back(),0xE3);
 
-    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,2);
+    sendRawBlock(buffer,sizeof(buffer));
 
     queryNumberList.pop_back();
 }

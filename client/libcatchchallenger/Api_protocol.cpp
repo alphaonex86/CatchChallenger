@@ -129,6 +129,9 @@ void Api_protocol::errorParsingLayer(const std::string &error)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     //abort();-> same behaviour on all platform
     #endif
+    #ifdef CATCHCHALLENGER_ABORTIFERROR
+    abort();
+    #endif
 }
 
 void Api_protocol::messageParsingLayer(const std::string &message) const

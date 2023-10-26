@@ -432,7 +432,7 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
             hps::to_stream(GlobalServerData::serverPrivateVariables.industriesStatus, out_file);
             hps::to_stream(GlobalServerData::serverSettings.city, out_file);
 
-            std::cerr << "createAccount_return) for: database/server" << std::endl;
+            //std::cerr << "createAccount_return) for: database/server" << std::endl;
         }
     }
     #else

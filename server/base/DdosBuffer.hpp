@@ -60,9 +60,9 @@ T DdosBuffer<T,maxItems>::total() const
         std::cerr << "time drift into DDOS, return 0" << std::endl;
         return 0;
     }
-    if(((uint64_t)tv.tv_sec-lastFlush)>30)
+    if(((uint64_t)tv.tv_sec-lastFlush)>300)
     {
-        std::cerr << "no flush into >30s, maybe to forgot call the DdosBuffer::flush() via timer, return 0" << std::endl;
+        std::cerr << "no flush into >300s, maybe to forgot call the DdosBuffer::flush() via timer, return 0" << std::endl;
         return 0;
     }
     #endif

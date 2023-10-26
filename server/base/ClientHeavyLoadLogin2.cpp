@@ -200,6 +200,7 @@ void Client::deleteCharacterNow(const uint32_t &characterId)
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)characterId;
     #else
     #error Define what do here
     #endif
@@ -233,7 +234,6 @@ void Client::addCharacter(const uint8_t &query_id, const uint8_t &profileIndex, 
     #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    std::cerr << "Client::addCharacter() for file" << std::endl;
     #else
     #error Define what do here
     #endif
@@ -1009,6 +1009,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)characterId;
     #elif CATCHCHALLENGER_DB_FILE
+    (void)characterId;
     #else
     #error Define what do here
     #endif

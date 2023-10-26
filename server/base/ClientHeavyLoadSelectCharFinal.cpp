@@ -35,6 +35,8 @@ void Client::characterIsRightFinalStep()
 
     uint32_t posOutput=0;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Client::characterIsRightFinalStepHeader,Client::characterIsRightFinalStepHeaderSize);
+    if(Client::characterIsRightFinalStepHeaderSize>100000)
+        std::cerr << "strange Client::characterIsRightFinalStepHeaderSize is bigger than 100K" << std::endl;
     ProtocolParsingBase::tempBigBufferForOutput[0x01]=query_id;
     posOutput+=Client::characterIsRightFinalStepHeaderSize;
 
@@ -438,6 +440,8 @@ void Client::characterIsRightFinalStep()
 
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
+    if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+        std::cerr << "strange output is bigger than 100K" << std::endl;
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
         return;
 
@@ -518,6 +522,8 @@ void Client::characterIsRightFinalStep()
             outputSize=3;
         }
         //can't use receive_instant_player_number() due this->connected_players==connected_players
+        if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+            std::cerr << "strange output is bigger than 100K" << std::endl;
         sendRawBlock(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),outputSize);
     }
 }
