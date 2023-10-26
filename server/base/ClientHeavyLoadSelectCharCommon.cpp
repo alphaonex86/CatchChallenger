@@ -141,7 +141,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         characterSelectionIsWrong(query_id,0x04,"Need more simplifiedIdList entry to log the character");
         return;
     }
-    std::string hexa;
+    std::string hexa,pseudo;
     {
         std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
@@ -161,6 +161,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
             if(c.character_id==characterId)
             {
                 hexa=binarytoHexa(c.pseudo.c_str(),c.pseudo.size());
+                pseudo=c.pseudo;
                 break;
             }
             index++;
@@ -681,6 +682,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         }
         hps::StreamInputBuffer s(in_file);
         s >> *this;
+        public_and_private_informations.public_informations.pseudo=pseudo;
         public_and_private_informations.public_informations.simplifiedId=simplifiedIdList.back();
         simplifiedIdList.pop_back();
         selectCharacterQueryId.push_back(query_id);
