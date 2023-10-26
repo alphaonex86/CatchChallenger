@@ -46,6 +46,7 @@ void Client::syncMonsterBuff(const PlayerMonster &monster)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)raw_buff;
     #else
     #error Define what do here
     #endif
@@ -102,6 +103,7 @@ void Client::syncMonsterSkillAndEndurance(const PlayerMonster &monster)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)skills_endurance;
     #else
     #error Define what do here
     #endif
@@ -133,6 +135,7 @@ void Client::syncMonsterEndurance(const PlayerMonster &monster)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    (void)skills_endurance;
     #else
     #error Define what do here
     #endif
@@ -184,8 +187,8 @@ void Client::saveStat()
             }
     }
     #endif
-    const PlayerMonster * const monster=getCurrentMonster();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    const PlayerMonster * const monster=getCurrentMonster();
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                 std::to_string(monster->hp),
                 std::to_string(monster->id)

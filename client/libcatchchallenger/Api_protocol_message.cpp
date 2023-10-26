@@ -276,6 +276,22 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 index++;
             }
+            if((size-pos)!=0)
+            {
+                parseError("Procotol wrong or corrupted","remaining data: parseMessage("+std::to_string(packetCode)+
+                           ","+binarytoHexa(data,pos)+
+                           " "+binarytoHexa(data+pos,size-pos)+
+                           ") line "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                           " CommonSettingsServer::commonSettingsServer.dontSendPseudo: "+std::to_string((unsigned int)CommonSettingsServer::commonSettingsServer.dontSendPseudo)+
+                           " CommonSettingsServer::commonSettingsServer.forcedSpeed: "+std::to_string((unsigned int)CommonSettingsServer::commonSettingsServer.forcedSpeed)+
+                           " max_players: "+std::to_string((unsigned int)max_players)+
+                           " character_selected: "+std::to_string((unsigned int)character_selected)+
+                           " number_of_map: "+std::to_string((unsigned int)number_of_map)+
+                           " player_informations.public_informations.simplifiedId: "+std::to_string((unsigned int)player_informations.public_informations.simplifiedId)+
+                           " last_direction_is_set: "+std::to_string((unsigned int)last_direction_is_set)
+                           );
+                return false;
+            }
         }
         break;
         //Move player on map, used too for the first insert of the current player

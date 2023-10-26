@@ -376,7 +376,7 @@ void MainWindow::display_numberOfStartCreatedCharacter(quint16 numberOfStartCrea
 
 void MainWindow::updateClientListStatus()
 {
-    ui->listClients->clear();
+/*    ui->listClients->clear();
     for (auto i = multipleBotConnexion.apiToCatchChallengerClient.cbegin(), end = multipleBotConnexion.apiToCatchChallengerClient.cend(); i != end; ++i)
     {
         const CatchChallenger::Api_client_real * const key=i.key();
@@ -429,7 +429,7 @@ void MainWindow::updateClientListStatus()
         default:
             ui->listClients->addItem("???");
         }
-    }
+    }*/
 }
 
 void MainWindow::on_serverList_activated(const QModelIndex &index)

@@ -24,60 +24,30 @@
        <item>
         <widget class="QLabel" name="numberOfHaveDatapackCharacter">
          <property name="text">
-          <string>numberOfHaveDatapackCharacter: ?</string>
+          <string>numberOfHaveDatapackCharacter: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="numberOfStartCreatingCharacter">
          <property name="text">
-          <string>numberOfStartCreatingCharacter: ?</string>
+          <string>numberOfStartCreatingCharacter: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="numberOfStartCreatedCharacter">
          <property name="text">
-          <string>numberOfStartCreatedCharacter: ?</string>
+          <string>numberOfStartCreatedCharacter: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="numberOfSelectingCharacter">
          <property name="text">
-          <string>Selecting character: ?</string>
+          <string>Selecting character: 0</string>
          </property>
         </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QGroupBox" name="groupBox_char">
-      <property name="title">
-       <string>Character</string>
-      </property>
-      <layout class="QVBoxLayout" name="verticalLayout_5">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_4">
-         <item>
-          <widget class="QComboBox" name="characterList">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="characterSelect">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="text">
-            <string>Select</string>
-           </property>
-          </widget>
-         </item>
-        </layout>
        </item>
       </layout>
      </widget>
@@ -351,30 +321,60 @@
        <item>
         <widget class="QLabel" name="numberOfBotConnected">
          <property name="text">
-          <string>Number of bot connected: ?</string>
+          <string>Number of bot connected: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="numberOfSelectedCharacter">
          <property name="text">
-          <string>Selected character: ?</string>
+          <string>Selected character: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="labelLastReplyTime">
          <property name="text">
-          <string>Last reply time: ?</string>
+          <string>Last reply time: 0</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="labelQueryList">
          <property name="text">
-          <string>Running query: ? Query with worse time: ?</string>
+          <string>Running query: 0 Query with worse time: 0</string>
          </property>
         </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QGroupBox" name="groupBox_char">
+      <property name="title">
+       <string>Character</string>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QComboBox" name="characterList">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="characterSelect">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="text">
+            <string>Select</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -424,9 +424,6 @@
        </item>
       </layout>
      </widget>
-    </item>
-    <item row="3" column="0">
-     <widget class="QListWidget" name="listClients"/>
     </item>
    </layout>
   </widget>
