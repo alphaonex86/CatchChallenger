@@ -2060,7 +2060,9 @@ void BaseWindow::on_openToLan_clicked()
     ui->openToLan->setEnabled(false);
     ui->toolButtonLan->setEnabled(false);
     const Player_private_and_public_informations &informations=client->get_player_informations_ro();
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
+    #endif
 }
 
 
@@ -2075,6 +2077,8 @@ void BaseWindow::on_toolButtonLan_clicked()
     ui->toolButtonLan->setEnabled(false);
     ui->toolButtonLan->setVisible(false);
     const Player_private_and_public_informations &informations=client->get_player_informations_ro();
+    #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
+    #endif
 }
 

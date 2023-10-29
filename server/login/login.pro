@@ -81,7 +81,7 @@ SOURCES += \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
-    ../epoll/EpollClient.cpp \
+    ../epoll/EpollClientAdvanced.cpp \
     ../epoll/EpollSocket.cpp \
     ../epoll/EpollSslClient.cpp \
     ../epoll/db/EpollPostgresql.cpp \
