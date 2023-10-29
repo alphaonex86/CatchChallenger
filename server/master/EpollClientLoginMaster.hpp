@@ -4,7 +4,7 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "CharactersGroup.hpp"
 #include "../base/VariableServer.hpp"
-#include "../epoll/EpollClient.hpp"
+#include "../epoll/EpollClientAdvanced.hpp"
 
 #include <random>
 #include <string>

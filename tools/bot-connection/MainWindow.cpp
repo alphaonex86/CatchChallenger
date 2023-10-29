@@ -1,9 +1,8 @@
 #include "MainWindow.h"
 #include "ui_MainWindow.h"
 
-#include "../../general/base/CommonSettingsServer.h"
-#include "../../general/base/FacilityLib.h"
-#include "../../client/base/FacilityLibClient.h"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLib.hpp"
 #include "../bot/simple/SimpleAction.h"
 
 #include <QNetworkProxy>
@@ -405,10 +404,10 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
                 text=name+groupText;
                 if(server.playedTime>0)
                 {
-                    if(!server.description.empty())
+                    /*if(!server.description.empty())
                         text+=" "+tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(server.playedTime)));
                     else
-                        text+="\n"+tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(server.playedTime)));
+                        text+="\n"+tr("%1 played").arg(QString::fromStdString(CatchChallenger::FacilityLibClient::timeToString(server.playedTime)));*/
                 }
                 if(!server.description.empty())
                     text+="\n"+QString::fromStdString(server.description);
