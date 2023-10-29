@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_CLIENTMAPMANAGEMENTEPOLL_H
 #define CATCHCHALLENGER_CLIENTMAPMANAGEMENTEPOLL_H
 
-#include "EpollClient.hpp"
+#include "EpollClientAdvanced.hpp"
 #include "../base/ClientMapManagement/MapVisibilityAlgorithm_None.hpp"
 #include "../base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 #include "../base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp"

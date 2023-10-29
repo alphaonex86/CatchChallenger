@@ -14,7 +14,7 @@
 #include <QTreeWidgetItem>
 
 #include "../bot/MultipleBotConnectionImplForGui.h"
-#include "../../client/base/ClientStructures.h"
+#include "../../client/libcatchchallenger/ClientStructures.hpp"
 
 namespace Ui {
 class MainWindow;
