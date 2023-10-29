@@ -28,7 +28,7 @@ SOURCES += main.cpp \
     ../../general/base/ProtocolParsingGeneral.cpp \
     ../../general/base/ProtocolParsingInput.cpp \
     ../../general/base/ProtocolParsingOutput.cpp \
-    ../../server/epoll/EpollClient.cpp \
+    ../../server/epoll/EpollClientAdvanced.cpp \
     ../../server/epoll/EpollUnixSocketServer.cpp \
     EpollServerStats.cpp
 

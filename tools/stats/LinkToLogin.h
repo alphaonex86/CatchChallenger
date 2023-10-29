@@ -2,7 +2,7 @@
 #define LOGINLINKTOLOGIN_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../../server/epoll/EpollClient.hpp"
+#include "../../server/epoll/EpollClientAdvanced.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>

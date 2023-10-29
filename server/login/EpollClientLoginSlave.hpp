@@ -1,7 +1,7 @@
 #ifndef EPOLLCLIENTLOGINMASTER_H
 #define EPOLLCLIENTLOGINMASTER_H
 
-#include "../epoll/EpollClient.hpp"
+#include "../epoll/EpollClientAdvanced.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../base/VariableServer.hpp"
 #include "../epoll/db/EpollPostgresql.hpp"
