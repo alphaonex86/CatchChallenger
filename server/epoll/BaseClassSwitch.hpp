@@ -54,6 +54,11 @@ public:
             Timer,
             Stdin
         #endif
+        #ifdef CATCHCHALLENGER_CLASS_BOT
+            UnixServer,
+            Client,
+            Timer,
+        #endif
     };
     virtual EpollObjectType getType() const = 0;
 };

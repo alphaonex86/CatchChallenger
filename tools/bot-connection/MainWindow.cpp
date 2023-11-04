@@ -114,8 +114,8 @@ void MainWindow::detectSlowDown(uint32_t queryCount,uint32_t worseTime)
 }
 
 void MainWindow::logged(CatchChallenger::Api_client_real *senderObject,
-                        const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
-                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                        const std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,
+                        const std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList,
                         bool haveTheDatapack)
 {
     Q_UNUSED(haveTheDatapack);
