@@ -74,7 +74,7 @@ SOURCES += \
     ../epoll/Epoll.cpp \
     ../epoll/EpollGenericSslServer.cpp \
     ../epoll/EpollGenericServer.cpp \
-    ../epoll/EpollClientAdvanced.cpp \
+    ../epoll/EpollClient.cpp \
     ../epoll/EpollSocket.cpp \
     ../epoll/EpollSslClient.cpp \
     ../epoll/EpollClientToServer.cpp \

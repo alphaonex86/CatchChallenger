@@ -2,7 +2,7 @@
 #define LOGINLINKTOMASTER_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../epoll/EpollClientAdvanced.hpp"
+#include "../epoll/EpollClient.hpp"
 #include <vector>
 #include <netinet/in.h>
 #include <sys/socket.h>

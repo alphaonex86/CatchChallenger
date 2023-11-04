@@ -4,7 +4,7 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "TimerReconnectOnTheMaster.hpp"
 #include "../base/TinyXMLSettings.hpp"
-#include "../epoll/EpollClientAdvanced.hpp"
+#include "../epoll/EpollClient.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
