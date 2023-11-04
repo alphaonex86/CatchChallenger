@@ -41,8 +41,8 @@ private slots:
     void on_connect_clicked();
     void on_characterSelect_clicked();
     void logged(CatchChallenger::Api_client_real *senderObject,
-                const std::vector<CatchChallenger::ServerFromPoolForDisplay> &serverOrdenedList,
-                const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList,
+                const std::vector<CatchChallenger::ServerFromPoolForDisplay> serverOrdenedList,
+                const std::vector<std::vector<CatchChallenger::CharacterEntry> > characterEntryList,
                 bool haveTheDatapack);
     void statusError(QString error);
     void display_numberOfBotConnected(quint16 numberOfBotConnected);
