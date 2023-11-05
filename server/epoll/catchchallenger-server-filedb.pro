@@ -41,7 +41,7 @@ TEMPLATE = app
 
 SOURCES += \
     $$PWD/EpollSocket.cpp \
-    $$PWD/EpollClientAdvanced.cpp \
+    $$PWD/EpollClient.cpp \
     $$PWD/EpollServer.cpp \
     $$PWD/EpollSslClient.cpp \
     $$PWD/EpollSslServer.cpp \
