@@ -29,8 +29,8 @@ public:
     void parseIncommingData();
     void breakNeedMoreData();
 
-    ssize_t read(char * data, const size_t &size);
-    ssize_t write(const char * const data, const size_t &size);
+    ssize_t readFromSocket(char * data, const size_t &size);
+    ssize_t writeToSocket(const char * const data, const size_t &size);
     void closeSocket();
 
     void selectCharacter(const uint8_t &query_id, const uint32_t &serverUniqueKey, const uint8_t &charactersGroupIndex, const uint32_t &characterId, const uint32_t &accountId);

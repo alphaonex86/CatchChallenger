@@ -9,26 +9,8 @@
 
 using namespace CatchChallenger;
 
-ssize_t ProtocolParsingInputOutput::read(char * data, const size_t &size)
-{
-    #ifdef PROTOCOLPARSINGDEBUG
-    std::cout << "ProtocolParsingInputOutput::read()" << std::endl;
-    #endif
-    (void)data;
-    (void)size;
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    //return -1, to simulate ok, take care of read real value
-    RXSize+=size;
-    return size;
-    #endif
-    //return -1, to simulate ok, take care of read real value
-    return size;
-}
-
 ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t &size)
 {
-    (void)data;
-    (void)size;
     //control the content BEFORE send
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -84,6 +66,7 @@ ssize_t ProtocolParsingInputOutput::write(const char * const data, const size_t 
     #ifndef EPOLLCATCHCHALLENGERSERVER
     TXSize+=size;
     #endif
+    writeToSocket(data,size);
     return size;
 }
 
@@ -118,7 +101,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
         {
             const unsigned int &size_to_get=CATCHCHALLENGER_COMMONBUFFERSIZE-static_cast<unsigned int>(header_cut.size());
             memcpy(ProtocolParsingInputOutput::tempBigBufferForInput,header_cut.data(),header_cut.size());
-            size=read(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
+            size=readFromSocket(ProtocolParsingInputOutput::tempBigBufferForInput,size_to_get)+header_cut.size();
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "ProtocolParsingInputOutput::parseIncommingData() read()" << std::endl;
             #endif
@@ -131,6 +114,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
             if(size>0)
             {
+                #ifndef EPOLLCATCHCHALLENGERSERVER
+                RXSize+=size;
+                #endif
                 size+=header_cut.size();
                 #ifdef PROTOCOLPARSINGDEBUG
                 std::cout << "with header cut " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
@@ -150,7 +136,7 @@ void ProtocolParsingInputOutput::parseIncommingData()
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() pre read" << std::endl;
             #endif
-            size=read(ProtocolParsingInputOutput::tempBigBufferForInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
+            size=readFromSocket(ProtocolParsingInputOutput::tempBigBufferForInput,CATCHCHALLENGER_COMMONBUFFERSIZE);
             #ifdef PROTOCOLPARSINGDEBUG
             std::cout << "ProtocolParsingInputOutput::parseIncommingData() !header_cut.empty() post read" << std::endl;
             #endif
@@ -166,6 +152,9 @@ void ProtocolParsingInputOutput::parseIncommingData()
             }
             if(size>0)
             {
+                #ifndef EPOLLCATCHCHALLENGERSERVER
+                RXSize+=size;
+                #endif
                 #ifdef PROTOCOLPARSINGDEBUG
                 std::cout << "without header cut " << binarytoHexa(ProtocolParsingInputOutput::tempBigBufferForInput,size) << " and size " << size << std::endl;
                 #endif

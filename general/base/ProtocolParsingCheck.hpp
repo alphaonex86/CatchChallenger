@@ -38,8 +38,8 @@ class ProtocolParsingCheck : public ProtocolParsingBase
 
         bool disconnectClient();
 
-        ssize_t read(char * data, const size_t &size);
-        ssize_t write(const char * data, const size_t &size);
+        ssize_t readFromSocket(char * data, const size_t &size);
+        ssize_t writeToSocket(const char * data, const size_t &size);
 };
 
 }
