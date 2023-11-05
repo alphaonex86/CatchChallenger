@@ -218,14 +218,6 @@ void SubServer::logged(std::vector<CatchChallenger::ServerFromPoolForDisplay> se
     }
 }
 
-bool CatchChallenger::ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const
-{
-    if(serverFromPoolForDisplay.uniqueKey<this->uniqueKey)
-        return true;
-    else
-        return false;
-}
-
 void SubServer::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
     if(connexionManager->client->getServerOrdenedList().empty())
