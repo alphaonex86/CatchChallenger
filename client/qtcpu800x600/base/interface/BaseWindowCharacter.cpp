@@ -333,14 +333,6 @@ void BaseWindow::updateServerList()
     ui->serverList->expandAll();
 }
 
-bool ServerFromPoolForDisplay::operator<(const ServerFromPoolForDisplay &serverFromPoolForDisplay) const
-{
-    if(serverFromPoolForDisplay.uniqueKey<this->uniqueKey)
-        return true;
-    else
-        return false;
-}
-
 void BaseWindow::addToServerList(LogicialGroup &logicialGroup, QTreeWidgetItem *item, const uint64_t &currentDate, const bool &fullView)
 {
     if(client->getServerOrdenedList().empty())
