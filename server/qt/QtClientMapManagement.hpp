@@ -13,8 +13,8 @@ public:
     QtMapVisibilityAlgorithm_None(QIODevice *qtSocket);
     void closeSocket() override;
     bool isValid() override;
-    ssize_t read(char * data, const size_t &size) override;
-    ssize_t write(const char * const data, const size_t &size) override;
+    ssize_t readFromSocket(char * data, const size_t &size) override;
+    ssize_t writeToSocket(const char * const data, const size_t &size) override;
     virtual void parseIncommingData() override;
 };
 class QtMapVisibilityAlgorithm_WithBorder_StoreOnSender : public QObject, public CatchChallenger::QtClient, public CatchChallenger::MapVisibilityAlgorithm_WithBorder_StoreOnSender
@@ -24,8 +24,8 @@ public:
     QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(QIODevice *qtSocket);
     void closeSocket() override;
     bool isValid() override;
-    ssize_t read(char * data, const size_t &size) override;
-    ssize_t write(const char * const data, const size_t &size) override;
+    ssize_t readFromSocket(char * data, const size_t &size) override;
+    ssize_t writeToSocket(const char * const data, const size_t &size) override;
     virtual void parseIncommingData() override;
 };
 class QtMapVisibilityAlgorithm_Simple_StoreOnSender : public QObject, public CatchChallenger::QtClient, public CatchChallenger::MapVisibilityAlgorithm_Simple_StoreOnSender
@@ -35,8 +35,8 @@ public:
     QtMapVisibilityAlgorithm_Simple_StoreOnSender(QIODevice *qtSocket);
     void closeSocket() override;
     bool isValid() override;
-    ssize_t read(char * data, const size_t &size) override;
-    ssize_t write(const char * const data, const size_t &size) override;
+    ssize_t readFromSocket(char * data, const size_t &size) override;
+    ssize_t writeToSocket(const char * const data, const size_t &size) override;
     virtual void parseIncommingData() override;
 };
 

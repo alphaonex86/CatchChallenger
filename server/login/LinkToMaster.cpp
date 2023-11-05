@@ -489,16 +489,13 @@ std::string LinkToMaster::listTheRunningQuery() const
     return returnVar;
 }
 
-ssize_t LinkToMaster::read(char * data, const size_t &size)
+ssize_t LinkToMaster::readFromSocket(char * data, const size_t &size)
 {
     return EpollClient::read(data,size);
 }
 
-ssize_t LinkToMaster::write(const char * const data, const size_t &size)
+ssize_t LinkToMaster::writeToSocket(const char * const data, const size_t &size)
 {
-    //do some basic check on low level protocol (message split, ...)
-    if(ProtocolParsingInputOutput::write(data,size)<0)
-        return -1;
     return EpollClient::write(data,size);
 }
 

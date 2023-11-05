@@ -79,8 +79,8 @@ public:
     void readTheFirstSslHeader();
     void moveClientFastPath(const uint8_t &, const uint8_t &);
 
-    ssize_t read(char * data, const size_t &size);
-    ssize_t write(const char * const data, const size_t &size);
+    ssize_t readFromSocket(char * data, const size_t &size);
+    ssize_t writeToSocket(const char * const data, const size_t &size);
     bool disconnectClient();
     void closeSocket();
 protected:

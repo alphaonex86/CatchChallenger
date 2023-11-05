@@ -148,16 +148,13 @@ void EpollClientLoginSlave::breakNeedMoreData()
     #endif
 }
 
-ssize_t EpollClientLoginSlave::read(char * data, const size_t &size)
+ssize_t EpollClientLoginSlave::readFromSocket(char * data, const size_t &size)
 {
     return EpollClient::read(data,size);
 }
 
-ssize_t EpollClientLoginSlave::write(const char * const data, const size_t &size)
+ssize_t EpollClientLoginSlave::writeToSocket(const char * const data, const size_t &size)
 {
-    //do some basic check on low level protocol (message split, ...)
-    if(ProtocolParsingInputOutput::write(data,size)<0)
-        return -1;
     return EpollClient::write(data,size);
 }
 

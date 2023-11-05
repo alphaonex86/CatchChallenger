@@ -58,8 +58,8 @@ public:
     bool sendRawBlock(const char * const data,const unsigned int &size);
     bool removeFromQueryReceived(const uint8_t &queryNumber);
     bool disconnectClient();
-    ssize_t read(char * data, const size_t &size);
-    ssize_t write(const char * const data, const size_t &size);
+    ssize_t readFromSocket(char * data, const size_t &size);
+    ssize_t writeToSocket(const char * const data, const size_t &size);
     void closeSocket();
 protected:
     void errorParsingLayer(const std::string &error);

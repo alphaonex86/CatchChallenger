@@ -2,7 +2,7 @@
 #define LOGINLINKTOLOGIN_H
 
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../../server/epoll/EpollClientAdvanced.hpp"
+#include "../../server/epoll/EpollClient.hpp"
 #include <vector>
 #include <random>
 #include <netinet/in.h>
@@ -101,8 +101,8 @@ public:
     static void displayErrorAndQuit(const char * errorString);
     const std::string &getJsonFileContent() const;
 
-    ssize_t read(char * data, const size_t &size);
-    ssize_t write(const char * const data, const size_t &size);
+    ssize_t readFromSocket(char * data, const size_t &size);
+    ssize_t writeToSocket(const char * const data, const size_t &size);
     void closeSocket();
 protected:
     bool disconnectClient();

@@ -856,7 +856,7 @@ void Api_protocol_Qt::closeSocket()
         socket->close();
 }
 
-ssize_t Api_protocol_Qt::read(char * data, const size_t &size)
+ssize_t Api_protocol_Qt::readFromSocket(char * data, const size_t &size)
 {
     if(socket!=nullptr)
         return socket->read(data,size);
@@ -864,7 +864,7 @@ ssize_t Api_protocol_Qt::read(char * data, const size_t &size)
     return -1;
 }
 
-ssize_t Api_protocol_Qt::write(const char * const data, const size_t &size)
+ssize_t Api_protocol_Qt::writeToSocket(const char * const data, const size_t &size)
 {
     if(socket!=nullptr)
         return socket->write(data,size);

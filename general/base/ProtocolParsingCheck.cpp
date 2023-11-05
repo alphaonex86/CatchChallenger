@@ -86,7 +86,7 @@ bool ProtocolParsingCheck::disconnectClient()
     return true;
 }
 
-ssize_t ProtocolParsingCheck::read(char * data, const size_t &size)
+ssize_t ProtocolParsingCheck::readFromSocket(char * data, const size_t &size)
 {
     (void)data;
     (void)size;
@@ -94,7 +94,7 @@ ssize_t ProtocolParsingCheck::read(char * data, const size_t &size)
     abort();
 }
 
-ssize_t ProtocolParsingCheck::write(const char * const data, const size_t &size)
+ssize_t ProtocolParsingCheck::writeToSocket(const char * const data, const size_t &size)
 {
     (void)data;
     (void)size;
