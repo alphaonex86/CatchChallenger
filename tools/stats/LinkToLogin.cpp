@@ -601,19 +601,13 @@ void LinkToLogin::writeData(const std::string &str)
 }
 #endif
 
-ssize_t LinkToLogin::read(char * data, const size_t &size)
+ssize_t LinkToLogin::readFromSocket(char * data, const size_t &size)
 {
     return EpollClient::read(data,size);
 }
 
-ssize_t LinkToLogin::write(const char * const data, const size_t &size)
+ssize_t LinkToLogin::writeToSocket(const char * const data, const size_t &size)
 {
-    //do some basic check on low level protocol (message split, ...)
-    if(ProtocolParsingInputOutput::write(data,size)<0)
-    {
-        std::cerr << "error to write ProtocolParsingInputOutput::write() " << infd << " into LinkToLogin::write(): " << binarytoHexa(data,size) << std::endl;
-        return -1;
-    }
     if(EpollClient::write(data,size)!=(ssize_t)size)
     {
         std::cerr << "error to write ProtocolParsingInputOutput::write() " << infd << " into LinkToLogin::write(): " << binarytoHexa(data,size) << std::endl;

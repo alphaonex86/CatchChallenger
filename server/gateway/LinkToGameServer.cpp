@@ -620,12 +620,12 @@ bool LinkToGameServer::removeFromQueryReceived(const uint8_t &queryNumber)
     return ProtocolParsingBase::removeFromQueryReceived(queryNumber);
 }
 
-ssize_t LinkToGameServer::read(char * data, const size_t &size)
+ssize_t LinkToGameServer::readFromSocket(char * data, const size_t &size)
 {
     return EpollClient::read(data,size);
 }
 
-ssize_t LinkToGameServer::write(const char * const data, const size_t &size)
+ssize_t LinkToGameServer::writeToSocket(const char * const data, const size_t &size)
 {
     //do some basic check on low level protocol (message split, ...)
     if(ProtocolParsingInputOutput::write(data,size)<0)
