@@ -105,8 +105,8 @@ public:
     virtual ~ProtocolParsingBase();
     friend class ProtocolParsing;
     friend class ProtocolParsingCheck;
-    virtual ssize_t read(char * data, const size_t &size) = 0;
-    virtual ssize_t write(const char * const data, const size_t &size) = 0;
+    virtual ssize_t readFromSocket(char * data, const size_t &size) = 0;
+    virtual ssize_t writeToSocket(const char * const data, const size_t &size) = 0;
     virtual void registerOutputQuery(const uint8_t &queryNumber, const uint8_t &packetCode) = 0;
 public:
     //this interface allow 0 copy method, return 1 if all is ok, return 0 if need more data, -1 if critical error and need disconnect
@@ -207,8 +207,7 @@ protected:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     CompressionProtocol::CompressionType getCompressType() const override;
     #endif
-    virtual ssize_t read(char * data, const size_t &size) override;
-    virtual ssize_t write(const char * const data, const size_t &size) override;
+    ssize_t write(const char * const data, const size_t &size);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ProtocolParsingCheck *protocolParsingCheck;
     #endif
