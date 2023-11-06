@@ -52,7 +52,6 @@ public:
     void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
 
     //protocol/connection info
-    virtual void hashSha224(const char * const data,const int size,char *buffer) override;
     virtual void readForFirstHeader() override;
     void disconnected(const std::string &reason) override;
     void notLogged(const std::string &reason) override;
