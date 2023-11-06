@@ -43,7 +43,7 @@ public:
     virtual bool haveBeatBot(const uint16_t &botFightId) const = 0;
 
     //protocol command
-    virtual void hashSha224(const char * const data,const int size,char *buffer) = 0;
+    void hashSha224(const char * const data,const int size,char *buffer);
     bool tryLogin(const std::string &login,const std::string &pass);
     bool tryCreateAccount();
     bool sendProtocol();

@@ -182,13 +182,6 @@ void Api_protocol_Qt::socketDestroyed()
     Api_protocol::socketDestroyed();
 }
 
-void Api_protocol_Qt::hashSha224(const char * const data,const int size,char *buffer)
-{
-    QCryptographicHash hash(QCryptographicHash::Sha224);
-    hash.addData(data,size);
-    memcpy(buffer,hash.result(),CATCHCHALLENGER_SHA224HASH_SIZE);
-}
-
 void Api_protocol_Qt::connectTheExternalSocketInternal()
 {
     #ifndef NOTCPSOCKET
