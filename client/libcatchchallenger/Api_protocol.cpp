@@ -2,6 +2,7 @@
 #include "../../general/base/ProtocolVersion.hpp"
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../general/sha224/sha224.hpp"
 
 #ifdef Q_CC_GNU
 //this next header is needed to change file time/date under gcc
@@ -279,6 +280,16 @@ const std::vector<ServerFromPoolForDisplay> &Api_protocol::getServerOrdenedList(
 bool Api_protocol::protocolWrong() const
 {
     return have_send_protocol && !have_receive_protocol;
+}
+
+void Api_protocol::hashSha224(const char * const data,const int size,char *buffer)
+{
+    SHA224 ctx = SHA224();
+    ctx.init();
+    const unsigned char * const tData=reinterpret_cast<const unsigned char * const>(data);
+    ctx.update(tData,size);
+    unsigned char * tBuffer=reinterpret_cast<unsigned char *>(buffer);
+    ctx.final(tBuffer);
 }
 
 bool Api_protocol::tryLogin(const std::string &login, const std::string &pass)
