@@ -59,8 +59,9 @@ public:
     std::string getPseudo() const;
     uint16_t getId() const;
 
+    /*why exists if never call by this class?
     virtual void sendDatapackContentBase(const std::string &hashBase=std::string()) = 0;
-    virtual void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string()) = 0;
+    virtual void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string()) = 0;*/
     virtual void tryDisconnect() = 0;
     virtual std::string datapackPathBase() const;
     virtual std::string datapackPathMain() const;

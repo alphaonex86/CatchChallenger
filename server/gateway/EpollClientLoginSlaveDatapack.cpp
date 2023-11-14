@@ -31,59 +31,6 @@ std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile> EpollCl
         abort();
     }
     #endif
-/*old code    std::unordered_map<std::string,DatapackCacheFile> filesList;
-    std::regex datapack_rightFileName(DATAPACK_FILE_REGEX);
-
-    const std::vector<std::string> &returnList=FacilityLibGeneral::listFolder(path);
-    int index=0;
-    const int &size=returnList.size();
-    while(index<size)
-    {
-        #ifdef _WIN32
-        std::string fileName=returnList.at(index);
-        #else
-        const std::string &fileName=returnList.at(index);
-        #endif
-        if(regex_search(fileName,datapack_rightFileName))
-        {
-            if(DatapackDownloaderBase::extensionAllowed.find(FacilityLibGeneral::getSuffix(fileName))!=DatapackDownloaderBase::extensionAllowed.cend())
-            {
-                if(withHash)
-                {
-                    const std::string &fullPath=path+returnList.at(index);
-                    std::cerr << "datapack_file_list(): " << fullPath << __FILE__ << ":" << __LINE__ << std::endl;
-                    dot he remake
-                    FILE *file=fopen(fullPath.c_str(),"rb");
-                    if(file!=NULL)
-                    {
-                        DatapackCacheFile datapackCacheFile;
-                        #ifdef _WIN32
-                        fileName.replace(EpollClientLoginSlave::text_antislash,EpollClientLoginSlave::text_slash);//remplace if is under windows server
-                        #endif
-
-                        const std::vector<char> &data=FacilityLibGeneral::readAllFileAndClose(file);
-                        SHA224 hash = SHA224();
-                        hash.init();
-                        hash.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
-                        hash.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
-                        ::memcpy(&datapackCacheFile.partialHash,ProtocolParsingBase::tempBigBufferForOutput,sizeof(uint32_t));
-
-                        filesList[fileName]=datapackCacheFile;
-                    }
-                    else
-                    {
-                        std::cerr << "Can't open: " << fileName << ": " << errno << std::endl;
-                        return std::unordered_map<std::string,EpollClientLoginSlave::DatapackCacheFile>();
-                    }
-                }
-            }
-            else
-                datapackCacheFile.partialHash=0;
-            filesList[fileName]=datapackCacheFile;
-        }
-        index++;
-    }
-    return filesList;*/
     std::unordered_map<std::string,DatapackCacheFile> filesList;
 
     std::vector<std::string> returnList;
