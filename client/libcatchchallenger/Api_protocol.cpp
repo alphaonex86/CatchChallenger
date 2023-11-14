@@ -641,6 +641,17 @@ bool Api_protocol::selectCharacter(const uint8_t &charactersGroupIndex, const ui
         std::cerr << "character select already send, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return false;
     }
+    if(serverIndex>=serverOrdenedList.size())
+    {
+        std::cerr << "server index out of bound, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
+    const uint32_t &serverUniqueKeyCheck=serverOrdenedList.at(serverIndex).uniqueKey;
+    if(serverUniqueKey!=serverUniqueKeyCheck)
+    {
+        std::cerr << "server index out of bound, line: " << __FILE__ << ": " << __LINE__ << std::endl;
+        return false;
+    }
 
     character_select_send=true;
     char buffer[1+4+4];
