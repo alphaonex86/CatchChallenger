@@ -48,8 +48,8 @@ public:
     uint16_t getPort();
 
     //datapack related
-    void sendDatapackContentBase(const std::string &hashBase=std::string()) override;
-    void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string()) override;
+    void sendDatapackContentBase(const std::string &hashBase=std::string());
+    void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string());
     void sendDatapackContentMain();
     void sendDatapackContentSub();
     void test_mirror_base();
