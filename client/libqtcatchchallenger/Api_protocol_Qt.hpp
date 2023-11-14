@@ -35,6 +35,10 @@ public:
     void errorFromFightEngine(const std::string &error);
     bool haveBeatBot(const uint16_t &botFightId) const override;
 
+    //facility to call from logged() signal if cache hash is not matched and just call Api_client_real/Api_client_virtual implementation
+    virtual void sendDatapackContentBase(const std::string &hashBase=std::string()) = 0;
+    virtual void sendDatapackContentMainSub(const std::string &hashMain=std::string(),const std::string &hashSub=std::string()) = 0;
+    
     ssize_t readFromSocket(char * data, const size_t &size) override;
     ssize_t writeToSocket(const char * const data, const size_t &size) override;
 #ifndef NOTCPSOCKET
