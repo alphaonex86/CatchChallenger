@@ -465,7 +465,7 @@ void MapVisualiser::removeUnusedMap()
     //undisplay the unused map
     for( const auto& n : old_all_map ) {
         if(old_all_map_time.find(n.first)==old_all_map_time.cend() ||
-                (currentTime.toTime_t()-old_all_map_time.at(n.first).toTime_t())>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT ||
+                (currentTime.toSecsSinceEpoch()-old_all_map_time.at(n.first).toSecsSinceEpoch())>CATCHCHALLENGER_CLIENT_MAP_CACHE_TIMEOUT ||
                 old_all_map.size()>CATCHCHALLENGER_CLIENT_MAP_CACHE_SIZE)
             destroyMap(n.second);
     }

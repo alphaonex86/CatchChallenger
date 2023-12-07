@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent) :
     #endif
 {
     addServer=nullptr;
-    qDebug() << "QStandardPaths::writableLocation(QStandardPaths::DataLocation)" << QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    qDebug() << "QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)" << QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     serverMode=ServerMode_None;
     qRegisterMetaType<QAbstractSocket::SocketError>("QAbstractSocket::SocketError");
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
@@ -108,7 +108,7 @@ MainWindow::MainWindow(QWidget *parent) :
     #if defined(CATCHCHALLENGER_SOLO)
     solowindow=new SoloWindow(this,QCoreApplication::applicationDirPath().toStdString()+
                               "/datapack/internal/",
-                              QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+
+                              QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+
                               "/savegames/",false);
     if(!connect(solowindow,&SoloWindow::back,this,&MainWindow::gameSolo_back))
         abort();
@@ -443,9 +443,9 @@ std::vector<ConnexionInfo> MainWindow::loadConfigConnexionInfoList()
 
 std::vector<ConnexionInfo> MainWindow::loadXmlConnexionInfoList()
 {
-    if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).isDir())
-        if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).isFile())
-            return loadXmlConnexionInfoListFromFile(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
+    if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).isDir())
+        if(QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml")).isFile())
+            return loadXmlConnexionInfoListFromFile(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml"));
     return loadXmlConnexionInfoListFromFile(QStringLiteral(":/other/default_server_list.xml"));
 }
 
@@ -1440,12 +1440,12 @@ QString MainWindow::serverToDatapachPath(ListEntryEnvolued * selectedServer) con
     if(customServerConnexion.contains(selectedServer))
     {
         if(!serverConnexion.value(selectedServer)->name.isEmpty())
-             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->name));
+             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->name));
         else
-             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
+             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
     }
     else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
+        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
     return datapack.absolutePath();
 }
 
@@ -1879,12 +1879,12 @@ void MainWindow::on_server_refresh_clicked()
 
 void MainWindow::metaDataChanged()
 {
-    if(!QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).isFile())
+    if(!QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml")).isFile())
         return;
     QVariant val=reply->header(QNetworkRequest::LastModifiedHeader);
     if(!val.isValid())
         return;
-    if(val.toDateTime()==QFileInfo(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml")).lastModified())
+    if(val.toDateTime()==QFileInfo(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml")).lastModified())
     {
         reply->abort();
         reply->deleteLater();
@@ -1920,10 +1920,10 @@ void MainWindow::httpFinished()
     bool save=true;
     struct stat sb;
     memset(&sb,0,sizeof(sb));
-    QFile cache(QStandardPaths::writableLocation(QStandardPaths::DataLocation)+QStringLiteral("/server_list.xml"));
+    QFile cache(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)+QStringLiteral("/server_list.xml"));
     if(val.isValid() && stat(cache.fileName().toLocal8Bit().data(), &sb)==0)
     {
-        if(sb.st_mtime==val.toDateTime().toTime_t())
+        if(sb.st_mtime==val.toDateTime().toSecsSinceEpoch())
             save=false;
     }
     if(save)
@@ -1937,8 +1937,8 @@ void MainWindow::httpFinished()
                 #ifdef Q_CC_GNU
                     //this function avalaible on unix and mingw
                     utimbuf butime;
-                    butime.actime=val.toDateTime().toTime_t();
-                    butime.modtime=val.toDateTime().toTime_t();
+                    butime.actime=val.toDateTime().toSecsSinceEpoch();
+                    butime.modtime=val.toDateTime().toSecsSinceEpoch();
                     int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
                     if(returnVal!=0)
                     {
@@ -2051,7 +2051,7 @@ void MainWindow::gameSolo_play(const std::string &savegamesPath)
     //baseWindow->mapController->setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
     serverMode=ServerMode_Internal;
     ui->stackedWidget->setCurrentWidget(baseWindow);
-    timeLaunched=QDateTime::currentDateTimeUtc().toTime_t();
+    timeLaunched=QDateTime::currentDateTimeUtc().toSecsSinceEpoch();
     QSettings metaData(QString::fromStdString(savegamesPath)+QStringLiteral("metadata.conf"),QSettings::IniFormat);
     if(!metaData.contains(QStringLiteral("pass")))
     {
@@ -2230,7 +2230,7 @@ void MainWindow::saveTime()
                     locaction.remove(0,mapPath.size());
                 if(!locaction.isEmpty())
                     metaData.setValue(QStringLiteral("location"),locaction);
-                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toTime_t();
+                uint64_t current_date_time=QDateTime::currentDateTimeUtc().toSecsSinceEpoch();
                 if(current_date_time>timeLaunched)
                     metaData.setValue("time_played",metaData.value("time_played").toUInt()+(uint32_t)(current_date_time-timeLaunched));
                 settingOk=true;
@@ -2386,7 +2386,7 @@ void MainWindow::updateTheOkButton()
     if(lastServerIsKick.value(serverConnexion.value(selectedServer)->host))
         if(lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host)>timeToWait)
             timeToWait=lastServerWaitBeforeConnectAfterKick.value(serverConnexion.value(selectedServer)->host);
-    uint32_t secondLastSinceConnexion=QDateTime::currentDateTime().toTime_t()-lastServerConnect.value(serverConnexion.value(selectedServer)->host).toTime_t();
+    uint32_t secondLastSinceConnexion=QDateTime::currentDateTime().toSecsSinceEpoch()-lastServerConnect.value(serverConnexion.value(selectedServer)->host).toSecsSinceEpoch();
     if(secondLastSinceConnexion>=timeToWait)
     {
         ui->pushButtonTryLogin->setEnabled(true);

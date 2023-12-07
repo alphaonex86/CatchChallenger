@@ -88,7 +88,7 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
     this->language=Language::language.getLanguage().toStdString();
     std::string cachepath;
     std::string cachepathdir;
-    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    QStringList l=QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation);
     if(!l.empty())
     {
         std::string b=datapackPath;

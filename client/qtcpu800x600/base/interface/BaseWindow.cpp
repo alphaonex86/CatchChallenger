@@ -24,7 +24,6 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QRegularExpression>
-#include <QtQml>
 #include <QComboBox>
 #include <iostream>
 
@@ -96,10 +95,6 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<std::vector<char> >("std::vector<char>");
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
 
-    qmlRegisterUncreatableType<EvolutionControl>("EvolutionControl", 1, 0, "EvolutionControl","");
-    qmlRegisterUncreatableType<AnimationControl>("AnimationControl", 2, 0, "AnimationControl","");
-
-
     mapController=nullptr;
 
     renderFrame=nullptr;
@@ -119,13 +114,7 @@ BaseWindow::BaseWindow() :
     newProfile=nullptr;
     datapackFileNumber=0;
     datapackFileSize=1;
-    evolutionControl=nullptr;
     previousAnimationWidget=nullptr;
-    animationWidget=nullptr;
-    craftingAnimationObject=nullptr;
-    qQuickViewContainer=nullptr;
-    baseMonsterEvolution=nullptr;
-    targetMonsterEvolution=nullptr;
     monsterEvolutionPostion=0;
     mLastGivenXP=0;
     currentMonsterLevel=0;
@@ -198,8 +187,6 @@ BaseWindow::BaseWindow() :
     client=NULL;
     ProtocolParsing::initialiseTheVariable();
     ui->setupUi(this);
-    animationWidget=NULL;
-    qQuickViewContainer=NULL;
     monsterBeforeMoveForChangeInWaiting=false;
     //Chat::chat=new Chat(ui->page_map);
     escape=false;
@@ -208,7 +195,6 @@ BaseWindow::BaseWindow() :
     newProfile=NULL;
     lastStepUsed=0;
     datapackFileSize=0;
-    craftingAnimationObject=NULL;
     #ifndef CATCHCHALLENGER_NOAUDIO
     if(Audio::audio==nullptr)
         Audio::audio=new Audio();
@@ -338,8 +324,6 @@ BaseWindow::BaseWindow() :
     if(!connect(&nextCityCatchTimer,&QTimer::timeout,     this,&BaseWindow::cityCaptureUpdateTime))
         abort();
     if(!connect(&updater_page_zonecatch,&QTimer::timeout, this,&BaseWindow::updatePageZoneCatch))
-        abort();
-    if(!connect(&animationControl,&AnimationControl::animationFinished,this,&BaseWindow::animationFinished,Qt::QueuedConnection))
         abort();
 
     renderFrame = new QFrame(ui->page_map);
@@ -2063,11 +2047,6 @@ void BaseWindow::on_openToLan_clicked()
     #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
     emit emitOpenToLan(tr("Server's %1").arg(QString::fromStdString(informations.public_informations.pseudo)),false);
     #endif
-}
-
-
-void BaseWindow::on_toolButtonLan_triggered(QAction *arg1)
-{
 }
 
 

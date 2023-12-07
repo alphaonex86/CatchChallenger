@@ -197,7 +197,7 @@ void Api_protocol_Qt::connectTheExternalSocketInternal()
         }
         //check the certificat
         {
-            QDir datapackCert(QString("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)));
+            QDir datapackCert(QString("%1/cert/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)));
             datapackCert.mkpath(datapackCert.absolutePath());
             QFile certFile;
             if(stageConnexion==StageConnexion::Stage1)
@@ -407,7 +407,7 @@ void Api_protocol_Qt::resetAll()
     #endif
     mDatapackBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
     #ifdef Q_OS_ANDROID
-    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::DataLocation).toStdString()+"/datapack/";
+    mDatapackBase=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation).toStdString()+"/datapack/";
     #endif
     mDatapackMain=mDatapackBase+"map/main/[main]/";
     mDatapackSub=mDatapackMain+"sub/[sub]/";

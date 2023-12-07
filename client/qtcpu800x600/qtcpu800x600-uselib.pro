@@ -1,8 +1,9 @@
 wasm: DEFINES += CATCHCHALLENGER_NOAUDIO NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
+DEFINES += CATCHCHALLENGER_NOAUDIO
 DEFINES += CATCHCHALLENGER_SOLO
 DEFINES += LIBIMPORT
 TEMPLATE = app
-QT += core gui widgets network sql quick websockets
+QT += core gui widgets network sql
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 include(base/solo.pri)
 QT += multimedia
