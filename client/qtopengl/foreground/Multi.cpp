@@ -22,7 +22,7 @@
 #include <iostream>
 #include <utime.h>
 #if defined(_WIN32) || defined(Q_OS_MAC)
-#include "../../qt/InternetUpdater.hpp"
+#include "../../libqtcatchchallenger/InternetUpdater.cpp"
 #endif
 
 Multi::Multi() :

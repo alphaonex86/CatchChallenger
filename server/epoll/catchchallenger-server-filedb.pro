@@ -32,7 +32,7 @@ DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 # store as file to reduce RAM need
 DEFINES += CATCHCHALLENGER_DB_FILE
 
-CONFIG += c++11
+CONFIG += c++17
 
 TARGET = catchchallenger-server-cli-epoll
 CONFIG   += console

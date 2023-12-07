@@ -60,15 +60,19 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
                 const std::string m=QtDatapackClientLoader::datapackLoader->getDatapackPath()+QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+QtDatapackClientLoader::datapackLoader->get_maps().at(index);
                 if(all_map.find(m)==all_map.cend())
                 {
-                    std::cerr << "all_map.find(m)==all_map.cend() with: " << m << std::endl;
-                    abort();
+                    std::cerr << "all_map.find(m)==all_map.cend() with: " << m << " should abort" << std::endl;
+                    //abort();
                 }
-                if(index!=all_map.at(m)->logicalMap.id)
+                else
                 {
-                    std::cerr << "index!=all_map.at(m)->logicalMap.id with: " << m << ", " << index << ", " << all_map.at(m)->logicalMap.id << std::endl;
-                    abort();
+                    if(index!=all_map.at(m)->logicalMap.id)
+                    {
+                        std::cerr << "index!=all_map.at(m)->logicalMap.id with: " << m << ", " << index << ", " << all_map.at(m)->logicalMap.id << std::endl;
+                        abort();
+                    }
+                    else
+                        std::cerr << m << std::endl;
                 }
-                std::cerr << m << std::endl;
                 index++;
             }
         }

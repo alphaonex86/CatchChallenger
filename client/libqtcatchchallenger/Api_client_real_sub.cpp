@@ -744,7 +744,7 @@ void Api_client_real::sendDatapackContentSub()
 #ifdef CATCHCHALLENGER_CACHE_HPS
     {
         cacheRemovedSub=false;
-        QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+        QStringList l=QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation);
         if(!l.empty())
         {
             std::string b=datapackPathBase();

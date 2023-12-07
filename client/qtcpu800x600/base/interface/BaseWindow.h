@@ -21,22 +21,17 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QMovie>
-#include <QQuickView>
 #include <QTreeWidgetItem>
 #include <unordered_set>
 #include <set>
 #include <map>
 #include <QBuffer>
 
-#include "../../crafting/interface/QmlInterface/CraftingAnimation.h"
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
 #include "../../../qtmaprender/MapController.hpp"
 #include "Chat.h"
 #include "NewProfile.h"
-#include "../QmlInterface/AnimationControl.h"
-#include "../../fight/interface/QmlInterface/QmlMonsterGeneralInformations.h"
-#include "../../fight/interface/QmlInterface/EvolutionControl.h"
 
 #ifndef CATCHCHALLENGER_BASEWINDOW_H
 #define CATCHCHALLENGER_BASEWINDOW_H
@@ -464,10 +459,7 @@ private slots:
     void on_listNearPlayer_itemActivated(QListWidgetItem *item);
     void on_listAllItem_itemActivated(QListWidgetItem *item);
     void on_openToLan_clicked();
-    void on_toolButtonLan_triggered(QAction *arg1);
-
     void on_toolButtonLan_clicked();
-
 protected slots:
     //datapack
     void datapackParsed();
@@ -510,14 +502,7 @@ private:
     NewProfile *newProfile;
     uint32_t datapackFileNumber;
     int32_t datapackFileSize;
-    AnimationControl animationControl;
-    EvolutionControl *evolutionControl;
     QWidget *previousAnimationWidget;
-    QQuickView *animationWidget;
-    CraftingAnimation *craftingAnimationObject;
-    QWidget *qQuickViewContainer;
-    QmlMonsterGeneralInformations *baseMonsterEvolution;
-    QmlMonsterGeneralInformations *targetMonsterEvolution;
     uint8_t monsterEvolutionPostion;
     uint32_t mLastGivenXP;
     uint8_t currentMonsterLevel;

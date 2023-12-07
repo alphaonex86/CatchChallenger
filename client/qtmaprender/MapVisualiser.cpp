@@ -9,8 +9,10 @@
 #include <QFileInfo>
 #include <QPointer>
 #include <QMessageBox>
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QGLFormat>
 #include <QGLWidget>
+#endif
 #include <QLabel>
 #include <QPixmapCache>
 
@@ -27,13 +29,17 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     if(!connect(&mapVisualiserThread,&MapVisualiserThread::asyncMapLoaded,this,&MapVisualiser::asyncMapLoaded,Qt::QueuedConnection))
         abort();
 
+    #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if(openGL)
         setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
+    #endif
     setRenderHint(QPainter::Antialiasing,false);
     setRenderHint(QPainter::TextAntialiasing,false);
-    setRenderHint(QPainter::HighQualityAntialiasing,false);
-    setRenderHint(QPainter::SmoothPixmapTransform,false);
+    #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     setRenderHint(QPainter::NonCosmeticDefaultPen,true);
+    setRenderHint(QPainter::HighQualityAntialiasing,false);
+    #endif
+    setRenderHint(QPainter::SmoothPixmapTransform,false);
     setCacheMode(QGraphicsView::CacheBackground);
     QPixmapCache::setCacheLimit(102400);
 

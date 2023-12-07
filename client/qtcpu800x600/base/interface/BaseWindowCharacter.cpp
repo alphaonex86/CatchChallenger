@@ -281,7 +281,7 @@ void BaseWindow::updateServerList()
     bool fullView=true;
     if(serverOrdenedList.size()>10)
         fullView=false;
-    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current__date=QDateTime::currentDateTime().toSecsSinceEpoch();
 
     //reload, bug if before init
     if(icon_server_list_star1.isNull())

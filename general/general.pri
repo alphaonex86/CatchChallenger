@@ -1,4 +1,4 @@
-CONFIG += c++11
+CONFIG += c++17
 QMAKE_CXXFLAGS+="-std=c++0x"
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 
