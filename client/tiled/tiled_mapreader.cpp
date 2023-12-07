@@ -47,6 +47,9 @@
 #include <QVector>
 #include <QXmlStreamReader>
 #include <QString>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <QtCore5Compat/QStringRef>
+#endif
 
 using namespace Tiled;
 using namespace Tiled::Internal;
@@ -280,7 +283,7 @@ Map *MapReaderPrivate::readMap()
     mMap = new Map(orientation, mapWidth, mapHeight, tileWidth, tileHeight);
     mCreatedTilesets.clear();
 
-    QStringRef bgColorString = atts.value(MapReader::text_backgroundcolor);
+    QStringRef bgColorString = atts.value("backgroundcolor");
     if (!bgColorString.isEmpty())
         mMap->setBackgroundColor(QColor(bgColorString.toString()));
 

@@ -398,7 +398,7 @@ void NormalServer::newConnection()
             const QHostAddress &peerAddress=socket->peerAddress();
             bool kicked=kickedHosts.contains(peerAddress);
             if(kicked)
-                if((QDateTime::currentDateTime().toTime_t()-kickedHosts.value(peerAddress).toTime_t())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
+                if((QDateTime::currentDateTime().toSecsSinceEpoch()-kickedHosts.value(peerAddress).toSecsSinceEpoch())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
                 {
                     kickedHosts.remove(peerAddress);
                     kicked=false;
@@ -447,7 +447,7 @@ void NormalServer::purgeKickedHost()
     QHashIterator<QHostAddress,QDateTime> i(kickedHosts);
     while (i.hasNext()) {
         i.next();
-        if((currentDateTime.toTime_t()-i.value().toTime_t())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
+        if((currentDateTime.toSecsSinceEpoch()-i.value().toSecsSinceEpoch())>=(uint32_t)CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick)
             hostsToRemove.push_back(i.key());
     }
     unsigned int index=0;
