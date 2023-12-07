@@ -1,5 +1,5 @@
 QT       += gui network core widgets
-QT       += qml quick opengl
+QT       += opengl
 
 DEFINES += CATCHCHALLENGER_CLIENT
 DEFINES += CATCHCHALLENGER_DB_SQLITE
@@ -9,7 +9,7 @@ wasm: {
 }
 else
 {
-#    DEFINES += NOWEBSOCKET
+    DEFINES += NOWEBSOCKET
 }
 !contains(DEFINES, NOWEBSOCKET) {
     QT += websockets

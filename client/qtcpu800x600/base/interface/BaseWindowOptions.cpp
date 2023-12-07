@@ -5,6 +5,7 @@
 #include "../../../libqtcatchchallenger/ClientVariableAudio.hpp"
 #include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
+#include "../../../../general/base/CommonDatapack.hpp"
 
 using namespace CatchChallenger;
 

@@ -762,7 +762,7 @@ void Api_client_real::sendDatapackContentBase(const std::string &hashBase)
 #ifdef CATCHCHALLENGER_CACHE_HPS
     {
         cacheRemovedBase=false;
-        QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+        QStringList l=QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation);
         if(!l.empty())
         {
             std::string b=datapackPathBase();

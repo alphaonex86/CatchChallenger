@@ -1,4 +1,5 @@
 #include "../../base/interface/BaseWindow.h"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "ui_BaseWindow.h"
 

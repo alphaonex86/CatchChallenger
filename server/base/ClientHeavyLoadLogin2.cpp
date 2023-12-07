@@ -529,14 +529,16 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
     number_of_character++;
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
+    #ifdef CATCHCHALLENGER_DB_FILE
     {
         FILE *fp=fopen("database/server","r+");
-        if(fp==NULL) {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+        if(fp==NULL) {std::cerr << "error to open in write the file database/server, errno: " << errno << " " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
         if(fseek(fp,sizeof(GlobalServerData::serverPrivateVariables.maxClanId)+sizeof(GlobalServerData::serverPrivateVariables.maxAccountId),SEEK_SET)!=0)
         {std::cerr << "error to open in write seek the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
         fwrite(&GlobalServerData::serverPrivateVariables.maxCharacterId,sizeof(GlobalServerData::serverPrivateVariables.maxCharacterId),1,fp);
         fclose(fp);
     }
+    #endif
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
 
     const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);

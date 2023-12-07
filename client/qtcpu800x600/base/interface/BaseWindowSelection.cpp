@@ -3,9 +3,9 @@
 #include "ui_BaseWindow.h"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
-#include <QQmlContext>
 #include <QInputDialog>
 #include <iostream>
 
@@ -101,42 +101,9 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                             CatchChallenger::CommonDatapack::commonDatapack.get_items().evolutionItem.at(item).at(monster->monster)
                             );
                 //create animation widget
-                if(animationWidget!=NULL)
-                    delete animationWidget;
-                if(qQuickViewContainer!=NULL)
-                    delete qQuickViewContainer;
-                animationWidget=new QQuickView();
-                qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-                qQuickViewContainer->setMinimumSize(QSize(800,600));
-                qQuickViewContainer->setMaximumSize(QSize(800,600));
-                qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
-                ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
                 //show the animation
                 ui->stackedWidget->setCurrentWidget(ui->page_animation);
                 previousAnimationWidget=ui->page_map;
-                if(baseMonsterEvolution!=NULL)
-                    delete baseMonsterEvolution;
-                if(targetMonsterEvolution!=NULL)
-                    delete targetMonsterEvolution;
-                baseMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformations,monsterInformationsExtra);
-                targetMonsterEvolution=new QmlMonsterGeneralInformations(monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                if(evolutionControl!=NULL)
-                    delete evolutionControl;
-                evolutionControl=new EvolutionControl(monsterInformations,monsterInformationsExtra,monsterInformationsEvolution,monsterInformationsEvolutionExtra);
-                animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
-                animationWidget->rootContext()->setContextProperty("evolutionControl",evolutionControl);
-                animationWidget->rootContext()->setContextProperty("canBeCanceled",QVariant(false));
-                animationWidget->rootContext()->setContextProperty("itemEvolution",
-                                                                   QUrl::fromLocalFile(
-                                                                       QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra()
-                                                                                              .at(item).imagePath)));
-                animationWidget->rootContext()->setContextProperty("baseMonsterEvolution",baseMonsterEvolution);
-                animationWidget->rootContext()->setContextProperty("targetMonsterEvolution",targetMonsterEvolution);
-                const std::string datapackQmlFile=client->datapackPathBase()+"qml/evolution-animation.qml";
-                if(QFile(QString::fromStdString(datapackQmlFile)).exists())
-                    animationWidget->setSource(QUrl::fromLocalFile(QString::fromStdString(datapackQmlFile)));
-                else
-                    animationWidget->setSource(QStringLiteral("qrc:/qml/evolution-animation.qml"));
                 client->useObjectOnMonsterByPosition(item,monsterPosition);
                 if(!client->useObjectOnMonsterByPosition(item,monsterPosition))
                 {

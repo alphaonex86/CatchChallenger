@@ -2,6 +2,7 @@ wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
 }
+DEFINES += CATCHCHALLENGER_NOAUDIO
 #DEFINES+=PROTOCOLPARSINGDEBUG
 DEFINES += CATCHCHALLENGER_CLASS_QT
 !contains(DEFINES, NOSINGLEPLAYER) {
@@ -27,6 +28,9 @@ include(../qtmaprender/render.pri)
 include(../qtmaprender/renderheader.pri)
 include(../tiled/tiled.pri)
 include(../tiled/tiledheader.pri)
+equals(QT_VERSION, 6){
+   QT += core5compat
+}
 TEMPLATE = app
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"

@@ -5,6 +5,7 @@
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../libqtcatchchallenger/Ultimate.hpp"
 
@@ -110,10 +111,7 @@ void BaseWindow::resetAll()
     escapeSuccess=false;
     datapackFileNumber=0;
     datapackFileSize=0;
-    baseMonsterEvolution=NULL;
-    targetMonsterEvolution=NULL;
     monsterEvolutionPostion=0;
-    evolutionControl=NULL;
     lastPlaceDisplayed.clear();
     events.clear();
     visualCategory.clear();
@@ -1392,35 +1390,13 @@ void BaseWindow::cityCapture(const uint32_t &remainingTime,const uint8_t &type)
 
 void BaseWindow::animationFinished()
 {
-    if(animationWidget!=NULL)
-    {
-        delete animationWidget;
-        animationWidget=NULL;
-    }
-    if(qQuickViewContainer!=NULL)
-    {
-        delete qQuickViewContainer;
-        qQuickViewContainer=NULL;
-    }
     if(previousAnimationWidget==ui->page_crafting)
     {
         ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
-        craftingAnimationObject->deleteLater();
-        craftingAnimationObject=NULL;
     }
     else if(previousAnimationWidget==ui->page_map)
     {
         ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
-        if(baseMonsterEvolution!=NULL)
-        {
-            delete baseMonsterEvolution;
-            baseMonsterEvolution=NULL;
-        }
-        if(targetMonsterEvolution!=NULL)
-        {
-            delete targetMonsterEvolution;
-            targetMonsterEvolution=NULL;
-        }
         client->confirmEvolutionByPosition(monsterEvolutionPostion);
         monsterEvolutionPostion=0;
         load_monsters();
@@ -1431,32 +1407,6 @@ void BaseWindow::animationFinished()
 
 void BaseWindow::evolutionCanceled()
 {
-    if(animationWidget!=NULL)
-    {
-        delete animationWidget;
-        animationWidget=NULL;
-    }
-    if(qQuickViewContainer!=NULL)
-    {
-        delete qQuickViewContainer;
-        qQuickViewContainer=NULL;
-    }
-    ui->stackedWidget->setCurrentWidget(previousAnimationWidget);
-    if(baseMonsterEvolution!=NULL)
-    {
-        delete baseMonsterEvolution;
-        baseMonsterEvolution=NULL;
-    }
-    if(targetMonsterEvolution!=NULL)
-    {
-        delete targetMonsterEvolution;
-        targetMonsterEvolution=NULL;
-    }
-    if(evolutionControl!=NULL)
-    {
-        delete evolutionControl;
-        evolutionControl=NULL;
-    }
     monsterEvolutionPostion=0;
     checkEvolution();
 }

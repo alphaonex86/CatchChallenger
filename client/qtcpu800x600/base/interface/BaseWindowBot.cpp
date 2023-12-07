@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../LanguagesSelect.h"
 #include "../../../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 
 #include <QDesktopServices>

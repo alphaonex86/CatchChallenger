@@ -13,7 +13,6 @@
 #include <QBuffer>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QQmlContext>
 #include <QUrl>
 #include <iostream>
 
@@ -603,32 +602,10 @@ void BaseWindow::on_craftingUse_clicked()
     appendReputationRewards(CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(
                                 crafting_recipes_items_graphical.at(selectedItem)).rewards.reputation);
     //create animation widget
-    if(animationWidget!=NULL)
-        delete animationWidget;
-    if(qQuickViewContainer!=NULL)
-        delete qQuickViewContainer;
-    animationWidget=new QQuickView();
-    qQuickViewContainer = QWidget::createWindowContainer(animationWidget);
-    qQuickViewContainer->setMinimumSize(QSize(800,600));
-    qQuickViewContainer->setMaximumSize(QSize(800,600));
-    qQuickViewContainer->setFocusPolicy(Qt::TabFocus);
-    ui->verticalLayoutPageAnimation->addWidget(qQuickViewContainer);
     //show the animation
     previousAnimationWidget=ui->stackedWidget->currentWidget();
     ui->stackedWidget->setCurrentWidget(ui->page_animation);
-    if(craftingAnimationObject!=NULL)
-        delete craftingAnimationObject;
-    craftingAnimationObject=new CraftingAnimation(mIngredients,
-                                                  mRecipe,mProduct,
-                                                  QUrl::fromLocalFile(QString::fromStdString(
-              playerBackImagePath)).toEncoded());
-    animationWidget->rootContext()->setContextProperty("animationControl",&animationControl);
-    animationWidget->rootContext()->setContextProperty("craftingAnimationObject",craftingAnimationObject);
     const QString datapackQmlFile=QString::fromStdString(client->datapackPathBase())+"qml/crafting-animation.qml";
-    if(QFile(datapackQmlFile).exists())
-        animationWidget->setSource(QUrl::fromLocalFile(datapackQmlFile));
-    else
-        animationWidget->setSource(QStringLiteral("qrc:/qml/crafting-animation.qml"));
 }
 
 void BaseWindow::on_listCraftingMaterials_itemActivated(QListWidgetItem *item)

@@ -10,6 +10,7 @@
 #include <QAudioOutput>
 #include <QList>
 #include <QBuffer>
+#include <QAudioFormat>
 
 class DLL_PUBLIC Audio
 {
