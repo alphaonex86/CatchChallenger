@@ -1,13 +1,13 @@
 #include "MapVisualiserThread.hpp"
 #include "MapItem.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/Map_loader.hpp"
-#include "../../../general/tinyXML2/tinyxml2.hpp"
-#include "../../../general/tinyXML2/customtinyxml2.hpp"
-#include "../tiled/tiled_mapobject.hpp"
-#include "../tiled/tiled_isometricrenderer.hpp"
-#include "../tiled/tiled_orthogonalrenderer.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/Map_loader.hpp"
+#include "../../general/tinyXML2/tinyxml2.hpp"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include <libtiled/mapobject.h>
+#include <libtiled/isometricrenderer.h>
+#include <libtiled/orthogonalrenderer.h>
 #include <QFileInfo>
 #include <QRegularExpression>
 #include "../libcatchchallenger/ClientVariable.hpp"
@@ -106,7 +106,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
     }
     if(stopIt)
     {
-        delete tempMapObject->tiledMap;
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
@@ -117,20 +117,20 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         qDebug() << QStringLiteral("(2) Unable to load the map: %1, error: %2")
                     .arg(QString::fromStdString(resolvedFileName))
                     .arg(QString::fromStdString(map_loader.errorString()));
-        int index=0;
+        /*int index=0;
         const int &listSize=tempMapObject->tiledMap->tilesets().size();
         while(index<listSize)
         {
             delete tempMapObject->tiledMap->tilesets().at(index);
             index++;
-        }
-        delete tempMapObject->tiledMap;
+        }*/
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
     if(stopIt)
     {
-        delete tempMapObject->tiledMap;
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
@@ -203,7 +203,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         qDebug() << QStringLiteral("(3) Unable to load the map: %1, error: %2")
                     .arg(QString::fromStdString(resolvedFileName))
                     .arg(QString::fromStdString(mLastError));
-        delete tempMapObject->tiledMap;
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
@@ -277,19 +277,17 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {
-    case Tiled::Map::Isometric:
-        tempMapObject->tiledRender = new Tiled::IsometricRenderer(tempMapObject->tiledMap);
-        break;
     case Tiled::Map::Orthogonal:
+        tempMapObject->tiledRender = new Tiled::OrthogonalRenderer(tempMapObject->tiledMap.get());
+        break;
     default:
-        tempMapObject->tiledRender = new Tiled::OrthogonalRenderer(tempMapObject->tiledMap);
+        return nullptr;
         break;
     }
     //tempMapObject->tiledRender->setObjectBorder(false);
 
     //do the object group to move the player on it
-    tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0,
-                                                        tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height());
+    tempMapObject->objectGroup = new Tiled::ObjectGroup("Dyna management",0,0);//tempMapObject->tiledMap->width(),tempMapObject->tiledMap->height()
     tempMapObject->objectGroup->setName("objectGroup for player layer");
 
     //add a tags
@@ -297,7 +295,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
     {
         Tiled::MapObject * tagMapObject = new Tiled::MapObject();
         Tiled::Cell cell=tagMapObject->cell();
-        cell.tile=tagTileset->tileAt(tagTilesetIndex);
+        cell.setTile(tagTileset->tileAt(tagTilesetIndex));
         tagMapObject->setCell(cell);
         tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
         tempMapObject->objectGroup->addObject(tagMapObject);
@@ -324,18 +322,18 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                     while(y<height)
                     {
                         Tiled::Cell cell=tileLayer->cellAt(x,y);
-                        Tiled::Tile *tile=cell.tile;
+                        Tiled::Tile *tile=cell.tile();
                         if(tile!=NULL)
                         {
-                            const std::string &random=tile->property("random").toStdString();
-                            const std::string &animation=tile->property("animation").toStdString();
+                            const std::string &random=tile->property("random").toString().toStdString();
+                            const std::string &animation=tile->property("animation").toString().toStdString();
                             if(!random.empty())
                             {
                                 bool ok=false;
                                 const uint8_t random_int=stringtouint8(random,&ok);
                                 if(ok)
                                 {
-                                    cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+rand()%random_int);
+                                    cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+rand()%random_int));
                                     tileLayer->setCell(x,y,cell);
                                 }
                                 else
@@ -363,7 +361,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                 const uint8_t frames=static_cast<uint8_t>(temp_frames);
                                                 {
                                                     Tiled::Cell cell;
-                                                    cell.tile=NULL;
+                                                    cell.setTile(NULL);
                                                     tileLayer->setCell(x,y,cell);
                                                 }
                                                 Tiled::ObjectGroup *objectGroup=NULL;
@@ -391,9 +389,9 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                 }
                                                 Map_animation_object map_animation_object;
                                                 if(animationList.size()>=3 && animationList.at(2)=="random-offset")
-                                                    cell.tile=tile->tileset()->tileAt(tileId+rand()%frames);
+                                                    cell.setTile(tile->tileset()->tileAt(tileId+rand()%frames));
                                                 else
-                                                    cell.tile=tile;
+                                                    cell.setTile(tile);
                                                 object->setCell(cell);
                                                 map_animation_object.animatedObject=object;
                                                 /// \todo control the animation is not out of rame
@@ -429,7 +427,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                     Tiled::MapObject* object=new Tiled::MapObject();
                                     Tiled::MapObject* objectOver=NULL;
                                     Tiled::Cell cell;
-                                    cell.tile=content.objectTile;
+                                    cell.setTile(content.objectTile);
                                     object->setCell(cell);
                                     objectGroup->addObject(object);
                                     object->setPosition(QPointF(x,y+1));
@@ -438,7 +436,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                     {
                                         objectOver=new Tiled::MapObject();
                                         Tiled::Cell cell;
-                                        cell.tile=content.objectTileOver;
+                                        cell.setTile(content.objectTileOver);
                                         objectOver->setCell(cell);
                                         tempMapObject->objectGroup->addObject(objectOver);
                                         objectOver->setPosition(QPointF(x,y+1));
@@ -454,13 +452,13 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                 );
                                     {
                                         Tiled::Cell cell;
-                                        cell.tile=NULL;
+                                        cell.setTile(NULL);
                                         tileLayer->setCell(x,y,cell);
                                     }
                                 }
                                 else
                                 {
-                                    const std::string &trigger=tile->property("trigger").toStdString();
+                                    const std::string &trigger=tile->property("trigger").toString().toStdString();
                                     if(!trigger.empty())
                                     {
                                         if(QString::fromStdString(trigger).contains(regexTrigger))
@@ -521,7 +519,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                 Tiled::MapObject* object=new Tiled::MapObject();
                                                 Tiled::MapObject* objectOver=NULL;
                                                 Tiled::Cell cell;
-                                                cell.tile=content.objectTile;
+                                                cell.setTile(content.objectTile);
                                                 object->setCell(cell);
                                                 objectGroup->addObject(object);
                                                 object->setPosition(QPointF(x,y+1));
@@ -530,7 +528,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                 {
                                                     objectOver=new Tiled::MapObject();
                                                     Tiled::Cell cell;
-                                                    cell.tile=content.objectTileOver;
+                                                    cell.setTile(content.objectTileOver);
                                                     objectOver->setCell(cell);
                                                     tempMapObject->objectGroup->addObject(objectOver);
                                                     objectOver->setPosition(QPointF(x,y+1));
@@ -546,7 +544,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
                                                             );
                                             }
                                             Tiled::Cell cell;
-                                            cell.tile=NULL;
+                                            cell.setTile(NULL);
                                             tileLayer->setCell(x,y,cell);
                                         }
                                         else
@@ -566,14 +564,14 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 
     if(stopIt)
     {
-        delete tempMapObject->tiledMap;
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }
 
     if(!loadOtherMapClientPart(tempMapObject))
     {
-        delete tempMapObject->tiledMap;
+        //delete tempMapObject->tiledMap;
         delete tempMapObject;
         return NULL;
     }

@@ -205,7 +205,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             {
                 otherPlayer.playerMapObject = new Tiled::MapObject();
                 otherPlayer.playerMapObject->setName("Other player");
-                otherPlayer.playerTileset = new Tiled::Tileset(QString::fromStdString(skinFolderList.at(player.skinId)),16,24);
+                otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(skinFolderList.at(player.skinId)),16,24);
                 if(!otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(datapackPath+
                      DATAPACK_BASE_PATH_SKIN+skinFolderList.at(player.skinId)+"/trainer.png")))
                     abort();
@@ -288,12 +288,12 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             }
             if(!pix.isNull())
             {
-                otherPlayer.labelMapObject = new Tiled::MapObject();
+                otherPlayer.labelMapObject=new Tiled::MapObject();
                 otherPlayer.labelMapObject->setName("labelMapObject");
-                otherPlayer.labelTileset = new Tiled::Tileset(QString(),pix.width(),pix.height());
+                otherPlayer.labelTileset=Tiled::Tileset::create(QString(),pix.width(),pix.height());
                 otherPlayer.labelTileset->addTile(pix);
                 Tiled::Cell cell=otherPlayer.labelMapObject->cell();
-                cell.tile=otherPlayer.labelTileset->tileAt(0);
+                cell.setTile(otherPlayer.labelTileset->tileAt(0));
                 otherPlayer.labelMapObject->setCell(cell);
             }
             else
@@ -313,7 +313,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_top:
             {
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(1);
+                cell.setTile(otherPlayer.playerTileset->tileAt(1));
                 otherPlayer.playerMapObject->setCell(cell);
             }
             break;
@@ -321,7 +321,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_right:
             {
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(4);
+                cell.setTile(otherPlayer.playerTileset->tileAt(4));
                 otherPlayer.playerMapObject->setCell(cell);
             }
             break;
@@ -329,7 +329,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_bottom:
             {
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(7);
+                cell.setTile(otherPlayer.playerTileset->tileAt(7));
                 otherPlayer.playerMapObject->setCell(cell);
             }
             break;
@@ -337,13 +337,13 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             case CatchChallenger::Direction_move_at_left:
             {
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(10);
+                cell.setTile(otherPlayer.playerTileset->tileAt(10));
                 otherPlayer.playerMapObject->setCell(cell);
             }
             break;
             default:
                 delete otherPlayer.playerMapObject;
-                delete otherPlayer.playerTileset;
+                //delete otherPlayer.playerTileset;
                 qDebug() << QStringLiteral("The direction send by the server is wrong");
             return true;
         }
@@ -678,7 +678,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         case CatchChallenger::Direction_move_at_top:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(1);
+            cell.setTile(otherPlayer.playerTileset->tileAt(1));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -686,7 +686,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         case CatchChallenger::Direction_move_at_right:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(4);
+            cell.setTile(otherPlayer.playerTileset->tileAt(4));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -694,7 +694,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         case CatchChallenger::Direction_move_at_bottom:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(7);
+            cell.setTile(otherPlayer.playerTileset->tileAt(7));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -702,7 +702,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
         case CatchChallenger::Direction_move_at_left:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(10);
+            cell.setTile(otherPlayer.playerTileset->tileAt(10));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -841,8 +841,8 @@ bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
     otherPlayer.moveAnimationTimer=NULL;
     if(otherPlayer.labelMapObject!=NULL)
         delete otherPlayer.labelMapObject;
-    if(otherPlayer.labelTileset!=NULL)
-        delete otherPlayer.labelTileset;
+    /*if(otherPlayer.labelTileset!=NULL)
+        delete otherPlayer.labelTileset;*/
 
     otherPlayerList.erase(id);
     return true;
@@ -1008,7 +1008,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
         case CatchChallenger::Direction_move_at_top:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(1);
+            cell.setTile(otherPlayer.playerTileset->tileAt(1));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -1016,7 +1016,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
         case CatchChallenger::Direction_move_at_right:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(4);
+            cell.setTile(otherPlayer.playerTileset->tileAt(4));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -1024,7 +1024,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
         case CatchChallenger::Direction_move_at_bottom:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(7);
+            cell.setTile(otherPlayer.playerTileset->tileAt(7));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -1032,13 +1032,13 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
         case CatchChallenger::Direction_move_at_left:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(10);
+            cell.setTile(otherPlayer.playerTileset->tileAt(10));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
         default:
             delete otherPlayer.playerMapObject;
-            delete otherPlayer.playerTileset;
+            //delete otherPlayer.playerTileset;
             qDebug() << QStringLiteral("The direction send by the server is wrong");
         return true;
     }
@@ -1075,7 +1075,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
                     if(otherPlayer.monsterMapObject!=NULL)
                     {
                         Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                        cell.tile=otherPlayer.monsterTileset->tileAt(2);
+                        cell.setTile(otherPlayer.monsterTileset->tileAt(2));
                         otherPlayer.monsterMapObject->setCell(cell);
                         otherPlayer.monsterMapObject->setVisible(true);
                         if(map!=new_map)
@@ -1104,7 +1104,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
                     if(otherPlayer.monsterMapObject!=NULL)
                     {
                         Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                        cell.tile=otherPlayer.monsterTileset->tileAt(6);
+                        cell.setTile(otherPlayer.monsterTileset->tileAt(6));
                         otherPlayer.monsterMapObject->setCell(cell);
                         otherPlayer.monsterMapObject->setVisible(true);
                         if(map!=new_map)
@@ -1136,7 +1136,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
                     if(otherPlayer.monsterMapObject!=NULL)
                     {
                         Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                        cell.tile=otherPlayer.monsterTileset->tileAt(3);
+                        cell.setTile(otherPlayer.monsterTileset->tileAt(3));
                         otherPlayer.monsterMapObject->setCell(cell);
                         otherPlayer.monsterMapObject->setVisible(true);
                         if(map!=new_map)
@@ -1165,7 +1165,7 @@ bool MapControllerMP::reinsert_player_final(const uint16_t &id,const uint8_t &x,
                     if(otherPlayer.monsterMapObject!=NULL)
                     {
                         Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                        cell.tile=otherPlayer.monsterTileset->tileAt(7);
+                        cell.setTile(otherPlayer.monsterTileset->tileAt(7));
                         otherPlayer.monsterMapObject->setCell(cell);
                         otherPlayer.monsterMapObject->setVisible(true);
                         if(map!=new_map)

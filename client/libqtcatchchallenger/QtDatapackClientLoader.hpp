@@ -19,7 +19,7 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/lib.h"
 #include "../libcatchchallenger/DatapackClientLoader.hpp"
-#include "../tiled/tiled_tileset.hpp"
+#include <tileset.h>
 
 class QtDatapackClientLoaderThread;
 
@@ -63,7 +63,8 @@ public:
     };
     struct QtPlantExtra
     {
-        Tiled::Tileset * tileset;
+        //Tiled::Tileset * tileset;
+        Tiled::SharedTileset tileset;
     };
     struct QtBuffExtra
     {

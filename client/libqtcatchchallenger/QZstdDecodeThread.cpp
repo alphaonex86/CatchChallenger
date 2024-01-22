@@ -1,5 +1,5 @@
 #include "QZstdDecodeThread.hpp"
-#include "../../general/libzstd/lib/zstd.h"
+#include <zstd.h>
 
 QZstdDecodeThread::QZstdDecodeThread()
 {

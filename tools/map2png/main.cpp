@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
             QString previousFolder;
             bool found1=true,found2=true;
 
-            QFileInfo dirDatapack1(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
+            QFileInfo dirDatapack1(QFileInfo(dir.absoluteFilePath()+"/").absolutePath());
             while(!QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/informations.xml")).exists() || dirDatapack1.absoluteFilePath().contains("map/main/") || !QFileInfo(dirDatapack1.absoluteFilePath()+QStringLiteral("/skin")).exists())
             {
                 previousFolder=dirDatapack1.absoluteFilePath();
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
                 }
             }
 
-            QFileInfo dirDatapack2(QFileInfo(dir.absoluteFilePath()+Map2Png::text_slash).absolutePath());
+            QFileInfo dirDatapack2(QFileInfo(dir.absoluteFilePath()+"/").absolutePath());
             while(!QFileInfo(dirDatapack2.absoluteFilePath()+QStringLiteral("/informations.xml")).exists())
             {
                 previousFolder=dirDatapack2.absoluteFilePath();
@@ -107,15 +107,15 @@ int main(int argc, char *argv[])
         }
         QElapsedTimer time;
         time.restart();
-        QStringList files=Map2Png::listFolder(dir.absoluteFilePath()+Map2Png::text_slash);
+        QStringList files=Map2Png::listFolder(dir.absoluteFilePath()+"/");
         int index=0;
         while(index<files.size())
         {
-            if(files.at(index).endsWith(Map2Png::text_dottmx))
+            if(files.at(index).endsWith(".tmx"))
             {
                 fileToOpen=files.at(index);
                 destination=files.at(index);
-                destination.replace(Map2Png::text_dottmx,Map2Png::text_dotpng);
+                destination.replace(".tmx",".png");
                 Map2Png w;
                 if(!baseDatapack.isEmpty())
                 {
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
                         abort();
                     }
                 }
-                w.viewMap(false,dir.absoluteFilePath()+Map2Png::text_slash+fileToOpen,destination);
+                w.viewMap(false,dir.absoluteFilePath()+"/"+fileToOpen,destination);
             }
             index++;
         }
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
             int index=0;
             while(index<arguments.size())
             {
-                if(arguments.at(index).endsWith(Map2Png::text_dottmx))
+                if(arguments.at(index).endsWith(".tmx"))
                 {
                     fileToOpen=arguments.at(index);
                     break;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                 int index=0;
                 while(index<arguments.size())
                 {
-                    if(arguments.at(index).endsWith(Map2Png::text_dotpng))
+                    if(arguments.at(index).endsWith(".png"))
                     {
                         destination=arguments.at(index);
                         break;
@@ -183,8 +183,8 @@ int main(int argc, char *argv[])
             }
             else
             {
-                if(!destination.endsWith(Map2Png::text_dotpng))
-                    destination+=Map2Png::text_dotpng;
+                if(!destination.endsWith(".png"))
+                    destination+=".png";
             }
         }
         {

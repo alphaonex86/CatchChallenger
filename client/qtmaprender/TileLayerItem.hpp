@@ -1,5 +1,5 @@
-#include "../tiled/tiled_tilelayer.hpp"
-#include "../tiled/tiled_maprenderer.hpp"
+#include <libtiled/tilelayer.h>
+#include <libtiled/maprenderer.h>
 
 #ifndef TILELAYERITEM_H
 #define TILELAYERITEM_H

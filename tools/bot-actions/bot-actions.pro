@@ -7,8 +7,6 @@ include(../../client/libcatchchallenger/lib.pri)
 include(../../client/libcatchchallenger/libheader.pri)
 include(../../client/libqtcatchchallenger/libqt.pri)
 include(../../client/libqtcatchchallenger/libqtheader.pri)
-include(../../client/tiled/tiled.pri)
-include(../../client/tiled/tiledheader.pri)
 include(../bot/actions/Actions.pri)
 
 QT       += core gui xml network sql

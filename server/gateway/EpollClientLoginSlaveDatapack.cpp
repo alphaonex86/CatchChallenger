@@ -1,7 +1,7 @@
 #include "EpollClientLoginSlave.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/xxhash/xxhash.h"
+#include <xxhash.h>
 #include "DatapackDownloaderBase.hpp"
 #include "DatapackDownloaderMainSub.hpp"
 
@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <algorithm>
+#include <string.h>
 
 using namespace CatchChallenger;
 

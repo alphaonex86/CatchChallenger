@@ -13,7 +13,7 @@ TemporaryTile::TemporaryTile(Tiled::MapObject* object) :
     moveToThread(QApplication::instance()->thread());
     #endif
     Tiled::Cell cell=object->cell();
-    cell.tile=TemporaryTile::empty;
+    cell.setTile(TemporaryTile::empty);
     object->setCell(cell);
     if(!connect(&timer,&QTimer::timeout,this,&TemporaryTile::updateTheTile))
         abort();
@@ -26,7 +26,7 @@ TemporaryTile::~TemporaryTile()
 void TemporaryTile::startAnimation(Tiled::Tile *tile,const uint32_t &ms,const uint8_t &count)
 {
     Tiled::Cell cell=object->cell();
-    cell.tile=tile;
+    cell.setTile(tile);
     object->setCell(cell);
     timer.start(ms);
     this->count=count;
@@ -39,9 +39,9 @@ void TemporaryTile::updateTheTile()
     if(index<count)
     {
         Tiled::Cell cell=object->cell();
-        if((cell.tile->id()+1)<cell.tile->tileset()->tileCount())
+        if((cell.tile()->id()+1)<cell.tile()->tileset()->tileCount())
         {
-            cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+1);
+            cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+1));
             object->setCell(cell);
             return;
         }
@@ -50,6 +50,6 @@ void TemporaryTile::updateTheTile()
     }
     timer.stop();
     Tiled::Cell cell=object->cell();
-    cell.tile=TemporaryTile::empty;
+    cell.setTile(TemporaryTile::empty);
     object->setCell(cell);
 }

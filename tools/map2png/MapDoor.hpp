@@ -4,9 +4,9 @@
 #include <QObject>
 #include <QTimer>
 
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
-#include "../../client/tiled/tiled_tileset.hpp"
+#include <mapobject.h>
+#include <tile.h>
+#include <tileset.h>
 
 class MapDoor : public QObject
 {

@@ -25,7 +25,7 @@ protected slots:
 protected:
     char * botAlreadyBeaten;
     uint32_t repel_step;
-    Tiled::Tileset *fightCollisionBot;
+    Tiled::SharedTileset fightCollisionBot;
 signals:
     void repelEffectIsOver() const;
     void teleportConditionNotRespected(const std::string &text) const;

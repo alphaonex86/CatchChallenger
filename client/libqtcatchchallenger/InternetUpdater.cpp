@@ -1,9 +1,9 @@
 #ifndef __EMSCRIPTEN__
 #include "InternetUpdater.hpp"
 #include "PlatformMacro.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/Version.hpp"
-#include "../../../general/base/cpp11addition.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/Version.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../libcatchchallenger/ClientVariable.hpp"
 #include "Ultimate.hpp"
 

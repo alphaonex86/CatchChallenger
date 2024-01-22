@@ -1,8 +1,9 @@
 #include "Client.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/xxhash/xxhash.h"
+#include <xxhash.h>
 #include <sys/stat.h>
+#include <string.h>
 
 /// \todo solve disconnecting/destroy during the SQL loading
 

@@ -1,5 +1,5 @@
 #include "ZstdDecode.hpp"
-#include "../../general/libzstd/lib/zstd.h"
+#include <zstd.h>
 #include "../../general/base/GeneralVariable.hpp"
 #include <iostream>
 

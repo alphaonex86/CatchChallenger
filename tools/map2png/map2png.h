@@ -26,23 +26,22 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/base/Map_loader.hpp"
 
-#include "../../client/tiled/tiled_isometricrenderer.hpp"
-#include "../../client/tiled/tiled_map.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_mapreader.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_orthogonalrenderer.hpp"
-#include "../../client/tiled/tiled_tilelayer.hpp"
-#include "../../client/tiled/tiled_tileset.hpp"
+#include <mapobject.h>
+#include <objectgroup.h>
+#include <isometricrenderer.h>
+#include <map.h>
+#include <mapobject.h>
+#include <mapreader.h>
+#include <objectgroup.h>
+#include <orthogonalrenderer.h>
+#include <tilelayer.h>
+#include <tileset.h>
 
-#include "../../client/qtmaprender/Map_client.hpp"
+#include "Map_client.hpp"
 
 #ifndef MAP_VISUALISER_H
 #define MAP_VISUALISER_H
@@ -99,52 +98,6 @@ public:
     explicit MapVisualiserOrder();
     ~MapVisualiserOrder();
     static void layerChangeLevelAndTagsChange(Map_full *tempMapObject, bool hideTheDoors=false);
-
-    static std::string text_blockedtext;
-    static std::string text_en;
-    static std::string text_lang;
-    static std::string text_Dyna_management;
-    static std::string text_Moving;
-    static std::string text_door;
-    static std::string text_Object;
-    static std::string text_bot;
-    static std::string text_bots;
-    static std::string text_WalkBehind;
-    static std::string text_Collisions;
-    static std::string text_Grass;
-    static std::string text_animation;
-    static std::string text_dotcomma;
-    static std::string text_ms;
-    static std::string text_frames;
-    static std::string text_map;
-    static std::string text_objectgroup;
-    static std::string text_name;
-    static std::string text_object;
-    static std::string text_type;
-    static std::string text_x;
-    static std::string text_y;
-    static std::string text_botfight;
-    static std::string text_property;
-    static std::string text_value;
-    static std::string text_file;
-    static std::string text_id;
-    static std::string text_slash;
-    static std::string text_dotxml;
-    static std::string text_dottmx;
-    static std::string text_properties;
-    static std::string text_shop;
-    static std::string text_learn;
-    static std::string text_heal;
-    static std::string text_fight;
-    static std::string text_zonecapture;
-    static std::string text_market;
-    static std::string text_zone;
-    static std::string text_fightid;
-    static std::string text_randomoffset;
-    static std::string text_visible;
-    static std::string text_true;
-    static std::string text_false;
-    static std::string text_trigger;
 protected:
     static QRegularExpression regexMs;
     static QRegularExpression regexFrames;
@@ -158,7 +111,7 @@ public:
     Map_full();
 public:
     CatchChallenger::Map_client logicalMap;
-    Tiled::Map * tiledMap;
+    std::shared_ptr<Tiled::Map> tiledMap;
     Tiled::MapRenderer * tiledRender;
     Tiled::ObjectGroup * objectGroup;
     std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,MapVisualiserOrder::Map_animation> > animatedObject;
@@ -197,28 +150,6 @@ public:
     static QStringList listFolder(const QString& folder,const QString& suffix=QString());
     QString baseDatapack;
     QString mainDatapack;
-    static QString text_slash;
-    static QString text_dottmx;
-    static QString text_dotpng;
-    static QString text_Moving;
-    static QString text_door;
-    static QString text_Object;
-    static QString text_bot;
-    static QString text_skin;
-    static QString text_fightertrainer;
-    static QString text_lookAt;
-    static QString text_empty;
-    static QString text_top;
-    static QString text_right;
-    static QString text_left;
-    static QString text_Collisions;
-    static QString text_animation;
-    static QString text_dotcomma;
-    static QString text_ms;
-    static QString text_frames;
-    static QString text_visible;
-    static QString text_false;
-    static QString text_object;
     QRegularExpression regexMs;
     QRegularExpression regexFrames;
     QStringList folderListSkin;
@@ -226,7 +157,7 @@ private:
     struct Map_full_map2png
     {
         CatchChallenger::Map_client logicalMap;
-        Tiled::Map * tiledMap;
+        std::shared_ptr<Tiled::Map> tiledMap;
         Tiled::MapRenderer * tiledRender;
         Tiled::ObjectGroup * objectGroup;
         qint32 x;
@@ -243,7 +174,7 @@ private:
     QHash<QString,Map_full_map2png *> other_map;
 private slots:
     static void layerChangeLevelAndTagsChange(Map_full *tempMapObject,bool hideTheDoors);
-    Tiled::Tileset * getTileset(Tiled::Map * map,const QString &file);
+    Tiled::SharedTileset getTileset(Tiled::Map * map,const QString &file);
     QString loadOtherMap(const QString &fileName);
     void loadCurrentMap(const QString &fileName,qint32 x, qint32 y);
 };

@@ -1,15 +1,15 @@
 #include "QtDatapackClientLoader.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/tinyXML2/customtinyxml2.hpp"
-#include "../tiled/tiled_tileset.hpp"
-#include "../tiled/tiled_mapreader.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include <tileset.h>
+#include <mapreader.h>
 #include "Settings.hpp"
 #include "Language.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../../../general/hps/hps.h"
+#include "../../general/hps/hps.h"
 #include <fstream>
 #include <QStandardPaths>
 #endif
@@ -22,6 +22,7 @@
 #include <QRegularExpression>
 #include <QCryptographicHash>
 #include <iostream>
+#include <vector>
 #include <unistd.h>
 
 QtDatapackClientLoader *QtDatapackClientLoader::datapackLoader=nullptr;
@@ -366,17 +367,17 @@ void QtDatapackClientLoader::resetAll()
             abort();
         }
     }
-    for (const auto &n : QtplantExtra)
-        delete n.second.tileset;
+    /*for (const auto &n : QtplantExtra)
+        delete n.second.tileset;*/
     QtplantExtra.clear();
-    {
+    /*{
          QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
          while (i.hasNext()) {
              i.next();
              delete i.value();
          }
          Tiled::Tileset::preloadedTileset.clear();
-    }
+    }*/
     ImageitemsExtra.clear();
     ImagemonsterExtra.clear();
     ImageitemsToLoad.clear();
@@ -390,7 +391,7 @@ void QtDatapackClientLoader::resetAll()
 
 void QtDatapackClientLoader::parseTileset()
 {
-    const std::vector<std::string> &fileList=
+    /*const std::vector<std::string> &fileList=
                 CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DATAPACK_BASE_PATH_MAPBASE);
     unsigned int index=0;
     while(index<fileList.size())
@@ -420,7 +421,7 @@ void QtDatapackClientLoader::parseTileset()
         index++;
     }
 
-    qDebug() << QStringLiteral("%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());
+    qDebug() << QStringLiteral("%1 tileset(s) loaded").arg(Tiled::Tileset::preloadedTileset.size());*/
 }
 
 void QtDatapackClientLoader::parseItemsExtra()
@@ -921,7 +922,7 @@ void QtDatapackClientLoader::parsePlantsExtra()
     while (i != CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend()) {
         //try load the tileset
         QtDatapackClientLoader::QtPlantExtra plant;
-        plant.tileset = new Tiled::Tileset(QString::fromStdString(text_plant),16,32);
+        plant.tileset=Tiled::Tileset::create(QString::fromStdString(text_plant),16,32);
         const std::string &path=basePath+std::to_string(i->first)+text_dotpng;
         if(!plant.tileset->loadFromImage(QImage(QString::fromStdString(path)),QString::fromStdString(path)))
         {
@@ -1049,7 +1050,7 @@ const QtDatapackClientLoader::QtPlantExtra &QtDatapackClientLoader::getPlantExtr
     //not loaded, force load as blocking call
     QtPlantExtra n;
 
-    n.tileset=new Tiled::Tileset(QString::number(id),16,32);
+    n.tileset=Tiled::Tileset::create(QString::number(id),16,32);
     n.tileset->loadFromImage(QImage(QStringLiteral(":/CC/images/plant/unknow_plant.png")),QStringLiteral(":/CC/images/plant/unknow_plant.png"));
     QtplantExtra[id]=n;
     return QtplantExtra.at(id);

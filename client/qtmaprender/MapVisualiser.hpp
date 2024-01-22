@@ -50,7 +50,7 @@ protected:
     Tiled::MapReader reader;
     QGraphicsScene *mScene;
 
-    Tiled::Tileset * markPathFinding;
+    Tiled::SharedTileset markPathFinding;
     int tagTilesetIndex;
 
     bool debugTags;

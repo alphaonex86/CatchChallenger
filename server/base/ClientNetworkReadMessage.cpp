@@ -267,6 +267,11 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                             sendHandlerCommand(command,text);
                             normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
                         }
+                        else if(command=="goto")
+                        {
+                            sendHandlerCommand(command,text);
+                            normalOutput(StaticText::text_send_command_slash+command+StaticText::text_space+text);
+                        }
                         else if(command==StaticText::text_kick)
                         {
                             sendBroadCastCommand(command,text);
