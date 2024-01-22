@@ -328,6 +328,8 @@ void CharacterList::updateCharacterList()
     }
     characterEntryList->clear();
     unsigned int index=0;
+    if(serverSelected>=serverOrdenedList.size())
+        return;
     const uint8_t charactersGroupIndex=serverOrdenedList.at(serverSelected).charactersGroupIndex;
     while(index<characterListForSelection.at(charactersGroupIndex).size())
     {

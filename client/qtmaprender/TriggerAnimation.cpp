@@ -11,7 +11,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     object(object),
     objectOver(NULL),
     cell(object->cell()),
-    baseTile(object->cell().tile),
+    baseTile(object->cell().tile()),
     baseTileOver(NULL),
     framesCountEnter(framesCountEnter),
     msEnter(msEnter),
@@ -34,7 +34,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     object(object),
     objectOver(NULL),
     cell(object->cell()),
-    baseTile(object->cell().tile),
+    baseTile(object->cell().tile()),
     baseTileOver(NULL),
     framesCountEnter(framesCountEnter),
     msEnter(msEnter),
@@ -59,7 +59,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     object(object),
     objectOver(objectOver),
     cell(object->cell()),
-    baseTile(object->cell().tile),
+    baseTile(object->cell().tile()),
     framesCountEnter(framesCountEnter),
     msEnter(msEnter),
     framesCountLeave(framesCountLeave),
@@ -73,7 +73,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     moveToThread(QApplication::instance()->thread());
     if(objectOver!=NULL)
     {
-        baseTileOver=objectOver->cell().tile;
+        baseTileOver=objectOver->cell().tile();
         cellOver=objectOver->cell();
     }
 }
@@ -87,7 +87,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     object(object),
     objectOver(objectOver),
     cell(object->cell()),
-    baseTile(object->cell().tile),
+    baseTile(object->cell().tile()),
     framesCountEnter(framesCountEnter),
     msEnter(msEnter),
     framesCountLeave(framesCountLeave),
@@ -101,7 +101,7 @@ TriggerAnimation::TriggerAnimation(Tiled::MapObject* object,
     moveToThread(QApplication::instance()->thread());
     if(objectOver!=NULL)
     {
-        baseTileOver=objectOver->cell().tile;
+        baseTileOver=objectOver->cell().tile();
         cellOver=objectOver->cell();
     }
 }
@@ -150,11 +150,11 @@ void TriggerAnimation::startLeave()
 
 void TriggerAnimation::setTileOffset(const uint8_t &offset)
 {
-    cell.tile=baseTile->tileset()->tileAt(baseTile->id()+offset);
+    cell.setTile(baseTile->tileset()->tileAt(baseTile->id()+offset));
     object->setCell(cell);
     if(objectOver!=NULL)
     {
-        cellOver.tile=baseTileOver->tileset()->tileAt(baseTileOver->id()+offset);
+        cellOver.setTile(baseTileOver->tileset()->tileAt(baseTileOver->id()+offset));
         objectOver->setCell(cellOver);
     }
 }

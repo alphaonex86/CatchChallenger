@@ -6,11 +6,11 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#include "../tiled/tiled_map.hpp"
-#include "../tiled/tiled_maprenderer.hpp"
-#include "../tiled/tiled_mapobject.hpp"
-#include "../tiled/tiled_objectgroup.hpp"
-#include "../tiled/tiled_tile.hpp"
+#include <libtiled/map.h>
+#include <libtiled/maprenderer.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/tile.h>
 
 #include "MapDoor.hpp"
 #include "Map_client.hpp"
@@ -107,7 +107,7 @@ public:
     Map_full();
 public:
     CatchChallenger::Map_client logicalMap;
-    Tiled::Map * tiledMap;
+    std::shared_ptr<Tiled::Map> tiledMap;
     Tiled::MapRenderer * tiledRender;
     Tiled::ObjectGroup * objectGroup;
     std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,MapVisualiserOrder::Map_animation> > animatedObject;

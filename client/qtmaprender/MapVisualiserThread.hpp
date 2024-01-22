@@ -11,9 +11,9 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#include "../tiled/tiled_mapreader.hpp"
-#include "../tiled/tiled_tileset.hpp"
-#include "../tiled/tiled_tile.hpp"
+#include <libtiled/mapreader.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
 
 #include "MapVisualiserOrder.hpp"
 #include "../../general/base/lib.h"

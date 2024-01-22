@@ -4,7 +4,7 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../../general/xxhash/xxhash.h"
+#include <xxhash.h>
 #include "../../general/sha224/sha224.hpp"
 #include "Client.hpp"
 

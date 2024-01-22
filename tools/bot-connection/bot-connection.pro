@@ -9,8 +9,6 @@ include(../../client/libqtcatchchallenger/libqt.pri)
 include(../../client/libqtcatchchallenger/libqtheader.pri)
 include(../../client/qtmaprender/render.pri)
 include(../../client/qtmaprender/renderheader.pri)
-include(../../client/tiled/tiled.pri)
-include(../../client/tiled/tiledheader.pri)
 include(../bot/simple/Simple.pri)
 
 QT       += core gui xml network sql opengl websockets

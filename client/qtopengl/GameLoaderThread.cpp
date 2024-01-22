@@ -1,7 +1,7 @@
 #include "GameLoaderThread.hpp"
 
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include "../opusfile/opusfile.h"
+#include <opusfile.h>
 #include <QBuffer>
 #endif
 #include <QDirIterator>

@@ -1,10 +1,6 @@
 #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
 #include "CompressionProtocol.hpp"
-#ifdef EXTERNALLIBZSTD
 #include <zstd.h>
-#else
-#include "../../general/libzstd/lib/zstd.h"
-#endif
 #include <iostream>
 
 char CompressionProtocol::tempBigBufferForUncompressedInput[];

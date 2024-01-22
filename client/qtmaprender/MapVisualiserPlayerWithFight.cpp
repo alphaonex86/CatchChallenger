@@ -24,7 +24,7 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
 {
     if(fightCollisionBot!=NULL)
     {
-        delete[] fightCollisionBot;
+        //delete[] fightCollisionBot;
         fightCollisionBot=NULL;
     }
     if(botAlreadyBeaten!=NULL)
@@ -152,7 +152,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
                         {
                             if(fightCollisionBot==NULL)
                             {
-                                fightCollisionBot=new Tiled::Tileset(QStringLiteral("fightCollisionBot"),16,16);
+                                fightCollisionBot=Tiled::Tileset::create(QStringLiteral("fightCollisionBot"),16,16);
                                 fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/CC/images/fightCollisionBot.png")),QStringLiteral(":/CC/images/fightCollisionBot.png"));
                             }
                         }

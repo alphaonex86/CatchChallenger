@@ -115,11 +115,11 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,b
                         }
                         else
                         {
-                            const Tiled::Tile *tile=objects.at(index2)->cell().tile;
+                            const Tiled::Tile *tile=objects.at(index2)->cell().tile();
                             if(tile!=NULL)
                             {
                                 //animation only for door
-                                const QString &animation=tile->property("animation");
+                                const QString &animation=tile->property("animation").toString();
                                 if(!animation.isEmpty())
                                 {
                                     const QStringList &animationList=animation.split(";");

@@ -14,11 +14,11 @@ using namespace CatchChallenger;
 #include <QDirIterator>
 #endif
 
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
 #include "../libcatchchallenger/TarDecode.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/xxhash/xxhash.h"
+#include "../../general/base/GeneralVariable.hpp"
+#include <xxhash.h>
 
 void Api_client_real::writeNewFileMain(const std::string &fileName,const std::string &data)
 {
