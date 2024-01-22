@@ -192,6 +192,65 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
     }
+    else if(command=="goto")
+    {
+        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        vectorRemoveEmpty(arguments);
+        if(arguments.size()==3)
+        {
+            if(arguments.at(1)!="goto")
+            {
+                receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /goto map x y");
+                return;
+            }
+            if(GlobalServerData::serverPrivateVariables.map_list.find(arguments.front())==GlobalServerData::serverPrivateVariables.map_list.end())
+            {
+                receiveSystemText(arguments.front()+" map not found, usage: /goto map x y");
+                return;
+            }
+            bool ok=false;
+            const uint8_t tempX=stringtouint8(arguments.at(1),&ok);
+            if(!ok)
+            {
+                receiveSystemText(arguments.front()+" x not number, usage: /goto map x y");
+                return;
+            }
+            const uint8_t tempY=stringtouint8(arguments.at(2),&ok);
+            if(!ok)
+            {
+                receiveSystemText(arguments.front()+" y not number, usage: /goto map x y");
+                return;
+            }
+            CommonMap * tempMap=GlobalServerData::serverPrivateVariables.map_list.at(arguments.front());
+            /*comparison is always false due to limited range of data type [-Wtype-limits]
+            if(tempX<0)
+            {
+                receiveSystemText(arguments.front()+" x too small, usage: /goto map x y");
+                return;
+            }
+            if(tempY<0)
+            {
+                receiveSystemText(arguments.front()+" y too small, usage: /goto map x y");
+                return;
+            }*/
+            if(tempX>=tempMap->width)
+            {
+                receiveSystemText(arguments.front()+" x too big, usage: /goto map x y");
+                return;
+            }
+            if(tempY>=tempMap->height)
+            {
+                receiveSystemText(arguments.front()+" y too big, usage: /goto map x y");
+                return;
+            }
+            teleportTo(tempMap,tempX,tempY,Orientation::Orientation_bottom);
+        }
+        else
+        {
+            receiveSystemText("Wrong arguments number for the command, usage: /goto map x y");
+            return;
+        }
+    }
     else if(command==StaticText::text_trade)
     {
         if(extraText.size()==0)

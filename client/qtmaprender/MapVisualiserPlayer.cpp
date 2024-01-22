@@ -1,12 +1,12 @@
 #include "MapVisualiserPlayer.hpp"
 
-#include "../../../general/base/MoveOnTheMap.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
+#include "../../general/base/GeneralVariable.hpp"
 
 #include <qmath.h>
 #include <QFileInfo>
@@ -73,7 +73,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
         setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     }
     stepAlternance=false;
-    animationTileset=new Tiled::Tileset(QStringLiteral("animation"),16,16);
+    animationTileset=Tiled::Tileset::create(QStringLiteral("animation"),16,16);
     nextCurrentObject=new Tiled::MapObject();
     grassCurrentObject=new Tiled::MapObject();
     grassCurrentObject->setName("grassCurrentObject");
@@ -85,7 +85,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     grassCurrentObject->setName("playerMapObject");
 
     lastTileset=defaultTileset;
-    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
+    playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
 
     lastAction.restart();
@@ -93,8 +93,8 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
 {
-    if(animationTileset!=NULL)
-        delete animationTileset;
+/*    if(animationTileset!=NULL)
+        delete animationTileset;*/
     if(nextCurrentObject!=NULL)
         delete nextCurrentObject;
     if(grassCurrentObject!=NULL)
@@ -107,9 +107,9 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
         monsterMapObject=nullptr;
     }
     //delete playerTileset;
-    std::unordered_set<Tiled::Tileset *> deletedTileset;
+    /*std::unordered_set<Tiled::SharedTileset> deletedTileset;
     for(auto i : playerTilesetCache) {
-            Tiled::Tileset * cur = i.second;
+            Tiled::SharedTileset cur = i.second;
             if(deletedTileset.find(cur)==deletedTileset.cend())
             {
                 deletedTileset.insert(cur);
@@ -117,13 +117,13 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
             }
         }
     for(auto i : monsterTilesetCache) {
-            Tiled::Tileset * cur = i.second;
+            Tiled::SharedTileset cur = i.second;
             if(deletedTileset.find(cur)==deletedTileset.cend())
             {
                 deletedTileset.insert(cur);
                 delete cur;
             }
-        }
+        }*/
 }
 
 bool MapVisualiserPlayer::haveMapInMemory(const std::string &mapPath)
@@ -196,7 +196,7 @@ void MapVisualiserPlayer::keyPressParse()
         else
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(10);
+            cell.setTile(playerTileset->tileAt(10));
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_left;
             lookToMove.start();
@@ -223,7 +223,7 @@ void MapVisualiserPlayer::keyPressParse()
         else
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(4);
+            cell.setTile(playerTileset->tileAt(4));
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_right;
             lookToMove.start();
@@ -250,7 +250,7 @@ void MapVisualiserPlayer::keyPressParse()
         else
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(1);
+            cell.setTile(playerTileset->tileAt(1));
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_top;
             lookToMove.start();
@@ -277,7 +277,7 @@ void MapVisualiserPlayer::keyPressParse()
         else
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(7);
+            cell.setTile(playerTileset->tileAt(7));
             playerMapObject->setCell(cell);
             direction=CatchChallenger::Direction_look_at_bottom;
             lookToMove.start();
@@ -354,7 +354,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 return;
             }
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(baseTile+0);
+            cell.setTile(playerTileset->tileAt(baseTile+0));
             playerMapObject->setCell(cell);
             return;
         }
@@ -453,7 +453,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 case 0:
                 {
                     Tiled::Cell cell=monsterMapObject->cell();
-                    cell.tile=monsterTileset->tileAt(baseTile+0);
+                    cell.setTile(monsterTileset->tileAt(baseTile+0));
                     monsterMapObject->setCell(cell);
                 }
                 break;
@@ -464,7 +464,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 case 2:
                 {
                     Tiled::Cell cell=monsterMapObject->cell();
-                    cell.tile=monsterTileset->tileAt(baseTile-2);
+                    cell.setTile(monsterTileset->tileAt(baseTile-2));
                     monsterMapObject->setCell(cell);
                 }
                 break;
@@ -472,7 +472,7 @@ void MapVisualiserPlayer::moveStepSlot()
                 case 4:
                 {
                     Tiled::Cell cell=monsterMapObject->cell();
-                    cell.tile=monsterTileset->tileAt(baseTile+0);
+                    cell.setTile(monsterTileset->tileAt(baseTile+0));
                     monsterMapObject->setCell(cell);
                 }
                 break;
@@ -544,7 +544,7 @@ void MapVisualiserPlayer::moveStepSlot()
         case 0:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(baseTile+0);
+            cell.setTile(playerTileset->tileAt(baseTile+0));
             playerMapObject->setCell(cell);
         }
         break;
@@ -556,9 +556,9 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             Tiled::Cell cell=playerMapObject->cell();
             if(stepAlternance)
-                cell.tile=playerTileset->tileAt(baseTile-1);
+                cell.setTile(playerTileset->tileAt(baseTile-1));
             else
-                cell.tile=playerTileset->tileAt(baseTile+1);
+                cell.setTile(playerTileset->tileAt(baseTile+1));
             playerMapObject->setCell(cell);
             stepAlternance=!stepAlternance;
         }
@@ -567,7 +567,7 @@ void MapVisualiserPlayer::moveStepSlot()
         case 4:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(baseTile+0);
+            cell.setTile(playerTileset->tileAt(baseTile+0));
             playerMapObject->setCell(cell);
         }
         break;
@@ -970,7 +970,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                                 QImage image(QString::fromStdString(imagePath));
                                 if(!image.isNull())
                                 {
-                                    playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),16,24);
+                                    playerTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),16,24);
                                     playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
                                 }
                                 else
@@ -983,10 +983,10 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                         }
                         {
                             Tiled::Cell cell=playerMapObject->cell();
-                            if(cell.tile!=nullptr)
+                            if(cell.tile()!=nullptr)
                             {
-                                int tileId=cell.tile->id();
-                                cell.tile=playerTileset->tileAt(tileId);
+                                int tileId=cell.tile()->id();
+                                cell.setTile(playerTileset->tileAt(tileId));
                                 playerMapObject->setCell(cell);
                             }
                             else
@@ -1007,8 +1007,8 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             playerTileset=playerTilesetCache[defaultTileset];
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                int tileId=cell.tile->id();
-                cell.tile=playerTileset->tileAt(tileId);
+                int tileId=cell.tile()->id();
+                cell.setTile(playerTileset->tileAt(tileId));
                 playerMapObject->setCell(cell);
             }
         }
@@ -1060,7 +1060,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             keyPressed.erase(Qt::Key_Left);
             direction=CatchChallenger::Direction_look_at_left;
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(10);
+            cell.setTile(playerTileset->tileAt(10));
             playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
@@ -1086,7 +1086,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             keyPressed.erase(Qt::Key_Right);
             direction=CatchChallenger::Direction_look_at_right;
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(4);
+            cell.setTile(playerTileset->tileAt(4));
             playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
@@ -1112,7 +1112,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             keyPressed.erase(Qt::Key_Up);
             direction=CatchChallenger::Direction_look_at_top;
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(1);
+            cell.setTile(playerTileset->tileAt(1));
             playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
@@ -1138,7 +1138,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             keyPressed.erase(Qt::Key_Down);
             direction=CatchChallenger::Direction_look_at_bottom;
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(7);
+            cell.setTile(playerTileset->tileAt(7));
             playerMapObject->setCell(cell);
             inMove=false;
             emit send_player_direction(direction);//see the top note
@@ -1273,7 +1273,7 @@ void MapVisualiserPlayer::parseAction()
                             std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))
                             ];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.tile=botDisplay->tileset->tileAt(4);
+                    cell.setTile(botDisplay->tileset->tileAt(4));
                     botDisplay->mapObject->setCell(cell);
                 }
                 else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
@@ -1303,7 +1303,7 @@ void MapVisualiserPlayer::parseAction()
                 {
                     CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.tile=botDisplay->tileset->tileAt(10);
+                    cell.setTile(botDisplay->tileset->tileAt(10));
                     botDisplay->mapObject->setCell(cell);
                 }
                 else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
@@ -1334,7 +1334,7 @@ void MapVisualiserPlayer::parseAction()
                     CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[
                             std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.tile=botDisplay->tileset->tileAt(7);
+                    cell.setTile(botDisplay->tileset->tileAt(7));
                     botDisplay->mapObject->setCell(cell);
                 }
                 else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
@@ -1365,7 +1365,7 @@ void MapVisualiserPlayer::parseAction()
                 {
                     CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
                     Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.tile=botDisplay->tileset->tileAt(1);
+                    cell.setTile(botDisplay->tileset->tileAt(1));
                     botDisplay->mapObject->setCell(cell);
                 }
                 else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
@@ -1500,11 +1500,11 @@ std::string MapVisualiserPlayer::currentMapType() const
     if(all_map.find(current_map)==all_map.cend())
         return std::string();
     const Map_full * const mapFull=all_map.at(current_map);
-    const Tiled::Map * const tiledMap=mapFull->tiledMap;
+    const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("type")!=properties.cend())
-        if(!properties.value("type").isEmpty())
-            return properties.value("type").toStdString();
+        if(!properties.value("type").toString().isEmpty())
+            return properties.value("type").toString().toStdString();
     if(mapFull->logicalMap.xmlRoot==NULL)
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("type")!=NULL)
@@ -1516,11 +1516,11 @@ std::string MapVisualiserPlayer::currentMapType() const
 std::string MapVisualiserPlayer::currentZone() const
 {
     const Map_full * const mapFull=all_map.at(current_map);
-    const Tiled::Map * const tiledMap=mapFull->tiledMap;
+    const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("zone")!=properties.cend())
-        if(!properties.value("zone").isEmpty())
-            return properties.value("zone").toStdString();
+        if(!properties.value("zone").toString().isEmpty())
+            return properties.value("zone").toString().toStdString();
     if(mapFull->logicalMap.xmlRoot==NULL)
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("zone")!=NULL)
@@ -1532,11 +1532,11 @@ std::string MapVisualiserPlayer::currentZone() const
 std::string MapVisualiserPlayer::currentBackgroundsound() const
 {
     const Map_full * const mapFull=all_map.at(current_map);
-    const Tiled::Map * const tiledMap=mapFull->tiledMap;
+    const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("backgroundsound")!=properties.cend())
-        if(!properties.value("backgroundsound").isEmpty())
-            return properties.value("backgroundsound").toStdString();
+        if(!properties.value("backgroundsound").toString().isEmpty())
+            return properties.value("backgroundsound").toString().toStdString();
     if(mapFull->logicalMap.xmlRoot==NULL)
         return std::string();
     if(mapFull->logicalMap.xmlRoot->Attribute("backgroundsound")!=NULL)
@@ -1648,8 +1648,8 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             case CatchChallenger::Direction_move_at_top:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(1);
-                if(cell.tile==nullptr)
+                cell.setTile(playerTileset->tileAt(1));
+                if(cell.tile()==nullptr)
                 {
                     std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
                     abort();
@@ -1661,8 +1661,8 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             case CatchChallenger::Direction_move_at_right:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(4);
-                if(cell.tile==nullptr)
+                cell.setTile(playerTileset->tileAt(4));
+                if(cell.tile()==nullptr)
                 {
                     std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
                     abort();
@@ -1674,8 +1674,8 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             case CatchChallenger::Direction_move_at_bottom:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(7);
-                if(cell.tile==nullptr)
+                cell.setTile(playerTileset->tileAt(7));
+                if(cell.tile()==nullptr)
                 {
                     std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
                     abort();
@@ -1687,8 +1687,8 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
             case CatchChallenger::Direction_move_at_left:
             {
                 Tiled::Cell cell=playerMapObject->cell();
-                cell.tile=playerTileset->tileAt(10);
-                if(cell.tile==nullptr)
+                cell.setTile(playerTileset->tileAt(10));
+                if(cell.tile()==nullptr)
                 {
                     std::cerr << "set nullptr into cell.tile (abort)" << std::endl;
                     abort();
@@ -1748,8 +1748,8 @@ void MapVisualiserPlayer::resetAll()
     #endif
 
     //delete playerTileset;
-    {
-        std::unordered_set<Tiled::Tileset *> deletedTileset;
+    /*{
+        std::unordered_set<Tiled::SharedTileset> deletedTileset;
         for(auto iter = playerTilesetCache.begin(); iter != playerTilesetCache.end(); ++iter){
                 if(deletedTileset.find(iter->second)==deletedTileset.cend())
                 {
@@ -1758,9 +1758,9 @@ void MapVisualiserPlayer::resetAll()
                 }
             }
         playerTilesetCache.clear();
-    }
+    }*/
     lastTileset=defaultTileset;
-    playerTileset = new Tiled::Tileset(QStringLiteral("player"),16,24);
+    playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
     playerMapObject = new Tiled::MapObject();
 }
@@ -1995,7 +1995,7 @@ void MapVisualiserPlayer::loadGrassTile()
             case 2:
             {
                 Tiled::Cell cell=grassCurrentObject->cell();
-                cell.tile=animationTileset->tileAt(0);
+                cell.setTile(animationTileset->tileAt(0));
                 grassCurrentObject->setCell(cell);
             }
             break;
@@ -2011,7 +2011,7 @@ void MapVisualiserPlayer::loadGrassTile()
             case 3:
             {
                 Tiled::Cell cell=nextCurrentObject->cell();
-                cell.tile=animationTileset->tileAt(2);
+                cell.setTile(animationTileset->tileAt(2));
                 nextCurrentObject->setCell(cell);
             }
             break;
@@ -2122,7 +2122,7 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         QImage image(QString::fromStdString(imagePath));
         if(!image.isNull())
         {
-            monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+            monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
             if(!monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
             monsterTilesetCache[imagePath]=monsterTileset;
@@ -2140,19 +2140,19 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
         {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
-                cell.tile=monsterTileset->tileAt(2);
+                cell.setTile(monsterTileset->tileAt(2));
             break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
-                cell.tile=monsterTileset->tileAt(7);
+                cell.setTile(monsterTileset->tileAt(7));
             break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
-                cell.tile=monsterTileset->tileAt(6);
+                cell.setTile(monsterTileset->tileAt(6));
             break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
-                cell.tile=monsterTileset->tileAt(3);
+                cell.setTile(monsterTileset->tileAt(3));
             break;
             default:
             break;
@@ -2229,7 +2229,7 @@ bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
         case CatchChallenger::Direction_move_at_top:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(1);
+            cell.setTile(playerTileset->tileAt(1));
             playerMapObject->setCell(cell);
         }
         break;
@@ -2237,7 +2237,7 @@ bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
         case CatchChallenger::Direction_move_at_right:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(4);
+            cell.setTile(playerTileset->tileAt(4));
             playerMapObject->setCell(cell);
         }
         break;
@@ -2245,7 +2245,7 @@ bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
         case CatchChallenger::Direction_move_at_bottom:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(7);
+            cell.setTile(playerTileset->tileAt(7));
             playerMapObject->setCell(cell);
         }
         break;
@@ -2253,7 +2253,7 @@ bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,con
         case CatchChallenger::Direction_move_at_left:
         {
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(10);
+            cell.setTile(playerTileset->tileAt(10));
             playerMapObject->setCell(cell);
         }
         break;
@@ -2348,7 +2348,7 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
                 return false;
             }
             Tiled::Cell cell=playerMapObject->cell();
-            cell.tile=playerTileset->tileAt(baseTile+0);
+            cell.setTile(playerTileset->tileAt(baseTile+0));
             playerMapObject->setCell(cell);
 
             std::cerr << "Error at path found, collision detected" << std::endl;
@@ -2419,6 +2419,6 @@ void MapVisualiserPlayer::forcePlayerTileset(QString path)
     //the direction
     direction=CatchChallenger::Direction_look_at_bottom;
     Tiled::Cell cell=playerMapObject->cell();
-    cell.tile=playerTileset->tileAt(7);
+    cell.setTile(playerTileset->tileAt(7));
     playerMapObject->setCell(cell);
 }

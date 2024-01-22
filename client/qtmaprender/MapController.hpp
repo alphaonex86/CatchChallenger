@@ -41,7 +41,7 @@ private:
         uint8_t plant_id;
         uint16_t seconds_to_mature;
     };
-    Tiled::Tileset *botFlags;
+    Tiled::SharedTileset botFlags;
     QGraphicsPixmapItem *imageOver;
     bool imageOverAdded;
     QColor actualColor,tempColor,newColor;

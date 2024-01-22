@@ -3,7 +3,7 @@
 
 #include <QObject>
 #include <QTimer>
-#include "../tiled/tiled_mapobject.hpp"
+#include <libtiled/mapobject.h>
 
 class MapMark : public QObject
 {

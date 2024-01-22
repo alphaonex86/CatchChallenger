@@ -1,14 +1,14 @@
 #include "MapMark.hpp"
 #include "ObjectGroupItem.hpp"
-#include "../tiled/tiled_tile.hpp"
-#include "../tiled/tiled_objectgroup.hpp"
+#include <libtiled/tile.h>
+#include <libtiled/objectgroup.h>
 #include <QDebug>
 
 MapMark::MapMark(Tiled::MapObject *mapObject) :
     m_mapObject(mapObject)
 {
     Tiled::Cell cell=mapObject->cell();
-    if(cell.tile==NULL)
+    if(cell.tile()==NULL)
     {
         qDebug() << "Tile NULL at map mark contructor";
         timer.stop();
@@ -41,13 +41,13 @@ void MapMark::updateTheFrame()
         return;
     }
     Tiled::Cell cell=m_mapObject->cell();
-    if(cell.tile==NULL)
+    if(cell.tile()==NULL)
     {
         qDebug() << "Tile NULL at mark";
         timer.stop();
         return;
     }
-    if(cell.tile->tileset()==NULL)
+    if(cell.tile()->tileset()==NULL)
     {
         qDebug() << "Tileset NULL at mark";
         ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
@@ -55,7 +55,7 @@ void MapMark::updateTheFrame()
         timer.stop();
         return;
     }
-    if(cell.tile->id()>=cell.tile->tileset()->tileCount())
+    if(cell.tile()->id()>=cell.tile()->tileset()->tileCount())
     {
         ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
         m_mapObject=NULL;
@@ -64,8 +64,8 @@ void MapMark::updateTheFrame()
     }
     else
     {
-        cell.tile=cell.tile->tileset()->tileAt(cell.tile->id()+1);
-        if(cell.tile==NULL)
+        cell.setTile(cell.tile()->tileset()->tileAt(cell.tile()->id()+1));
+        if(cell.tile()==NULL)
         {
             ObjectGroupItem::objectGroupLink.at(m_mapObject->objectGroup())->removeObject(m_mapObject);
             m_mapObject=NULL;

@@ -26,11 +26,6 @@ include(../libqtcatchchallenger/libqt.pri)
 include(../libqtcatchchallenger/libqtheader.pri)
 include(../qtmaprender/render.pri)
 include(../qtmaprender/renderheader.pri)
-include(../tiled/tiled.pri)
-include(../tiled/tiledheader.pri)
-equals(QT_VERSION, 6){
-   QT += core5compat
-}
 TEMPLATE = app
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"

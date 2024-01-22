@@ -3,11 +3,8 @@
 
 #include <unordered_map>
 #include <vector>
-
-namespace Tiled {
-class MapObject;
-class Tileset;
-}
+#include <libtiled/mapobject.h>
+#include <libtiled/tileset.h>
 
 class TemporaryTile;
 
@@ -25,7 +22,7 @@ enum BotMove
 struct BotDisplay
 {
     Tiled::MapObject *mapObject;
-    Tiled::Tileset *tileset;
+    Tiled::SharedTileset tileset;
     std::vector<Tiled::MapObject *> flags;
     TemporaryTile * temporaryTile;
     BotMove botMove;

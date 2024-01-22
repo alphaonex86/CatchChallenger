@@ -5,7 +5,7 @@
 #include "VariableServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
-#include "../../general/xxhash/xxhash.h"
+#include <xxhash.h>
 
 #include <regex>
 #include <iostream>

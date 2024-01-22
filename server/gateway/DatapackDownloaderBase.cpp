@@ -15,13 +15,14 @@ using namespace CatchChallenger;
 #include <chrono>
 #include <utime.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <zstd.h>
+#include <xxhash.h>
 
-#include "../../general/libzstd/lib/zstd.h"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/xxhash/xxhash.h"
 #include "../../client/libcatchchallenger/TarDecode.hpp"
 #include "LinkToGameServer.hpp"
 #include "EpollServerLoginSlave.hpp"

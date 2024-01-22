@@ -5,7 +5,7 @@
 MapDoor::MapDoor(Tiled::MapObject* object, const uint8_t &framesCount, const uint16_t &ms) :
     object(object),
     cell(object->cell()),
-    baseTile(object->cell().tile),
+    baseTile(object->cell().tile()),
     framesCount(framesCount),
     ms(ms)
 {
@@ -91,6 +91,6 @@ void MapDoor::timerFinish()
         }
         index++;
     }
-    cell.tile=baseTile->tileset()->tileAt(baseTile->id()+highterFrame);
+    cell.setTile(baseTile->tileset()->tileAt(baseTile->id()+highterFrame));
     object->setCell(cell);
 }

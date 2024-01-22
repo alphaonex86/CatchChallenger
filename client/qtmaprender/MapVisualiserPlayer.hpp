@@ -76,7 +76,7 @@ public:
 private:
     //player
     Tiled::MapObject * playerMapObject;
-    Tiled::Tileset * playerTileset;
+    Tiled::SharedTileset playerTileset;
     std::string playerSkinPath;
     int moveStep;
     CatchChallenger::Direction direction;
@@ -90,7 +90,7 @@ private:
     //monster
     std::vector<CatchChallenger::Direction> pendingMonsterMoves;
     Tiled::MapObject * monsterMapObject;
-    Tiled::Tileset * monsterTileset;
+    Tiled::SharedTileset monsterTileset;
     std::string current_monster_map;
     uint8_t monster_x,monster_y;
 
@@ -102,8 +102,8 @@ protected:
     std::string datapackMapPathBase;
     std::string datapackMapPathSpec;
     //cache
-    std::unordered_map<std::string,Tiled::Tileset *> playerTilesetCache;
-    std::unordered_map<std::string,Tiled::Tileset *> monsterTilesetCache;
+    std::unordered_map<std::string,Tiled::SharedTileset> playerTilesetCache;
+    std::unordered_map<std::string,Tiled::SharedTileset> monsterTilesetCache;
     std::string lastTileset;
     std::string defaultTileset;
 
@@ -128,7 +128,7 @@ protected:
     Tiled::MapObject * grassCurrentObject;
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
-    Tiled::Tileset * animationTileset;
+    Tiled::SharedTileset animationTileset;
     uint16_t currentPlayerSpeed;
     bool animationDisplayed;
 
