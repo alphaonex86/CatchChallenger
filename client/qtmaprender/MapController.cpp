@@ -2,11 +2,11 @@
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
 #include "../qtmaprender/TemporaryTile.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../../general/base/CommonSettingsServer.hpp"
-#include "../../../general/base/GeneralStructures.hpp"
-#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/GeneralStructures.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 
 #include <iostream>
 #include <QDebug>
@@ -64,7 +64,7 @@ MapController::~MapController()
 {
     if(botFlags!=NULL)
     {
-        delete botFlags;
+        //delete botFlags;
         botFlags=NULL;
     }
 }
@@ -141,7 +141,7 @@ void MapController::updateBot()
             break;
             case CatchChallenger::BotMove::BotMove_Loop:
             {
-                uint8_t baseTile=static_cast<uint8_t>(botDisplay.mapObject->cell().tile->id());
+                uint8_t baseTile=static_cast<uint8_t>(botDisplay.mapObject->cell().tile()->id());
                 switch(baseTile)
                 {
                     default:
@@ -159,7 +159,7 @@ void MapController::updateBot()
                     break;
                 }
                 Tiled::Cell cell=botDisplay.mapObject->cell();
-                cell.tile=botDisplay.tileset->tileAt(baseTile);
+                cell.setTile(botDisplay.tileset->tileAt(baseTile));
                 botDisplay.mapObject->setCell(cell);
             }
             break;
@@ -183,7 +183,7 @@ void MapController::updateBot()
                     break;
                 }
                 Tiled::Cell cell=botDisplay.mapObject->cell();
-                cell.tile=botDisplay.tileset->tileAt(baseTile);
+                cell.setTile(botDisplay.tileset->tileAt(baseTile));
                 botDisplay.mapObject->setCell(cell);
             }
             break;
@@ -337,7 +337,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
 
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
-    botDisplay->tileset=new Tiled::Tileset("bot",16,24);
+    botDisplay->tileset=Tiled::Tileset::create("bot",16,24);
     std::string skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
     if(!QFile(QString::fromStdString(skinPath)).exists())
     {
@@ -369,7 +369,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
 
     {
         Tiled::Cell cell=botDisplay->mapObject->cell();
-        cell.tile=botDisplay->tileset->tileAt(baseTile);
+        cell.setTile(botDisplay->tileset->tileAt(baseTile));
         botDisplay->mapObject->setCell(cell);
 
         ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
@@ -384,7 +384,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         //add flags
         if(botFlags==NULL)
         {
-            botFlags=new Tiled::Tileset(QStringLiteral("botflags"),16,16);
+            botFlags=Tiled::Tileset::create(QStringLiteral("botflags"),16,16);
             botFlags->loadFromImage(QImage(QStringLiteral(":/CC/images/flags.png")),QStringLiteral(":/CC/images/flags.png"));
             TemporaryTile::empty=botFlags->tileAt(15);
         }
@@ -405,7 +405,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setName("Shops");
             botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
-            cell.tile=botFlags->tileAt(2);
+            cell.setTile(botFlags->tileAt(2));
             flag->setCell(cell);
             ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -418,7 +418,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setName("Learn");
             botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
-            cell.tile=botFlags->tileAt(3);
+            cell.setTile(botFlags->tileAt(3));
             flag->setCell(cell);
             ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -443,7 +443,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             Tiled::MapObject * flag=new Tiled::MapObject();
             botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
-            cell.tile=botFlags->tileAt(0);
+            cell.setTile(botFlags->tileAt(0));
             flag->setCell(cell);
             ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -456,7 +456,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setName("Market");
             botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
-            cell.tile=botFlags->tileAt(4);
+            cell.setTile(botFlags->tileAt(4));
             flag->setCell(cell);
             ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -469,7 +469,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setName("Zonecapture");
             botDisplay->flags.push_back(flag);
             Tiled::Cell cell=flag->cell();
-            cell.tile=botFlags->tileAt(6);
+            cell.setTile(botFlags->tileAt(6));
             flag->setCell(cell);
             ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0

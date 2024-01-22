@@ -32,7 +32,7 @@ public:
     {
         std::string lastTileset;
         Tiled::MapObject * playerMapObject;
-        Tiled::Tileset * playerTileset;
+        Tiled::SharedTileset playerTileset;
         int moveStep;
         CatchChallenger::Direction direction;
         uint8_t x,y;
@@ -42,13 +42,13 @@ public:
         std::unordered_set<std::string> mapUsed;
         CatchChallenger::Player_public_informations informations;
         Tiled::MapObject * labelMapObject;
-        Tiled::Tileset * labelTileset;
+        Tiled::SharedTileset labelTileset;
         uint32_t playerSpeed;
         bool animationDisplayed;
         //monster
         std::vector<CatchChallenger::Direction> pendingMonsterMoves;
         Tiled::MapObject * monsterMapObject;
-        Tiled::Tileset * monsterTileset;
+        Tiled::SharedTileset monsterTileset;
         std::string current_monster_map;
         uint8_t monster_x,monster_y;
 

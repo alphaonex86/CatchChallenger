@@ -10,12 +10,12 @@
 #include <QPointer>
 #include <iostream>
 
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/base/FacilityLib.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/MoveOnTheMap.hpp"
-#include "../tiled/tiled_tile.hpp"
-#include "../../../general/base/CommonMap.hpp"
+#include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
+#include <libtiled/tile.h>
+#include "../../general/base/CommonMap.hpp"
 #include "../libcatchchallenger/ClientVariable.hpp"
 
 bool MapVisualiser::rectTouch(QRect r1,QRect r2)
@@ -47,7 +47,7 @@ void MapVisualiser::destroyMap(Map_full *map)
     }
     map->doors.clear();
     if(map->tiledMap!=NULL)
-        mapItem->removeMap(map->tiledMap);
+        mapItem->removeMap(map->tiledMap.get());
     if(all_map.find(map->logicalMap.map_file)!=all_map.cend())
     {
         all_map[map->logicalMap.map_file]=NULL;
@@ -61,9 +61,9 @@ void MapVisualiser::destroyMap(Map_full *map)
     //delete common variables
     CatchChallenger::CommonMap::removeParsedLayer(map->logicalMap.parsed_layer);
     map->logicalMap.parsed_layer.simplifiedMap=NULL;
-    qDeleteAll(map->tiledMap->tilesets());
-    if(map->tiledMap!=NULL)
-        delete map->tiledMap;
+    //qDeleteAll(map->tiledMap.get()->tilesets());
+    /*if(map->tiledMap!=NULL)
+        delete map->tiledMap;*/
     map->tiledMap=NULL;
     if(map->tiledRender!=NULL)
         delete map->tiledRender;
@@ -150,10 +150,10 @@ void MapVisualiser::asyncDetectBorder(Map_full * tempMapObject)
     if(MapVisualiser::rectTouch(current_map_rect,map_rect))
     {
         //display a new map now visible
-        if(!mapItem->haveMap(tempMapObject->tiledMap))
-            mapItem->addMap(tempMapObject,tempMapObject->tiledMap,tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
+        if(!mapItem->haveMap(tempMapObject->tiledMap.get()))
+            mapItem->addMap(tempMapObject,tempMapObject->tiledMap.get(),tempMapObject->tiledRender,tempMapObject->objectGroupIndex);
         mapItem->setMapPosition(
-                    tempMapObject->tiledMap,
+                    tempMapObject->tiledMap.get(),
                                 static_cast<uint16_t>(tempMapObject->relative_x_pixel),
                                 static_cast<uint16_t>(tempMapObject->relative_y_pixel)
                                 );
@@ -424,11 +424,11 @@ void MapVisualiser::applyTheAnimationTimer()
 
                         Tiled::MapObject * mapObject=animation_object.animatedObject;
                         Tiled::Cell cell=mapObject->cell();
-                        Tiled::Tile *tile=mapObject->cell().tile;
+                        Tiled::Tile *tile=mapObject->cell().tile();
                         Tiled::Tile *newTile=tile->tileset()->tileAt(tile->id()+1);
                         if(newTile->id()>=map_animation.maxId)
                             newTile=tile->tileset()->tileAt(map_animation.minId);
-                        cell.tile=newTile;
+                        cell.setTile(newTile);
                         mapObject->setCell(cell);
 
                         index++;
@@ -477,9 +477,9 @@ void MapVisualiser::hideNotloadedMap()
     for( const auto& n : all_map )
         if(n.second->logicalMap.map_file!=current_map)
             if(!n.second->displayed)
-                mapItem->removeMap(n.second->tiledMap);
+                mapItem->removeMap(n.second->tiledMap.get());
     for( const auto& n : old_all_map )
-        mapItem->removeMap(n.second->tiledMap);
+        mapItem->removeMap(n.second->tiledMap.get());
 }
 
 void MapVisualiser::passMapIntoOld()

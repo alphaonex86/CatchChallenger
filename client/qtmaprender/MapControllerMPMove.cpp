@@ -174,7 +174,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case 0:
                 {
                     Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile+0);
+                    cell.setTile(otherPlayer.monsterTileset->tileAt(baseTile+0));
                     otherPlayer.monsterMapObject->setCell(cell);
                 }
                 break;
@@ -185,7 +185,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case 2:
                 {
                     Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile-2);
+                    cell.setTile(otherPlayer.monsterTileset->tileAt(baseTile-2));
                     otherPlayer.monsterMapObject->setCell(cell);
                 }
                 break;
@@ -193,7 +193,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case 4:
                 {
                     Tiled::Cell cell=otherPlayer.monsterMapObject->cell();
-                    cell.tile=otherPlayer.monsterTileset->tileAt(baseTile+0);
+                    cell.setTile(otherPlayer.monsterTileset->tileAt(baseTile+0));
                     otherPlayer.monsterMapObject->setCell(cell);
                 }
                 break;
@@ -274,7 +274,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         case 0:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(baseTile+0);
+            cell.setTile(otherPlayer.playerTileset->tileAt(baseTile+0));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -287,9 +287,9 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
             if(otherPlayer.stepAlternance)
-                cell.tile=otherPlayer.playerTileset->tileAt(baseTile-1);
+                cell.setTile(otherPlayer.playerTileset->tileAt(baseTile-1));
             else
-                cell.tile=otherPlayer.playerTileset->tileAt(baseTile+1);
+                cell.setTile(otherPlayer.playerTileset->tileAt(baseTile+1));
             otherPlayer.playerMapObject->setCell(cell);
             otherPlayer.stepAlternance=!otherPlayer.stepAlternance;
         }
@@ -298,7 +298,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         case 4:
         {
             Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-            cell.tile=otherPlayer.playerTileset->tileAt(baseTile+0);
+            cell.setTile(otherPlayer.playerTileset->tileAt(baseTile+0));
             otherPlayer.playerMapObject->setCell(cell);
         }
         break;
@@ -406,7 +406,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_left;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(10);
+                cell.setTile(otherPlayer.playerTileset->tileAt(10));
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
@@ -433,7 +433,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_right;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(4);
+                cell.setTile(otherPlayer.playerTileset->tileAt(4));
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
@@ -461,7 +461,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_top;
 
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(1);
+                cell.setTile(otherPlayer.playerTileset->tileAt(1));
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();
@@ -488,7 +488,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_bottom;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                cell.tile=otherPlayer.playerTileset->tileAt(7);
+                cell.setTile(otherPlayer.playerTileset->tileAt(7));
                 otherPlayer.playerMapObject->setCell(cell);
                 otherPlayer.inMove=false;
                 otherPlayer.oneStepMore->stop();

@@ -1,9 +1,9 @@
 #include "MapController.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../general/base/CommonDatapack.hpp"
-#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 #include <iostream>
 #include <QDebug>
 #include <QFileInfo>
@@ -176,7 +176,7 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
         QImage image(QString::fromStdString(imagePath));
         if(!image.isNull())
         {
-            tempPlayer.monsterTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),32,32);
+            tempPlayer.monsterTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),32,32);
             if(!tempPlayer.monsterTileset->loadFromImage(image,QString::fromStdString(imagePath)))
                 abort();
             monsterTilesetCache[imagePath]=tempPlayer.monsterTileset;
@@ -194,19 +194,19 @@ void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const
         {
             case CatchChallenger::Direction_look_at_top:
             case CatchChallenger::Direction_move_at_top:
-                cell.tile=tempPlayer.monsterTileset->tileAt(2);
+                cell.setTile(tempPlayer.monsterTileset->tileAt(2));
             break;
             case CatchChallenger::Direction_look_at_right:
             case CatchChallenger::Direction_move_at_right:
-                cell.tile=tempPlayer.monsterTileset->tileAt(7);
+                cell.setTile(tempPlayer.monsterTileset->tileAt(7));
             break;
             case CatchChallenger::Direction_look_at_bottom:
             case CatchChallenger::Direction_move_at_bottom:
-                cell.tile=tempPlayer.monsterTileset->tileAt(6);
+                cell.setTile(tempPlayer.monsterTileset->tileAt(6));
             break;
             case CatchChallenger::Direction_look_at_left:
             case CatchChallenger::Direction_move_at_left:
-                cell.tile=tempPlayer.monsterTileset->tileAt(3);
+                cell.setTile(tempPlayer.monsterTileset->tileAt(3));
             break;
             default:
             break;
@@ -796,7 +796,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                             QImage image(QString::fromStdString(imagePath));
                             if(!image.isNull())
                             {
-                                otherPlayer.playerTileset = new Tiled::Tileset(QString::fromStdString(lastTileset),16,24);
+                                otherPlayer.playerTileset=Tiled::Tileset::create(QString::fromStdString(lastTileset),16,24);
                                 otherPlayer.playerTileset->loadFromImage(image,QString::fromStdString(imagePath));
                             }
                             else
@@ -809,8 +809,8 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                     }
                     {
                         Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                        int tileId=cell.tile->id();
-                        cell.tile=otherPlayer.playerTileset->tileAt(tileId);
+                        int tileId=cell.tile()->id();
+                        cell.setTile(otherPlayer.playerTileset->tileAt(tileId));
                         otherPlayer.playerMapObject->setCell(cell);
                     }
                 }
@@ -824,8 +824,8 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
             otherPlayer.playerTileset=playerTilesetCache[defaultTileset];
             {
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
-                int tileId=cell.tile->id();
-                cell.tile=otherPlayer.playerTileset->tileAt(tileId);
+                int tileId=cell.tile()->id();
+                cell.setTile(otherPlayer.playerTileset->tileAt(tileId));
                 otherPlayer.playerMapObject->setCell(cell);
             }
         }

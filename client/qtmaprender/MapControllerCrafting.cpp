@@ -48,7 +48,7 @@ void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const 
     }
     const std::string &map=QFileInfo(QString::fromStdString(datapackMapPathSpec+
                    QtDatapackClientLoader::datapackLoader->get_maps().at(mapId))).absoluteFilePath().toStdString();
-    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap))
+    if(!haveMapInMemory(map) || !mapItem->haveMap(all_map.at(map)->tiledMap.get()))
     {
         qDebug() << QString("map (%1,%2) not show or not loaded, delay it").arg(QString::fromStdString(map)).arg(mapId);
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -150,7 +150,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     Tiled::Cell cell=plant->mapObject->cell();
     if(plant->mature_at<=currentTime)
     {
-        cell.tile=QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(4);
+        cell.setTile(QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(4));
         plant->mapObject->setCell(cell);
         return false;
     }
@@ -161,22 +161,22 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     if(seconds_to_mature<floweringDiff)
     {
         plant->start(seconds_to_mature*1000);
-        cell.tile=QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(3);
+        cell.setTile(QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(3));
     }
     else if(seconds_to_mature<tallerDiff)
     {
         plant->start((seconds_to_mature-floweringDiff)*1000);
-        cell.tile=QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(2);
+        cell.setTile(QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(2));
     }
     else if(seconds_to_mature<sproutedDiff)
     {
         plant->start((seconds_to_mature-tallerDiff)*1000);
-        cell.tile=QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(1);
+        cell.setTile(QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(1));
     }
     else
     {
         plant->start((seconds_to_mature-sproutedDiff)*1000);
-        cell.tile=QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(0);
+        cell.setTile(QtDatapackClientLoader::datapackLoader->getPlantExtra(plant->plant_id).tileset->tileAt(0));
     }
     plant->mapObject->setCell(cell);
     return true;
@@ -224,7 +224,7 @@ void MapController::remove_plant_full(const std::string &map, const uint8_t &x, 
                     .arg(QString::fromStdString(stringimplode(map_list,";")));
         return;
     }
-    if(!mapItem->haveMap(all_map[map]->tiledMap))
+    if(!mapItem->haveMap(all_map[map]->tiledMap.get()))
     {
         qDebug() << QString("map (%1) not show, ignore it").arg(QString::fromStdString(map));
         return;

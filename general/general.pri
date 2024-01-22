@@ -57,8 +57,7 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/fight/CommonFightEngineWild.cpp \
     $$PWD/fight/CommonFightEngineBase.cpp \
     $$PWD/base/Version.cpp \
-    $$PWD/sha224/sha224.cpp \
-    $$PWD/xxhash/xxhash.c
+    $$PWD/sha224/sha224.cpp
 
 HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/ClientBase.hpp \
@@ -83,77 +82,9 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/fight/FightLoader.hpp \
     $$PWD/fight/CommonFightEngine.hpp \
     $$PWD/fight/CommonFightEngineBase.hpp \
-    $$PWD/sha224/sha224.hpp \
-    $$PWD/xxhash/xxhash.h
+    $$PWD/sha224/sha224.hpp
 
-!contains(DEFINES, EXTERNALLIBZSTD) {
-SOURCES += \
-    $$PWD/libzstd/lib/common/pool.c \
-    $$PWD/libzstd/lib/common/zstd_common.c \
-    $$PWD/libzstd/lib/common/entropy_common.c \
-    $$PWD/libzstd/lib/common/fse_decompress.c \
-    $$PWD/libzstd/lib/common/threading.c \
-    $$PWD/libzstd/lib/common/error_private.c \
-    $$PWD/libzstd/lib/common/xxbhash.c \
-    $$PWD/libzstd/lib/compress/zstd_compress_sequences.c \
-    $$PWD/libzstd/lib/compress/huf_compress.c \
-    $$PWD/libzstd/lib/compress/zstd_compress.c \
-    $$PWD/libzstd/lib/compress/zstd_compress_superblock.c \
-    $$PWD/libzstd/lib/compress/zstd_lazy.c \
-    $$PWD/libzstd/lib/compress/hist.c \
-    $$PWD/libzstd/lib/compress/zstd_fast.c \
-    $$PWD/libzstd/lib/compress/zstd_opt.c \
-    $$PWD/libzstd/lib/compress/zstd_ldm.c \
-    $$PWD/libzstd/lib/compress/zstdmt_compress.c \
-    $$PWD/libzstd/lib/compress/fse_compress.c \
-    $$PWD/libzstd/lib/compress/zstd_compress_literals.c \
-    $$PWD/libzstd/lib/compress/zstd_double_fast.c \
-    $$PWD/libzstd/lib/decompress/zstd_ddict.c \
-    $$PWD/libzstd/lib/decompress/huf_decompress.c \
-    $$PWD/libzstd/lib/decompress/zstd_decompress.c \
-    $$PWD/libzstd/lib/decompress/zstd_decompress_block.c \
-    $$PWD/libzstd/lib/dictBuilder/cover.c \
-    $$PWD/libzstd/lib/dictBuilder/divsufsort.c \
-    $$PWD/libzstd/lib/dictBuilder/fastcover.c \
-    $$PWD/libzstd/lib/dictBuilder/zdict.c \
-
-HEADERS += \
-    $$PWD/libzstd/lib/zstd.h \
-    $$PWD/libzstd/lib/common/compiler.h \
-    $$PWD/libzstd/lib/common/threading.h \
-    $$PWD/libzstd/lib/common/xxhash.h \
-    $$PWD/libzstd/lib/common/error_private.h \
-    $$PWD/libzstd/lib/common/bitstream.h \
-    $$PWD/libzstd/lib/common/fse.h \
-    $$PWD/libzstd/lib/common/mem.h \
-    $$PWD/libzstd/lib/common/huf.h \
-    $$PWD/libzstd/lib/common/zstd_internal.h \
-    $$PWD/libzstd/lib/common/pool.h \
-    $$PWD/libzstd/lib/common/cpu.h \
-    $$PWD/libzstd/lib/common/zstd_errors.h \
-    $$PWD/libzstd/lib/compress/zstd_fast.h \
-    $$PWD/libzstd/lib/compress/zstd_lazy.h \
-    $$PWD/libzstd/lib/compress/zstd_compress_internal.h \
-    $$PWD/libzstd/lib/compress/zstdmt_compress.h \
-    $$PWD/libzstd/lib/compress/zstd_cwksp.h \
-    $$PWD/libzstd/lib/compress/zstd_opt.h \
-    $$PWD/libzstd/lib/compress/hist.h \
-    $$PWD/libzstd/lib/compress/zstd_compress_sequences.h \
-    $$PWD/libzstd/lib/compress/zstd_ldm.h \
-    $$PWD/libzstd/lib/compress/zstd_double_fast.h \
-    $$PWD/libzstd/lib/compress/zstd_compress_literals.h \
-    $$PWD/libzstd/lib/decompress/zstd_ddict.h \
-    $$PWD/libzstd/lib/decompress/zstd_decompress_block.h \
-    $$PWD/libzstd/lib/decompress/zstd_decompress_internal.h \
-    $$PWD/libzstd/lib/dictBuilder/cover.h \
-    $$PWD/libzstd/lib/dictBuilder/zdict.h \
-    $$PWD/libzstd/lib/dictBuilder/divsufsort.h
-
-    DEFINES += ZSTD_STATIC_LINKING_ONLY
-    INCLUDEPATH += $$PWD/libzstd/lib/
-} else {
-    LIBS    += -lzstd
-}
+LIBS    += -lzstd -lxxhash
 
 #only linux is C only, mac, windows, other is in Qt for compatibility
 win32:RESOURCES += $$PWD/base/resources/resources-windows-qt-plugin.qrc

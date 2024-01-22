@@ -25,7 +25,7 @@ LIBS    += -lpq
 
 DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 
-CONFIG += c++11
+CONFIG += c++17
 
 TARGET = catchchallenger-server-master
 CONFIG   += console
@@ -132,6 +132,8 @@ HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2c.cpp
+
+LIBS += -lxxhash
 
 linux:QMAKE_LFLAGS += -fuse-ld=mold
 linux:LIBS += -fuse-ld=mold

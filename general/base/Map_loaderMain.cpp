@@ -5,11 +5,7 @@
 #include "cpp11addition.hpp"
 
 #include <iostream>
-#ifdef EXTERNALLIBZSTD
 #include <zstd.h>
-#else
-#include "../../general/libzstd/lib/zstd.h"
-#endif
 #include <map>
 
 using namespace CatchChallenger;

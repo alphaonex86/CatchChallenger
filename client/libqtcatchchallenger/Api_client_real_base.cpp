@@ -14,11 +14,11 @@ using namespace CatchChallenger;
 #include <QDirIterator>
 #endif
 
-#include "../../../general/base/CommonSettingsCommon.hpp"
-#include "../../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
+#include "../../general/base/FacilityLibGeneral.hpp"
 #include "../libcatchchallenger/TarDecode.hpp"
-#include "../../../general/base/GeneralVariable.hpp"
-#include "../../../general/xxhash/xxhash.h"
+#include "../../general/base/GeneralVariable.hpp"
+#include <xxhash.h>
 
 //need host + port here to have datapack base
 

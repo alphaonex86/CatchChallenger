@@ -16,7 +16,7 @@
 #include <QLabel>
 #include <QPixmapCache>
 
-#include "../../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &openGL) :
     mScene(new QGraphicsScene(this)),
@@ -79,7 +79,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
 
     tagTilesetIndex=0;
-    markPathFinding=new Tiled::Tileset(QStringLiteral("mark path finding"),16,24);
+    markPathFinding=Tiled::Tileset::create(QStringLiteral("mark path finding"),16,24);
     {
         QImage image(QStringLiteral(":/CC/images/map/marker.png"));
         if(image.isNull())
@@ -176,8 +176,8 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMa
         Tiled::MapObject *mapObject=new Tiled::MapObject();
         mapObject->setName("Mark for path finding");
         Tiled::Cell cell=mapObject->cell();
-        cell.tile=markPathFinding->tileAt(0);
-        if(cell.tile==NULL)
+        cell.setTile(markPathFinding->tileAt(0));
+        if(cell.tile()==NULL)
             qDebug() << "Tile NULL before map mark contructor";
         mapObject->setCell(cell);
         mapObject->setPosition(QPointF(x,y+1));

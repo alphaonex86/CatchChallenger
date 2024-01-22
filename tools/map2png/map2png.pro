@@ -1,5 +1,3 @@
-include(../../client/tiled/tiled.pri)
-
 TEMPLATE = app
 TARGET = map2png
 DEFINES += MAXIMIZEPERFORMANCEOVERDATABASESIZE
@@ -8,17 +6,12 @@ QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
 
 QT += xml network opengl
 
+LIBS += -ltiled
+INCLUDEPATH += /usr/include/libtiled/
+
 DEFINES += ONLYMAPRENDER NOWEBSOCKET
 
 include(../../general/general.pri)
-# NO! include their own render
-#include(../../client/qtmaprender/render.pri)
-#include(../../client/qtmaprender/renderheader.pri)
-#only include partially
-#include(../../client/libcatchchallenger/lib.pri)
-#include(../../client/libcatchchallenger/libheader.pri)
-#include(../../client/libqtcatchchallenger/libqt.pri)
-#include(../../client/libqtcatchchallenger/libqtheader.pri)
 
 win32:RC_FILE += resources-windows.rc
 
@@ -49,8 +42,7 @@ HEADERS += map2png.h \
     Map_client.hpp \
     TriggerAnimation.hpp
 
-RESOURCES += \
-    resources.qrc
+RESOURCES += resources.qrc
 
 win32:RESOURCES += $$PWD/../../general/base/resources/resources-windows-qt-plugin.qrc
 
@@ -62,8 +54,8 @@ SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp
 
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
+#linux:QMAKE_LFLAGS += -fuse-ld=mold
+#linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #

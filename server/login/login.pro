@@ -34,31 +34,6 @@ TEMPLATE = app
 
 SOURCES += \
     ../../general/base/CompressionProtocol.cpp \
-    ../../general/libzstd/lib/common/debug.c \
-    ../../general/libzstd/lib/common/entropy_common.c \
-    ../../general/libzstd/lib/common/error_private.c \
-    ../../general/libzstd/lib/common/fse_decompress.c \
-    ../../general/libzstd/lib/common/pool.c \
-    ../../general/libzstd/lib/common/threading.c \
-    ../../general/libzstd/lib/common/xxbhash.c \
-    ../../general/libzstd/lib/common/zstd_common.c \
-    ../../general/libzstd/lib/compress/fse_compress.c \
-    ../../general/libzstd/lib/compress/hist.c \
-    ../../general/libzstd/lib/compress/huf_compress.c \
-    ../../general/libzstd/lib/compress/zstd_compress.c \
-    ../../general/libzstd/lib/compress/zstd_compress_literals.c \
-    ../../general/libzstd/lib/compress/zstd_compress_sequences.c \
-    ../../general/libzstd/lib/compress/zstd_compress_superblock.c \
-    ../../general/libzstd/lib/compress/zstd_double_fast.c \
-    ../../general/libzstd/lib/compress/zstd_fast.c \
-    ../../general/libzstd/lib/compress/zstd_lazy.c \
-    ../../general/libzstd/lib/compress/zstd_ldm.c \
-    ../../general/libzstd/lib/compress/zstd_opt.c \
-    ../../general/libzstd/lib/compress/zstdmt_compress.c \
-    ../../general/libzstd/lib/decompress/huf_decompress.c \
-    ../../general/libzstd/lib/decompress/zstd_ddict.c \
-    ../../general/libzstd/lib/decompress/zstd_decompress.c \
-    ../../general/libzstd/lib/decompress/zstd_decompress_block.c \
     ../../general/sha224/sha224.cpp \
     main-epoll-login-slave.cpp \
     EpollClientLoginSlave.cpp \
@@ -113,34 +88,6 @@ SOURCES += \
 
 HEADERS += \
     ../../general/base/CompressionProtocol.hpp \
-    ../../general/libzstd/lib/common/bitstream.h \
-    ../../general/libzstd/lib/common/compiler.h \
-    ../../general/libzstd/lib/common/cpu.h \
-    ../../general/libzstd/lib/common/debug.h \
-    ../../general/libzstd/lib/common/error_private.h \
-    ../../general/libzstd/lib/common/fse.h \
-    ../../general/libzstd/lib/common/huf.h \
-    ../../general/libzstd/lib/common/mem.h \
-    ../../general/libzstd/lib/common/pool.h \
-    ../../general/libzstd/lib/common/threading.h \
-    ../../general/libzstd/lib/common/xxhash.h \
-    ../../general/libzstd/lib/common/zstd_errors.h \
-    ../../general/libzstd/lib/common/zstd_internal.h \
-    ../../general/libzstd/lib/compress/hist.h \
-    ../../general/libzstd/lib/compress/zstd_compress_internal.h \
-    ../../general/libzstd/lib/compress/zstd_compress_literals.h \
-    ../../general/libzstd/lib/compress/zstd_compress_sequences.h \
-    ../../general/libzstd/lib/compress/zstd_compress_superblock.h \
-    ../../general/libzstd/lib/compress/zstd_cwksp.h \
-    ../../general/libzstd/lib/compress/zstd_double_fast.h \
-    ../../general/libzstd/lib/compress/zstd_fast.h \
-    ../../general/libzstd/lib/compress/zstd_lazy.h \
-    ../../general/libzstd/lib/compress/zstd_ldm.h \
-    ../../general/libzstd/lib/compress/zstd_opt.h \
-    ../../general/libzstd/lib/compress/zstdmt_compress.h \
-    ../../general/libzstd/lib/decompress/zstd_ddict.h \
-    ../../general/libzstd/lib/decompress/zstd_decompress_block.h \
-    ../../general/libzstd/lib/decompress/zstd_decompress_internal.h \
     ../../general/sha224/sha224.hpp \
     EpollClientLoginSlave.h \
     EpollServerLoginSlave.h \
@@ -185,6 +132,8 @@ HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2c.cpp
+
+LIBS += -lzstd
 
 linux:QMAKE_LFLAGS += -fuse-ld=mold
 linux:LIBS += -fuse-ld=mold
