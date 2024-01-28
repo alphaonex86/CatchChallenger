@@ -31,8 +31,6 @@ HEADERS += \
     ../../server/epoll/EpollTimer.hpp \
     ../../server/epoll/EpollUnixSocketServer.hpp \
     Bot.hpp \
-    DatapackDownloaderBase.hpp \
-    DatapackDownloaderMainSub.hpp \
     TimerMove.hpp
 
 SOURCES += \
@@ -42,9 +40,5 @@ SOURCES += \
     ../../server/epoll/EpollTimer.cpp \
     ../../server/epoll/EpollUnixSocketServer.cpp \
     Bot.cpp \
-    DatapackDownloaderBase.cpp \
-    DatapackDownloaderMainSub.cpp \
-    DatapackDownloader_main.cpp \
-    DatapackDownloader_sub.cpp \
     TimerMove.cpp \
     main-epoll-bot.cpp
