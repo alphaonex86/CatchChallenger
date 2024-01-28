@@ -2,14 +2,13 @@
 #include <iostream>
 #include <cstring>
 #include <arpa/inet.h>
+#include <xxhash.h>
+#include <sys/stat.h>
+#include <fstream>
+
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/cpp11addition.hpp"
-#include "../../general/xxhash/xxhash.h"
-#include "DatapackDownloaderBase.hpp"
-#include "DatapackDownloaderMainSub.hpp"
-#include <sys/stat.h>
-#include <fstream>
 
 sockaddr_in6 Bot::serv_addr;
 std::string Bot::login;
@@ -189,6 +188,7 @@ void Bot::notLogged(const std::string &reason)
 //const std::vector<ServerFromPoolForDisplay> &serverOrdenedList,
 void Bot::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList)
 {
+    parseDatapack("datapack/");
     unsigned int characterCount=0;
     unsigned int index=0;
     while(index<characterEntryList.size())
@@ -243,9 +243,7 @@ void Bot::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> 
     }
     else
     {
-        DatapackDownloaderBase::sendDatapackContentBase();//need have datapack to have profile to create new character
-
-/*        std::cerr << "logged with no character" << std::endl;
+        std::cerr << "logged with no character" << std::endl;
         const std::vector<CatchChallenger::Profile> &profileList=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
         if(profileList.empty())
         {
@@ -311,7 +309,7 @@ void Bot::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> 
 
             addCharacter(server.charactersGroupIndex,profileIndex,pseudo,rand()%selectedProfile.monstergroup.size(),skinList.at(rand()%skinList.size()));
             selectedServer++;
-        }*/
+        }
     }
 }
 void Bot::protocol_is_good()
@@ -373,7 +371,6 @@ void Bot::newCharacterId(const uint8_t &returnCode,const uint32_t &characterId)
 void Bot::haveCharacter()
 {
     std::cerr << "haveCharacter" << std::endl;
-    sendDatapackContentMainSub();
 }
 //events
 void Bot::setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events)
@@ -515,23 +512,11 @@ void Bot::haveTheDatapack()
 void Bot::haveTheDatapackMainSub()
 {
     std::cerr << "haveTheDatapackMainSub" << std::endl;
-
-    //regen the datapack cache
-    /*if(LinkToGameServer::httpDatapackMirrorRewriteMainAndSub.size()<=1)
-    {
-        //mDatapackMain(mDatapackBase+"map/main/"+mainDatapackCode+"/"),
-        EpollClientLoginSlave::datapack_file_main[mainDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackMain);
-        if(!mDatapackSub.empty())
-            //mDatapackSub=mDatapackBase+"map/main/"+mainDatapackCode+"/sub/"+subDatapackCode+"/";
-            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache=EpollClientLoginSlave::datapack_file_list(mDatapackSub);
-        else
-            EpollClientLoginSlave::datapack_file_sub[mainDatapackCode][subDatapackCode].datapack_file_hash_cache.clear();
-    }*/
 }
 //base
 void Bot::newFileBase(const std::string &fileName,const std::string &data)
 {
-    (void)data;
+    (void)&data;
     (void)fileName;
 }
 void Bot::newHttpFileBase(const std::string &url,const std::string &fileName)
@@ -551,7 +536,7 @@ void Bot::datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &dat
 //main
 void Bot::newFileMain(const std::string &fileName,const std::string &data)
 {
-    (void)data;
+    (void)&data;
     (void)fileName;
 }
 void Bot::newHttpFileMain(const std::string &url,const std::string &fileName)
@@ -571,7 +556,7 @@ void Bot::datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &dat
 //sub
 void Bot::newFileSub(const std::string &fileName,const std::string &data)
 {
-    (void)data;
+    (void)&data;
     (void)fileName;
 }
 void Bot::newHttpFileSub(const std::string &url,const std::string &fileName)
@@ -744,166 +729,14 @@ void Bot::closeSocket()
     CatchChallenger::EpollClient::close();
 }
 
-std::unordered_map<std::string,uint32_t/*partialHash*/> Bot::datapack_file_list(const std::string &path,const bool withHash)
-{
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(path.empty())
-    {
-        //mostly for listFolderNotRecursive()/listFolder() protect
-        std::cerr << "can't EpollClientLoginSlave::datapack_file_list(\"\")" << std::endl;
-        abort();
-    }
-    #endif
-    std::unordered_map<std::string,uint32_t> filesList;
+void Bot::emitdatapackParsed()
+{}
+void Bot::emitdatapackParsedMainSub()
+{}
+void Bot::emitdatapackChecksumError()
+{}
+void Bot::parseTopLib()
+{}
+std::string Bot::getLanguage()
+{return "en";}
 
-    std::vector<std::string> returnList;
-    returnList=CatchChallenger::FacilityLibGeneral::listFolder(path);
-
-    unsigned int index=0;
-    while(index<returnList.size())
-    {
-        #ifdef _WIN32
-        std::string fileName=returnList.at(index);
-        #else
-        const std::string &fileName=returnList.at(index);
-        #endif
-        const std::string &suffix=CatchChallenger::FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
-        //if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
-        //try replace by better algo
-        if(!suffix.empty())
-        {
-//            const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);
-            if(!suffix.empty() &&
-                    DatapackDownloaderBase::extensionAllowed.find(suffix)
-                    !=DatapackDownloaderBase::extensionAllowed.cend())
-            {
-                uint32_t datapackCacheFile;
-                if(withHash)
-                {
-                    struct stat buf;
-                    if(::stat((path+returnList.at(index)).c_str(),&buf)==0)
-                    {
-                        if(buf.st_size<=CATCHCHALLENGER_MAX_FILE_SIZE)
-                        {
-                            std::string fullPathFileToOpen=path+returnList.at(index);
-                            #ifdef Q_OS_WIN32
-                            stringreplaceAll(fullPathFileToOpen,"/","\\");
-                            #endif
-                            FILE *filedesc=fopen(fullPathFileToOpen.c_str(),"rb");
-                            if(filedesc!=NULL)
-                            {
-                                #ifdef _WIN32
-                                stringreplaceAll(fileName,"\\","/");//remplace if is under windows server
-                                #endif
-                                const std::vector<char> &data=CatchChallenger::FacilityLibGeneral::readAllFileAndClose(filedesc);
-
-                                uint32_t h=0;
-                                XXH32_canonical_t htemp;
-                                XXH32_canonicalFromHash(&htemp,XXH32(data.data(),data.size(),0));
-                                memcpy(&h,&htemp.digest,sizeof(h));
-
-                                datapackCacheFile=h;
-                                filesList[fileName]=datapackCacheFile;
-                            }
-                            else
-                            {
-                                datapackCacheFile=0;
-                                std::cerr << "Client::datapack_file_list fopen failed on " +path+returnList.at(index)+ ":"+std::to_string(errno) << std::endl;
-                            }
-                        }
-                        else
-                        {
-                            datapackCacheFile=0;
-                            std::cerr << "Client::datapack_file_list file too big failed on " +path+returnList.at(index)+ ":"+std::to_string(buf.st_size) << std::endl;
-                        }
-                    }
-                    else
-                    {
-                        datapackCacheFile=0;
-                        std::cerr << "Client::datapack_file_list stat failed on " +path+returnList.at(index)+ ":"+std::to_string(errno) << std::endl;
-                    }
-                }
-                else
-                {
-                    datapackCacheFile=0;
-                    filesList[fileName]=datapackCacheFile;
-                }
-            }
-        }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        else
-        {
-            std::cerr << "For Client::datapack_file_list(" << path << "," << withHash << ")" << std::endl;
-            std::cerr << "FacilityLibGeneral::getSuffixAndValidatePathFromFS(" << fileName << ") return empty result" << std::endl;
-            //const std::string &suffix2=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
-        }
-        #endif
-        index++;
-    }
-    return filesList;
-}
-
-std::string Bot::datapackPathBase() const
-{
-    return CatchChallenger::Api_protocol::datapackPathBase();
-}
-
-std::string Bot::datapackPathMain() const
-{
-    return CatchChallenger::Api_protocol::datapackPathMain();
-}
-
-std::string Bot::datapackPathSub() const
-{
-    return CatchChallenger::Api_protocol::datapackPathSub();
-}
-
-std::string Bot::mainDatapackCode() const
-{
-    return CatchChallenger::Api_protocol::mainDatapackCode();
-}
-
-std::string Bot::subDatapackCode() const
-{
-    return CatchChallenger::Api_protocol::subDatapackCode();
-}
-
-bool Bot::dolocalfolder(const std::string &dir)
-{
-    struct stat myStat;
-    if(stat(dir.c_str(),&myStat)==0)
-    {
-        if((myStat.st_mode&S_IFMT)==S_IFDIR)
-            return true;
-        else
-            return false;
-    }
-    else
-        return (mkdir(dir.c_str(),0700)==0);
-}
-
-bool Bot::mkpath(const std::string &dir)
-{
-#ifndef __linux__
-#error this only work on linux
-#endif
-    std::string tempdir=dir;
-    stringreplaceAll(tempdir,"//","/");
-    const std::vector<std::string> &folderdir=stringsplit(dir,'/');
-    unsigned int index=2;
-    while(index<folderdir.size())
-    {
-        std::vector<std::string> tempsplit;
-        std::copy(folderdir.cbegin(),folderdir.cbegin()+index,std::back_inserter(tempsplit));
-        const std::string &pathtodo=stringimplode(tempsplit,'/');
-        if(pathtodo.size()<2)
-        {
-            std::cerr << "FacilityLibGateway::mkpath(" << dir << "): pathtodo.size()<2" << std::endl;
-            return false;
-        }
-        if(!dolocalfolder(pathtodo))
-            return false;
-        index++;
-    }
-    return dolocalfolder(tempdir);
-}
