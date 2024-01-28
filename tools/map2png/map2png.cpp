@@ -801,17 +801,10 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                             else
                                 qDebug() << "insert bot at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
                             QString lookAt=objects.at(index2)->property("lookAt").toString();
-                            QPointF position=objects.at(index2)->position();
-                            objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-                            tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->removeObjectAt(index2);
-                            MapObject *object=new MapObject(QString(),"bot",position);
-                            if(tempMapObject->objectGroup!=nullptr)
-                                tempMapObject->objectGroup->addObject(object);
-                            else
-                                qDebug() << "insert bot but tempMapObject->objectGroup==null at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
-                            objects=tempMapObject->tiledMap->layerAt(index)->asObjectGroup()->objects();
-                            index2--;
-                            Cell cell=object->cell();
+                            Layer * layer=tempMapObject->tiledMap->layerAt(index);
+                            ObjectGroup *objGrou=layer->asObjectGroup();
+
+                            Cell cell=objects.at(index2)->cell();
                             if(lookAt=="top")
                                 cell.setTile(tileset->tileAt(1));
                             else if(lookAt=="right")
@@ -820,7 +813,19 @@ QString Map2Png::loadOtherMap(const QString &fileName)
                                 cell.setTile(tileset->tileAt(10));
                             else
                                 cell.setTile(tileset->tileAt(7));
-                            object->setCell(cell);
+                            objects.at(index2)->setCell(cell);
+                            if(objects.at(index2)->hasDimensions())
+                                objects.at(index2)->setSize(tileset->tileAt(1)->width(),tileset->tileAt(1)->height());
+                            //tempMapObject->objectGroup->addObject(objects.at(index2));
+
+                            if(tempMapObject->objectGroup!=nullptr)
+                            {
+                                /*tempMapObject->objectGroup->addObject(objects.at(index2));
+                                objGrou->removeObject(objects.at(index2));
+                                index2--;*/
+                            }
+                            else
+                                qDebug() << "insert bot but tempMapObject->objectGroup==null at " << __FILE__ << ":" << __LINE__ << " on map " << resolvedFileName << objects.at(index2)->x() << objects.at(index2)->y() << objects.at(index2)->property("skin").toString();
                         }
                         else
                             qDebug() << "bot found tileset NULL at " << __FILE__ << ":" << __LINE__;
