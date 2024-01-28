@@ -5,11 +5,10 @@
 #include <netinet/in.h>
 
 #include "../../client/libcatchchallenger/Api_protocol.hpp"
+#include "../../client/libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../server/epoll/EpollClient.hpp"
-#include "DatapackDownloaderBase.hpp"
-#include "DatapackDownloaderMainSub.hpp"
 
-class Bot : public CatchChallenger::EpollClient, public CatchChallenger::Api_protocol, public DatapackDownloaderBase, public DatapackDownloaderMainSub
+class Bot : public CatchChallenger::EpollClient, public CatchChallenger::Api_protocol, public DatapackClientLoader
 {
 public:
     explicit Bot(const int &infd);
@@ -20,14 +19,6 @@ public:
     ssize_t readFromSocket(char * data, const size_t &size);
     ssize_t writeToSocket(const char * const data, const size_t &size);
 public:
-    std::string datapackPathBase() const;
-    std::string datapackPathMain() const;
-    std::string datapackPathSub() const;
-    std::string mainDatapackCode() const;
-    std::string subDatapackCode() const;
-
-    bool dolocalfolder(const std::string &dir);
-    bool mkpath(const std::string &dir);
     bool haveBeatBot(const uint16_t &botFightId) const;
     void tryDisconnect();
     void readForFirstHeader();
@@ -159,6 +150,13 @@ public:
 private:
     static sockaddr_in6 serv_addr;
     static std::string login,pass;
+
+private:
+    void emitdatapackParsed() override;
+    void emitdatapackParsedMainSub() override;
+    void emitdatapackChecksumError() override;
+    void parseTopLib() override;
+    std::string getLanguage() override;
 };
 
 #endif // BotClient_H
