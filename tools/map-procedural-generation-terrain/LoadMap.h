@@ -6,8 +6,13 @@
 #include <unordered_map>
 #include <string>
 
-#include "../../client/tiled/tiled_tilelayer.hpp"
-#include "../../client/tiled/tiled_map.hpp"
+//#include <libtiled/tilelayer.h>
+//#include <libtiled/map.h>
+//#include "/usr/include/libtiled/tilelayer.h"
+#include <libtiled/tilelayer.h>
+#include <libtiled/map.h>
+
+
 #include "VoronioForTiledMapTmx.h"
 #include "znoise/headers/Simplex.hpp"
 

@@ -338,6 +338,7 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     if(!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent())
     {
         std::cout << "!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent(), don't forget call CommonDatapackServerSpec::parseDatapack(), and when finished Api_protocol::have_main_and_sub_datapack_loaded()" << std::endl;
+        std::cout << "Stop character loading for now, then character_selected=false" << std::endl;
         if(delayedLogin.data.empty())
         {
             delayedLogin.data=std::string(data+pos,size-pos);

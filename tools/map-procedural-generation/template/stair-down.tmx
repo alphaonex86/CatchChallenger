@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="2" height="2" tilewidth="16" tileheight="16" infinite="0" nextobjectid="5">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="2" height="2" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="5">
  <tileset firstgid="1" source="../dest/map/tileset/invisible.tsx"/>
  <tileset firstgid="17" source="../../../CatchChallenger-datapack/map/tileset/t1.tsx"/>
- <layer name="Collisions" width="2" height="2">
-  <data encoding="base64" compression="zstd">
-   KLUv/SAQbQAAOAAAAAA/AgABAAUwAg==
+ <layer id="1" name="Collisions" width="2" height="2">
+  <data encoding="base64" compression="zlib">
+   eJxjYGBgsGdigAMAAxoAQg==
   </data>
  </layer>
- <objectgroup name="Moving">
+ <objectgroup id="2" name="Moving">
   <object id="4" name="stair-down" type="teleport on push" gid="3" x="16" y="16" width="16" height="16"/>
  </objectgroup>
 </map>

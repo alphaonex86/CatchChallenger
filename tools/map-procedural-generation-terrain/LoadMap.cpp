@@ -4,12 +4,21 @@
 #include <QCoreApplication>
 #include <iostream>
 
-#include "../../client/tiled/tiled_mapreader.hpp"
-#include "../../client/tiled/tiled_tileset.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
+#include <libtiled/mapreader.h>
+#include <libtiled/tileset.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+/**
+#include <libtiled/mapreader.h>
+#include <libtiled/tileset.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+**/
 
 #include "../../general/base/cpp11addition.hpp"
+
+extern std::vector<Tiled::SharedTileset> LoadMap_tilesets_hack;
+extern std::vector<std::unique_ptr<Tiled::Map>> LoadMap_map_hack;
 
 LoadMap::Terrain LoadMap::terrainList[5][6];
 QStringList LoadMap::terrainFlatList;
@@ -51,7 +60,7 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
 
     Tiled::MapReader reader;
-    Tiled::Tileset *tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/map/"+tsx);
+    Tiled::SharedTileset tilesetBase=reader.readTileset(QCoreApplication::applicationDirPath()+"/dest/map/"+tsx);
     if(tilesetBase==NULL)
     {
         std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString()
@@ -69,21 +78,38 @@ Tiled::Tileset *LoadMap::readTileset(const QString &tsx,Tiled::Map *tiledMap)
         abort();
     }*/
     tiledMap->addTileset(tilesetBase);
-    tilesetBase->setFileName(mapDir.relativeFilePath(tilesetBase->fileName()));
-    return tilesetBase;
+
+    // FIX Libtiled v1.3.5: Tiled::SharedTileset.getFileName() no longer returns file path for some reason
+    QString tsx_abs_path = QCoreApplication::applicationDirPath()+"/dest/map/"+tsx;
+    QString tsx_relative_path = mapDir.relativeFilePath(tsx_abs_path);
+
+    tilesetBase->setFileName(tsx_relative_path);
+
+    LoadMap_tilesets_hack.push_back(tilesetBase);
+
+    return tilesetBase.get(); // TODO: propagate smart pointer
 }
 
 Tiled::Map *LoadMap::readMap(const QString &tmx)
 {
+    // TODO: DEBUG
+    //std::cout << "LoadMap::readMap() Called with tmx = " << tmx.toStdString() << std::endl;
+
     Tiled::MapReader reader;
-    Tiled::Map *map=reader.readMap(QCoreApplication::applicationDirPath()+"/"+tmx);
+    std::unique_ptr<Tiled::Map> map=reader.readMap(QCoreApplication::applicationDirPath()+"/"+tmx);
     if(map==NULL)
     {
         std::cerr << "File not found: " << QCoreApplication::applicationDirPath().toStdString() << "/" << tmx.toStdString() <<
                   ": " << reader.errorString().toStdString() << std::endl;
         abort();
     }
-    return map;
+
+
+    Tiled::Map *map_ptr = map.get();
+
+    LoadMap_map_hack.push_back(std::move(map)); //  Hack FIX Libtiled 1.3.x - Tiled::Map is now smart pointer and is deleted automaticaly
+
+    return map_ptr; // TODO: Temp, should just propagate smart pointer
 }
 
 Tiled::Tileset *LoadMap::readTilesetWithTileId(const uint32_t &tile,const QString &tsx,Tiled::Map *tiledMap)
@@ -182,47 +208,49 @@ Tiled::ObjectGroup *LoadMap::addDebugLayer(Tiled::Map &tiledMap,std::vector<std:
         addText=" (Polygon)";
     else
         addText=" (Tile)";
-    Tiled::ObjectGroup *layerZoneWater=new Tiled::ObjectGroup("WaterZone"+addText,0,0,tiledMap.width(),tiledMap.height());
+
+    // ObjectGroup constructor no longer needs width and height
+    Tiled::ObjectGroup *layerZoneWater=new Tiled::ObjectGroup("WaterZone"+addText,0,0);
     layerZoneWater->setColor(QColor("#6273cc"));
     tiledMap.addLayer(layerZoneWater);
 
-    Tiled::ObjectGroup *layerZoneSnow=new Tiled::ObjectGroup("Snow"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneSnow=new Tiled::ObjectGroup("Snow"+addText,0,0);
     layerZoneSnow->setColor(QColor("#ffffff"));
     tiledMap.addLayer(layerZoneSnow);
-    Tiled::ObjectGroup *layerZoneTundra=new Tiled::ObjectGroup("Tundra"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTundra=new Tiled::ObjectGroup("Tundra"+addText,0,0);
     layerZoneTundra->setColor(QColor("#ddddbb"));
     tiledMap.addLayer(layerZoneTundra);
-    Tiled::ObjectGroup *layerZoneBare=new Tiled::ObjectGroup("Bare"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneBare=new Tiled::ObjectGroup("Bare"+addText,0,0);
     layerZoneBare->setColor(QColor("#bbbbbb"));
     tiledMap.addLayer(layerZoneBare);
-    Tiled::ObjectGroup *layerZoneScorched=new Tiled::ObjectGroup("Scorched"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneScorched=new Tiled::ObjectGroup("Scorched"+addText,0,0);
     layerZoneScorched->setColor(QColor("#999999"));
     tiledMap.addLayer(layerZoneScorched);
-    Tiled::ObjectGroup *layerZoneTaiga=new Tiled::ObjectGroup("Taiga"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTaiga=new Tiled::ObjectGroup("Taiga"+addText,0,0);
     layerZoneTaiga->setColor(QColor("#ccd4bb"));
     tiledMap.addLayer(layerZoneTaiga);
-    Tiled::ObjectGroup *layerZoneShrubland=new Tiled::ObjectGroup("Shrubland"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneShrubland=new Tiled::ObjectGroup("Shrubland"+addText,0,0);
     layerZoneShrubland->setColor(QColor("#c4ccbb"));
     tiledMap.addLayer(layerZoneShrubland);
-    Tiled::ObjectGroup *layerZoneTemperateDesert=new Tiled::ObjectGroup("Temperate Desert"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateDesert=new Tiled::ObjectGroup("Temperate Desert"+addText,0,0);
     layerZoneTemperateDesert->setColor(QColor("#e4e8ca"));
     tiledMap.addLayer(layerZoneTemperateDesert);
-    Tiled::ObjectGroup *layerZoneTemperateRainForest=new Tiled::ObjectGroup("Temperate Rain Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateRainForest=new Tiled::ObjectGroup("Temperate Rain Forest"+addText,0,0);
     layerZoneTemperateRainForest->setColor(QColor("#a4c4a8"));
     tiledMap.addLayer(layerZoneTemperateRainForest);
-    Tiled::ObjectGroup *layerZoneTemperateDeciduousForest=new Tiled::ObjectGroup("Temperate Deciduous Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTemperateDeciduousForest=new Tiled::ObjectGroup("Temperate Deciduous Forest"+addText,0,0);
     layerZoneTemperateDeciduousForest->setColor(QColor("#b4c9a9"));
     tiledMap.addLayer(layerZoneTemperateDeciduousForest);
-    Tiled::ObjectGroup *layerZoneGrassland=new Tiled::ObjectGroup("Grassland"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneGrassland=new Tiled::ObjectGroup("Grassland"+addText,0,0);
     layerZoneGrassland->setColor(QColor("#c4d4aa"));
     tiledMap.addLayer(layerZoneGrassland);
-    Tiled::ObjectGroup *layerZoneTropicalRainForest=new Tiled::ObjectGroup("Tropical Rain Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTropicalRainForest=new Tiled::ObjectGroup("Tropical Rain Forest"+addText,0,0);
     layerZoneTropicalRainForest->setColor(QColor("#9cbba9"));
     tiledMap.addLayer(layerZoneTropicalRainForest);
-    Tiled::ObjectGroup *layerZoneTropicalSeasonalForest=new Tiled::ObjectGroup("Tropical Seasonal Forest"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneTropicalSeasonalForest=new Tiled::ObjectGroup("Tropical Seasonal Forest"+addText,0,0);
     layerZoneTropicalSeasonalForest->setColor(QColor("#a9cca4"));
     tiledMap.addLayer(layerZoneTropicalSeasonalForest);
-    Tiled::ObjectGroup *layerZoneSubtropicalDesert=new Tiled::ObjectGroup("Subtropical Desert"+addText,0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerZoneSubtropicalDesert=new Tiled::ObjectGroup("Subtropical Desert"+addText,0,0);
     layerZoneSubtropicalDesert->setColor(QColor("#e9ddc7"));
     tiledMap.addLayer(layerZoneSubtropicalDesert);
 
@@ -292,7 +320,7 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     tiledMap.addLayer(layerZoneWalkBehind);
     Tiled::TileLayer *layerZoneWalkBehind2=new Tiled::TileLayer("WalkBehind",0,0,tiledMap.width(),tiledMap.height());
     tiledMap.addLayer(layerZoneWalkBehind2);
-    Tiled::ObjectGroup *layerMoving=new Tiled::ObjectGroup("Moving",0,0,tiledMap.width(),tiledMap.height());
+    Tiled::ObjectGroup *layerMoving=new Tiled::ObjectGroup("Moving",0,0);
     tiledMap.addLayer(layerMoving);
 
     //add temporary layer
@@ -315,7 +343,7 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     QDir mapDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
     QString tilesetPath(QFileInfo(QCoreApplication::applicationDirPath()+"/dest/map/tileset/invisible.tsx").absoluteFilePath());
     Tiled::MapReader reader;
-    Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
+    Tiled::SharedTileset tilesetBase=reader.readTileset(tilesetPath);
     if(tilesetBase==NULL)
     {
         std::cerr << "File not found: " << tilesetPath.toStdString() << std::endl;
@@ -323,6 +351,8 @@ Tiled::TileLayer *LoadMap::addTerrainLayer(Tiled::Map &tiledMap,const bool dotra
     }
     tiledMap.addTileset(tilesetBase);
     tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
+
+    LoadMap_tilesets_hack.push_back(tilesetBase);
 
     return layerZoneWater;
 }
@@ -345,6 +375,7 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
         QPolygonF poly;
         poly=zone.polygon;
         poly=poly.intersected(polyMap);
+        // TODO: Position of MapObject() may need conversion of units from tiles to pixels (API change introduced in v0.10.0)
         Tiled::MapObject *objectPolygon = new Tiled::MapObject("Zone "+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
         objectPolygon->setPolygon(poly);
         objectPolygon->setShape(Tiled::MapObject::Polygon);
@@ -352,6 +383,7 @@ void LoadMap::addPolygoneTerrain(std::vector<std::vector<Tiled::ObjectGroup *> >
         QPolygonF polyTile;
         polyTile=zone.pixelizedPolygon;
         polyTile=polyTile.intersected(polyMap);
+        // TODO: Position of MapObject() may need conversion of units from tiles to pixels (API change introduced in v0.10.0)
         Tiled::MapObject *objectTile = new Tiled::MapObject("Zone "+QString::number(index),"",QPointF(offsetX,offsetY), QSizeF(0.0,0.0));
         objectTile->setPolygon(polyTile);
         objectTile->setShape(Tiled::MapObject::Polygon);
@@ -414,10 +446,10 @@ void LoadMap::addTerrain(const Grid &grid,
                 {
                     const Point &point=zone.points.at(pointIndex);
                     Tiled::Cell cell;
-                    cell.flippedHorizontally=false;
-                    cell.flippedVertically=false;
-                    cell.flippedAntiDiagonally=false;
-                    cell.tile=terrain.tile;
+                    cell.setFlippedHorizontally(false);
+                    cell.setFlippedVertically(false);
+                    cell.setFlippedAntiDiagonally(false);
+                    cell.setTile(terrain.tile);
                     terrain.tileLayer->setCell(point.x(),point.y(),cell);
                     pointIndex++;
                 }
@@ -461,9 +493,12 @@ Tiled::Tileset *LoadMap::searchTilesetByName(const Tiled::Map &tiledMap,const QS
     unsigned int tilesetIndex=0;
     while(tilesetIndex<(unsigned int)tiledMap.tilesetCount())
     {
-        Tiled::Tileset * const layer=tiledMap.tilesetAt(tilesetIndex);
+        Tiled::SharedTileset const layer=tiledMap.tilesetAt(tilesetIndex);
+
+        LoadMap_tilesets_hack.push_back(layer);
+
         if(layer->name()==name)
-            return layer;
+            return layer.get(); // TODO: temp, should return smartpointer
         tilesetIndex++;
     }
     std::cerr << "Unable to found layer with name: " << name.toStdString() << std::endl;
@@ -472,7 +507,7 @@ Tiled::Tileset *LoadMap::searchTilesetByName(const Tiled::Map &tiledMap,const QS
     tilesetIndex = 0;
     while(tilesetIndex<(unsigned int)tiledMap.tilesetCount())
     {
-        Tiled::Tileset * const layer=tiledMap.tilesetAt(tilesetIndex);
+        Tiled::SharedTileset const layer=tiledMap.tilesetAt(tilesetIndex);
         std::cerr << " - " << layer->name().toStdString() << std::endl;
         tilesetIndex++;
     }
@@ -518,9 +553,11 @@ std::vector<Tiled::Tile *> LoadMap::getTileAt(const Tiled::Map &tiledMap,const u
         {
             if(layer->x()!=0 || layer->y()!=0)
                 abort();
-            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
-                abort();
-            tiles.push_back(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile);
+            
+            // layer no longer has functions width() and height()
+            //if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+            //    abort();
+            tiles.push_back(static_cast<Tiled::TileLayer *>(layer)->cellAt(x,y).tile());
         }
         tileLayerIndex++;
     }
@@ -540,9 +577,11 @@ Tiled::TileLayer *LoadMap::haveTileAt(const Tiled::Map &tiledMap,const unsigned 
             Tiled::TileLayer * const castedLayer=static_cast<Tiled::TileLayer *>(layer);
             if(layer->x()!=0 || layer->y()!=0)
                 abort();
-            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
-                abort();
-            if(castedLayer->cellAt(x,y).tile==tile)
+
+            // layer no longer has functions width() and height()// layer no longer have functions width() and height()
+            // if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+            //    abort();
+            if(castedLayer->cellAt(x,y).tile()==tile)
                 return castedLayer;
         }
         tileLayerIndex++;
@@ -563,9 +602,11 @@ Tiled::Tile * LoadMap::haveTileAtReturnTile(const Tiled::Map &tiledMap,const uns
             Tiled::TileLayer * const castedLayer=static_cast<Tiled::TileLayer *>(layer);
             if(layer->x()!=0 || layer->y()!=0)
                 abort();
-            if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
-                abort();
-            Tiled::Tile * const tile=castedLayer->cellAt(x,y).tile;
+
+            // layer no longer has functions width() and height()// layer no longer have functions width() and height()
+            //if(x>=(unsigned int)layer->width() || y>=(unsigned int)layer->height())
+            //    abort();
+            Tiled::Tile * const tile=castedLayer->cellAt(x,y).tile();
             if(vectorcontainsAtLeastOne(tiles,tile))
                 return tile;
         }
@@ -583,7 +624,7 @@ Tiled::Tile * LoadMap::haveTileAtReturnTileUniqueLayer(const unsigned int x,cons
     {
         const Tiled::TileLayer * const layer=tilesLayers.at(tileLayerIndex);
         const Tiled::Tile * const tileToSearch=tiles.at(tileLayerIndex);
-        Tiled::Tile * const tile=layer->cellAt(x,y).tile;
+        Tiled::Tile * const tile=layer->cellAt(x,y).tile();
         if(tile==tileToSearch)
             return tile;
         tileLayerIndex++;

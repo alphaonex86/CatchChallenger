@@ -5,9 +5,9 @@
 #include <QDir>
 #include <iostream>
 
-#include "../../client/tiled/tiled_mapwriter.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
 
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
@@ -20,6 +20,13 @@
 #include "LoadMapAll.h"
 #include "PartialMap.h"
 #include "MiniMapAll.h"
+
+
+// A hack to keep all smart pointers alive during the whole program lifetime
+std::vector<Tiled::SharedTileset> PartialMap_tilesets_hack;
+std::vector<Tiled::SharedTileset> LoadMap_tilesets_hack;
+std::vector<Tiled::SharedTileset> MapBrush_tilesets_hack;
+std::vector<std::unique_ptr<Tiled::Map>> LoadMap_map_hack;
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -123,7 +130,7 @@ int main(int argc, char *argv[])
             LoadMap::addTerrainLayer(tiledMap,config.dotransition);
             LoadMap::loadAllTileset(cachedTileset,tiledMap);
 
-            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0,tiledMap.width(),tiledMap.height());
+            Tiled::ObjectGroup *layerObject=new Tiled::ObjectGroup("Object",0,0); // ObjectGroup contructor no longer accept width and height 
             tiledMap.addLayer(layerObject);
 
             if(config.displayzone)
@@ -194,7 +201,7 @@ int main(int argc, char *argv[])
             }
             t.start();
             {
-                Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
+                Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0); // ObjectGroup contructor no longer accepts width and height 
                 layerZoneChunk->setColor(QColor("#ffe000"));
                 tiledMap.addLayer(layerZoneChunk);
 
@@ -205,7 +212,16 @@ int main(int argc, char *argv[])
                     while(mapX<config.mapXCount)
                     {
                         Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
-                        object->setPolygon(QPolygonF(QRectF(mapX*config.mapWidth,mapY*config.mapHeight,config.mapWidth,config.mapHeight)));
+
+                        unsigned int tiles_x = mapX*config.mapWidth;
+                        unsigned int tiles_y = mapY*config.mapHeight;
+
+                        // Convert to pixel units when creating a new Tiled::MapObject
+                        // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                        unsigned int pixels_x = tiles_x * tiledMap.tileWidth();
+                        unsigned int pixels_y = tiles_y * tiledMap.tileHeight();
+
+                        object->setPolygon(QPolygonF(QRectF(pixels_x,pixels_y,config.mapWidth*tiledMap.tileWidth(),config.mapHeight*tiledMap.tileHeight())));
                         object->setShape(Tiled::MapObject::Polygon);
                         layerZoneChunk->addObject(object);
                         mapX++;
@@ -217,6 +233,11 @@ int main(int argc, char *argv[])
             if(config.doallmap)
             {
                 Tiled::MapWriter maprwriter;
+
+#ifdef TILED_CSV
+                tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#endif
+
                 if(!maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx"))
                 {
                     std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;

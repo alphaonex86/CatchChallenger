@@ -1,7 +1,7 @@
 #include "LoadMapAll.h"
 
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
@@ -19,7 +19,7 @@ std::unordered_map<std::string,LoadMapAll::Zone> LoadMapAll::zones;
 
 void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsigned int mapHeight)
 {
-    Tiled::ObjectGroup *layerCity=new Tiled::ObjectGroup("City",0,0,worldMap.width(),worldMap.height());
+    Tiled::ObjectGroup *layerCity=new Tiled::ObjectGroup("City",0,0); // ObjectGroup contructor no longer accept width and height 
     layerCity->setColor(QColor("#bb5555"));
     worldMap.addLayer(layerCity);
 
@@ -43,6 +43,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
         const uint32_t x=city.x;
         const uint32_t y=city.y;
         QPolygonF poly(QRectF(0,0,mapWidth-4,mapHeight-4));
+        // TODO: Position of MapObject() may need conversion of units from tiles to pixels (API change introduced in v0.10.0)
         Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(city.name+" ("+citySize+", level: "+std::to_string(city.level)+")"),"",QPointF(mapWidth*x+2,mapHeight*y+2), QSizeF(0.0,0.0));
         objectPolygon->setPolygon(poly);
         objectPolygon->setShape(Tiled::MapObject::Polygon);
@@ -51,7 +52,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
         index++;
     }
 
-    Tiled::ObjectGroup *layerRoad=new Tiled::ObjectGroup("Road",0,0,worldMap.width(),worldMap.height());
+    Tiled::ObjectGroup *layerRoad=new Tiled::ObjectGroup("Road",0,0); // ObjectGroup contructor no longer accept width and height 
     layerRoad->setColor(QColor("#ffcc22"));
     worldMap.addLayer(layerRoad);
     const unsigned int w=worldMap.width()/mapWidth;
@@ -102,6 +103,7 @@ void LoadMapAll::addDebugCity(Tiled::Map &worldMap, unsigned int mapWidth, unsig
 
                     //paint it
                     QPolygonF poly(QRectF(0,0,mapWidth,mapHeight));
+                    // TODO: Position of MapObject() may need conversion of units from tiles to pixels (API change introduced in v0.10.0)
                     Tiled::MapObject *objectPolygon = new Tiled::MapObject(QString::fromStdString(str),"",QPointF(mapWidth*x,mapHeight*y), QSizeF(0.0,0.0));
                     objectPolygon->setPolygon(poly);
                     objectPolygon->setShape(Tiled::MapObject::Polygon);
@@ -913,9 +915,15 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             const unsigned int &y=q.first;
             LoadMapAll::RoadIndex &roadIndex=q.second;
             unsigned int tempLevel=(levelmap.Get({(float)x,(float)y},levelmapscale)+1.0)/2.0*(levelmapmax-levelmapmin)+levelmapmin;
-            roadIndex.level=tempLevel-(minLevel-levelmapmin);
+            int temp_roadIndex=tempLevel-(minLevel-levelmapmin);
             if(roadIndex.level<levelmapmin)
-                roadIndex.level=levelmapmin;
+                temp_roadIndex=levelmapmin;
+            if(temp_roadIndex>255)
+            {
+                std::cerr << "roadIndexLevel>255, WARN!" << std::endl;
+                abort();
+            }
+            roadIndex.level=temp_roadIndex;
             float roadIndexLevel=roadIndex.level;
             uint8_t levelDiff=roadIndexLevel*0.1;
             if(levelDiff<2)
@@ -932,6 +940,8 @@ void LoadMapAll::addCity(Tiled::Map &worldMap, const Grid &grid, const std::vect
             while(inferiorLevel<=(roadIndex.level+levelDiff))
             {
                 levelRange.push_back(inferiorLevel);
+                if(inferiorLevel>=255)//work around for roadIndex.level==255
+                    break;
                 inferiorLevel++;
             }
             if(levelRange.size()<2)

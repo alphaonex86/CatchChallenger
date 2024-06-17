@@ -1,9 +1,9 @@
 #include "MapBrush.h"
-#include "../../client/tiled/tiled_tileset.hpp"
-#include "../../client/tiled/tiled_tilelayer.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
+#include <libtiled/tileset.h>
+#include <libtiled/tilelayer.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/tile.h>
 #include "LoadMap.h"
 
 #include <unordered_set>
@@ -11,6 +11,8 @@
 #include <QFileInfo>
 #include <QCoreApplication>
 #include <QDir>
+
+extern std::vector<Tiled::SharedTileset> MapBrush_tilesets_hack;
 
 uint8_t *MapBrush::mapMask=NULL;
 
@@ -158,19 +160,25 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
         uint8_t templateTilesetIndex=0;
         while(templateTilesetIndex<templateMap->tilesetCount())
         {
-            Tiled::Tileset * tileset=templateMap->tilesetAt(templateTilesetIndex);
+            Tiled::SharedTileset tileset=templateMap->tilesetAt(templateTilesetIndex);
+
+            MapBrush_tilesets_hack.push_back(tileset);
+
             QFileInfo tilesetFile(tileset->fileName());
             QString tilesetPath=tilesetFile.absoluteFilePath();
             uint8_t templateTilesetWorldIndex=0;
             //search into current tileset
             while(templateTilesetWorldIndex<worldMap.tilesetCount())
             {
-                Tiled::Tileset * tilesetWorld=worldMap.tilesetAt(templateTilesetWorldIndex);
+                Tiled::SharedTileset tilesetWorld=worldMap.tilesetAt(templateTilesetWorldIndex);
+
+                MapBrush_tilesets_hack.push_back(tilesetWorld);
+
                 QFileInfo tilesetWorldFile(QCoreApplication::applicationDirPath()+"/dest/map/main/official/"+tilesetWorld->fileName());
                 QString tilesetWorldPath=tilesetWorldFile.absoluteFilePath();
                 if(tilesetPath==tilesetWorldPath)
                 {
-                    returnedVar.templateTilesetToMapTileset[tileset]=tilesetWorld;
+                    returnedVar.templateTilesetToMapTileset[tileset.get()]=tilesetWorld.get(); // TODO: Needs to be converted from Tileset* to SharedTileset, on both sides
                     break;
                 }
                 templateTilesetWorldIndex++;
@@ -180,7 +188,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
             {
                 QDir templateDir(QCoreApplication::applicationDirPath()+"/dest/map/main/official/");
                 const QString &tilesetTemplateRelativePath=templateDir.relativeFilePath(tilesetPath);
-                returnedVar.templateTilesetToMapTileset[tileset]=LoadMap::readTileset("main/official/"+tilesetTemplateRelativePath,&worldMap);
+                returnedVar.templateTilesetToMapTileset[tileset.get()]=LoadMap::readTileset("main/official/"+tilesetTemplateRelativePath,&worldMap); // TODO: Needs to be converted from Tileset* to SharedTileset
             }
             templateTilesetIndex++;
         }
@@ -215,14 +223,14 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
                             const Tiled::Cell &cell=castedLayer->cellAt(index_x,index_y);
                             if(!cell.isEmpty())
                             {
-                                const unsigned int &tileId=cell.tile->id();
-                                Tiled::Tileset *oldTileset=cell.tile->tileset();
+                                const unsigned int &tileId=cell.tile()->id();
+                                Tiled::Tileset *oldTileset=cell.tile()->tileset();
                                 Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
                                 Tiled::Cell cell;
-                                cell.flippedHorizontally=false;
-                                cell.flippedVertically=false;
-                                cell.flippedAntiDiagonally=false;
-                                cell.tile=worldTileset->tileAt(tileId);
+                                cell.setFlippedHorizontally(false);
+                                cell.setFlippedVertically(false);
+                                cell.setFlippedAntiDiagonally(false);
+                                cell.setTile(worldTileset->tileAt(tileId));
                                 worldLayer->setCell(x_world,y_world,cell);
                                 if((layerIndex==selectedTemplate.baseLayerIndex || allTileIsMask)&& mapMask != NULL)
                                 {
@@ -249,11 +257,20 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
             while(index<(unsigned int)objects.size())
             {
                 const Tiled::MapObject* const object=objects.at(index);
-                const int x_world=selectedTemplate.x+x+object->x();
-                const int y_world=selectedTemplate.y+y+object->y();
+
+                // Convert to pixel units when creating a new Tiled::MapObject
+                // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                int x_world=selectedTemplate.x+x+(object->x() / worldMap.tileWidth());
+                int y_world=selectedTemplate.y+y+(object->y() / worldMap.tileHeight());
+
+                // Convert to pixel units when creating a new Tiled::MapObject
+                // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                x_world = x_world * worldMap.tileWidth();
+                y_world = y_world * worldMap.tileHeight();
+
                 Tiled::MapObject* const newobject=new Tiled::MapObject(object->name(),object->type(),QPoint(x_world,y_world),object->size());
 
-                Tiled::Tile *tile=object->cell().tile;
+                Tiled::Tile *tile=object->cell().tile();
                 if(tile!=NULL)
                 {
                     const unsigned int &tileId=tile->id();
@@ -261,7 +278,7 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
                     Tiled::Tileset *worldTileset=selectedTemplate.templateTilesetToMapTileset.at(oldTileset);
 
                     Tiled::Cell cell=newobject->cell();
-                    cell.tile=worldTileset->tileAt(tileId);
+                    cell.setTile(worldTileset->tileAt(tileId));
                     newobject->setCell(cell);
                     newobject->setProperties(object->properties());
                     worldLayer->addObject(newobject);

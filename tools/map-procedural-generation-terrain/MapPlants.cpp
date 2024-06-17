@@ -8,8 +8,8 @@
 #include <QCoreApplication>
 
 #include "LoadMap.h"
-#include "../../client/tiled/tiled_tilelayer.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
+#include <libtiled/tilelayer.h>
+#include <libtiled/tile.h>
 
 MapPlants::MapPlantsOptions MapPlants::mapPlantsOptions[5][6];
 
@@ -71,9 +71,9 @@ void MapPlants::addVegetation(Tiled::Map &worldMap,const VoronioForTiledMapTmx::
             while(x<(unsigned int)worldMap.width())
             {
                 //unmask the zone walkable and not collision
-                if(layerWalkable->cellAt(x,y).tile!=NULL)
+                if(layerWalkable->cellAt(x,y).tile()!=NULL)
                 {
-                    if(layerCollisions->cellAt(x,y).tile!=NULL)
+                    if(layerCollisions->cellAt(x,y).tile()!=NULL)
                     {
                         const unsigned int &bitMask=x+y*worldMap.width();
                         const unsigned int maxMapSize=(worldMap.width()*worldMap.height()/8+1);

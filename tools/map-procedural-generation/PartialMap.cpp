@@ -1,11 +1,11 @@
 #include "PartialMap.h"
 
-#include "../../client/tiled/tiled_mapwriter.hpp"
-#include "../../client/tiled/tiled_mapreader.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_tileset.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapreader.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include <QDir>
@@ -13,6 +13,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <cmath>
+
+extern std::vector<Tiled::SharedTileset> PartialMap_tilesets_hack;
 
 bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const unsigned int &minY,
                       const unsigned int &maxX, const unsigned int &maxY, const std::string &file, std::vector<RecuesPoint> &recuesPoints,
@@ -36,11 +38,11 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         }
 
     //add external tileset
-    std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
+    std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset; // TODO: Need to convert to SharedTileset
     unsigned int indexTileset=0;
     while(indexTileset<(unsigned int)world.tilesetCount())
     {
-        const Tiled::Tileset * const tileset=world.tilesetAt(indexTileset);
+        const Tiled::SharedTileset tileset=world.tilesetAt(indexTileset);
         QString tilesetFileName=tileset->fileName();
         if(tilesetFileName.isEmpty())
         {
@@ -57,7 +59,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         QString tilesetPath(QFileInfo(tilesetFileName).absoluteFilePath());
 
         Tiled::MapReader reader;
-        Tiled::Tileset *tilesetBase=reader.readTileset(tilesetPath);
+        Tiled::SharedTileset tilesetBase=reader.readTileset(tilesetPath);
         if(tilesetBase==NULL)
         {
             std::cerr << "File not found: " << tilesetPath.toStdString() << std::endl;
@@ -65,7 +67,11 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         }
         tiledMap.addTileset(tilesetBase);
         tilesetBase->setFileName(mapDir.relativeFilePath(tilesetPath));
-        templateTilesetToMapTileset[tileset]=tilesetBase;
+
+        PartialMap_tilesets_hack.push_back(tileset);
+        PartialMap_tilesets_hack.push_back(tilesetBase);
+
+        templateTilesetToMapTileset[tileset.get()]=tilesetBase.get(); // TODO: Need to convert to SharedTileset
         indexTileset++;
     }
 
@@ -90,13 +96,13 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                     {
                         haveContent=true;
                         Tiled::Cell newCell;
-                        newCell.flippedAntiDiagonally=oldCell.flippedAntiDiagonally;
-                        newCell.flippedHorizontally=oldCell.flippedHorizontally;
-                        newCell.flippedVertically=oldCell.flippedVertically;
-                        const unsigned int &oldTileId=oldCell.tile->id();
-                        Tiled::Tileset *oldTileset=oldCell.tile->tileset();
+                        newCell.setFlippedAntiDiagonally(oldCell.flippedAntiDiagonally());
+                        newCell.setFlippedHorizontally(oldCell.flippedHorizontally());
+                        newCell.setFlippedVertically(oldCell.flippedVertically());
+                        const unsigned int &oldTileId=oldCell.tile()->id();
+                        Tiled::Tileset *oldTileset=oldCell.tile()->tileset();
                         Tiled::Tileset *newTileset=templateTilesetToMapTileset.at(oldTileset);
-                        newCell.tile=newTileset->tileAt(oldTileId);
+                        newCell.setTile(newTileset->tileAt(oldTileId));
                         tileLayer->setCell(x,y,newCell);
                     }
                     x++;
@@ -113,36 +119,44 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         {
             const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
             const QList<Tiled::MapObject*> &objects=castedLayer->objects();
-            Tiled::ObjectGroup * objectGroup=new Tiled::ObjectGroup(castedLayer->name(),0,0,mapWidth,mapHeight);
+            Tiled::ObjectGroup * objectGroup=new Tiled::ObjectGroup(castedLayer->name(),0,0); // ObjectGroup no longer accepts mapWidth,mapHeight
             bool haveContent=false;
             unsigned int objectIndex=0;
             while(objectIndex<(unsigned int)objects.size())
             {
                 const Tiled::MapObject* oldobject=objects.at(objectIndex);
                 const unsigned int objectx=oldobject->x();
-                const unsigned int objecty=oldobject->y()
+                const unsigned int objecty=oldobject->y() -1;  // FIX: Without this some objects end up in wrong chunks
+
         #ifdef GENERATEMAPBORDER
                         -1//less the y offset, why?
         #endif
                         ;
-                if(objectx>=minX && objectx<maxX && objecty>=minY && objecty<maxY)
+                // Convert to pixel units when creating a new Tiled::MapObject
+                // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                unsigned int pixels_minX = minX * world.tileWidth();
+                unsigned int pixels_minY = minY * world.tileHeight();
+                unsigned int pixels_maxX = maxX * world.tileWidth();
+                unsigned int pixels_maxY = maxY * world.tileHeight();
+
+                if(objectx>=pixels_minX && objectx<pixels_maxX && objecty>=pixels_minY && objecty<pixels_maxY)
                 {
                     const Tiled::Cell &oldCell=oldobject->cell();
                     if(!oldCell.isEmpty())
                     {
                         haveContent=true;
                         QPointF position=oldobject->position();
-                        position.setX(position.x()-minX);
-                        position.setY(position.y()-minY);
+                        position.setX(position.x()-pixels_minX); // pixels_minX to fix v0.10.0 API breakage
+                        position.setY(position.y()-pixels_minY); // pixels_minY to fix v0.10.0 API breakage
                         Tiled::MapObject* newobject=new Tiled::MapObject(oldobject->name(),oldobject->type(),position,oldobject->size());
                         Tiled::Cell newCell;
-                        newCell.flippedAntiDiagonally=oldCell.flippedAntiDiagonally;
-                        newCell.flippedHorizontally=oldCell.flippedHorizontally;
-                        newCell.flippedVertically=oldCell.flippedVertically;
-                        const unsigned int &oldTileId=oldCell.tile->id();
-                        Tiled::Tileset *oldTileset=oldCell.tile->tileset();
+                        newCell.setFlippedAntiDiagonally(oldCell.flippedAntiDiagonally());
+                        newCell.setFlippedHorizontally(oldCell.flippedHorizontally());
+                        newCell.setFlippedVertically(oldCell.flippedVertically());
+                        const unsigned int &oldTileId=oldCell.tile()->id();
+                        Tiled::Tileset *oldTileset=oldCell.tile()->tileset();
                         Tiled::Tileset *newTileset=templateTilesetToMapTileset.at(oldTileset);
-                        newCell.tile=newTileset->tileAt(oldTileId);
+                        newCell.setTile(newTileset->tileAt(oldTileId));
                         newobject->setCell(newCell);
                         newobject->setProperties(oldobject->properties());
 
@@ -151,8 +165,11 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
                         if(objectGroup->name()=="Moving" && newobject->type()=="rescue")
                         {
                             PartialMap::RecuesPoint recuesPoint;
-                            recuesPoint.x=floor(position.x());
-                            recuesPoint.y=floor(position.y())-1;//I don't know why it have this offset
+
+                            // Convert to pixel units when creating a new Tiled::MapObject
+                            // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                            recuesPoint.x=floor(position.x() / world.tileWidth());
+                            recuesPoint.y=floor((position.y()-1) / world.tileHeight());//I don't know why it have this offset
                             recuesPoint.map=file;
                             if(stringEndsWith(recuesPoint.map,".tmx"))
                                 recuesPoint.map.erase(recuesPoint.map.size()-4);
@@ -174,6 +191,11 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
     }
 
     Tiled::MapWriter maprwriter;
+
+#ifdef TILED_CSV
+    tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#endif
+
     bool returnVar=maprwriter.writeMap(&tiledMap,fileInfo.absoluteFilePath());
     if(!returnVar)
         std::cerr << maprwriter.errorString().toStdString() << std::endl;
@@ -206,27 +228,35 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
 
     //delete map
     {
+        // It was commented out in the commit removing the embeded libs 42df8825b7d1dc939264d4145aeabf4ea2f1bdf6
+        /*
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
         while (i.hasNext()) {
             i.next();
             delete i.value();
         }
         Tiled::Tileset::preloadedTileset.clear();
+        */
     }
     {
         unsigned int index=0;
         while(index<(unsigned int)tiledMap.tilesetCount())
         {
-            Tiled::Tileset * tileset=tiledMap.tilesetAt(index);
+            Tiled::SharedTileset tileset=tiledMap.tilesetAt(index);
+            PartialMap_tilesets_hack.push_back(tileset);
+
             if(!tileset->isExternal())
             {
-                QString tsxPath=tileset->imageSource();
+                QString tsxPath=tileset->imageSource().toString();
                 tsxPath.replace(".png",".tsx");
                 if(!QFile::exists(tsxPath))
                 {
                     Tiled::MapWriter writer;
+
+                    //tileset->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+
                     //write external tileset
-                    writer.writeTileset(tileset,tsxPath);
+                    writer.writeTileset(*tileset,tsxPath);
                     std::cout << "Write new tileset: " << tsxPath.toStdString() << std::endl;
                 }
                 //use the external tileset

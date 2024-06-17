@@ -18,6 +18,8 @@ public:
     static sockaddr_in6 get_serv_addr();
     ssize_t readFromSocket(char * data, const size_t &size);
     ssize_t writeToSocket(const char * const data, const size_t &size);
+    void generateNewMove();
+    static std::vector<Bot *> list;
 public:
     bool haveBeatBot(const uint16_t &botFightId) const;
     void tryDisconnect();

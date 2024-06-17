@@ -20,7 +20,7 @@ scale_City=3
 scale_TerrainMap=0.03
 scale_TerrainMoisure=0.1
 scale_Zone=0.1
-seed=375
+seed=400
 tileStep=4
 
 [plants]
