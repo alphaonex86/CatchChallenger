@@ -34,6 +34,9 @@
 /server/catchchallenger-server-cli-epoll
 /client/catchchallenger
 
+# generated output
+/tools/map-procedural-generation/dest
+
 ### Qt ###
 # C++ objects and libs
 *.so.*
