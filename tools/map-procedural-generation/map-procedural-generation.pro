@@ -2,6 +2,10 @@ include(../map-procedural-generation-terrain/map-procedural-generation-terrain.p
 
 TARGET = map-procedural-generation
 
+CONFIG += debug
+
+LIBS += -ltiled
+
 DEFINES += MAPPROCEDURALGENFULL
 
 SOURCES += \
