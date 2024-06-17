@@ -31,7 +31,10 @@ Direction MoveOnTheMap::getDirection() const
 void MoveOnTheMap::newDirection(const Direction &the_new_direction)
 {
     if(last_direction_is_set==false)
+    {
+        std::cerr << "can't call move now, you need wait firstly the insert_player() with current player (abort)" << std::endl;
         abort();
+    }
     #ifdef DEBUG_MESSAGE_MOVEONTHEMAP
     std::cout << "newDirection(" << directionToString(the_new_direction) << "): " << __LINE__ << std::endl;
     #endif

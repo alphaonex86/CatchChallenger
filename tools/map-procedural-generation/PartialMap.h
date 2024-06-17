@@ -1,7 +1,7 @@
 #ifndef PARTIALMAP_H
 #define PARTIALMAP_H
 
-#include "../../client/tiled/tiled_map.hpp"
+#include <libtiled/map.h>
 #include <string>
 
 class PartialMap

@@ -981,6 +981,11 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                             }
                             playerTilesetCache[lastTileset]=playerTileset;
                         }
+                        if(playerTileset.isNull())
+                        {
+                            std::cerr << "ERROR playerTileset.isNull() (abort)" << std::endl;
+                            abort();
+                        }
                         {
                             Tiled::Cell cell=playerMapObject->cell();
                             if(cell.tile()!=nullptr)

@@ -8,16 +8,14 @@
 
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
 
 sockaddr_in6 Bot::serv_addr;
 std::string Bot::login;
 std::string Bot::pass;
 
-static const std::string text_double_slash="//";
-static const std::string text_dotslash="./";
-static const std::string text_antislash="\\";
-static const std::string text_slash="/";
+std::vector<Bot *> Bot::list;
 
 Bot::Bot(const int &infd) :
     EpollClient(infd)
@@ -42,6 +40,7 @@ Bot::Bot(const int &infd) :
     if(tempPass.find("%number%")!=std::string::npos)
         tempPass.replace(tempPass.find("%number%"), sizeof("%number%") - 1, "1");
     tryLogin(tempLogin,tempPass);
+    Bot::list.push_back(this);
 }
 
 Bot::~Bot()
@@ -71,6 +70,43 @@ Bot::~Bot()
         delete DatapackDownloaderBase::datapackDownloaderBase;
         DatapackDownloaderBase::datapackDownloaderBase=NULL;
     }*/
+    {
+        unsigned int index=0;
+        while(index<Bot::list.size())
+        {
+            if(Bot::list.at(index)==this)
+                Bot::list.erase(Bot::list.cbegin()+index);
+            else
+                index++;
+        }
+    }
+}
+
+void Bot::generateNewMove()
+{
+    auto new_direction=last_direction;
+    std::cout << "generate old Move: " << std::to_string(last_direction) << std::endl;
+    do
+    {
+        switch(rand()%4)
+        {
+        case 0:
+            new_direction=CatchChallenger::Direction_look_at_bottom;
+        break;
+        case 1:
+            new_direction=CatchChallenger::Direction_look_at_left;
+        break;
+        case 2:
+            new_direction=CatchChallenger::Direction_look_at_right;
+        break;
+        default:
+        case 3:
+            new_direction=CatchChallenger::Direction_look_at_top;
+        break;
+        }
+    } while(new_direction==last_direction);
+    std::cout << "generate new Move: " << std::to_string(new_direction) << std::endl;
+    send_player_direction(new_direction);
 }
 
 bool Bot::parseServerHostAndPort(const char * const host,const char * const port)
@@ -240,6 +276,8 @@ void Bot::logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> 
             }
             index++;
         }
+        std::cerr << "logged but unable to select char (abort)" << std::endl;
+        abort();
     }
     else
     {
@@ -328,6 +366,7 @@ void Bot::connectedOnGameServer()
 void Bot::haveDatapackMainSubCode()
 {
     std::cerr << "haveDatapackMainSubCode" << std::endl;
+    parseDatapackMainSub(CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
 }
 void Bot::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
 {
@@ -392,6 +431,8 @@ void Bot::insert_player(const CatchChallenger::Player_public_informations &playe
     (void)x;
     (void)y;
     (void)direction;
+    if(okayer id== same)
+        setLastDirection(
 }
 void Bot::move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
 {

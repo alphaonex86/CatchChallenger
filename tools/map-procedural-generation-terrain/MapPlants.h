@@ -4,8 +4,9 @@
 #include <vector>
 #include <unordered_map>
 
-#include "../../client/tiled/tiled_map.hpp"
-#include "../../client/tiled/tiled_tileset.hpp"
+#include <libtiled/map.h>
+#include <libtiled/tileset.h>
+
 #include "VoronioForTiledMapTmx.h"
 #include "MapBrush.h"
 

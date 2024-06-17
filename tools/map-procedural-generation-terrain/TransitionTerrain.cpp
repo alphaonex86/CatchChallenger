@@ -3,6 +3,20 @@
 
 #include <iostream>
 
+int findLayerIndexByName(const Tiled::Map *map, const QString &targetLayerName) {
+    const auto &layers = map->layers();
+    for (int i = 0; i < layers.size(); ++i) {
+        const Tiled::Layer *layer = layers.at(i);
+
+        // Check if the layer name matches the target layer name
+        if (layer->name() == targetLayerName) {
+            return i;  // Found, return the index
+        }
+    }
+
+    return -1;  // Not found
+}
+
 typedef VoronioForTiledMapTmx vd;
 
 uint16_t TransitionTerrain::layerMask(const Tiled::TileLayer * const terrainLayer,const unsigned int &x,const unsigned int &y,Tiled::Tile *tile,const bool XORop)
@@ -12,44 +26,44 @@ uint16_t TransitionTerrain::layerMask(const Tiled::TileLayer * const terrainLaye
     uint16_t to_type_match=0;//9 bits used-1=8bit, the center bit is the current tile
     if(x>0 && y>0)
     {
-        if((terrainLayer->cellAt(x-1,y-1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x-1,y-1).tile()!=tile) ^ XORop)
             to_type_match|=1;
     }
     if(y>0)
     {
-        if((terrainLayer->cellAt(x,y-1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x,y-1).tile()!=tile) ^ XORop)
             to_type_match|=2;
     }
     if(x<(w-1) && y>0)
     {
-        if((terrainLayer->cellAt(x+1,y-1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x+1,y-1).tile()!=tile) ^ XORop)
             to_type_match|=4;
     }
     if(x>0)
     {
-        if((terrainLayer->cellAt(x-1,y).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x-1,y).tile()!=tile) ^ XORop)
             to_type_match|=8;
     }
-    if((terrainLayer->cellAt(x,y).tile!=tile) ^ XORop)
+    if((terrainLayer->cellAt(x,y).tile()!=tile) ^ XORop)
         to_type_match|=16;
     if(x<(w-1))
     {
-        if((terrainLayer->cellAt(x+1,y).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x+1,y).tile()!=tile) ^ XORop)
             to_type_match|=32;
     }
     if(x>0 && y<(h-1))
     {
-        if((terrainLayer->cellAt(x-1,y+1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x-1,y+1).tile()!=tile) ^ XORop)
             to_type_match|=64;
     }
     if(y<(h-1))
     {
-        if((terrainLayer->cellAt(x,y+1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x,y+1).tile()!=tile) ^ XORop)
             to_type_match|=128;
     }
     if(x<(w-1) && y<(h-1))
     {
-        if((terrainLayer->cellAt(x+1,y+1).tile!=tile) ^ XORop)
+        if((terrainLayer->cellAt(x+1,y+1).tile()!=tile) ^ XORop)
             to_type_match|=256;
     }
     return to_type_match;
@@ -111,9 +125,9 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                 unsigned int x=0;
                 while(x<w)
                 {
-                    const bool innerBool=!XORop && (terrainLayer->cellAt(x,y).tile==terrain.tile);
+                    const bool innerBool=!XORop && (terrainLayer->cellAt(x,y).tile()==terrain.tile);
                     const unsigned int &bitMask=x+y*w;
-                    const bool outerBool=XORop && terrainLayer->cellAt(x,y).tile!=terrain.tile && !(MapBrush::mapMask[bitMask/8] & (1<<(7-bitMask%8)));
+                    const bool outerBool=XORop && terrainLayer->cellAt(x,y).tile()!=terrain.tile && !(MapBrush::mapMask[bitMask/8] & (1<<(7-bitMask%8)));
                     if(
                             //inner
                             innerBool ||
@@ -132,7 +146,7 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                             if(XORop)
                             {
                                 const uint16_t to_type_match_collision=layerMask(colisionLayerMask,x,y,NULL,false);
-                                const bool onGrass=transitionLayerMask->cellAt(x,y).tile!=NULL;
+                                const bool onGrass=transitionLayerMask->cellAt(x,y).tile()!=NULL;
                                 bool forceDisplay=false;
                                 //outer border
                                 if(to_type_match&2)
@@ -237,10 +251,10 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                                 if(!onGrass || forceDisplay)
                                 {
                                     Tiled::Cell cell;
-                                    cell.tile=terrain.transition_tile.at(indexTile);
-                                    cell.flippedHorizontally=false;
-                                    cell.flippedVertically=false;
-                                    cell.flippedAntiDiagonally=false;
+                                    cell.setTile(terrain.transition_tile.at(indexTile));
+                                    cell.setFlippedHorizontally(false);
+                                    cell.setFlippedVertically(false);
+                                    cell.setFlippedAntiDiagonally(false);
                                     transitionLayer->setCell(x,y,cell);
                                 }
                             }
@@ -279,10 +293,10 @@ void TransitionTerrain::addTransitionOnMap(Tiled::Map &tiledMap)
                                     indexTile=11;
 
                                 Tiled::Cell cell;
-                                cell.tile=terrain.transition_tile.at(indexTile);
-                                cell.flippedHorizontally=false;
-                                cell.flippedVertically=false;
-                                cell.flippedAntiDiagonally=false;
+                                cell.setTile(terrain.transition_tile.at(indexTile));
+                                cell.setFlippedHorizontally(false);
+                                cell.setFlippedVertically(false);
+                                cell.setFlippedAntiDiagonally(false);
                                 transitionLayer->setCell(x,y,cell);
                             }
                         }
@@ -339,7 +353,7 @@ void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
                 while(x<w)
                 {
                     const Tiled::Cell &cell=transitionLayerMask->cellAt(x,y);
-                    if(cell.tile!=NULL)
+                    if(cell.tile()!=NULL)
                     {
                         int tileLayerIndexTemp=tileLayerIndex;
                         while(true)
@@ -355,9 +369,9 @@ void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
                                 std::cerr << "!tempLayer->isTileLayer() (abort)" << std::endl;
                                 abort();
                             }
-                            if(static_cast<Tiled::TileLayer *>(tempLayer)->cellAt(x,y).tile!=NULL)
+                            if(static_cast<Tiled::TileLayer *>(tempLayer)->cellAt(x,y).tile()!=NULL)
                             {
-                                if(cell.tile!=terrain->tile)
+                                if(cell.tile()!=terrain->tile)
                                     tileLayerIndexTemp++;
                                 else
                                 {
@@ -367,10 +381,10 @@ void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
                                     {
                                         Tiled::TileLayer * tileLayer=static_cast<Tiled::TileLayer *>(tiledMap.layerAt(tileLayerIndexTemp));
                                         Tiled::Cell cell;
-                                        cell.tile=NULL;
-                                        cell.flippedHorizontally=false;
-                                        cell.flippedVertically=false;
-                                        cell.flippedAntiDiagonally=false;
+                                        cell.setTile(nullptr);
+                                        cell.setFlippedHorizontally(false);
+                                        cell.setFlippedVertically(false);
+                                        cell.setFlippedAntiDiagonally(false);
                                         tileLayer->setCell(x,y,cell);
                                         tileLayerIndexTemp++;
                                     }
@@ -396,7 +410,11 @@ void TransitionTerrain::mergeDown(Tiled::Map &tiledMap)
     {
         Tiled::TileLayer * layer=layerToDelete.at(index);
         //layer->setVisible(false);
-        const int indexOfLayer=tiledMap.indexOfLayer(layer->name());
+
+        // FIX Libtiled v1.8.0 - Tiled::Map.indexOfLayer() no longer exist
+        //const int indexOfLayer=tiledMap.indexOfLayer(layer->name());
+        const int indexOfLayer = findLayerIndexByName(&tiledMap, layer->name());
+
         if(indexOfLayer>=0)
             delete tiledMap.takeLayerAt(indexOfLayer);
         index++;
@@ -531,10 +549,10 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
                                     indexTile=6;
 
                                 Tiled::Cell cell;
-                                cell.tile=groupedTerrain.transition_tile.at(indexTile);
-                                cell.flippedHorizontally=false;
-                                cell.flippedVertically=false;
-                                cell.flippedAntiDiagonally=false;
+                                cell.setTile(groupedTerrain.transition_tile.at(indexTile));
+                                cell.setFlippedHorizontally(false);
+                                cell.setFlippedVertically(false);
+                                cell.setFlippedAntiDiagonally(false);
                                 transitionLayer->setCell(x,y,cell);
                             }
                         }
@@ -550,12 +568,18 @@ void TransitionTerrain::addTransitionGroupOnMap(Tiled::Map &tiledMap)
 
 void TransitionTerrain::changeTileLayerOrder(Tiled::Map &tiledMap)
 {
-    const int indexOfLayerWalkable=tiledMap.indexOfLayer("Walkable");
+     // FIX Libtiled v1.8.0 - Tiled::Map.indexOfLayer() no longer exist
+    //const int indexOfLayerWalkable=tiledMap.indexOfLayer("Walkable");
+    const int indexOfLayerWalkable = findLayerIndexByName(&tiledMap, "Walkable");
     if(indexOfLayerWalkable<0)
         return;
-    const int indexOfLayerGrass=tiledMap.indexOfLayer("Grass");
+
+     // FIX Libtiled v1.8.0 - Tiled::Map.indexOfLayer() no longer exist
+    //const int indexOfLayerGrass=tiledMap.indexOfLayer("Grass");
+    const int indexOfLayerGrass = findLayerIndexByName(&tiledMap, "Grass");
     if(indexOfLayerGrass<0)
         return;
+
     Tiled::Layer *layerZoneGrass=tiledMap.takeLayerAt(indexOfLayerGrass);
     tiledMap.insertLayer(indexOfLayerWalkable+1,layerZoneGrass);
 }

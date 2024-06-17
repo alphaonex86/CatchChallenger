@@ -2,10 +2,10 @@
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
-#include "../../client/tiled/tiled_tileset.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_mapwriter.hpp"
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapwriter.h>
 
 #include <iostream>
 #include <algorithm>
@@ -568,7 +568,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
     loadMapTemplate("building-big-1/",mapTemplatebuildingbig1,"building-big-1",mapWidth,mapHeight,worldMap);
 
     if(water != NULL && water->tile != NULL){
-        waterTile.tile = water->tile;
+        waterTile.setTile(water->tile);
     }else{
         std::cerr << "Watertile not found" << std::endl;
     }
@@ -595,8 +595,8 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                         for(unsigned int j= 0; j < scale; j++){
                             for(unsigned int k = 0; k < scale; k++){
-                                if(colliLayer->cellAt(x*mapWidth+sx*scale+j, y*mapHeight+sy*scale+k).tile != NULL
-                                        || waterLayer->cellAt(x*mapWidth+sx*scale+j, y*mapHeight+sy*scale +k).tile != NULL){
+                                if(colliLayer->cellAt(x*mapWidth+sx*scale+j, y*mapHeight+sy*scale+k).tile() != NULL
+                                        || waterLayer->cellAt(x*mapWidth+sx*scale+j, y*mapHeight+sy*scale +k).tile() != NULL){
                                     map[sx + sy*scaleWidth] |= 0x08; // Obstacle
                                 }
                             }
@@ -808,7 +808,23 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                             if(i >= limit && temp.name == mapTemplatebuildingheal.name){
                                 Tiled::ObjectGroup* moving = LoadMap::searchObjectGroupByName(worldMap, "Moving");
-                                Tiled::MapObject* rescue = new Tiled::MapObject("", "rescue", QPointF((x+.5)*mapWidth, (y+.5)*mapHeight), QSizeF(1,1));
+
+                                qreal point_x = (x+.5)*mapWidth;
+                                qreal point_y = (y+.5)*mapHeight;
+
+                                int tileWidth = worldMap.tileWidth();
+                                int tileHeight = worldMap.tileHeight();
+
+                                // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                                qreal pixels_x = point_x * tileWidth;
+                                qreal pixels_y = point_y * tileHeight;
+
+                                QPointF point = QPointF(pixels_x, pixels_y);
+
+                                std::cout << "point_x: " << point_x << std::endl;
+                                std::cout << "point_y: " << point_y << std::endl;
+
+                                Tiled::MapObject* rescue = new Tiled::MapObject("", "rescue", point, QSizeF(tileWidth,tileHeight));
                                 rescue->setCell(Tiled::Cell(invis->tileAt(1)));
                                 moving->addObject(rescue);
                             }
@@ -831,6 +847,7 @@ void LoadMapAll::generateRoadContent(Tiled::Map &worldMap, const SettingsAll::Se
 
                 if(setting.displayregion){
                     for(const ZoneMarker *marker: zones){
+                        // TODO: Position of MapObject() may need conversion of units from tiles to pixels (API change introduced in v0.10.0)
                         Tiled::MapObject *region = new Tiled::MapObject("", "region", QPointF(marker->x*2+mapWidth*x, marker->y*2+mapHeight*y), QSizeF(marker->w*2, marker->h*2));
                         region->setProperty("id", QString::number(marker->id));
                         region->setProperty("from", QString::number(marker->from));
@@ -885,7 +902,7 @@ bool checkEmptyRoad( const SettingsAll::SettingsExtra &setting, int tx, int ty){
 bool checkTerrain(const std::vector<LoadMap::Terrain*> &terrains, const Tiled::Map &worldMap, unsigned int tx, unsigned int ty, const QStringList &mountainTerrain){
 
     for(LoadMap::Terrain* terrain:terrains){
-        if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile == terrain->tile){
+        if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile() == terrain->tile){
             if(mountainTerrain.contains(terrain->terrainName)){
                 return false;
             }
@@ -917,44 +934,44 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
     const Tiled::Tileset * const mainTileset=LoadMap::searchTilesetByName(worldMap,"t1.tsx");
     Tiled::Cell newCell;
 
-    newCell.flippedAntiDiagonally=false;
-    newCell.flippedHorizontally=false;
-    newCell.flippedVertically=false;
-    newCell.tile=invisibleTileset->tileAt(0);
+    newCell.setFlippedAntiDiagonally(false);
+    newCell.setFlippedHorizontally(false);
+    newCell.setFlippedVertically(false);
+    newCell.setTile(invisibleTileset->tileAt(0));
 
     unsigned int y=0;
 
     unsigned int* map;
 
     Tiled::Cell bottomLedge;
-    bottomLedge.tile=mainTileset->tileAt(setting.ledgebottom);
-    bottomLedge.flippedHorizontally=false;
-    bottomLedge.flippedVertically=false;
-    bottomLedge.flippedAntiDiagonally=false;
+    bottomLedge.setTile(mainTileset->tileAt(setting.ledgebottom));
+    bottomLedge.setFlippedHorizontally(false);
+    bottomLedge.setFlippedVertically(false);
+    bottomLedge.setFlippedAntiDiagonally(false);
 
     Tiled::Cell leftLedge;
-    leftLedge.tile=mainTileset->tileAt(setting.ledgeleft);
-    leftLedge.flippedHorizontally=false;
-    leftLedge.flippedVertically=false;
-    leftLedge.flippedAntiDiagonally=false;
+    leftLedge.setTile(mainTileset->tileAt(setting.ledgeleft));
+    leftLedge.setFlippedHorizontally(false);
+    leftLedge.setFlippedVertically(false);
+    leftLedge.setFlippedAntiDiagonally(false);
 
     Tiled::Cell rightLedge;
-    rightLedge.tile=mainTileset->tileAt(setting.ledgeright);
-    rightLedge.flippedHorizontally=false;
-    rightLedge.flippedVertically=false;
-    rightLedge.flippedAntiDiagonally=false;
+    rightLedge.setTile(mainTileset->tileAt(setting.ledgeright));
+    rightLedge.setFlippedHorizontally(false);
+    rightLedge.setFlippedVertically(false);
+    rightLedge.setFlippedAntiDiagonally(false);
 
     Tiled::Cell topLedge; // Unused
-    topLedge.tile=mainTileset->tileAt(setting.ledgebottom);
-    topLedge.flippedHorizontally=false;
-    topLedge.flippedVertically=true;
-    topLedge.flippedAntiDiagonally=false;
+    topLedge.setTile(mainTileset->tileAt(setting.ledgebottom));
+    topLedge.setFlippedHorizontally(false);
+    topLedge.setFlippedVertically(true);
+    topLedge.setFlippedAntiDiagonally(false);
 
     Tiled::Cell empty;
-    empty.tile=NULL;
-    empty.flippedHorizontally=false;
-    empty.flippedVertically=false;
-    empty.flippedAntiDiagonally=false;
+    empty.setTile(nullptr);
+    empty.setFlippedHorizontally(false);
+    empty.setFlippedVertically(false);
+    empty.setFlippedAntiDiagonally(false);
     Tiled::ObjectGroup *objectLayer=LoadMap::searchObjectGroupByName(worldMap,"Object");
 
     std::vector<Tiled::TileLayer*> transitionsLayers = std::vector<Tiled::TileLayer*>();
@@ -999,9 +1016,20 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
         }
     }
 
-    for(Tiled::TileLayer* layer: worldMap.tileLayers()){
-        if(layer->name().contains("OnGrass")){
-            transitionsLayers.push_back(layer);
+    for(Tiled::Layer* layer: worldMap.tileLayers()){
+
+        Tiled::TileLayer *tileLayer = dynamic_cast<Tiled::TileLayer*>(layer);
+
+        if (tileLayer != nullptr)
+        {
+            if(tileLayer->name().contains("OnGrass")){
+                transitionsLayers.push_back(tileLayer);
+            }
+        }
+        else
+        {
+            std::cout << "This is not a Tile Layer! File: " << __FILE__ << ", Line: " << __LINE__ << std::endl;
+            exit(-1);
         }
     }
 
@@ -1136,7 +1164,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                         }
 
                         if(type == 0x1 || type==0x4) {
-                            Tiled::Tile* colliTile = colliLayer->cellAt(tx, ty).tile;
+                            Tiled::Tile* colliTile = colliLayer->cellAt(tx, ty).tile();
 
                             if(colliTile != NULL){
                                 for(QPair<Tiled::Tile*, Tiled::Tile*> replaceSet: walkway){
@@ -1155,7 +1183,7 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                             }
                         } else if(!isCity && type == 0x3){
                             for(LoadMap::Terrain* terrain:terrains){
-                                if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile == terrain->tile){
+                                if(LoadMap::searchTileLayerByName(worldMap, terrain->tmp_layerString)->cellAt(tx, ty).tile() == terrain->tile){
                                     if(grassTiles.find(terrain->terrainName.toStdString()) != grassTiles.end()){
                                         grassLayer->setCell(tx, ty, grassTiles[terrain->terrainName.toStdString()]);
                                     }
@@ -1373,7 +1401,18 @@ void LoadMapAll::addRoadContent(Tiled::Map &worldMap, const SettingsAll::Setting
                                 roadBot.skin = rand()%80; // read config for this value
                                 roadIndex.roadBot.push_back(roadBot);
 
-                                Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(roadBot.x, roadBot.y+1), QSizeF(1, 1));
+                                int tiles_x = roadBot.x;
+                                int tiles_y = roadBot.y+1;
+
+                                int tileWidth = worldMap.tileWidth();
+                                int tileHeight = worldMap.tileHeight();
+
+                                // Convert to pixel units when creating a new Tiled::MapObject
+                                // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                                int pixels_x = tiles_x * tileWidth;
+                                int pixels_y = tiles_y * tileHeight;
+
+                                Tiled::MapObject *bot = new Tiled::MapObject("", "bot", QPointF(pixels_x, pixels_y), QSizeF(tileWidth, tileHeight));
                                 bot->setProperty("file", QString::fromStdString(filename+"-bots"));
                                 bot->setProperty("id", QString::number(roadBot.id));
                                 bot->setProperty("lookAt", directions[roadBot.look_at]);
@@ -1724,8 +1763,10 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
 
                     Tiled::MapObject* door = mainDoors.at(rand()%mainDoors.size());
 
-                    properties["x"]=QString::number(door->x()+pos.first);
-                    properties["y"]=QString::number(door->y()+pos.second);
+                    // Convert to pixel units when creating a new Tiled::MapObject
+                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                    properties["x"]=QString::number((door->x() / worldMap.tileWidth()) + pos.first);
+                    properties["y"]=QString::number((door->y() / worldMap.tileHeight()) + pos.second);
 
                     object->setProperties(properties);
                     object->setName("");
@@ -1753,6 +1794,11 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
             abort();
         }
         Tiled::MapWriter maprwriter;
+
+#ifdef TILED_CSV
+        nextHopMap->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#endif
+
         nextHopMap->setProperties(Tiled::Properties());
         if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
         {
@@ -1770,7 +1816,7 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
             {
                 QString content("<map");
                 if(properties.contains("type"))
-                    content+=" type=\""+properties.value("type")+"\"";
+                    content+=" type=\""+properties.value("type").toString()+"\"";
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
@@ -1831,8 +1877,8 @@ void LoadMapAll::generateRoom(Tiled::Map& worldMap, const MapBrush::MapTemplate 
 
                     properties["file"] = botpath;
 
-                    content += "\n\t<bot id=\""+properties["id"]+"\">";
-                    content += "\n\t\t<name>"+properties["id"]+"</name>";
+                    content += "\n\t<bot id=\""+properties["id"].toString()+"\">";
+                    content += "\n\t\t<name>"+properties["id"].toString()+"</name>";
                     content += "\n\t\t<step id=\"1\" type=\"text\"><![CDATA[";
                     content += QString::fromStdString(setting.npcMessage.at(rand()%setting.npcMessage.size()));
                     content += "]]></step>";
@@ -1883,8 +1929,8 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
     roomMap.addLayer(new Tiled::TileLayer("OnGrass", 0, 0, roomMap.width(), roomMap.height()));
     roomMap.addLayer(new Tiled::TileLayer("Collisions", 0, 0, roomMap.width(), roomMap.height()));
     roomMap.addLayer(new Tiled::TileLayer("WalkBehind", 0, 0, roomMap.width(), roomMap.height()));
-    roomMap.addLayer(new Tiled::ObjectGroup("Moving", 0, 0, roomMap.width(), roomMap.height()));
-    roomMap.addLayer(new Tiled::ObjectGroup("Object", 0, 0, roomMap.width(), roomMap.height()));
+    roomMap.addLayer(new Tiled::ObjectGroup("Moving", 0, 0));
+    roomMap.addLayer(new Tiled::ObjectGroup("Object", 0, 0));
     RSLayer = LoadMap::searchTileLayerByName(roomMap, wall.layer);
 
     // Generate wall & floor
@@ -1993,7 +2039,7 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
         delete [] spots;
     }
 
-    for(Tiled::Tileset* t: roomMap.tilesets()){
+    for(Tiled::SharedTileset t: roomMap.tilesets()){
         if(roomSettings.hasFloorDown || roomSettings.hasFloorUp){
             t->setFileName("../../"+t->fileName());
         }else{

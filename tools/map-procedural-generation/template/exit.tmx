@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.0" tiledversion="1.1.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="1" height="2" tilewidth="16" tileheight="16" infinite="0" nextobjectid="2">
+<map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" compressionlevel="6" width="1" height="2" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="2">
  <tileset firstgid="1" source="../dest/map/tileset/inside-terra.tsx"/>
  <tileset firstgid="1025" source="../dest/map/tileset/inside-mobilier.tsx"/>
  <tileset firstgid="2049" source="../dest/map/tileset/invisible.tsx"/>
- <layer name="OnGrass" width="1" height="2">
-  <data encoding="base64" compression="zstd">
-   KLUv/SAIQQAAHgAAAAAAAAA=
+ <layer id="1" name="OnGrass" width="1" height="2">
+  <data encoding="base64" compression="zlib">
+   eJyTY4AAAAD4AB8=
   </data>
  </layer>
- <objectgroup name="Moving">
+ <objectgroup id="2" name="Moving">
   <object id="1" name="exit" type="teleport on push" gid="2051" x="0" y="32" width="16" height="16"/>
  </objectgroup>
 </map>
