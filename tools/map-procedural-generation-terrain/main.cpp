@@ -4,9 +4,9 @@
 #include <QFile>
 #include <iostream>
 
-#include "../../client/tiled/tiled_mapwriter.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
+#include <libtiled/mapwriter.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/objectgroup.h>
 
 #include "znoise/headers/Simplex.hpp"
 #include "VoronioForTiledMapTmx.h"
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
                 qDebug("Vegetation took %d ms", t.elapsed());
             }
             {
-                Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0,tiledMap.width(),tiledMap.height());
+                Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0);
                 layerZoneChunk->setColor(QColor("#ffe000"));
                 tiledMap.addLayer(layerZoneChunk);
 
@@ -121,7 +121,16 @@ int main(int argc, char *argv[])
                     while(mapX<config.mapXCount)
                     {
                         Tiled::MapObject *object = new Tiled::MapObject(QString::number(mapX)+","+QString::number(mapY),"",QPointF(0,0), QSizeF(0.0,0.0));
-                        object->setPolygon(QPolygonF(QRectF(mapX*config.mapWidth,mapY*config.mapHeight,config.mapWidth,config.mapHeight)));
+
+                        unsigned int tiles_x = mapX*config.mapWidth;
+                        unsigned int tiles_y = mapY*config.mapHeight;
+
+                        // Convert to pixel units when creating a new Tiled::MapObject
+                        // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                        unsigned int pixels_x = tiles_x * tiledMap.tileWidth();
+                        unsigned int pixels_y = tiles_y * tiledMap.tileHeight();
+
+                        object->setPolygon(QPolygonF(QRectF(pixels_x,pixels_y,config.mapWidth*tiledMap.tileWidth(),config.mapHeight*tiledMap.tileHeight())));
                         object->setShape(Tiled::MapObject::Polygon);
                         layerZoneChunk->addObject(object);
                         mapX++;
@@ -133,6 +142,9 @@ int main(int argc, char *argv[])
 
 
             Tiled::MapWriter maprwriter;
+
+            tiledMap.setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+
             maprwriter.writeMap(&tiledMap,QCoreApplication::applicationDirPath()+"/dest/map/main/official/all.tmx");
         }
         //do tmx split

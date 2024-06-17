@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../client/tiled/tiled_map.hpp"
+#include <libtiled/map.h>
 
 class MapBrush
 {
@@ -14,7 +14,7 @@ public:
         Tiled::Map * tiledMap;
         std::string name;
         std::vector<uint8_t> templateLayerNumberToMapLayerNumber;
-        std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset;
+        std::unordered_map<const Tiled::Tileset *,Tiled::Tileset *> templateTilesetToMapTileset; // TODO: This needs to be converted to SharedTileset
         uint8_t width,height,x,y;
         uint8_t baseLayerIndex;
         std::vector<Tiled::Map *> otherMap;

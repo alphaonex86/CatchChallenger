@@ -3,11 +3,11 @@
 #include "../map-procedural-generation-terrain/LoadMap.h"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 
-#include "../../client/tiled/tiled_tileset.hpp"
-#include "../../client/tiled/tiled_tile.hpp"
-#include "../../client/tiled/tiled_objectgroup.hpp"
-#include "../../client/tiled/tiled_mapobject.hpp"
-#include "../../client/tiled/tiled_mapwriter.hpp"
+#include <libtiled/tileset.h>
+#include <libtiled/tile.h>
+#include <libtiled/objectgroup.h>
+#include <libtiled/mapobject.h>
+#include <libtiled/mapwriter.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
@@ -33,7 +33,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
         Tiled::Properties properties=object->properties();
         oldValue[object]=object->properties();
         if(mapTemplatebuilding.otherMap.size()>1)
-            properties["map"]=QString::fromStdString(baseName)+"/"+properties.value("map");
+            properties["map"]=QString::fromStdString(baseName)+"/"+properties.value("map").toString();
         else
             properties["map"]=QString::fromStdString(baseName);
         object->setProperties(properties);
@@ -61,7 +61,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                 Tiled::MapObject* object=doorsLocale.at(index);
                 Tiled::Properties properties=object->properties();
                 oldValue[object]=properties;
-                if(properties.value("map").toStdString()==mapTemplatebuilding.name)
+                if(properties.value("map").toString().toStdString()==mapTemplatebuilding.name)
                 {
                     if(mapTemplatebuilding.otherMap.size()>1)
                         properties["map"]="../"+QString::fromStdString(LoadMapAll::lowerCase(city.name));
@@ -70,13 +70,13 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
                     properties["x"]=QString::number(properties.value("x").toUInt(&ok)+pos.first);
                     if(!ok)
                     {
-                        std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toStdString() << std::endl;
+                        std::cerr << "For one tmx map, x is not a number: " << properties.value("x").toString().toStdString() << std::endl;
                         abort();
                     }
                     properties["y"]=QString::number(properties.value("y").toUInt(&ok)+pos.second);
                     if(!ok)
                     {
-                        std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toStdString() << std::endl;
+                        std::cerr << "For one tmx map, y is not a number: " << properties.value("y").toString().toStdString() << std::endl;
                         abort();
                     }
                     object->setProperties(properties);
@@ -104,6 +104,11 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
             abort();
         }
         Tiled::MapWriter maprwriter;
+
+#ifdef TILED_CSV
+        nextHopMap->setLayerDataFormat(Tiled::Map::CSV);  // DEBUG
+#endif
+
         nextHopMap->setProperties(Tiled::Properties());
         if(!maprwriter.writeMap(nextHopMap,fileInfo.absoluteFilePath()))
         {
@@ -121,7 +126,7 @@ void LoadMapAll::addBuildingChain(const std::string &baseName, const std::string
             {
                 QString content("<map");
                 if(properties.contains("type"))
-                    content+=" type=\""+properties.value("type")+"\"";
+                    content+=" type=\""+properties.value("type").toString()+"\"";
                 if(!zone.empty())
                     content+=" zone=\""+QString::fromStdString(zone)+"\"";
                 content+=">\n"
@@ -210,7 +215,7 @@ void LoadMapAll::loadMapTemplate(const char * folderName, MapBrush::MapTemplate 
         {
             Tiled::MapObject* object=doors.at(index);
             Tiled::Properties properties=object->properties();
-            const std::string &mapString=properties.value("map").toStdString();
+            const std::string &mapString=properties.value("map").toString().toStdString();
             if(fileToIndex.find(mapString)!=fileToIndex.cend())
             {}//properties["map"]=QString::fromStdString(mapString);
             else
@@ -397,12 +402,12 @@ void LoadMapAll::addCityContent(Tiled::Map &worldMap, const unsigned int &mapXCo
 
 void LoadMapAll::deleteMapList(MapBrush::MapTemplate &mapTemplatebuilding)
 {
-    delete mapTemplatebuilding.tiledMap;
+    // delete mapTemplatebuilding.tiledMap; // FIX Libtiled 1.3.x - Tiled::Map is now smart pointer and is deleted automaticaly
     mapTemplatebuilding.tiledMap=NULL;
     unsigned int index=0;
     while(index<mapTemplatebuilding.otherMap.size())
     {
-        delete mapTemplatebuilding.otherMap.at(index);
+        // delete mapTemplatebuilding.otherMap.at(index); // FIX Libtiled 1.3.x - Tiled::Map is now smart pointer and is deleted automaticaly
         index++;
     }
     mapTemplatebuilding.otherMap.clear();
@@ -415,10 +420,10 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
     const Tiled::Tileset * const invisibleTileset=LoadMap::searchTilesetByName(worldMap,"invisible");
 
     Tiled::Cell newCell;
-    newCell.flippedAntiDiagonally=false;
-    newCell.flippedHorizontally=false;
-    newCell.flippedVertically=false;
-    newCell.tile=invisibleTileset->tileAt(3);
+    newCell.setFlippedAntiDiagonally(false);
+    newCell.setFlippedHorizontally(false);
+    newCell.setFlippedVertically(false);
+    newCell.setTile(invisibleTileset->tileAt(3));
 
     const unsigned int mapWidth=worldMap.width()/mapXCount;
     const unsigned int mapHeight=worldMap.height()/mapYCount;
@@ -431,10 +436,21 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
             const uint8_t &zoneOrientation=LoadMapAll::mapPathDirection[x+y*mapXCount];
             if(zoneOrientation!=0)
             {
+                int tileWidth = worldMap.tileWidth();
+                int tileHeight = worldMap.tileHeight();
+
                 QDir mapDir(QFileInfo(QString::fromStdString(LoadMapAll::getMapFile(x,y))).absoluteDir());
                 if(zoneOrientation&Orientation_left)
                 {
-                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-left",QPointF(x*mapWidth,y*mapHeight+mapHeight/2),QSizeF(1,1));
+                    int tiles_x = x*mapWidth;
+                    int tiles_y = y*mapHeight+mapHeight/2;
+
+                    // Convert to pixel units when creating a new Tiled::MapObject
+                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                    int pixels_x = tiles_x * worldMap.tileWidth();
+                    int pixels_y = tiles_y * worldMap.tileHeight();
+
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-left",QPointF(pixels_x, pixels_y),QSizeF(tileWidth,tileHeight));
                     const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x-1,y))));
                     newobject->setProperty("map",nextMap);
                     newobject->setCell(newCell);
@@ -442,7 +458,15 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 }
                 if(zoneOrientation&Orientation_right)
                 {
-                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-right",QPointF(x*mapWidth+mapWidth-1,y*mapHeight+mapHeight/2),QSizeF(1,1));
+                    int tiles_x = x*mapWidth+mapWidth-1;
+                    int tiles_y = y*mapHeight+mapHeight/2;
+
+                    // Convert to pixel units when creating a new Tiled::MapObject
+                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                    int pixels_x = tiles_x * worldMap.tileWidth();
+                    int pixels_y = tiles_y * worldMap.tileHeight();
+
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-right",QPointF(pixels_x,pixels_y),QSizeF(tileWidth,tileHeight));
                     const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x+1,y))));
                     newobject->setProperty("map",nextMap);
                     newobject->setCell(newCell);
@@ -450,7 +474,20 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 }
                 if(zoneOrientation&Orientation_top)
                 {
-                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-top",QPointF(x*mapWidth+mapWidth/2,-0.001/*not exact float representation correction*/+y*mapHeight+1),QSizeF(1,1));
+                    qreal tiles_x = x*mapWidth+mapWidth/2;
+                    qreal tiles_y = y*mapHeight+1;
+
+#ifdef DEBUG_DANIJEL
+                    std::cout << "DEBUG border-top: Coord = " << x << ", " << y << std::endl;
+                    std::cout << "DEBUG border-top: Tiles = " << tiles_x << ", " << tiles_y << std::endl;
+#endif
+
+                    // Convert to pixel units when creating a new Tiled::MapObject
+                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                    qreal pixels_x = tiles_x * worldMap.tileWidth();
+                    qreal pixels_y = tiles_y * worldMap.tileHeight();
+
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-top",QPointF(pixels_x, pixels_y),QSizeF(tileWidth,tileHeight));
                     const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x,y-1))));
                     newobject->setProperty("map",nextMap);
                     newobject->setCell(newCell);
@@ -458,7 +495,20 @@ void LoadMapAll::addMapChange(Tiled::Map &worldMap, const unsigned int &mapXCoun
                 }
                 if(zoneOrientation&Orientation_bottom)
                 {
-                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-bottom",QPointF(x*mapWidth+mapWidth/2,-0.001/*not exact float representation correction*/+y*mapHeight+mapHeight),QSizeF(1,1));
+                    qreal tiles_x = x*mapWidth+mapWidth/2;
+                    qreal tiles_y = y*mapHeight+mapHeight;
+
+#ifdef DEBUG_DANIJEL
+                    std::cout << "DEBUG border-bottom: Coord = " << x << ", " << y << std::endl;
+                    std::cout << "DEBUG border-bottom: Tiles = " << tiles_x << ", " << tiles_y << std::endl;
+#endif
+
+                    // Convert to pixel units when creating a new Tiled::MapObject
+                    // FIX: API change in v0.10.x - MapObjects now use pixel units instead of tile units
+                    qreal pixels_x = tiles_x * worldMap.tileWidth();
+                    qreal pixels_y = tiles_y * worldMap.tileHeight();
+
+                    Tiled::MapObject* newobject=new Tiled::MapObject("","border-bottom",QPointF(pixels_x, pixels_y),QSizeF(tileWidth,tileHeight));
                     const QString nextMap(mapDir.relativeFilePath(QString::fromStdString(LoadMapAll::getMapFile(x,y+1))));
                     newobject->setProperty("map",nextMap);
                     newobject->setCell(newCell);

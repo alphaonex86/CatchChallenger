@@ -299,7 +299,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
     if(hashMain.size()!=28)
     {
         Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(datapackPathMain));
-        hashMain.empty();
+        hashMain.clear();
     }
     std::string hashSub;
     if(Settings::settings->contains("DatapackHashSub-"+QString::fromStdString(datapackPathSub)))
@@ -310,7 +310,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
     if(hashSub.size()!=28)
     {
         Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(datapackPathSub));
-        hashSub.empty();
+        hashSub.clear();
     }
     DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode,hashMain,hashSub);
     if(mDefaultInventoryImage==NULL)
@@ -487,7 +487,7 @@ std::string QtDatapackClientLoader::getSkinPath(const std::string &skinName,cons
         }
         entryListIndex++;
     }
-    return std::string();
+    return std::string(":/CC/images/player_default/"+type+".png");
 }
 
 std::string QtDatapackClientLoader::getFrontSkinPath(const uint32_t &skinId) const
