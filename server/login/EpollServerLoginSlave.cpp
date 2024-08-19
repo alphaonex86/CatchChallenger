@@ -7,6 +7,7 @@
 #include "LinkToMaster.hpp"
 #include "LinkToGameServer.hpp"
 #include "../base/PreparedDBQuery.hpp"
+#include "../base/GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 
@@ -623,10 +624,10 @@ void EpollServerLoginSlave::preload_profile()
         abort();
     }
 
-    unsigned int index=0;
-    while(index<EpollServerLoginSlave::loginProfileList.size())
+    unsigned int profileIndex=0;
+    while(profileIndex<EpollServerLoginSlave::loginProfileList.size())
     {
-        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[index];
+        EpollServerLoginSlave::LoginProfile &profile=EpollServerLoginSlave::loginProfileList[profileIndex];
 
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
@@ -697,9 +698,9 @@ void EpollServerLoginSlave::preload_profile()
             DatabaseBase * const database=CharactersGroupForLogin::list.at(indexDatabaseCommon)->database();
             const DatabaseBase::DatabaseType &databaseType=CharactersGroupForLogin::list.at(indexDatabaseCommon)->databaseType();
             LoginProfile::PreparedStatementForCreation &preparedStatementForCreation=profile.preparedStatementForCreationByCommon[database];
-            if(preparedStatementForCreation.type.size()<=index)
-                preparedStatementForCreation.type.resize(index+1);
-            LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type[index];
+            if(preparedStatementForCreation.type.size()<=profileIndex)
+                preparedStatementForCreation.type.resize(profileIndex+1);
+            LoginProfile::PreparedStatementForCreationType &preparedStatementForCreationType=preparedStatementForCreation.type[profileIndex];
             //assume here all is the same type
             {
                 unsigned int monsterGroupIndex=0;
@@ -718,6 +719,9 @@ void EpollServerLoginSlave::preload_profile()
                         if(monster.skills.empty())
                         {
                             std::cerr << "monster.skills.empty() for some profile" << std::endl;
+                            std::cerr << "check if datapack is in " << GlobalServerData::serverSettings.datapack_basePath << std::endl;
+                            std::cerr << "check if datapack check if this monster id have skill " << monster.id << std::endl;
+                            std::cerr << "check the profile number " << profileIndex << std::endl;
                             abort();
                         }
                         uint32_t lastSkillId=0;
@@ -858,7 +862,7 @@ void EpollServerLoginSlave::preload_profile()
             indexDatabaseCommon++;
         }
 
-        index++;
+        profileIndex++;
     }
 
     if(EpollServerLoginSlave::loginProfileList.size()==0 && CommonSettingsCommon::commonSettingsCommon.min_character!=CommonSettingsCommon::commonSettingsCommon.max_character)

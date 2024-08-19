@@ -61,11 +61,11 @@ void BaseServer::preload_18_sync_profile()
 
     //if reallocate query, los pointer, it's why reserved/allocted before all
     GlobalServerData::serverPrivateVariables.serverProfileInternalList.resize(CommonDatapack::commonDatapack.get_profileList().size());
-    unsigned int index=0;
-    while(index<CommonDatapack::commonDatapack.get_profileList().size())
+    unsigned int profileIndex=0;
+    while(profileIndex<CommonDatapack::commonDatapack.get_profileList().size())
     {
-        const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().at(index);
-        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[index];
+        const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().at(profileIndex);
+        ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
         serverProfileInternal.map=nullptr;
         serverProfileInternal.orientation=Orientation_none;
         serverProfileInternal.valid=false;
@@ -88,7 +88,7 @@ void BaseServer::preload_18_sync_profile()
         serverProfileInternal.orientation=serverProfile.orientation;
 
         #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(index);
+        const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(profileIndex);
 
         std::string encyclopedia_item,item;
         if(!profile.items.empty())
@@ -228,6 +228,9 @@ void BaseServer::preload_18_sync_profile()
                     if(skills_list.empty())
                     {
                         std::cerr << "skills_list.empty() for some profile" << std::endl;
+                        std::cerr << "check if datapack is in " << GlobalServerData::serverSettings.datapack_basePath << std::endl;
+                        std::cerr << "check if datapack check if this monster id have skill " << monster.id << std::endl;
+                        std::cerr << "check the profile number " << profileIndex << std::endl;
                         abort();
                     }
                     uint32_t lastSkillId=0;
@@ -455,12 +458,12 @@ void BaseServer::preload_18_sync_profile()
 
         serverProfileInternal.valid=true;
 
-        index++;
+        profileIndex++;
     }
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        if(index!=CommonDatapack::commonDatapack.get_profileList().size())
+        if(profileIndex!=CommonDatapack::commonDatapack.get_profileList().size())
         {
             std::cerr << "index!=CommonDatapack::commonDatapack.get_profileList().size() corrupted (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
