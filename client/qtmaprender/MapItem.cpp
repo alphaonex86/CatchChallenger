@@ -35,6 +35,22 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
     QStringList mapNameList;
     // Create a child item for each layer
     const int &loopSize=layers.size();
+    int width=0;
+    int height=0;
+    for(int i = 0; i < loopSize; ++i)
+    {
+        if (Tiled::TileLayer *tileLayer = layers.at(i)->asTileLayer()) {
+            TileLayerItem tileLayerItem=TileLayerItem(tileLayer, renderer, this);
+            QSize size(tileLayerItem.boundingRect().size().width(),tileLayerItem.boundingRect().size().height());
+            if(width < size.width()){
+                width = size.width();
+            }
+            if(height < size.height()){
+                height = size.height();
+            }
+        }
+
+    }
     int index2=0;
     while(index2<loopSize)
     {
@@ -43,12 +59,13 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
             graphicsItem=new TileLayerItem(tileLayer, renderer, this);
             if(cache && image.size().isNull())
             {
-                image=QImage(QSize(graphicsItem->boundingRect().size().width(),graphicsItem->boundingRect().size().height()),QImage::Format_ARGB32_Premultiplied);
+                image=QImage(QSize(width,height),QImage::Format_ARGB32_Premultiplied);
                 image.fill(Qt::transparent);
             }
 
-            if(!cache || image.size()!=graphicsItem->boundingRect().size())
-            {}
+            if(!cache)// || image.size()!=graphicsItem->boundingRect().size())
+            {
+            }
             else
             {
                 QPainter painter(&image);
