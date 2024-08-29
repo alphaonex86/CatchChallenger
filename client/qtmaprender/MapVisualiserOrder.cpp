@@ -1,6 +1,6 @@
 #include "MapVisualiserOrder.hpp"
 #include <QDebug>
-
+#include <cmath>
 std::string MapVisualiserOrder::text_blockedtext="blockedtext";
 std::string MapVisualiserOrder::text_en="en";
 std::string MapVisualiserOrder::text_lang="lang";
@@ -135,13 +135,16 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,b
                                             uint8_t frames=static_cast<uint8_t>(framesString.toUShort());
                                             if(ms>0 && frames>1)
                                             {
+                                                const float TILE_SIZE = 16.0f;
+                                                uint32_t xTile = std::floor(x/TILE_SIZE);
+                                                uint32_t yTile = std::floor(y/TILE_SIZE);
                                                 if(tempMapObject->doors.find(
-                                                            std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))
+                                                            std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(xTile),static_cast<uint8_t>(yTile))
                                                             )==
                                                         tempMapObject->doors.cend())
                                                 {
                                                     MapDoor *door=new MapDoor(objects.at(index2),frames,ms);
-                                                    tempMapObject->doors[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))]=door;
+                                                    tempMapObject->doors[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(xTile),static_cast<uint8_t>(yTile))]=door;
                                                 }
                                             }
                                             else
