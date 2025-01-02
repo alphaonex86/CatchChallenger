@@ -6,20 +6,20 @@ http://catchchallenger.first-world.info/
 ## Description
 This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, lineage for the crafting/clan/MMORPG, X3 for the commerce/fabric/industry. With mod possibility, and datapack.
 
-It's a pixel art game. The work is concentrated on the gameplay/performance/security/creativity/accessibility. The income is to paid the developping and the artwork. The game is fully open source (GPL3).
+It's a pixel art game. The work is concentrated on the gameplay/performance/security/creativity/accessibility. The income is to paid the developing and the artwork. The game is fully open source (GPL3).
 
-The gameplay have strong team part, but remain interresting in single player. Have clear advantage on 3G/wifi/TOR connexion or into the tiers world.
+The gameplay have strong team part, but remain interesting in single player. Have clear advantage on 3G/wifi/TOR connexion or into the tiers world.
 
 ## License
 client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled
 libogg and fileopus is extracted from other project
-Interface UI is from buyed template (then under copyright)
+Interface UI is from bought template (then under copyright)
 
-## Programing
+## Programming
 
 Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
 
-SGBD for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. SGBD for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
+DBMS for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. DBMS for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
 
 ## Prerequisites
 
