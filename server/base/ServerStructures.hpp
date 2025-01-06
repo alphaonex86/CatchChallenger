@@ -61,13 +61,6 @@ struct FileToSend
     std::string file;
 };
 
-enum MapVisibilityAlgorithmSelection : uint8_t
-{
-    MapVisibilityAlgorithmSelection_WithBorder,
-    MapVisibilityAlgorithmSelection_Simple,
-    MapVisibilityAlgorithmSelection_None
-};
-
 enum QuestAction : uint8_t
 {
     QuestAction_Start,
@@ -175,8 +168,6 @@ public:
     class MapVisibility
     {
     public:
-        MapVisibilityAlgorithmSelection mapVisibilityAlgorithm;
-
         class MapVisibility_Simple
         {
         public:
@@ -195,38 +186,6 @@ public:
             #endif
         };
         MapVisibility_Simple simple;
-        class MapVisibility_WithBorder
-        {
-        public:
-            uint16_t maxWithBorder;
-            uint16_t reshowWithBorder;
-            uint16_t max;
-            uint16_t reshow;
-            #ifdef CATCHCHALLENGER_CACHE_HPS
-            template <class B>
-            void serialize(B& buf) const {
-                buf << maxWithBorder << reshowWithBorder << max << reshow;
-            }
-            template <class B>
-            void parse(B& buf) {
-                buf >> maxWithBorder >> reshowWithBorder >> max >> reshow;
-            }
-            #endif
-        };
-        MapVisibility_WithBorder withBorder;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << (uint8_t)mapVisibilityAlgorithm << simple << withBorder;
-        }
-        template <class B>
-        void parse(B& buf) {
-            uint8_t value=0;
-            buf >> value;
-            mapVisibilityAlgorithm=(MapVisibilityAlgorithmSelection)value;
-            buf >> simple >> withBorder;
-        }
-        #endif
     };
     MapVisibility mapVisibility;
 
@@ -450,8 +409,8 @@ struct CaptureCityValidated
 {
     std::vector<Client *> players;
     std::vector<Client *> playersInFight;
-    std::vector<uint16_t> bots;
-    std::vector<uint16_t> botsInFight;
+    std::vector<std::pair<uint32_t,uint8_t> > bots;
+    std::vector<std::pair<uint32_t,uint8_t> > botsInFight;
     std::unordered_map<uint32_t,uint16_t> clanSize;
 };
 
@@ -552,7 +511,7 @@ struct ServerPrivateVariables
     #endif
     #endif
     //to the zone id, see GlobalServerData::serverPrivateVariables.zoneToId
-    std::vector<std::vector<uint16_t> > captureFightIdListByZoneToCaptureCity;
+    std::vector<std::vector<std::pair<uint32_t,uint8_t> > > captureFightIdListByZoneToCaptureCity;
     std::vector<CityStatus> cityStatusList;
     std::unordered_map<uint32_t,uint16_t> cityStatusListReverse;
     std::unordered_set<uint32_t> tradedMonster;

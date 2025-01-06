@@ -113,7 +113,6 @@ protected:
     void preload_11_sync_the_players();
     void preload_18_sync_profile();
     virtual void preload_the_visibility_algorithm();
-    void preload_the_bots(const std::vector<Map_semi> &semi_loaded_map);
     virtual void preload_finish();
     void preload_8_sync_monsters_drops();
     void preload_19_async_sql_monsters_max_id();
@@ -169,7 +168,6 @@ protected:
     void loadMonsterSkills_return();*/
 
     bool initialize_the_database();
-    void loadBotFile(const std::string &mapfile, const std::string &fileName);
     //FakeServer server;//wrong, create another object, here need use the global static object
 
     //to keep client list, std::unordered_set because it will have lot of more disconnecion than server closing

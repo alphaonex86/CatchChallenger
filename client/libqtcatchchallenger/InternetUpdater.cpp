@@ -70,6 +70,7 @@ void InternetUpdater::httpFinished()
     {
         std::cerr << "get the new update failed: not finished" << std::endl;
         reply->deleteLater();
+        errorUpdate(tr("Reply should not be finished").toStdString());
         return;
     }
     else if(reply->error())
@@ -78,10 +79,12 @@ void InternetUpdater::httpFinished()
         newUpdateTimer.start(24*60*60*1000);
         std::cerr << "get the new update failed: "+reply->errorString().toStdString() << std::endl;
         reply->deleteLater();
+        errorUpdate(tr("Reply error: %1").arg((int)reply->error()).toStdString());
         return;
     } else if (!redirectionTarget.isNull()) {
         std::cerr << "redirection denied to: "+redirectionTarget.toUrl().toString().toStdString() << std::endl;
         reply->deleteLater();
+        errorUpdate(tr("Reply can't be redirect").toStdString());
         return;
     }
     std::string newVersion=QString::fromUtf8(reply->readAll()).toStdString();
@@ -89,6 +92,7 @@ void InternetUpdater::httpFinished()
     {
         std::cerr << "version string is empty" << std::endl;
         reply->deleteLater();
+        errorUpdate(tr("New version can't be empty").toStdString());
         return;
     }
     stringreplaceAll(newVersion,"\n","");
@@ -96,16 +100,19 @@ void InternetUpdater::httpFinished()
     {
         std::cerr << "version string don't match: "+newVersion << std::endl;
         reply->deleteLater();
+        errorUpdate(tr("Version is not into correct format").toStdString());
         return;
     }
     if(newVersion==CatchChallenger::Version::str)
     {
         reply->deleteLater();
+        emit noNewUpdate();
         return;
     }
     if(!versionIsNewer(newVersion))
     {
         reply->deleteLater();
+        emit noNewUpdate();
         return;
     }
     newUpdateTimer.stop();

@@ -312,7 +312,6 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         new_tp.condition.data.fightBot=0;
                                         new_tp.condition.data.item=0;
                                         new_tp.condition.data.quest=0;
-                                        new_tp.conditionUnparsed=nullptr;
                                         new_tp.destination_x = stringtouint8(property_text.at("x"),&ok);
                                         if(ok)
                                         {
@@ -337,8 +336,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                                                     );
                                                         if(!stringEndsWith(conditionFile,".xml"))
                                                             conditionFile+=".xml";
-                                                        new_tp.conditionUnparsed=getXmlCondition(file,conditionFile,conditionId);
-                                                        new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);
+                                                        /*new_tp.conditionUnparsed=getXmlCondition(file,conditionFile,conditionId);
+                                                        new_tp.condition=xmlConditionToMapCondition(conditionFile,new_tp.conditionUnparsed);*/
                                                     }
                                                 }
                                                 new_tp.map=property_text.at("map");
@@ -432,11 +431,6 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         if(!stringEndsWith(property_text["file"],".xml"))
                                             property_text["file"]+=".xml";
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.file=FSabsoluteFilePath(
-                                                            FSabsolutePath(file)+
-                                                            "/"+
-                                                            property_text.at("file")
-                                                    );
                                         bot_semi.id=stringtouint16(property_text.at("id"),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
