@@ -130,7 +130,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             }
             #endif
             const uint16_t &factoryId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            getFactoryList(queryNumber,factoryId);
+            //getFactoryList(queryNumber,factoryId);
             return true;
         }
         break;
@@ -148,7 +148,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
             const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
             const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
-            buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
+            //buyFactoryProduct(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
         break;
@@ -166,7 +166,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
             const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
             const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
             const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
-            sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
+            //sellFactoryResource(queryNumber,factoryId,objectId,quantity,price);
             return true;
         }
         break;

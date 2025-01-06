@@ -23,8 +23,6 @@ public:
     static std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > loadCraftingRecipes(
             const std::string &file, const std::unordered_map<uint16_t, Item> &items, uint16_t &crafingRecipesMaxId);
     static ItemFull loadItems(const std::string &folder, const std::unordered_map<uint8_t, Buff> &monsterBuffs);
-    static std::unordered_map<uint16_t,Industry> loadIndustries(const std::string &folder,const std::unordered_map<uint16_t, Item> &items);
-    static std::unordered_map<uint16_t,IndustryLink> loadIndustriesLink(const std::string &file,const std::unordered_map<uint16_t,Industry> &industries);
     #endif
     DLL_PUBLIC static std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > loadProfileList(const std::string &datapackPath, const std::string &file,
                                                                       #ifndef CATCHCHALLENGER_CLASS_MASTER

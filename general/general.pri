@@ -29,7 +29,6 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
     $$PWD/base/DatapackGeneralLoader.cpp \
     $$PWD/base/DatapackGeneralLoaderCrafting.cpp \
-    $$PWD/base/DatapackGeneralLoaderIndustry.cpp \
     $$PWD/base/DatapackGeneralLoaderItem.cpp \
     $$PWD/base/DatapackGeneralLoaderMap.cpp \
     $$PWD/base/DatapackGeneralLoaderMonsterDrop.cpp \
@@ -41,7 +40,6 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
     $$PWD/fight/FightLoader.cpp \
     $$PWD/fight/FightLoaderBuff.cpp \
-    $$PWD/fight/FightLoaderFight.cpp \
     $$PWD/fight/FightLoaderMonster.cpp \
     $$PWD/fight/FightLoaderSkill.cpp \
     $$PWD/base/CommonMap.cpp \

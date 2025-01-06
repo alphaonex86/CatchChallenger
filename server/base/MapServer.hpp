@@ -119,6 +119,8 @@ public:
         for (const auto &x : rescue)
               buf << x.first << (uint8_t)x.second;
         buf << reverse_db_id << zone << pointOnMap_Item;
+        buf << botFights;
+        buf << shops;
     }
     static uint32_t mapListSize;
     static CommonMap * posToPointer(const int32_t &pos);
@@ -162,7 +164,7 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::vector<uint16_t> value;
+            std::unordered_map<uint8_t,Shop> value;
             buf >> posXY >> value;
             shops[posXY]=value;
         }
@@ -194,14 +196,14 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::vector<uint16_t> value;
+            std::vector<uint8_t> value;
             buf >> posXY >> value;
             botsFight[posXY]=value;
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::vector<uint16_t> value;
+            std::vector<uint8_t> value;
             buf >> posXY >> value;
             botsFightTrigger[posXY]=value;
         }
@@ -216,6 +218,7 @@ public:
             rescue[posXY]=(Orientation)value;
         }
         buf >> reverse_db_id >> zone >> pointOnMap_Item;
+        buf >> botFights;
     }
     #endif
 };

@@ -5,6 +5,7 @@
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include <fstream>
 #endif
+#include <iostream>
 
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -264,11 +265,11 @@ void BaseServer::preload_industries_return()
     size_t s=0;
     if(dictionary_serialBuffer!=nullptr)
         *dictionary_serialBuffer >> s;
-    for (size_t i = 0; i < s; i++)
+    for (size_t i = 0; i < s; i++){}
     #else
     while(GlobalServerData::serverPrivateVariables.db_server->next())
     #endif
-    {
+    /*{
         IndustryStatus industryStatus;
         bool ok=true;
         #ifdef CATCHCHALLENGER_DB_FILE
@@ -416,7 +417,7 @@ void BaseServer::preload_industries_return()
         if(ok)
             GlobalServerData::serverPrivateVariables.industriesStatus[id]=industryStatus;
     }
-    std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;
+    std::cout << GlobalServerData::serverPrivateVariables.industriesStatus.size() << " SQL industries loaded" << std::endl;*/
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #error Define what do here

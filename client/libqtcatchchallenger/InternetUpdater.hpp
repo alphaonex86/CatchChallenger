@@ -22,6 +22,8 @@ public:
     #endif
 signals:
     void newUpdate(const std::string &version) const;
+    void errorUpdate(const std::string &errorString) const;
+    void noNewUpdate() const;
 private:
     QTimer newUpdateTimer;
     QTimer firstUpdateTimer;

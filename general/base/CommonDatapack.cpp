@@ -53,7 +53,6 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parseMonstersCollision();
     parseMonstersEvolutionItems();
     parseMonstersItemToLearn();
-    parseIndustries();
     parseProfileList();
     parseLayersOptions();
     #endif
@@ -83,16 +82,6 @@ void CommonDatapack::parseItems()
     items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
     std::cout << items.item.size() << " items(s) loaded" << std::endl;
     std::cout << items.trap.size() << " trap(s) loaded" << std::endl;
-    #endif
-}
-
-void CommonDatapack::parseIndustries()
-{
-    #ifndef CATCHCHALLENGER_CLASS_MASTER
-    industries=DatapackGeneralLoader::loadIndustries(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESBASE,items.item);
-    industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESBASE+"list.xml",industries);
-    std::cout << industries.size() << " industries loaded" << std::endl;
-    std::cout << industriesLink.size() << " industries link loaded" << std::endl;
     #endif
 }
 
@@ -247,7 +236,6 @@ void CommonDatapack::unload()
     items.monsterItemEffect.clear();
     items.evolutionItem.clear();
     items.repel.clear();
-    industries.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
     profileList.clear();
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -295,16 +283,6 @@ const std::unordered_map<uint8_t,Buff> &CommonDatapack::get_monsterBuffs() const
 const ItemFull &CommonDatapack::get_items() const
 {
     return items;
-}
-
-const std::unordered_map<uint16_t,Industry> &CommonDatapack::get_industries() const
-{
-    return industries;
-}
-
-const std::unordered_map<uint16_t,IndustryLink> &CommonDatapack::get_industriesLink() const
-{
-    return industriesLink;
 }
 
 const LayersOptions &CommonDatapack::get_layersOptions() const

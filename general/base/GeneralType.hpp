@@ -18,7 +18,7 @@
 #define CLAN_ID_TYPE uint32_t
 #define SPEED_TYPE uint8_t
 #define ZONE_TYPE uint16_t
-#define SHOP_TYPE uint16_t
+#define SHOP_TYPE uint8_t
 #define FACTORY_TYPE uint16_t
 
 #endif // GENERALTYPE_H

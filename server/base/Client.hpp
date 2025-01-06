@@ -455,11 +455,6 @@ private:
     void getShopList(const uint8_t &query_id, const SHOP_TYPE &shopId);
     void buyObject(const uint8_t &query_id, const SHOP_TYPE &shopId, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price);
     void sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
-    //factory
-    void saveIndustryStatus(const FACTORY_TYPE &factoryId, const IndustryStatus &industryStatus, const Industry &industry);
-    void getFactoryList(const uint8_t &query_id, const FACTORY_TYPE &factoryId);
-    void buyFactoryProduct(const uint8_t &query_id,const FACTORY_TYPE &factoryId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
-    void sellFactoryResource(const uint8_t &query_id,const FACTORY_TYPE &factoryId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();
@@ -487,7 +482,7 @@ private:
     void battleAccepted();
     virtual bool tryEscape() override;
     void heal();
-    void requestFight(const uint16_t &fightId);
+    void requestFight(const uint8_t &fightId);
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
     Client * getLocalClientHandlerFight();
     //clan
@@ -560,7 +555,7 @@ private:
     void healAllMonsters() override;
     void battleFakeAccepted(Client * otherPlayer);
     void battleFakeAcceptedInternal(Client *otherPlayer);
-    bool botFightStart(const uint16_t &botFightId);
+    bool botFightStart(const uint8_t &botFightId);
     int addCurrentBuffEffect(const Skill::BuffEffect &effect) override;
     bool moveUpMonster(const uint8_t &number) override;
     bool moveDownMonster(const uint8_t &number) override;

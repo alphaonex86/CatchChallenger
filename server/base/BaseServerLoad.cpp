@@ -134,7 +134,8 @@ bool BaseServer::preload_zone_init()
         {
             if(capture->Attribute("fightId")!=NULL)
             {
-                bool ok;
+                /// TODO remake this part
+                /*bool ok;
                 const std::vector<std::string> &fightIdStringList=stringsplit(capture->Attribute("fightId"),';');
                 unsigned int sub_index=0;
                 while(sub_index<fightIdStringList.size())
@@ -159,7 +160,7 @@ bool BaseServer::preload_zone_init()
                         GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.push_back(t);
                     }
                     GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity[zoneId]=fightIdList;
-                }
+                }*/
                 break;
             }
             else

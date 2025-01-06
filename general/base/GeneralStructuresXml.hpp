@@ -16,7 +16,6 @@ struct Map_semi_teleport
     COORD_TYPE source_x,source_y;
     COORD_TYPE destination_x,destination_y;
     std::string map;
-    const tinyxml2::XMLElement * conditionUnparsed;
     MapCondition condition;
 };
 
@@ -45,7 +44,6 @@ struct Map_to_send
     struct Bot_Semi
     {
         Map_Point point;
-        std::string file;
         uint16_t id;
         std::unordered_map<std::string,std::string> property_text;
     };

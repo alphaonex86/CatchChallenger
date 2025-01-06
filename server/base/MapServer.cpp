@@ -20,6 +20,7 @@ MapServer::MapServer() :
     reverse_db_id(0),
     zone(65535)
 {
+    botFightsMaxId=0;
     border.bottom.x_offset=0;
     border.bottom.map=nullptr;
     border.top.x_offset=0;
