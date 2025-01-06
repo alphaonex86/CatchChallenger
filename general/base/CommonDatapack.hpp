@@ -28,8 +28,6 @@ protected:
     uint16_t craftingRecipesMaxId;
     std::unordered_map<uint8_t,Buff> monsterBuffs;
     ItemFull items;
-    std::unordered_map<uint16_t,Industry> industries;
-    std::unordered_map<uint16_t,IndustryLink> industriesLink;
     LayersOptions layersOptions;
     std::vector<Event> events;
 
@@ -62,8 +60,6 @@ public:
     const uint16_t &get_craftingRecipesMaxId() const;
     const std::unordered_map<uint8_t,Buff> &get_monsterBuffs() const;
     const ItemFull &get_items() const;
-    const std::unordered_map<uint16_t,Industry> &get_industries() const;
-    const std::unordered_map<uint16_t,IndustryLink> &get_industriesLink() const;
     const LayersOptions &get_layersOptions() const;
     const std::vector<Event> &get_events() const;
 
@@ -95,8 +91,6 @@ public:
         buf << craftingRecipesMaxId;
         buf << monsterBuffs;
         buf << items;
-        buf << industries;
-        buf << industriesLink;
         #ifdef CATCHCHALLENGER_CLIENT
         buf << monstersCollision;
         buf << monstersCollisionTemp;
@@ -124,8 +118,6 @@ public:
         buf >> craftingRecipesMaxId;
         buf >> monsterBuffs;
         buf >> items;
-        buf >> industries;
-        buf >> industriesLink;
         #ifdef CATCHCHALLENGER_CLIENT
         buf >> monstersCollision;
         buf >> monstersCollisionTemp;
@@ -152,7 +144,6 @@ private:
 private:
     void parseTypes();
     void parseItems();
-    virtual void parseIndustries();
     void parsePlants();
     void parseCraftingRecipes();
     void parseBuff();

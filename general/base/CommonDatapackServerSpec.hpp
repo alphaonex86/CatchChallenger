@@ -18,10 +18,7 @@ public:
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
-    const std::unordered_map<uint16_t,BotFight> &get_botFights() const;
-    const uint16_t &get_botFightsMaxId() const;
     const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> &get_quests() const;
-    const std::unordered_map<SHOP_TYPE,Shop> &get_shops() const;
     const std::vector<ServerSpecProfile> &get_serverProfileList() const;
     std::vector<ServerSpecProfile> &get_serverProfileList_rw();
     const std::unordered_map<uint16_t,std::vector<MonsterDrops> > &get_monsterDrops() const;
@@ -30,10 +27,7 @@ public:
     const std::vector<std::string> &get_idToZone() const;
     std::vector<std::string> &get_idToZone_rw();
 protected:
-    std::unordered_map<uint16_t,BotFight> botFights;
-    uint16_t botFightsMaxId;
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
-    std::unordered_map<SHOP_TYPE,Shop> shops;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<uint16_t,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
     std::unordered_map<std::string,ZONE_TYPE> zoneToId;//tempory var to load zone
@@ -42,20 +36,14 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << botFights;
-        buf << botFightsMaxId;
         buf << quests;
-        buf << shops;
         buf << serverProfileList;
         buf << monsterDrops;
         buf << idToZone;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> botFights;
-        buf >> botFightsMaxId;
         buf >> quests;
-        buf >> shops;
         buf >> serverProfileList;
         buf >> monsterDrops;
         buf >> idToZone;
@@ -69,10 +57,7 @@ private:
     std::string subDatapackCode;
 private:
     void parseQuests();
-    void parseBotFights();//gold/item variables by server
-    void parseShop();
     void parseServerProfileList();
-    void parseIndustries();
     #ifdef CATCHCHALLENGER_CLIENT
     void applyMonstersRate();//xp,sp variable by server, only have this second pass on client, take care
     #endif

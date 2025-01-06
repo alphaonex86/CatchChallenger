@@ -21,7 +21,6 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
 {
     isParsedSpec=false;
     parsingSpec=false;
-    botFightsMaxId=0;
 }
 
 void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode)
@@ -40,10 +39,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, co
     CommonDatapack::commonDatapack.parseDatapack(datapackPath);
 
     parseQuests();
-    parseBotFights();
-    parseShop();
     parseServerProfileList();
-    parseIndustries();
     #ifdef CATCHCHALLENGER_CLIENT
     applyMonstersRate();
     #endif
@@ -69,19 +65,6 @@ void CommonDatapackServerSpec::parseQuests()
 {
     quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2);
     std::cout << quests.size() << " quest(s) loaded" << std::endl;
-}
-
-void CommonDatapackServerSpec::parseShop()
-{
-    shops=DatapackGeneralLoader::preload_shop(datapackPath+DATAPACK_BASE_PATH_SHOP1+mainDatapackCode+DATAPACK_BASE_PATH_SHOP2+"shop.xml",CommonDatapack::commonDatapack.get_items().item);
-    std::cout << shops.size() << " monster items(s) to learn loaded" << std::endl;
-}
-
-void CommonDatapackServerSpec::parseBotFights()
-{
-    botFightsMaxId=0;
-    botFights=FightLoader::loadFight(datapackPath+DATAPACK_BASE_PATH_FIGHT1+mainDatapackCode+DATAPACK_BASE_PATH_FIGHT2,CommonDatapack::commonDatapack.get_monsters(),CommonDatapack::commonDatapack.get_monsterSkills(),CommonDatapack::commonDatapack.get_items().item,botFightsMaxId);
-    std::cout << botFights.size() << " bot fight(s) loaded" << std::endl;
 }
 
 void CommonDatapackServerSpec::parseServerProfileList()
@@ -149,34 +132,6 @@ void CommonDatapackServerSpec::applyMonstersRate()
 }
 #endif
 
-void CommonDatapackServerSpec::parseIndustries()
-{
-    const std::unordered_map<uint16_t,Industry> &industriesBase=CommonDatapack::commonDatapack.get_industries();
-    const std::unordered_map<uint16_t,IndustryLink> &industriesLinkBase=CommonDatapack::commonDatapack.get_industriesLink();
-    CommonDatapack::commonDatapack.industries=DatapackGeneralLoader::loadIndustries(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESSPEC1+mainDatapackCode+DATAPACK_BASE_PATH_INDUSTRIESSPEC2,CommonDatapack::commonDatapack.get_items().item);
-    std::cout << industriesBase.size() << " industries loaded (spec industries " << CommonDatapack::commonDatapack.industries.size() << ")" << std::endl;
-    {
-        auto i=industriesBase.begin();
-        while(i!=industriesBase.cend())
-        {
-            if(CommonDatapack::commonDatapack.industries.find(i->first)==CommonDatapack::commonDatapack.industries.cend())
-                CommonDatapack::commonDatapack.industries[i->first]=i->second;
-            ++i;
-        }
-    }
-    CommonDatapack::commonDatapack.industriesLink=DatapackGeneralLoader::loadIndustriesLink(datapackPath+DATAPACK_BASE_PATH_INDUSTRIESSPEC1+mainDatapackCode+DATAPACK_BASE_PATH_INDUSTRIESSPEC2+"list.xml",CommonDatapack::commonDatapack.industries);
-    std::cout << industriesLinkBase.size() << " industries link loaded (spec industries link " << CommonDatapack::commonDatapack.industriesLink.size() << ")" << std::endl;
-    {
-        auto i=industriesLinkBase.begin();
-        while(i!=industriesLinkBase.cend())
-        {
-            if(CommonDatapack::commonDatapack.industriesLink.find(i->first)==CommonDatapack::commonDatapack.industriesLink.cend())
-                CommonDatapack::commonDatapack.industriesLink[i->first]=i->second;
-            ++i;
-        }
-    }
-}
-
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 void CommonDatapackServerSpec::parseMonstersDrop()
 {
@@ -194,7 +149,6 @@ void CommonDatapackServerSpec::unload()
     if(parsingSpec)
         return;
     parsingSpec=true;
-    botFights.clear();
     quests.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
     Map_loader::teleportConditionsUnparsed.clear();
@@ -202,7 +156,6 @@ void CommonDatapackServerSpec::unload()
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterDrops.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
-    shops.clear();
     serverProfileList.clear();
     CommonDatapack::commonDatapack.unload();
 
@@ -215,24 +168,9 @@ void CommonDatapackServerSpec::unload()
     isParsedSpec=false;
 }
 
-const std::unordered_map<uint16_t,BotFight> &CommonDatapackServerSpec::get_botFights() const
-{
-    return botFights;
-}
-
-const uint16_t &CommonDatapackServerSpec::get_botFightsMaxId() const
-{
-    return botFightsMaxId;
-}
-
 const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> &CommonDatapackServerSpec::get_quests() const
 {
     return quests;
-}
-
-const std::unordered_map<SHOP_TYPE,Shop> &CommonDatapackServerSpec::get_shops() const
-{
-    return shops;
 }
 
 const std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList() const

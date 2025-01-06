@@ -17,6 +17,7 @@
 */
 
 using namespace CatchChallenger;
+force reemit true
 
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
@@ -936,6 +937,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_a
 //buffer overflow check via buffer usage at player insert, per map if player are visible
 void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
+    if(client.size()<=1)
+        return;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(have_change==false)
     {

@@ -10,11 +10,6 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
-    {
-        errorOutput("shopId not found: "+std::to_string(shopId));
-        return;
-    }
     CommonMap *map=this->map;
     uint8_t x=this->x;
     uint8_t y=this->y;
@@ -100,7 +95,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
             }
             else
             {
-                const std::vector<uint16_t> shops=mapServer->shops.at(pos);
+                const std::vector<uint8_t> shops=mapServer->shops.at(pos);
                 if(!vectorcontainsAtLeastOne(shops,shopId))
                 {
                     errorOutput("not shop into this direction");
@@ -111,7 +106,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
     }
     else
     {
-        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
+        const std::vector<uint8_t> shops=mapServer->shops.at(pos);
         if(!vectorcontainsAtLeastOne(shops,shopId))
         {
             errorOutput("not shop into this direction");
@@ -119,7 +114,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
         }
     }
     //send the shop items (no taxes from now)
-    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId);
+    const Shop &shop=mapServer->shopsList.at(shopId);
 
     removeFromQueryReceived(query_id);
     //send the network reply

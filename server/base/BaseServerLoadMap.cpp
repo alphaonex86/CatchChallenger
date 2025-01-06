@@ -450,9 +450,6 @@ bool BaseServer::preload_9_sync_the_map()
 
     //preload_map_semi_after_db_id load the item id
 
-    //nead be after the offet
-    preload_the_bots(semi_loaded_map);
-
     //load the rescue
     index=0;
     while(index<semi_loaded_map.size())

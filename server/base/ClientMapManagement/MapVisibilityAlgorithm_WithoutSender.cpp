@@ -16,30 +16,16 @@ MapVisibilityAlgorithm_WithoutSender::~MapVisibilityAlgorithm_WithoutSender()
 
 void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
 {
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    if disabled quit;
+    if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==nullptr)
+        return;
+    unsigned int index=0;
+    const unsigned int &list_size=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size;
+    while(index<list_size)
     {
-        case MapVisibilityAlgorithmSelection_Simple:
-        {
-            if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==nullptr)
-                return;
-            unsigned int index=0;
-            const unsigned int &list_size=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size;
-            while(index<list_size)
-            {
-                Map_server_MapVisibility_Simple_StoreOnSender * const map=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update[index];
-                map->purgeBuffer();
-                index++;
-            }
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
-        }
-        break;
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        {
-        }
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        break;
-        default:
-        break;
+        Map_server_MapVisibility_Simple_StoreOnSender * const map=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update[index];
+        map->purgeBuffer();
+        index++;
     }
+    Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 }
