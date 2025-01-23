@@ -63,7 +63,7 @@ void BaseServer::unload_the_static_data()
 
 void BaseServer::unload_zone()
 {
-    GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.clear();
+    GlobalServerData::serverPrivateVariables.zoneIdToMapList.clear();
     GlobalServerData::serverPrivateVariables.tradedMonster.clear();
 }
 

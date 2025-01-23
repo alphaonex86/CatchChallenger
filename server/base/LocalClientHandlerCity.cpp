@@ -257,8 +257,31 @@ void Client::startTheCityCapture()
             }
             if(GlobalServerData::serverPrivateVariables.cityStatusList.at(i->first).clan==0)
             {
-                if(GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size()>i->first)
-                    tempCaptureCityValidated.bots=GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.at(i->first);
+                if(GlobalServerData::serverPrivateVariables.zoneIdToMapList.size()>i->first)
+                {
+                    const std::vector<CATCHCHALLENGER_TYPE_MAP/*mapId*/> &mapsList=GlobalServerData::serverPrivateVariables.zoneIdToMapList.at(i->first);
+                    unsigned int index=0;
+                    while(index<mapsList.size())
+                    {
+                        const CATCHCHALLENGER_TYPE_MAP &mapId=mapsList.at(index);
+                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
+                        if(mapId>=GlobalServerData::serverPrivateVariables.map_list.size())
+                        {
+                            std::cerr << "Client::startTheCityCapture() mapId is > map list size" << std::endl;
+                            abort();
+                        }
+                        #endif
+                        const CommonMap *map=GlobalServerData::serverPrivateVariables.flat_map_list[mapId];
+                        std::pair<CATCHCHALLENGER_TYPE_MAP/*mapId*/,uint8_t/*botId*/> temp;
+                        for (const std::pair<const uint8_t/*npc id*/,BotFight>& n : map->botFights)
+                        {
+                            temp.first=mapId;
+                            temp.second=n.first;
+                            tempCaptureCityValidated.bots.push_back(temp);
+                        }
+                        index++;
+                    }
+                }
             }
             tempCaptureCityValidated.players=i->second;
             unsigned int index;
