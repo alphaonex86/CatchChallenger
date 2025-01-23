@@ -172,7 +172,7 @@ bool BaseServer::preload_zone_init()
         index++;
     }
 
-    std::cout << GlobalServerData::serverPrivateVariables.captureFightIdListByZoneToCaptureCity.size() << " zone(s) loaded" << std::endl;
+    std::cout << GlobalServerData::serverPrivateVariables.zoneIdToMapList.size() << " zone(s) loaded" << std::endl;
     return true;
 }
 

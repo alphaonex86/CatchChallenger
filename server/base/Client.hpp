@@ -301,8 +301,8 @@ private:
     //info linked
     static Direction	temp_direction;
     static std::unordered_map<uint32_t,Client *> playerById;
-    static std::unordered_map<uint16_t,std::vector<Client *> > captureCity;
-    static std::unordered_map<uint16_t,CaptureCityValidated> captureCityValidatedList;
+    static std::unordered_map<ZONE_TYPE,std::vector<Client *> > captureCity;
+    static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
     //socket related
