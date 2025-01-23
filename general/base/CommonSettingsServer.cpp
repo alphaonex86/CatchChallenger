@@ -6,8 +6,6 @@ CommonSettingsServer::CommonSettingsServer()
 {
     everyBodyIsRoot=false;
     forcedSpeed=0;
-    useSP=false;
-    autoLearn=false;
     dontSendPseudo=false;
     forceClientToSendAtMapChange=false;
     waitBeforeConnectAfterKick=0;

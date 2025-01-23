@@ -201,14 +201,6 @@ void BaseServer::loadAndFixSettings()
         CommonSettingsCommon::commonSettingsCommon.character_delete_time=7*24*3600;
     }
     #endif
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-    {
-        if(CommonSettingsServer::commonSettingsServer.autoLearn)
-        {
-            std::cerr << "Auto-learn disable when SP enabled" << std::endl;
-            CommonSettingsServer::commonSettingsServer.autoLearn=false;
-        }
-    }
 
     if(GlobalServerData::serverSettings.datapackCache<-1)
     {
@@ -268,103 +260,35 @@ void BaseServer::loadAndFixSettings()
             sizeof(uint8_t)+map_list_size+/*player_list_size same with move, delete, ...*/
             //of the player
             /*player_list_size same with move, delete, ...*/+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+sizeof(uint8_t)+0/*pseudo size put directy*/+sizeof(uint8_t);
-    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+    if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
     {
-        if(GlobalServerData::serverSettings.mapVisibility.simple.max<5)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max<5" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.simple.max=5;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow<3" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.simple.reshow=3;
-        }
-
-        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.max_players;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
-        }
-
-        /*do the coding part...if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
-            GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;*/
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max<5" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.simple.max=5;
     }
-    else if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder)
+    if(GlobalServerData::serverSettings.mapVisibility.simple.reshow<3)
     {
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder<3" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=3;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder<2" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=2;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.max<5)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.max<5" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.max=5;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow<3" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=3;
-        }
-
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.max_players;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.max_players;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.max_players;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.max>GlobalServerData::serverSettings.max_players" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.max=GlobalServerData::serverSettings.max_players;
-        }
-
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshow>GlobalServerData::serverSettings.mapVisibility.withBorder.max" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshow=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.max" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.max;
-        }
-        if(GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow)
-        {
-            std::cerr << "GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder>GlobalServerData::serverSettings.mapVisibility.withBorder.reshow" << std::endl;
-            GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder=GlobalServerData::serverSettings.mapVisibility.withBorder.reshow;
-        }
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow<3" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.simple.reshow=3;
     }
+
+    if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players)
+    {
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.max_players" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.max_players;
+    }
+    if(GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players)
+    {
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.max>GlobalServerData::serverSettings.max_players" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.simple.max=GlobalServerData::serverSettings.max_players;
+    }
+    if(GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max)
+    {
+        std::cerr << "GlobalServerData::serverSettings.mapVisibility.simple.reshow>GlobalServerData::serverSettings.mapVisibility.simple.max" << std::endl;
+        GlobalServerData::serverSettings.mapVisibility.simple.reshow=GlobalServerData::serverSettings.mapVisibility.simple.max;
+    }
+
+    /*do the coding part...if(GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime>GlobalServerData::serverSettings.mapVisibility.simple.max)
+        GlobalServerData::serverPrivateVariables.maxVisiblePlayerAtSameTime=GlobalServerData::serverSettings.mapVisibility.simple.max;*/
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -447,18 +371,6 @@ void BaseServer::loadAndFixSettings()
     #error Define what do here
     #endif
     
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-        case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-        case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-        break;
-        default:
-            GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm=CatchChallenger::MapVisibilityAlgorithmSelection_Simple;
-            std::cerr << "Wrong visibility algorithm" << std::endl;
-        break;
-    }
-
     switch(GlobalServerData::serverSettings.city.capture.frenquency)
     {
         case City::Capture::Frequency_week:

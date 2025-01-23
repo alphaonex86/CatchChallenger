@@ -19,7 +19,6 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
     playerMonster.catched_with=0;
     playerMonster.egg_step=0;
     playerMonster.remaining_xp=0;
-    playerMonster.sp=0;
     uint8_t randomMonsterInt=getOneSeed(100);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     uint8_t randomMonsterIntOriginal=randomMonsterInt;
@@ -287,7 +286,6 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
         newMonster.monster=wildMonsters.front().monster;
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.front().skills;
-        newMonster.sp=0;
         #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
         newMonster.id=catchAWild(get_public_and_private_informations().playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters,newMonster);
         return newMonster.id;

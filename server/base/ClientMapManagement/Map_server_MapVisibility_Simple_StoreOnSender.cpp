@@ -17,7 +17,6 @@
 */
 
 using namespace CatchChallenger;
-force reemit true
 
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
 MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
@@ -88,52 +87,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(clients.size()-1);
             posOutput+=2;
         }
-        if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
-        {
-            if(clients.size()>1)
-            {
-                unsigned int index=0;
-                while(index<clients.size())
-                {
-                    MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
-                    posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
-                    ++index;
-                }
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-                index=0;
-                while(index<clients.size())
-                {
-                    MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
-                    client->to_send_insert=false;
-                    if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
-                    {
-                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        MapServer::check6B(ProtocolParsingBase::tempBigBufferForOutput+1+4,posOutput-1-4);
-                        #endif
-                        client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                    }
-                    else
-                        client->mapSyncMiss=true;
-                    ++index;
-                }
-            }
-        }
-        else
+        if(clients.size()>1)
         {
             unsigned int index=0;
             while(index<clients.size())
             {
                 MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
-
-                unsigned int indexSub=0;
-                while(indexSub<clients.size())
-                {
-                    if(index!=indexSub)
-                        posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
-                    ++indexSub;
-                }
-
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
+                ++index;
+            }
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+            index=0;
+            while(index<clients.size())
+            {
+                MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
                 client->to_send_insert=false;
                 if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
                 {
@@ -144,7 +111,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
                 }
                 else
                     client->mapSyncMiss=true;
-
                 ++index;
             }
         }
@@ -520,112 +486,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert_reemit(un
     #endif
 }
 
-void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert(unsigned int &clientsToSendDataSizeOldClients)
-{
-    unsigned int real_reinsert_count=0;
-    unsigned int index_subindex=0;
-
-    while(index_subindex<clientsToSendDataSizeOldClients)
-    {
-        if(clientsToSendDataOldClients[index_subindex]->haveNewMove)
-            real_reinsert_count++;
-        index_subindex++;
-    }
-    if(real_reinsert_count>0)
-    {
-        uint32_t bufferSizeToHave;
-        if(GlobalServerData::serverSettings.max_players<=255)
-            bufferSizeToHave=sizeof(uint8_t)+real_reinsert_count*(sizeof(uint8_t)+sizeof(uint8_t)*3);
-        else
-            bufferSizeToHave=sizeof(uint16_t)+real_reinsert_count*(sizeof(uint16_t)+sizeof(uint8_t)*3);
-
-        //send the network message
-        uint32_t posOutput=0;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x66;
-        posOutput+=1;
-        //Can't be here, need exclude him self to know the size:*reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(bufferSizeToHave-1-4);//set the dynamic size
-        posOutput+=4;
-
-        if(bufferSizeToHave<CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER)
-        {
-            unsigned int index=0;
-            if(GlobalServerData::serverSettings.max_players<=255)
-            {
-                while(index<clientsToSendDataSizeOldClients)
-                {
-                    unsigned int temp_reinsert=real_reinsert_count;
-                    if(clientsToSendDataOldClients[index]->haveNewMove)
-                        temp_reinsert--;
-                    if(temp_reinsert>0)
-                    {
-                        index_subindex=0;
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)temp_reinsert;
-                        posOutput+=1;
-                        while(index_subindex<clientsToSendDataSizeOldClients)
-                        {
-                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
-                            if(index!=index_subindex && client->haveNewMove)
-                            {
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)client->getX();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)client->getY();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)client->getLastDirection();
-                                posOutput+=sizeof(uint8_t)+sizeof(uint8_t)*3;
-                            }
-                            index_subindex++;
-                        }
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-                        if(clientsToSendDataOldClients[index]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index]->mapSyncMiss==false)
-                            clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        else
-                            clientsToSendDataOldClients[index]->mapSyncMiss=true;
-                        posOutput=1+4;
-                    }
-                    index++;
-                }
-            }
-            else
-            {
-                while(index<clientsToSendDataSizeOldClients)
-                {
-                    unsigned int temp_reinsert=real_reinsert_count;
-                    if(clientsToSendDataOldClients[index]->haveNewMove)
-                        temp_reinsert--;
-                    if(temp_reinsert>0)
-                    {
-                        index_subindex=0;
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16((uint16_t)temp_reinsert);
-                        posOutput+=2;
-                        while(index_subindex<clientsToSendDataSizeOldClients)
-                        {
-                            const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
-                            if(index!=index_subindex && client->haveNewMove)
-                            {
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId);
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)client->getX();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)client->getY();
-                                ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)client->getLastDirection();
-                                posOutput+=sizeof(uint16_t)+sizeof(uint8_t)*3;
-                            }
-                            index_subindex++;
-                        }
-                        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-                        if(clientsToSendDataOldClients[index]->pingCountInProgress()<=0 && clientsToSendDataOldClients[index]->mapSyncMiss==false)
-                            clientsToSendDataOldClients[index]->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        else
-                            clientsToSendDataOldClients[index]->mapSyncMiss=true;
-                        posOutput=1+4;
-                    }
-                    index++;
-                }
-            }
-        }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        else
-            std::cerr << "Out of buffer for map management to send reinsert en 16bits" << __LINE__ << "bufferSizeToHave" << bufferSizeToHave << "CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER" << CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER << std::endl;
-        #endif
-    }
-}
 
 void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_header(char *buffer, int &posOutput)
 {
@@ -777,30 +637,27 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_playercou
 
 void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_and_send(char *buffer, int &posOutput)
 {
-    if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(buffer[0x00]!=0x6b)
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(buffer[0x00]!=0x6b)
-        {
-            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
-        }
-        #endif
-        unsigned int indexSub=0;
-        while(indexSub<clients.size())
-        {
-            MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(indexSub);
-            posOutput+=playerToFullInsert(client,buffer+posOutput);
-            ++indexSub;
-        }
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(buffer[0x00]!=0x6b)
-        {
-            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
-        }
-        #endif
+        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
     }
+    #endif
+    unsigned int indexSub=0;
+    while(indexSub<clients.size())
+    {
+        MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(indexSub);
+        posOutput+=playerToFullInsert(client,buffer+posOutput);
+        ++indexSub;
+    }
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(buffer[0x00]!=0x6b)
+    {
+        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    #endif
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(buffer[0x00]!=0x6b)
@@ -841,46 +698,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_a
                 abort();
             }
             #endif
-            if(!GlobalServerData::serverSettings.mapVisibility.simple.reemit)
-            {
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(buffer[0x00]!=0x6b)
-                {
-                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                #endif
-                unsigned int indexSub=0;
-                while(indexSub<clients.size())
-                {
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(buffer[0x00]!=0x6b)
-                    {
-                        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-                        abort();
-                    }
-                    //std::cerr << "before add " << posOutput << " " << __FILE__ << ":" << __LINE__ << std::endl;
-                    #endif
-                    if(client!=clients.at(indexSub))
-                        posOutput+=playerToFullInsert(clients.at(indexSub),buffer+posOutput);
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    //std::cerr << "after add " << posOutput << " " << __FILE__ << ":" << __LINE__ << std::endl;
-                    if(buffer[0x00]!=0x6b)
-                    {
-                        std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-                        abort();
-                    }
-                    #endif
-                    ++indexSub;
-                }
-                #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                if(buffer[0x00]!=0x6b)
-                {
-                    std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                }
-                #endif
-            }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(buffer[0x00]!=0x6b)
             {
@@ -937,8 +754,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_a
 //buffer overflow check via buffer usage at player insert, per map if player are visible
 void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
 {
-    if(client.size()<=1)
-        return;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(have_change==false)
     {
@@ -992,12 +807,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer()
     //send small reinsert, used to remplace move and improve the performance
     const int &small_reinsert_count=clientsToSendDataSizeOldClients;
     if(small_reinsert_count>1)//then player who is not drop/insert
-    {
-        if(GlobalServerData::serverSettings.mapVisibility.simple.reemit)
-            send_samllreinsert_reemit(clientsToSendDataSizeOldClients);
-        else
-            send_samllreinsert(clientsToSendDataSizeOldClients);
-    }
+        send_samllreinsert_reemit(clientsToSendDataSizeOldClients);
     //purge
     {
         int posOutput=0;

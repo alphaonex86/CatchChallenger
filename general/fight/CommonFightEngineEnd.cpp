@@ -207,7 +207,6 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             #endif
             const Monster &wildMonsterInfo=CommonDatapack::commonDatapack.get_monsters().at(wildMonster.monster);
             //multiplicator do at datapack loading
-            int sp=wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(wildMonsterInfo.give_xp<=0)
@@ -221,10 +220,10 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
                 abort();
             }
             #endif
-            giveXPSP(xp,sp);
+            giveXP(xp);
             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("You win "+std::to_string(wildMonsterInfo.give_xp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
-                               " xp and "+std::to_string(wildMonsterInfo.give_sp*wildMonster.level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
+                               " xp");
             #endif
         }
     }
@@ -240,12 +239,11 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
             //give xp/sp here
             const Monster &botmonster=CommonDatapack::commonDatapack.get_monsters().at(botFightMonsters.front().monster);
             //multiplicator do at datapack loading
-            int sp=botmonster.give_sp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
             int xp=botmonster.give_xp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX;
-            giveXPSP(xp,sp);
+            giveXP(xp);
             #ifdef CATCHCHALLENGER_DEBUG_FIGHT
             messageFightEngine("You win "+std::to_string(botmonster.give_xp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+
-                               " xp and "+std::to_string(botmonster.give_sp*botFightMonsters.front().level/CATCHCHALLENGER_MONSTER_LEVEL_MAX)+" sp");
+                               " xp");
             #endif
         }
     }
@@ -264,7 +262,7 @@ bool CommonFightEngine::checkKOOtherMonstersForGain()
 }
 
 //return true if change level, multiplicator do at datapack loading
-bool CommonFightEngine::giveXPSP(int xp,int sp)
+bool CommonFightEngine::giveXP(int xp)
 {
     bool haveChangeOfLevel=false;
     PlayerMonster * monster=getCurrentMonster();
@@ -307,7 +305,6 @@ bool CommonFightEngine::giveXPSP(int xp,int sp)
     else
         messageFightEngine("Not level up: ("+std::to_string(remaining_xp)+")<monsterInformations.level_to_xp.at("+std::to_string(level)+"-1): "+std::to_string(monsterInformations.level_to_xp.at(level-1))+"");
     #endif
-    monster->sp+=sp;
 
     return haveChangeOfLevel;
 }

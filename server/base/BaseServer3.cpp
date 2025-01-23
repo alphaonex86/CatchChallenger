@@ -3,7 +3,6 @@
 #include "DictionaryServer.hpp"
 #include "Client.hpp"
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -75,21 +74,7 @@ void BaseServer::preload_1_the_data()
         *serialBuffer >> MapServer::mapListSize;
         GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*MapServer::mapListSize));
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
-        {
-            switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-            {
-                case MapVisibilityAlgorithmSelection_Simple:
-                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_Simple_StoreOnSender;
-                break;
-                case MapVisibilityAlgorithmSelection_WithBorder:
-                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_WithBorder_StoreOnSender;
-                break;
-                case MapVisibilityAlgorithmSelection_None:
-                default:
-                    GlobalServerData::serverPrivateVariables.flat_map_list[i]=new MapServer;
-                break;
-            }
-        }
+            GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_Simple_StoreOnSender;
         std::unordered_set<uint32_t> detectDuplicateMapId;
         for(unsigned int i=0; i<MapServer::mapListSize; i++)
         {
@@ -174,13 +159,10 @@ void BaseServer::preload_1_the_data()
         }*/
 
 
-        if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
-        {
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=
-                    static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size()));
-            memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size());
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
-        }
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=
+                static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size()));
+        memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size());
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;

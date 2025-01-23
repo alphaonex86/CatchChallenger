@@ -41,13 +41,6 @@ bool CommonFightEngine::learnSkill(PlayerMonster *monsterPlayer, const uint16_t 
                     errorFightEngine("Skill level to learn not found learnSkill() "+std::to_string(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.size())+">"+std::to_string(learn.learnSkillLevel));
                     return false;
                 }
-                if(CommonSettingsServer::commonSettingsServer.useSP)
-                {
-                    const uint32_t &sp=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.at(learn.learnSkillLevel-1).sp_to_learn;
-                    if(sp>monsterPlayer->sp)
-                        return false;
-                    monsterPlayer->sp-=sp;
-                }
                 if(learn.learnSkillLevel==1)
                 {
                     PlayerMonster::PlayerSkill temp;

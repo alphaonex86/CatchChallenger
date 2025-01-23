@@ -370,45 +370,25 @@ bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,cons
 }
 
 //return true if change level, multiplicator do at datapack loading
-bool Client::giveXPSP(int xp,int sp)
+bool Client::giveXP(int xp)
 {
-    const bool &haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
+    const bool &haveChangeOfLevel=CommonFightEngine::giveXP(xp);
     if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         auto currentMonster=getCurrentMonster();
-        if(CommonSettingsServer::commonSettingsServer.useSP)
-        {
-            if(haveChangeOfLevel)
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
-                            std::to_string(currentMonster->hp),
-                            std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->level),
-                            std::to_string(currentMonster->sp),
-                            std::to_string(currentMonster->id)
-                            });
-            else
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp.asyncWrite({
-                            std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->sp),
-                            std::to_string(currentMonster->id)
-                            });
-        }
+        if(haveChangeOfLevel)
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
+                        std::to_string(currentMonster->hp),
+                        std::to_string(currentMonster->remaining_xp),
+                        std::to_string(currentMonster->level),
+                        std::to_string(currentMonster->id)
+                        });
         else
-        {
-            if(haveChangeOfLevel)
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
-                            std::to_string(currentMonster->hp),
-                            std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->level),
-                            std::to_string(currentMonster->id)
-                            });
-            else
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp.asyncWrite({
-                            std::to_string(currentMonster->remaining_xp),
-                            std::to_string(currentMonster->id)
-                            });
-        }
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp.asyncWrite({
+                        std::to_string(currentMonster->remaining_xp),
+                        std::to_string(currentMonster->id)
+                        });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         (void)currentMonster;
         #elif CATCHCHALLENGER_DB_FILE

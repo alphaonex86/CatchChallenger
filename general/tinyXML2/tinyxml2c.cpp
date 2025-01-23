@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
 
@@ -1055,3 +1056,4 @@ bool XMLPrinter::Visit( const XMLUnknown& unknown )
 
 }   // namespace tinyxml2
 
+#endif // CATCHCHALLENGER_NOXML

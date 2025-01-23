@@ -12,11 +12,11 @@
 
 #include <vector>
 #include <iostream>
+#include <cstdint>
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
 class MapVisibilityAlgorithm_Simple_StoreOnSender;
-class MapVisibilityAlgorithm_WithBorder_StoreOnSender;
 class Client;
 
 class MapServer : public CommonMap, public MapServerCrafting
@@ -94,14 +94,8 @@ public:
         buf << (uint8_t)shops.size();
         for (const auto &x : shops)
               buf << x.first << x.second;
-        buf << (uint8_t)learn.size();
-        for (const auto &x : learn)
-              buf << x.first << x.second;
         buf << (uint8_t)heal.size();
         for (const auto &x : heal)
-              buf << x.first << x.second;
-        buf << (uint8_t)market.size();
-        for (const auto &x : market)
               buf << x.first << x.second;
         buf << (uint8_t)zonecapture.size();
         for (const auto &x : zonecapture)
@@ -120,7 +114,6 @@ public:
               buf << x.first << (uint8_t)x.second;
         buf << reverse_db_id << zone << pointOnMap_Item;
         buf << botFights;
-        buf << shops;
     }
     static uint32_t mapListSize;
     static CommonMap * posToPointer(const int32_t &pos);
@@ -164,27 +157,15 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::unordered_map<uint8_t,Shop> value;
-            buf >> posXY >> value;
-            shops[posXY]=value;
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            buf >> posXY.first >> posXY.second;
-            learn.insert(posXY);
+            Shop s;
+            buf >> posXY >> s;
+            shops[posXY]=s;
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
             buf >> posXY.first >> posXY.second;
             heal.insert(posXY);
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            buf >> posXY.first >> posXY.second;
-            market.insert(posXY);
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
@@ -196,7 +177,7 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            std::vector<uint8_t> value;
+            uint8_t value;
             buf >> posXY >> value;
             botsFight[posXY]=value;
         }
