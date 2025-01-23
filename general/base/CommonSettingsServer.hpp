@@ -14,8 +14,6 @@ public:
     std::string httpDatapackMirrorServer;
     #endif
     uint8_t forcedSpeed;
-    bool useSP;
-    bool autoLearn;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
     bool everyBodyIsRoot;

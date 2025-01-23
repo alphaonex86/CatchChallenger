@@ -2447,13 +2447,6 @@ int Api_protocol::dataToPlayerMonster(const char * const data,const unsigned int
     }
     monster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
     pos+=sizeof(uint32_t);
-    if((size-pos)<(int)sizeof(uint32_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster sp, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return -1;
-    }
-    monster.sp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-    pos+=sizeof(uint32_t);
     if((size-pos)<(int)sizeof(uint16_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the monster captured_with, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));

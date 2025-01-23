@@ -97,7 +97,7 @@ protected:
     virtual void fightFinished();
     virtual void wildDrop(const uint16_t &monster);
     virtual bool checkKOOtherMonstersForGain();
-    virtual bool giveXPSP(int xp,int sp);
+    virtual bool giveXP(int xp);
     virtual bool addLevel(PlayerMonster * monster,const uint8_t &numberOfLevel=1);
     virtual void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
     virtual std::vector<Monster::AttackToLearn> autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex);

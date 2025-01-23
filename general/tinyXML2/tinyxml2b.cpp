@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
 
@@ -771,3 +772,4 @@ XMLError XMLElement::QueryFloatText( float* fval ) const
 
 }   // namespace tinyxml2
 
+#endif // CATCHCHALLENGER_NOXML

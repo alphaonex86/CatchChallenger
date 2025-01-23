@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
 
@@ -2105,3 +2106,4 @@ private:
 #endif
 
 #endif // TINYXML2_INCLUDED
+#endif // CATCHCHALLENGER_NOXML

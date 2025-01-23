@@ -7,11 +7,7 @@
 
 namespace hps {
 
-#ifdef CATCHCHALLENGER_CLIENT
-constexpr size_t STREAM_OUTPUT_BUFFER_SIZE = 65536;
-#else
-constexpr size_t STREAM_OUTPUT_BUFFER_SIZE = 4096;
-#endif
+constexpr size_t STREAM_OUTPUT_BUFFER_SIZE = 1 << 16;
 
 class StreamOutputBuffer {
  public:
@@ -50,12 +46,10 @@ class StreamOutputBuffer {
     Serializer<T, StreamOutputBuffer>::serialize(t, *this);
     return *this;
   }
-
-  inline ssize_t tellp() const {
-      if(stream->tellp()>0)
-        return (ssize_t)stream->tellp() + pos;
-      else
-        return pos;
+  
+  //usefull to debug and profile the file size
+  inline size_t tellp() const {
+      return (size_t)stream->tellp() + pos;
   }
 
  private:

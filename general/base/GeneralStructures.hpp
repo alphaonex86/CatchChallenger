@@ -233,7 +233,6 @@ class PlayerMonster : public PublicPlayerMonster
         #endif
     };
     uint32_t remaining_xp;
-    uint32_t sp;
     uint32_t egg_step;
     //in form of list to get random into the list
     std::vector<PlayerSkill> skills;
@@ -245,12 +244,12 @@ class PlayerMonster : public PublicPlayerMonster
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << monster << level << hp << catched_with << (uint8_t)gender << buffs << remaining_xp << sp << egg_step << skills << character_origin;
+        buf << monster << level << hp << catched_with << (uint8_t)gender << buffs << remaining_xp << egg_step << skills << character_origin;
     }
     template <class B>
     void parse(B& buf) {
         uint8_t value=0;
-        buf >> monster >> level >> hp >> catched_with >> value >> buffs >> remaining_xp >> sp >> egg_step >> skills >> character_origin;
+        buf >> monster >> level >> hp >> catched_with >> value >> buffs >> remaining_xp >> egg_step >> skills >> character_origin;
         gender=(Gender)value;
     }
     #endif

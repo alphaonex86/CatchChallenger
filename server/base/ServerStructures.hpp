@@ -173,19 +173,29 @@ public:
         public:
             uint16_t max;
             uint16_t reshow;
-            bool reemit;
+            bool enable;
             #ifdef CATCHCHALLENGER_CACHE_HPS
             template <class B>
             void serialize(B& buf) const {
-                buf << max << reshow << reemit;
+                buf << max << reshow << enable;
             }
             template <class B>
             void parse(B& buf) {
-                buf >> max >> reshow >> reemit;
+                buf >> max >> reshow >> enable;
             }
             #endif
         };
         MapVisibility_Simple simple;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << simple;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> simple;
+        }
+        #endif
     };
     MapVisibility mapVisibility;
 

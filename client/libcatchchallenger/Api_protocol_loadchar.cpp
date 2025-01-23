@@ -93,20 +93,6 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
     pos+=sizeof(uint8_t);
     if((size-pos)<(int)sizeof(uint8_t))
     {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the forcedSpeed, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    CommonSettingsServer::commonSettingsServer.useSP=data[pos];
-    pos+=sizeof(uint8_t);
-    if((size-pos)<(int)sizeof(uint8_t))
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    CommonSettingsServer::commonSettingsServer.autoLearn=data[pos];
-    pos+=sizeof(uint8_t);
-    if((size-pos)<(int)sizeof(uint8_t))
-    {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the max_character, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }

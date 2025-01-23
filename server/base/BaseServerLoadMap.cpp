@@ -5,7 +5,6 @@
 #include <chrono>
 
 #include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
-#include "ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 
@@ -58,19 +57,7 @@ bool BaseServer::preload_9_sync_the_map()
             map_name_to_do_id.push_back(sortFileName);
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
             {
-                switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                {
-                    case MapVisibilityAlgorithmSelection_Simple:
-                        flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
-                    break;
-                    case MapVisibilityAlgorithmSelection_WithBorder:
-                        flat_map_list_temp.push_back(new Map_server_MapVisibility_WithBorder_StoreOnSender);
-                    break;
-                    case MapVisibilityAlgorithmSelection_None:
-                    default:
-                        flat_map_list_temp.push_back(new MapServer);
-                    break;
-                }
+                flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
                 MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
@@ -133,19 +120,7 @@ bool BaseServer::preload_9_sync_the_map()
                           << fileName << ",[\"'])"
                           << std::endl;
 
-                switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                {
-                    case MapVisibilityAlgorithmSelection_Simple:
-                        flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
-                    break;
-                    case MapVisibilityAlgorithmSelection_WithBorder:
-                        flat_map_list_temp.push_back(new Map_server_MapVisibility_WithBorder_StoreOnSender);
-                    break;
-                    case MapVisibilityAlgorithmSelection_None:
-                    default:
-                        flat_map_list_temp.push_back(new MapServer);
-                    break;
-                }
+                flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
                 MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
@@ -179,12 +154,9 @@ bool BaseServer::preload_9_sync_the_map()
             GlobalServerData::serverPrivateVariables.flat_map_list[index]=flat_map_list_temp.at(index);
             index++;
         }
-        if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
-        {
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
-            memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*flat_map_list_temp.size());
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
-        }
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*flat_map_list_temp.size()));
+        memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*flat_map_list_temp.size());
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
     }
 
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());

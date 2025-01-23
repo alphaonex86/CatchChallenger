@@ -16,7 +16,8 @@ MapVisibilityAlgorithm_WithoutSender::~MapVisibilityAlgorithm_WithoutSender()
 
 void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
 {
-    if disabled quit;
+    if(!GlobalServerData::serverSettings.mapVisibility.simple.enable)
+        return;
     if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==nullptr)
         return;
     unsigned int index=0;

@@ -16,19 +16,17 @@ class Serializer<
     typename std::enable_if<std::is_signed<T>::value && std::is_integral<T>::value, void>::type> {
  public:
   static void serialize(const T& num, B& ob) {
-    /*const size_t n_bits = sizeof(num) * 8;
+    const size_t n_bits = sizeof(num) * 8;
     using UT = typename std::make_unsigned<T>::type;
     UT zigzaged_num = (num << 1) ^ (num >> (n_bits - 1));
-    Serializer<UT, B>::serialize(zigzaged_num, ob);*/
-      ob.write((char *)&num,sizeof(num));
+    Serializer<UT, B>::serialize(zigzaged_num, ob);
   }
 
   static void parse(T& num, B& ib) {
-    /*using UT = typename std::make_unsigned<T>::type;
+    using UT = typename std::make_unsigned<T>::type;
     UT zigzaged_num;
     Serializer<UT, B>::parse(zigzaged_num, ib);
-    num = (-(zigzaged_num & 1)) ^ (zigzaged_num >> 1);*/
-    ib.read((char *)&num,sizeof(num));
+    num = (-(zigzaged_num & 1)) ^ (zigzaged_num >> 1);
   }
 };
 

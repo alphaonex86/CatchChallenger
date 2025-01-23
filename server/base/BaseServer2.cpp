@@ -46,7 +46,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.sendPlayerNumber                       = true;
     GlobalServerData::serverSettings.pvp                                    = true;
 
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = CatchChallenger::MapVisibilityAlgorithmSelection_None;
     GlobalServerData::serverSettings.datapackCache                              = -1;
     if(FacilityLibGeneral::applicationDirPath.empty())
     {
@@ -58,7 +57,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
     CommonSettingsServer::commonSettingsServer.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
-    CommonSettingsServer::commonSettingsServer.useSP                  = true;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
@@ -70,7 +68,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.anonymous            = false;
     GlobalServerData::serverSettings.everyBodyIsRoot=0;
     GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap=0;
-    CommonSettingsServer::commonSettingsServer.autoLearn              = false;//need useSP to false
     CommonSettingsServer::commonSettingsServer.dontSendPseudo         = false;
     CommonSettingsServer::commonSettingsServer.chat_allow_clan        = true;
     CommonSettingsServer::commonSettingsServer.chat_allow_local       = true;
@@ -92,14 +89,9 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.fightSync                         = GameServerSettings::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.positionTeleportSync              = true;
     GlobalServerData::serverSettings.secondToPositionSync              = 0;
-    GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm       = MapVisibilityAlgorithmSelection_Simple;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
-    GlobalServerData::serverSettings.mapVisibility.simple.reemit                = true;
-    GlobalServerData::serverSettings.mapVisibility.withBorder.maxWithBorder     = 20;
-    GlobalServerData::serverSettings.mapVisibility.withBorder.reshowWithBorder  = 10;
-    GlobalServerData::serverSettings.mapVisibility.withBorder.max               = 30;
-    GlobalServerData::serverSettings.mapVisibility.withBorder.reshow            = 20;
+    GlobalServerData::serverSettings.mapVisibility.simple.enable                = true;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
     GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;
@@ -162,15 +154,12 @@ BaseServer::~BaseServer()
         delete GlobalServerData::serverPrivateVariables.flat_map_list;
         GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
     }
-    if(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm==CatchChallenger::MapVisibilityAlgorithmSelection_Simple)
+    if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update!=NULL)
     {
-        if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update!=NULL)
-        {
-            delete Map_server_MapVisibility_Simple_StoreOnSender::map_to_update;
-            Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
-        }
-        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
+        delete Map_server_MapVisibility_Simple_StoreOnSender::map_to_update;
+        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
     }
+    Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 }
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -217,9 +206,6 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
 {
     *serialBuffer >> GlobalServerData::serverSettings;
 
-    *serialBuffer >> CommonSettingsServer::commonSettingsServer.useSP;
-    *serialBuffer >> CommonSettingsServer::commonSettingsServer.autoLearn;
-    *serialBuffer >> CommonSettingsServer::commonSettingsServer.useSP;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.forcedSpeed;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.dontSendPseudo;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;

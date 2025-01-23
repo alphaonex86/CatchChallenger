@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 #ifndef customtinyxml2h
 #define customtinyxml2h
 
@@ -23,3 +24,4 @@ static inline std::string tinyxml2errordoc(const tinyxml2::XMLDocument * const d
 }
 
 #endif // TINYXML2_INCLUDED
+#endif // CATCHCHALLENGER_NOXML
