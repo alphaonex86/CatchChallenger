@@ -452,9 +452,9 @@ private:
     //teleportation
     void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
-    void getShopList(const uint8_t &query_id, const SHOP_TYPE &shopId);
-    void buyObject(const uint8_t &query_id, const SHOP_TYPE &shopId, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price);
-    void sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
+    void getShopList(const uint8_t &query_id);
+    void buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price);
+    void sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price);
     //trade
     void tradeCanceled();
     void tradeAccepted();
@@ -586,7 +586,7 @@ private:
     void resetTheBattle();
     PublicPlayerMonster *getOtherMonster() override;
     void fightFinished() override;
-    bool giveXPSP(int xp,int sp) override;
+    bool giveXP(int xp) override;
     bool useSkillAgainstBotMonster(const uint16_t &skill, const uint8_t &skillLevel);
     void wildDrop(const uint16_t &monster) override;
     uint8_t getOneSeed(const uint8_t &max) override;

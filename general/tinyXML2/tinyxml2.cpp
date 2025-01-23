@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 /*
 Original code by Lee Thomason (www.grinninglizard.com)
 
@@ -868,3 +869,4 @@ XMLNode* XMLNode::InsertAfterChild( XMLNode* afterThis, XMLNode* addThis )
 }
 
 }   // namespace tinyxml2
+#endif // CATCHCHALLENGER_NOXML

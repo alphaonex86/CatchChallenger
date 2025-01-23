@@ -14,84 +14,6 @@ bool Client::learnSkillByMonsterPosition(const uint8_t &monsterPosition, const u
         errorOutput("The monster is not found: "+std::to_string(monsterPosition));
         return false;
     }
-    CommonMap *map=this->map;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
-    Direction direction=getLastDirection();
-    switch(getLastDirection())
-    {
-        case Direction_look_at_top:
-        case Direction_look_at_right:
-        case Direction_look_at_bottom:
-        case Direction_look_at_left:
-            direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                {
-                    errorOutput("learnSkill() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return false;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return false;
-            }
-        break;
-        default:
-        errorOutput("Wrong direction to use a learn skill");
-        return false;
-    }
-    const MapServer * const mapServer=static_cast<MapServer*>(map);
-    const std::pair<uint8_t,uint8_t> pos(x,y);
-    if(mapServer->learn.find(pos)==mapServer->learn.end())
-    {
-        switch(direction)
-        {
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            direction=lookToMove(direction);
-            break;
-            default:
-            break;
-        }
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            case Direction_move_at_top:
-            case Direction_move_at_right:
-            case Direction_move_at_bottom:
-            case Direction_move_at_left:
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("learnSkill() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return false;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
-                    return false;
-                }
-            break;
-            default:
-            break;
-        }
-        if(mapServer->learn.find(pos)==mapServer->learn.end())
-        {
-            errorOutput("not learn skill into this direction");
-            return false;
-        }
-    }
     return learnSkillInternal(monsterPosition,skill);
 }
 
@@ -253,8 +175,8 @@ void Client::requestFight(const uint8_t &fightId)
     bool found=false;
     if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
     {
-        const std::vector<uint8_t> &botsFightList=mapServer->botsFight.at(pos);
-        if(vectorcontainsAtLeastOne(botsFightList,fightId))
+        const uint8_t botsFightList=mapServer->botsFight.at(pos);
+        if(botsFightList==fightId)
             found=true;
     }
     if(!found)
@@ -305,8 +227,8 @@ void Client::requestFight(const uint8_t &fightId)
         const std::pair<uint8_t,uint8_t> pos(x,y);
         if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
         {
-            const std::vector<uint8_t> &botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
-            if(vectorcontainsAtLeastOne(botsFightList,fightId))
+            const uint8_t botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
+            if(botsFightList==fightId)
                 found=true;
         }
         if(!found)

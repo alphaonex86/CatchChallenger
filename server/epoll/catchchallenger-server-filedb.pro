@@ -25,6 +25,7 @@ DEFINES += CATCHCHALLENGER_EXTRA_CHECK
 #DEFINES += CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 #DEFINES += SERVERSSL
 #DEFINES += SERVERBENCHMARK
+#DEFINES += CATCHCHALLENGER_NOXML
 
 DEFINES += CATCHCHALLENGER_CLASS_ALLINONESERVER
 #DEFINES += CATCHCHALLENGERSERVERDROPIFCLENT
@@ -87,17 +88,19 @@ HEADERS += $$PWD/EpollSocket.h \
     $$PWD/timer/PlayerUpdaterEpoll.hpp \
     $$PWD/timer/TimeRangeEventScan.hpp
 
-#choose one of:
+contains(DEFINES, CATCHCHALLENGER_NOXML) {
+} else {
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
 HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp
+}
 
 SOURCES += $$PWD/../../general/base/GeneralStructures.hpp
 
-#linux:LIBS += -fuse-ld=mold
+linux:LIBS += -fuse-ld=mold
 #precompile_header:!isEmpty(PRECOMPILED_HEADER) {
 #DEFINES += USING_PCH
 #

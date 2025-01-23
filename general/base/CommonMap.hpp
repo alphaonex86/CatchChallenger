@@ -56,15 +56,13 @@ public:
     //the index is position (x+y*width)
     ParsedLayer parsed_layer;
 
-    std::unordered_map<uint8_t,BotFight> botFights;//id is bot id to save what have win
+    std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     uint16_t botFightsMaxId;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::unordered_map<uint8_t,Shop>,pairhash> shops;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFight;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//force 1 shop by x,y
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
 
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zonecapture;//x,y bot to Map_loader::zoneNumber
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);

@@ -114,7 +114,6 @@ PlayerMonster FacilityLib::botFightMonsterToPlayerMonster(const BotFight::BotFig
     tempPlayerMonster.monster=botFightMonster.id;
     tempPlayerMonster.remaining_xp=0;
     tempPlayerMonster.skills=botFightMonster.attacks;
-    tempPlayerMonster.sp=0;
     return tempPlayerMonster;
 }
 
@@ -172,8 +171,6 @@ uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &mon
     *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.remaining_xp);
     posOutput+=4;
     *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.hp);
-    posOutput+=4;
-    *reinterpret_cast<uint32_t *>(data+posOutput)=htole32(monster.sp);
     posOutput+=4;
     *reinterpret_cast<uint16_t *>(data+posOutput)=htole16(monster.catched_with);
     posOutput+=2;

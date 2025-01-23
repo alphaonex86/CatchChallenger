@@ -197,38 +197,16 @@ void BaseServer::preload_7_sync_the_skin()
 void BaseServer::preload_11_sync_the_players()
 {
     Client::simplifiedIdList.clear();
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    uint16_t index=0;
+    while(index<GlobalServerData::serverSettings.max_players)
     {
-        default:
-        case MapVisibilityAlgorithmSelection_Simple:
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        {
-            uint16_t index=0;
-            while(index<GlobalServerData::serverSettings.max_players)
-            {
-                Client::simplifiedIdList.push_back(index);
-                index++;
-            }
-            std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
-        }
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        break;
+        Client::simplifiedIdList.push_back(index);
+        index++;
     }
+    std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
 }
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        case MapVisibilityAlgorithmSelection_Simple:
-            std::cout << "Visibility: MapVisibilityAlgorithmSelection_Simple" << std::endl;
-        break;
-        case MapVisibilityAlgorithmSelection_WithBorder:
-            std::cout << "Visibility: MapVisibilityAlgorithmSelection_WithBorder" << std::endl;
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-            std::cout << "Visibility: MapVisibilityAlgorithmSelection_None" << std::endl;
-        break;
-    }
+    std::cout << "Visibility: MapVisibilityAlgorithmSelection_Simple: " << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.enable) << " " << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.reshow) << "/" << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.max) << std::endl;
 }

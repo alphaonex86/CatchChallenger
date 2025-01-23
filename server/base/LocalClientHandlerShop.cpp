@@ -5,7 +5,7 @@
 
 using namespace CatchChallenger;
 
-void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
+void Client::getShopList(const uint8_t &query_id)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
@@ -42,6 +42,7 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
     }
     const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
+    Shop shop;
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
@@ -94,27 +95,12 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
                 return;
             }
             else
-            {
-                const std::vector<uint8_t> shops=mapServer->shops.at(pos);
-                if(!vectorcontainsAtLeastOne(shops,shopId))
-                {
-                    errorOutput("not shop into this direction");
-                    return;
-                }
-            }
+                shop=mapServer->shops.at(pos);
         }
     }
     else
-    {
-        const std::vector<uint8_t> shops=mapServer->shops.at(pos);
-        if(!vectorcontainsAtLeastOne(shops,shopId))
-        {
-            errorOutput("not shop into this direction");
-            return;
-        }
-    }
+        shop=mapServer->shops.at(pos);
     //send the shop items (no taxes from now)
-    const Shop &shop=mapServer->shopsList.at(shopId);
 
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -158,16 +144,11 @@ void Client::getShopList(const uint8_t &query_id,const SHOP_TYPE &shopId)
     }
 }
 
-void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("buyObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
-    {
-        errorOutput("shopId not found: "+std::to_string(shopId));
-        return;
-    }
     if(quantity<=0)
     {
         errorOutput("quantity wrong: "+std::to_string(quantity));
@@ -205,6 +186,7 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
     }
     const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
+    std::pair<uint8_t,uint8_t> shop_pos(x,y);
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
@@ -259,26 +241,12 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
             return;
         }
         else
-        {
-            const std::vector<uint16_t> shops=mapServer->shops.at(pos);
-            if(!vectorcontainsAtLeastOne(shops,shopId))
-            {
-                errorOutput("not shop into this direction");
-                return;
-            }
-        }
+            shop_pos=pos;
     }
     else
-    {
-        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
-        if(!vectorcontainsAtLeastOne(shops,shopId))
-        {
-            errorOutput("not shop into this direction");
-            return;
-        }
-    }
+        shop_pos=pos;
     //send the shop items (no taxes from now)
-    const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId);
+    const Shop &shop=mapServer->shops.at(shop_pos);
     const int &priceIndex=vectorindexOf(shop.items,objectId);
 
     removeFromQueryReceived(query_id);
@@ -302,7 +270,7 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
-    const uint32_t &realprice=CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId).prices.at(priceIndex);
+    const uint32_t &realprice=shop.prices.at(priceIndex);
     if(realprice==0)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
@@ -352,16 +320,11 @@ void Client::buyObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const uin
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::sellObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("sellObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
-    {
-        errorOutput("shopId not found: "+std::to_string(shopId));
-        return;
-    }
     if(quantity<=0)
     {
         errorOutput("quantity wrong: "+std::to_string(quantity));
@@ -399,6 +362,7 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
     }
     const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
+    std::pair<uint8_t,uint8_t> shop_pos(x,y);
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
@@ -452,24 +416,10 @@ void Client::sellObject(const uint8_t &query_id,const SHOP_TYPE &shopId,const CA
             return;
         }
         else
-        {
-            const std::vector<uint16_t> shops=mapServer->shops.at(pos);
-            if(!vectorcontainsAtLeastOne(shops,shopId))
-            {
-                errorOutput("not shop into this direction");
-                return;
-            }
-        }
+            shop_pos=pos;
     }
     else
-    {
-        const std::vector<uint16_t> shops=mapServer->shops.at(pos);
-        if(!vectorcontainsAtLeastOne(shops,shopId))
-        {
-            errorOutput("not shop into this direction");
-            return;
-        }
-    }
+        shop_pos=pos;
     removeFromQueryReceived(query_id);
     //send the network reply
 

@@ -26,7 +26,6 @@ public:
     void send_insert_exclude();
     void send_remove(unsigned int &clientsToSendDataSizeOldClients);
     void send_samllreinsert_reemit(unsigned int &clientsToSendDataSizeOldClients);
-    void send_samllreinsert(unsigned int &clientsToSendDataSizeOldClients);
     void send_insertcompose_header(char *buffer,int &posOutput);
     void send_insertcompose_map(char *buffer,int &posOutput);
     void send_insertcompose_playercount(char *buffer,int &posOutput);
