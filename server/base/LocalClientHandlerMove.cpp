@@ -131,10 +131,9 @@ bool Client::singleMove(const Direction &direction)
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {
-                    const auto &fightId=teleporter.condition.data.fightBot;
-                    if(!(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8))))
+                    if(!haveBeatBot(teleporter.condition.data.fight.mapId,teleporter.condition.data.fight.fightBot))
                     {
-                        errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.data.fightBot)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have FightBot win to use this teleporter: "+std::to_string(teleporter.condition.data.fight.mapId)+"/"+std::to_string(teleporter.condition.data.fight.fightBot)+" with map: "+map->map_file+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 }

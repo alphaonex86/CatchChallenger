@@ -315,6 +315,23 @@ public:
     #endif
 };
 
+//this structure allow load only map and near map and not all the data (not implemented)
+class Player_private_and_public_informations_Map
+{
+    //std::pair<COORD_TYPE,COORD_TYPE> allow directly work without DB resolution
+public:
+#ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+    //here to send at character login
+    std::unordered_set<std::pair<COORD_TYPE,COORD_TYPE>> itemOnMap;
+    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
+    std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
+#else
+    std::set<std::pair<COORD_TYPE,COORD_TYPE>> itemOnMap;
+    std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
+    std::set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
+#endif
+};
+
 class Player_private_and_public_informations
 {
 public:
@@ -329,7 +346,6 @@ public:
     char * encyclopedia_item;//CommonDatapack::commonDatapack.items.item.size()/8+1, if store with HFS then store CommonDatapack::commonDatapack.items.item.size() as header
     uint32_t repel_step;
     bool clan_leader;
-    char * bot_already_beaten;//CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId/8+1, if store with HFS then store CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId as header
 
     /* item and plant is keep under database format to keep the dataintegrity and save quickly the data
      * More memory usage by 2x, but improve the code maintenance because the id in memory is id in database
@@ -338,19 +354,17 @@ public:
     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
         //here to send at character login
-        std::unordered_set<uint16_t> itemOnMap;
-        std::unordered_map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
         std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
+        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
     #else
         std::set<ActionAllow> allow;
         //here to send at character login
-        std::set<uint16_t> itemOnMap;
-        std::map<uint16_t/*pointOnMap:indexOfDirtOnMap*/,PlayerPlant> plantOnMap;
-        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
+                std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
         std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
+        std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
     #endif
 };
 
@@ -975,14 +989,21 @@ public:
     #endif
 };
 
+class MapFight
+{
+public:
+    CATCHCHALLENGER_TYPE_BOTID fightBot;
+    CATCHCHALLENGER_TYPE_MAPID mapId;
+};
+
 class MapCondition
 {
 public:
     MapConditionType type;
     union Data {
-       uint16_t quest;
+       CATCHCHALLENGER_TYPE_QUEST quest;
        CATCHCHALLENGER_TYPE_ITEM item;
-       uint16_t fightBot;
+       MapFight fight;
     } data;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -1650,15 +1671,15 @@ public:
     {
     public:
         std::vector<Item> items;
-        std::vector<uint16_t> fightId;
+        std::vector<MapFight> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << items << fightId;
+            buf << items << fights;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> items >> fightId;
+            buf >> items >> fights;
         }
         #endif
     };

@@ -117,7 +117,7 @@ void Client::heal()
     rescue=unvalidated_rescue;
 }
 
-void Client::requestFight(const uint8_t &fightId)
+void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId)
 {
     if(isInFight())
     {
@@ -131,7 +131,7 @@ void Client::requestFight(const uint8_t &fightId)
         return;
     }
     #endif
-    if(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
+    if(haveBeatBot(mapId,botId))
     {
         errorOutput("You can't rebeat this fighter");
         return;
@@ -172,73 +172,73 @@ void Client::requestFight(const uint8_t &fightId)
     const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    bool found=false;
     if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
     {
-        const uint8_t botsFightList=mapServer->botsFight.at(pos);
-        if(botsFightList==fightId)
-            found=true;
-    }
-    if(!found)
-    {
-        Direction direction=getLastDirection();
-        switch(direction)
+        const uint8_t botsFightId=mapServer->botsFight.at(pos);
+        if(botsFightId==botId)
         {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            direction=lookToMove(direction);
-            break;
-            default:
+            normalOutput("is now in fight (after a request) on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botId));
+            botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(mapServer->id,botId));
             return;
         }
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            case Direction_move_at_top:
-            case Direction_move_at_right:
-            case Direction_move_at_bottom:
-            case Direction_move_at_left:
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+    }
+    direction=getLastDirection();
+    switch(direction)
+    {
+        /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+        direction=lookToMove(direction);
+        break;
+        default:
+        return;
+    }
+    switch(direction)
+    {
+        /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+        case Direction_move_at_top:
+        case Direction_move_at_right:
+        case Direction_move_at_bottom:
+        case Direction_move_at_left:
+            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
                 {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("requestFight() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
+                    errorOutput("requestFight() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return;
                 }
-            break;
-            default:
-            errorOutput("Wrong direction to use a shop");
-            return;
-        }
+            }
+            else
+            {
+                errorOutput("No valid map in this direction");
+                return;
+            }
+        break;
+        default:
+        errorOutput("Wrong direction to use a shop");
+        return;
+    }
+    {
         const MapServer * const mapServer=static_cast<MapServer*>(map);
         const std::pair<uint8_t,uint8_t> pos(x,y);
         if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
         {
-            const uint8_t botsFightList=static_cast<MapServer*>(this->map)->botsFight.at(pos);
-            if(botsFightList==fightId)
-                found=true;
-        }
-        if(!found)
-        {
-            errorOutput("no fight with id "+std::to_string(fightId)+" in this direction");
-            return;
+            const uint8_t botsFightId=static_cast<MapServer*>(this->map)->botsFight.at(pos);
+            if(botsFightId==botId)
+            {
+                normalOutput("is now in fight (after a request) on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botId));
+                botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(mapServer->id,botId));
+                return;
+            }
         }
     }
-    normalOutput("is now in fight (after a request) on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(fightId));
-    botFightStart(fightId);
+    errorOutput("no fight with id "+std::to_string(botId)+" in this direction");
 }
 
 bool Client::otherPlayerIsInRange(Client * otherPlayer)

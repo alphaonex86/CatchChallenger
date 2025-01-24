@@ -57,7 +57,6 @@ public:
     ParsedLayer parsed_layer;
 
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
-    uint16_t botFightsMaxId;
     std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//force 1 shop by x,y
     std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight

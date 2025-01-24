@@ -278,22 +278,22 @@ bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TY
     return false;
 }
 
-bool Client::botFightStart(const uint8_t &botFightId)
+bool Client::botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &botFight)
 {
     if(isInFight())
     {
         errorOutput("error: is already in fight");
         return false;
     }
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(botFightId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
+    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(botFight)==CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
     {
-        errorOutput("error: bot id "+std::to_string(botFightId)+" not found");
+        errorOutput("error: bot id "+std::to_string(botFight)+" not found");
         return false;
     }
-    const BotFight &botFight=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(botFightId);
+    const BotFight &botFight=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(botFight);
     if(botFight.monsters.empty())
     {
-        errorOutput("error: bot id "+std::to_string(botFightId)+" have no monster to fight");
+        errorOutput("error: bot id "+std::to_string(botFight)+" have no monster to fight");
         return false;
     }
     startTheFight();
@@ -313,7 +313,7 @@ bool Client::botFightStart(const uint8_t &botFightId)
         return false;
     }
     #endif
-    this->botFightId=botFightId;
+    this->botFight=botFight;
     return true;
 }
 

@@ -282,7 +282,7 @@ private:
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
     uint64_t botFightCash;
-    uint16_t botFightId;
+    std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
     //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;
@@ -482,7 +482,7 @@ private:
     void battleAccepted();
     virtual bool tryEscape() override;
     void heal();
-    void requestFight(const uint8_t &fightId);
+    void requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId);
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
     Client * getLocalClientHandlerFight();
     //clan
@@ -499,7 +499,7 @@ private:
     void previousCityCaptureNotFinished();
     void leaveTheCityCapture();
     void cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &number_of_clan);
-    void cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId);
+    void cityCaptureBotFight(const uint16_t &number_of_player, const uint16_t &number_of_clan, const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &fight);
     void cityCaptureInWait(const uint16_t &number_of_player,const uint16_t &number_of_clan);
     void cityCaptureWin();
     static void cityCaptureSendInWait(const CaptureCityValidated &captureCityValidated,const uint16_t &number_of_player,const uint16_t &number_of_clan);
@@ -508,7 +508,7 @@ private:
     void setInCityCapture(const bool &isInCityCapture);
     //map move
     bool captureCityInProgress();
-    void fightOrBattleFinish(const bool &win, const uint16_t &fightId);//fightId == 0 if is in battle
+    void fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &fight);//fightId == 0 if is in battle
     void moveMonster(const bool &up,const uint8_t &number);
 
     Player_private_and_public_informations &get_public_and_private_informations() override;
@@ -555,7 +555,7 @@ private:
     void healAllMonsters() override;
     void battleFakeAccepted(Client * otherPlayer);
     void battleFakeAcceptedInternal(Client *otherPlayer);
-    bool botFightStart(const uint8_t &botFightId);
+    bool botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &botFight);
     int addCurrentBuffEffect(const Skill::BuffEffect &effect) override;
     bool moveUpMonster(const uint8_t &number) override;
     bool moveDownMonster(const uint8_t &number) override;
