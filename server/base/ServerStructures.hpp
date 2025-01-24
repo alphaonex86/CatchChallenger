@@ -419,8 +419,8 @@ struct CaptureCityValidated
 {
     std::vector<Client *> players;
     std::vector<Client *> playersInFight;
-    std::vector<std::pair<CATCHCHALLENGER_TYPE_MAP/*mapId*/,uint8_t/*botId*/> > bots;
-    std::vector<std::pair<CATCHCHALLENGER_TYPE_MAP/*mapId*/,uint8_t/*botId*/> > botsInFight;
+    std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > bots;
+    std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > botsInFight;
     std::unordered_map<uint32_t,uint16_t> clanSize;
 };
 
@@ -521,7 +521,7 @@ struct ServerPrivateVariables
     #endif
     #endif
     //to the zone id, see GlobalServerData::serverPrivateVariables.zoneToId
-    std::vector<std::vector<CATCHCHALLENGER_TYPE_MAP/*mapId*/> > zoneIdToMapList;
+    std::vector<std::vector<CATCHCHALLENGER_TYPE_MAPID/*mapId*/> > zoneIdToMapList;
     std::vector<CityStatus> cityStatusList;
     std::unordered_map<uint32_t,uint16_t> cityStatusListReverse;
     std::unordered_set<uint32_t> tradedMonster;
@@ -546,7 +546,7 @@ struct ServerPrivateVariables
     //map
     CommonMap ** flat_map_list;//size set via map_list.size() at next line
     std::unordered_map<std::string,CommonMap *> map_list;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAP,std::string > id_map_to_map;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;
     int8_t sizeofInsertRequest;
 
     //connection

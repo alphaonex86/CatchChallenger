@@ -83,7 +83,7 @@ public:
     virtual void hpChange(PlayerMonster * currentMonster, const uint32_t &newHpValue);
     virtual bool removeBuffOnMonster(PlayerMonster * currentMonster, const uint32_t &buffId);
     virtual bool removeAllBuffOnMonster(PlayerMonster * currentMonster);
-    virtual bool haveBeatBot(const uint16_t &botFightId) const;
+    virtual bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId, const CATCHCHALLENGER_TYPE_BOTID &botId) const;
 protected:
     virtual Player_private_and_public_informations &get_public_and_private_informations() = 0;
     virtual const Player_private_and_public_informations &get_public_and_private_informations_ro() const = 0;

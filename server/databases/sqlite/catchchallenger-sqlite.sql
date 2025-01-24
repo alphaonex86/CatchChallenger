@@ -47,14 +47,6 @@ CREATE TABLE "server_time" (
 );
 CREATE UNIQUE INDEX "server_time_index" on server_time (server ASC, account ASC);
 CREATE INDEX "server_time_by_account" on server_time (account ASC);
-CREATE TABLE plant (
-    "pointOnMap" INTEGER,
-    "plant" INTEGER,
-    "character" INTEGER,
-    "plant_timestamps" INTEGER
-);
-CREATE UNIQUE INDEX "plant_unqiue" on plant (pointOnMap ASC, character ASC);
-CREATE INDEX "plant_by_char" on plant (character ASC);
 CREATE TABLE character_forserver (
     "character" INTEGER,
     "x" INTEGER,
@@ -132,15 +124,3 @@ CREATE UNIQUE INDEX "bypseudoandclan" on "character" (pseudo ASC, clan ASC);
 CREATE INDEX "byclan" on "character" (clan ASC);
 CREATE UNIQUE INDEX "player_unique_pseudo" on "character" (pseudo ASC);
 CREATE INDEX "player_link_account" on "character" (account ASC);
-CREATE TABLE "dictionary_pointonmap_item" (
-    "id" INTEGER,
-    "map" INTEGER,
-    "x" INTEGER,
-    "y" INTEGER
-);
-CREATE TABLE "dictionary_pointonmap_plant" (
-    "id" INTEGER,
-    "map" INTEGER,
-    "x" INTEGER,
-    "y" INTEGER
-);
