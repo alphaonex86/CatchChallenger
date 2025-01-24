@@ -259,11 +259,11 @@ void Client::startTheCityCapture()
             {
                 if(GlobalServerData::serverPrivateVariables.zoneIdToMapList.size()>i->first)
                 {
-                    const std::vector<CATCHCHALLENGER_TYPE_MAP/*mapId*/> &mapsList=GlobalServerData::serverPrivateVariables.zoneIdToMapList.at(i->first);
+                    const std::vector<CATCHCHALLENGER_TYPE_MAPID/*mapId*/> &mapsList=GlobalServerData::serverPrivateVariables.zoneIdToMapList.at(i->first);
                     unsigned int index=0;
                     while(index<mapsList.size())
                     {
-                        const CATCHCHALLENGER_TYPE_MAP &mapId=mapsList.at(index);
+                        const CATCHCHALLENGER_TYPE_MAPID &mapId=mapsList.at(index);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
                         if(mapId>=GlobalServerData::serverPrivateVariables.map_list.size())
                         {
@@ -272,7 +272,7 @@ void Client::startTheCityCapture()
                         }
                         #endif
                         const CommonMap *map=GlobalServerData::serverPrivateVariables.flat_map_list[mapId];
-                        std::pair<CATCHCHALLENGER_TYPE_MAP/*mapId*/,uint8_t/*botId*/> temp;
+                        std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> temp;
                         for (const std::pair<const uint8_t/*npc id*/,BotFight>& n : map->botFights)
                         {
                             temp.first=mapId;
@@ -394,7 +394,7 @@ void Client::cityCaptureBattle(const uint16_t &number_of_player,const uint16_t &
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t &number_of_clan,const uint32_t &fightId)
+void Client::cityCaptureBotFight(const uint16_t &number_of_player, const uint16_t &number_of_clan, const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &fight)
 {
     //send the network message
     uint32_t posOutput=0;
@@ -408,8 +408,10 @@ void Client::cityCaptureBotFight(const uint16_t &number_of_player,const uint16_t
     posOutput+=2;
     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(number_of_clan);
     posOutput+=2;
-    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(fightId);
-    posOutput+=4;
+    *reinterpret_cast<CATCHCHALLENGER_TYPE_MAPID *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(fight.first);
+    posOutput+=2;
+    *reinterpret_cast<uint8_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=fight.second;
+    posOutput+=1;
 
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
@@ -460,8 +462,8 @@ void Client::previousCityCaptureNotFinished()
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-//fightId == 0 if is in battle
-void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
+//fight == 0 if is in battle
+void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &fight)
 {
     if(clan!=NULL)
     {
@@ -473,8 +475,8 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
             {
                 if(win)
                 {
-                    if(fightId!=0)
-                        vectorremoveOne(captureCityValidated.botsInFight,fightId);
+                    if(fight.second!=0)
+                        vectorremoveOne(captureCityValidated.botsInFight,fight);
                     else
                     {
                         if(otherCityPlayerBattle!=NULL)
@@ -518,10 +520,10 @@ void Client::fightOrBattleFinish(const bool &win, const uint16_t &fightId)
                 }
                 else
                 {
-                    if(fightId!=0)
+                    if(fight.second!=0)
                     {
-                        vectorremoveOne(captureCityValidated.botsInFight,fightId);
-                        vectorremoveOne(captureCityValidated.bots,fightId);
+                        vectorremoveOne(captureCityValidated.botsInFight,fight);
+                        vectorremoveOne(captureCityValidated.bots,fight);
                     }
                     else
                     {

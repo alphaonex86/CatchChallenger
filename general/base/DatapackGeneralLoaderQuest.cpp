@@ -367,7 +367,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     {
                         const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
                         if(ok)
-                            stepObject.requirements.fightId.push_back(fightId);
+                            stepObject.requirements.fights.push_back(fightId);
                         else
                             std::cerr << "Unable to open the file: " << file << ", step id is not a number "
                                       << fightItem->Attribute("id") << ": child->Name(): " << fightItem->Name() << std::endl;

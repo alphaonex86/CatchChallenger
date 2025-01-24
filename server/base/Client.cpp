@@ -63,7 +63,7 @@ Client::Client() :
     mHaveCurrentSkill(false),
     mMonsterChange(false),
     botFightCash(0),
-    botFightId(0),
+    botFight(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0)),
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isInCityCapture(false),
     #endif
@@ -724,8 +724,11 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     if(public_and_private_informations.encyclopedia_item!=nullptr)
         encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
     std::string bot_already_beatenS;
+
+    //serialise list of bot fight in form: map DB id + id
     if(public_and_private_informations.bot_already_beaten!=nullptr)
         bot_already_beatenS=std::string(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
+
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
         << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
@@ -743,7 +746,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << botFightMonsters;
     buf << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
-    buf << botFightCash << botFightId << isInCityCapture;
+    buf << botFightCash << botFight << isInCityCapture;
 
     uint32_t map_file_database_id=0;
     uint32_t rescue_map_file_database_id=0;

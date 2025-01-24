@@ -54,26 +54,6 @@ CREATE TABLE city (
 
 
 --
--- Name: dictionary_pointonmap; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE dictionary_pointonmap_plant (
-    id integer NOT NULL,
-    map integer NOT NULL,
-    x smallint NOT NULL,
-    y smallint NOT NULL
-);
-
-CREATE TABLE dictionary_pointonmap_item (
-    id integer NOT NULL,
-    map integer NOT NULL,
-    x smallint NOT NULL,
-    y smallint NOT NULL
-);
-
-
-
---
 -- Name: dictionary_map; Type: TABLE; Schema: public; Owner: root; Tablespace: 
 --
 
@@ -97,33 +77,12 @@ CREATE TABLE factory (
 
 
 --
--- Name: plant; Type: TABLE; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE TABLE plant (
-    "character" integer NOT NULL,
-    "pointOnMap" smallint NOT NULL,
-    plant smallint NOT NULL,
-    plant_timestamps integer NOT NULL
-);
-
---
 -- Name: character_forserver_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
 --
 
 ALTER TABLE ONLY character_forserver
     ADD CONSTRAINT character_forserver_pkey PRIMARY KEY ("character");
 
-
---
--- Name: dictionary_itemOnMap_pkey; Type: CONSTRAINT; Schema: public; Owner: root; Tablespace: 
---
-
-ALTER TABLE ONLY dictionary_pointonmap_item
-    ADD CONSTRAINT "dictionary_pointOnMap_item_pkey" PRIMARY KEY (id);
-
-ALTER TABLE ONLY dictionary_pointonmap_plant
-    ADD CONSTRAINT "dictionary_pointOnMap_plant_pkey" PRIMARY KEY (id);
 
 
 --
@@ -142,18 +101,6 @@ ALTER TABLE ONLY factory
     ADD CONSTRAINT factory_pkey PRIMARY KEY (id);
 
 
---
--- Name: plant_by_char; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE INDEX plant_by_char ON plant USING btree ("character");
-
-
---
--- Name: plant_unique; Type: INDEX; Schema: public; Owner: root; Tablespace: 
---
-
-CREATE UNIQUE INDEX plant_unique ON plant USING btree ("character", "pointOnMap");
 
 --
 -- Name: character_character_forserver_index; Type: INDEX; Schema: public; Owner: root; Tablespace: 

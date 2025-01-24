@@ -309,7 +309,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         new_tp.source_x=static_cast<uint8_t>(object_x);
                                         new_tp.source_y=static_cast<uint8_t>(object_y);
                                         new_tp.condition.type=MapConditionType_None;
-                                        new_tp.condition.data.fightBot=0;
+                                        new_tp.condition.data.fight.fightBot=0;
+                                        new_tp.condition.data.fight.mapId=0;
                                         new_tp.condition.data.item=0;
                                         new_tp.condition.data.quest=0;
                                         new_tp.destination_x = stringtouint8(property_text.at("x"),&ok);

@@ -116,9 +116,15 @@ void CommonFightEngine::healAllMonsters()
         updateCanDoFight();
 }
 
-bool CommonFightEngine::haveBeatBot(const uint16_t &botFightId) const
+bool CommonFightEngine::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const
 {
-    return get_public_and_private_informations_ro().bot_already_beaten[botFightId/8] & (1<<(7-botFightId%8));
+    const Player_private_and_public_informations &privateData=get_public_and_private_informations_ro();
+    if(privateData.mapData.find(mapId)==privateData.mapData.cend())
+        return false;
+    const Player_private_and_public_informations_Map &mapData=privateData.mapData.at(mapId);
+    if(mapData.bot_already_beaten.find(botId)==mapData.bot_already_beaten.cend())
+        return false;
+    return true;
 }
 
 bool CommonFightEngine::monsterIsKO(const PlayerMonster &playerMonter)

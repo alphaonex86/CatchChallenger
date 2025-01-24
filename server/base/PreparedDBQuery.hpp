@@ -162,25 +162,6 @@ public:
     PreparedStatementUnit db_query_update_plant;
     PreparedStatementUnit db_query_update_itemonmap;
     PreparedStatementUnit db_query_update_character_bot_already_beaten;
-
-    /*
-    PreparedStatementUnit db_query_insert_bot_already_beaten;
-    PreparedStatementUnit db_query_select_bot_beaten;
-    PreparedStatementUnit db_query_select_itemOnMap;
-    PreparedStatementUnit db_query_insert_itemonmap;
-    PreparedStatementUnit db_query_insert_recipe;
-    PreparedStatementUnit db_query_delete_quest;
-    PreparedStatementUnit db_query_select_quest_by_id;
-    PreparedStatementUnit db_query_update_quest_finish;
-    PreparedStatementUnit db_query_update_quest_step;
-    PreparedStatementUnit db_query_update_quest_restart;
-    PreparedStatementUnit db_query_insert_quest;
-    PreparedStatementUnit db_query_select_plant;
-    PreparedStatementUnit db_query_delete_plant;
-    PreparedStatementUnit db_query_delete_plant_by_index;
-    PreparedStatementUnit db_query_insert_plant;
-    PreparedStatementUnit db_query_delete_bot_already_beaten;
-*/
 };
 #endif
 

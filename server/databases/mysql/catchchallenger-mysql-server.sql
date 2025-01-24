@@ -61,28 +61,6 @@ CREATE TABLE IF NOT EXISTS `dictionary_map` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `dictionary_pointonmap`
---
-
-CREATE TABLE IF NOT EXISTS `dictionary_pointonmap_item` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `map` int(11) NOT NULL,
-  `x` smallint(6) NOT NULL,
-  `y` smallint(6) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `dictionary_pointonmap_plant` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `map` int(11) NOT NULL,
-  `x` smallint(6) NOT NULL,
-  `y` smallint(6) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `factory`
 --
 
@@ -95,16 +73,3 @@ CREATE TABLE IF NOT EXISTS `factory` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
-
---
--- Table structure for table `plant`
---
-
-CREATE TABLE IF NOT EXISTS `plant` (
-  `character` int(11) NOT NULL,
-  `pointOnMap` int(11) NOT NULL,
-  `plant` tinyint(3) unsigned NOT NULL,
-  `plant_timestamps` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`character`,`pointOnMap`),
-  KEY `character` (`character`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
