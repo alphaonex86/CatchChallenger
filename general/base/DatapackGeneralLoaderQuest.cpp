@@ -363,11 +363,19 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
                 while(fightItem!=NULL)
                 {
-                    if(fightItem->Attribute("id")!=NULL)
+                    if(fightItem->Attribute("id")!=NULL && fightItem->Attribute("map")!=NULL)
                     {
                         const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
                         if(ok)
+                        {
+                            if(GlobalServerData::serverPrivateVariables.map_list.find()!=GlobalServerData::serverPrivateVariables.map_list.cend())
+                            {
                             stepObject.requirements.fights.push_back(fightId);
+                            }
+                            else
+                                std::cerr << "Unable to open the file: " << file << ", map not found "
+                                          << fightItem->Attribute("map") << ": child->Name(): " << fightItem->Name() << std::endl;
+                        }
                         else
                             std::cerr << "Unable to open the file: " << file << ", step id is not a number "
                                       << fightItem->Attribute("id") << ": child->Name(): " << fightItem->Name() << std::endl;
