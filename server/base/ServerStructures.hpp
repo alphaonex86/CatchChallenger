@@ -96,13 +96,23 @@ class BotMapServer
 {
 public:
     CATCHCHALLENGER_TYPE_BOTID fightBot;
-    CommonMap *map;
+    CATCHCHALLENGER_TYPE_MAPID map;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << fightBot << map;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> fightBot >> map;
+    }
+    #endif
 };
 
 class QuestServer
 {
 public:
-    class Item
+    class ItemServer
     {
     public:
         CATCHCHALLENGER_TYPE_ITEM item;
@@ -118,7 +128,7 @@ public:
         }
         #endif
     };
-    class ItemMonster
+    class ItemMonsterServer
     {
     public:
         CATCHCHALLENGER_TYPE_ITEM item;
@@ -135,7 +145,7 @@ public:
         }
         #endif
     };
-    class Requirements
+    class RequirementsServer
     {
     public:
         std::vector<QuestRequirements> quests;
@@ -151,10 +161,10 @@ public:
         }
         #endif
     };
-    class Rewards
+    class RewardsServer
     {
     public:
-        std::vector<Item> items;
+        std::vector<ItemServer> items;
         std::vector<ReputationRewards> reputation;
         std::vector<ActionAllow> allow;
         #ifdef CATCHCHALLENGER_CACHE_HPS
@@ -178,10 +188,10 @@ public:
         }
         #endif
     };
-    class StepRequirements
+    class StepRequirementsServer
     {
     public:
-        std::vector<Item> items;
+        std::vector<ItemServer> items;
         std::vector<BotMapServer> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
@@ -194,29 +204,29 @@ public:
         }
         #endif
     };
-    class Step//bots to talk to progress
+    class StepServer//bots to talk to progress
     {
     public:
-        std::vector<ItemMonster> itemsMonster;
-        StepRequirements requirements;
+        std::vector<ItemMonsterServer> itemsMonster;
+        StepRequirementsServer requirements;
         BotMapServer botToTalk;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << itemsMonster << requirements << bots;
+            buf << itemsMonster << requirements << botToTalk;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> itemsMonster >> requirements >> bots;
+            buf >> itemsMonster >> requirements >> botToTalk;
         }
         #endif
     };
 
-    uint16_t id;
+    CATCHCHALLENGER_TYPE_QUEST id;
     bool repeatable;
-    Requirements requirements;
-    Rewards rewards;
-    std::vector<Step> steps;
+    RequirementsServer requirements;
+    RewardsServer rewards;
+    std::vector<StepServer> steps;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
@@ -294,9 +304,6 @@ public:
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #endif
-
-    uint8_t common_blobversion_datapack;
-    uint8_t server_blobversion_datapack;
 
     //connection
     bool automatic_account_creation;
@@ -430,9 +437,6 @@ void serialize(B& buf) const {
     #else
     #endif
 
-    buf << common_blobversion_datapack;
-    buf << server_blobversion_datapack;
-
     //connection
     buf << automatic_account_creation;
 
@@ -492,9 +496,6 @@ void parse(B& buf) {
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #else
     #endif
-
-    buf >> common_blobversion_datapack;
-    buf >> server_blobversion_datapack;
 
     //connection
     buf >> automatic_account_creation;
@@ -664,9 +665,6 @@ struct ServerPrivateVariables
     std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
 
-    uint8_t common_blobversion_datapack;
-    uint8_t server_blobversion_datapack;
-
     //market
     std::vector<MarketItem> marketItemList;
     std::vector<MarketPlayerMonster> marketPlayerMonsterList;
@@ -715,6 +713,30 @@ struct ServerPrivateVariables
 
     //datapack
     std::unordered_map<std::string,uint8_t> skinList;
+};
+
+class MapConditionServer
+{
+public:
+    MapConditionType type;
+    union Data {
+       CATCHCHALLENGER_TYPE_QUEST quest;
+       CATCHCHALLENGER_TYPE_ITEM item;
+       CATCHCHALLENGER_TYPE_BOTID fightBot;
+    } data;
+    CATCHCHALLENGER_TYPE_MAPID map;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << (uint8_t)type << data.quest;
+    }
+    template <class B>
+    void parse(B& buf) {
+        uint8_t temp=0;
+        buf >> temp >> data.quest;
+        type=(MapConditionType)temp;
+    }
+    #endif
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

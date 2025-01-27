@@ -61,10 +61,6 @@ BaseServer::BaseServer() :
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems      = 150;
-    GlobalServerData::serverPrivateVariables.server_blobversion_datapack=0;
-    GlobalServerData::serverSettings.server_blobversion_datapack=0;
-    GlobalServerData::serverPrivateVariables.common_blobversion_datapack=0;
-    GlobalServerData::serverSettings.common_blobversion_datapack=0;
     GlobalServerData::serverSettings.anonymous            = false;
     GlobalServerData::serverSettings.everyBodyIsRoot=0;
     GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap=0;

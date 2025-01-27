@@ -95,24 +95,31 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
 
     //load the content
     bool ok;
-    std::vector<uint16_t> defaultBots;
+    BotMap defaultBots;
     quest.id=0;
     quest.repeatable=false;
     if(root->Attribute("repeatable")!=NULL)
         if(strcmp(root->Attribute("repeatable"),"yes")==0 ||
            strcmp(root->Attribute("repeatable"),"true")==0)
             quest.repeatable=true;
-    if(root->Attribute("bot")!=NULL)
+    if(root->Attribute("bot")!=NULL && root->Attribute("map")!=NULL)
     {
-        const std::vector<std::string> &tempStringList=stringsplit(root->Attribute("bot"),';');
-        unsigned int index=0;
-        while(index<tempStringList.size())
+        const CATCHCHALLENGER_TYPE_BOTID tempInt=stringtouint8(root->Attribute("bot"),&ok);
+        if(ok)
         {
-            uint16_t tempInt=stringtouint16(tempStringList.at(index),&ok);
-            if(ok)
-                defaultBots.push_back(tempInt);
-            index++;
+            defaultBots.fightBot=tempInt;
+            defaultBots.map=root->Attribute("map");
         }
+        else
+        {
+            std::cerr << "Unable to open the file: " << file << ", \"bot\" is not a number" << std::endl;
+            return std::pair<bool,Quest>(false,quest);
+        }
+    }
+    else
+    {
+        std::cerr << "Unable to open the file: " << file << ", \"bot\" or \"map\" root balise not found for reputation of the xml file" << std::endl;
+        return std::pair<bool,Quest>(false,quest);
     }
 
     //load requirements
@@ -289,20 +296,19 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         if(id>=0)
         {
             CatchChallenger::Quest::Step stepObject;
-            if(step->Attribute("bot")!=NULL)
+            if(step->Attribute("bot")!=NULL && step->Attribute("map")!=NULL)
             {
-                const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
-                unsigned int index=0;
-                while(index<tempStringList.size())
+                const CATCHCHALLENGER_TYPE_BOTID &tempInt=stringtouint8(step->Attribute("bot"),&ok);
+                if(ok)
                 {
-                    const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                    if(ok)
-                        stepObject.bots.push_back(tempInt);
-                    index++;
+                    stepObject.botToTalk.fightBot=tempInt;
+                    stepObject.botToTalk.map=step->Attribute("map");
                 }
+                else
+                    std::cerr << "Unable to open the file: " << file << ", step bot count is not number: " << step->Attribute("bot") << std::endl;
             }
             else
-                stepObject.bots=defaultBots;
+                stepObject.botToTalk=defaultBots;
             //do the item
             {
                 const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
@@ -363,18 +369,15 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 const tinyxml2::XMLElement * fightItem = step->FirstChildElement("fight");
                 while(fightItem!=NULL)
                 {
-                    if(fightItem->Attribute("id")!=NULL && fightItem->Attribute("map")!=NULL)
+                    if(fightItem->Attribute("bot")!=NULL && fightItem->Attribute("map")!=NULL)
                     {
-                        const uint16_t &fightId=stringtouint16(fightItem->Attribute("id"),&ok);
+                        const CATCHCHALLENGER_TYPE_BOTID &fightId=stringtouint8(fightItem->Attribute("bot"),&ok);
                         if(ok)
                         {
-                            if(GlobalServerData::serverPrivateVariables.map_list.find()!=GlobalServerData::serverPrivateVariables.map_list.cend())
-                            {
-                            stepObject.requirements.fights.push_back(fightId);
-                            }
-                            else
-                                std::cerr << "Unable to open the file: " << file << ", map not found "
-                                          << fightItem->Attribute("map") << ": child->Name(): " << fightItem->Name() << std::endl;
+                            BotMap t;
+                            t.fightBot=fightId;
+                            t.map=fightItem->Attribute("map");
+                            stepObject.requirements.fights.push_back(t);
                         }
                         else
                             std::cerr << "Unable to open the file: " << file << ", step id is not a number "

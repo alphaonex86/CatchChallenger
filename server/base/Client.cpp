@@ -546,6 +546,16 @@ void Client::disconnectClientById(const uint32_t &characterId)
     }
 }
 
+bool Client::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const
+{
+    if(mapData.find(mapId)==mapData.cend())
+        return false;
+    const Player_private_and_public_informations_Map &tempMapData=mapData.at(mapId);
+    if(tempMapData.bot_already_beaten.find(botId)==tempMapData.bot_already_beaten.cend())
+        return false;
+    return true;
+}
+
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
 {
@@ -734,6 +744,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
         << public_and_private_informations.plantOnMap << public_and_private_informations.quests << public_and_private_informations.reputation
         << public_and_private_informations.items << public_and_private_informations.warehouse_items;
+    buf << mapData;
     const uint8_t allowSize=public_and_private_informations.allow.size();
     buf << allowSize;
     std::set<ActionAllow>::iterator it;
@@ -782,6 +793,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> bot_already_beatenS;
     buf >> public_and_private_informations.itemOnMap >> public_and_private_informations.plantOnMap >> public_and_private_informations.quests
         >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items;
+    buf >> mapData;
     uint8_t allowSize=0;
     buf >> allowSize;
     {
