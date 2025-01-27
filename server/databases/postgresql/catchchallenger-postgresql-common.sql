@@ -44,7 +44,6 @@ CREATE TABLE "character" (
     encyclopedia_monster bytea,
     encyclopedia_item bytea,
     achievements bytea,
-    blob_version smallint,
     lastdaillygift bigint
 );
 

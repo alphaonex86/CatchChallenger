@@ -37,8 +37,16 @@ CREATE TABLE character_forserver (
     botfight_id bytea NOT NULL,
     itemonmap bytea NOT NULL,
     plants bytea,
-    quest bytea NOT NULL,
-    blob_version smallint NOT NULL
+    quest bytea NOT NULL
+);
+
+
+CREATE TABLE character_bymap (
+    "character" integer NOT NULL,
+    "map" smallint NOT NULL,
+    "plants" bytea NOT NULL,
+    "items" bytea NOT NULL,
+    "fights" bytea NOT NULL
 );
 
 
@@ -107,6 +115,7 @@ ALTER TABLE ONLY factory
 --
 
 CREATE INDEX character_character_forserver_index ON character_forserver USING btree ("character");
+CREATE INDEX character_character_bymap_index ON character_bymap USING btree ("character");
 
 
 --

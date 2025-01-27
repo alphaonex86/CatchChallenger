@@ -34,7 +34,6 @@ CREATE TABLE `character` (
   `encyclopedia_monster` mediumblob NOT NULL,
   `encyclopedia_item` mediumblob NOT NULL,
   `achievements` tinyblob NOT NULL,
-  `blob_version` tinyint(4) NOT NULL,
   `lastdaillygift` bigint(20) NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
