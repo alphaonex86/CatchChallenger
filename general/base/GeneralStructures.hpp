@@ -139,6 +139,13 @@ struct map_management_move
     std::vector<map_management_movement> movement_list;
 };
 
+class BotMap
+{
+public:
+    CATCHCHALLENGER_TYPE_BOTID fightBot;
+    std::string map;
+};
+
 struct Player_public_informations
 {
     SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
@@ -989,13 +996,6 @@ public:
     #endif
 };
 
-class MapFight
-{
-public:
-    CATCHCHALLENGER_TYPE_BOTID fightBot;
-    CATCHCHALLENGER_TYPE_MAPID mapId;
-};
-
 class MapCondition
 {
 public:
@@ -1003,7 +1003,7 @@ public:
     union Data {
        CATCHCHALLENGER_TYPE_QUEST quest;
        CATCHCHALLENGER_TYPE_ITEM item;
-       MapFight fight;
+       BotMap fight;
     } data;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -1611,7 +1611,7 @@ public:
     {
     public:
         CATCHCHALLENGER_TYPE_ITEM item;
-        std::vector<uint16_t> monsters;
+        std::vector<CATCHCHALLENGER_TYPE_MONSTER> monsters;
         uint8_t rate;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
@@ -1671,7 +1671,7 @@ public:
     {
     public:
         std::vector<Item> items;
-        std::vector<MapFight> fights;
+        std::vector<BotMap> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
@@ -1688,7 +1688,7 @@ public:
     public:
         std::vector<ItemMonster> itemsMonster;
         StepRequirements requirements;
-        std::vector<uint16_t> bots;
+        BotMap botToTalk;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {

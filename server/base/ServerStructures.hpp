@@ -92,6 +92,143 @@ struct LoginServerSettings
     bool announce;
 };
 
+class BotMapServer
+{
+public:
+    CATCHCHALLENGER_TYPE_BOTID fightBot;
+    CommonMap *map;
+};
+
+class QuestServer
+{
+public:
+    class Item
+    {
+    public:
+        CATCHCHALLENGER_TYPE_ITEM item;
+        uint32_t quantity;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << quantity;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> quantity;
+        }
+        #endif
+    };
+    class ItemMonster
+    {
+    public:
+        CATCHCHALLENGER_TYPE_ITEM item;
+        std::vector<CATCHCHALLENGER_TYPE_MONSTER> monsters;
+        uint8_t rate;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << item << monsters << rate;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> item >> monsters >> rate;
+        }
+        #endif
+    };
+    class Requirements
+    {
+    public:
+        std::vector<QuestRequirements> quests;
+        std::vector<ReputationRequirements> reputation;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << quests << reputation;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> quests >> reputation;
+        }
+        #endif
+    };
+    class Rewards
+    {
+    public:
+        std::vector<Item> items;
+        std::vector<ReputationRewards> reputation;
+        std::vector<ActionAllow> allow;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << items << reputation;
+            buf << (uint8_t)allow.size();
+            for(auto const& v: allow)
+                buf << (uint8_t)v;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> items >> reputation;
+            uint8_t vectorsize=0;
+            buf >> vectorsize;
+            for(unsigned int i=0; i<vectorsize; i++) {
+                uint8_t value=0;
+                buf >> value;
+                allow.push_back((ActionAllow)value);
+            }
+        }
+        #endif
+    };
+    class StepRequirements
+    {
+    public:
+        std::vector<Item> items;
+        std::vector<BotMapServer> fights;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << items << fights;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> items >> fights;
+        }
+        #endif
+    };
+    class Step//bots to talk to progress
+    {
+    public:
+        std::vector<ItemMonster> itemsMonster;
+        StepRequirements requirements;
+        BotMapServer botToTalk;
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        template <class B>
+        void serialize(B& buf) const {
+            buf << itemsMonster << requirements << bots;
+        }
+        template <class B>
+        void parse(B& buf) {
+            buf >> itemsMonster >> requirements >> bots;
+        }
+        #endif
+    };
+
+    uint16_t id;
+    bool repeatable;
+    Requirements requirements;
+    Rewards rewards;
+    std::vector<Step> steps;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << id << repeatable << requirements << rewards << steps;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> id >> repeatable >> requirements >> rewards >> steps;
+    }
+    #endif
+};
+
 class GameServerSettings
 {
 public:

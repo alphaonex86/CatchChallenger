@@ -26,12 +26,17 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
-  `botfight_id` mediumblob NOT NULL,
-  `itemonmap` tinyblob NOT NULL,
-  `plants` blob NOT NULL,
+  `by_map` blob NOT NULL,
   `quest` blob NOT NULL,
-  `blob_version` tinyint(4) NOT NULL,
   PRIMARY KEY (`character`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `character_bymap` (
+  `character` int(11) NOT NULL,
+  `map` int(11) NOT NULL,
+  `plants` blob NOT NULL,
+  `items` blob NOT NULL,
+  `fights` blob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
