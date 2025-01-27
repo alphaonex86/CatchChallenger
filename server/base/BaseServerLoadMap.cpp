@@ -455,8 +455,6 @@ bool BaseServer::preload_9_sync_the_map()
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << GlobalServerData::serverPrivateVariables.map_list.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-    DictionaryServer::dictionary_pointOnMap_item_internal_to_database.clear();
-    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.clear();
     #ifdef EPOLLCATCHCHALLENGERSERVER
     {
         unsigned int index=0;

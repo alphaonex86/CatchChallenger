@@ -67,6 +67,7 @@ public:
     static bool characterConnected(const uint32_t &characterId);
     bool disconnectClient() override;
     static void disconnectClientById(const uint32_t &characterId);
+    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const;
     Client *getClientFight() const;
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
@@ -117,6 +118,11 @@ public:
     #endif
     static std::vector<Client *> stat_client_list;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
+    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
+    #else
+    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
+    #endif
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;

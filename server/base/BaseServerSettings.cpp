@@ -36,29 +36,6 @@ void BaseServer::loadAndFixSettings()
             GlobalServerData::serverPrivateVariables.server_message.pop_back();
     } while(removeTheLastList);
 
-    #if CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION > 15
-    #error CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION can t be greater than 15
-    #endif
-    GlobalServerData::serverPrivateVariables.common_blobversion_datapack=GlobalServerData::serverSettings.common_blobversion_datapack;
-    if(GlobalServerData::serverPrivateVariables.common_blobversion_datapack>15)
-    {
-        std::cerr << "common_blobversion_datapack > 15" << std::endl;
-        abort();
-    }
-    GlobalServerData::serverPrivateVariables.common_blobversion_datapack*=16;
-    GlobalServerData::serverPrivateVariables.common_blobversion_datapack|=CATCHCHALLENGER_SERVER_DATABASE_COMMON_BLOBVERSION;
-    #if CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION > 15
-    #error CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION can t be greater than 15
-    #endif
-    GlobalServerData::serverPrivateVariables.server_blobversion_datapack=GlobalServerData::serverSettings.server_blobversion_datapack;
-    if(GlobalServerData::serverPrivateVariables.server_blobversion_datapack>15)
-    {
-        std::cerr << "server_blobversion_datapack > 15" << std::endl;
-        abort();
-    }
-    GlobalServerData::serverPrivateVariables.server_blobversion_datapack*=16;
-    GlobalServerData::serverPrivateVariables.server_blobversion_datapack|=CATCHCHALLENGER_SERVER_DATABASE_SERVER_BLOBVERSION;
-
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(GlobalServerData::serverSettings.database_login.tryInterval<1)

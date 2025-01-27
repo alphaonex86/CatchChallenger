@@ -36,17 +36,17 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << quests;
+        //buf << quests;
         buf << serverProfileList;
-        buf << monsterDrops;
-        buf << idToZone;
+        //buf << monsterDrops;
+        //buf << idToZone;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> quests;
+        //buf >> quests;
         buf >> serverProfileList;
-        buf >> monsterDrops;
-        buf >> idToZone;
+        //buf >> monsterDrops;
+        //buf >> idToZone;
     }
     #endif
 private:
