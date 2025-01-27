@@ -187,6 +187,7 @@ protected:
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif
     bool preload_industries_call;
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestServer> quests;
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     std::ifstream *in_file;

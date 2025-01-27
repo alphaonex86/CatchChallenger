@@ -139,9 +139,8 @@ struct map_management_move
     std::vector<map_management_movement> movement_list;
 };
 
-class BotMap
+struct BotMap
 {
-public:
     CATCHCHALLENGER_TYPE_BOTID fightBot;
     std::string map;
 };
@@ -364,14 +363,12 @@ public:
         std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::unordered_map<uint8_t,PlayerReputation> reputation;
         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
-        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
     #else
         std::set<ActionAllow> allow;
         //here to send at character login
                 std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
         std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
-        std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
     #endif
 };
 
@@ -1003,8 +1000,9 @@ public:
     union Data {
        CATCHCHALLENGER_TYPE_QUEST quest;
        CATCHCHALLENGER_TYPE_ITEM item;
-       BotMap fight;
+       CATCHCHALLENGER_TYPE_BOTID fightBot;
     } data;
+    std::string map;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
@@ -1692,11 +1690,11 @@ public:
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << itemsMonster << requirements << bots;
+            buf << itemsMonster << requirements << botToTalk;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> itemsMonster >> requirements >> bots;
+            buf >> itemsMonster >> requirements >> botToTalk;
         }
         #endif
     };
@@ -1844,14 +1842,14 @@ public:
 class ServerSpecProfile
 {
 public:
-    void * mapPointer;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
     /// \todo support multiple map start, change both:
     std::string mapString;
-    std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile*/
+    std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile
+    needed: start.xml define monster, start.xml into map define place*/
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
@@ -1862,7 +1860,6 @@ public:
         uint8_t value=0;
         buf >> x >> y >> value >> mapString >> databaseId;
         orientation=(Orientation)value;
-        mapPointer=nullptr;
     }
     #endif
 };

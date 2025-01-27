@@ -63,6 +63,7 @@ public:
 
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zonecapture;//x,y bot to Map_loader::zoneNumber
+    std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
 
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };

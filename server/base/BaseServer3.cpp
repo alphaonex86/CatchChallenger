@@ -43,6 +43,7 @@ void BaseServer::preload_1_the_data()
                 abort();
             }
             std::cout << "commonDatapack size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
+            *serialBuffer >> quests;
             *serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
             std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
             const auto &after = msFrom1970();
@@ -121,34 +122,6 @@ void BaseServer::preload_1_the_data()
         }
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
-        DictionaryServer::dictionary_pointOnMap_item_database_to_internal.clear();
-        uint32_t uint32size=0;
-        *serialBuffer >> uint32size;
-        for(uint32_t i=0; i<uint32size; i++)
-        {
-            DictionaryServer::MapAndPointItem v;
-            *serialBuffer >> v.datapack_index_item;
-            int32_t pos=0;
-            *serialBuffer >> pos;
-            v.map=static_cast<MapServer *>(MapServer::posToPointer(pos));
-            *serialBuffer >> v.x;
-            *serialBuffer >> v.y;
-            DictionaryServer::dictionary_pointOnMap_item_database_to_internal.push_back(v);
-        }
-        DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.clear();
-        *serialBuffer >> uint32size;
-        for(uint32_t i=0; i<uint32size; i++)
-        {
-            DictionaryServer::MapAndPointPlant v;
-            *serialBuffer >> v.datapack_index_plant;
-            int32_t pos=0;
-            *serialBuffer >> pos;
-            v.map=static_cast<MapServer *>(MapServer::posToPointer(pos));
-            *serialBuffer >> v.x;
-            *serialBuffer >> v.y;
-            DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.push_back(v);
-        }
-
         /*std::cout << __FILE__ << ":" << __LINE__ << " DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
         for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
         {
@@ -196,6 +169,7 @@ void BaseServer::preload_1_the_data()
             size_t lastSize=0;
             hps::to_stream(CommonDatapack::commonDatapack, *out_file);
             std::cout << "commonDatapack size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
+            hps::to_stream(quests, *out_file);
             hps::to_stream(CommonDatapackServerSpec::commonDatapackServerSpec, *out_file);
             std::cout << "commonDatapackServerSpec size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.randomData, *out_file);

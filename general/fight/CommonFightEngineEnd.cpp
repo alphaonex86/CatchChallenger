@@ -118,12 +118,6 @@ void CommonFightEngine::healAllMonsters()
 
 bool CommonFightEngine::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const
 {
-    const Player_private_and_public_informations &privateData=get_public_and_private_informations_ro();
-    if(privateData.mapData.find(mapId)==privateData.mapData.cend())
-        return false;
-    const Player_private_and_public_informations_Map &mapData=privateData.mapData.at(mapId);
-    if(mapData.bot_already_beaten.find(botId)==mapData.bot_already_beaten.cend())
-        return false;
     return true;
 }
 
