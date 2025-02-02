@@ -127,12 +127,6 @@ protected:
     void preload_zone_return();
     static void preload_industries_static(void *object);
     void preload_industries_return();
-    void preload_pointOnMap_item_return();
-    static void preload_pointOnMap_item_static(void *object);
-    void preload_13_async_pointOnMap_item_sql();
-    void preload_pointOnMap_plant_return();
-    static void preload_pointOnMap_plant_static(void *object);
-    void preload_14_async_pointOnMap_plant_sql();
     void preload_12_async_dictionary_map();
     static void preload_dictionary_map_static(void *object);
     void preload_dictionary_map_return();
@@ -176,12 +170,10 @@ protected:
     std::unordered_map<std::string/*file name*/,std::unordered_map<uint16_t/*bot id, \see CommonDatapackServerSpec, Map_to_send,struct Bot_Semi,uint16_t id, 16Bit*/,CatchChallenger::Bot> > botFiles;
     std::unordered_set<uint32_t> botIdLoaded;
     uint64_t timeDatapack;
-    unsigned int dictionary_pointOnMap_maxId_item,dictionary_pointOnMap_maxId_plant;
     BaseServerMasterSendDatapack baseServerMasterSendDatapack;
 
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     unsigned int entryListIndex;
-    unsigned int plant_on_the_map;
     std::vector<Map_semi> semi_loaded_map;
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
