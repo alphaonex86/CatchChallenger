@@ -14,7 +14,6 @@ SOURCES += \
     $$PWD/base/BaseServerLoadMapAfterDB.cpp \
     $$PWD/base/BaseServerLoadSQL.cpp \
     $$PWD/base/BaseServerLoadSQLNotEpoll.cpp \
-    $$PWD/base/BaseServerLoadSQLPoint.cpp \
     $$PWD/base/BaseServerUnload.cpp \
     $$PWD/base/BaseServerMasterLoadDictionary.cpp \
     $$PWD/base/BaseServerMasterSendDatapack.cpp \
