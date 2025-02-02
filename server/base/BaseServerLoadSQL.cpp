@@ -201,7 +201,28 @@ void BaseServer::preload_dictionary_map_return()
         std::cerr << obsoleteMap << " SQL obsolete map dictionary" << std::endl;
     std::cout << DictionaryServer::dictionary_map_database_to_internal.size() << " SQL map dictionary" << std::endl;
 
-    preload_13_async_pointOnMap_item_sql();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
+    {/*nothing to do*/}
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    GlobalServerData::serverPrivateVariables.db_server->clear();
+    #endif
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #else
+    #error Define what do here
+    #endif
+    {
+        preload_the_visibility_algorithm();
+        if(!preload_the_city_capture())
+            return;
+        if(!preload_zone())
+            return;
+        const auto now = msFrom1970();
+        std::cout << "Loaded the server static datapack into " << (now-timeDatapack) << "ms" << std::endl;
+        timeDatapack=now;
+
+        //start SQL load
+        preload_15_async_map_semi_after_db_id();
+    }
 }
 
 void BaseServer::preload_21_async_industries()
@@ -489,25 +510,6 @@ void BaseServer::preload_industries_return()
             pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
 
         //the player load well without this, is loaded by another way: std::vector<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
-
-        hps::to_stream((int32_t)DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(), *out_file);
-        for(int32_t i=0; i<(int32_t)DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
-        {
-            const DictionaryServer::MapAndPointItem &v=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
-            hps::to_stream(v.datapack_index_item, *out_file);
-            hps::to_stream(pointer_to_pos.at(v.map), *out_file);
-            hps::to_stream(v.x, *out_file);
-            hps::to_stream(v.y, *out_file);
-        }
-        hps::to_stream((int32_t)DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size(), *out_file);
-        for(int32_t i=0; i<(int32_t)DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size(); i++)
-        {
-            const DictionaryServer::MapAndPointPlant &v=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(i);
-            hps::to_stream(v.datapack_index_plant, *out_file);
-            hps::to_stream(pointer_to_pos.at(v.map), *out_file);
-            hps::to_stream(v.x, *out_file);
-            hps::to_stream(v.y, *out_file);
-        }
 
         dbSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
         std::cout << "DictionaryServer Size: " << dbSize << "B" << std::endl;

@@ -42,18 +42,16 @@ public:
     class ItemOnMap
     {
     public:
-        uint16_t pointOnMapDbCode;
-
         uint16_t item;
         bool infinite;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << pointOnMapDbCode << item << infinite;
+            buf << item << infinite;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> pointOnMapDbCode >> item >> infinite;
+            buf >> item >> infinite;
         }
         #endif
     };

@@ -14,7 +14,7 @@ void Client::newQuestAction(const QuestAction &action,const uint16_t &questId)
         errorOutput("unknown questId: "+std::to_string(questId));
         return;
     }
-    const Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const QuestServer &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
     switch(action)
     {
         case QuestAction_Start:
@@ -119,7 +119,7 @@ MonsterDrops Client::questItemMonsterToMonsterDrops(const Quest::ItemMonster &qu
     return monsterDrops;
 }
 
-bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
+bool Client::haveNextStepQuestRequirements(const QuestServer &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("check quest step requirement for: "+std::to_string(quest.id));
@@ -151,7 +151,7 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
     while(index<requirements.fights.size())
     {
         const uint32_t &fightId=requirements.fights.at(index);
-        if(public_and_private_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
+        if(!haveBeatBot(mapServer->id,teleporter.condition.data.fightBot))
         {
             normalOutput("quest requirement, have not beat the bot: "+std::to_string(fightId));
             return false;
@@ -161,7 +161,7 @@ bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
     return true;
 }
 
-bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
+bool Client::haveStartQuestRequirement(const QuestServer &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("check quest requirement for: "+std::to_string(quest.id));
@@ -303,7 +303,7 @@ void Client::syncDatabaseQuest()
     }
 }
 
-bool Client::nextStepQuest(const Quest &quest)
+bool Client::nextStepQuest(const QuestServer &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("drop quest step requirement for: "+std::to_string(quest.id));
@@ -367,7 +367,7 @@ bool Client::nextStepQuest(const Quest &quest)
     return true;
 }
 
-bool Client::startQuest(const Quest &quest)
+bool Client::startQuest(const QuestServer &quest)
 {
     if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {

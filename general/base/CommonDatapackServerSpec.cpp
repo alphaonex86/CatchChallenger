@@ -183,7 +183,7 @@ std::vector<ServerSpecProfile> &CommonDatapackServerSpec::get_serverProfileList_
     return serverProfileList;
 }
 
-const std::unordered_map<uint16_t,std::vector<MonsterDrops> > &CommonDatapackServerSpec::get_monsterDrops() const
+const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > &CommonDatapackServerSpec::get_monsterDrops() const
 {
     return monsterDrops;
 }

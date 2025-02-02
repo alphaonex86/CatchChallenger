@@ -27,11 +27,8 @@ BaseServer::BaseServer() :
     ProtocolParsing::initialiseTheVariable();
     timeDatapack=0;
     entryListIndex=0;
-    plant_on_the_map=0;
     preload_industries_call=false;
 
-    dictionary_pointOnMap_maxId_item=0;
-    dictionary_pointOnMap_maxId_plant=0;
     CompressionProtocol::compressionTypeServer                                = CompressionProtocol::CompressionType::Zstandard;
 
     GlobalServerData::serverPrivateVariables.connected_players      = 0;
@@ -314,7 +311,6 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     }
     #endif
 
-    std::cout << plant_on_the_map << " SQL plant on map" << std::endl;
     std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     const auto &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
