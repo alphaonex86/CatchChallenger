@@ -2,13 +2,16 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../base/PreparedDBQuery.hpp"
+#include "BaseServer.hpp"
 #include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
 
 //quest
-void Client::newQuestAction(const QuestAction &action,const uint16_t &questId)
+void Client::newQuestAction(const QuestAction &action,const CATCHCHALLENGER_TYPE_QUEST &questId)
 {
+    BotMap
+    GlobalServerData::serverPrivateVariables::
     if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
     {
         errorOutput("unknown questId: "+std::to_string(questId));
@@ -43,7 +46,7 @@ void Client::newQuestAction(const QuestAction &action,const uint16_t &questId)
     }
 }
 
-void Client::addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep)
+void Client::addQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("addQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
@@ -76,7 +79,7 @@ void Client::addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep)
     }
 }
 
-void Client::removeQuestStepDrop(const uint16_t &questId,const uint8_t &questStep)
+void Client::removeQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("removeQuestStepDrop for quest: "+std::to_string(questId)+", step: "+std::to_string(questStep));
@@ -381,7 +384,7 @@ bool Client::startQuest(const QuestServer &quest)
     return true;
 }
 
-void Client::cancelQuest(const uint16_t &questId)
+void Client::cancelQuest(const CATCHCHALLENGER_TYPE_QUEST &questId)
 {
     public_and_private_informations.quests.erase(questId);
     syncDatabaseQuest();

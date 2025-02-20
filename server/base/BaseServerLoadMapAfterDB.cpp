@@ -29,7 +29,22 @@ void BaseServer::preload_15_async_map_semi_after_db_id()
             const Quest::Step &sSrc=src.steps.at(index);
             QuestServer::StepServer sDst;
             sDst.botToTalk.fightBot=sSrc.botToTalk.fightBot;
-            sDst.botToTalk.map=sSrc.botToTalk.map;//search into map list to resolv
+            //search into map list to resolv
+            unsigned int indexMap=0;
+            while(indexMap<MapServer::mapListSize)
+            {
+                const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[indexMap]);
+                if(map->map_file==sSrc.botToTalk.map)
+                {
+                    sDst.botToTalk.map=indexMap;
+                    break;
+                }
+            }
+            if(index>=src.steps.size())
+            {
+                std::cerr << "not found map: " << sSrc.botToTalk.map << std::endl;
+                abort();
+            }
             unsigned int subindex=0;
             while(subindex<sSrc.itemsMonster.size())
             {
@@ -47,7 +62,22 @@ void BaseServer::preload_15_async_map_semi_after_db_id()
                 const BotMap &ssSrc=sSrc.requirements.fights.at(index);
                 BotMapServer ssDst;
                 ssDst.fightBot=ssSrc.fightBot;
-                ssDst.map=ssSrc.map;//search into map list to resolv
+                //search into map list to resolv
+                unsigned int indexMap=0;
+                while(indexMap<MapServer::mapListSize)
+                {
+                    const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[indexMap]);
+                    if(map->map_file==ssSrc.map)
+                    {
+                        ssDst.map=indexMap;
+                        break;
+                    }
+                }
+                if(index>=src.steps.size())
+                {
+                    std::cerr << "not found map: " << sSrc.botToTalk.map << std::endl;
+                    abort();
+                }
                 sDst.requirements.fights.push_back(ssDst);
                 subindex++;
             }

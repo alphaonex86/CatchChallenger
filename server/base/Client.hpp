@@ -469,7 +469,7 @@ private:
     void tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity);
     void tradeAddTradeMonster(const uint8_t &monsterPosition);
     //quest
-    void newQuestAction(const QuestAction &action, const uint16_t &questId);
+    void newQuestAction(const QuestAction &action, const CATCHCHALLENGER_TYPE_QUEST &questId);
     void appendAllow(const ActionAllow &allow);
     void removeAllow(const ActionAllow &allow);
     void syncDatabaseAllow();
@@ -526,10 +526,10 @@ private:
     bool haveStartQuestRequirement(const QuestServer &quest);
     bool nextStepQuest(const QuestServer &quest);
     bool startQuest(const QuestServer &quest);
-    void addQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
-    void removeQuestStepDrop(const uint16_t &questId,const uint8_t &questStep);
+    void addQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep);
+    void removeQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep);
     void syncDatabaseQuest();
-    void cancelQuest(const uint16_t &questId);
+    void cancelQuest(const CATCHCHALLENGER_TYPE_QUEST &questId);
 
     bool checkCollision();
 

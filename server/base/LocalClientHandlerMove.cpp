@@ -118,7 +118,7 @@ bool Client::singleMove(const Direction &direction)
                     errorOutput("You are not in clan to try pass");
                     return false;
                 }
-                if(mapServer->zone==65535)
+                if(mapServer->zone==255)
                 {
                     errorOutput("This door have no zone asigned");
                     return false;

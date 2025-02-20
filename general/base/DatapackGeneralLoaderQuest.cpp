@@ -8,7 +8,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder)
+std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loadQuests(const std::string &folder, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     bool ok;
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> quests;
@@ -26,7 +26,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loa
         if(ok)
         {
             //add it, all seam ok
-            std::pair<bool,Quest> returnedQuest=loadSingleQuest(fileList.at(index).absoluteFilePath+"/definition.xml");
+            std::pair<bool,Quest> returnedQuest=loadSingleQuest(fileList.at(index).absoluteFilePath+"/definition.xml",mapPathToId);
             if(returnedQuest.first==true)
             {
                 returnedQuest.second.id=questId;
@@ -43,7 +43,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> DatapackGeneralLoader::loa
     return quests;
 }
 
-std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &file)
+std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &file, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::unordered_map<std::string,uint8_t> reputationNameToId;
     {
