@@ -30,7 +30,7 @@ public:
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     uint8_t localChatDropTotalCache;
     uint8_t localChatDropNewValue;
-    CATCHCHALLENGER_TYPE_MAPID reverse_db_id;
+    CATCHCHALLENGER_TYPE_MAPID id_db;
     //the next variable is related to GlobalServerData::serverPrivateVariables.idToZone
     ZONE_TYPE zone;//255 if no zone
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -110,11 +110,10 @@ public:
         buf << (uint8_t)rescue.size();
         for (const auto &x : rescue)
               buf << x.first << (uint8_t)x.second;
-        buf << reverse_db_id << zone << pointOnMap_Item;
+        buf << id_db << zone << pointOnMap_Item;
         buf << botFights;
         buf << monsterDrops;
     }
-    static uint32_t mapListSize;
     static CommonMap * posToPointer(const int32_t &pos);
     template <class B>
     void parse(B& buf) {
@@ -197,7 +196,7 @@ public:
             buf >> posXY >> value;
             rescue[posXY]=(Orientation)value;
         }
-        buf >> reverse_db_id >> zone >> pointOnMap_Item;
+        buf >> id_db >> zone >> pointOnMap_Item;
         buf >> botFights;
         buf >> monsterDrops;
     }

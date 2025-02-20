@@ -19,6 +19,7 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
+    MapServer::mapListSize=0;
     Map_loader map_temp;
     std::vector<std::string> map_name;
     std::vector<std::string> map_name_to_do_id;
@@ -122,6 +123,8 @@ bool BaseServer::preload_9_sync_the_map()
 
                 flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
                 MapServer *mapServer=static_cast<MapServer *>(flat_map_list_temp.back());
+                mapServer->id=MapServer::mapListSize;
+                MapServer::mapListSize++;
                 GlobalServerData::serverPrivateVariables.map_list[sortFileName]=mapServer;
 
                 mapServer->width			= 0;
@@ -444,8 +447,8 @@ bool BaseServer::preload_9_sync_the_map()
     {
         if(GlobalServerData::serverPrivateVariables.map_list.find(map_name_to_do_id.at(index))!=GlobalServerData::serverPrivateVariables.map_list.end())
         {
-            GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id=index;
-            GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id]=map_name_to_do_id.at(index);
+
+            //GlobalServerData::serverPrivateVariables.id_map_to_map[GlobalServerData::serverPrivateVariables.map_list[map_name_to_do_id.at(index)]->id]=map_name_to_do_id.at(index);
         }
         else
             abort();

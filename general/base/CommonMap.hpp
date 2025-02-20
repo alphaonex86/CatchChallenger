@@ -65,6 +65,14 @@ public:
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zonecapture;//x,y bot to Map_loader::zoneNumber
     std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
 
+    /* WHY NOT HERE?
+     * Server use ServerMap, Client use Common Map
+     * Then the pointer don't have fixed size
+     * Then can't just use pointer archimectic
+    static CommonMap * flat_map_list;//size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
+    static uint32_t flat_map_size;
+    */
+
     static void removeParsedLayer(const ParsedLayer &parsed_layer);
 };
 }

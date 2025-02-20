@@ -763,18 +763,18 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     uint32_t rescue_map_file_database_id=0;
     uint32_t unvalidated_rescue_map_file_database_id=0;
     if(map_entry.map!=nullptr)
-        map_file_database_id=static_cast<MapServer *>(map_entry.map)->reverse_db_id;
+        map_file_database_id=static_cast<MapServer *>(map_entry.map)->id_db;
     if(rescue.map!=nullptr)
-        rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
+        rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->id_db;
     if(unvalidated_rescue.map!=nullptr)
-        unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+        unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->id_db;
     buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
     buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
     buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
 
     uint32_t map_id=0;
     if(map!=nullptr)
-        map_id=static_cast<MapServer *>(map)->reverse_db_id;
+        map_id=static_cast<MapServer *>(map)->id_db;
     buf << map_id << x << y << (uint8_t)last_direction;
 }
 

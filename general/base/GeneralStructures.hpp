@@ -139,10 +139,21 @@ struct map_management_move
     std::vector<map_management_movement> movement_list;
 };
 
-struct BotMap
+class BotMap
 {
+public:
     CATCHCHALLENGER_TYPE_BOTID fightBot;
-    std::string map;
+    CATCHCHALLENGER_TYPE_MAPID map;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << fightBot << map;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> fightBot >> map;
+    }
+    #endif
 };
 
 struct Player_public_informations

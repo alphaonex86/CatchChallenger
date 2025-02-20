@@ -10,14 +10,10 @@
 
 using namespace CatchChallenger;
 
-#ifdef CATCHCHALLENGER_CACHE_HPS
-uint32_t MapServer::mapListSize=0;
-#endif
-
 MapServer::MapServer() :
     localChatDropTotalCache(0),
     localChatDropNewValue(0),
-    reverse_db_id(0),
+    id_db(0),
     zone(65535)
 {
     botFightsMaxId=0;

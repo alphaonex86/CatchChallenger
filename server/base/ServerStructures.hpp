@@ -92,153 +92,6 @@ struct LoginServerSettings
     bool announce;
 };
 
-class BotMapServer
-{
-public:
-    CATCHCHALLENGER_TYPE_BOTID fightBot;
-    CATCHCHALLENGER_TYPE_MAPID map;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << fightBot << map;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> fightBot >> map;
-    }
-    #endif
-};
-
-class QuestServer
-{
-public:
-    class ItemServer
-    {
-    public:
-        CATCHCHALLENGER_TYPE_ITEM item;
-        uint32_t quantity;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << item << quantity;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> item >> quantity;
-        }
-        #endif
-    };
-    class ItemMonsterServer
-    {
-    public:
-        CATCHCHALLENGER_TYPE_ITEM item;
-        std::vector<CATCHCHALLENGER_TYPE_MONSTER> monsters;
-        uint8_t rate;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << item << monsters << rate;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> item >> monsters >> rate;
-        }
-        #endif
-    };
-    class RequirementsServer
-    {
-    public:
-        std::vector<QuestRequirements> quests;
-        std::vector<ReputationRequirements> reputation;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << quests << reputation;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> quests >> reputation;
-        }
-        #endif
-    };
-    class RewardsServer
-    {
-    public:
-        std::vector<ItemServer> items;
-        std::vector<ReputationRewards> reputation;
-        std::vector<ActionAllow> allow;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << items << reputation;
-            buf << (uint8_t)allow.size();
-            for(auto const& v: allow)
-                buf << (uint8_t)v;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> items >> reputation;
-            uint8_t vectorsize=0;
-            buf >> vectorsize;
-            for(unsigned int i=0; i<vectorsize; i++) {
-                uint8_t value=0;
-                buf >> value;
-                allow.push_back((ActionAllow)value);
-            }
-        }
-        #endif
-    };
-    class StepRequirementsServer
-    {
-    public:
-        std::vector<ItemServer> items;
-        std::vector<BotMapServer> fights;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << items << fights;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> items >> fights;
-        }
-        #endif
-    };
-    class StepServer//bots to talk to progress
-    {
-    public:
-        std::vector<ItemMonsterServer> itemsMonster;
-        StepRequirementsServer requirements;
-        BotMapServer botToTalk;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << itemsMonster << requirements << botToTalk;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> itemsMonster >> requirements >> botToTalk;
-        }
-        #endif
-    };
-
-    CATCHCHALLENGER_TYPE_QUEST id;
-    bool repeatable;
-    RequirementsServer requirements;
-    RewardsServer rewards;
-    std::vector<StepServer> steps;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << id << repeatable << requirements << rewards << steps;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> id >> repeatable >> requirements >> rewards >> steps;
-    }
-    #endif
-};
-
 class GameServerSettings
 {
 public:
@@ -678,11 +531,19 @@ struct ServerPrivateVariables
     uint64_t time_city_capture;
     std::unordered_map<uint32_t,Clan *> clanList;
 
-    //map
-    CommonMap ** flat_map_list;//size set via map_list.size() at next line
-    std::unordered_map<std::string,CommonMap *> map_list;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;
+    /* WHY HERE?
+     * Server use ServerMap, Client use Common Map
+     * Then the pointer don't have fixed size
+     * Then can't just use pointer archimectic*/
+    //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
+    MapServer * flat_map_list;
+    CATCHCHALLENGER_TYPE_MAPID flat_map_size;
+    //std::unordered_map<std::string,CommonMap *> map_list;
+    //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;
+    //id from BD use DictionaryServer::dictionary_map_database_to_internal -> NULL if not found
     int8_t sizeofInsertRequest;
+
+    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestServer> quests;
 
     //connection
     uint16_t connected_players;
