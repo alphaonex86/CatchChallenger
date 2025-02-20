@@ -127,7 +127,7 @@ void BaseServer::preload_dictionary_map_return()
             {
                 DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map));
                 foundMap.insert(map);
-                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->reverse_db_id=databaseMapId;
+                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->id_db=databaseMapId;
             }
             else
                 obsoleteMap++;
@@ -192,7 +192,7 @@ void BaseServer::preload_dictionary_map_return()
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
             DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->reverse_db_id=maxDatabaseMapId;
+            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->id_db=maxDatabaseMapId;
         }
         index++;
     }
@@ -451,12 +451,12 @@ void BaseServer::preload_industries_return()
         uint32_t mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
         hps::to_stream(mapListSize, *out_file);
 
-        std::unordered_map<const CommonMap *,std::string> map_list_reverse;
+        /*std::unordered_map<const CommonMap *,std::string> map_list_reverse;
         for (const auto &x : GlobalServerData::serverPrivateVariables.map_list)
               map_list_reverse[x.second]=x.first;
         std::unordered_map<std::string,uint32_t> id_map_to_map_reverse;
         for (const auto &x : GlobalServerData::serverPrivateVariables.id_map_to_map)
-              id_map_to_map_reverse[x.second]=x.first;
+              id_map_to_map_reverse[x.second]=x.first;*/
         uint32_t idSize=0;
         uint32_t pathSize=0;
         uint32_t mapSize=0;
@@ -464,18 +464,18 @@ void BaseServer::preload_industries_return()
         for(unsigned int i=0; i<mapListSize; i++)
         {
             const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
-            const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
-            const uint32_t &id=id_map_to_map_reverse.at(string);
+            /*const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
+            const uint32_t &id=id_map_to_map_reverse.at(string);*/
 
             //std::cerr << "map id " << id << " at " << out_file->tellp() << std::endl;
 
-            hps::to_stream(id, *out_file);
+            /*hps::to_stream(id, *out_file);
             idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
 
             //std::cerr << "map string " << string << " at " << out_file->tellp() << std::endl;
 
             hps::to_stream(string, *out_file);
-            pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
+            pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();*/
 
             //std::cerr << "map at " << out_file->tellp() << " map->pointOnMap_Item.size(): " << std::to_string(map->pointOnMap_Item.size()) << std::endl;
             /*for (const auto& kv : map->pointOnMap_Item)

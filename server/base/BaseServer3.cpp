@@ -116,7 +116,7 @@ void BaseServer::preload_1_the_data()
                 }
             }
             #endif
-            GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
+            //GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
             GlobalServerData::serverPrivateVariables.map_list[string]=map;
             //std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
         }

@@ -17,8 +17,8 @@ public:
     static std::vector<std::string> loadSkins(const std::string &folder);
     static std::vector<Reputation> loadReputation(const std::string &file);//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    static std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> loadQuests(const std::string &folder);
-    static std::pair<bool,Quest> loadSingleQuest(const std::string &file);
+    static std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, Quest> loadQuests(const std::string &folder, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    static std::pair<bool,Quest> loadSingleQuest(const std::string &file,const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     static std::unordered_map<uint8_t,Plant> loadPlants(const std::string &file);
     static std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_t,uint16_t> > loadCraftingRecipes(
             const std::string &file, const std::unordered_map<uint16_t, Item> &items, uint16_t &crafingRecipesMaxId);
