@@ -46,6 +46,7 @@ namespace CatchChallenger {
 class CommonMap;
 class Client;
 class MapServer;
+class Map_server_MapVisibility_Simple_StoreOnSender;
 class PlayerUpdaterBase;
 
 struct Map_player_info
@@ -536,14 +537,12 @@ struct ServerPrivateVariables
      * Then the pointer don't have fixed size
      * Then can't just use pointer archimectic*/
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    MapServer * flat_map_list;
+    Map_server_MapVisibility_Simple_StoreOnSender * flat_map_list;
     CATCHCHALLENGER_TYPE_MAPID flat_map_size;
     //std::unordered_map<std::string,CommonMap *> map_list;
     //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;
     //id from BD use DictionaryServer::dictionary_map_database_to_internal -> NULL if not found
     int8_t sizeofInsertRequest;
-
-    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestServer> quests;
 
     //connection
     uint16_t connected_players;
@@ -574,30 +573,6 @@ struct ServerPrivateVariables
 
     //datapack
     std::unordered_map<std::string,uint8_t> skinList;
-};
-
-class MapConditionServer
-{
-public:
-    MapConditionType type;
-    union Data {
-       CATCHCHALLENGER_TYPE_QUEST quest;
-       CATCHCHALLENGER_TYPE_ITEM item;
-       CATCHCHALLENGER_TYPE_BOTID fightBot;
-    } data;
-    CATCHCHALLENGER_TYPE_MAPID map;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << (uint8_t)type << data.quest;
-    }
-    template <class B>
-    void parse(B& buf) {
-        uint8_t temp=0;
-        buf >> temp >> data.quest;
-        type=(MapConditionType)temp;
-    }
-    #endif
 };
 
 bool operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2);

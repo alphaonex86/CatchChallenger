@@ -108,7 +108,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         if(ok)
         {
             defaultBots.fightBot=tempInt;
-            defaultBots.map=root->Attribute("map");
+            const std::string tempS(root->Attribute("map"));
+            if(mapPathToId.find(tempS)!=mapPathToId.cend())
+                defaultBots.map=mapPathToId.at(tempS);
+            else
+            {
+                std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
+                return std::pair<bool,Quest>(false,quest);
+            }
         }
         else
         {
@@ -301,8 +308,14 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 const CATCHCHALLENGER_TYPE_BOTID &tempInt=stringtouint8(step->Attribute("bot"),&ok);
                 if(ok)
                 {
-                    stepObject.botToTalk.fightBot=tempInt;
-                    stepObject.botToTalk.map=step->Attribute("map");
+                    std::string tempS(step->Attribute("map"));
+                    if(mapPathToId.find(tempS)!=mapPathToId.cend())
+                    {
+                        stepObject.botToTalk.fightBot=tempInt;
+                        stepObject.botToTalk.map=mapPathToId.at(tempS);
+                    }
+                    else
+                        std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
                 }
                 else
                     std::cerr << "Unable to open the file: " << file << ", step bot count is not number: " << step->Attribute("bot") << std::endl;
@@ -374,10 +387,16 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         const CATCHCHALLENGER_TYPE_BOTID &fightId=stringtouint8(fightItem->Attribute("bot"),&ok);
                         if(ok)
                         {
-                            BotMap t;
-                            t.fightBot=fightId;
-                            t.map=fightItem->Attribute("map");
-                            stepObject.requirements.fights.push_back(t);
+                            std::string tempS(fightItem->Attribute("map"));
+                            if(mapPathToId.find(tempS)!=mapPathToId.cend())
+                            {
+                                BotMap t;
+                                t.fightBot=fightId;
+                                t.map=mapPathToId.at(tempS);
+                                stepObject.requirements.fights.push_back(t);
+                            }
+                            else
+                                std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
                         }
                         else
                             std::cerr << "Unable to open the file: " << file << ", step id is not a number "

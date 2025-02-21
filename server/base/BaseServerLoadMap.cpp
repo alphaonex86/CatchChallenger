@@ -56,6 +56,7 @@ bool BaseServer::preload_9_sync_the_map()
             std::string sortFileName=fileName;
             stringreplaceOne(sortFileName,tmxRemove,"");
             map_name_to_do_id.push_back(sortFileName);
+            //mapPathToId[sortFileName]=map_name_to_do_id.size(); need be sorted before
             if(map_temp.tryLoadMap(GlobalServerData::serverPrivateVariables.datapack_mapPath+fileName))
             {
                 flat_map_list_temp.push_back(new Map_server_MapVisibility_Simple_StoreOnSender);
@@ -163,6 +164,14 @@ bool BaseServer::preload_9_sync_the_map()
     }
 
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());
+    {
+        unsigned int index=0;
+        while(index<map_name_to_do_id.size())
+        {
+            mapPathToId[map_name_to_do_id.at(index)]=index;
+            index++;
+        }
+    }
 
     //resolv the border map name into their pointer
     index=0;

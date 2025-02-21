@@ -61,21 +61,30 @@ public:
     template <class B>
     void serialize(B& buf) const {
         //CommonMap
-        std::unordered_map<void *,int32_t> pointer_to_pos;
-        pointer_to_pos[nullptr]=-1;
-        for(int32_t i=0; i<(int32_t)GlobalServerData::serverPrivateVariables.map_list.size(); i++)
-            pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
-        buf << border.bottom.x_offset << pointer_to_pos.at(border.bottom.map);
-        buf << border.left.y_offset << pointer_to_pos.at(border.left.map);
-        buf << border.right.y_offset << pointer_to_pos.at(border.right.map);
-        buf << border.top.x_offset << pointer_to_pos.at(border.top.map);
+        if(border.bottom.map!=nullptr)
+            buf << border.bottom.x_offset << border.bottom.map->id;
+        else
+            buf << border.bottom.x_offset << 65535;
+        if(border.left.map!=nullptr)
+            buf << border.left.y_offset << border.left.map->id;
+        else
+            buf << border.left.y_offset << 65535;
+        if(border.right.map!=nullptr)
+            buf << border.right.y_offset << border.right.map->id;
+        else
+            buf << border.right.y_offset << 65535;
+        if(border.top.map!=nullptr)
+            buf << border.top.x_offset << border.top.map->id;
+        else
+            buf << border.top.x_offset << 65535;
         buf << teleporter_list_size;
         for(unsigned int i=0; i<teleporter_list_size; i++)
         {
             const Teleporter &tp=teleporter[i];
-            buf << tp.condition << tp.destination_x << tp.destination_y
-                << pointer_to_pos.at(tp.map)
-                << tp.source_x << tp.source_y;
+            if(tp.map!=nullptr)
+                buf << tp.condition << tp.destination_x << tp.destination_y
+                    << tp.map->id
+                    << tp.source_x << tp.source_y;
         }
         buf << width;
         buf << height;
@@ -114,28 +123,28 @@ public:
         buf << botFights;
         buf << monsterDrops;
     }
-    static CommonMap * posToPointer(const int32_t &pos);
+    static CommonMap * posToPointer(const CATCHCHALLENGER_TYPE_MAPID &mappos);
     template <class B>
     void parse(B& buf) {
         //CommonMap
-        int32_t pos=0;
-        buf >> border.bottom.x_offset >> pos;
-        border.bottom.map=posToPointer(pos);
-        buf >> border.left.y_offset >> pos;
-        border.left.map=posToPointer(pos);
-        buf >> border.right.y_offset >> pos;
-        border.right.map=posToPointer(pos);
-        buf >> border.top.x_offset >> pos;
-        border.top.map=posToPointer(pos);
+        CATCHCHALLENGER_TYPE_MAPID mappos=0;
+        buf >> border.bottom.x_offset >> mappos;
+        border.bottom.map=posToPointer(mappos);
+        buf >> border.left.y_offset >> mappos;
+        border.left.map=posToPointer(mappos);
+        buf >> border.right.y_offset >> mappos;
+        border.right.map=posToPointer(mappos);
+        buf >> border.top.x_offset >> mappos;
+        border.top.map=posToPointer(mappos);
         buf >> teleporter_list_size;
         teleporter=(CommonMap::Teleporter *)malloc(sizeof(CommonMap::Teleporter)*teleporter_list_size);
         for(unsigned int i=0; i<teleporter_list_size; i++)
         {
             Teleporter &tp=teleporter[i];
             buf >> tp.condition >> tp.destination_x >> tp.destination_y
-                >> pos
+                >> mappos
                 >> tp.source_x >> tp.source_y;
-            tp.map=posToPointer(pos);
+            tp.map=posToPointer(mappos);
         }
         buf >> width;
         buf >> height;

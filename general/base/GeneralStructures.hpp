@@ -1013,7 +1013,10 @@ public:
        CATCHCHALLENGER_TYPE_ITEM item;
        CATCHCHALLENGER_TYPE_BOTID fightBot;
     } data;
-    std::string map;
+    /* see GlobalServerData::serverPrivateVariables.flat_map_list for server
+     * not pointer to just unserialize without memory allocation + searching
+     * 65535 if no map set */
+    CATCHCHALLENGER_TYPE_MAPID mapindex;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {

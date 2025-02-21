@@ -354,15 +354,15 @@ unsigned int MapServer::playerToFullInsert(const Client * const client, char * c
 }
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
-CommonMap * MapServer::posToPointer(const int32_t &pos)
+CommonMap * MapServer::posToPointer(const CATCHCHALLENGER_TYPE_MAPID &mappos)
 {
-    if(pos==-1)
+    if(mappos==-1)
         return nullptr;
-    if((uint32_t)pos<mapListSize)
-        return GlobalServerData::serverPrivateVariables.flat_map_list[pos];
+    if(mappos<GlobalServerData::serverPrivateVariables.flat_map_size)
+        return GlobalServerData::serverPrivateVariables.flat_map_list[mappos];
     else
     {
-        std::cerr << pos << " not into list: ";
+        std::cerr << mappos << " not into list: ";
         size_t index=0;
         while(index<mapListSize)
         {

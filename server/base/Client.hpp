@@ -522,10 +522,10 @@ private:
     static std::string directionToStringToSave(const Direction &direction);
     static std::string orientationToStringToSave(const Orientation &orientation);
     //quest
-    bool haveNextStepQuestRequirements(const QuestServer &quest);
-    bool haveStartQuestRequirement(const QuestServer &quest);
-    bool nextStepQuest(const QuestServer &quest);
-    bool startQuest(const QuestServer &quest);
+    bool haveNextStepQuestRequirements(const Quest &quest);
+    bool haveStartQuestRequirement(const Quest &quest);
+    bool nextStepQuest(const Quest &quest);
+    bool startQuest(const Quest &quest);
     void addQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep);
     void removeQuestStepDrop(const CATCHCHALLENGER_TYPE_QUEST &questId,const uint8_t &questStep);
     void syncDatabaseQuest();
