@@ -179,6 +179,7 @@ protected:
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif
     bool preload_industries_call;
+    std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     std::ifstream *in_file;
