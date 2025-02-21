@@ -18,12 +18,18 @@ public:
     {
         struct Map_BorderContent_TopBottom
         {
-            CommonMap *map;
+            /* see GlobalServerData::serverPrivateVariables.flat_map_list for server
+             * not pointer to just unserialize without memory allocation + searching
+             * 65535 if no map set */
+            CATCHCHALLENGER_TYPE_MAPID mapIndex;
             int16_t x_offset;//the max map size is 255, then offset have range: -255 to 255, see Map_loader::tryLoadMap() check size
         };
         struct Map_BorderContent_LeftRight
         {
-            CommonMap *map;
+            /* see GlobalServerData::serverPrivateVariables.flat_map_list for server
+             * not pointer to just unserialize without memory allocation + searching
+             * 65535 if no map set */
+            CATCHCHALLENGER_TYPE_MAPID mapIndex;
             int16_t y_offset;//the max map size is 255, then offset have range: -255 to 255, see Map_loader::tryLoadMap() check size
         };
         Map_BorderContent_TopBottom top;
@@ -33,9 +39,12 @@ public:
     };
     struct Teleporter
     {
-        uint8_t source_x,source_y;/*source*/
-        uint8_t destination_x,destination_y;/*destination*/
-        CommonMap *map;
+        uint8_t source_x,source_y;
+        uint8_t destination_x,destination_y;
+        /* see GlobalServerData::serverPrivateVariables.flat_map_list for server
+         * not pointer to just unserialize without memory allocation + searching
+         * 65535 if no map set */
+        CATCHCHALLENGER_TYPE_MAPID mapIndex;
         MapCondition condition;
     };
 
@@ -44,14 +53,14 @@ public:
     Teleporter* teleporter;//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
     uint8_t teleporter_list_size;
 
-    std::string map_file;
+    //std::string map_file;-> use heap and dynamic size generate big serialiser overhead, sloud be in debug only or for cache datapack debugging
     uint8_t width;//why uint16_t if a map is not allowed be more than 255?
     uint8_t height;//why uint16_t if a map is not allowed be more than 255?
     //uint32_t group;
 
     /* on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
      * on client, MapVisualiserThread set this variable */
-    uint32_t id;
+    CATCHCHALLENGER_TYPE_MAPID id;
 
     //the index is position (x+y*width)
     ParsedLayer parsed_layer;

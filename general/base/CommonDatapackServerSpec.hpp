@@ -14,7 +14,7 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode);
+    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
@@ -56,7 +56,7 @@ private:
     std::string mainDatapackCode;
     std::string subDatapackCode;
 private:
-    void parseQuests();
+    void parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     void parseServerProfileList();
     #ifdef CATCHCHALLENGER_CLIENT
     void applyMonstersRate();//xp,sp variable by server, only have this second pass on client, take care

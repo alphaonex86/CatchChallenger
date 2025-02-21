@@ -23,8 +23,13 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
     parsingSpec=false;
 }
 
-void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode)
+void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
+    if(!CommonDatapack::commonDatapack.isParsedContent())
+    {
+        std::cerr << "firstly you need call CommonDatapack::commonDatapack.parseDatapack(), load the map before call CommonDatapackServerSpec::parseDatapack()" << std::endl;
+        return;
+    }
     if(isParsedSpec)
         return;
     if(parsingSpec)
@@ -36,9 +41,7 @@ void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, co
     this->subDatapackCode=subDatapackCode;
 
     #ifndef BOTTESTCONNECT
-    CommonDatapack::commonDatapack.parseDatapack(datapackPath);
-
-    parseQuests();
+    parseQuests(mapPathToId);
     parseServerProfileList();
     #ifdef CATCHCHALLENGER_CLIENT
     applyMonstersRate();
@@ -61,9 +64,9 @@ bool CommonDatapackServerSpec::isParsedContent() const
     return isParsedSpec;
 }
 
-void CommonDatapackServerSpec::parseQuests()
+void CommonDatapackServerSpec::parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
-    quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2);
+    quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2,mapPathToId);
     std::cout << quests.size() << " quest(s) loaded" << std::endl;
 }
 

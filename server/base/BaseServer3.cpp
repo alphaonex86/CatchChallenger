@@ -43,7 +43,6 @@ void BaseServer::preload_1_the_data()
                 abort();
             }
             std::cout << "commonDatapack size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-            *serialBuffer >> quests;
             *serialBuffer >> CommonDatapackServerSpec::commonDatapackServerSpec;
             std::cout << "commonDatapackServerSpec size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
             const auto &after = msFrom1970();
@@ -72,15 +71,17 @@ void BaseServer::preload_1_the_data()
         std::cout << "skinList size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-        *serialBuffer >> MapServer::mapListSize;
-        GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<CommonMap **>(malloc(sizeof(CommonMap *)*MapServer::mapListSize));
-        for(unsigned int i=0; i<MapServer::mapListSize; i++)
-            GlobalServerData::serverPrivateVariables.flat_map_list[i]=new Map_server_MapVisibility_Simple_StoreOnSender;
-        std::unordered_set<uint32_t> detectDuplicateMapId;
-        for(unsigned int i=0; i<MapServer::mapListSize; i++)
+        *serialBuffer >> GlobalServerData::serverPrivateVariables.flat_map_size;
+        const size_t tempMemSize=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*GlobalServerData::serverPrivateVariables.flat_map_size;
+        GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(tempMemSize));
+        //memset((void *)GlobalServerData::serverPrivateVariables.flat_map_list,0,tempMemSize);//security but performance problem
+        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
+            new(GlobalServerData::serverPrivateVariables.flat_map_list+i) Map_server_MapVisibility_Simple_StoreOnSender();
+        std::unordered_set<CATCHCHALLENGER_TYPE_MAPID> detectDuplicateMapId;
+        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
         {
             std::string string;
-            uint32_t id=0;
+            CATCHCHALLENGER_TYPE_MAPID id=0;
             //ssize_t lastPos=0;
             //lastPos=serialBuffer->tellg();
             *serialBuffer >> id;
@@ -90,7 +91,7 @@ void BaseServer::preload_1_the_data()
                 std::cerr << "duplicate id for map: " << id << std::endl;
                 abort();
             }
-            if(id>100000)
+            if(id>65530)
             {
                 std::cerr << "map id " << id << " too big, abort to prevent problem at " << serialBuffer->tellg() << std::endl;
                 abort();
@@ -149,7 +150,6 @@ void BaseServer::preload_1_the_data()
         {
             const auto &now = msFrom1970();
             CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
-            CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
             const auto &after = msFrom1970();
             std::cout << "Loaded the common datapack into " << (after-now) << "ms" << std::endl;
         }
@@ -160,6 +160,8 @@ void BaseServer::preload_1_the_data()
         preload_7_sync_the_skin();
         preload_8_sync_monsters_drops();
         preload_9_sync_the_map();
+        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
+        mapPathToId.clear();
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
@@ -169,7 +171,6 @@ void BaseServer::preload_1_the_data()
             size_t lastSize=0;
             hps::to_stream(CommonDatapack::commonDatapack, *out_file);
             std::cout << "commonDatapack size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
-            hps::to_stream(quests, *out_file);
             hps::to_stream(CommonDatapackServerSpec::commonDatapackServerSpec, *out_file);
             std::cout << "commonDatapackServerSpec size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.randomData, *out_file);
