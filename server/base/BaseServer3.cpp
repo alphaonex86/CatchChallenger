@@ -71,56 +71,39 @@ void BaseServer::preload_1_the_data()
         std::cout << "skinList size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
         *serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-        *serialBuffer >> GlobalServerData::serverPrivateVariables.flat_map_size;
-        const size_t tempMemSize=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*GlobalServerData::serverPrivateVariables.flat_map_size;
-        GlobalServerData::serverPrivateVariables.flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(tempMemSize));
-        //memset((void *)GlobalServerData::serverPrivateVariables.flat_map_list,0,tempMemSize);//security but performance problem
-        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
-            new(GlobalServerData::serverPrivateVariables.flat_map_list+i) Map_server_MapVisibility_Simple_StoreOnSender();
-        std::unordered_set<CATCHCHALLENGER_TYPE_MAPID> detectDuplicateMapId;
-        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
-        {
-            std::string string;
-            CATCHCHALLENGER_TYPE_MAPID id=0;
-            //ssize_t lastPos=0;
-            //lastPos=serialBuffer->tellg();
-            *serialBuffer >> id;
-            //std::cerr << "map id " << id << " at " << lastPos << std::endl;
-            if(detectDuplicateMapId.find(id)!=detectDuplicateMapId.cend())
-            {
-                std::cerr << "duplicate id for map: " << id << std::endl;
-                abort();
-            }
-            if(id>65530)
-            {
-                std::cerr << "map id " << id << " too big, abort to prevent problem at " << serialBuffer->tellg() << std::endl;
-                abort();
-            }
-            //lastPos=serialBuffer->tellg();
-            *serialBuffer >> string;
 
-            MapServer * map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
-            //lastPos=serialBuffer->tellg();
-            *serialBuffer >> *map;
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            //std::cerr << "map string " << string << " map " << id << " map->pointOnMap_Item " << std::to_string(map->pointOnMap_Item.size()) << std::endl;
-            for (const auto& kv : map->pointOnMap_Item)
-            {
-                const MapServer::ItemOnMap &item=kv.second;
-                //std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << " item.infinite: " << std::to_string(item.infinite) << std::endl;
-                /*if(!item.infinite)
-                    std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << std::endl;*/
-                if(CommonDatapack::commonDatapack.get_items().item.find(item.item)==CommonDatapack::commonDatapack.get_items().item.cend())
-                {
-                    std::cerr << "Object " << std::to_string(item.item) << " is not found into the item list" << std::endl;
-                    abort();
-                }
-            }
+        {
+            *serialBuffer >> CommonMap::flat_map_list_size;
+            *serialBuffer >> CommonMap::map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
+            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+            CommonMap::flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(s));
+            #ifdef CATCHCHALLENGER_HARDENED
+            memset((void *)GlobalServerData::serverPrivateVariables.flat_map_list,0,tempMemSize);//security but performance problem
+            for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
+                new(GlobalServerData::serverPrivateVariables.flat_map_list+i) Map_server_MapVisibility_Simple_StoreOnSender();
             #endif
-            //GlobalServerData::serverPrivateVariables.id_map_to_map[id]=string;
-            GlobalServerData::serverPrivateVariables.map_list[string]=map;
-            //std::cerr << "map end at " << serialBuffer->tellg() << std::endl;
+            serialBuffer->read((char *)CommonMap::flat_teleporter,s);
         }
+
+        {
+            *serialBuffer >> CommonMap::flat_teleporter_list_size;//temp, used as size when finish
+            const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
+            CommonMap::flat_teleporter=static_cast<CommonMap::Teleporter *>(malloc(s));
+            #ifdef CATCHCHALLENGER_HARDENED
+            memset((void *)CommonMap::flat_teleporter,0,s);//security but performance problem
+            #endif
+            serialBuffer->read((char *)CommonMap::flat_teleporter,s);
+        }
+
+        {
+            *serialBuffer >> CommonMap::flat_simplified_map_list_size;//temp, used as size when finish
+            CommonMap::flat_simplified_map=static_cast<uint8_t *>(malloc(CommonMap::flat_simplified_map_list_size));
+            #ifdef CATCHCHALLENGER_HARDENED
+            memset((void *)CommonMap::flat_simplified_map,0,CommonMap::flat_simplified_map_list_size);//security but performance problem
+            #endif
+            serialBuffer->read((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
+        }
+
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
         /*std::cout << __FILE__ << ":" << __LINE__ << " DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
@@ -134,8 +117,10 @@ void BaseServer::preload_1_the_data()
 
 
         Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=
-                static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size()));
-        memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(CommonMap *)*GlobalServerData::serverPrivateVariables.map_list.size());
+                static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(Map_server_MapVisibility_Simple_StoreOnSender *)*CommonMap::flat_map_list_size));
+        #ifdef CATCHCHALLENGER_HARDENED
+        memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(Map_server_MapVisibility_Simple_StoreOnSender *)*CommonMap::flat_map_list_size);
+        #endif
         Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 
         const auto &after = msFrom1970();
@@ -160,7 +145,7 @@ void BaseServer::preload_1_the_data()
         preload_7_sync_the_skin();
         preload_8_sync_monsters_drops();
         preload_9_sync_the_map();
-        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
+        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
         mapPathToId.clear();
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
@@ -193,6 +178,25 @@ void BaseServer::preload_1_the_data()
             std::cout << "other data size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, *out_file);
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
+
+            {
+                hps::to_stream(CommonMap::flat_map_list_size, *out_file);
+                hps::to_stream(CommonMap::map_object_size, *out_file);
+                const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+                out_file->write((char *)CommonMap::flat_map_list,s);
+            }
+
+            {
+                hps::to_stream(CommonMap::flat_teleporter_list_size, *out_file);
+                const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
+                out_file->write((char *)CommonMap::flat_teleporter,s);
+            }
+
+            {
+                hps::to_stream(CommonMap::flat_simplified_map_list_size, *out_file);
+                out_file->write((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
+            }
+            std::cout << "map size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
         }
         #endif
     }

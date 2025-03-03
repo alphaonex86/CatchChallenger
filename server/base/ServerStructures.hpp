@@ -418,7 +418,7 @@ struct CaptureCityValidated
 
 struct ServerProfileInternal
 {
-    MapServer *map;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     /*COORD_TYPE*/ uint8_t x;
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
@@ -532,13 +532,14 @@ struct ServerPrivateVariables
     uint64_t time_city_capture;
     std::unordered_map<uint32_t,Clan *> clanList;
 
-    /* WHY HERE?
+    /* MOVED TO CommonMap
      * Server use ServerMap, Client use Common Map
      * Then the pointer don't have fixed size
-     * Then can't just use pointer archimectic*/
+     * Then can't just use pointer archimectic
+     * then Object size save into CommonMap */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    Map_server_MapVisibility_Simple_StoreOnSender * flat_map_list;
-    CATCHCHALLENGER_TYPE_MAPID flat_map_size;
+    //Map_server_MapVisibility_Simple_StoreOnSender * flat_map_list;
+    //CATCHCHALLENGER_TYPE_MAPID flat_map_size;
     //std::unordered_map<std::string,CommonMap *> map_list;
     //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::string > id_map_to_map;
     //id from BD use DictionaryServer::dictionary_map_database_to_internal -> NULL if not found

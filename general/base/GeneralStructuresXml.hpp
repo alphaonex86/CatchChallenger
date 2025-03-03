@@ -28,6 +28,7 @@ struct Map_to_send
     uint32_t width;
     uint32_t height;
     std::string zoneName;
+    std::vector<uint8_t> simplifiedMap;
 
     std::unordered_map<std::string,std::string> property;
 

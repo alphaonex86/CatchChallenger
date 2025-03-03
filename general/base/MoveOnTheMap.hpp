@@ -29,15 +29,15 @@ public:
 
     static bool canGoTo(const Direction &direction, const CommonMap &map, const uint8_t &x, const uint8_t &y, const bool &checkCollision, const bool &allowTeleport=true);
     static ParsedLayerLedges getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y);
-    static bool move(Direction direction, CommonMap ** map, uint8_t *x, uint8_t *y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool moveWithoutTeleport(Direction direction, CommonMap ** map, uint8_t *x, uint8_t *y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool teleport(CommonMap **map, uint8_t *x, uint8_t *y);
+    static bool move(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    static bool moveWithoutTeleport(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    static bool teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t &x, uint8_t &y);
     static int8_t indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
 
-    static bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static inline bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static bool isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction);
-    static bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static inline bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     Direction getDirection() const;
 protected:

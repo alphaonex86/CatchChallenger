@@ -28,7 +28,6 @@ public:
     Map_to_send map_to_send;
     std::string errorString();
     bool tryLoadMap(const std::string &file, const bool &botIsNotWalkable=true);
-    static void removeMapLayer(const ParsedLayer &parsed_layer);
     bool loadMonsterOnMapAndExtra(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);

@@ -142,12 +142,6 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-void Map_loader::removeMapLayer(const ParsedLayer &parsed_layer)
-{
-    if(parsed_layer.simplifiedMap!=nullptr)
-        delete[] parsed_layer.simplifiedMap;
-}
-
 bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     tinyxml2::XMLDocument *domDocument=NULL;

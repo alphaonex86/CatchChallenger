@@ -98,7 +98,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.city.capture.day                           = City::Capture::Monday;
     GlobalServerData::serverSettings.city.capture.hour                          = 0;
     GlobalServerData::serverSettings.city.capture.minute                        = 0;
-    GlobalServerData::serverPrivateVariables.flat_map_list                      = NULL;
     //start to 0 due to pre incrementation before use
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     GlobalServerData::serverPrivateVariables.maxClanId=0;
@@ -142,11 +141,31 @@ BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
     closeDB();
-    if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+
+    if(CommonMap::flat_map_list==nullptr)
     {
-        delete GlobalServerData::serverPrivateVariables.flat_map_list;
-        GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
+        delete (MapServer *)CommonMap::flat_map_list;
+        CommonMap::flat_map_list=nullptr;
     }
+    CommonMap::flat_map_list_size=0;
+    CommonMap::map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
+
+    if(CommonMap::flat_teleporter==nullptr)
+    {
+        delete CommonMap::flat_teleporter;
+        CommonMap::flat_teleporter=nullptr;
+    }
+    CommonMap::flat_teleporter_list_size=0;//temp
+    CommonMap::flat_teleporter_list_size=0;//to save serialize
+
+    if(CommonMap::flat_simplified_map==nullptr)
+    {
+        delete CommonMap::flat_simplified_map;
+        CommonMap::flat_simplified_map=nullptr;
+    }
+    CommonMap::flat_simplified_map_list_size=0;//temp
+    CommonMap::flat_simplified_map_list_size=0;//to save serialize
+
     if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update!=NULL)
     {
         delete Map_server_MapVisibility_Simple_StoreOnSender::map_to_update;
