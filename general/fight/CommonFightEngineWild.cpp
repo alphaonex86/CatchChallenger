@@ -147,7 +147,7 @@ PlayerMonster CommonFightEngine::getRandomMonster(const std::vector<MapMonster> 
 }
 
 //return true if now have wild monter to fight
-bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y,
+bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y,
                                                      #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
                                                      const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items
                                                      #else
@@ -158,16 +158,18 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
     bool ok;
     if(isInFight())
     {
-        errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
+        errorFightEngine("error: map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
 
-    if(map->parsed_layer.simplifiedMap==NULL)
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
     {
-        /// no fight in this zone
-        return false;
+        std::cerr << "CommonFightEngine::generateWildFightIfCollision() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
     }
-    uint8_t zoneCode=map->parsed_layer.simplifiedMap[x+y*map->width];
+    #endif
+    const uint8_t &zoneCode=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
     /* No wild monster into:
      * 253 ParsedLayerLedges_LedgesBottom
      * 252 ParsedLayerLedges_LedgesTop
@@ -175,13 +177,13 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
      * 250 ParsedLayerLedges_LedgesLeft */
     if(zoneCode==250 || zoneCode==251 || zoneCode==252 || zoneCode==253)
         return false;
-    if(zoneCode>=map->parsed_layer.monstersCollisionList.size())
+    if(zoneCode>=map.parsed_layer.monstersCollisionList.size())
     {
-        //errorFightEngine("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range"); -> bug is TP in colision
+        //errorFightEngine("error: map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range"); -> bug is TP in colision
         /// no fight in this zone
         return false;
     }
-    const MonstersCollisionValue &monstersCollisionValue=map->parsed_layer.monstersCollisionList.at(zoneCode);
+    const MonstersCollisionValue &monstersCollisionValue=map.parsed_layer.monstersCollisionList.at(zoneCode);
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
@@ -197,14 +199,14 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
             {
                 if(!ableToFight)
                 {
-                    errorFightEngine("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
+                    errorFightEngine("LocalClientHandlerFight::singleMove(), can't walk into the grass into map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+")");
                     return false;
                 }
                 if(stepFight==0)
                 {
                     if(randomSeedsSize()==0)
                     {
-                        errorFightEngine("error: no more random seed here, map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
+                        errorFightEngine("error: no more random seed here, map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
                         return false;
                     }
                     else
@@ -253,7 +255,7 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap *map, const
                         }
                         else
                         {
-                            errorFightEngine("error: no more random seed here to have the get on map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
+                            errorFightEngine("error: no more random seed here to have the get on map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+")");
                             return false;
                         }
                     }

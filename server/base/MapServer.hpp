@@ -61,31 +61,11 @@ public:
     template <class B>
     void serialize(B& buf) const {
         //CommonMap
-        if(border.bottom.map!=nullptr)
-            buf << border.bottom.x_offset << border.bottom.map->id;
-        else
-            buf << border.bottom.x_offset << 65535;
-        if(border.left.map!=nullptr)
-            buf << border.left.y_offset << border.left.map->id;
-        else
-            buf << border.left.y_offset << 65535;
-        if(border.right.map!=nullptr)
-            buf << border.right.y_offset << border.right.map->id;
-        else
-            buf << border.right.y_offset << 65535;
-        if(border.top.map!=nullptr)
-            buf << border.top.x_offset << border.top.map->id;
-        else
-            buf << border.top.x_offset << 65535;
-        buf << teleporter_list_size;
-        for(unsigned int i=0; i<teleporter_list_size; i++)
-        {
-            const Teleporter &tp=teleporter[i];
-            if(tp.map!=nullptr)
-                buf << tp.condition << tp.destination_x << tp.destination_y
-                    << tp.map->id
-                    << tp.source_x << tp.source_y;
-        }
+        buf << border.bottom.x_offset << border.bottom.mapIndex;
+        buf << border.left.y_offset << border.left.mapIndex;
+        buf << border.right.y_offset << border.right.mapIndex;
+        buf << border.top.x_offset << border.top.mapIndex;
+        buf << teleporter_list_size << teleporter_first_index;
         buf << width;
         buf << height;
         const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
@@ -97,15 +77,15 @@ public:
         //buf << group;
         buf << id;
         buf << parsed_layer.monstersCollisionList;
-        buf.write((char *)parsed_layer.simplifiedMap,mapSize);
+        buf << parsed_layer.simplifiedMapIndex;
         buf << (uint8_t)shops.size();
         for (const auto &x : shops)
               buf << x.first << x.second;
         buf << (uint8_t)heal.size();
         for (const auto &x : heal)
               buf << x.first << x.second;
-        buf << (uint8_t)zonecapture.size();
-        for (const auto &x : zonecapture)
+        buf << (uint8_t)zoneCapture.size();
+        for (const auto &x : zoneCapture)
               buf << x.first << x.second;
         buf << (uint8_t)botsFight.size();
         for (const auto &x : botsFight)
@@ -127,25 +107,11 @@ public:
     template <class B>
     void parse(B& buf) {
         //CommonMap
-        CATCHCHALLENGER_TYPE_MAPID mappos=0;
-        buf >> border.bottom.x_offset >> mappos;
-        border.bottom.map=posToPointer(mappos);
-        buf >> border.left.y_offset >> mappos;
-        border.left.map=posToPointer(mappos);
-        buf >> border.right.y_offset >> mappos;
-        border.right.map=posToPointer(mappos);
-        buf >> border.top.x_offset >> mappos;
-        border.top.map=posToPointer(mappos);
-        buf >> teleporter_list_size;
-        teleporter=(CommonMap::Teleporter *)malloc(sizeof(CommonMap::Teleporter)*teleporter_list_size);
-        for(unsigned int i=0; i<teleporter_list_size; i++)
-        {
-            Teleporter &tp=teleporter[i];
-            buf >> tp.condition >> tp.destination_x >> tp.destination_y
-                >> mappos
-                >> tp.source_x >> tp.source_y;
-            tp.map=posToPointer(mappos);
-        }
+        buf >> border.bottom.x_offset >> border.bottom.mapIndex;
+        buf >> border.left.y_offset >> border.left.mapIndex;
+        buf >> border.right.y_offset >> border.right.mapIndex;
+        buf >> border.top.x_offset >> border.top.mapIndex;
+        buf >> teleporter_list_size >> teleporter_first_index;
         buf >> width;
         buf >> height;
         const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
@@ -157,8 +123,7 @@ public:
         //buf >> group;
         buf >> id;
         buf >> parsed_layer.monstersCollisionList;
-        parsed_layer.simplifiedMap=(uint8_t *)malloc(mapSize);
-        buf.read((char *)parsed_layer.simplifiedMap,mapSize);
+        buf >> parsed_layer.simplifiedMapIndex;
         uint8_t smallsize=0;
         std::pair<uint8_t,uint8_t> posXY;posXY.first=0;posXY.second=0;
         buf >> smallsize;
@@ -179,7 +144,7 @@ public:
         {
             uint16_t value;
             buf >> posXY >> value;
-            zonecapture[posXY]=value;
+            zoneCapture[posXY]=value;
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)

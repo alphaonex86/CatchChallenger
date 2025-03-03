@@ -1116,7 +1116,7 @@ public:
      * 250 ParsedLayerLedges_LedgesLeft
      * 249 dirt
      * 200 - 248 reserved */
-    uint8_t *simplifiedMap;
+    uint32_t simplifiedMapIndex;
     /* 0 cave def
      * 1-199 monster def and condition */
     std::vector<MonstersCollisionValue> monstersCollisionList;
