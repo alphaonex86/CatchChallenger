@@ -66,19 +66,18 @@ void BaseServer::preload_18_sync_profile()
     {
         const ServerSpecProfile &serverProfile=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList().at(profileIndex);
         ServerProfileInternal &serverProfileInternal=GlobalServerData::serverPrivateVariables.serverProfileInternalList[profileIndex];
-        serverProfileInternal.map=nullptr;
+        serverProfileInternal.mapIndex=65535;
         serverProfileInternal.orientation=Orientation_none;
         serverProfileInternal.valid=false;
         serverProfileInternal.x=0;
         serverProfileInternal.y=0;
-        if(GlobalServerData::serverPrivateVariables.map_list.find(serverProfile.mapString)==GlobalServerData::serverPrivateVariables.map_list.cend())
+        if(mapPathToId.find(serverProfile.mapString)==mapPathToId.cend())
         {
             std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
             abort();
         }
-        serverProfileInternal.map=
-                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(serverProfile.mapString));
-        if(serverProfileInternal.map==NULL)
+        serverProfileInternal.mapIndex=mapPathToId.at(serverProfile.mapString);
+        if(serverProfileInternal.mapIndex==65535)
         {
             std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not resolved, fix it (abort)" << std::endl;
             abort();

@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/CommonMap.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include <iostream>
@@ -226,12 +227,15 @@ void BaseServer::loadAndFixSettings()
     else
         player_list_size=sizeof(uint16_t);*/
     uint8_t map_list_size;
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+    if(CommonMap::flat_map_list_size<=255)
         map_list_size=sizeof(uint8_t);
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+    else if(CommonMap::flat_map_list_size<=65534)
         map_list_size=sizeof(uint16_t);
     else
-        map_list_size=sizeof(uint32_t);
+    {
+        std::cerr << "too many map, you need less than 65534 map count" << std::endl;
+        abort();
+    }
     GlobalServerData::serverPrivateVariables.sizeofInsertRequest=
             //mutualised
             sizeof(uint8_t)+map_list_size+/*player_list_size same with move, delete, ...*/

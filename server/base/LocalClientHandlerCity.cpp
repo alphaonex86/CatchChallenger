@@ -84,7 +84,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         const MapServer * const mapServer=static_cast<MapServer*>(map);
         const std::pair<uint8_t,uint8_t> pos(x,y);
         //check if is zonecapture
-        if(mapServer->zonecapture.find(pos)==mapServer->zonecapture.cend())
+        if(mapServer->zoneCapture.find(pos)==mapServer->zoneCapture.cend())
         {
             Direction direction=getLastDirection();
             switch(direction)
@@ -120,14 +120,14 @@ void Client::waitingForCityCaputre(const bool &cancel)
             }
             const MapServer * const mapServer=static_cast<MapServer*>(map);
             const std::pair<uint8_t,uint8_t> pos(x,y);
-            if(mapServer->zonecapture.find(pos)==mapServer->zonecapture.cend())
+            if(mapServer->zoneCapture.find(pos)==mapServer->zoneCapture.cend())
             {
                 errorOutput("no zonecapture point in this direction");
                 return;
             }
         }
         //send the zone capture
-        const ZONE_TYPE &zoneId=static_cast<MapServer*>(map)->zonecapture.at(std::pair<uint8_t,uint8_t>(x,y));
+        const ZONE_TYPE &zoneId=static_cast<MapServer*>(map)->zoneCapture.at(std::pair<uint8_t,uint8_t>(x,y));
         if(!public_and_private_informations.clan_leader)
         {
             if(clan->captureCityInProgress==65535)

@@ -19,7 +19,6 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
-    MapServer::mapListSize=0;
     Map_loader map_temp;
     std::vector<std::string> map_name;
     std::vector<std::string> map_name_to_do_id;

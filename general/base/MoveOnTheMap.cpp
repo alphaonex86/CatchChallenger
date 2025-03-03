@@ -213,29 +213,35 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
     #endif
     switch(direction)
     {
-        case Direction_move_at_left:
-            if(x>0)
+        case Direction_move_at_top:
+            if(y>0)
             {
                 if(checkCollision)
-                    if(!isWalkableWithDirection(map,x-1,y,direction))
+                    if(!isWalkableWithDirection(map,x,y-1,direction))
                         return false;
                 if(!allowTeleport)
-                    if(needBeTeleported(map,x-1,y))
+                    if(needBeTeleported(map,x,y-1))
                         return false;
                 return true;
             }
-            else if(map.border.left.map==NULL)
+            else if(map.border.top.mapIndex==65535)
                 return false;
-            else if(y<-map.border.left.y_offset)
+            else if(x<-map.border.top.x_offset)
                 return false;
             else
             {
                 if(checkCollision)
-                    if(!isWalkableWithDirection(*map.border.left.map,map.border.left.map->width-1,y+static_cast<int8_t>(map.border.left.y_offset),direction))
+                {
+                    const CommonMap * const mapTop=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.top.mapIndex));
+                    if(!isWalkableWithDirection(*mapTop,x+static_cast<uint8_t>(map.border.top.x_offset),mapTop->height-1,direction))
                         return false;
+                }
                 if(!allowTeleport)
-                    if(needBeTeleported(*map.border.left.map,map.border.left.map->width-1,y+static_cast<int8_t>(map.border.left.y_offset)))
+                {
+                    const CommonMap * const mapTop=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.top.mapIndex));
+                    if(needBeTeleported(*mapTop,x+static_cast<uint8_t>(map.border.top.x_offset),mapTop->height-1))
                         return false;
+                }
                 return true;
             }
         break;
@@ -250,44 +256,24 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
                         return false;
                 return true;
             }
-            else if(map.border.right.map==NULL)
+            else if(map.border.right.mapIndex==65535)
                 return false;
             else if(y<-map.border.right.y_offset)
                 return false;
             else
             {
                 if(checkCollision)
-                    if(!isWalkableWithDirection(*map.border.right.map,0,y+static_cast<int8_t>(map.border.right.y_offset),direction))
+                {
+                    const CommonMap * const mapRight=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.right.mapIndex));
+                    if(!isWalkableWithDirection(*mapRight,0,y+static_cast<int8_t>(map.border.right.y_offset),direction))
                         return false;
+                }
                 if(!allowTeleport)
-                    if(needBeTeleported(*map.border.right.map,0,y+static_cast<int8_t>(map.border.right.y_offset)))
+                {
+                    const CommonMap * const mapRight=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.right.mapIndex));
+                    if(needBeTeleported(*mapRight,0,y+static_cast<int8_t>(map.border.right.y_offset)))
                         return false;
-                return true;
-            }
-        break;
-        case Direction_move_at_top:
-            if(y>0)
-            {
-                if(checkCollision)
-                    if(!isWalkableWithDirection(map,x,y-1,direction))
-                        return false;
-                if(!allowTeleport)
-                    if(needBeTeleported(map,x,y-1))
-                        return false;
-                return true;
-            }
-            else if(map.border.top.map==NULL)
-                return false;
-            else if(x<-map.border.top.x_offset)
-                return false;
-            else
-            {
-                if(checkCollision)
-                    if(!isWalkableWithDirection(*map.border.top.map,x+static_cast<uint8_t>(map.border.top.x_offset),map.border.top.map->height-1,direction))
-                        return false;
-                if(!allowTeleport)
-                    if(needBeTeleported(*map.border.top.map,x+static_cast<uint8_t>(map.border.top.x_offset),map.border.top.map->height-1))
-                        return false;
+                }
                 return true;
             }
         break;
@@ -302,18 +288,56 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
                         return false;
                 return true;
             }
-            else if(map.border.bottom.map==NULL)
+            else if(map.border.bottom.mapIndex==65535)
                 return false;
             else if(x<-map.border.bottom.x_offset)
                 return false;
             else
             {
                 if(checkCollision)
-                    if(!isWalkableWithDirection(*map.border.bottom.map,x+static_cast<uint8_t>(map.border.bottom.x_offset),0,direction))
+                {
+                    const CommonMap * const mapBottom=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.bottom.mapIndex));
+                    if(!isWalkableWithDirection(*mapBottom,x+static_cast<uint8_t>(map.border.bottom.x_offset),0,direction))
+                        return false;
+                }
+                if(!allowTeleport)
+                {
+                    const CommonMap * const mapBottom=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.bottom.mapIndex));
+                    if(needBeTeleported(*mapBottom,x+static_cast<uint8_t>(map.border.bottom.x_offset),0))
+                        return false;
+                }
+                return true;
+            }
+        break;
+        case Direction_move_at_left:
+            if(x>0)
+            {
+                if(checkCollision)
+                    if(!isWalkableWithDirection(map,x-1,y,direction))
                         return false;
                 if(!allowTeleport)
-                    if(needBeTeleported(*map.border.bottom.map,x+static_cast<uint8_t>(map.border.bottom.x_offset),0))
+                    if(needBeTeleported(map,x-1,y))
                         return false;
+                return true;
+            }
+            else if(map.border.left.mapIndex==65535)
+                return false;
+            else if(y<-map.border.left.y_offset)
+                return false;
+            else
+            {
+                if(checkCollision)
+                {
+                    const CommonMap * const mapLeft=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.left.mapIndex));
+                    if(!isWalkableWithDirection(*mapLeft,mapLeft->width-1,y+static_cast<int8_t>(map.border.left.y_offset),direction))
+                        return false;
+                }
+                if(!allowTeleport)
+                {
+                    const CommonMap * const mapLeft=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map.border.left.mapIndex));
+                    if(needBeTeleported(*mapLeft,mapLeft->width-1,y+static_cast<int8_t>(map.border.left.y_offset)))
+                        return false;
+                }
                 return true;
             }
         break;
@@ -325,26 +349,41 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
 
 CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.simplifiedMap==NULL)
-        return CatchChallenger::ParsedLayerLedges_NoLedges;
-    const uint8_t &i=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    {
+        std::cerr << "MoveOnTheMap::getLedge() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
+    }
+    #endif
+    const uint8_t &i=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
     if(i<250 || i>253)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
     return static_cast<ParsedLayerLedges>((uint32_t)i-250+1);
 }
 
-bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
+bool MoveOnTheMap::teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y)
 {
-    const CommonMap::Teleporter * const teleporter=(*map)->teleporter;
-    const uint8_t &teleporter_list_size=(*map)->teleporter_list_size;
+    const CommonMap * const map=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
+    const uint8_t &teleporter_list_size=map->teleporter_list_size;
+    if(teleporter_list_size<=0)
+        return false;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(CommonMap::flat_teleporter==nullptr)
+    {
+        std::cerr << "MoveOnTheMap::teleport() CommonMap::flat_teleporter==nullptr" << std::endl;
+        abort();
+    }
+    #endif
+    const CommonMap::Teleporter * const teleporter=CommonMap::flat_teleporter+map->teleporter_first_index;
     uint8_t index=0;
     while(index<teleporter_list_size)
     {
-        if(teleporter[index].source_x==*x && teleporter[index].source_y==*y)
+        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
         {
-            *x=teleporter[index].destination_x;
-            *y=teleporter[index].destination_y;
-            *map=teleporter[index].map;
+            x=teleporter[index].destination_x;
+            y=teleporter[index].destination_y;
+            mapIndex=teleporter[index].mapIndex;
             return true;
         }
         index++;
@@ -354,7 +393,7 @@ bool MoveOnTheMap::teleport(CommonMap **map, COORD_TYPE *x, COORD_TYPE *y)
 
 int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    const CommonMap::Teleporter * const teleporter=map.teleporter;
+    const CommonMap::Teleporter * const teleporter=CommonMap::flat_teleporter+map.teleporter_first_index;;
     uint8_t index=0;
     while(index<map.teleporter_list_size)
     {
@@ -367,7 +406,7 @@ int8_t MoveOnTheMap::indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x
 
 bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    const CommonMap::Teleporter * const teleporter=map.teleporter;
+    const CommonMap::Teleporter * const teleporter=CommonMap::flat_teleporter+map.teleporter_first_index;;
     int8_t index=0;
     while(index<map.teleporter_list_size)
     {
@@ -381,18 +420,27 @@ bool MoveOnTheMap::needBeTeleported(const CommonMap &map, const COORD_TYPE &x, c
 bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     //exclude here ParsedLayerLedges, because don't have info about direction
-    if(map.parsed_layer.simplifiedMap==NULL)
-        return false;
-    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
-    return val<200;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    {
+        std::cerr << "MoveOnTheMap::isWalkable() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
+    }
+    #endif
+    return *(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width)<200;
 }
 
 bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     //exclude here ParsedLayerLedges, because don't have info about direction
-    if(map.parsed_layer.simplifiedMap==NULL)
-        return false;
-    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    {
+        std::cerr << "MoveOnTheMap::isWalkableWithDirection() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
+    }
+    #endif
+    const uint8_t &val=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
     if(val<200)
         return true;
     switch(direction)
@@ -425,22 +473,32 @@ bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &
 
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.simplifiedMap==NULL)
-        return false;
-    return map.parsed_layer.simplifiedMap[x+y*(map.width)]==249;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    {
+        std::cerr << "MoveOnTheMap::isDirt() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
+    }
+    #endif
+    return *(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width)==249;
 }
 
 MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.simplifiedMap==NULL)
-        return MonstersCollisionValue();
-    const uint8_t &val=map.parsed_layer.simplifiedMap[x+y*(map.width)];
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    {
+        std::cerr << "MoveOnTheMap::getZoneCollision() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        abort();
+    }
+    #endif
+    const uint8_t &val=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
     if(map.parsed_layer.monstersCollisionList.size()<=val)
         return MonstersCollisionValue();
     return map.parsed_layer.monstersCollisionList.at(val);
 }
 
-bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
+bool MoveOnTheMap::move(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(direction)
@@ -454,13 +512,13 @@ bool MoveOnTheMap::move(Direction direction, CommonMap ** map, COORD_TYPE *x, CO
             abort();//wrong direction send
     }
     #endif
-    if(!moveWithoutTeleport(direction,map,x,y,checkCollision,allowTeleport))
+    if(!moveWithoutTeleport(direction,mapIndex,x,y,checkCollision,allowTeleport))
         return false;
-    teleport(map,x,y);
+    teleport(mapIndex,x,y);
     return true;
 }
 
-bool MoveOnTheMap::moveWithoutTeleport(Direction direction, CommonMap ** map, COORD_TYPE *x, COORD_TYPE *y, const bool &checkCollision, const bool &allowTeleport)
+bool MoveOnTheMap::moveWithoutTeleport(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(direction)
@@ -474,53 +532,56 @@ bool MoveOnTheMap::moveWithoutTeleport(Direction direction, CommonMap ** map, CO
             abort();//wrong direction send
     }
     #endif
-    if(*map==NULL)
+    if(mapIndex==65535)
         return false;
-    if(!canGoTo(direction,**map,*x,*y,checkCollision,allowTeleport))
+    const CommonMap * const map=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
+    if(!canGoTo(direction,*map,x,y,checkCollision,allowTeleport))
         return false;
     switch(direction)
     {
-        case Direction_move_at_left:
-            if(*x>0)
-                *x-=1;
+        case Direction_move_at_top:
+            if(y>0)
+                y-=1;
             else
             {
-                *x=(*map)->border.left.map->width-1;
-                *y+=(*map)->border.left.y_offset;
-                *map=(*map)->border.left.map;
+                const CommonMap * const mapTop=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map->border.top.mapIndex));
+                y=mapTop->height-1;
+                x+=map->border.top.x_offset;
+                mapIndex=map->border.top.mapIndex;
             }
             return true;
         break;
         case Direction_move_at_right:
-            if(*x<((*map)->width-1))
-                *x+=1;
+            if(x<(map->width-1))
+                x+=1;
             else
             {
-                *x=0;
-                *y+=(*map)->border.right.y_offset;
-                *map=(*map)->border.right.map;
-            }
-            return true;
-        break;
-        case Direction_move_at_top:
-            if(*y>0)
-                *y-=1;
-            else
-            {
-                *y=(*map)->border.top.map->height-1;
-                *x+=(*map)->border.top.x_offset;
-                *map=(*map)->border.top.map;
+                x=0;
+                y+=map->border.right.y_offset;
+                mapIndex=map->border.right.mapIndex;
             }
             return true;
         break;
         case Direction_move_at_bottom:
-            if(*y<((*map)->height-1))
-                *y+=1;
+            if(y<(map->height-1))
+                y+=1;
             else
             {
-                *y=0;
-                *x+=(*map)->border.bottom.x_offset;
-                *map=(*map)->border.bottom.map;
+                y=0;
+                x+=map->border.bottom.x_offset;
+                mapIndex=map->border.bottom.mapIndex;
+            }
+            return true;
+        break;
+        case Direction_move_at_left:
+            if(x>0)
+                x-=1;
+            else
+            {
+                const CommonMap * const mapLeft=reinterpret_cast<const CommonMap *>(CommonMap::indexToMap(map->border.left.mapIndex));
+                x=mapLeft->width-1;
+                y+=map->border.left.y_offset;
+                mapIndex=map->border.left.mapIndex;
             }
             return true;
         break;
