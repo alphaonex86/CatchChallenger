@@ -7,10 +7,12 @@
 #include <utility>
 
 #include "GeneralStructures.hpp"
+#include "GeneralStructuresXml.hpp"
 #include "cpp11addition.hpp"
 #include "lib.h"
 
 namespace CatchChallenger {
+
 class DLL_PUBLIC CommonMap
 {
 public:
@@ -47,11 +49,19 @@ public:
         CATCHCHALLENGER_TYPE_MAPID mapIndex;
         MapCondition condition;
     };
+    //to load/unload the content
+    struct Map_semi
+    {
+        //conversion x,y to position: x+y*width
+        CommonMap* map;
+        Map_semi_border border;
+        Map_to_send old_map;
+    };
 
     Map_Border border;
 
     CATCHCHALLENGER_TYPE_TELEPORTERID teleporter_first_index;//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
-    uint8_t teleporter_list_size;//limit to 255 max to prevent statured server
+    uint8_t teleporter_list_size;//limit to 127 max to prevent statured server
 
     //std::string map_file;-> use heap and dynamic size generate big serialiser overhead, sloud be in debug only or for cache datapack debugging
     //map not allowed be more than 127*127
@@ -91,7 +101,7 @@ public:
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
     static void * flat_map_list;
     static CATCHCHALLENGER_TYPE_MAPID flat_map_list_size;
-    static size_t map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
+    static size_t flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
     static inline const void * indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index);
 
     static Teleporter*                          flat_teleporter;
@@ -99,6 +109,9 @@ public:
 
     static uint8_t *                            flat_simplified_map;
     static CATCHCHALLENGER_TYPE_MAPID           flat_simplified_map_list_size;//temp, used as size when finish
+
+    template<class MapType>
+    static void loadAllMapsAndLink(const std::string &datapack_mapPath, std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
 };
 }
 

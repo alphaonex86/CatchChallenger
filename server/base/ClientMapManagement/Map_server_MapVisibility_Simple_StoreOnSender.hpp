@@ -40,11 +40,9 @@ public:
     bool send_reinsert_all;//threasold, hide after 100 player, reshow below 50
     bool have_change;
 
-    //maybe need have to be optimized
-    static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataNewClients[65535];//temp space to work
-    static MapVisibilityAlgorithm_Simple_StoreOnSender * clientsToSendDataOldClients[65535];//temp space to work
-    static Map_server_MapVisibility_Simple_StoreOnSender ** map_to_update;
-    static uint32_t map_to_update_size;
+    /* drop, scan at each move is more problematic than scan whole map list each 100ms
+     * static uint16_t * map_to_update;
+    static uint16_t map_to_update_size;*/
 };
 }
 

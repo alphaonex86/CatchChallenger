@@ -18,11 +18,6 @@
 
 using namespace CatchChallenger;
 
-MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataNewClients[65535];
-MapVisibilityAlgorithm_Simple_StoreOnSender * Map_server_MapVisibility_Simple_StoreOnSender::clientsToSendDataOldClients[65535];
-Map_server_MapVisibility_Simple_StoreOnSender ** Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
-uint32_t Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
-
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
     to_send_remove_size(0),
     show(true),
