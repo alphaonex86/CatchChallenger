@@ -118,6 +118,8 @@ void CommonFightEngine::healAllMonsters()
 
 bool CommonFightEngine::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const
 {
+    (void)mapId;
+    (void)botId;
     return true;
 }
 

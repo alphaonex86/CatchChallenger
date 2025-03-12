@@ -74,9 +74,10 @@ void BaseServer::preload_1_the_data()
 
         {
             *serialBuffer >> CommonMap::flat_map_list_size;
-            *serialBuffer >> CommonMap::map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
+            *serialBuffer >> CommonMap::flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
             const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
             CommonMap::flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(s));
+            CommonMap::flat_map_object_size=sizeof(Map_server_MapVisibility_Simple_StoreOnSender);
             #ifdef CATCHCHALLENGER_HARDENED
             memset((void *)GlobalServerData::serverPrivateVariables.flat_map_list,0,tempMemSize);//security but performance problem
             for(CATCHCHALLENGER_TYPE_MAPID i=0; i<GlobalServerData::serverPrivateVariables.flat_map_size; i++)
@@ -105,23 +106,6 @@ void BaseServer::preload_1_the_data()
         }
 
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
-
-        /*std::cout << __FILE__ << ":" << __LINE__ << " DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
-        for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
-        {
-            const DictionaryServer::MapAndPointItem &t=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
-            std::cerr << "DictionaryServer::MapAndPointItem &t " << &t << std::endl;
-            if(t.map!=nullptr)
-                std::cerr << t.datapack_index_item << " " << t.map->id << " " << std::to_string(t.x) << " " << std::to_string(t.y) << " " << std::endl;
-        }*/
-
-
-        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=
-                static_cast<Map_server_MapVisibility_Simple_StoreOnSender **>(malloc(sizeof(Map_server_MapVisibility_Simple_StoreOnSender *)*CommonMap::flat_map_list_size));
-        #ifdef CATCHCHALLENGER_HARDENED
-        memset(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update,0x00,sizeof(Map_server_MapVisibility_Simple_StoreOnSender *)*CommonMap::flat_map_list_size);
-        #endif
-        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
@@ -181,7 +165,7 @@ void BaseServer::preload_1_the_data()
 
             {
                 hps::to_stream(CommonMap::flat_map_list_size, *out_file);
-                hps::to_stream(CommonMap::map_object_size, *out_file);
+                hps::to_stream(CommonMap::flat_map_object_size, *out_file);
                 const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
                 out_file->write((char *)CommonMap::flat_map_list,s);
             }
