@@ -87,15 +87,6 @@ protected:
     };
     std::atomic<ServerStat> stat;
 
-    //to load/unload the content
-    struct Map_semi
-    {
-        //conversion x,y to position: x+y*width
-        CommonMap* map;
-        Map_semi_border border;
-        Map_to_send old_map;
-    };
-
     virtual void setEventTimer(const uint8_t &event,const uint8_t &value,const unsigned int &time,const unsigned int &start) = 0;
     void preload_4_sync_randomBlock();
     void preload_30_sync_other();
@@ -174,11 +165,11 @@ protected:
 
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     unsigned int entryListIndex;
-    std::vector<Map_semi> semi_loaded_map;
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
     #endif
     bool preload_industries_call;
+
     std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
 
     #ifdef CATCHCHALLENGER_CACHE_HPS

@@ -148,7 +148,7 @@ BaseServer::~BaseServer()
         CommonMap::flat_map_list=nullptr;
     }
     CommonMap::flat_map_list_size=0;
-    CommonMap::map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
+    CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
 
     if(CommonMap::flat_teleporter==nullptr)
     {
@@ -165,13 +165,6 @@ BaseServer::~BaseServer()
     }
     CommonMap::flat_simplified_map_list_size=0;//temp
     CommonMap::flat_simplified_map_list_size=0;//to save serialize
-
-    if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update!=NULL)
-    {
-        delete Map_server_MapVisibility_Simple_StoreOnSender::map_to_update;
-        Map_server_MapVisibility_Simple_StoreOnSender::map_to_update=NULL;
-    }
-    Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 }
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
