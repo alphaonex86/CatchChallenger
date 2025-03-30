@@ -100,12 +100,6 @@ void NormalServer::initAll()
 
 //////////////////////////////////////////// server starting //////////////////////////////////////
 
-void NormalServer::parseJustLoadedMap(const Map_to_send &map_to_send,const std::string &map_file)
-{
-    Q_UNUSED(map_to_send);
-    Q_UNUSED(map_file);
-}
-
 void NormalServer::load_settings()
 {
     GlobalServerData::serverPrivateVariables.connected_players	= 0;

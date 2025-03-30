@@ -43,6 +43,32 @@ const void * CommonMap::indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index)
     return ((char *)flat_map_list)+index*flat_map_object_size;
 }
 
+void * CommonMap::indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index)
+{
+#ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(flat_map_list==nullptr)
+    {
+        std::cerr << "CommonMap::indexToMap() flat_map_list==nullptr" << std::endl;
+        abort();
+    }
+    if(flat_map_object_size<=sizeof(CommonMap))
+    {
+        std::cerr << "CommonMap::indexToMap() map_object_size<=sizeof(CommonMap) " << sizeof(CommonMap) << std::endl;
+        abort();
+    }
+    if(flat_map_list_size<=0)
+    {
+        std::cerr << "CommonMap::indexToMap() flat_map_list_size<=0" << std::endl;
+        abort();
+    }
+    if(index>=flat_map_list_size)
+    {
+        std::cerr << "CommonMap::indexToMap() index>=flat_map_list_size the check have to be done at index creation" << std::endl;
+        abort();
+    }
+#endif
+    return ((char *)flat_map_list)+index*flat_map_object_size;
+}
 
 template<class MapType>
 void CommonMap::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
@@ -112,6 +138,7 @@ void CommonMap::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vect
 
                 Map_semi map_semi;
                 map_semi.map				= mapServer;
+                map_semi.file=fileName;
 
                 if(map_temp.map_to_send.border.top.fileName.size()>0)
                 {
@@ -168,6 +195,7 @@ void CommonMap::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vect
 
                 Map_semi map_semi;
                 map_semi.map				= mapServer;
+                map_semi.file=fileName;
 
                 map_semi.old_map=map_temp.map_to_send;
 
@@ -497,4 +525,7 @@ void CommonMap::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vect
             currentTempMap.border.right.y_offset=0;
         index++;
     }
+
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    std::cout << semi_loaded_map.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 }

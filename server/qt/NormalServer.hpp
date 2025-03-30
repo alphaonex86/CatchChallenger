@@ -96,8 +96,6 @@ signals:
     void new_player_is_connected(const Player_private_and_public_informations &player);
     void player_is_disconnected(const std::string &pseudo);
     void new_chat_message(const std::string &pseudo,const Chat_type &type,const std::string &text);
-protected:
-    virtual void parseJustLoadedMap(const Map_to_send &map_to_send,const std::string &map_file);
 };
 }
 

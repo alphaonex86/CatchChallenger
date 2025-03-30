@@ -33,7 +33,7 @@ void Client::sendNewEvent(char * const data, const uint32_t &size)
     queryNumberList.pop_back();
 }
 
-void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, constuint8_t &x, constuint8_t &y, const Orientation &orientation)
 {
     if(queryNumberList.empty())
     {
@@ -41,7 +41,7 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
         return;
     }
     PlayerOnMap teleportationPoint;
-    teleportationPoint.map=map;
+    teleportationPoint.map=mapIndex;
     teleportationPoint.x=x;
     teleportationPoint.y=y;
     teleportationPoint.orientation=orientation;
@@ -53,33 +53,24 @@ void Client::teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*CO
     registerOutputQuery(queryNumberList.back(),0xE1);
     queryNumberList.pop_back();
 
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+    if(CommonMap::flat_map_list_size<=255)
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/1+1+1+1);//set the dynamic size
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=static_cast<uint8_t>(map->id);
+        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=static_cast<uint8_t>(mapIndex->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=(uint8_t)orientation;
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/1+1+1+1);
     }
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+    else
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/2+1+1+1);//set the dynamic size
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(map->id);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(mapIndex->id);
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
 
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/2+1+1+1);
-    }
-    else
-    {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/4+1+1+1);//set the dynamic size
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole32(map->id);
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=x;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+5]=y;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+6]=(uint8_t)orientation;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/4+1+1+1);
     }
 }
 

@@ -305,7 +305,6 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static Direction	temp_direction;
     static std::unordered_map<uint32_t,Client *> playerById;
     static std::unordered_map<ZONE_TYPE,std::vector<Client *> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
@@ -404,7 +403,7 @@ private:
     void purgeReadBuffer();
 
     void sendNewEvent(char * const data, const uint32_t &size);
-    void teleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    void teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     void sendTradeRequest(char * const data,const uint32_t &size);
     void sendBattleRequest(char * const data,const uint32_t &size);
 
@@ -456,7 +455,7 @@ private:
     void useObject(const uint8_t &query_id,const uint16_t &itemId);
     bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition) override;
     //teleportation
-    void receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    void receiveTeleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     //shop
     void getShopList(const uint8_t &query_id);
     void buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price);
@@ -544,8 +543,8 @@ private:
     bool isInBattle() const override;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
-    bool botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
-    bool checkFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool botFightCollision(const CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    bool checkFightCollision(const CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(Client * otherPlayerBattle);
     void saveAllMonsterPosition();
 
@@ -782,8 +781,8 @@ protected:
     void messageParsingLayer(const std::string &message) const override;
     //map move
     virtual bool singleMove(const Direction &direction) override;
-    virtual void put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
-    virtual void teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    virtual void put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    virtual void teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
     virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
     virtual void extraStop() = 0;
 };

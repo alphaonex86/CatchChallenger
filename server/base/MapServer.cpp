@@ -63,7 +63,7 @@ void MapServer::check6B(const char * const data,const unsigned int size)
             pos+=sizeof(uint8_t);
             mapId=mapTempId;
         }
-        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+        else
         {
             if((size-pos)<(unsigned int)sizeof(uint16_t))
             {
@@ -74,17 +74,6 @@ void MapServer::check6B(const char * const data,const unsigned int size)
             uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
             mapId=mapTempId;
-        }
-        else
-        {
-            if((size-pos)<(unsigned int)sizeof(uint32_t))
-            {
-                std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                abort();
-                return;
-            }
-            mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-            pos+=sizeof(uint32_t);
         }
         (void)mapId;
 

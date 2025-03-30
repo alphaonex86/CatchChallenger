@@ -6,6 +6,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 #include <vector>
 #include <time.h>
@@ -82,22 +83,29 @@ void BaseServer::unload_the_bots()
 
 void BaseServer::unload_the_map()
 {
-    semi_loaded_map.clear();
-    auto i=GlobalServerData::serverPrivateVariables.map_list.begin();
-    while (i != GlobalServerData::serverPrivateVariables.map_list.end())
+    if(CommonMap::flat_map_list!=nullptr)
     {
-        CommonMap::removeParsedLayer(i->second->parsed_layer);
-        delete i->second;
-        ++i;
+        delete reinterpret_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(CommonMap::flat_map_list);
+        CommonMap::flat_map_list=nullptr;
     }
-    GlobalServerData::serverPrivateVariables.map_list.clear();
-    DictionaryServer::dictionary_map_database_to_internal.clear();
-    if(GlobalServerData::serverPrivateVariables.flat_map_list!=NULL)
+    CommonMap::flat_map_list_size=0;
+    CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
+
+    if(CommonMap::flat_teleporter!=nullptr)
     {
-        delete GlobalServerData::serverPrivateVariables.flat_map_list;
-        GlobalServerData::serverPrivateVariables.flat_map_list=NULL;
+        delete CommonMap::flat_teleporter;
+        CommonMap::flat_teleporter=nullptr;
     }
-    botIdLoaded.clear();
+    CommonMap::flat_teleporter_list_size=0;//temp, used as size when finish
+
+    if(CommonMap::flat_simplified_map!=nullptr)
+    {
+        delete CommonMap::flat_simplified_map;
+        CommonMap::flat_simplified_map=nullptr;
+    }
+    CommonMap::flat_simplified_map_list_size=0;//temp, used as size when finish
+
+    mapPathToId.clear();
 }
 
 void BaseServer::unload_the_skin()
