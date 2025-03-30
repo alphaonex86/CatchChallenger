@@ -16,7 +16,7 @@ public:
     virtual ~MapBasicMove();
     //info linked
 
-    CommonMap *map;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     COORD_TYPE x,y;
     Direction last_direction;
 
@@ -26,9 +26,9 @@ public:
     COORD_TYPE getY() const;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    virtual void put_on_the_map(CommonMap * const map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
+    virtual void put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation);
     virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction);
-    virtual void teleportValidatedTo(CommonMap * const map, const uint8_t &x, const uint8_t &y, const Orientation &orientation);
+    virtual void teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_t &x, const uint8_t &y, const Orientation &orientation);
 protected:
     //normal management related
     virtual void errorOutput(const std::string &errorString);

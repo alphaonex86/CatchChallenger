@@ -10,7 +10,7 @@ class DictionaryServer
 {
 public:
     //used at runtime (at player loading)
-    static std::vector<MapServer *> dictionary_map_database_to_internal;
+    static std::vector<uint16_t> dictionary_map_database_to_internal;//65535 not found
 };
 }
 

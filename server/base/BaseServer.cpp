@@ -21,10 +21,6 @@ bool BaseServer::load_next_city_capture()
     return true;
 }
 
-void BaseServer::parseJustLoadedMap(const Map_to_send &,const std::string &)
-{
-}
-
 bool BaseServer::initialize_the_database()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

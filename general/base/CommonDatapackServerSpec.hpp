@@ -14,7 +14,7 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
-    void parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    void parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
@@ -23,9 +23,9 @@ public:
     std::vector<ServerSpecProfile> &get_serverProfileList_rw();
     const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > &get_monsterDrops() const;
     const std::unordered_map<std::string,ZONE_TYPE> &get_zoneToId() const;
-    std::unordered_map<std::string,ZONE_TYPE> &get_zoneToId_rw();
+    std::unordered_map<std::string,ZONE_TYPE> &get_zoneToId_rw();//doing by server see BaseServerLoad.cpp
     const std::vector<std::string> &get_idToZone() const;
-    std::vector<std::string> &get_idToZone_rw();
+    std::vector<std::string> &get_idToZone_rw();//doing by server see BaseServerLoad.cpp
 protected:
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
     std::vector<ServerSpecProfile> serverProfileList;

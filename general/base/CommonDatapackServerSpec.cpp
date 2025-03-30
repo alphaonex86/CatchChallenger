@@ -23,7 +23,7 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
     parsingSpec=false;
 }
 
-void CommonDatapackServerSpec::parseDatapack(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     if(!CommonDatapack::commonDatapack.isParsedContent())
     {

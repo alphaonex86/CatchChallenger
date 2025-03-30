@@ -72,7 +72,6 @@ protected:
     void SQL_common_load_finish();
     #endif
 protected:
-    virtual void parseJustLoadedMap(const Map_to_send &,const std::string &);
     void closeDB();
     //starting function
     virtual void loadAndFixSettings();
