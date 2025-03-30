@@ -9,9 +9,10 @@ using namespace CatchChallenger;
 
 bool Client::checkCollision()
 {
+    const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
     if(!MoveOnTheMap::isWalkable(*map,x,y))
     {
-        errorOutput("move at "+std::to_string(temp_direction)+", can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+map->map_file);
+        errorOutput("can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+std::to_string(mapIndex));
         return false;
     }
     else
@@ -85,9 +86,10 @@ std::string Client::orientationToStringToSave(const Orientation &orientation)
  * Because the ClientMapManagement can be totaly satured by the square complexity
  * that's allow to continue the player to connect and play
  * the overhead for the network it just at the connexion */
-void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
+void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
-    MapBasicMove::put_on_the_map(map,x,y,orientation);
+    CommonMap *map=static_cast<CommonMap *>(CommonMap::indexToMapWritable(mapIndex));
+    MapBasicMove::put_on_the_map(mapIndex,x,y,orientation);
     insertClientOnMap(map);
 
     uint32_t posOutput=0;
@@ -101,20 +103,15 @@ void Client::put_on_the_map(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE 
     posOutput+=1;
 
     //send the current map of the player
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+    if(CommonMap::flat_map_list_size<=255)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map->id);
         posOutput+=1;
     }
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+    else
     {
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
         posOutput+=2;
-    }
-    else
-    {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(map->id);
-        posOutput+=4;
     }
     //send only for this player
     if(GlobalServerData::serverSettings.max_players<=255)
@@ -307,18 +304,18 @@ void Client::removeFirstEventInQueue()
     }
 }
 
-void Client::receiveTeleportTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void Client::receiveTeleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
-    teleportTo(map,x,y,orientation);
+    teleportTo(mapIndex,x,y,orientation);
 }
 
-void Client::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void Client::teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
-    normalOutput("teleportValidatedTo("+map->map_file+
+    normalOutput("teleportValidatedTo("+std::to_string(mapIndex)+
                                     ","+std::to_string(x)+
                                     ","+std::to_string(y)+
                                     ","+std::to_string((uint8_t)orientation)+")");
-    MapBasicMove::teleportValidatedTo(map,x,y,orientation);
+    MapBasicMove::teleportValidatedTo(mapIndex,x,y,orientation);
     if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
 }

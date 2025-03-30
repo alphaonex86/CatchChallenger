@@ -53,11 +53,11 @@ void Client::sendLocalChatText(const std::string &text)
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
-    const size_t &size=static_cast<MapServer *>(map)->clientsForBroadcast.size();
+    const size_t &size=static_cast<MapServer *>(map)->clientsForLocalBroadcast.size();
     unsigned int index=0;
     while(index<size)
     {
-        Client * const client=static_cast<MapServer *>(map)->clientsForBroadcast.at(index);
+        Client * const client=static_cast<MapServer *>(map)->clientsForLocalBroadcast.at(index);
         if(client!=this)
             client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         index++;
@@ -71,7 +71,7 @@ void Client::insertClientOnMap(CommonMap *map)
         normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast already have this");
     else
     #endif
-    static_cast<MapServer *>(map)->clientsForBroadcast.push_back(this);
+    static_cast<MapServer *>(map)->clientsForLocalBroadcast.push_back(this);
 }
 
 void Client::removeClientOnMap(CommonMap *map)
@@ -80,7 +80,7 @@ void Client::removeClientOnMap(CommonMap *map)
     if(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)!=1)
         normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: "+std::to_string(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)));
     #endif
-    vectorremoveOne(static_cast<MapServer *>(map)->clientsForBroadcast,this);
+    vectorremoveOne(static_cast<MapServer *>(map)->clientsForLocalBroadcast,this);
 
     map=NULL;
 }

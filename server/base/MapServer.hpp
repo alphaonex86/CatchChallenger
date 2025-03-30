@@ -38,7 +38,7 @@ public:
     #endif
 
     //at last to improve the other variable cache
-    std::vector<Client *> clientsForBroadcast;//frequent remove/insert due to map change
+    std::vector<Client *> clientsForLocalBroadcast;//frequent remove/insert due to map change
     class ItemOnMap
     {
     public:

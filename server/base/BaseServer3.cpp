@@ -129,7 +129,6 @@ void BaseServer::preload_1_the_data()
         preload_7_sync_the_skin();
         preload_8_sync_monsters_drops();
         preload_9_sync_the_map();
-        CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(GlobalServerData::serverSettings.datapack_basePath,CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
         mapPathToId.clear();
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;

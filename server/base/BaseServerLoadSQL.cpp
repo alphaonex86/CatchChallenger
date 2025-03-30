@@ -7,6 +7,7 @@
 #endif
 #include <iostream>
 
+#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -25,7 +26,7 @@ void BaseServer::preload_12_async_dictionary_map()
     #else
     #error Define what do here
     #endif
-    if(GlobalServerData::serverPrivateVariables.map_list.size()==0)
+    if(CommonMap::flat_map_list_size==0)
     {
         std::cerr << "No map to list" << std::endl;
         abort();
@@ -119,15 +120,16 @@ void BaseServer::preload_dictionary_map_return()
                 unsigned int index=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size());
                 while(index<=databaseMapId)
                 {
-                    DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
+                    DictionaryServer::dictionary_map_database_to_internal.push_back(65535);
                     index++;
                 }
             }
-            if(GlobalServerData::serverPrivateVariables.map_list.find(map)!=GlobalServerData::serverPrivateVariables.map_list.end())
+            //this is step 12, mapPathToId is clear at step 15
+            if(mapPathToId.find(map)!=mapPathToId.end())
             {
-                DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map));
+                DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=mapPathToId.at(map);
                 foundMap.insert(map);
-                static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list.at(map))->id_db=databaseMapId;
+                static_cast<MapServer *>(CommonMap::indexToMapWritable(mapPathToId.at(map)))->id_db=databaseMapId;
             }
             else
                 obsoleteMap++;
@@ -139,14 +141,14 @@ void BaseServer::preload_dictionary_map_return()
     #else
     #error Define what do here
     #endif
-    if(obsoleteMap>0 && GlobalServerData::serverPrivateVariables.map_list.size()==0)
+    if(obsoleteMap>0 && mapPathToId.size()==0)
     {
         std::cerr << "Only obsolete map!" << std::endl;
         abort();
     }
     if(obsoleteMap>0)
         std::cerr << "/!\\ Obsolete map, can due to start previously start with another mainDatapackCode" << std::endl;
-    std::vector<std::string> map_list_flat=unordered_map_keys_vector(GlobalServerData::serverPrivateVariables.map_list);
+    std::vector<std::string> map_list_flat=unordered_map_keys_vector(mapPathToId);
     std::sort(map_list_flat.begin(),map_list_flat.end());
     unsigned int index=0;
     while(index<map_list_flat.size())
@@ -190,9 +192,9 @@ void BaseServer::preload_dictionary_map_return()
             #error Define what do here
             #endif
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
-                DictionaryServer::dictionary_map_database_to_internal.push_back(NULL);
-            DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map]);
-            static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.map_list[map])->id_db=maxDatabaseMapId;
+                DictionaryServer::dictionary_map_database_to_internal.push_back(65535);
+            DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=mapPathToId.at(map);
+            static_cast<MapServer *>(CommonMap::indexToMapWritable(mapPathToId.at(map)))->id_db=maxDatabaseMapId;
         }
         index++;
     }
@@ -448,7 +450,7 @@ void BaseServer::preload_industries_return()
     if(out_file!=nullptr)
     {
         //save map content to cache
-        uint32_t mapListSize=GlobalServerData::serverPrivateVariables.map_list.size();
+        CATCHCHALLENGER_TYPE_MAPID mapListSize=mapPathToId.size();
         hps::to_stream(mapListSize, *out_file);
 
         /*std::unordered_map<const CommonMap *,std::string> map_list_reverse;
@@ -461,53 +463,31 @@ void BaseServer::preload_industries_return()
         uint32_t pathSize=0;
         uint32_t mapSize=0;
         size_t lastSize=out_file->tellp();
-        for(unsigned int i=0; i<mapListSize; i++)
+
         {
-            const MapServer * const map=static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[i]);
-            /*const std::string &string=map_list_reverse.at(static_cast<const CommonMap *>(map));
-            const uint32_t &id=id_map_to_map_reverse.at(string);*/
-
-            //std::cerr << "map id " << id << " at " << out_file->tellp() << std::endl;
-
-            /*hps::to_stream(id, *out_file);
-            idSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-
-            //std::cerr << "map string " << string << " at " << out_file->tellp() << std::endl;
-
-            hps::to_stream(string, *out_file);
-            pathSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();*/
-
-            //std::cerr << "map at " << out_file->tellp() << " map->pointOnMap_Item.size(): " << std::to_string(map->pointOnMap_Item.size()) << std::endl;
-            /*for (const auto& kv : map->pointOnMap_Item)
-            {
-                const MapServer::ItemOnMap &item=kv.second;
-                //std::cerr << "Loaded map item: " << std::to_string(item.item) << " item.pointOnMapDbCode: " << std::to_string(item.pointOnMapDbCode) << " item.infinite: " << std::to_string(item.infinite) << std::endl;
-            }*/
-
-            hps::to_stream(*map, *out_file);
-            mapSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
-
-            //std::cerr << "map end at " << out_file->tellp() << std::endl;
+            hps::to_stream(CommonMap::flat_map_list_size, *out_file);
+            hps::to_stream(CommonMap::flat_map_object_size, *out_file);
+            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+            out_file->write((char *)CommonMap::flat_map_list,s);
         }
 
-        /*std::cout << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal: " << DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size() << std::endl;
-        for(unsigned int i=0; i<DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size(); i++)
         {
-            const DictionaryServer::MapAndPointItem &t=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(i);
-            std::cerr << t.datapack_index_item << " " << t.map->id << " " << t.x << " " << t.y << " " << std::endl;
-        }*/
+            hps::to_stream(CommonMap::flat_teleporter_list_size, *out_file);
+            const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
+            out_file->write((char *)CommonMap::flat_teleporter,s);
+        }
+
+        {
+            hps::to_stream(CommonMap::flat_simplified_map_list_size, *out_file);
+            out_file->write((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
+        }
 
         std::cout << "map id size: " << idSize << "B" << std::endl;
         std::cout << "map pathSize size: " << pathSize << "B" << std::endl;
         std::cout << "map size: " << mapSize << "B" << std::endl;
 
-        uint32_t dbSize=0;
+        CATCHCHALLENGER_TYPE_MAPID dbSize=0;
         lastSize=out_file->tellp();
-
-        std::unordered_map<void *,int32_t> pointer_to_pos;
-        pointer_to_pos[nullptr]=-1;
-        for(int32_t i=0; i<(int32_t)GlobalServerData::serverPrivateVariables.map_list.size(); i++)
-            pointer_to_pos[GlobalServerData::serverPrivateVariables.flat_map_list[i]]=i;
 
         //the player load well without this, is loaded by another way: std::vector<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
 

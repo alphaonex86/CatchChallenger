@@ -246,7 +246,7 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool Client::botFightCollision(CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool Client::botFightCollision(const CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
     {

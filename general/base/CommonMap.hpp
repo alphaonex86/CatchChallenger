@@ -54,13 +54,16 @@ public:
     {
         //conversion x,y to position: x+y*width
         CommonMap* map;
+        std::string file;
         Map_semi_border border;
         Map_to_send old_map;
     };
 
     Map_Border border;
 
-    CATCHCHALLENGER_TYPE_TELEPORTERID teleporter_first_index;//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+    /*for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+     * to have map index do: flat_teleporter+teleporter_first_index */
+    CATCHCHALLENGER_TYPE_TELEPORTERID teleporter_first_index;
     uint8_t teleporter_list_size;//limit to 127 max to prevent statured server
 
     //std::string map_file;-> use heap and dynamic size generate big serialiser overhead, sloud be in debug only or for cache datapack debugging
@@ -103,6 +106,7 @@ public:
     static CATCHCHALLENGER_TYPE_MAPID flat_map_list_size;
     static size_t flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
     static inline const void * indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index);
+    static inline void * indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index);
 
     static Teleporter*                          flat_teleporter;
     static CATCHCHALLENGER_TYPE_TELEPORTERID    flat_teleporter_list_size;//temp, used as size when finish

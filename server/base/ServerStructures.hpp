@@ -51,7 +51,7 @@ class PlayerUpdaterBase;
 
 struct Map_player_info
 {
-    CommonMap *map;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     int x,y;
     std::string skin;
 };
@@ -73,7 +73,7 @@ enum QuestAction : uint8_t
 class PlayerOnMap
 {
 public:
-    CommonMap* map;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     COORD_TYPE x;
     COORD_TYPE y;
     Orientation orientation;

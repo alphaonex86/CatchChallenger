@@ -57,20 +57,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
         // can be only this map with this algo, then 1 map
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+        if(CommonMap::flat_map_list_size<=255)
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
             posOutput+=1;
         }
-        else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+        else
         {
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
             posOutput+=2;
-        }
-        else
-        {
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
-            posOutput+=4;
         }
         if(GlobalServerData::serverSettings.max_players<=255)
         {
@@ -153,20 +148,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert(unsigned int &cl
                 /* can be only this map with this algo, then 1 map */
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
-                if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+                if(CommonMap::flat_map_list_size<=255)
                 {
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                     posOutput+=1;
                 }
-                else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+                else
                 {
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
                     posOutput+=2;
-                }
-                else
-                {
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
-                    posOutput+=4;
                 }
                 if(GlobalServerData::serverSettings.max_players<=255)
                 {
@@ -279,20 +269,15 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert_exclude()
                 /* can be only this map with this algo, then 1 map */
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
-                if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+                if(CommonMap::flat_map_list_size<=255)
                 {
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                     posOutput+=1;
                 }
-                else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+                else
                 {
                     *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(id);
                     posOutput+=2;
-                }
-                else
-                {
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(id);
-                    posOutput+=4;
                 }
                 if(GlobalServerData::serverSettings.max_players<=255)
                 {
@@ -517,7 +502,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_header(ch
 void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_map(char *buffer, int &posOutput)
 {
     //mapId
-    if(GlobalServerData::serverPrivateVariables.map_list.size()<=255)
+    if(CommonMap::flat_map_list_size<=255)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(buffer[0x00]!=0x6b)
@@ -536,7 +521,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_map(char 
         }
         #endif
     }
-    else if(GlobalServerData::serverPrivateVariables.map_list.size()<=65535)
+    else
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(buffer[0x00]!=0x6b)
@@ -547,25 +532,6 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_map(char 
         #endif
         *reinterpret_cast<uint16_t *>(buffer+posOutput)=htole16(id);
         posOutput+=2;
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(buffer[0x00]!=0x6b)
-        {
-            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
-        }
-        #endif
-    }
-    else
-    {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(buffer[0x00]!=0x6b)
-        {
-            std::cerr << "corrupted buffer into " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
-        }
-        #endif
-        *reinterpret_cast<uint32_t *>(buffer+posOutput)=htole32(id);
-        posOutput+=4;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(buffer[0x00]!=0x6b)
         {

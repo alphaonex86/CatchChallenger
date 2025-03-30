@@ -203,7 +203,8 @@ void BaseServer::preload_11_sync_the_players()
         Client::simplifiedIdList.push_back(index);
         index++;
     }
-    std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
+    //deprecated, then just skip
+    //std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
 }
 
 void BaseServer::preload_the_visibility_algorithm()
