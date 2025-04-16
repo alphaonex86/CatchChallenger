@@ -69,7 +69,6 @@ SOURCES += \
     $$PWD/base/TinyXMLSettings.cpp \
     $$PWD/base/DatabaseFunction.cpp \
     $$PWD/base/StringWithReplacement.cpp \
-    $$PWD/base/StaticText.cpp \
     $$PWD/base/PreparedStatementUnit.cpp \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \

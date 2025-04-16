@@ -34,7 +34,6 @@ HEADERS += \
     $$PWD/base/TinyXMLSettings.hpp \
     $$PWD/base/DatabaseFunction.hpp \
     $$PWD/base/StringWithReplacement.hpp \
-    $$PWD/base/StaticText.hpp \
     $$PWD/base/GameServerVariables.hpp \
     $$PWD/base/PreparedStatementUnit.hpp \
     $$PWD/crafting/MapServerCrafting.hpp
