@@ -75,7 +75,6 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/CommonSettingsServer.hpp \
     $$PWD/base/GeneralType.hpp \
     $$PWD/base/cpp11addition.hpp \
-    $$PWD/base/GeneralStructuresXml.hpp \
     $$PWD/base/PortableEndian.hpp \
     $$PWD/fight/FightLoader.hpp \
     $$PWD/fight/CommonFightEngine.hpp \

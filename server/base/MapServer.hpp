@@ -101,6 +101,7 @@ public:
               buf << x.first << (uint8_t)x.second;
         buf << id_db << zone << pointOnMap_Item;
         buf << botFights;
+        buf << shopByIndex;
         buf << monsterDrops;
     }
     static CommonMap * posToPointer(const CATCHCHALLENGER_TYPE_MAPID &mappos);
@@ -129,9 +130,9 @@ public:
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
         {
-            Shop s;
-            buf >> posXY >> s;
-            shops[posXY]=s;
+            uint8_t value;
+            buf >> posXY >> value;
+            shops[posXY]=value;
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
@@ -172,6 +173,7 @@ public:
         }
         buf >> id_db >> zone >> pointOnMap_Item;
         buf >> botFights;
+        buf >> shopByIndex;
         buf >> monsterDrops;
     }
     #endif

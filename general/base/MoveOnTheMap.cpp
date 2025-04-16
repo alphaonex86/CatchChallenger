@@ -498,7 +498,7 @@ MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, cons
     return map.parsed_layer.monstersCollisionList.at(val);
 }
 
-bool MoveOnTheMap::move(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+bool MoveOnTheMap::move(const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(direction)
@@ -518,7 +518,7 @@ bool MoveOnTheMap::move(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapInde
     return true;
 }
 
-bool MoveOnTheMap::moveWithoutTeleport(Direction direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+bool MoveOnTheMap::moveWithoutTeleport(const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     switch(direction)
