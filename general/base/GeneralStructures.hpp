@@ -407,27 +407,6 @@ public:
     #endif
 };
 
-/* map related */
-struct Map_semi_border_content_top_bottom
-{
-    std::string fileName;
-    int16_t x_offset;//can be negative, it's an offset!
-};
-
-struct Map_semi_border_content_left_right
-{
-    std::string fileName;
-    int16_t y_offset;//can be negative, it's an offset!
-};
-
-struct Map_semi_border
-{
-    Map_semi_border_content_top_bottom top;
-    Map_semi_border_content_top_bottom bottom;
-    Map_semi_border_content_left_right left;
-    Map_semi_border_content_left_right right;
-};
-
 enum MapConditionType : uint8_t
 {
     MapConditionType_None=0x00,

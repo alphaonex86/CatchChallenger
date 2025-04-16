@@ -38,6 +38,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
     }
     if(!cancel)
     {
+        remake
         if(captureCityInProgress())
         {
             errorOutput("Try capture city when is already into that's");
@@ -51,80 +52,19 @@ void Client::waitingForCityCaputre(const bool &cancel)
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("ask zonecapture at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
         #endif
-        CommonMap *map=this->map;
-        uint8_t x=this->x;
-        uint8_t y=this->y;
-        //resolv the object
-        Direction direction=getLastDirection();
-        switch(direction)
+        COORD_TYPE new_x=0,new_y=0;
+        const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+        if(new_map==nullptr)
         {
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-                direction=lookToMove(direction);
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("waitingForCityCaputre() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
-                    return;
-                }
-            break;
-            default:
-            errorOutput("Wrong direction to use a zonecapture");
+            errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
             return;
         }
-        const MapServer * const mapServer=static_cast<MapServer*>(map);
         const std::pair<uint8_t,uint8_t> pos(x,y);
         //check if is zonecapture
         if(mapServer->zoneCapture.find(pos)==mapServer->zoneCapture.cend())
         {
-            Direction direction=getLastDirection();
-            switch(direction)
-            {
-                /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-                case Direction_look_at_top:
-                case Direction_look_at_right:
-                case Direction_look_at_bottom:
-                case Direction_look_at_left:
-                direction=lookToMove(direction);
-                [[gnu::fallthrough]];
-                case Direction_move_at_top:
-                case Direction_move_at_right:
-                case Direction_move_at_bottom:
-                case Direction_move_at_left:
-                    if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                    {
-                        if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                        {
-                            errorOutput("waitingForCityCaputre() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        errorOutput("No valid map in this direction");
-                        return;
-                    }
-                break;
-                default:
-                errorOutput("Wrong direction to use a zonecapture");
-                return;
-            }
-            const MapServer * const mapServer=static_cast<MapServer*>(map);
-            const std::pair<uint8_t,uint8_t> pos(x,y);
-            if(mapServer->zoneCapture.find(pos)==mapServer->zoneCapture.cend())
-            {
-                errorOutput("no zonecapture point in this direction");
-                return;
-            }
+            errorOutput("no zonecapture point in this direction");
+            return;
         }
         //send the zone capture
         const ZONE_TYPE &zoneId=static_cast<MapServer*>(map)->zoneCapture.at(std::pair<uint8_t,uint8_t>(x,y));

@@ -7,96 +7,23 @@ using namespace CatchChallenger;
 
 void Client::getShopList(const uint8_t &query_id)
 {
+    remake
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
-    CommonMap *map=this->map;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
-    //resolv the object
-    Direction direction=getLastDirection();
-    switch(direction)
+    COORD_TYPE new_x=0,new_y=0;
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    if(new_map==nullptr)
     {
-        case Direction_look_at_top:
-        case Direction_look_at_right:
-        case Direction_look_at_bottom:
-        case Direction_look_at_left:
-            direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                {
-                    errorOutput("getShopList() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        default:
-        errorOutput("Wrong direction to use a shop");
+        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
-    const MapServer * const mapServer=static_cast<MapServer*>(map);
-    const std::pair<uint8_t,uint8_t> pos(x,y);
     Shop shop;
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            direction=lookToMove(direction);
-            break;
-            default:
-            break;
-        }
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            case Direction_move_at_top:
-            case Direction_move_at_right:
-            case Direction_move_at_bottom:
-            case Direction_move_at_left:
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("getShopList() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
-                    return;
-                }
-            break;
-            default:
-            break;
-        }
-        {
-            const MapServer * const mapServer=static_cast<MapServer*>(map);
-            const std::pair<uint8_t,uint8_t> pos(x,y);
-            if(mapServer->shops.find(pos)==mapServer->shops.cend())
-            {
-                errorOutput("not shop into this direction");
-                return;
-            }
-            else
-                shop=mapServer->shops.at(pos);
-        }
+        errorOutput("not shop into this direction");
+        return;
     }
     else
         shop=mapServer->shops.at(pos);
@@ -154,94 +81,19 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
         errorOutput("quantity wrong: "+std::to_string(quantity));
         return;
     }
-    CommonMap *map=this->map;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
-    //resolv the object
-    Direction direction=getLastDirection();
-    switch(direction)
+    COORD_TYPE new_x=0,new_y=0;
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    if(new_map==nullptr)
     {
-        case Direction_look_at_top:
-        case Direction_look_at_right:
-        case Direction_look_at_bottom:
-        case Direction_look_at_left:
-            direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                {
-                    errorOutput("buyObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        default:
-        errorOutput("Wrong direction to use a shop");
+        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
-    const MapServer * const mapServer=static_cast<MapServer*>(map);
-    const std::pair<uint8_t,uint8_t> pos(x,y);
     std::pair<uint8_t,uint8_t> shop_pos(x,y);
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        //not shop
-        Direction direction=getLastDirection();
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            direction=lookToMove(direction);
-            break;
-            default:
-            return;
-        }
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            case Direction_move_at_top:
-            case Direction_move_at_right:
-            case Direction_move_at_bottom:
-            case Direction_move_at_left:
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("buyObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
-                    return;
-                }
-            break;
-            default:
-            errorOutput("Wrong direction to use a shop");
-            return;
-        }
-        const MapServer * const mapServer=static_cast<MapServer*>(map);
-        const std::pair<uint8_t,uint8_t> pos(x,y);
-        if(mapServer->shops.find(pos)==mapServer->shops.cend())
-        {
-            errorOutput("not shop into this direction");
-            return;
-        }
-        else
-            shop_pos=pos;
+        errorOutput("not shop into this direction");
+        return;
     }
     else
         shop_pos=pos;
@@ -330,93 +182,18 @@ void Client::sellObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM
         errorOutput("quantity wrong: "+std::to_string(quantity));
         return;
     }
-    CommonMap *map=this->map;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
-    //resolv the object
-    Direction direction=getLastDirection();
-    switch(direction)
+    COORD_TYPE new_x=0,new_y=0;
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    if(new_map==nullptr)
     {
-        case Direction_look_at_top:
-        case Direction_look_at_right:
-        case Direction_look_at_bottom:
-        case Direction_look_at_left:
-            direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                {
-                    errorOutput("sellObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        default:
-        errorOutput("Wrong direction to use a shop");
+        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
-    const MapServer * const mapServer=static_cast<MapServer*>(map);
-    const std::pair<uint8_t,uint8_t> pos(x,y);
-    std::pair<uint8_t,uint8_t> shop_pos(x,y);
     //check if is shop
     if(mapServer->shops.find(pos)==mapServer->shops.cend())
     {
-        Direction direction=getLastDirection();
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            direction=lookToMove(direction);
-            break;
-            default:
-            return;
-        }
-        switch(direction)
-        {
-            /// \warning: Not loop but move here due to first transform set: direction=lookToMove(direction);
-            case Direction_look_at_top:
-            case Direction_look_at_right:
-            case Direction_look_at_bottom:
-            case Direction_look_at_left:
-            case Direction_move_at_top:
-            case Direction_move_at_right:
-            case Direction_move_at_bottom:
-            case Direction_move_at_left:
-                if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
-                {
-                    if(!MoveOnTheMap::move(direction,&map,&x,&y,false))
-                    {
-                        errorOutput("sellObject() Can't move at this direction from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                        return;
-                    }
-                }
-                else
-                {
-                    errorOutput("No valid map in this direction");
-                    return;
-                }
-            break;
-            default:
-            errorOutput("Wrong direction to use a shop");
-            return;
-        }
-        const MapServer * const mapServer=static_cast<MapServer*>(map);
-        const std::pair<uint8_t,uint8_t> pos(x,y);
-        if(mapServer->shops.find(pos)==mapServer->shops.cend())
-        {
-            errorOutput("not shop into this direction");
-            return;
-        }
-        else
-            shop_pos=pos;
+        errorOutput("not shop into this direction");
+        return;
     }
     else
         shop_pos=pos;

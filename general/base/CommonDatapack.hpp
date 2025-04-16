@@ -62,6 +62,10 @@ public:
     const ItemFull &get_items() const;
     const LayersOptions &get_layersOptions() const;
     const std::vector<Event> &get_events() const;
+    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> get_tempNameToItemId() const;
+    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> get_tempNameToSkillId() const;
+    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> get_tempNameToBuffId() const;
+    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> get_tempNameToMonsterId() const;
 
     const bool &get_monsterRateApplied() const;
     void set_monsterRateApplied(const bool &v);
@@ -141,14 +145,21 @@ private:
     bool isParsed;
     bool parsing;
     std::string datapackPath;
+    //to fill, used to resolv into file the name and not the id, more easy to edit the xml file, all in lowercase
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId;
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> tempNameToBuffId;
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> tempNameToSkillId;
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId;
 private:
     void parseTypes();
     void parseItems();
     void parsePlants();
     void parseCraftingRecipes();
     void parseBuff();
+    //have to be after buff to be able to resolve name to id
     void parseSkills();
     void parseEvents();
+    //have to be after skill and item to be able to resolve name to id
     void parseMonsters();
     void parseMonstersCollision();
     void parseMonstersEvolutionItems();

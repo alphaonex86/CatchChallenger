@@ -12,6 +12,19 @@ using namespace CatchChallenger;
 
 bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable)
 {
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
+    if(tempNameToItemId.empty())
+    {
+        std::cerr << "no item name loaded (abort)" << std::endl;
+        abort();
+    }
+    if(tempNameToMonsterId.empty())
+    {
+        std::cerr << "no monster name loaded (abort)" << std::endl;
+        abort();
+    }
+
     error.clear();
     Map_to_send map_to_send_temp;
     map_to_send_temp.border.bottom.x_offset=0;
@@ -894,7 +907,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadMonsterOnMapAndExtra(xmlExtra,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
+    loadMonsterOnMapAndExtra(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {
