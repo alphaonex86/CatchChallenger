@@ -352,6 +352,7 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                    {
                        if(strcmp(step->Attribute("type"),"shop")==0)
                        {
+                           Shop s;
                            const tinyxml2::XMLElement *product = step->FirstChildElement("product");
                            while(product!=NULL)
                            {
@@ -380,40 +381,24 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                                    }
                                    if(found)
                                    {
-                                       const Item &i=CommonDatapack::commonDatapack.get_items().item.at(item);
-                                       const uint32_t price=i.price;
+                                       const Item &i=CommonDatapack::commonDatapack.get_items().item.at(itemId);
+                                       uint32_t price=i.price;
                                        if(step->Attribute("overridePrice")!=NULL)
                                        {
                                            bool ok=false;
                                            const uint32_t tprice=stringtouint32(step->Attribute("overridePrice"),&ok);
                                            price=tprice;
                                        }
-
+                                       s.items[itemId]=price;
                                    }
                                }
                                product = product->NextSiblingElement("product");
                            }
-                           if(step->Attribute("shop")==NULL)
-                                qDebug() << (QStringLiteral("Has not attribute \"shop\": for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                            {
-                                const uint16_t shop=stringtouint16(step->Attribute("shop"),&ok);
-                                if(!ok)
-                                    qDebug() << (QStringLiteral("shop is not a number: for bot id: %1 (%2)")
-                                        .arg(botId).arg(QString::fromStdString(botFile)));
-                                else
-                                    parsedMap->logicalMap.shops[std::pair<uint8_t,uint8_t>(x,y)].push_back(shop);
-                            }
-                        }
-                        else if(strcmp(step->Attribute("type"),"learn")==0)
-                        {
-                            if(parsedMap->logicalMap.learn.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                logicalMap.learn.cend())
-                                qDebug() << (QStringLiteral("learn point already on the map: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                                parsedMap->logicalMap.learn.insert(std::pair<uint8_t,uint8_t>(x,y));
+                           if(!s.items.empty() && map_to_send.shops.find(botOnMap.point)==map_to_send.shops.cend())
+                           {
+                                map_to_send.shopByIndex.push_back(s);
+                                map_to_send.shops[botOnMap.point]=map_to_send.shopByIndex.size()-1;
+                           }
                         }
                         else if(strcmp(step->Attribute("type"),"heal")==0)
                         {
@@ -423,15 +408,6 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                                     .arg(botId).arg(QString::fromStdString(botFile)));
                             else
                                 parsedMap->logicalMap.heal.insert(std::pair<uint8_t,uint8_t>(x,y));
-                        }
-                        else if(strcmp(step->Attribute("type"),"market")==0)
-                        {
-                            if(parsedMap->logicalMap.market.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                logicalMap.market.cend())
-                                qDebug() << (QStringLiteral("market point already on the map: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                                parsedMap->logicalMap.market.insert(std::pair<uint8_t,uint8_t>(x,y));
                         }
                         else if(strcmp(step->Attribute("type"),"zonecapture")==0)
                         {

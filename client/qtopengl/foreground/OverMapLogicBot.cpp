@@ -229,11 +229,6 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         selectObject(ObjectType_Sell);*/
         return;
     }
-    else if(strcmp(stepXml->Attribute("type"),"learn")==0)
-    {
-        selectObject(ObjectType_MonsterToLearn);
-        return;
-    }
     else if(strcmp(stepXml->Attribute("type"),"heal")==0)
     {
         connexionManager->client->healAllMonsters();
@@ -334,19 +329,6 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         }
         ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
         updateTheWareHouseContent();
-        return;*/
-        abort();
-    }
-    else if(strcmp(stepXml->Attribute("type"),"market")==0)
-    {
-        /*ui->marketMonster->clear();
-        ui->marketObject->clear();
-        ui->marketOwnMonster->clear();
-        ui->marketOwnObject->clear();
-        ui->marketWithdraw->setVisible(false);
-        ui->marketStat->setText(tr("In waiting of market list"));
-        connexionManager->client->getMarketList();
-        ui->stackedWidget->setCurrentWidget(ui->page_market);
         return;*/
         abort();
     }

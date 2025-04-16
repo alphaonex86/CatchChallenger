@@ -342,7 +342,7 @@ Direction Client::lookToMove(const Direction &direction)
 }
 
 //return nullptr if can't move in this direction
-const MapServer * Client::mapAndPosIfMoveInLookingDirection(COORD_TYPE &x,COORD_TYPE &y)
+const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
 {
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
     CommonMap *map=indexToMap(mapIndex);
@@ -360,7 +360,20 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirection(COORD_TYPE &x,COORD_
             if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
             {
                 if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,false))
+                {
+                    CommonMap *map=indexToMap(mapIndex);
+                    if(!MoveOnTheMap::isWalkable(*map,x,y))
+                    {
+                        if(MoveOnTheMap::canGoTo(direction,*map,x,y,true))
+                        {
+                            if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,true))
+                            {}
+                        }
+                        else
+                            return nullptr;
+                    }
                     return nullptr;
+                }
             }
             else
                 return nullptr;

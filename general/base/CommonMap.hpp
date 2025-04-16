@@ -25,15 +25,13 @@ public:
      * after resolution the index is position (x+y*width)*/
     ParsedLayer parsed_layer;
 
-    std::unordered_map<uint8_t/*npc id*/,Shop> shopByIndex;//id is bot id to save what have win
+    std::vector<Shop> shopByIndex;
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight, on same to to have light load
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
 
-    /* in same map when:
-     * x,y validated if around have at least 1 walkable tile and have not same type at tile
-     * x,y+1 validated if is colision and +2 (same direction) is walkable tile and have not same type at tile */
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> shops;
+    // in same map
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*shop index*/,pairhash> shops;
     std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zoneCapture;//x,y bot to Map_loader::zoneNumber

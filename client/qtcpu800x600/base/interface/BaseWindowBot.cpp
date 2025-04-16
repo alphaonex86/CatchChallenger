@@ -239,11 +239,6 @@ void BaseWindow::goToBotStep(const uint8_t &step)
         selectObject(ObjectType_Sell);
         return;
     }
-    else if(strcmp(stepXml->Attribute("type"),"learn")==0)
-    {
-        selectObject(ObjectType_MonsterToLearn);
-        return;
-    }
     else if(strcmp(stepXml->Attribute("type"),"heal")==0)
     {
         client->healAllMonsters();
