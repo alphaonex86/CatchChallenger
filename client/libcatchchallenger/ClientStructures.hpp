@@ -64,6 +64,16 @@ struct ServerForSelection
     uint32_t lastConnect;
 };
 
+//permanent bot on client, temp to parse on the server
+struct Bot
+{
+    std::unordered_map<uint8_t,const tinyxml2::XMLElement *> step;
+    std::unordered_map<std::string,std::string> properties;
+    uint8_t botId;
+    std::string skin;
+    std::string name;
+};
+
 struct MarketObject
 {
     uint32_t marketObjectUniqueId;

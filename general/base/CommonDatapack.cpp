@@ -79,7 +79,7 @@ void CommonDatapack::parseSkins()
 void CommonDatapack::parseItems()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
-    items=DatapackGeneralLoader::loadItems(datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
+    items=DatapackGeneralLoader::loadItems(tempNameToItemId,datapackPath+DATAPACK_BASE_PATH_ITEM,monsterBuffs);
     std::cout << items.item.size() << " items(s) loaded" << std::endl;
     std::cout << items.trap.size() << " trap(s) loaded" << std::endl;
     #endif
@@ -113,14 +113,15 @@ void CommonDatapack::parseReputation()
 void CommonDatapack::parseBuff()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    monsterBuffs=FightLoader::loadMonsterBuff(datapackPath+DATAPACK_BASE_PATH_BUFF);
+    monsterBuffs=FightLoader::loadMonsterBuff(tempNameToBuffId,datapackPath+DATAPACK_BASE_PATH_BUFF);
     std::cout << monsterBuffs.size() << " monster buff(s) loaded" << std::endl;
     #endif
 }
 
+//have to be after buff to be able to resolve name to id
 void CommonDatapack::parseSkills()
 {
-    monsterSkills=FightLoader::loadMonsterSkill(datapackPath+DATAPACK_BASE_PATH_SKILL
+    monsterSkills=FightLoader::loadMonsterSkill(tempNameToSkillId,datapackPath+DATAPACK_BASE_PATH_SKILL
                                                 #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                 ,monsterBuffs,types
                                                 #endif // CATCHCHALLENGER_CLASS_MASTER
@@ -136,6 +137,7 @@ void CommonDatapack::parseEvents()
     #endif
 }
 
+//have to be after skill and item to be able to resolve name to id
 void CommonDatapack::parseMonsters()
 {
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -149,7 +151,7 @@ void CommonDatapack::parseMonsters()
     else
         monsterRateApplied=true;
     #endif
-    monsters=FightLoader::loadMonster(datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
+    monsters=FightLoader::loadMonster(tempNameToMonsterId,datapackPath+DATAPACK_BASE_PATH_MONSTERS,monsterSkills
                                       #ifndef CATCHCHALLENGER_CLASS_MASTER
                                       ,types,items.item
                                       ,monstersMaxId
@@ -246,6 +248,10 @@ void CommonDatapack::unload()
     xmlLoadedFile.clear();
     #endif
     skins.clear();
+    tempNameToItemId.clear();
+    tempNameToSkillId.clear();
+    tempNameToBuffId.clear();
+    tempNameToMonsterId.clear();
 
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterRateApplied=false;
@@ -295,6 +301,25 @@ const std::vector<Event> &CommonDatapack::get_events() const
     return events;
 }
 
+const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_ITEM> CommonDatapack::get_tempNameToItemId() const
+{
+    return tempNameToItemId;
+}
+
+const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_BUFF> CommonDatapack::get_tempNameToBuffId() const
+{
+    return tempNameToBuffId;
+}
+
+const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_SKILL> CommonDatapack::get_tempNameToSkillId() const
+{
+    return tempNameToSkillId;
+}
+
+const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_MONSTER> CommonDatapack::get_tempNameToMonsterId() const
+{
+    return tempNameToMonsterId;
+}
 
 const bool &CommonDatapack::get_monsterRateApplied() const
 {

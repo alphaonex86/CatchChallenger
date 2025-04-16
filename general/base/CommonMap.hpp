@@ -7,13 +7,41 @@
 #include <utility>
 
 #include "GeneralStructures.hpp"
-#include "GeneralStructuresXml.hpp"
 #include "cpp11addition.hpp"
 #include "lib.h"
 
 namespace CatchChallenger {
 
-class DLL_PUBLIC CommonMap
+//data directly related to map, then not need resolv external map
+class DLL_PUBLIC BaseMap
+{
+public:
+    //std::string map_file;-> use heap and dynamic size generate big serialiser overhead, sloud be in debug only or for cache datapack debugging
+    //map not allowed be more than 127*127
+    uint8_t width;
+    uint8_t height;
+
+    /* see flat_simplified_map
+     * after resolution the index is position (x+y*width)*/
+    ParsedLayer parsed_layer;
+
+    std::unordered_map<uint8_t/*npc id*/,Shop> shopByIndex;//id is bot id to save what have win
+    std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight, on same to to have light load
+    //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
+
+    /* in same map when:
+     * x,y validated if around have at least 1 walkable tile and have not same type at tile
+     * x,y+1 validated if is colision and +2 (same direction) is walkable tile and have not same type at tile */
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> shops;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zoneCapture;//x,y bot to Map_loader::zoneNumber
+
+    std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
+};
+
+class DLL_PUBLIC CommonMap : public BaseMap
 {
 public:
     struct Map_Border
@@ -49,15 +77,6 @@ public:
         CATCHCHALLENGER_TYPE_MAPID mapIndex;
         MapCondition condition;
     };
-    //to load/unload the content
-    struct Map_semi
-    {
-        //conversion x,y to position: x+y*width
-        CommonMap* map;
-        std::string file;
-        Map_semi_border border;
-        Map_to_send old_map;
-    };
 
     Map_Border border;
 
@@ -66,28 +85,9 @@ public:
     CATCHCHALLENGER_TYPE_TELEPORTERID teleporter_first_index;
     uint8_t teleporter_list_size;//limit to 127 max to prevent statured server
 
-    //std::string map_file;-> use heap and dynamic size generate big serialiser overhead, sloud be in debug only or for cache datapack debugging
-    //map not allowed be more than 127*127
-    uint8_t width;
-    uint8_t height;
-    //uint32_t group;
-
     /* on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
      * on client, MapVisualiserThread set this variable */
     CATCHCHALLENGER_TYPE_MAPID id;
-
-    /* see flat_simplified_map
-     * after resolution the index is position (x+y*width)*/
-    ParsedLayer parsed_layer;
-
-    std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
-    std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//force 1 shop by x,y
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight
-
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zoneCapture;//x,y bot to Map_loader::zoneNumber
-    std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
 
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map
@@ -113,9 +113,6 @@ public:
 
     static uint8_t *                            flat_simplified_map;
     static CATCHCHALLENGER_TYPE_MAPID           flat_simplified_map_list_size;//temp, used as size when finish
-
-    template<class MapType>
-    static void loadAllMapsAndLink(const std::string &datapack_mapPath, std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
 };
 }
 

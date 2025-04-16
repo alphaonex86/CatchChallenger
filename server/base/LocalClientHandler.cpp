@@ -341,6 +341,37 @@ Direction Client::lookToMove(const Direction &direction)
     }
 }
 
+//return nullptr if can't move in this direction
+const MapServer * Client::mapAndPosIfMoveInLookingDirection(COORD_TYPE &x,COORD_TYPE &y)
+{
+    CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
+    CommonMap *map=indexToMap(mapIndex);
+    x=this->x;
+    y=this->y;
+    //resolv the object
+    Direction direction=getLastDirection();
+    switch(direction)
+    {
+        case Direction_look_at_top:
+        case Direction_look_at_right:
+        case Direction_look_at_bottom:
+        case Direction_look_at_left:
+            direction=lookToMove(direction);
+            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            {
+                if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,false))
+                    return nullptr;
+            }
+            else
+                return nullptr;
+        break;
+        default:
+            return nullptr;
+        return;
+    }
+    return indexToMap(mapIndex);
+}
+
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)
 {
     if(monsterDrops1.item!=monsterDrops2.item)
