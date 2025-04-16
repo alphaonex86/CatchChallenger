@@ -1172,16 +1172,15 @@ public:
 class Shop
 {
 public:
-    std::vector<uint32_t> prices;
-    std::vector<CATCHCHALLENGER_TYPE_ITEM> items;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> items;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << prices << items;
+        buf << items;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> prices >> items;
+        buf >> items;
     }
     #endif
 };

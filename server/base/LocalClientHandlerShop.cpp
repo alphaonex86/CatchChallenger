@@ -12,7 +12,7 @@ void Client::getShopList(const uint8_t &query_id)
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -82,7 +82,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
         return;
     }
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -183,7 +183,7 @@ void Client::sellObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM
         return;
     }
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");

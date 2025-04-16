@@ -714,15 +714,6 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
 
                                                             }
                                                         }
-                                                        else if(strcmp(step->Attribute("type"),"learn")==0)
-                                                        {
-                                                            if(parsedMap->logicalMap.learn.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                                                logicalMap.learn.cend())
-                                                                qDebug() << (QStringLiteral("learn point already on the map: for bot id: %1 (%2)")
-                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                                                            else
-                                                                parsedMap->logicalMap.learn.insert(std::pair<uint8_t,uint8_t>(x,y));
-                                                        }
                                                         else if(strcmp(step->Attribute("type"),"heal")==0)
                                                         {
                                                             if(parsedMap->logicalMap.heal.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
@@ -731,15 +722,6 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
                                                                     .arg(botId).arg(QString::fromStdString(botFile)));
                                                             else
                                                                 parsedMap->logicalMap.heal.insert(std::pair<uint8_t,uint8_t>(x,y));
-                                                        }
-                                                        else if(strcmp(step->Attribute("type"),"market")==0)
-                                                        {
-                                                            if(parsedMap->logicalMap.market.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                                                logicalMap.market.cend())
-                                                                qDebug() << (QStringLiteral("market point already on the map: for bot id: %1 (%2)")
-                                                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                                                            else
-                                                                parsedMap->logicalMap.market.insert(std::pair<uint8_t,uint8_t>(x,y));
                                                         }
                                                         else if(strcmp(step->Attribute("type"),"zonecapture")==0)
                                                         {

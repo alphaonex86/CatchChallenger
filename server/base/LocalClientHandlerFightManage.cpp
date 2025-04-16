@@ -29,7 +29,7 @@ void Client::heal()
     normalOutput("ask heal at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -69,7 +69,7 @@ void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHA
     normalOutput("request fight at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirection(new_x,new_y);
+    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");

@@ -607,7 +607,7 @@ private:
     bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index) override;
 
     //return nullptr if can't move in this direction
-    const MapServer * mapAndPosIfMoveInLookingDirection(COORD_TYPE &x,COORD_TYPE &y);
+    const MapServer * mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
     Client * otherPlayerTrade;
