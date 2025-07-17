@@ -507,11 +507,13 @@ public:
     #endif
 };
 
+/* when trade failed then update this status
+ * when come in range, update this status*/
 struct IndustryStatus
 {
     uint64_t last_update;
-    std::unordered_map<uint32_t,uint32_t> resources;
-    std::unordered_map<uint32_t,uint32_t> products;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> resources;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> products;
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -867,54 +869,6 @@ public:
     #endif
 };
 
-class IndustryLink
-{
-public:
-    uint16_t industry;
-    class Requirements
-    {
-    public:
-        std::vector<ReputationRequirements> reputation;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << reputation;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> reputation;
-        }
-        #endif
-    };
-    Requirements requirements;
-    class Rewards
-    {
-    public:
-        std::vector<ReputationRewards> reputation;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << reputation;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> reputation;
-        }
-        #endif
-    };
-    Rewards rewards;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << industry << requirements << rewards;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> industry >> requirements >> rewards;
-    }
-    #endif
-};
-
 class Industry
 {
 public:
@@ -954,14 +908,16 @@ public:
     };
     std::vector<Resource> resources;
     std::vector<Product> products;
+    std::vector<ReputationRequirements> requirements;
+    std::vector<ReputationRewards> rewards;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << time << cycletobefull << resources << products;
+        buf << time << cycletobefull << resources << products << requirements << rewards;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> time >> cycletobefull >> resources >> products;
+        buf >> time >> cycletobefull >> resources >> products << requirements << rewards;
     }
     #endif
 };
@@ -1716,7 +1672,7 @@ public:
     public:
         uint16_t id;
         uint8_t level;
-        std::vector<PlayerMonster::PlayerSkill> attacks;
+        std::vector<PlayerMonster::PlayerSkill> attacks;//allow custom attack
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {

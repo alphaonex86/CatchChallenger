@@ -445,7 +445,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         if(!stringEndsWith(property_text["file"],".xml"))
                                             property_text["file"]+=".xml";
                                         Map_to_send::Bot_Semi bot_semi;
-                                        bot_semi.id=stringtouint16(property_text.at("id"),&ok);
+                                        bot_semi.id=stringtouint8(property_text.at("id"),&ok);
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
@@ -907,7 +907,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadMonsterOnMapAndExtra(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
+    loadMonsterOnMapAndExtra<MapType>(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {
