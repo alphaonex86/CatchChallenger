@@ -18,6 +18,7 @@ public:
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
+public:
     const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> &get_quests() const;
     const std::vector<ServerSpecProfile> &get_serverProfileList() const;
     std::vector<ServerSpecProfile> &get_serverProfileList_rw();

@@ -39,23 +39,7 @@ public:
 
     //at last to improve the other variable cache
     std::vector<Client *> clientsForLocalBroadcast;//frequent remove/insert due to map change
-    class ItemOnMap
-    {
-    public:
-        uint16_t item;
-        bool infinite;
-        #ifdef CATCHCHALLENGER_CACHE_HPS
-        template <class B>
-        void serialize(B& buf) const {
-            buf << item << infinite;
-        }
-        template <class B>
-        void parse(B& buf) {
-            buf >> item >> infinite;
-        }
-        #endif
-    };
-    std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//first is x,y, second is db code, item
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>

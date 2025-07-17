@@ -142,7 +142,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
+bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -318,8 +318,6 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
         }
     }
 
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
     const tinyxml2::XMLElement *bot = map_to_send.xmlRoot->FirstChildElement("bot");
     while(bot!=NULL)
     {
@@ -350,6 +348,8 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                        std::cerr << file << " bot type attribute is not found" << std::endl;
                    else
                    {
+                       const uint8_t stepId=stringtouint8(step->Attribute("id"));
+                       botslist[indexBot].steps[stepId]=step;
                        if(strcmp(step->Attribute("type"),"shop")==0)
                        {
                            Shop s;
@@ -364,9 +364,9 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                                    CATCHCHALLENGER_TYPE_ITEM itemId=0;
                                    std::string item(step->Attribute("itemId"));
                                    item=str_tolower(item);
-                                   if(tempNameToItemId.find(item)!=tempNameToItemId.cend())
+                                   if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(item)!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
                                    {
-                                       itemId=tempNameToItemId.at(item);
+                                       itemId=CommonDatapack::commonDatapack.get_tempNameToItemId().at(item);
                                        found=true;
                                    }
                                    else
@@ -395,21 +395,9 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                                product = product->NextSiblingElement("product");
                            }
                            if(!s.items.empty() && map_to_send.shops.find(botOnMap.point)==map_to_send.shops.cend())
-                           {
-                                map_to_send.shopByIndex.push_back(s);
-                                map_to_send.shops[botOnMap.point]=map_to_send.shopByIndex.size()-1;
-                           }
+                                map_to_send.shops[botOnMap.point]=s;
                         }
-                        else if(strcmp(step->Attribute("type"),"heal")==0)
-                        {
-                            if(parsedMap->logicalMap.heal.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                logicalMap.heal.cend())
-                                qDebug() << (QStringLiteral("heal point already on the map: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                                parsedMap->logicalMap.heal.insert(std::pair<uint8_t,uint8_t>(x,y));
-                        }
-                        else if(strcmp(step->Attribute("type"),"zonecapture")==0)
+                        /*else if(strcmp(step->Attribute("type"),"zonecapture")==0)
                         {
                             if(step->Attribute("zone")==NULL)
                                 qDebug() << (QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2)")
@@ -427,21 +415,174 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, const std::ve
                                     qDebug() << (QStringLiteral("zoneString not resolved: for bot id: %1 (%2)")
                                         .arg(botId).arg(QString::fromStdString(botFile)));
                             }
-                        }
+                        }*/
                         else if(strcmp(step->Attribute("type"),"fight")==0)
                         {
-                            if(parsedMap->logicalMap.botsFight.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                logicalMap.botsFight.cend())
-                                qDebug() << (QStringLiteral("botsFight point already on the map: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                            {
-                                const uint16_t &fightid=stringtouint16(step->Attribute("fightid"),&ok);
-                                if(ok)
-                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightid)!=
-                                            CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
-                                        parsedMap->logicalMap.botsFight[std::pair<uint8_t,uint8_t>(x,y)].push_back(fightid);
-                            }
+                           BotFight t;
+                           t.cash=0;
+
+                           const tinyxml2::XMLElement *gain = step->FirstChildElement("gain");
+                           while(gain!=NULL)
+                           {
+                               if(gain->Attribute("cash")!=NULL)
+                               {
+                                   bool ok=false;
+                                   const uint32_t cash=stringtouint32(step->Attribute("cash"),&ok);
+                                   t.cash=cash;
+                               }
+                               if(gain->Attribute("item")!=NULL)
+                               {
+                                   BotFight::Item i;
+                                   i.id=0;
+                                   i.quantity=1;
+                                   bool ok=false;
+                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint32(step->Attribute("item"),&ok);
+                                   if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                                   {
+                                       i.id=itemId;
+                                       i.quantity=1;
+                                       t.items.push_back(i);
+                                   }
+                                   else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(step->Attribute("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                   {
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(step->Attribute("item"));
+                                       i.quantity=1;
+                                       t.items.push_back(i);
+                                   }
+                               }
+                               gain = gain->NextSiblingElement("gain");
+                           }
+
+                           const tinyxml2::XMLElement *monster = step->FirstChildElement("monster");
+                           while(monster!=NULL)
+                           {
+                               if(monster->Attribute("id")!=NULL)
+                               {
+                                   BotFight::BotFightMonster i;
+                                   i.id=0;//monster id
+                                   i.level=1;
+                                   bool ok=false;
+                                   i.id=stringtouint32(step->Attribute("id"),&ok);
+                                   if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
+                                   {}
+                                   else
+                                   {
+                                       i.id=0;//monster id
+                                       if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(step->Attribute("id"))!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
+                                           i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(step->Attribute("id"));
+                                   }
+                                   if(i.id!=0 && monster->Attribute("level")!=NULL)
+                                   {
+                                       bool ok=false;
+                                       i.level=stringtouint32(step->Attribute("id"),&ok);
+                                       if(ok)
+                                           t.monsters.push_bash(i);
+                                   }
+                               }
+                               monster = monster->NextSiblingElement("monster");
+                           }
+
+                           map_to_send.botsFights[searchID]=t;
+
+                           Orientation o=Orientation_none;
+                           if(bot->Attribute("lookAt")!=NULL)
+                           {
+                               if(strcmp(bot->Attribute("lookAt"),"bottom")==0)
+                                   o=Orientation_bottom;
+                               else if(strcmp(bot->Attribute("lookAt"),"top")==0)
+                                   o=Orientation_top;
+                               if(strcmp(bot->Attribute("lookAt"),"left")==0)
+                                   o=Orientation_left;
+                               if(strcmp(bot->Attribute("lookAt"),"right")==0)
+                                   o=Orientation_right;
+                           }
+                           uint32_t fightRange=5;
+                           if(step->Attribute("fightRange")!=NULL)
+                           {
+                               bool ok=false;
+                               fightRange=stringtouint32(step->Attribute("fightRange"),&ok);
+                               if(!ok)
+                               {
+                                   std::cerr << "fightRange is not a number" << std::endl;
+                                   fightRange=5;
+                               }
+                               else
+                               {
+                                   if(fightRange<2 || fightRange>10)
+                                   {
+                                       std::cerr << "fightRange is not between 2 and 10" << std::endl;
+                                       fightRange=5;
+                                   }
+                               }
+                           }
+
+                           int parsedRange=0;
+                           switch(o)
+                           {
+                               default:
+                               case Orientation_none:
+                                   break;
+                               case Orientation_bottom:
+                                   while(parsedRange<fightRange)
+                                   {
+                                       if(y>=map.height-1)
+                                           break;
+                                       y++;
+                                       if(not walkable(x,y))
+                                           break;
+                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
+                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                       else
+                                          map_to_send.botsFight[botOnMap.point].push_back();
+                                       parsedRange++;
+                                   }
+                               break;
+                               case Orientation_top:
+                                   while(parsedRange<fightRange)
+                                   {
+                                       if(y>=0)
+                                           break;
+                                       y--;
+                                       if(not walkable(x,y))
+                                           break;
+                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
+                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                       else
+                                          map_to_send.botsFight[botOnMap.point].push_back();
+                                       parsedRange++;
+                                   }
+                               break;
+                               case Orientation_right:
+                                   while(parsedRange<fightRange)
+                                   {
+                                       if(x>=map.width-1)
+                                           break;
+                                       x++;
+                                       if(not walkable(x,y))
+                                           break;
+                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
+                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                       else
+                                          map_to_send.botsFight[botOnMap.point].push_back();
+                                       parsedRange++;
+                                   }
+                               break;
+                               case Orientation_bottom:
+                                   while(parsedRange<fightRange)
+                                   {
+                                       if(x>=0)
+                                           break;
+                                       x--;
+                                       if(not walkable(x,y))
+                                           break;
+                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
+                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                       else
+                                          map_to_send.botsFight[botOnMap.point].push_back();
+                                       parsedRange++;
+                                   }
+                               break;
+                           }
                         }
                     }
                     step = step->NextSiblingElement("step");
@@ -671,6 +812,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 mapServer->height			= static_cast<uint8_t>(map_temp.map_to_send.height);
                 CommonMap::flat_simplified_map_list_size+=mapServer->width*mapServer->height;
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
+                map_temp.map_to_send.
                 //mapServer->map_file		= fileNameWihtoutTmx;
                 mapServer->zone=255;
 

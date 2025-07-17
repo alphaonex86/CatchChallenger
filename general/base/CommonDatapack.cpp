@@ -378,6 +378,11 @@ const std::vector<Profile> &CommonDatapack::get_profileList() const
     return profileList;
 }
 
+const std::vector<Profile> &CommonDatapack::get_profileList()
+{
+    return commonDatapack.profileList;
+}
+
 
 const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile() const
 {
