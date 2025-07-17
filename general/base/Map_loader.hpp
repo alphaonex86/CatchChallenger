@@ -60,7 +60,7 @@ public:
 
     std::vector<Map_semi_teleport> teleport;
 
-    //only for server
+    //only for server, more simple here
     std::vector<std::pair<uint8_t,uint8_t>> rescue_points;
 
     //load just after the xml extra file
@@ -69,6 +69,7 @@ public:
         std::pair<uint8_t,uint8_t> point;
         uint8_t id;
         std::unordered_map<std::string,std::string> property_text;
+        std::unordered_map<uint8_t,const tinyxml2::XMLElement *> steps;
     };
     std::vector<Bot_Semi> bots;
 
@@ -96,7 +97,7 @@ public:
     Map_to_send map_to_send;
     std::string errorString();
     bool tryLoadMap(const std::string &file, const bool &botIsNotWalkable=true);
-    bool loadMonsterOnMapAndExtra(const std::string &file, const std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
+    bool loadMonsterOnMapAndExtra(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);

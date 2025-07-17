@@ -552,22 +552,16 @@ struct ServerPrivateVariables
     struct GiftEntry
     {
         uint32_t min_random_number,max_random_number;
-        uint16_t item;
+        CATCHCHALLENGER_TYPE_ITEM item;
     };
     std::vector<GiftEntry> gift_list;
 
     uint32_t number_of_bots_logged;
     int botSpawnIndex;
-    std::unordered_map<uint32_t,IndustryStatus> industriesStatus;
     std::vector<uint8_t> events;
 
     //xp rate at form for level to xp: a*exp(x*b+c)+d
     struct Xp
-    {
-        uint32_t a,b,c,d;
-    };
-    //xp rate at form for level to xp: a*exp(x*b+c)+d
-    struct Sp
     {
         uint32_t a,b,c,d;
     };

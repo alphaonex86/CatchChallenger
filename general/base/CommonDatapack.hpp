@@ -81,7 +81,7 @@ public:
     const uint16_t &get_monstersMaxId() const;
     const std::unordered_map<uint16_t,Skill> &get_monsterSkills() const;
     const std::vector<Profile> &get_profileList() const;
-
+public:
     const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile() const;//keep for Map_loader::getXmlCondition(), need to be deleted later
     std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile_rw();
     const std::vector<std::string > &get_skins() const;//I think it's clean after use, database have only number

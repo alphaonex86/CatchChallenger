@@ -12,6 +12,23 @@
 
 namespace CatchChallenger {
 
+class ItemOnMap
+{
+public:
+    CATCHCHALLENGER_TYPE_ITEM item;
+    bool infinite;
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << item << infinite;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> item >> infinite;
+    }
+    #endif
+};
+
 //data directly related to map, then not need resolv external map
 class DLL_PUBLIC BaseMap
 {
@@ -25,16 +42,19 @@ public:
      * after resolution the index is position (x+y*width)*/
     ParsedLayer parsed_layer;
 
-    std::vector<Shop> shopByIndex;
+    std::vector<std::pair<Industry,IndustryStatus>> industryByIndex;
+    // need load state from server, and sync with client, if empty then status not loaded, just disable the industry
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight, on same to to have light load
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
 
     // in same map
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*shop index*/,pairhash> shops;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;
     std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zoneCapture;//x,y bot to Map_loader::zoneNumber
+    std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;
+    /* ONLY SERVER
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal; */
 
     std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
 };
