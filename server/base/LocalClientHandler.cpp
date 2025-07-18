@@ -103,7 +103,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     posOutput+=1;
 
     //send the current map of the player
-    if(CommonMap::flat_map_list_size<=255)
+    if(CommonMap::flat_map_list_count<=255)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map->id);
         posOutput+=1;

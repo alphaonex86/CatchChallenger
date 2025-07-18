@@ -53,7 +53,7 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, constuint8_t
     registerOutputQuery(queryNumberList.back(),0xE1);
     queryNumberList.pop_back();
 
-    if(CommonMap::flat_map_list_size<=255)
+    if(CommonMap::flat_map_list_count<=255)
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/1+1+1+1);//set the dynamic size
         ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=static_cast<uint8_t>(mapIndex->id);

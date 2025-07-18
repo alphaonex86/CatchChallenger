@@ -57,7 +57,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
         // can be only this map with this algo, then 1 map
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        if(CommonMap::flat_map_list_size<=255)
+        if(CommonMap::flat_map_list_count<=255)
         {
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
             posOutput+=1;
@@ -148,7 +148,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert(unsigned int &cl
                 /* can be only this map with this algo, then 1 map */
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
-                if(CommonMap::flat_map_list_size<=255)
+                if(CommonMap::flat_map_list_count<=255)
                 {
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                     posOutput+=1;
@@ -269,7 +269,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert_exclude()
                 /* can be only this map with this algo, then 1 map */
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
                 posOutput+=1;
-                if(CommonMap::flat_map_list_size<=255)
+                if(CommonMap::flat_map_list_count<=255)
                 {
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(id);
                     posOutput+=1;
@@ -502,7 +502,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_header(ch
 void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_map(char *buffer, int &posOutput)
 {
     //mapId
-    if(CommonMap::flat_map_list_size<=255)
+    if(CommonMap::flat_map_list_count<=255)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         if(buffer[0x00]!=0x6b)

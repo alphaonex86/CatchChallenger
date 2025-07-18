@@ -7,7 +7,7 @@
 using namespace CatchChallenger;
 
 void * CommonMap::flat_map_list=nullptr;
-CATCHCHALLENGER_TYPE_MAPID CommonMap::flat_map_list_size=0;
+CATCHCHALLENGER_TYPE_MAPID CommonMap::flat_map_list_count=0;
 size_t CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
 
 CommonMap::Teleporter* CommonMap::flat_teleporter=nullptr;
@@ -29,12 +29,12 @@ const void * CommonMap::indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index)
         std::cerr << "CommonMap::indexToMap() map_object_size<=sizeof(CommonMap) " << sizeof(CommonMap) << std::endl;
         abort();
     }
-    if(flat_map_list_size<=0)
+    if(flat_map_list_count<=0)
     {
         std::cerr << "CommonMap::indexToMap() flat_map_list_size<=0" << std::endl;
         abort();
     }
-    if(index>=flat_map_list_size)
+    if(index>=flat_map_list_count)
     {
         std::cerr << "CommonMap::indexToMap() index>=flat_map_list_size the check have to be done at index creation" << std::endl;
         abort();
@@ -56,12 +56,12 @@ void * CommonMap::indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index)
         std::cerr << "CommonMap::indexToMap() map_object_size<=sizeof(CommonMap) " << sizeof(CommonMap) << std::endl;
         abort();
     }
-    if(flat_map_list_size<=0)
+    if(flat_map_list_count<=0)
     {
         std::cerr << "CommonMap::indexToMap() flat_map_list_size<=0" << std::endl;
         abort();
     }
-    if(index>=flat_map_list_size)
+    if(index>=flat_map_list_count)
     {
         std::cerr << "CommonMap::indexToMap() index>=flat_map_list_size the check have to be done at index creation" << std::endl;
         abort();

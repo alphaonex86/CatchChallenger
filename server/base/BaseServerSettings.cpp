@@ -227,9 +227,9 @@ void BaseServer::loadAndFixSettings()
     else
         player_list_size=sizeof(uint16_t);*/
     uint8_t map_list_size;
-    if(CommonMap::flat_map_list_size<=255)
+    if(CommonMap::flat_map_list_count<=255)
         map_list_size=sizeof(uint8_t);
-    else if(CommonMap::flat_map_list_size<=65534)
+    else if(CommonMap::flat_map_list_count<=65534)
         map_list_size=sizeof(uint16_t);
     else
     {
