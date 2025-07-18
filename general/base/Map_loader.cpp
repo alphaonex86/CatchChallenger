@@ -978,27 +978,52 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
     {
         unsigned int sub_index=0;
         Map_semi &map_semi=semi_loaded_map.at(index);
+        MapType * mapFinal=CommonMap::flat_map_list+index;
 
-        //resolv the border map name into their pointer
+        //resolv the border map name into their pointer + resolv the offset to change of map
         if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end())
-            map_semi.old_map.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
+        {
+            mapFinal.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
+            mapFinal.border.bottom.x_offset=map_semi.border.bottom.x_offset;
+        }
         else
-            map_semi.old_map.border.bottom.mapIndex=65535;
+        {
+            mapFinal.border.bottom.mapIndex=65535;
+            mapFinal.border.bottom.x_offset=0;
+        }
 
         if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end())
-            map_semi.old_map.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
+        {
+            mapFinal.border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
+            mapFinal.border.top.x_offset=map_semi.border.top.x_offset;
+        }
         else
-            map_semi.old_map.border.top.mapIndex=65535;
+        {
+            mapFinal.border.top.mapIndex=65535;
+            mapFinal.border.top.x_offset=0;
+        }
 
         if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end())
-            map_semi.old_map.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
+        {
+            mapFinal.border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
+            mapFinal.border.left.y_offset=map_semi.border.left.y_offset;
+        }
         else
-            map_semi.old_map.border.left.mapIndex=65535;
+        {
+            mapFinal.border.left.mapIndex=65535;
+            mapFinal.border.left.y_offset=0;
+        }
 
         if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end())
-            map_semi.old_map.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
+        {
+            mapFinal.border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
+            mapFinal.border.right.y_offset=map_semi.border.right.y_offset;
+        }
         else
-            map_semi.old_map.border.right.mapIndex=65535;
+        {
+            mapFinal.border.right.mapIndex=65535;
+            mapFinal.border.right.y_offset=0;
+        }
 
         //resolv the teleported into their pointer
         map_semi.old_map.teleporter_list_size=0;
