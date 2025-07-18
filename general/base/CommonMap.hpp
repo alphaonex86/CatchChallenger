@@ -45,12 +45,11 @@ public:
     std::vector<std::pair<Industry,IndustryStatus>> industryByIndex;
     // need load state from server, and sync with client, if empty then status not loaded, just disable the industry
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
-    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint8_t>,pairhash> botsFightTrigger;//trigger line in front of bot fight, on same to to have light load
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
 
     // in same map
     std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFight;//force 1 fight by x,y
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y
     std::unordered_map<std::pair<uint8_t,uint8_t>,ZONE_TYPE,pairhash> zoneCapture;//x,y bot to Map_loader::zoneNumber
     std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;
     /* ONLY SERVER
