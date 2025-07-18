@@ -73,9 +73,9 @@ void BaseServer::preload_1_the_data()
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
         {
-            *serialBuffer >> CommonMap::flat_map_list_size;
+            *serialBuffer >> CommonMap::flat_map_list_count;
             *serialBuffer >> CommonMap::flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
-            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
             CommonMap::flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(s));
             CommonMap::flat_map_object_size=sizeof(Map_server_MapVisibility_Simple_StoreOnSender);
             #ifdef CATCHCHALLENGER_HARDENED
@@ -163,9 +163,9 @@ void BaseServer::preload_1_the_data()
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
 
             {
-                hps::to_stream(CommonMap::flat_map_list_size, *out_file);
+                hps::to_stream(CommonMap::flat_map_list_count, *out_file);
                 hps::to_stream(CommonMap::flat_map_object_size, *out_file);
-                const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+                const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
                 out_file->write((char *)CommonMap::flat_map_list,s);
             }
 

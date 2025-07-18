@@ -26,7 +26,7 @@ void BaseServer::preload_12_async_dictionary_map()
     #else
     #error Define what do here
     #endif
-    if(CommonMap::flat_map_list_size==0)
+    if(CommonMap::flat_map_list_count==0)
     {
         std::cerr << "No map to list" << std::endl;
         abort();
@@ -465,9 +465,9 @@ void BaseServer::preload_industries_return()
         size_t lastSize=out_file->tellp();
 
         {
-            hps::to_stream(CommonMap::flat_map_list_size, *out_file);
+            hps::to_stream(CommonMap::flat_map_list_count, *out_file);
             hps::to_stream(CommonMap::flat_map_object_size, *out_file);
-            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_size;
+            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
             out_file->write((char *)CommonMap::flat_map_list,s);
         }
 
