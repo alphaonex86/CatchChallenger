@@ -78,9 +78,9 @@ void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHA
     const MapServer * const mapServer=static_cast<MapServer*>(map);
     const std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is shop
-    if(mapServer->botsFight.find(pos)!=mapServer->botsFight.cend())
+    if(mapServer->botsFightTrigger.find(pos)!=mapServer->botsFightTrigger.cend())
     {
-        const uint8_t botsFightId=mapServer->botsFight.at(pos);
+        const uint8_t botsFightId=mapServer->botsFightTrigger.at(pos);
         if(botsFightId==botId)
         {
             normalOutput("is now in fight (after a request) on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botId));

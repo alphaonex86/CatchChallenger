@@ -4,6 +4,9 @@
 #include "GeneralVariable.hpp"
 #include "CommonDatapackServerSpec.hpp"
 #include "cpp11addition.hpp"
+#include "MoveOnTheMap.hpp"
+#include "FacilityLibGeneral.hpp"
+#include <chrono>
 
 #ifdef TILED_ZLIB
     #ifndef __EMSCRIPTEN__
@@ -436,7 +439,7 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<M
                                    i.id=0;
                                    i.quantity=1;
                                    bool ok=false;
-                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint32(step->Attribute("item"),&ok);
+                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(step->Attribute("item"),&ok);
                                    if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
                                    {
                                        i.id=itemId;
@@ -462,7 +465,7 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<M
                                    i.id=0;//monster id
                                    i.level=1;
                                    bool ok=false;
-                                   i.id=stringtouint32(step->Attribute("id"),&ok);
+                                   i.id=stringtouint16(step->Attribute("id"),&ok);
                                    if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
                                    {}
                                    else
@@ -474,15 +477,15 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<M
                                    if(i.id!=0 && monster->Attribute("level")!=NULL)
                                    {
                                        bool ok=false;
-                                       i.level=stringtouint32(step->Attribute("id"),&ok);
+                                       i.level=stringtouint8(step->Attribute("level"),&ok);
                                        if(ok)
-                                           t.monsters.push_bash(i);
+                                           t.monsters.push_back(i);
                                    }
                                }
                                monster = monster->NextSiblingElement("monster");
                            }
 
-                           map_to_send.botsFights[searchID]=t;
+                           map_to_send.botFights[searchID]=t;
 
                            Orientation o=Orientation_none;
                            if(bot->Attribute("lookAt")!=NULL)
@@ -516,73 +519,80 @@ bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<M
                                }
                            }
 
-                           int parsedRange=0;
-                           switch(o)
+                           if(map_to_send.monstersCollisionMap!=nullptr)
                            {
-                               default:
-                               case Orientation_none:
+                               uint8_t x=botOnMap.point.first;
+                               uint8_t y=botOnMap.point.second;
+                               uint8_t parsedRange=0;
+                               switch(o)
+                               {
+                                   default:
+                                   case Orientation_none:
+                                       break;
+                                   case Orientation_bottom:
+                                       while(parsedRange<fightRange)
+                                       {
+                                           if(y>=map_to_send.height-1)
+                                               break;
+                                           y++;
+                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                               break;
+                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                           else
+                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                           parsedRange++;
+                                       }
                                    break;
-                               case Orientation_bottom:
-                                   while(parsedRange<fightRange)
-                                   {
-                                       if(y>=map.height-1)
-                                           break;
-                                       y++;
-                                       if(not walkable(x,y))
-                                           break;
-                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
-                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
-                                       else
-                                          map_to_send.botsFight[botOnMap.point].push_back();
-                                       parsedRange++;
-                                   }
-                               break;
-                               case Orientation_top:
-                                   while(parsedRange<fightRange)
-                                   {
-                                       if(y>=0)
-                                           break;
-                                       y--;
-                                       if(not walkable(x,y))
-                                           break;
-                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
-                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
-                                       else
-                                          map_to_send.botsFight[botOnMap.point].push_back();
-                                       parsedRange++;
-                                   }
-                               break;
-                               case Orientation_right:
-                                   while(parsedRange<fightRange)
-                                   {
-                                       if(x>=map.width-1)
-                                           break;
-                                       x++;
-                                       if(not walkable(x,y))
-                                           break;
-                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
-                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
-                                       else
-                                          map_to_send.botsFight[botOnMap.point].push_back();
-                                       parsedRange++;
-                                   }
-                               break;
-                               case Orientation_bottom:
-                                   while(parsedRange<fightRange)
-                                   {
-                                       if(x>=0)
-                                           break;
-                                       x--;
-                                       if(not walkable(x,y))
-                                           break;
-                                       if(map_to_send.botsFight.find(botOnMap.point)!=map_to_send.botsFight.cend())
-                                           std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
-                                       else
-                                          map_to_send.botsFight[botOnMap.point].push_back();
-                                       parsedRange++;
-                                   }
-                               break;
+                                   case Orientation_top:
+                                       while(parsedRange<fightRange)
+                                       {
+                                           if(y==0)
+                                               break;
+                                           y--;
+                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                               break;
+                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                           else
+                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                           parsedRange++;
+                                       }
+                                   break;
+                                   case Orientation_right:
+                                       while(parsedRange<fightRange)
+                                       {
+                                           if(x>=map_to_send.width-1)
+                                               break;
+                                           x++;
+                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                               break;
+                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                           else
+                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                           parsedRange++;
+                                       }
+                                   break;
+                                   case Orientation_left:
+                                       while(parsedRange<fightRange)
+                                       {
+                                           if(x==0)
+                                               break;
+                                           x--;
+                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                               break;
+                                           if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
+                                               std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
+                                           else
+                                              map_to_send.botsFightTrigger[botOnMap.point]=searchID;
+                                           parsedRange++;
+                                       }
+                                   break;
+                               }
                            }
+                           else
+                               std::cerr << file << " bot id " << searchID << " map layer not loaded" << std::endl;//the map is loaded before the bot?
                         }
                     }
                     step = step->NextSiblingElement("step");
@@ -812,12 +822,9 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 mapServer->height			= static_cast<uint8_t>(map_temp.map_to_send.height);
                 CommonMap::flat_simplified_map_list_size+=mapServer->width*mapServer->height;
                 mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
-                map_temp.map_to_send.
-                //mapServer->map_file		= fileNameWihtoutTmx;
-                mapServer->zone=255;
 
                 Map_semi map_semi;
-                map_semi.map				= mapServer;
+                map_semi.old_map				= mapServer;
                 map_semi.file=fileName;
 
                 if(map_temp.map_to_send.border.top.fileName.size()>0)
@@ -871,10 +878,9 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 mapServer->width			= 0;
                 mapServer->height			= 0;
                 mapServer->parsed_layer.simplifiedMapIndex=65535;
-                //mapServer->map_file		= fileNameWihtoutTmx;
 
                 Map_semi map_semi;
-                map_semi.map				= mapServer;
+                map_semi.old_map				= mapServer;
                 map_semi.file=fileName;
 
                 map_semi.old_map=map_temp.map_to_send;

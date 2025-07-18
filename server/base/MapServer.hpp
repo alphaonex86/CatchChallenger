@@ -71,8 +71,8 @@ public:
         buf << (uint8_t)zoneCapture.size();
         for (const auto &x : zoneCapture)
               buf << x.first << x.second;
-        buf << (uint8_t)botsFight.size();
-        for (const auto &x : botsFight)
+        buf << (uint8_t)botsFightTrigger.size();
+        for (const auto &x : botsFightTrigger)
               buf << x.first << x.second;
         buf << (uint8_t)botsFightTrigger.size();
         for (const auto &x : botsFightTrigger)
@@ -136,7 +136,7 @@ public:
         {
             uint8_t value;
             buf >> posXY >> value;
-            botsFight[posXY]=value;
+            botsFightTrigger[posXY]=value;
         }
         buf >> smallsize;
         for(uint8_t i=0; i<smallsize; i++)
