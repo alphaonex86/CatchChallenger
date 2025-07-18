@@ -350,13 +350,13 @@ bool MoveOnTheMap::canGoTo(const Direction &direction,const CommonMap &map,const
 CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "MoveOnTheMap::getLedge() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "MoveOnTheMap::getLedge() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    const uint8_t &i=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
+    const uint8_t &i=*(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width);
     if(i<250 || i>253)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
     return static_cast<ParsedLayerLedges>((uint32_t)i-250+1);
@@ -421,26 +421,26 @@ bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint
 {
     //exclude here ParsedLayerLedges, because don't have info about direction
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "MoveOnTheMap::isWalkable() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "MoveOnTheMap::isWalkable() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    return *(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width)<200;
+    return *(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width)<200;
 }
 
 bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     //exclude here ParsedLayerLedges, because don't have info about direction
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "MoveOnTheMap::isWalkableWithDirection() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "MoveOnTheMap::isWalkableWithDirection() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    const uint8_t &val=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
+    const uint8_t &val=*(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width);
     if(val<200)
         return true;
     switch(direction)
@@ -474,28 +474,28 @@ bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "MoveOnTheMap::isDirt() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "MoveOnTheMap::isDirt() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    return *(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width)==249;
+    return *(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width)==249;
 }
 
 MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "MoveOnTheMap::getZoneCollision() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "MoveOnTheMap::getZoneCollision() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    const uint8_t &val=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
-    if(map.parsed_layer.monstersCollisionList.size()<=val)
+    const uint8_t &val=*(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width);
+    if(map.monstersCollisionList.size()<=val)
         return MonstersCollisionValue();
-    return map.parsed_layer.monstersCollisionList.at(val);
+    return map.monstersCollisionList.at(val);
 }
 
 bool MoveOnTheMap::move(const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)

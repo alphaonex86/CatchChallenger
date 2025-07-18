@@ -38,9 +38,7 @@ public:
     uint8_t width;
     uint8_t height;
 
-    /* see flat_simplified_map
-     * after resolution the index is position (x+y*width)*/
-    ParsedLayer parsed_layer;
+    std::vector<MonstersCollisionValue> monstersCollisionList;
 
     std::vector<std::pair<Industry,IndustryStatus>> industryByIndex;
     // need load state from server, and sync with client, if empty then status not loaded, just disable the industry
@@ -106,6 +104,8 @@ public:
      * on client, MapVisualiserThread set this variable */
     CATCHCHALLENGER_TYPE_MAPID id;
 
+    uint32_t flat_simplified_map_first_index;
+
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map
      * Then the pointer don't have fixed size
@@ -117,10 +117,12 @@ public:
      * Each time you call malloc the space should be memset 0 to prevent get previous data
      * Each time you call malloc the allocated space can have metadata
      * Reduce the memory fragmentation
-     * The space can be allocated in uncontinuous space, then you will have memory holes (more memory and less data density) linked too with block alignement */
+     * The space can be allocated in uncontinuous space, then you will have memory holes (more memory and less data density) linked too with block alignement
+     * Check too Binary space partition
+     * https://byjus.com/gate/internal-fragmentation-in-os-notes/ or search memory fragmentation, maybe can be mitigated with 16Bits pointer */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
     static void * flat_map_list;
-    static CATCHCHALLENGER_TYPE_MAPID flat_map_list_size;
+    static CATCHCHALLENGER_TYPE_MAPID flat_map_list_count;
     static size_t flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
     static inline const void * indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index);
     static inline void * indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index);
@@ -128,6 +130,18 @@ public:
     static Teleporter*                          flat_teleporter;
     static CATCHCHALLENGER_TYPE_TELEPORTERID    flat_teleporter_list_size;//temp, used as size when finish
 
+    /* see flat_simplified_map
+     * after resolution the index is position (x+y*width)*/
+    /* 0 walkable: index = 0 for monster is used into cave
+     * 254 not walkable
+     * 253 ParsedLayerLedges_LedgesBottom
+     * 252 ParsedLayerLedges_LedgesTop
+     * 251 ParsedLayerLedges_LedgesRight
+     * 250 ParsedLayerLedges_LedgesLeft
+     * 249 dirt
+     * 200 - 248 reserved
+     * 0 cave def
+     * 1-199 monster def and condition */
     static uint8_t *                            flat_simplified_map;
     static CATCHCHALLENGER_TYPE_MAPID           flat_simplified_map_list_size;//temp, used as size when finish
 };

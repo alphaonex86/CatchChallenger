@@ -88,7 +88,7 @@ void BaseServer::unload_the_map()
         delete reinterpret_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(CommonMap::flat_map_list);
         CommonMap::flat_map_list=nullptr;
     }
-    CommonMap::flat_map_list_size=0;
+    CommonMap::flat_map_list_count=0;
     CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
 
     if(CommonMap::flat_teleporter!=nullptr)
