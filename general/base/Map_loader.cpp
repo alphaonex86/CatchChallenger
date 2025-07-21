@@ -7,6 +7,7 @@
 #include "MoveOnTheMap.hpp"
 #include "FacilityLibGeneral.hpp"
 #include <chrono>
+#include <sys/stat.h>
 
 #ifdef TILED_ZLIB
     #ifndef __EMSCRIPTEN__
@@ -765,8 +766,20 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
     Map_loader map_temp;
     std::vector<std::string> map_name;
     std::vector<std::string> map_name_to_do_id;
-    std::vector<std::string> returnList=FacilityLibGeneral::listFolder(datapack_mapPath);
-    std::sort(returnList.begin(), returnList.end());
+    struct stat buffer;
+    if(::stat(datapack_mapPath.c_str(),&buffer)!=0)
+        return;
+    std::vector<std::string> returnList;
+    switch(buffer.st_mode)
+    {
+        case S_IFREG:
+            returnList.push_back(datapack_mapPath);
+        break;
+        case S_IFDIR:
+            returnList=FacilityLibGeneral::listFolder(datapack_mapPath);
+            std::sort(returnList.begin(), returnList.end());
+        break;
+    }
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 
     if(returnList.size()==0)
@@ -818,6 +831,8 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 MapType *mapFinal=static_cast<MapType *>(flat_map_list_temp.back());
                 //GlobalServerData::serverPrivateVariables.map_list[fileNameWihtoutTmx]=mapServer;
 
+                bool tryLoadNearMap=returnList.size()==1 && index==0;
+
                 mapFinal->top.mapIndex=65535;
                 mapFinal->top.x_offset=0;
                 mapFinal->bottom.mapIndex=65535;
@@ -841,24 +856,32 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                     map_semi.border.top.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.top.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.top.fileName,".tmx","");
                     map_semi.border.top.x_offset		= map_temp.map_to_send.border.top.x_offset;
+                    if(tryLoadNearMap)
+                        returnList.push_back(map_semi.border.top.fileName);
                 }
                 if(map_temp.map_to_send.border.bottom.fileName.size()>0)
                 {
                     map_semi.border.bottom.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.bottom.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.bottom.fileName,".tmx","");
                     map_semi.border.bottom.x_offset		= map_temp.map_to_send.border.bottom.x_offset;
+                    if(tryLoadNearMap)
+                        returnList.push_back(map_semi.border.bottom.fileName);
                 }
                 if(map_temp.map_to_send.border.left.fileName.size()>0)
                 {
                     map_semi.border.left.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.left.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.left.fileName,".tmx","");
                     map_semi.border.left.y_offset		= map_temp.map_to_send.border.left.y_offset;
+                    if(tryLoadNearMap)
+                        returnList.push_back(map_semi.border.left.fileName);
                 }
                 if(map_temp.map_to_send.border.right.fileName.size()>0)
                 {
                     map_semi.border.right.fileName		= Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.border.right.fileName,datapack_mapPath);
                     stringreplaceOne(map_semi.border.right.fileName,".tmx","");
                     map_semi.border.right.y_offset		= map_temp.map_to_send.border.right.y_offset;
+                    if(tryLoadNearMap)
+                        returnList.push_back(map_semi.border.right.fileName);
                 }
 
                 teleport_count+=map_temp.map_to_send.teleport.size();
@@ -867,6 +890,8 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 {
                     map_temp.map_to_send.teleport[sub_index].map=Map_loader::resolvRelativeMap(datapack_mapPath+fileName,map_temp.map_to_send.teleport.at(sub_index).map,datapack_mapPath);
                     stringreplaceOne(map_temp.map_to_send.teleport[sub_index].map,".tmx","");
+                    if(tryLoadNearMap)
+                        returnList.push_back(map_temp.map_to_send.teleport[sub_index].map);
                     sub_index++;
                 }
 
@@ -897,7 +922,8 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                           << fileName << ",[\"'])"
                           << std::endl;
 
-                /*flat_map_list_temp.push_back(new MapType);
+                /*see mapPathToId
+                 * flat_map_list_temp.push_back(new MapType);
                 MapType *mapServer=static_cast<MapType *>(flat_map_list_temp.back());
 
                 mapServer->width			= 0;
