@@ -56,6 +56,7 @@ public:
     std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
 };
 
+//the only visible map is loaded on client, all map on server
 class DLL_PUBLIC CommonMap : public BaseMap
 {
 public:
@@ -119,7 +120,10 @@ public:
      * Reduce the memory fragmentation
      * The space can be allocated in uncontinuous space, then you will have memory holes (more memory and less data density) linked too with block alignement
      * Check too Binary space partition
-     * https://byjus.com/gate/internal-fragmentation-in-os-notes/ or search memory fragmentation, maybe can be mitigated with 16Bits pointer */
+     * https://byjus.com/gate/internal-fragmentation-in-os-notes/ or search memory fragmentation, maybe can be mitigated with 16Bits pointer
+     * WHY NO MORE SIMPLE? WHY JUST NOT POINTER BY OBJECT?
+     * continus space improve fragementation, loading from cache... it's server optimised version, the client will always load limited list of map
+     */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
     static void * flat_map_list;
     static CATCHCHALLENGER_TYPE_MAPID flat_map_list_count;
