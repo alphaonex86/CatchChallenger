@@ -26,7 +26,7 @@ public:
     MapServer();
     void doDDOSLocalChat();
     static unsigned int playerToFullInsert(const Client * const player, char * const bufferForOutput);
-    std::map<std::pair<uint8_t,uint8_t>,Orientation/*,pairhash*/> rescue;
+
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     uint8_t localChatDropTotalCache;
     uint8_t localChatDropNewValue;
@@ -39,7 +39,8 @@ public:
 
     //at last to improve the other variable cache
     std::vector<Client *> clientsForLocalBroadcast;//frequent remove/insert due to map change
-    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,Orientation/*,pairhash*/> rescue;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_map<std::pair<uint8_t,uint8_t> is better
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_set<std::pair<uint8_t,uint8_t> is better
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
