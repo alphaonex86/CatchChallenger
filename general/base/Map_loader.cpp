@@ -146,7 +146,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-bool Map_loader::loadMonsterOnMapAndExtra(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
+bool Map_loader::loadExtraXml(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -825,10 +825,10 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
             map_name_to_do_id.push_back(fileNameWihtoutTmx);
             map_name.push_back(fileNameWihtoutTmx);
             //mapPathToId[sortFileName]=map_name_to_do_id.size(); need be sorted before
-            if(map_temp.tryLoadMap(datapack_mapPath+fileName))
+            flat_map_list_temp.push_back(new MapType);
+            MapType *mapFinal=static_cast<MapType *>(flat_map_list_temp.back());
+            if(map_temp.tryLoadMap(datapack_mapPath+fileName,mapFinal,true))
             {
-                flat_map_list_temp.push_back(new MapType);
-                MapType *mapFinal=static_cast<MapType *>(flat_map_list_temp.back());
                 //GlobalServerData::serverPrivateVariables.map_list[fileNameWihtoutTmx]=mapServer;
 
                 bool tryLoadNearMap=returnList.size()==1 && index==0;
@@ -917,6 +917,8 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
             }
             else
             {
+                delete flat_map_list_temp.back();
+                flat_map_list_temp.pop_back();
                 std::cout << "error at loading: " << datapack_mapPath << fileName << ", error: " << map_temp.errorString()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
@@ -1052,8 +1054,8 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
         }
 
         //resolv the teleported into their pointer
-        map_semi.old_map.teleporter_list_size=0;
-        map_semi.old_map.teleporter_first_index=CommonMap::flat_teleporter_list_size;
+        mapFinal.teleporter_list_size=0;
+        mapFinal.teleporter_first_index=CommonMap::flat_teleporter_list_size;
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
@@ -1066,14 +1068,14 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                         && teleporter_semi.destination_y<map_semi.old_map.height)
                 {
                     uint16_t index_search=0;
-                    while(index_search<map_semi.old_map.teleporter_list_size)
+                    while(index_search<mapFinal.teleporter_list_size)
                     {
-                        const CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+map_semi.old_map.teleporter_first_index+index_search);
+                        const CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal.teleporter_first_index+index_search);
                         if(teleporter.source_x==teleporter_semi.source_x && teleporter.source_y==teleporter_semi.source_y)
                             break;
                         index_search++;
                     }
-                    if(index_search==map_semi.old_map.teleporter_list_size)
+                    if(index_search==mapFinal.teleporter_list_size)
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
@@ -1091,14 +1093,14 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                              << ")"
                              << std::endl;
                         #endif
-                        CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+map_semi.old_map.teleporter_first_index+index_search);
+                        CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal.teleporter_first_index+index_search);
                         teleporter.mapIndex=mapPathToId.at(teleportString);
                         teleporter.source_x=teleporter_semi.source_x;
                         teleporter.source_y=teleporter_semi.source_y;
                         teleporter.destination_x=teleporter_semi.destination_x;
                         teleporter.destination_y=teleporter_semi.destination_y;
                         teleporter.condition=teleporter_semi.condition;
-                        map_semi.old_map.teleporter_list_size++;
+                        mapFinal.teleporter_list_size++;
                         CommonMap::flat_teleporter_list_size++;
                     }
                     else

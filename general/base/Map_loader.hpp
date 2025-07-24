@@ -60,9 +60,6 @@ public:
 
     std::vector<Map_semi_teleport> teleport;
 
-    //only for server, more simple here
-    std::vector<std::pair<uint8_t,uint8_t>> rescue_points;
-
     //load just after the xml extra file
     struct Bot_Semi
     {
@@ -71,7 +68,15 @@ public:
         std::unordered_map<std::string,std::string> property_text;
         std::unordered_map<uint8_t,const tinyxml2::XMLElement *> steps;
     };
-    std::vector<Bot_Semi> bots;
+    std::vector<Bot_Semi> bots;//to pass pos to xml file, used into colision too
+    struct ItemOnMap_Semi
+    {
+        bool infinite;
+        bool visible;
+        CATCHCHALLENGER_TYPE_ITEM item;
+        std::pair<uint8_t,uint8_t> point;
+    };
+    std::vector<ItemOnMap_Semi> items;//used into colision
 
     //loaded into CommonMap::flat_simplified_map and BaseMap::ParsedLayer
     uint8_t *monstersCollisionMap;
@@ -96,8 +101,9 @@ public:
 
     Map_to_send map_to_send;
     std::string errorString();
-    bool tryLoadMap(const std::string &file, const bool &botIsNotWalkable=true);
-    bool loadMonsterOnMapAndExtra(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
+    template<class MapType>
+    bool tryLoadMap(const std::string &file, MapType *mapFinal, const bool &botIsNotWalkable);
+    bool loadExtraXml(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);

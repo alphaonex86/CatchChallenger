@@ -10,7 +10,8 @@
 
 using namespace CatchChallenger;
 
-bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable)
+template<class MapType>
+bool Map_loader::tryLoadMap(const std::string &file, MapType *mapFinal, const bool &botIsNotWalkable)
 {
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
@@ -368,17 +369,18 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                     else
                                         std::cerr << "Missing map,x or y, type: " << type << ", file: " << file << std::endl;
                                 }
-                                else if(type=="rescue")
+                                /*else if(type=="rescue")
                                 {
                                     Map_to_send::Map_Point tempPoint;
                                     tempPoint.x=static_cast<uint8_t>(object_x);
                                     tempPoint.y=static_cast<uint8_t>(object_y);
                                     map_to_send_temp.rescue_points.push_back(tempPoint);
                                     //map_to_send_temp.bot_spawn_points << tempPoint;
-                                }
+                                }*/
                                 else
                                 {
-                                    std::cerr << "Unknown type: " << type
+                                    if(!mapFinal.parseUnknownMoving(type,object_x,object_y,property_text))
+                                        std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
                                               << " (moving), " << SubChild->Name()
@@ -449,8 +451,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         bot_semi.property_text=property_text;
                                         if(ok)
                                         {
-                                            bot_semi.point.x=static_cast<uint8_t>(object_x);
-                                            bot_semi.point.y=static_cast<uint8_t>(object_y);
+                                            bot_semi.point.first=static_cast<uint8_t>(object_x);
+                                            bot_semi.point.second=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.bots.push_back(bot_semi);
                                         }
                                     }
@@ -482,20 +484,28 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                                         item_semi.item=stringtouint16(property_text.at("item"),&ok);
                                         if(ok)
                                         {
-                                            item_semi.point.x=static_cast<uint8_t>(object_x);
-                                            item_semi.point.y=static_cast<uint8_t>(object_y);
+                                            item_semi.point.first=static_cast<uint8_t>(object_x);
+                                            item_semi.point.second=static_cast<uint8_t>(object_y);
                                             map_to_send_temp.items.push_back(item_semi);
                                         }
+                                        else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(property_text.at("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                       {
+                                            item_semi.item=CommonDatapack::commonDatapack.get_tempNameToItemId().at(property_text.at("item"));
+                                            item_semi.point.first=static_cast<uint8_t>(object_x);
+                                            item_semi.point.second=static_cast<uint8_t>(object_y);
+                                            map_to_send_temp.items.push_back(item_semi);
+                                       }
                                     }
                                     else
                                         std::cerr << "Missing \"object\" properties (item) for the bot: " << SubChild->Name()
                                                   << ", file: " << file << ", text: " << SubChild->Value() << std::endl;
                                 }
-                                else if(type=="StrengthBoulder")
+                                else if(type=="StrengthBoulder")//not implemented
                                 {}
                                 else
                                 {
-                                    std::cerr << "Unknown type: " << type
+                                    if(!mapFinal.parseUnknownObject(type,object_x,object_y,property_text))
+                                        std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
                                               << " (object), " << SubChild->Name()
@@ -746,7 +756,8 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
     null_data[2]=0x00;
     null_data[3]=0x00;*/
 
-    map_to_send_temp.simplifiedMap.resize(map_to_send_temp.width*map_to_send_temp.height);
+    std::vector<uint8_t> simplifiedMap;
+    simplifiedMap.resize(map_to_send_temp.width*map_to_send_temp.height);
 
     uint32_t x=0;
     uint32_t y=0;
@@ -831,25 +842,25 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
 
             if(dirt)
             {
-                Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
+                /*Map_to_send::DirtOnMap_Semi dirtOnMap_Semi;
                 dirtOnMap_Semi.point.x=static_cast<uint8_t>(x);
                 dirtOnMap_Semi.point.y=static_cast<uint8_t>(y);
-                map_to_send_temp.dirts.push_back(dirtOnMap_Semi);
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=249;
+                map_to_send_temp.dirts.push_back(dirtOnMap_Semi); why have this?*/
+                simplifiedMap[x+y*map_to_send_temp.width]=249;
             }
             else if(ledgesLeft)
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=250;
+                simplifiedMap[x+y*map_to_send_temp.width]=250;
             else if(ledgesRight)
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=251;
+                simplifiedMap[x+y*map_to_send_temp.width]=251;
             else if(ledgesTop)
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=252;
+                simplifiedMap[x+y*map_to_send_temp.width]=252;
             else if(ledgesBottom)
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=253;
+                simplifiedMap[x+y*map_to_send_temp.width]=253;
             else if((walkable || monsterCollision) && !collisions && !dirt &&
                     !ledgesBottom && !ledgesRight && !ledgesLeft && !ledgesTop)
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=0;
+                simplifiedMap[x+y*map_to_send_temp.width]=0;
             else
-                map_to_send_temp.simplifiedMap[x+y*map_to_send_temp.width]=254;
+                simplifiedMap[x+y*map_to_send_temp.width]=254;
 
             y++;
         }
@@ -864,7 +875,7 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             {
                 const Map_semi_teleport &map_semi_teleport=map_to_send_temp.teleport.at(index);
                 if(map_semi_teleport.source_x<map_to_send_temp.width && map_semi_teleport.source_y<map_to_send_temp.height)
-                    map_to_send_temp.simplifiedMap[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=0;
+                    simplifiedMap[map_semi_teleport.source_x+map_semi_teleport.source_y*map_to_send_temp.width]=0;
                 else
                     std::cerr << "teleporter out of map on " << file << ", source: " << std::to_string(map_semi_teleport.source_x) << "," << std::to_string(map_semi_teleport.source_y) << std::endl;
                 index++;
@@ -876,43 +887,38 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             while(index<map_to_send_temp.bots.size())
             {
                 const Map_to_send::Bot_Semi &bot=map_to_send_temp.bots.at(index);
-                if(bot.point.x<map_to_send_temp.width && bot.point.y<map_to_send_temp.height)
+                if(bot.point.first<map_to_send_temp.width && bot.point.second<map_to_send_temp.height)
                 {
                     if(bot.property_text.find("skin")!=bot.property_text.cend() &&
                             (bot.property_text.find("lookAt")==bot.property_text.cend() || bot.property_text.at("lookAt")!="move"))
-                        map_to_send_temp.simplifiedMap[bot.point.x+bot.point.y*map_to_send_temp.width]=254;
+                        simplifiedMap[bot.point.first+bot.point.second*map_to_send_temp.width]=254;
                 }
                 else
-                    std::cerr << "bot out of map on " << file << ", source: " << std::to_string(bot.point.x) << "," << std::to_string(bot.point.y) << std::endl;
+                    std::cerr << "bot out of map on " << file << ", source: " << std::to_string(bot.point.first) << "," << std::to_string(bot.point.second) << std::endl;
                 index++;
             }
             index=0;
             while(index<map_to_send_temp.items.size())
             {
                 const Map_to_send::ItemOnMap_Semi &item_semi=map_to_send_temp.items.at(index);
-                if(item_semi.point.x<map_to_send_temp.width && item_semi.point.y<map_to_send_temp.height)
+                if(item_semi.point.first<map_to_send_temp.width && item_semi.point.second<map_to_send_temp.height)
                 {
                     if(item_semi.visible && item_semi.infinite)
-                        map_to_send_temp.simplifiedMap[item_semi.point.x+item_semi.point.y*map_to_send_temp.width]=254;
+                        simplifiedMap[item_semi.point.first+item_semi.point.second*map_to_send_temp.width]=254;
                 }
                 else
-                    std::cerr << "item out of map on " << file << ", source: " << std::to_string(item_semi.point.x) << "," << std::to_string(item_semi.point.y) << std::endl;
+                    std::cerr << "item out of map on " << file << ", source: " << std::to_string(item_semi.point.first) << "," << std::to_string(item_semi.point.second) << std::endl;
                 index++;
             }
         }
     }
 
-    //don't put code here !!!!!! put before the last block
-    this->map_to_send=map_to_send_temp;
-
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadMonsterOnMapAndExtra<MapType>(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
+    loadExtraXml(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {
-        this->map_to_send.simplifiedMap=map_to_send_temp.simplifiedMap;
-
         //link to monster zone id
         {
             auto i=mapLayerContentForMonsterCollision.begin();
@@ -929,26 +935,26 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
                         while(y<this->map_to_send.height)
                         {
                             unsigned int value=reinterpret_cast<const unsigned int *>(i->second.data())[x+y*map_to_send_temp.width];
-                            const uint8_t &val=map_to_send_temp.simplifiedMap[x+y*this->map_to_send.width];
+                            const uint8_t &val=simplifiedMap[x+y*this->map_to_send.width];
                             if(value!=0 && val<200)
                             {
-                                if(this->map_to_send.simplifiedMap[x+y*this->map_to_send.width]==0)
-                                    this->map_to_send.simplifiedMap[x+y*this->map_to_send.width]=zoneId;
-                                else if(this->map_to_send.simplifiedMap[x+y*this->map_to_send.width]==zoneId)
+                                if(val==0)
+                                    simplifiedMap[x+y*this->map_to_send.width]=zoneId;
+                                else if(val==zoneId)
                                 {}//ignore, same zone
                                 else
                                 {
                                     if(!previousHaveMonsterWarn)
                                     {
                                         std::cerr << "Have already monster at " << std::to_string(x) << "," << std::to_string(y) << " for " << file
-                                                  << ", actual zone: " << std::to_string(this->map_to_send.simplifiedMap[x+y*this->map_to_send.width])
+                                                  << ", actual zone: " << std::to_string(val)
                                                   << " (" << CommonDatapack::commonDatapack.get_monstersCollisionTemp()
-                                                     .at(this->map_to_send.simplifiedMap[x+y*this->map_to_send.width]).layer
+                                                     .at(val).layer
                                                   << "), new zone: " << std::to_string(zoneId) << " (" << CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(zoneId).layer
                                                   << ")" << std::endl;
                                         previousHaveMonsterWarn=true;
                                     }
-                                    this->map_to_send.simplifiedMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
+                                    simplifiedMap[x+y*this->map_to_send.width]=zoneId;//overwrited by above layer
                                 }
                             }
                             y++;
@@ -960,6 +966,10 @@ bool Map_loader::tryLoadMap(const std::string &file,const bool &botIsNotWalkable
             }
         }
     }
+
+    //don't put code after here !!!!!! put before the last block
+    map_to_send_temp.monstersCollisionMap=malloc(simplifiedMap.size());
+    memcpy(map_to_send_temp.monstersCollisionMap,simplifiedMap.data(),simplifiedMap.size());
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
