@@ -11,7 +11,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string &folder, const std::unordered_map<uint16_t, Skill> &monsterSkills
+std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &tempNameToMonsterId,const std::string &folder, const std::unordered_map<uint16_t, Skill> &monsterSkills
                                                 #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                 , const std::vector<Type> &types, const std::unordered_map<uint16_t, Item> &items,
                                                 uint16_t &monstersMaxId
@@ -176,6 +176,16 @@ std::unordered_map<uint16_t,Monster> FightLoader::loadMonster(const std::string 
                     std::cerr << "Unable to open the xml file: " << file << ", id already found: child->Name(): " << item->Name() << std::endl;
                 else
                 {
+                    const tinyxml2::XMLElement * name = item->FirstChildElement("name");
+                    while(item!=NULL)
+                    {
+                        if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                        {
+                            tempNameToMonsterId[name->GetText()]=id;
+                            break;
+                        }
+                        name = name->NextSiblingElement("name");
+                    }
                     #ifndef CATCHCHALLENGER_CLASS_MASTER
                     if(item->Attribute("catch_rate")!=NULL)
                     {
