@@ -8,7 +8,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::string &folder
+std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> &tempNameToSkillId,const std::string &folder
                                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
                                                    , const std::unordered_map<uint8_t, Buff> &monsterBuffs
                                                    , const std::vector<Type> &types
@@ -93,6 +93,16 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(const std::stri
                     std::cerr << "Unable to open the xml file: " << file << ", id already found: child->Name(): " << item->Name() << std::endl;
                 else if(ok)
                 {
+                    const tinyxml2::XMLElement * name = item->FirstChildElement("name");
+                    while(item!=NULL)
+                    {
+                        if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                        {
+                            tempNameToSkillId[name->GetText()]=id;
+                            break;
+                        }
+                        name = name->NextSiblingElement("name");
+                    }
                     std::unordered_map<uint8_t,Skill::SkillList> levelDef;
                     const tinyxml2::XMLElement * effect = item->FirstChildElement("effect");
                     if(effect!=NULL)

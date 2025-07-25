@@ -8,7 +8,7 @@
 using namespace CatchChallenger;
 
 #ifndef CATCHCHALLENGER_CLASS_MASTER
-ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::unordered_map<uint8_t,Buff> &monsterBuffs)
+ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &tempNameToItemId,const std::string &folder,const std::unordered_map<uint8_t,Buff> &monsterBuffs)
 {
     #ifdef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
     (void)monsterBuffs;
@@ -78,6 +78,16 @@ ItemFull DatapackGeneralLoader::loadItems(const std::string &folder,const std::u
                 const uint16_t &id=stringtouint16(item->Attribute("id"),&ok);
                 if(ok)
                 {
+                    const tinyxml2::XMLElement * name = item->FirstChildElement("name");
+                    while(item!=NULL)
+                    {
+                        if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                        {
+                            tempNameToItemId[name->GetText()]=id;
+                            break;
+                        }
+                        name = name->NextSiblingElement("name");
+                    }
                     if(items.item.find(id)==items.item.cend())
                     {
                         if(items.itemMaxId<id)
