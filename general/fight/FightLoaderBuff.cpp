@@ -9,7 +9,7 @@
 using namespace CatchChallenger;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string &folder)
+std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
 {
     std::unordered_map<uint8_t,Buff> monsterBuffs;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
@@ -74,6 +74,16 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(const std::string 
                     std::cerr << "Unable to open the xml file: " << file << ", id already found: child->Name(): " << item->Name() << std::endl;
                 else if(ok)
                 {
+                    const tinyxml2::XMLElement * name = item->FirstChildElement("name");
+                    while(item!=NULL)
+                    {
+                        if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                        {
+                            tempNameToBuffId[name->GetText()]=id;
+                            break;
+                        }
+                        name = name->NextSiblingElement("name");
+                    }
                     Buff::Duration general_duration=Buff::Duration_ThisFight;
                     uint8_t general_durationNumberOfTurn=0;
                     float general_capture_bonus=1.0;

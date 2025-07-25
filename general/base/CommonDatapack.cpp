@@ -301,22 +301,22 @@ const std::vector<Event> &CommonDatapack::get_events() const
     return events;
 }
 
-const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_ITEM> CommonDatapack::get_tempNameToItemId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> CommonDatapack::get_tempNameToItemId() const
 {
     return tempNameToItemId;
 }
 
-const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_BUFF> CommonDatapack::get_tempNameToBuffId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> CommonDatapack::get_tempNameToBuffId() const
 {
     return tempNameToBuffId;
 }
 
-const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_SKILL> CommonDatapack::get_tempNameToSkillId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> CommonDatapack::get_tempNameToSkillId() const
 {
     return tempNameToSkillId;
 }
 
-const std::unordenedMap<std::string,CATCHCHALLENGER_TYPE_MONSTER> CommonDatapack::get_tempNameToMonsterId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> CommonDatapack::get_tempNameToMonsterId() const
 {
     return tempNameToMonsterId;
 }
@@ -377,12 +377,6 @@ const std::vector<Profile> &CommonDatapack::get_profileList() const
 {
     return profileList;
 }
-
-const std::vector<Profile> &CommonDatapack::get_profileList()
-{
-    return commonDatapack.profileList;
-}
-
 
 const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile() const
 {
