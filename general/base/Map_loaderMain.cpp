@@ -10,8 +10,7 @@
 
 using namespace CatchChallenger;
 
-template<class MapType>
-bool Map_loader::tryLoadMap(const std::string &file, MapType *mapFinal, const bool &botIsNotWalkable)
+bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const bool &botIsNotWalkable)
 {
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
@@ -379,7 +378,7 @@ bool Map_loader::tryLoadMap(const std::string &file, MapType *mapFinal, const bo
                                 }*/
                                 else
                                 {
-                                    if(!mapFinal.parseUnknownMoving(type,object_x,object_y,property_text))
+                                    if(!mapFinal->parseUnknownMoving(type,object_x,object_y,property_text))
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -504,7 +503,7 @@ bool Map_loader::tryLoadMap(const std::string &file, MapType *mapFinal, const bo
                                 {}
                                 else
                                 {
-                                    if(!mapFinal.parseUnknownObject(type,object_x,object_y,property_text))
+                                    if(!mapFinal->parseUnknownObject(type,object_x,object_y,property_text))
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -968,7 +967,7 @@ bool Map_loader::tryLoadMap(const std::string &file, MapType *mapFinal, const bo
     }
 
     //don't put code after here !!!!!! put before the last block
-    map_to_send_temp.monstersCollisionMap=malloc(simplifiedMap.size());
+    map_to_send_temp.monstersCollisionMap=static_cast<uint8_t *>(malloc(simplifiedMap.size()));
     memcpy(map_to_send_temp.monstersCollisionMap,simplifiedMap.data(),simplifiedMap.size());
 
     #ifdef EPOLLCATCHCHALLENGERSERVER

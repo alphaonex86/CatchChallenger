@@ -512,8 +512,8 @@ public:
 struct IndustryStatus
 {
     uint64_t last_update;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> resources;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> products;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> resources;//max cycletobefull*resouces
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> products;//max cycletobefull*resouces
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>

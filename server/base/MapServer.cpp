@@ -16,15 +16,19 @@ MapServer::MapServer() :
     id_db(0),
     zone(65535)
 {
-    botFightsMaxId=0;
     border.bottom.x_offset=0;
-    border.bottom.map=nullptr;
+    border.bottom.mapIndex=65535;
     border.top.x_offset=0;
-    border.top.map=nullptr;
+    border.top.mapIndex=65535;
     border.right.y_offset=0;
-    border.right.map=nullptr;
+    border.right.mapIndex=65535;
     border.left.y_offset=0;
-    border.left.map=nullptr;
+    border.left.mapIndex=65535;
+
+    localChatDropTotalCache=0;
+    localChatDropNewValue=0;
+    id_db=0;
+    zone=0;
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }
 
@@ -341,28 +345,3 @@ unsigned int MapServer::playerToFullInsert(const Client * const client, char * c
     posOutput+=2;
     return posOutput;
 }
-
-#ifdef CATCHCHALLENGER_CACHE_HPS
-CommonMap * MapServer::posToPointer(const CATCHCHALLENGER_TYPE_MAPID &mappos)
-{
-    if(mappos==-1)
-        return nullptr;
-    if(mappos<GlobalServerData::serverPrivateVariables.flat_map_size)
-        return GlobalServerData::serverPrivateVariables.flat_map_list[mappos];
-    else
-    {
-        std::cerr << mappos << " not into list: ";
-        size_t index=0;
-        while(index<mapListSize)
-        {
-            if(index>0)
-                std::cerr << ", ";
-            std::cerr << GlobalServerData::serverPrivateVariables.flat_map_list[index]->id;
-            index++;
-        }
-        std::cerr << " (" << mapListSize << ")";
-        abort();
-    }
-    return nullptr;
-}
-#endif

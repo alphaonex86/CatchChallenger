@@ -844,7 +844,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
 
                 mapFinal->width			= static_cast<uint8_t>(map_temp.map_to_send.width);
                 mapFinal->height			= static_cast<uint8_t>(map_temp.map_to_send.height);
-                mapFinal.flat_simplified_map_first_index=CommonMap::flat_simplified_map_list_size;
+                mapFinal->flat_simplified_map_first_index=CommonMap::flat_simplified_map_list_size;
                 CommonMap::flat_simplified_map_list_size+=mapFinal->width*mapFinal->height;
 
                 Map_semi map_semi;
@@ -898,20 +898,21 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                 map_semi.old_map=map_temp.map_to_send;
 
                 //copy BaseMap
-                mapFinal.width=map_semi.old_map.width;
-                mapFinal.height=map_semi.old_map.height;
+                mapFinal->width=map_semi.old_map.width;
+                mapFinal->height=map_semi.old_map.height;
 
-                mapFinal.monstersCollisionList=map_semi.old_map.monstersCollisionList;
+                mapFinal->monstersCollisionList=map_semi.old_map.monstersCollisionList;
 
-                mapFinal.industryByIndex=map_semi.old_map.industryByIndex;
-                mapFinal.botFights=map_semi.old_map.botFights;
+                mapFinal->industries=map_semi.old_map.industries;
+                mapFinal->industriesStatus=map_semi.old_map.industriesStatus;
+                mapFinal->botFights=map_semi.old_map.botFights;
 
-                mapFinal.shops=map_semi.old_map.shops;
-                mapFinal.botsFightTrigger=map_semi.old_map.botsFightTrigger;
-                mapFinal.zoneCapture=map_semi.old_map.zoneCapture;
-                mapFinal.pointOnMap_Item=map_semi.old_map.pointOnMap_Item;
+                mapFinal->shops=map_semi.old_map.shops;
+                mapFinal->botsFightTrigger=map_semi.old_map.botsFightTrigger;
+                mapFinal->zoneCapture=map_semi.old_map.zoneCapture;
+                mapFinal->pointOnMap_Item=map_semi.old_map.pointOnMap_Item;
 
-                mapFinal.monsterDrops=map_semi.old_map.monsterDrops;
+                mapFinal->monsterDrops=map_semi.old_map.monsterDrops;
 
                 semi_loaded_map.push_back(map_semi);
             }
@@ -967,7 +968,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
         #endif
         for(CATCHCHALLENGER_TYPE_MAPID i=0; i<flat_map_list_temp.size(); i++)
         {
-            MapType * mapFinal=CommonMap::flat_map_list+i;
+            MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+i;
             memcpy(mapFinal,flat_map_list_temp.at(i),sizeof(MapType));
         }
     }
@@ -986,7 +987,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
 
         for(CATCHCHALLENGER_TYPE_MAPID i=0; i<CommonMap::flat_map_list_count; i++)
         {
-            MapType * mapFinal=CommonMap::flat_map_list+i;
+            MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+i;
             memcpy(CommonMap::flat_simplified_map+mapFinal->flat_simplified_map_first_index,map_temp.map_to_send.monstersCollisionMap,mapFinal->width*mapFinal->height);
         }
     }
@@ -1006,56 +1007,56 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
     {
         unsigned int sub_index=0;
         Map_semi &map_semi=semi_loaded_map.at(index);
-        MapType * mapFinal=CommonMap::flat_map_list+index;
+        MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+index;
 
         //resolv the border map name into their pointer + resolv the offset to change of map
         if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end())
         {
-            mapFinal.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
-            mapFinal.border.bottom.x_offset=map_semi.border.bottom.x_offset;
+            mapFinal->border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
+            mapFinal->border.bottom.x_offset=map_semi.border.bottom.x_offset;
         }
         else
         {
-            mapFinal.border.bottom.mapIndex=65535;
-            mapFinal.border.bottom.x_offset=0;
+            mapFinal->border.bottom.mapIndex=65535;
+            mapFinal->border.bottom.x_offset=0;
         }
 
         if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end())
         {
-            mapFinal.border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
-            mapFinal.border.top.x_offset=map_semi.border.top.x_offset;
+            mapFinal->border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
+            mapFinal->border.top.x_offset=map_semi.border.top.x_offset;
         }
         else
         {
-            mapFinal.border.top.mapIndex=65535;
-            mapFinal.border.top.x_offset=0;
+            mapFinal->border.top.mapIndex=65535;
+            mapFinal->border.top.x_offset=0;
         }
 
         if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end())
         {
-            mapFinal.border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
-            mapFinal.border.left.y_offset=map_semi.border.left.y_offset;
+            mapFinal->border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
+            mapFinal->border.left.y_offset=map_semi.border.left.y_offset;
         }
         else
         {
-            mapFinal.border.left.mapIndex=65535;
-            mapFinal.border.left.y_offset=0;
+            mapFinal->border.left.mapIndex=65535;
+            mapFinal->border.left.y_offset=0;
         }
 
         if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end())
         {
-            mapFinal.border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
-            mapFinal.border.right.y_offset=map_semi.border.right.y_offset;
+            mapFinal->border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
+            mapFinal->border.right.y_offset=map_semi.border.right.y_offset;
         }
         else
         {
-            mapFinal.border.right.mapIndex=65535;
-            mapFinal.border.right.y_offset=0;
+            mapFinal->border.right.mapIndex=65535;
+            mapFinal->border.right.y_offset=0;
         }
 
         //resolv the teleported into their pointer
-        mapFinal.teleporter_list_size=0;
-        mapFinal.teleporter_first_index=CommonMap::flat_teleporter_list_size;
+        mapFinal->teleporter_list_size=0;
+        mapFinal->teleporter_first_index=CommonMap::flat_teleporter_list_size;
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
@@ -1068,14 +1069,14 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                         && teleporter_semi.destination_y<map_semi.old_map.height)
                 {
                     uint16_t index_search=0;
-                    while(index_search<mapFinal.teleporter_list_size)
+                    while(index_search<mapFinal->teleporter_list_size)
                     {
-                        const CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal.teleporter_first_index+index_search);
+                        const CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal->teleporter_first_index+index_search);
                         if(teleporter.source_x==teleporter_semi.source_x && teleporter.source_y==teleporter_semi.source_y)
                             break;
                         index_search++;
                     }
-                    if(index_search==mapFinal.teleporter_list_size)
+                    if(index_search==mapFinal->teleporter_list_size)
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
@@ -1093,14 +1094,14 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
                              << ")"
                              << std::endl;
                         #endif
-                        CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal.teleporter_first_index+index_search);
+                        CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal->teleporter_first_index+index_search);
                         teleporter.mapIndex=mapPathToId.at(teleportString);
                         teleporter.source_x=teleporter_semi.source_x;
                         teleporter.source_y=teleporter_semi.source_y;
                         teleporter.destination_x=teleporter_semi.destination_x;
                         teleporter.destination_y=teleporter_semi.destination_y;
                         teleporter.condition=teleporter_semi.condition;
-                        mapFinal.teleporter_list_size++;
+                        mapFinal->teleporter_list_size++;
                         CommonMap::flat_teleporter_list_size++;
                     }
                     else
