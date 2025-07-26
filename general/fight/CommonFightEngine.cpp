@@ -60,22 +60,22 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "CommonFightEngine::canDoRandomFight() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "CommonFightEngine::canDoRandomFight() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
 
-    const uint8_t &zoneCode=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
+    const uint8_t &zoneCode=*(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(zoneCode>=map.parsed_layer.monstersCollisionList.size())
+    if(zoneCode>=map.monstersCollisionList.size())
     {
-        std::cerr << "CommonFightEngine::canDoRandomFight() zoneCode>=map.parsed_layer.monstersCollisionList.size()" << std::endl;
+        std::cerr << "CommonFightEngine::canDoRandomFight() zoneCode>=map.monstersCollisionList.size()" << std::endl;
         abort();
     }
     #endif
-    const MonstersCollisionValue &monstersCollisionValue=map.parsed_layer.monstersCollisionList.at(zoneCode);
+    const MonstersCollisionValue &monstersCollisionValue=map.monstersCollisionList.at(zoneCode);
     if(monstersCollisionValue.walkOn.empty())
         return true;
     else

@@ -27,14 +27,14 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/base/Map_loaderMain.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
-    $$PWD/base/DatapackGeneralLoader.cpp \
-    $$PWD/base/DatapackGeneralLoaderCrafting.cpp \
-    $$PWD/base/DatapackGeneralLoaderItem.cpp \
-    $$PWD/base/DatapackGeneralLoaderMap.cpp \
-    $$PWD/base/DatapackGeneralLoaderMonsterDrop.cpp \
-    $$PWD/base/DatapackGeneralLoaderPlant.cpp \
-    $$PWD/base/DatapackGeneralLoaderQuest.cpp \
-    $$PWD/base/DatapackGeneralLoaderReputation.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMap.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMonsterDrop.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp \
     $$PWD/base/cpp11addition.cpp \
     $$PWD/base/cpp11additionstringtointcpp.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
@@ -68,7 +68,7 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/GeneralVariable.hpp \
     $$PWD/base/FacilityLib.hpp \
     $$PWD/base/FacilityLibGeneral.hpp \
-    $$PWD/base/DatapackGeneralLoader.hpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp \
     $$PWD/base/CommonDatapack.hpp \
     $$PWD/base/CommonDatapackServerSpec.hpp \
     $$PWD/base/CommonSettingsCommon.hpp \

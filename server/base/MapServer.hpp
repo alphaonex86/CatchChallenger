@@ -45,121 +45,50 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        //CommonMap
         buf << border.bottom.x_offset << border.bottom.mapIndex;
         buf << border.left.y_offset << border.left.mapIndex;
         buf << border.right.y_offset << border.right.mapIndex;
         buf << border.top.x_offset << border.top.mapIndex;
-        buf << teleporter_list_size << teleporter_first_index;
+        buf << teleporter_first_index;
+        buf << teleporter_list_size;
+        buf << id;
+        buf << flat_simplified_map_first_index;
+
         buf << width;
         buf << height;
-        const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
-        if(mapSize>hps::STREAM_INPUT_BUFFER_SIZE/2)
-        {
-            std::cerr << "mapSize: " << mapSize << ">STREAM_INPUT_BUFFER_SIZE: " << hps::STREAM_INPUT_BUFFER_SIZE << "/2" << std::endl;
-            abort();
-        }
-        //buf << group;
-        buf << id;
-        buf << parsed_layer.monstersCollisionList;
-        buf << parsed_layer.simplifiedMapIndex;
-        buf << (uint8_t)shops.size();
-        for (const auto &x : shops)
-              buf << x.first << x.second;
-        buf << (uint8_t)heal.size();
-        for (const auto &x : heal)
-              buf << x.first << x.second;
-        buf << (uint8_t)zoneCapture.size();
-        for (const auto &x : zoneCapture)
-              buf << x.first << x.second;
-        buf << (uint8_t)botsFightTrigger.size();
-        for (const auto &x : botsFightTrigger)
-              buf << x.first << x.second;
-        buf << (uint8_t)botsFightTrigger.size();
-        for (const auto &x : botsFightTrigger)
-              buf << x.first << x.second;
-        //MapServerCrafting
-        buf << plants;
-        //server map
-        buf << (uint8_t)rescue.size();
-        for (const auto &x : rescue)
-              buf << x.first << (uint8_t)x.second;
-        buf << id_db << zone << pointOnMap_Item;
+        buf << monstersCollisionList;
+        buf << industries;
         buf << botFights;
-        buf << shopByIndex;
+        buf << shops;
+        buf << botsFightTrigger;
+        buf << zoneCapture;
+        buf << pointOnMap_Item;
         buf << monsterDrops;
     }
-    static CommonMap * posToPointer(const CATCHCHALLENGER_TYPE_MAPID &mappos);
     template <class B>
     void parse(B& buf) {
-        //CommonMap
-        buf >> border.bottom.x_offset >> border.bottom.mapIndex;
-        buf >> border.left.y_offset >> border.left.mapIndex;
-        buf >> border.right.y_offset >> border.right.mapIndex;
-        buf >> border.top.x_offset >> border.top.mapIndex;
-        buf >> teleporter_list_size >> teleporter_first_index;
+        buf >> teleporter_first_index;
+        buf >> teleporter_list_size;
+        buf >> id;
+        buf >> flat_simplified_map_first_index;
+
         buf >> width;
         buf >> height;
-        const uint16_t &mapSize=(uint16_t)width*(uint16_t)height;
-        /*if(mapSize>hps::STREAM_INPUT_BUFFER_SIZE)
-        {
-            std::cerr << "mapSize: " << mapSize << ">STREAM_INPUT_BUFFER_SIZE: " << hps::STREAM_INPUT_BUFFER_SIZE << "/2" << std::endl;
-            abort();
-        }*/
-        //buf >> group;
-        buf >> id;
-        buf >> parsed_layer.monstersCollisionList;
-        buf >> parsed_layer.simplifiedMapIndex;
-        uint8_t smallsize=0;
-        std::pair<uint8_t,uint8_t> posXY;posXY.first=0;posXY.second=0;
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            uint8_t value;
-            buf >> posXY >> value;
-            shops[posXY]=value;
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            buf >> posXY.first >> posXY.second;
-            heal.insert(posXY);
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            uint16_t value;
-            buf >> posXY >> value;
-            zoneCapture[posXY]=value;
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            uint8_t value;
-            buf >> posXY >> value;
-            botsFightTrigger[posXY]=value;
-        }
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            std::vector<uint8_t> value;
-            buf >> posXY >> value;
-            botsFightTrigger[posXY]=value;
-        }
-       //MapServerCrafting
-        buf >> plants;
-        //server map
-        buf >> smallsize;
-        for(uint8_t i=0; i<smallsize; i++)
-        {
-            uint8_t value;
-            buf >> posXY >> value;
-            rescue[posXY]=(Orientation)value;
-        }
-        buf >> id_db >> zone >> pointOnMap_Item;
+        buf >> monstersCollisionList;
+        buf >> industries;
         buf >> botFights;
-        buf >> shopByIndex;
+        buf >> shops;
+        buf >> botsFightTrigger;
+        buf >> zoneCapture;
+        buf >> pointOnMap_Item;
         buf >> monsterDrops;
+
+        for(int i=0;i<industries.size();i++)
+        {
+            IndustryStatus s;
+            s.last_update=0;
+            industriesStatus.push_back(s);
+        }
     }
     #endif
 };

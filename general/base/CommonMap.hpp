@@ -40,8 +40,11 @@ public:
 
     std::vector<MonstersCollisionValue> monstersCollisionList;
 
-    std::vector<std::pair<Industry,IndustryStatus>> industryByIndex;
-    // need load state from server, and sync with client, if empty then status not loaded, just disable the industry
+    //any where on the map
+    std::vector<Industry> industries;
+    //to load after industries and check data coherency
+    std::vector<IndustryStatus> industriesStatus;
+
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
 
@@ -126,11 +129,9 @@ public:
      * continus space improve fragementation, loading from cache... it's server optimised version, the client will always load limited list of map
      */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    static void * flat_map_list;
+    static void * flat_map_list;//std::vector<CommonMap *> will request 2x more memory fetch, one to get the pointer, one to get the data. With the actual pointer, just get the data
     static CATCHCHALLENGER_TYPE_MAPID flat_map_list_count;
     static size_t flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
-    static inline const void * indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index);
-    static inline void * indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index);
 
     static Teleporter*                          flat_teleporter;
     static CATCHCHALLENGER_TYPE_TELEPORTERID    flat_teleporter_list_size;//temp, used as size when finish
@@ -149,6 +150,11 @@ public:
      * 1-199 monster def and condition */
     static uint8_t *                            flat_simplified_map;
     static CATCHCHALLENGER_TYPE_MAPID           flat_simplified_map_list_size;//temp, used as size when finish
+    
+    
+    //facility function
+    static inline const void * indexToMap(const CATCHCHALLENGER_TYPE_MAPID &index);
+    static inline void * indexToMapWritable(const CATCHCHALLENGER_TYPE_MAPID &index);
 };
 }
 
