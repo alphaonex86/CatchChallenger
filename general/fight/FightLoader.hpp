@@ -5,7 +5,7 @@
 #include <string>
 
 #include "../base/GeneralStructures.hpp"
-#include "../base/DatapackGeneralLoader.hpp"
+#include "../base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 
 namespace CatchChallenger {
 class FightLoader

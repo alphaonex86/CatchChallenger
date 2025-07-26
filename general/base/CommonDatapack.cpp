@@ -1,7 +1,7 @@
 #include "CommonDatapack.hpp"
 #include "GeneralVariable.hpp"
 #include "../fight/FightLoader.hpp"
-#include "DatapackGeneralLoader.hpp"
+#include "DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 #include "CommonSettingsServer.hpp"
 #endif

@@ -6,7 +6,7 @@
 #include "GeneralVariable.hpp"
 #include "Map_loader.hpp"
 #include "../fight/FightLoader.hpp"
-#include "DatapackGeneralLoader.hpp"
+#include "DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 
 #include <iostream>

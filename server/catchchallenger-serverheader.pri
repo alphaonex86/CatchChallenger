@@ -7,10 +7,10 @@ HEADERS += \
     $$PWD/base/GlobalServerData.hpp \
     $$PWD/base/PlayerUpdaterBase.hpp \
     $$PWD/base/SqlFunction.hpp \
-    $$PWD/base/BaseServer.hpp \
+    $$PWD/base/BaseServer/BaseServer.hpp \
     $$PWD/base/BaseServerMasterLoadDictionary.hpp \
     $$PWD/base/BaseServerMasterSendDatapack.hpp \
-    $$PWD/base/LocalClientHandlerWithoutSender.hpp \
+    $$PWD/base/LocalClientHandler/LocalClientHandlerWithoutSender.hpp \
     $$PWD/base/ServerStructures.hpp \
     $$PWD/base/Client.hpp \
     $$PWD/base/ClientNetworkReadWithoutSender.hpp \

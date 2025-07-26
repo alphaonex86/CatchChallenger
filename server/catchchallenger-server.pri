@@ -2,46 +2,47 @@ SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/PlayerUpdaterBase.cpp \
     $$PWD/base/SqlFunction.cpp \
-    $$PWD/base/BaseServer.cpp \
-    $$PWD/base/BaseServer2.cpp \
-    $$PWD/base/BaseServer3.cpp \
-    $$PWD/base/BaseServerSettings.cpp \
-    $$PWD/base/BaseServerLoad.cpp \
-    $$PWD/base/BaseServerLoadProfile.cpp \
-    $$PWD/base/BaseServerLoadDatapack.cpp \
-    $$PWD/base/BaseServerLoadOther.cpp \
-    $$PWD/base/BaseServerLoadMap.cpp \
-    $$PWD/base/BaseServerLoadMapAfterDB.cpp \
-    $$PWD/base/BaseServerLoadSQL.cpp \
-    $$PWD/base/BaseServerLoadSQLNotEpoll.cpp \
-    $$PWD/base/BaseServerUnload.cpp \
-    $$PWD/base/BaseServerMasterLoadDictionary.cpp \
-    $$PWD/base/BaseServerMasterSendDatapack.cpp \
-    $$PWD/base/LocalClientHandler.cpp \
-    $$PWD/base/LocalClientHandlerMove.cpp \
-    $$PWD/base/LocalClientHandlerReputation.cpp \
-    $$PWD/base/LocalClientHandlerFightManage.cpp \
-    $$PWD/base/LocalClientHandlerObject.cpp \
-    $$PWD/base/LocalClientHandlerWarehouse.cpp \
-    $$PWD/base/LocalClientHandlerCommand.cpp \
-    $$PWD/base/LocalClientHandlerDatabaseSync.cpp \
-    $$PWD/base/LocalClientHandlerShop.cpp \
-    $$PWD/base/LocalClientHandlerClan.cpp \
-    $$PWD/base/LocalClientHandlerCity.cpp \
-    $$PWD/base/LocalClientHandlerWithoutSender.cpp \
-    $$PWD/base/LocalClientHandlerQuest.cpp \
-    $$PWD/base/LocalClientHandlerTrade.cpp \
+    $$PWD/base/BaseServer/BaseServer.cpp \
+    $$PWD/base/BaseServer/BaseServer2.cpp \
+    $$PWD/base/BaseServer/BaseServer3.cpp \
+    $$PWD/base/BaseServer/BaseServerSettings.cpp \
+    $$PWD/base/BaseServer/BaseServerLoad.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadProfile.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadDatapack.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadOther.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadMap.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadMapAfterDB.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadSQL.cpp \
+    $$PWD/base/BaseServer/BaseServerLoadSQLNotEpoll.cpp \
+    $$PWD/base/BaseServer/BaseServerUnload.cpp \
+    $$PWD/base/BaseServer/BaseServerMasterLoadDictionary.cpp \
+    $$PWD/base/BaseServer/BaseServerMasterSendDatapack.cpp \
+    $$PWD/base/BaseServer/BaseServerLogin.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandler.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerMove.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerReputation.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerFightManage.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerObject.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerWarehouse.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerCommand.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerDatabaseSync.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerShop.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerClan.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerCity.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerWithoutSender.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerQuest.cpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerTrade.cpp \
     $$PWD/base/ClientLocalBroadcast.cpp \
     $$PWD/base/Client.cpp \
     $$PWD/base/ClientStaticVar.cpp \
-    $$PWD/base/ClientHeavyLoad.cpp \
-    $$PWD/base/ClientHeavyLoadLogin.cpp \
-    $$PWD/base/ClientHeavyLoadLogin2.cpp \
-    $$PWD/base/ClientHeavyLoadMirror.cpp \
-    $$PWD/base/ClientHeavyLoadSelectChar.cpp \
-    $$PWD/base/ClientHeavyLoadSelectCharCommon.cpp \
-    $$PWD/base/ClientHeavyLoadSelectCharServer.cpp \
-    $$PWD/base/ClientHeavyLoadSelectCharFinal.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoad.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadLogin.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadLogin2.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadMirror.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadSelectChar.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadSelectCharCommon.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadSelectCharServer.cpp \
+    $$PWD/base/ClientLoad/ClientHeavyLoadSelectCharFinal.cpp \
     $$PWD/base/ClientNetworkWrite.cpp \
     $$PWD/base/ClientNetworkRead.cpp \
     $$PWD/base/ClientNetworkReadMessage.cpp \
@@ -64,7 +65,6 @@ SOURCES += \
     $$PWD/base/PreparedDBQueryCommon.cpp \
     $$PWD/base/PreparedDBQueryServer.cpp \
     $$PWD/base/DatabaseBase.cpp \
-    $$PWD/base/BaseServerLogin.cpp \
     $$PWD/base/TimeRangeEventScanBase.cpp \
     $$PWD/base/TinyXMLSettings.cpp \
     $$PWD/base/DatabaseFunction.cpp \

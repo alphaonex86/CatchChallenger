@@ -5,7 +5,7 @@
 
 #include "ServerStructures.hpp"
 #include "ClientMapManagement/ClientMapManagement.hpp"
-#include "BaseServerMasterSendDatapack.hpp"
+#include "BaseServer/BaseServerMasterSendDatapack.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/fight/CommonFightEngine.hpp"
 #include "../../general/base/ProtocolParsing.hpp"

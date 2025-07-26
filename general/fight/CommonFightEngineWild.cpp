@@ -163,13 +163,13 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const
     }
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size)
+    if(map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size)
     {
-        std::cerr << "CommonFightEngine::generateWildFightIfCollision() map.parsed_layer.simplifiedMapIndex>=CommonMap::flat_simplified_map_list_size" << std::endl;
+        std::cerr << "CommonFightEngine::generateWildFightIfCollision() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();
     }
     #endif
-    const uint8_t &zoneCode=*(CommonMap::flat_simplified_map+map.parsed_layer.simplifiedMapIndex+x+y*map.width);
+    const uint8_t &zoneCode=*(CommonMap::flat_simplified_map+map.flat_simplified_map_first_index+x+y*map.width);
     /* No wild monster into:
      * 253 ParsedLayerLedges_LedgesBottom
      * 252 ParsedLayerLedges_LedgesTop
@@ -177,13 +177,13 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const
      * 250 ParsedLayerLedges_LedgesLeft */
     if(zoneCode==250 || zoneCode==251 || zoneCode==252 || zoneCode==253)
         return false;
-    if(zoneCode>=map.parsed_layer.monstersCollisionList.size())
+    if(zoneCode>=map.monstersCollisionList.size())
     {
         //errorFightEngine("error: map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range"); -> bug is TP in colision
         /// no fight in this zone
         return false;
     }
-    const MonstersCollisionValue &monstersCollisionValue=map.parsed_layer.monstersCollisionList.at(zoneCode);
+    const MonstersCollisionValue &monstersCollisionValue=map.monstersCollisionList.at(zoneCode);
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
