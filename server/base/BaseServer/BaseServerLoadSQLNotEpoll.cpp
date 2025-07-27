@@ -1,5 +1,5 @@
 #include "BaseServer.hpp"
-#include "GlobalServerData.hpp"
+#include "../GlobalServerData.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"

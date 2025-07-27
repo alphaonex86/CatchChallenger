@@ -144,7 +144,7 @@ BaseServer::~BaseServer()
 
     if(CommonMap::flat_map_list==nullptr)
     {
-        delete (MapServer *)CommonMap::flat_map_list;
+        free(static_cast<MapServer *>(CommonMap::flat_map_list));
         CommonMap::flat_map_list=nullptr;
     }
     CommonMap::flat_map_list_count=0;

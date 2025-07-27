@@ -56,7 +56,7 @@ std::string Client::directionToStringToSave(const Direction &direction)
         default:
         break;
     }
-    return StaticText::text_bottom;
+    return "3";
 }
 
 std::string Client::orientationToStringToSave(const Orientation &orientation)
@@ -344,7 +344,7 @@ Direction Client::lookToMove(const Direction &direction)
 const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
 {
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
-    CommonMap *map=indexToMap(mapIndex);
+    const CommonMap *map=CommonMap::indexToMap(mapIndex);
     x=this->x;
     y=this->y;
     //resolv the object
@@ -360,7 +360,7 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TY
             {
                 if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,false))
                 {
-                    CommonMap *map=indexToMap(mapIndex);
+                    const CommonMap *map=CommonMap::indexToMap(mapIndex);
                     if(!MoveOnTheMap::isWalkable(*map,x,y))
                     {
                         if(MoveOnTheMap::canGoTo(direction,*map,x,y,true))
@@ -381,7 +381,7 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TY
             return nullptr;
         return;
     }
-    return indexToMap(mapIndex);
+    return CommonMap::indexToMap(mapIndex);
 }
 
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)

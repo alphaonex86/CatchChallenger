@@ -345,3 +345,47 @@ unsigned int MapServer::playerToFullInsert(const Client * const client, char * c
     posOutput+=2;
     return posOutput;
 }
+
+bool MapServer::parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text)
+{
+    (void)property_text;
+    if(type=="rescue")
+    {
+        std::pair<uint8_t,uint8_t> p(object_x,object_y);
+        rescue.insert(p,Orientation_bottom);
+        return true;
+    }
+    return false;
+}
+
+bool MapServer::parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text)
+{
+    (void)type;
+    (void)object_x;
+    (void)object_y;
+    (void)property_text;
+    return false;
+}
+
+bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step)
+{
+    (void)object_x;
+    (void)object_y;
+    (void)step;
+    if(strcmp(step->Attribute("type"),"heal")==0)
+    {
+        heal.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
+        return true;
+    }
+    if(strcmp(step->Attribute("type"),"zonecapture")==0)
+    {
+        if(step->Attribute("zone")==NULL)
+            std::cerr << "zonecapture point have not the zone attribute: for bot id: " << searchID << " " << botFile << std::endl;
+        else if(zonecapture.find(std::pair<uint8_t,uint8_t>(x,y))!=zonecapture.cend())
+            std::cerr << "zonecapture point already on the map: for bot id: " << searchID << " " << botFile << std::endl;
+        else
+            zonecapture.insert(std::pair<uint8_t,uint8_t>(x,y));
+        return true;
+    }
+    return false;
+}
