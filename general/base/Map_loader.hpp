@@ -102,7 +102,7 @@ public:
     Map_to_send map_to_send;
     std::string errorString();
     bool tryLoadMap(const std::string &file, CommonMap *mapFinal, const bool &botIsNotWalkable);
-    bool loadExtraXml(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
+    bool loadExtraXml(CommonMap *mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);

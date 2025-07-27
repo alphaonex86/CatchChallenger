@@ -1,12 +1,12 @@
 #include "BaseServer.hpp"
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "DictionaryServer.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
+#include "../DictionaryServer.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 #include <vector>
 #include <time.h>
@@ -70,7 +70,6 @@ void BaseServer::unload_zone()
 
 void BaseServer::unload_industries()
 {
-    GlobalServerData::serverPrivateVariables.industriesStatus.clear();
 }
 
 void BaseServer::unload_the_city_capture()
@@ -85,7 +84,7 @@ void BaseServer::unload_the_map()
 {
     if(CommonMap::flat_map_list!=nullptr)
     {
-        delete reinterpret_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(CommonMap::flat_map_list);
+        free(reinterpret_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(CommonMap::flat_map_list));
         CommonMap::flat_map_list=nullptr;
     }
     CommonMap::flat_map_list_count=0;

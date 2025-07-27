@@ -1,0 +1,17 @@
+50x50 map, AMD Ryzen 9 7950X3D 16-Core Processor
+generateGrid took 76 ms
+computeVoronoi took 11224 ms
+Add terrain took 732 ms
+Transitions took 2123 ms
+mergeDown took 693 ms
+dominimap 17527 ms
+Vegetation took 1499 ms
+
+150x150 map, AMD Ryzen 9 7950X3D 16-Core Processor
+generateGrid took 654 ms
+computeVoronoi took 102624 ms
+Add terrain took 6311 ms
+Transitions took 19001 ms
+mergeDown took 6451 ms
+dominimap 163139 ms
+Vegetation took 15587 ms

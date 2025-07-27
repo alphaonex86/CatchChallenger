@@ -1,6 +1,6 @@
 #include "BaseServer.hpp"
-#include "DictionaryServer.hpp"
-#include "GlobalServerData.hpp"
+#include "../DictionaryServer.hpp"
+#include "../GlobalServerData.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 
 using namespace CatchChallenger;
