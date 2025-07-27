@@ -27,15 +27,21 @@ public:
     static Orientation directionToOrientation(const Direction &direction);
     static Direction directionToDirectionLook(const Direction &direction);
 
-    static bool canGoTo(const Direction &direction, const CommonMap &map, const uint8_t &x, const uint8_t &y, const bool &checkCollision, const bool &allowTeleport=true);
-    static ParsedLayerLedges getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y);
-    static bool move(const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool moveWithoutTeleport(const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
-    static bool teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t &x, uint8_t &y);
-    static int8_t indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
-    static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    //this map list access
+    template<class MapType>
+    static bool canGoTo(const std::vector<MapType> &mapList,const Direction &direction, const CommonMap &map, const uint8_t &x, const uint8_t &y, const bool &checkCollision, const bool &allowTeleport=true);
+    template<class MapType>
+    static bool teleport(const std::vector<MapType> &mapList,CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t &x, uint8_t &y);
+    template<class MapType>
+    static bool move(const std::vector<MapType> &mapList,const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
+    template<class MapType>
+    static bool moveWithoutTeleport(const std::vector<MapType> &mapList,const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
 
     static inline bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+    static int8_t indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    static ParsedLayerLedges getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y);
+
     static bool isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction);
     static inline bool isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static MonstersCollisionValue getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y);

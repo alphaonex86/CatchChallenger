@@ -67,7 +67,7 @@ public:
     static bool characterConnected(const uint32_t &characterId);
     bool disconnectClient() override;
     static void disconnectClientById(const uint32_t &characterId);
-    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const;
+    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const override;
     Client *getClientFight() const;
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER

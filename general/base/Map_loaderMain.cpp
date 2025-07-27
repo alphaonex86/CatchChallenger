@@ -368,14 +368,6 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
                                     else
                                         std::cerr << "Missing map,x or y, type: " << type << ", file: " << file << std::endl;
                                 }
-                                /*else if(type=="rescue")
-                                {
-                                    Map_to_send::Map_Point tempPoint;
-                                    tempPoint.x=static_cast<uint8_t>(object_x);
-                                    tempPoint.y=static_cast<uint8_t>(object_y);
-                                    map_to_send_temp.rescue_points.push_back(tempPoint);
-                                    //map_to_send_temp.bot_spawn_points << tempPoint;
-                                }*/
                                 else
                                 {
                                     if(!mapFinal->parseUnknownMoving(type,object_x,object_y,property_text))
@@ -914,7 +906,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadExtraXml(xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
+    loadExtraXml(mapFinal,xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {

@@ -146,7 +146,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-bool Map_loader::loadExtraXml(const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
+bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -401,25 +401,6 @@ bool Map_loader::loadExtraXml(const std::string &file, std::vector<Map_to_send::
                            if(!s.items.empty() && map_to_send.shops.find(botOnMap.point)==map_to_send.shops.cend())
                                 map_to_send.shops[botOnMap.point]=s;
                         }
-                        /*else if(strcmp(step->Attribute("type"),"zonecapture")==0)
-                        {
-                            if(step->Attribute("zone")==NULL)
-                                qDebug() << (QStringLiteral("zonecapture point have not the zone attribute: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else if(parsedMap->logicalMap.zonecapture.find(std::pair<uint8_t,uint8_t>(x,y))!=parsedMap->
-                                logicalMap.zonecapture.cend())
-                                qDebug() << (QStringLiteral("zonecapture point already on the map: for bot id: %1 (%2)")
-                                    .arg(botId).arg(QString::fromStdString(botFile)));
-                            else
-                            {
-                                const char * const zoneString=step->Attribute("zone");
-                                if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(zoneString)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
-                                    parsedMap->logicalMap.zonecapture[std::pair<uint8_t,uint8_t>(x,y)]=QtDatapackClientLoader::datapackLoader->get_zonesExtra().at(zoneString).id;
-                                else
-                                    qDebug() << (QStringLiteral("zoneString not resolved: for bot id: %1 (%2)")
-                                        .arg(botId).arg(QString::fromStdString(botFile)));
-                            }
-                        }*/
                         else if(strcmp(step->Attribute("type"),"fight")==0)
                         {
                            BotFight t;
@@ -595,6 +576,11 @@ bool Map_loader::loadExtraXml(const std::string &file, std::vector<Map_to_send::
                            else
                                std::cerr << file << " bot id " << searchID << " map layer not loaded" << std::endl;//the map is loaded before the bot?
                         }
+                       else
+                       {
+                           if(!mapFinal->parseUnknownBotStep(botOnMap.point.first,botOnMap.point.second,step))
+                               std::cerr << file << " bot id " << searchID << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
+                       }
                     }
                     step = step->NextSiblingElement("step");
                 }
@@ -761,7 +747,7 @@ std::string Map_loader::resolvRelativeMap(const std::string &file,const std::str
 }
 
 template<class MapType>
-void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     Map_loader map_temp;
     std::vector<std::string> map_name;
@@ -787,7 +773,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
         std::cerr << "No file map to list" << std::endl;
         abort();
     }
-    if(!semi_loaded_map.empty() || CommonMap::flat_teleporter_list_size<=0)
+    if(!semi_loaded_map.empty() || !flat_map_list.size().empty())
     {
         std::cerr << "preload_the_map() already call" << std::endl;
         abort();
@@ -799,17 +785,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
     std::regex mapFilter("\\.tmx$");
     std::regex mapExclude("[\"']");
     std::vector<CommonMap *> flat_map_list_temp;
-    uint16_t teleport_count=0;
-    while(index<returnList.size())
-    {
-        std::string fileName=returnList.at(index);
-        stringreplaceAll(fileName,"\\","/");
-        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
-            CommonMap::flat_simplified_map_list_size++;
-        index++;
-    }
 
-    CommonMap::flat_simplified_map_list_size=0;
     index=0;
     while(index<returnList.size())
     {
@@ -909,7 +885,6 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
 
                 mapFinal->shops=map_semi.old_map.shops;
                 mapFinal->botsFightTrigger=map_semi.old_map.botsFightTrigger;
-                mapFinal->zoneCapture=map_semi.old_map.zoneCapture;
                 mapFinal->pointOnMap_Item=map_semi.old_map.pointOnMap_Item;
 
                 mapFinal->monsterDrops=map_semi.old_map.monsterDrops;
@@ -918,7 +893,7 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
             }
             else
             {
-                delete flat_map_list_temp.back();
+                delete static_cast<MapType *>(flat_map_list_temp.back());
                 flat_map_list_temp.pop_back();
                 std::cout << "error at loading: " << datapack_mapPath << fileName << ", error: " << map_temp.errorString()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
@@ -950,11 +925,6 @@ void Map_loader::loadAllMapsAndLink(const std::string &datapack_mapPath,std::vec
     if(flat_map_list_temp.size()!=semi_loaded_map.size())
     {
         std::cerr << "flat_map_list_temp.size()!=semi_loaded_map.size() (abort)" << std::endl;
-        abort();
-    }
-    if(flat_map_list_temp.size()!=CommonMap::flat_map_list_count)
-    {
-        std::cerr << "flat_map_list_temp.size()!=CommonMap::flat_map_list_count (abort)" << std::endl;
         abort();
     }
     //memory allocation
