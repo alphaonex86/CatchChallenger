@@ -233,6 +233,11 @@ bool MoveOnTheMap::isWalkable(const CommonMap &map, const uint8_t &x, const uint
     return map.flat_simplified_map.at(x+y*map.width)<200;
 }
 
+uint8_t MoveOnTheMap::getZoneCode(const CommonMap &map, const uint8_t &x, const uint8_t &y)
+{
+    return map.flat_simplified_map.at(x+y*map.width);
+}
+
 CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
     const uint8_t &i=map.flat_simplified_map.at(x+y*map.width);

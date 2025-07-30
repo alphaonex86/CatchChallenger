@@ -43,7 +43,6 @@ Map_loader::Map_loader()
     map_to_send.border.left.y_offset=0;
     map_to_send.border.right.y_offset=0;
     map_to_send.xmlRoot=NULL;
-    map_to_send.monstersCollisionMap=NULL;
     map_to_send.width=0;
     map_to_send.height=0;
 }
@@ -146,7 +145,7 @@ int32_t Map_loader::decompressZlib(const char * const input, const uint32_t &int
 }
 #endif
 
-bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
+bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist,std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName)
 {
     /* in same map when:
      * x,y validated if around have at least 1 walkable tile and have not same type at tile
@@ -501,7 +500,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                                }
                            }
 
-                           if(map_to_send.monstersCollisionMap!=nullptr)
+                           if(!map_to_send.flat_simplified_map.empty())
                            {
                                uint8_t x=botOnMap.point.first;
                                uint8_t y=botOnMap.point.second;
@@ -517,7 +516,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                                            if(y>=map_to_send.height-1)
                                                break;
                                            y++;
-                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
@@ -532,7 +531,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                                            if(y==0)
                                                break;
                                            y--;
-                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
@@ -547,7 +546,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                                            if(x>=map_to_send.width-1)
                                                break;
                                            x++;
-                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
@@ -562,7 +561,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                                            if(x==0)
                                                break;
                                            x--;
-                                           if(*(map_to_send.monstersCollisionMap+x+y*map_to_send.width)<200)//is walkable
+                                           if(map_to_send.flat_simplified_map.at(x+y*map_to_send.width)<200)//is walkable
                                                break;
                                            if(map_to_send.botsFightTrigger.find(botOnMap.point)!=map_to_send.botsFightTrigger.cend())
                                                std::cerr << "botsFight point already on the map: for bot id " << searchID << std::endl;
@@ -578,7 +577,7 @@ bool Map_loader::loadExtraXml(CommonMap *mapFinal,const std::string &file, std::
                         }
                        else
                        {
-                           if(!mapFinal->parseUnknownBotStep(botOnMap.point.first,botOnMap.point.second,step))
+                           if(!mapFinal.parseUnknownBotStep(botOnMap.point.first,botOnMap.point.second,step))
                                std::cerr << file << " bot id " << searchID << " bot step not found: " << step->Attribute("type") << std::endl;//the map is loaded before the bot?
                        }
                     }
@@ -784,7 +783,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
     std::string tmxRemove(".tmx");
     std::regex mapFilter("\\.tmx$");
     std::regex mapExclude("[\"']");
-    std::vector<CommonMap *> flat_map_list_temp;
 
     index=0;
     while(index<returnList.size())
@@ -801,27 +799,25 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             map_name_to_do_id.push_back(fileNameWihtoutTmx);
             map_name.push_back(fileNameWihtoutTmx);
             //mapPathToId[sortFileName]=map_name_to_do_id.size(); need be sorted before
-            flat_map_list_temp.push_back(new MapType);
-            MapType *mapFinal=static_cast<MapType *>(flat_map_list_temp.back());
+            flat_map_list.push_back(new MapType);
+            MapType &mapFinal=flat_map_list.back();
             if(map_temp.tryLoadMap(datapack_mapPath+fileName,mapFinal,true))
             {
                 //GlobalServerData::serverPrivateVariables.map_list[fileNameWihtoutTmx]=mapServer;
 
                 bool tryLoadNearMap=returnList.size()==1 && index==0;
 
-                mapFinal->top.mapIndex=65535;
-                mapFinal->top.x_offset=0;
-                mapFinal->bottom.mapIndex=65535;
-                mapFinal->bottom.x_offset=0;
-                mapFinal->right.mapIndex=65535;
-                mapFinal->right.y_offset=0;
-                mapFinal->left.mapIndex=65535;
-                mapFinal->left.y_offset=0;
+                mapFinal.top.mapIndex=65535;
+                mapFinal.top.x_offset=0;
+                mapFinal.bottom.mapIndex=65535;
+                mapFinal.bottom.x_offset=0;
+                mapFinal.right.mapIndex=65535;
+                mapFinal.right.y_offset=0;
+                mapFinal.left.mapIndex=65535;
+                mapFinal.left.y_offset=0;
 
-                mapFinal->width			= static_cast<uint8_t>(map_temp.map_to_send.width);
-                mapFinal->height			= static_cast<uint8_t>(map_temp.map_to_send.height);
-                mapFinal->flat_simplified_map_first_index=CommonMap::flat_simplified_map_list_size;
-                CommonMap::flat_simplified_map_list_size+=mapFinal->width*mapFinal->height;
+                mapFinal.width			= static_cast<uint8_t>(map_temp.map_to_send.width);
+                mapFinal.height			= static_cast<uint8_t>(map_temp.map_to_send.height);
 
                 Map_semi map_semi;
                 map_semi.old_map				= map_temp.map_to_send;
@@ -860,7 +856,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
                         returnList.push_back(map_semi.border.right.fileName);
                 }
 
-                teleport_count+=map_temp.map_to_send.teleport.size();
                 sub_index=0;
                 while(sub_index<map_temp.map_to_send.teleport.size())
                 {
@@ -872,29 +867,13 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
                 }
 
                 map_semi.old_map=map_temp.map_to_send;
-
-                //copy BaseMap
-                mapFinal->width=map_semi.old_map.width;
-                mapFinal->height=map_semi.old_map.height;
-
-                mapFinal->monstersCollisionList=map_semi.old_map.monstersCollisionList;
-
-                mapFinal->industries=map_semi.old_map.industries;
-                mapFinal->industriesStatus=map_semi.old_map.industriesStatus;
-                mapFinal->botFights=map_semi.old_map.botFights;
-
-                mapFinal->shops=map_semi.old_map.shops;
-                mapFinal->botsFightTrigger=map_semi.old_map.botsFightTrigger;
-                mapFinal->pointOnMap_Item=map_semi.old_map.pointOnMap_Item;
-
-                mapFinal->monsterDrops=map_semi.old_map.monsterDrops;
+                mapFinal.flat_simplified_map=map_temp.map_to_send.flat_simplified_map;
 
                 semi_loaded_map.push_back(map_semi);
             }
             else
             {
-                delete static_cast<MapType *>(flat_map_list_temp.back());
-                flat_map_list_temp.pop_back();
+                flat_map_list.pop_back();
                 std::cout << "error at loading: " << datapack_mapPath << fileName << ", error: " << map_temp.errorString()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
@@ -922,44 +901,10 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
         index++;
     }
 
-    if(flat_map_list_temp.size()!=semi_loaded_map.size())
+    if(flat_map_list.size()!=semi_loaded_map.size())
     {
         std::cerr << "flat_map_list_temp.size()!=semi_loaded_map.size() (abort)" << std::endl;
         abort();
-    }
-    //memory allocation
-    {
-        CommonMap::flat_map_list_count=semi_loaded_map.size();
-        const size_t s=sizeof(MapType)*map_name.size();
-        CommonMap::flat_map_list=static_cast<MapType *>(malloc(s));
-        CommonMap::flat_map_object_size=sizeof(MapType);
-        #ifdef CATCHCHALLENGER_HARDENED
-        memset((void *)CommonMap::flat_map_list,0,s);//security but performance problem
-        #endif
-        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<flat_map_list_temp.size(); i++)
-        {
-            MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+i;
-            memcpy(mapFinal,flat_map_list_temp.at(i),sizeof(MapType));
-        }
-    }
-    {
-        const size_t s=sizeof(CommonMap::Teleporter)*teleport_count;
-        CommonMap::flat_teleporter=static_cast<CommonMap::Teleporter *>(malloc(s));
-        #ifdef CATCHCHALLENGER_HARDENED
-        memset((void *)CommonMap::flat_teleporter,0,s);//security but performance problem
-        #endif
-    }
-    {
-        CommonMap::flat_simplified_map=static_cast<uint8_t *>(malloc(CommonMap::flat_simplified_map_list_size));
-        #ifdef CATCHCHALLENGER_HARDENED
-        memset((void *)CommonMap::flat_simplified_map,0,CommonMap::flat_simplified_map_list_size);//security but performance problem
-        #endif
-
-        for(CATCHCHALLENGER_TYPE_MAPID i=0; i<CommonMap::flat_map_list_count; i++)
-        {
-            MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+i;
-            memcpy(CommonMap::flat_simplified_map+mapFinal->flat_simplified_map_first_index,map_temp.map_to_send.monstersCollisionMap,mapFinal->width*mapFinal->height);
-        }
     }
 
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());
@@ -975,58 +920,55 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
     index=0;
     while(index<semi_loaded_map.size())
     {
-        unsigned int sub_index=0;
         Map_semi &map_semi=semi_loaded_map.at(index);
-        MapType * mapFinal=static_cast<MapType *>(CommonMap::flat_map_list)+index;
+        MapType &mapFinal=flat_map_list.at(index);
+        unsigned int sub_index=0;
 
         //resolv the border map name into their pointer + resolv the offset to change of map
         if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end())
         {
-            mapFinal->border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
-            mapFinal->border.bottom.x_offset=map_semi.border.bottom.x_offset;
+            mapFinal.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
+            mapFinal.border.bottom.x_offset=map_semi.border.bottom.x_offset;
         }
         else
         {
-            mapFinal->border.bottom.mapIndex=65535;
-            mapFinal->border.bottom.x_offset=0;
+            mapFinal.border.bottom.mapIndex=65535;
+            mapFinal.border.bottom.x_offset=0;
         }
 
         if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end())
         {
-            mapFinal->border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
-            mapFinal->border.top.x_offset=map_semi.border.top.x_offset;
+            mapFinal.border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
+            mapFinal.border.top.x_offset=map_semi.border.top.x_offset;
         }
         else
         {
-            mapFinal->border.top.mapIndex=65535;
-            mapFinal->border.top.x_offset=0;
+            mapFinal.border.top.mapIndex=65535;
+            mapFinal.border.top.x_offset=0;
         }
 
         if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end())
         {
-            mapFinal->border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
-            mapFinal->border.left.y_offset=map_semi.border.left.y_offset;
+            mapFinal.border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
+            mapFinal.border.left.y_offset=map_semi.border.left.y_offset;
         }
         else
         {
-            mapFinal->border.left.mapIndex=65535;
-            mapFinal->border.left.y_offset=0;
+            mapFinal.border.left.mapIndex=65535;
+            mapFinal.border.left.y_offset=0;
         }
 
         if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end())
         {
-            mapFinal->border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
-            mapFinal->border.right.y_offset=map_semi.border.right.y_offset;
+            mapFinal.border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
+            mapFinal.border.right.y_offset=map_semi.border.right.y_offset;
         }
         else
         {
-            mapFinal->border.right.mapIndex=65535;
-            mapFinal->border.right.y_offset=0;
+            mapFinal.border.right.mapIndex=65535;
+            mapFinal.border.right.y_offset=0;
         }
 
-        //resolv the teleported into their pointer
-        mapFinal->teleporter_list_size=0;
-        mapFinal->teleporter_first_index=CommonMap::flat_teleporter_list_size;
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
@@ -1038,15 +980,17 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
                 if(teleporter_semi.destination_x<map_semi.old_map.width
                         && teleporter_semi.destination_y<map_semi.old_map.height)
                 {
+                    //remove duplicate
                     uint16_t index_search=0;
-                    while(index_search<mapFinal->teleporter_list_size)
+                    while(index_search<mapFinal.teleporters.size())
                     {
-                        const CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal->teleporter_first_index+index_search);
+                        const Teleporter &teleporter=mapFinal.at(index_search);
                         if(teleporter.source_x==teleporter_semi.source_x && teleporter.source_y==teleporter_semi.source_y)
                             break;
                         index_search++;
                     }
-                    if(index_search==mapFinal->teleporter_list_size)
+                    //no duplicate then add
+                    if(index_search==mapFinal.teleporter_list_size)
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
@@ -1064,15 +1008,14 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
                              << ")"
                              << std::endl;
                         #endif
-                        CommonMap::Teleporter &teleporter=*(CommonMap::flat_teleporter+mapFinal->teleporter_first_index+index_search);
+                        Teleporter teleporter;
                         teleporter.mapIndex=mapPathToId.at(teleportString);
                         teleporter.source_x=teleporter_semi.source_x;
                         teleporter.source_y=teleporter_semi.source_y;
                         teleporter.destination_x=teleporter_semi.destination_x;
                         teleporter.destination_y=teleporter_semi.destination_y;
                         teleporter.condition=teleporter_semi.condition;
-                        mapFinal->teleporter_list_size++;
-                        CommonMap::flat_teleporter_list_size++;
+                        mapFinal.teleporters.push_back(teleporter);
                     }
                     else
                         std::cerr << "already found teleporter on the map: "
@@ -1133,10 +1076,10 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
     {
         const std::string &tempName=map_name.at(index);
         const uint16_t indexMap=mapPathToId.at(tempName);
-        MapType &currentTempMap=*((MapType *)CommonMap::flat_map_list+indexMap);
+        MapType &currentTempMap=flat_map_list[indexMap];
         if(currentTempMap.border.bottom.mapIndex!=65535)
         {
-            MapType &bottomTempMap=*((MapType *)CommonMap::flat_map_list+currentTempMap.border.bottom.mapIndex);
+            MapType &bottomTempMap=flat_map_list[currentTempMap.border.bottom.mapIndex];
             if(bottomTempMap.border.top.mapIndex!=indexMap)
             {
                 if(bottomTempMap.border.top.mapIndex==65535)
@@ -1160,7 +1103,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
         }
         if(currentTempMap.border.top.mapIndex!=65535)
         {
-            MapType &topTempMap=*((MapType *)CommonMap::flat_map_list+currentTempMap.border.top.mapIndex);
+            MapType &topTempMap=flat_map_list[currentTempMap.border.top.mapIndex];
             if(topTempMap.border.bottom.mapIndex!=indexMap)
             {
                 if(topTempMap.border.bottom.mapIndex==65535)
@@ -1184,7 +1127,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
         }
         if(currentTempMap.border.left.mapIndex!=65535)
         {
-            MapType &leftTempMap=*((MapType *)CommonMap::flat_map_list+currentTempMap.border.left.mapIndex);
+            MapType &leftTempMap=flat_map_list[currentTempMap.border.left.mapIndex];
             if(leftTempMap.border.right.mapIndex!=indexMap)
             {
                 if(leftTempMap.border.right.mapIndex==65535)
@@ -1208,7 +1151,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
         }
         if(currentTempMap.border.right.mapIndex!=65535)
         {
-            MapType &rightTempMap=*((MapType *)CommonMap::flat_map_list+currentTempMap.border.right.mapIndex);
+            MapType &rightTempMap=flat_map_list[currentTempMap.border.right.mapIndex];
             if(rightTempMap.border.left.mapIndex!=indexMap)
             {
                 if(rightTempMap.border.left.mapIndex==65535)
@@ -1239,7 +1182,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
     {
         const std::string &tempName=map_name.at(index);
         const uint16_t indexMap=mapPathToId.at(tempName);
-        MapType &currentTempMap=*((MapType *)CommonMap::flat_map_list+indexMap);
+        MapType &currentTempMap=flat_map_list[indexMap];
         if(currentTempMap.border.bottom.mapIndex!=65535)
         {
             currentTempMap.border.bottom.x_offset=

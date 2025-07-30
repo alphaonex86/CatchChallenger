@@ -72,36 +72,7 @@ void BaseServer::preload_1_the_data()
         *serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
-        {
-            *serialBuffer >> CommonMap::flat_map_list_count;
-            *serialBuffer >> CommonMap::flat_map_object_size;//store in full length to easy multiply by index (16Bits) and have full size pointer
-            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
-            CommonMap::flat_map_list=static_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(malloc(s));
-            CommonMap::flat_map_object_size=sizeof(Map_server_MapVisibility_Simple_StoreOnSender);
-            #ifdef CATCHCHALLENGER_HARDENED
-            memset((void *)GlobalServerData::serverPrivateVariables.flat_map_list,0,tempMemSize);//security but performance problem
-            #endif
-            serialBuffer->read((char *)CommonMap::flat_map_list,s);
-        }
-
-        {
-            *serialBuffer >> CommonMap::flat_teleporter_list_size;//temp, used as size when finish
-            const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
-            CommonMap::flat_teleporter=static_cast<CommonMap::Teleporter *>(malloc(s));
-            #ifdef CATCHCHALLENGER_HARDENED
-            memset((void *)CommonMap::flat_teleporter,0,s);//security but performance problem
-            #endif
-            serialBuffer->read((char *)CommonMap::flat_teleporter,s);
-        }
-
-        {
-            *serialBuffer >> CommonMap::flat_simplified_map_list_size;//temp, used as size when finish
-            CommonMap::flat_simplified_map=static_cast<uint8_t *>(malloc(CommonMap::flat_simplified_map_list_size));
-            #ifdef CATCHCHALLENGER_HARDENED
-            memset((void *)CommonMap::flat_simplified_map,0,CommonMap::flat_simplified_map_list_size);//security but performance problem
-            #endif
-            serialBuffer->read((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
-        }
+        *serialBuffer >> MapServer::flat_map_list;
 
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
@@ -160,23 +131,7 @@ void BaseServer::preload_1_the_data()
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, *out_file);
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
 
-            {
-                hps::to_stream(CommonMap::flat_map_list_count, *out_file);
-                hps::to_stream(CommonMap::flat_map_object_size, *out_file);
-                const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
-                out_file->write((char *)CommonMap::flat_map_list,s);
-            }
-
-            {
-                hps::to_stream(CommonMap::flat_teleporter_list_size, *out_file);
-                const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
-                out_file->write((char *)CommonMap::flat_teleporter,s);
-            }
-
-            {
-                hps::to_stream(CommonMap::flat_simplified_map_list_size, *out_file);
-                out_file->write((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
-            }
+            hps::to_stream(MapServer::flat_map_list, *out_file);
             std::cout << "map size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
         }
         #endif

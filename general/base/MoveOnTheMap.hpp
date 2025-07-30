@@ -37,6 +37,7 @@ public:
     template<class MapType>
     static bool moveWithoutTeleport(const std::vector<MapType> &mapList,const Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision=false, const bool &allowTeleport=true);
 
+    static inline uint8_t getZoneCode(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static inline bool isWalkable(const CommonMap &map, const uint8_t &x, const uint8_t &y);
     static int8_t indexOfTeleporter(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);
     static bool needBeTeleported(const CommonMap &map, const COORD_TYPE &x, const COORD_TYPE &y);

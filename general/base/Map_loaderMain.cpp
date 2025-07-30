@@ -10,7 +10,7 @@
 
 using namespace CatchChallenger;
 
-bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const bool &botIsNotWalkable)
+bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable)
 {
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
@@ -32,7 +32,6 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
     map_to_send_temp.border.left.y_offset=0;
     map_to_send_temp.border.right.y_offset=0;
     map_to_send_temp.xmlRoot=nullptr;
-    map_to_send_temp.monstersCollisionMap=nullptr;
     map_to_send_temp.width=0;
     map_to_send_temp.height=0;
 
@@ -370,7 +369,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
                                 }
                                 else
                                 {
-                                    if(!mapFinal->parseUnknownMoving(type,object_x,object_y,property_text))
+                                    if(!mapFinal.parseUnknownMoving(type,object_x,object_y,property_text))
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -495,7 +494,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
                                 {}
                                 else
                                 {
-                                    if(!mapFinal->parseUnknownObject(type,object_x,object_y,property_text))
+                                    if(!mapFinal.parseUnknownObject(type,object_x,object_y,property_text))
                                         std::cerr << "Unknown type: " << type
                                               << ", object_x: " << object_x
                                               << ", object_y: " << object_y
@@ -957,10 +956,6 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap *mapFinal, const 
             }
         }
     }
-
-    //don't put code after here !!!!!! put before the last block
-    map_to_send_temp.monstersCollisionMap=static_cast<uint8_t *>(malloc(simplifiedMap.size()));
-    memcpy(map_to_send_temp.monstersCollisionMap,simplifiedMap.data(),simplifiedMap.size());
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;
