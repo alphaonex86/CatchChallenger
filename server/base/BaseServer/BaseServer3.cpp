@@ -2,7 +2,7 @@
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
 #include "../Client.hpp"
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -72,7 +72,7 @@ void BaseServer::preload_1_the_data()
         *serialBuffer >> GlobalServerData::serverPrivateVariables.monsterDrops;
         std::cout << "monsterDrops size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
-        *serialBuffer >> MapServer::flat_map_list;
+        *serialBuffer >> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
 
         std::cout << "map size: " << ((int32_t)serialBuffer->tellg()-(int32_t)lastSize) << "B" << std::endl;lastSize=serialBuffer->tellg();
 
@@ -131,7 +131,7 @@ void BaseServer::preload_1_the_data()
             hps::to_stream(GlobalServerData::serverPrivateVariables.monsterDrops, *out_file);
             std::cout << "monsterDrops size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
 
-            hps::to_stream(MapServer::flat_map_list, *out_file);
+            hps::to_stream(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list, *out_file);
             std::cout << "map size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
         }
         #endif

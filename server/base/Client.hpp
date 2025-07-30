@@ -1,10 +1,8 @@
 #ifndef CATCHCHALLENGER_CLIENT_H
 #define CATCHCHALLENGER_CLIENT_H
 
-#include <vector>
-
 #include "ServerStructures.hpp"
-#include "ClientMapManagement/ClientMapManagement.hpp"
+#include "MapManagement/ClientMapManagement.hpp"
 #include "BaseServer/BaseServerMasterSendDatapack.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/fight/CommonFightEngine.hpp"
