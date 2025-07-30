@@ -78,8 +78,21 @@ public:
     };
     std::vector<ItemOnMap_Semi> items;//used into colision
 
-    //loaded into CommonMap::flat_simplified_map and BaseMap::ParsedLayer
-    uint8_t *monstersCollisionMap;
+    /* see flat_simplified_map
+     * after resolution the index is position (x+y*width)
+     * not optimal, but memory safe, simply 2 cache miss max
+     */
+    /* 0 walkable: index = 0 for monster is used into cave
+     * 254 not walkable
+     * 253 ParsedLayerLedges_LedgesBottom
+     * 252 ParsedLayerLedges_LedgesTop
+     * 251 ParsedLayerLedges_LedgesRight
+     * 250 ParsedLayerLedges_LedgesLeft
+     * 249 dirt
+     * 200 - 248 reserved
+     * 0 cave def
+     * 1-199 monster def and condition */
+    std::vector<uint8_t> flat_simplified_map;//can't be pointer, server can have unique pointer, but client need another pointer or pointer mulitple in case of multi-bots
 
     const tinyxml2::XMLElement * xmlRoot;
 };
@@ -101,15 +114,15 @@ public:
 
     Map_to_send map_to_send;
     std::string errorString();
-    bool tryLoadMap(const std::string &file, CommonMap *mapFinal, const bool &botIsNotWalkable);
-    bool loadExtraXml(CommonMap *mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
+    bool tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable);
+    bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
     template<class MapType>
-    static void loadAllMapsAndLink(const std::string &datapack_mapPath, std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    static void loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const std::string &datapack_mapPath, std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
 
     //for tiled
     #ifdef TILED_ZLIB

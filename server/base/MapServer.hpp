@@ -18,6 +18,7 @@ namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
 class MapVisibilityAlgorithm_Simple_StoreOnSender;
 class Client;
+class Map_server_MapVisibility_Simple_StoreOnSender;
 
 class MapServer : public CommonMap, public MapServerCrafting
 {
@@ -47,26 +48,7 @@ public:
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> zoneCapture;//ZONE_TYPE removed, will use the zone of current map (prevent error and resolv zone to id), 5% of the map
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
 
-    /* WHY HERE?
-     * Server use ServerMap, Client use Common Map
-     * Then the pointer don't have fixed size
-     * Then can't just use pointer archimectic
-     * then Object size save into CommonMap
-     * have to be initialised toghter */
-    /* WHY use unique large block:
-     * Each time you call malloc the pointer should be random to improve the security
-     * Each time you call malloc the space should be memset 0 to prevent get previous data
-     * Each time you call malloc the allocated space can have metadata
-     * Reduce the memory fragmentation
-     * The space can be allocated in uncontinuous space, then you will have memory holes (more memory and less data density) linked too with block alignement
-     * Check too Binary space partition
-     * https://byjus.com/gate/internal-fragmentation-in-os-notes/ or search memory fragmentation, maybe can be mitigated with 16Bits pointer
-     * WHY NO MORE SIMPLE? WHY JUST NOT POINTER BY OBJECT?
-     * continus space improve fragementation, loading from cache... it's server optimised version, the client will always load limited list of map
-     * index imply always pass the list map and type to always be able to resolv index to data
-     */
-    //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
-    static std::vector<MapServer> flat_map_list;//std::vector<CommonMap *> will request 2x more memory fetch, one to get the pointer, one to get the data. With the actual pointer, just get the data, need one list for server and multiple list for client
+    //see Map_server_MapVisibility_Simple_StoreOnSender for flat_map_list
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -75,38 +57,128 @@ public:
         buf << border.left.y_offset << border.left.mapIndex;
         buf << border.right.y_offset << border.right.mapIndex;
         buf << border.top.x_offset << border.top.mapIndex;
-        buf << teleporter_first_index;
-        buf << teleporter_list_size;
-        buf << id;
-        buf << flat_simplified_map_first_index;
+        buf << teleporters;
+        buf << flat_simplified_map;
 
         buf << width;
         buf << height;
         buf << monstersCollisionList;
         buf << industries;
         buf << botFights;
-        buf << shops;
-        buf << botsFightTrigger;
-        buf << zoneCapture;
-        buf << pointOnMap_Item;
+
+        //std::unordered_map<std::pair<uint8_t,uint8_t> and std::unordered_set<std::pair<uint8_t,uint8_t> not supported by HPS
+        buf << (uint8_t)shops.size();
+        for(const auto& n : shops)
+        {
+            buf << n.first.first;
+            buf << n.first.second;
+            buf << n.second;
+        }
+        buf << (uint8_t)botsFightTrigger.size();
+        for(const auto& n : botsFightTrigger)
+        {
+            buf << n.first.first;
+            buf << n.first.second;
+            buf << n.second;
+        }
+        buf << (uint8_t)pointOnMap_Item.size();
+        for(const auto& n : pointOnMap_Item)
+        {
+            buf << n.first.first;
+            buf << n.first.second;
+            buf << n.second;
+        }
+
+        buf << (uint8_t)rescue.size();
+        for(const auto& n : rescue)
+        {
+            buf << n.first.first;
+            buf << n.first.second;
+            buf << (uint8_t)n.second;
+        }
+        buf << (uint8_t)heal.size();
+        for(const auto& n : heal)
+        {
+            buf << n.first;
+            buf << n.second;
+        }
+        buf << (uint8_t)heal.size();
+        for(const auto& n : heal)
+        {
+            buf << n.first;
+            buf << n.second;
+        }
+
         buf << monsterDrops;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> teleporter_first_index;
-        buf >> teleporter_list_size;
-        buf >> id;
-        buf >> flat_simplified_map_first_index;
+        buf >> teleporters;
+        buf >> flat_simplified_map;
 
         buf >> width;
         buf >> height;
         buf >> monstersCollisionList;
         buf >> industries;
         buf >> botFights;
-        buf >> shops;
-        buf >> botsFightTrigger;
-        buf >> zoneCapture;
-        buf >> pointOnMap_Item;
+
+        uint8_t tempSize=0;
+
+        buf >> tempSize;
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            Shop s;
+            buf >> s;
+            shops[std::pair<uint8_t,uint8_t>(x,y)]=s;
+        }
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            uint8_t s;
+            buf >> s;
+            botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=s;
+        }
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            ItemOnMap s;
+            buf >> s;
+            pointOnMap_Item[std::pair<uint8_t,uint8_t>(x,y)]=s;
+        }
+
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            uint8_t s;
+            buf >> s;
+            rescue[std::pair<uint8_t,uint8_t>(x,y)]=(Orientation)s;
+        }
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            heal.insert(std::pair<uint8_t,uint8_t>(x,y));
+        }
+        for(int i=0;i<tempSize;i++)
+        {
+            uint8_t x=0,y=0;
+            buf >> x;
+            buf >> y;
+            Shop s;
+            buf >> s;
+            zoneCapture.insert(std::pair<uint8_t,uint8_t>(x,y));
+        }
+
         buf >> monsterDrops;
 
         for(unsigned int i=0;i<industries.size();i++)

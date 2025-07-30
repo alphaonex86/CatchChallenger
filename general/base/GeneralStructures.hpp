@@ -917,7 +917,7 @@ public:
     }
     template <class B>
     void parse(B& buf) {
-        buf >> time >> cycletobefull >> resources >> products << requirements << rewards;
+        buf >> time >> cycletobefull >> resources >> products >> requirements >> rewards;
     }
     #endif
 };

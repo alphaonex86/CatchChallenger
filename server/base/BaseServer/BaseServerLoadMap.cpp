@@ -28,7 +28,7 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
-    Map_loader::loadAllMapsAndLink<Map_server_MapVisibility_Simple_StoreOnSender>(GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId);
+    Map_loader::loadAllMapsAndLink<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId);
 
     //load the rescue, extra and zone
     CATCHCHALLENGER_TYPE_MAPID index=0;
