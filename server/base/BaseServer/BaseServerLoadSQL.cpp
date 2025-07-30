@@ -7,7 +7,7 @@
 #endif
 #include <iostream>
 
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -26,7 +26,7 @@ void BaseServer::preload_12_async_dictionary_map()
     #else
     #error Define what do here
     #endif
-    if(CommonMap::flat_map_list_count==0)
+    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()==0)
     {
         std::cerr << "No map to list" << std::endl;
         abort();
@@ -129,7 +129,7 @@ void BaseServer::preload_dictionary_map_return()
             {
                 DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=mapPathToId.at(map);
                 foundMap.insert(map);
-                static_cast<MapServer *>(CommonMap::indexToMapWritable(mapPathToId.at(map)))->id_db=databaseMapId;
+                Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
             }
             else
                 obsoleteMap++;
@@ -194,7 +194,7 @@ void BaseServer::preload_dictionary_map_return()
             while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(65535);
             DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=mapPathToId.at(map);
-            static_cast<MapServer *>(CommonMap::indexToMapWritable(mapPathToId.at(map)))->id_db=maxDatabaseMapId;
+            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=maxDatabaseMapId;
         }
         index++;
     }
@@ -464,23 +464,7 @@ void BaseServer::preload_industries_return()
         uint32_t mapSize=0;
         size_t lastSize=out_file->tellp();
 
-        {
-            hps::to_stream(CommonMap::flat_map_list_count, *out_file);
-            hps::to_stream(CommonMap::flat_map_object_size, *out_file);
-            const size_t s=sizeof(Map_server_MapVisibility_Simple_StoreOnSender)*CommonMap::flat_map_list_count;
-            out_file->write((char *)CommonMap::flat_map_list,s);
-        }
-
-        {
-            hps::to_stream(CommonMap::flat_teleporter_list_size, *out_file);
-            const size_t s=sizeof(CommonMap::Teleporter)*CommonMap::flat_teleporter_list_size;
-            out_file->write((char *)CommonMap::flat_teleporter,s);
-        }
-
-        {
-            hps::to_stream(CommonMap::flat_simplified_map_list_size, *out_file);
-            out_file->write((char *)CommonMap::flat_simplified_map,CommonMap::flat_simplified_map_list_size);
-        }
+        hps::to_stream(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list, *out_file);
 
         std::cout << "map id size: " << idSize << "B" << std::endl;
         std::cout << "map pathSize size: " << pathSize << "B" << std::endl;

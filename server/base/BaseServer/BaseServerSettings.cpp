@@ -5,7 +5,7 @@
 #include "../../general/base/CommonMap.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;

@@ -4,7 +4,7 @@
 
 #include <chrono>
 
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonMap.hpp"
@@ -28,14 +28,23 @@ bool BaseServer::preload_9_sync_the_map()
     #ifdef DEBUG_MESSAGE_MAP_LOAD
     std::cout << "start preload the map, into: " << GlobalServerData::serverPrivateVariables.datapack_mapPath << std::endl;
     #endif
+    Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.clear();
+    mapPathToId.clear();
     Map_loader::loadAllMapsAndLink<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,GlobalServerData::serverPrivateVariables.datapack_mapPath,semi_loaded_map,mapPathToId);
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()!=semi_loaded_map.size())
+    {
+        std::cerr << "Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()!=semi_loaded_map.size()" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    #endif
 
     //load the rescue, extra and zone
     CATCHCHALLENGER_TYPE_MAPID index=0;
     while(index<semi_loaded_map.size())
     {
         Map_semi &map_semi=semi_loaded_map.at(index);
-        MapServer &map_server=static_cast<MapServer *>(CommonMap::flat_map_list)[index];
+        Map_server_MapVisibility_Simple_StoreOnSender &map_server=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[index];
         if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(map_semi.old_map.zoneName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
             map_server.zone=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(map_semi.old_map.zoneName);
         index++;

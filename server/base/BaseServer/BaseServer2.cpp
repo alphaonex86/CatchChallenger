@@ -1,7 +1,7 @@
 #include "BaseServer.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonSettingsServer.hpp"
