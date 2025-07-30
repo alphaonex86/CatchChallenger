@@ -2,14 +2,14 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
 
 bool Client::checkCollision()
 {
-    const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-    if(!MoveOnTheMap::isWalkable(*map,x,y))
+    if(!MoveOnTheMap::isWalkable(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex),x,y))
     {
         errorOutput("can't wall at: "+std::to_string(x)+","+std::to_string(y)+" on map: "+std::to_string(mapIndex));
         return false;

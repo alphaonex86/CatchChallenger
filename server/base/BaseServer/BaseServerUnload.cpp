@@ -6,7 +6,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 #include <vector>
 #include <time.h>
@@ -82,28 +82,7 @@ void BaseServer::unload_the_bots()
 
 void BaseServer::unload_the_map()
 {
-    if(CommonMap::flat_map_list!=nullptr)
-    {
-        free(reinterpret_cast<Map_server_MapVisibility_Simple_StoreOnSender *>(CommonMap::flat_map_list));
-        CommonMap::flat_map_list=nullptr;
-    }
-    CommonMap::flat_map_list_count=0;
-    CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
-
-    if(CommonMap::flat_teleporter!=nullptr)
-    {
-        delete CommonMap::flat_teleporter;
-        CommonMap::flat_teleporter=nullptr;
-    }
-    CommonMap::flat_teleporter_list_size=0;//temp, used as size when finish
-
-    if(CommonMap::flat_simplified_map!=nullptr)
-    {
-        delete CommonMap::flat_simplified_map;
-        CommonMap::flat_simplified_map=nullptr;
-    }
-    CommonMap::flat_simplified_map_list_size=0;//temp, used as size when finish
-
+    Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.clear();
     mapPathToId.clear();
 }
 

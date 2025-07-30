@@ -16,14 +16,14 @@ HEADERS += \
     $$PWD/base/ClientNetworkReadWithoutSender.hpp \
     $$PWD/base/BroadCastWithoutSender.hpp \
     $$PWD/base/MapServer.hpp \
-    $$PWD/base/ClientMapManagement/ClientMapManagement.hpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.hpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp \
-    $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp \
-    $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp \
-    $$PWD/base/ClientMapManagement/MapBasicMove.hpp \
+    $$PWD/base/MapManagement/ClientMapManagement.hpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.hpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp \
+    $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp \
+    $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp \
+    $$PWD/base/MapManagement/MapBasicMove.hpp \
     $$PWD/base/DictionaryLogin.hpp \
     $$PWD/base/DdosBuffer.hpp \
     $$PWD/base/DictionaryServer.hpp \

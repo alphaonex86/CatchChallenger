@@ -51,14 +51,14 @@ SOURCES += \
     $$PWD/base/ClientBroadCast.cpp \
     $$PWD/base/MapServer.cpp \
     $$PWD/base/BroadCastWithoutSender.cpp \
-    $$PWD/base/ClientMapManagement/ClientMapManagement.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_None.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.cpp \
-    $$PWD/base/ClientMapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.cpp \
-    $$PWD/base/ClientMapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
-    $$PWD/base/ClientMapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.cpp \
-    $$PWD/base/ClientMapManagement/MapBasicMove.cpp \
+    $$PWD/base/MapManagement/ClientMapManagement.cpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.cpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.cpp \
+    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.cpp \
+    $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
+    $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.cpp \
+    $$PWD/base/MapManagement/MapBasicMove.cpp \
     $$PWD/base/DictionaryLogin.cpp \
     $$PWD/base/DictionaryServer.cpp \
     $$PWD/base/PreparedDBQueryLogin.cpp \
