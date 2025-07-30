@@ -18,6 +18,8 @@
 
 using namespace CatchChallenger;
 
+std::vector<Map_server_MapVisibility_Simple_StoreOnSender> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
+
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
     to_send_remove_size(0),
     show(true),

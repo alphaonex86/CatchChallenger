@@ -52,7 +52,7 @@ public:
     // in same map
     std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//6% of the map
     std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y
-    std::map<std::pair<uint8_t,uint8_t>,ItemOnMap/*,pairhash*/> pointOnMap_Item;//2% of the map
+    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> pointOnMap_Item;//2% of the map
     /* ONLY SERVER, see MapServer.hpp
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::vector<std::pair<uint8_t,uint8_t>> rescue_points;*/
@@ -92,6 +92,23 @@ struct Teleporter
      * 65535 if no map set */
     CATCHCHALLENGER_TYPE_MAPID mapIndex;
     MapCondition condition;
+
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << source_x << source_y;
+        buf << destination_x << destination_y;
+        buf << mapIndex;
+        buf << condition;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> source_x >> source_y;
+        buf >> destination_x >> destination_y;
+        buf >> mapIndex;
+        buf >> condition;
+    }
+    #endif
 };
 
 //the only visible map is loaded on client, all map on server
@@ -102,9 +119,7 @@ public:
 
     /* on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
      * on client, MapVisualiserThread set this variable */
-    CATCHCHALLENGER_TYPE_MAPID id;
-
-    std::vector<Teleporter> teleporters;
+    //CATCHCHALLENGER_TYPE_MAPID id;
 
     /* see flat_simplified_map
      * after resolution the index is position (x+y*width)
@@ -120,7 +135,11 @@ public:
      * 200 - 248 reserved
      * 0 cave def
      * 1-199 monster def and condition */
-    std::vector<uint8_t> flat_simplified_map;//can't be pointer, server can have unique pointer, but client need another pointer or pointer mulitple in case of multi-bots
+    /* can't be pointer, server can have unique pointer, but client need another pointer or pointer mulitple in case of multi-bots
+     * can be just uint32_t offset the map list, but by map */
+    std::vector<uint8_t> flat_simplified_map;
+
+    std::vector<Teleporter> teleporters;
 
     //extra parse function
     virtual bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);

@@ -141,30 +141,6 @@ BaseServer::~BaseServer()
 {
     GlobalServerData::serverPrivateVariables.stopIt=true;
     closeDB();
-
-    if(CommonMap::flat_map_list==nullptr)
-    {
-        free(static_cast<MapServer *>(CommonMap::flat_map_list));
-        CommonMap::flat_map_list=nullptr;
-    }
-    CommonMap::flat_map_list_count=0;
-    CommonMap::flat_map_object_size=0;//store in full length to easy multiply by index (16Bits) and have full size pointer
-
-    if(CommonMap::flat_teleporter==nullptr)
-    {
-        delete CommonMap::flat_teleporter;
-        CommonMap::flat_teleporter=nullptr;
-    }
-    CommonMap::flat_teleporter_list_size=0;//temp
-    CommonMap::flat_teleporter_list_size=0;//to save serialize
-
-    if(CommonMap::flat_simplified_map==nullptr)
-    {
-        delete CommonMap::flat_simplified_map;
-        CommonMap::flat_simplified_map=nullptr;
-    }
-    CommonMap::flat_simplified_map_list_size=0;//temp
-    CommonMap::flat_simplified_map_list_size=0;//to save serialize
 }
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
