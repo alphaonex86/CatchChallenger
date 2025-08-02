@@ -541,8 +541,8 @@ private:
     bool isInBattle() const override;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
-    bool botFightCollision(const CommonMap *map, const COORD_TYPE &x, const COORD_TYPE &y);
-    bool checkFightCollision(const CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    bool checkFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(Client * otherPlayerBattle);
     void saveAllMonsterPosition();
 
@@ -651,8 +651,8 @@ private:
     void insertIntoAClan(const uint32_t &clanId);
     void ejectToClan();
 
-    void insertClientOnMap(CommonMap *map);
-    void removeClientOnMap(CommonMap *map);
+    void insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map);
+    void removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map);
 
     void errorFightEngine(const std::string &error) override;
     void messageFightEngine(const std::string &message) const override;

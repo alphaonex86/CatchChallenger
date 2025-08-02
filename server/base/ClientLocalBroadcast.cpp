@@ -64,7 +64,7 @@ void Client::sendLocalChatText(const std::string &text)
     }
 }
 
-void Client::insertClientOnMap(CommonMap *map)
+void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(vectorcontainsAtLeastOne(static_cast<MapServer *>(map)->clientsForBroadcast,this))
@@ -74,7 +74,7 @@ void Client::insertClientOnMap(CommonMap *map)
     static_cast<MapServer *>(map)->clientsForLocalBroadcast.push_back(this);
 }
 
-void Client::removeClientOnMap(CommonMap *map)
+void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
     if(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)!=1)
