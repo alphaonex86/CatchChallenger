@@ -87,9 +87,9 @@ std::string Client::orientationToStringToSave(const Orientation &orientation)
  * the overhead for the network it just at the connexion */
 void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
-    CommonMap *map=static_cast<CommonMap *>(CommonMap::indexToMapWritable(mapIndex));
+    Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     MapBasicMove::put_on_the_map(mapIndex,x,y,orientation);
-    insertClientOnMap(map);
+    insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
 
     uint32_t posOutput=0;
 
@@ -102,14 +102,14 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     posOutput+=1;
 
     //send the current map of the player
-    if(CommonMap::flat_map_list_count<=255)
+    if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size()<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map->id);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(map.id);
         posOutput+=1;
     }
     else
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map->id);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(map.id);
         posOutput+=2;
     }
     //send only for this player
@@ -343,8 +343,9 @@ Direction Client::lookToMove(const Direction &direction)
 //return nullptr if can't move in this direction
 const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
 {
+    // to not apply the changes
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
-    const CommonMap *map=CommonMap::indexToMap(mapIndex);
+    const CommonMap &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     x=this->x;
     y=this->y;
     //resolv the object
@@ -356,16 +357,16 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TY
         case Direction_look_at_bottom:
         case Direction_look_at_left:
             direction=lookToMove(direction);
-            if(MoveOnTheMap::canGoTo(direction,*map,x,y,false))
+            if(MoveOnTheMap::canGoTo(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,false))
             {
-                if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,false))
+                if(!MoveOnTheMap::move<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,false))
                 {
-                    const CommonMap *map=CommonMap::indexToMap(mapIndex);
-                    if(!MoveOnTheMap::isWalkable(*map,x,y))
+                    const CommonMap &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    if(!MoveOnTheMap::isWalkable(map,x,y))
                     {
-                        if(MoveOnTheMap::canGoTo(direction,*map,x,y,true))
+                        if(MoveOnTheMap::canGoTo(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,true))
                         {
-                            if(!MoveOnTheMap::move(direction,&mapIndex,&x,&y,true))
+                            if(!MoveOnTheMap::move<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,true))
                             {}
                         }
                         else
@@ -379,9 +380,9 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TY
         break;
         default:
             return nullptr;
-        return;
+        return nullptr;
     }
-    return CommonMap::indexToMap(mapIndex);
+    return &Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
 }
 
 bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDrops1,const CatchChallenger::MonsterDrops &monsterDrops2)

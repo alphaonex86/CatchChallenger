@@ -2,6 +2,7 @@
 
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
+#include "../MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
@@ -9,16 +10,16 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-        if(this->x>=map->width)
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map->width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
-        if(this->y>=map->height)
+        if(this->y>=map.height)
         {
-            std::cerr << "y to out of map: " << this->y << " > " << map->height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "y to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
@@ -34,16 +35,16 @@ bool Client::moveThePlayer(const uint8_t &previousMovedUnit,const Direction &dir
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(returnValue)
     {
-        const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-        if(this->x>=map->width)
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map->width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
-        if(this->y>=map->height)
+        if(this->y>=map.height)
         {
-            std::cerr << "y to out of map: " << this->y << " > " << map->height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "y to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
@@ -56,16 +57,16 @@ bool Client::singleMove(const Direction &direction)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
-        const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-        if(this->x>=map->width)
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: " << this->x << " > " << map->width << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << this->x << " > " << map.width << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
-        if(this->y>=map->height)
+        if(this->y>=map.height)
         {
-            std::cerr << "x to out of map: " << this->y << " > " << map->height << " (" << mapIndex << ")" << std::endl;
+            std::cerr << "x to out of map: " << this->y << " > " << map.height << " (" << mapIndex << ")" << std::endl;
             abort();
             return false;
         }
@@ -94,29 +95,27 @@ bool Client::singleMove(const Direction &direction)
     Direction temp_direction=direction;
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
     {
-        const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
         #ifdef DEBUG_MESSAGE_CLIENT_MOVE
         normalOutput("Client::singleMove(), go in this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
         #endif
-        if(!MoveOnTheMap::canGoTo(direction,*map,x,y,true))
+        if(!MoveOnTheMap::canGoTo<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,true))
         {
             errorOutput("Client::singleMove(), can't go into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
             return false;
         }
-        if(!MoveOnTheMap::moveWithoutTeleport(direction,mapIndex,x,y,false,true))
+        if(!MoveOnTheMap::moveWithoutTeleport<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,false,true))
         {
             errorOutput("Client::singleMove(), can go but move failed into this direction: "+MoveOnTheMap::directionToString(direction)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
             return false;
         }
     }
 
-    const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-    const MapServer * const mapServer=static_cast<const MapServer *>(map);
-    const CommonMap::Teleporter* const teleporter_list=CommonMap::flat_teleporter+map->teleporter_first_index;
+    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     uint8_t index_search=0;
-    while(index_search<map->teleporter_list_size)
+    while(index_search<map.teleporters.size())
     {
-        const CommonMap::Teleporter &teleporter=teleporter_list[index_search];
+        const Teleporter &teleporter=map.teleporters.at(index_search);
         if(teleporter.source_x==x && teleporter.source_y==y)
         {
             switch(teleporter.condition.type)
@@ -129,12 +128,12 @@ bool Client::singleMove(const Direction &direction)
                     errorOutput("You are not in clan to try pass");
                     return false;
                 }
-                if(mapServer->zone==255)
+                if(map.zone==255)
                 {
                     errorOutput("This door have no zone asigned");
                     return false;
                 }
-                if(GlobalServerData::serverPrivateVariables.cityStatusList.at(mapServer->zone).clan!=public_and_private_informations.clan)
+                if(GlobalServerData::serverPrivateVariables.cityStatusList.at(map.zone).clan!=public_and_private_informations.clan)
                 {
                     errorOutput("This city is not owned by you clan");
                     return false;
@@ -142,9 +141,9 @@ bool Client::singleMove(const Direction &direction)
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {
-                    if(!haveBeatBot(mapServer->id,teleporter.condition.data.fightBot))
+                    if(!haveBeatBot(map.id,teleporter.condition.data.fightBot))
                     {
-                        errorOutput("Need have FightBot win to use this teleporter: map "+std::to_string(mapServer->id)+"/"+std::to_string(teleporter.condition.data.fightBot)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have FightBot win to use this teleporter: map "+std::to_string(map.id)+"/"+std::to_string(teleporter.condition.data.fightBot)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 }
@@ -186,20 +185,20 @@ bool Client::singleMove(const Direction &direction)
 
     if(this->mapIndex!=mapIndex)
     {
-        removeClientOnMap(static_cast<CommonMap *>(CommonMap::indexToMapWritable(this->mapIndex)));
-        insertClientOnMap(static_cast<CommonMap *>(CommonMap::indexToMapWritable(mapIndex)));
+        removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(this->mapIndex));
+        insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex));
     }
 
     this->mapIndex=mapIndex;
     this->x=x;
     this->y=y;
     {
-        if(mapServer->rescue.find(std::pair<uint8_t,uint8_t>(x,y))!=mapServer->rescue.cend())
+        if(map.rescue.find(std::pair<uint8_t,uint8_t>(x,y))!=map.rescue.cend())
         {
             unvalidated_rescue.mapIndex=mapIndex;
             unvalidated_rescue.x=x;
             unvalidated_rescue.y=y;
-            unvalidated_rescue.orientation=mapServer->rescue.at(std::pair<uint8_t,uint8_t>(x,y));
+            unvalidated_rescue.orientation=map.rescue.at(std::pair<uint8_t,uint8_t>(x,y));
         }
     }
     if(botFightCollision(map,x,y))
@@ -217,12 +216,9 @@ bool Client::singleMove(const Direction &direction)
                 index++;
             }
         }
-        if(generateWildFightIfCollision(*map,x,y,public_and_private_informations.items,mergedEvents))
+        if(generateWildFightIfCollision(map,x,y,public_and_private_informations.items,mergedEvents))
         {
-            if(map!=NULL)
-                normalOutput("Client::singleMove(), now is in front of wild monster with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
-            else
-                normalOutput("Client::singleMove(), now is in front of wild monster)");
+            normalOutput("Client::singleMove(), now is in front of wild monster with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
             return true;
         }
     }
@@ -232,16 +228,16 @@ bool Client::singleMove(const Direction &direction)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(this->mapIndex!=65535)
     {
-        const CommonMap *map=static_cast<const CommonMap *>(CommonMap::indexToMap(mapIndex));
-        if(this->x>=map->width)
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        if(this->x>=map.width)
         {
-            std::cerr << "x to out of map: "+std::to_string(this->x)+" > "+std::to_string(map->width)+" ("+std::to_string(this->mapIndex)+")" << std::endl;
+            std::cerr << "x to out of map: "+std::to_string(this->x)+" > "+std::to_string(map.width)+" ("+std::to_string(this->mapIndex)+")" << std::endl;
             abort();
             return false;
         }
-        if(this->y>=map->height)
+        if(this->y>=map.height)
         {
-            std::cerr << "y to out of map: "+std::to_string(this->y)+" > "+std::to_string(map->height)+" ("+std::to_string(this->mapIndex)+")" << std::endl;
+            std::cerr << "y to out of map: "+std::to_string(this->y)+" > "+std::to_string(map.height)+" ("+std::to_string(this->mapIndex)+")" << std::endl;
             abort();
             return false;
         }
