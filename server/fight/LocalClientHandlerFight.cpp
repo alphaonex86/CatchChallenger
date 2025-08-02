@@ -7,6 +7,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
+#include "../base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
@@ -246,17 +247,17 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool Client::botFightCollision(const CommonMap *map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool Client::botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
     {
-        errorOutput("error: map: "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
+        errorOutput("error: map: "+map.map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
-    if(static_cast<MapServer *>(map)->botsFightTrigger.find(pos)!=static_cast<MapServer *>(map)->botsFightTrigger.cend())
+    if(map.botsFightTrigger.find(pos)!=map.botsFightTrigger.cend())
     {
-        const std::vector<uint8_t> &botList=static_cast<MapServer *>(map)->botsFightTrigger.at(pos);
+        const std::vector<uint8_t> &botList=map.botsFightTrigger.at(pos);
         unsigned int index=0;
         while(index<botList.size())
         {
@@ -265,7 +266,7 @@ bool Client::botFightCollision(const CommonMap *map,const COORD_TYPE &x,const CO
             {
                 if(!haveBeatBot(botFightId))
                 {
-                    normalOutput("is now in fight on map "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
+                    normalOutput("is now in fight on map "+map.map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
                     botFightStart(botFightId);
                     return true;
                 }
