@@ -43,8 +43,6 @@ public:
 
     //any where on the map, need broadcast the state
     std::vector<Industry> industries;
-    //to load after industries and check data coherency
-    std::vector<IndustryStatus> industriesStatus;
 
     std::unordered_map<uint8_t/*npc id*/,BotFight> botFights;//id is bot id to save what have win
     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> dirt;-> stored into ParsedLayer
@@ -58,6 +56,10 @@ public:
     std::vector<std::pair<uint8_t,uint8_t>> rescue_points;*/
 
     std::vector<MonsterDrops> monsterDrops;//to prevent send network packet for item when luck is 100%
+
+    //MAP DYNAMIC
+    //to load after industries and check data coherency
+    std::vector<IndustryStatus> industriesStatus;
 };
 
 struct Map_Border

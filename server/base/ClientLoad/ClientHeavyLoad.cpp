@@ -129,8 +129,6 @@ bool CatchChallenger::operator!=(const CatchChallenger::PlayerMonster &monster1,
 {
     if(monster1.remaining_xp!=monster2.remaining_xp)
         return true;
-    if(monster1.sp!=monster2.sp)
-        return true;
     if(monster1.egg_step!=monster2.egg_step)
         return true;
     if(monster1.id!=monster2.id)

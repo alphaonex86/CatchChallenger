@@ -180,7 +180,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     generateRandomNumber();
 
     playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
-    playerById[character_id]=this;
+    playerById_db[character_id]=this;
     if(public_and_private_informations.clan>0)
         sendClanInfo();
 
@@ -341,11 +341,11 @@ Direction Client::lookToMove(const Direction &direction)
 }
 
 //return nullptr if can't move in this direction
-const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
+const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
 {
     // to not apply the changes
     CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
-    const CommonMap &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     x=this->x;
     y=this->y;
     //resolv the object
@@ -361,7 +361,7 @@ const MapServer * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TY
             {
                 if(!MoveOnTheMap::move<Map_server_MapVisibility_Simple_StoreOnSender>(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,mapIndex,x,y,false))
                 {
-                    const CommonMap &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+                    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
                     if(!MoveOnTheMap::isWalkable(map,x,y))
                     {
                         if(MoveOnTheMap::canGoTo(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list,direction,map,x,y,true))

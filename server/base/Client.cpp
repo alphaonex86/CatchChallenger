@@ -8,7 +8,8 @@
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
 
-#include "BaseServerLogin.hpp"
+#include "BaseServer/BaseServerLogin.hpp"
+#include "MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <fstream>
@@ -94,7 +95,6 @@ Client::Client() :
     public_and_private_informations.recipes=nullptr;
     public_and_private_informations.encyclopedia_monster=nullptr;
     public_and_private_informations.encyclopedia_item=nullptr;
-    public_and_private_informations.bot_already_beaten=nullptr;
 }
 
 //need be call after isReadyToDelete() emited
@@ -235,8 +235,8 @@ bool Client::disconnectClient()
     else if(stat==ClientStat::CharacterSelected)
     {
         const std::string &character_id_string=std::to_string(character_id);
-        if(map!=NULL)
-            removeClientOnMap(map);
+        if(mapIndex<65535)
+            removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
         if(GlobalServerData::serverSettings.sendPlayerNumber)
             GlobalServerData::serverPrivateVariables.player_updater->removeConnectedPlayer();
         extraStop();
@@ -254,7 +254,7 @@ bool Client::disconnectClient()
         if(!vectorremoveOne(clientBroadCastList,this))
             std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
-        playerById.erase(character_id);
+        playerById_db.erase(character_id);
         characterCreationDateList.erase(character_id);
         #ifndef EPOLLCATCHCHALLENGERSERVER
         leaveTheCityCapture();
@@ -314,9 +314,9 @@ bool Client::disconnectClient()
                 index++;
             }
         }
-        if(map!=NULL)
+        if(mapIndex<65535)
             savePosition();
-        map=NULL;
+        mapIndex=65535;
         character_id=0;
         stat=ClientStat::None;
     }
@@ -534,23 +534,23 @@ uint32_t Client::getClanId(bool * const ok)
 
 bool Client::characterConnected(const uint32_t &characterId)
 {
-    return playerById.find(characterId)!=playerById.cend();
+    return playerById_db.find(characterId)!=playerById_db.cend();
 }
 
 void Client::disconnectClientById(const uint32_t &characterId)
 {
-    if(playerById.find(characterId)!=playerById.cend())
+    if(playerById_db.find(characterId)!=playerById_db.cend())
     {
-        Client * client=playerById.at(characterId);
+        Client * client=playerById_db.at(characterId);
         client->disconnectClient();
     }
 }
 
 bool Client::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const
 {
-    if(mapData.find(mapId)==mapData.cend())
+    if(public_and_private_informations.mapData.find(mapId)==public_and_private_informations.mapData.cend())
         return false;
-    const Player_private_and_public_informations_Map &tempMapData=mapData.at(mapId);
+    const Player_private_and_public_informations_Map &tempMapData=public_and_private_informations.mapData.at(mapId);
     if(tempMapData.bot_already_beaten.find(botId)==tempMapData.bot_already_beaten.cend())
         return false;
     return true;
@@ -735,16 +735,15 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
     std::string bot_already_beatenS;
 
+    //see Player_private_and_public_informations_Map
     //serialise list of bot fight in form: map DB id + id
-    if(public_and_private_informations.bot_already_beaten!=nullptr)
-        bot_already_beatenS=std::string(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
         << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
-        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS << public_and_private_informations.itemOnMap
-        << public_and_private_informations.plantOnMap << public_and_private_informations.quests << public_and_private_informations.reputation
+        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS
+        << public_and_private_informations.quests << public_and_private_informations.reputation
         << public_and_private_informations.items << public_and_private_informations.warehouse_items;
-    buf << mapData;
+    buf << public_and_private_informations.mapData;
     const uint8_t allowSize=public_and_private_informations.allow.size();
     buf << allowSize;
     std::set<ActionAllow>::iterator it;
@@ -759,22 +758,18 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
     buf << botFightCash << botFight << isInCityCapture;
 
-    uint32_t map_file_database_id=0;
-    uint32_t rescue_map_file_database_id=0;
-    uint32_t unvalidated_rescue_map_file_database_id=0;
-    if(map_entry.map!=nullptr)
-        map_file_database_id=static_cast<MapServer *>(map_entry.map)->id_db;
-    if(rescue.map!=nullptr)
-        rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->id_db;
-    if(unvalidated_rescue.map!=nullptr)
-        unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->id_db;
+    CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
+    CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
+    CATCHCHALLENGER_TYPE_MAPID unvalidated_rescue_map_file_database_id=0;
+    map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(map_entry.mapIndex).id_db;
+    rescue_map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue.mapIndex).id_db;
+    unvalidated_rescue_map_file_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue.mapIndex).id_db;
     buf << map_file_database_id << map_entry.x << map_entry.y << (uint8_t)map_entry.orientation;
     buf << rescue_map_file_database_id << rescue.x << rescue.y << (uint8_t)rescue.orientation;
     buf << unvalidated_rescue_map_file_database_id << unvalidated_rescue.x << unvalidated_rescue.y << (uint8_t)unvalidated_rescue.orientation;
 
-    uint32_t map_id=0;
-    if(map!=nullptr)
-        map_id=static_cast<MapServer *>(map)->id_db;
+    CATCHCHALLENGER_TYPE_MAPID map_id=0;
+    map_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex).id_db;
     buf << map_id << x << y << (uint8_t)last_direction;
 }
 
@@ -786,14 +781,13 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     std::string recipesS;
     std::string encyclopedia_monsterS;
     std::string encyclopedia_itemS;
-    std::string bot_already_beatenS;
     buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash >> public_and_private_informations.warehouse_cash
         >> recipesS >> public_and_private_informations.playerMonster >> public_and_private_informations.warehouse_playerMonster
         >> encyclopedia_monsterS >> encyclopedia_itemS
-        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> bot_already_beatenS;
-    buf >> public_and_private_informations.itemOnMap >> public_and_private_informations.plantOnMap >> public_and_private_informations.quests
+        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader;
+    buf >> public_and_private_informations.quests
         >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items;
-    buf >> mapData;
+    buf >> public_and_private_informations.mapData;
     uint8_t allowSize=0;
     buf >> allowSize;
     {
@@ -824,24 +818,18 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     if(min>encyclopedia_itemS.size())
         min=encyclopedia_itemS.size();
     memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);
-    public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-    memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-    min=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1;
-    if(min>bot_already_beatenS.size())
-        min=bot_already_beatenS.size();
-    memcpy(public_and_private_informations.bot_already_beaten,bot_already_beatenS.data(),min);
 
     buf >> ableToFight;
     buf >> wildMonsters;
     buf >> botFightMonsters;
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
-    buf >> botFightCash >> botFightId >> isInCityCapture;
+    buf >> botFightCash >> isInCityCapture;
 
     uint8_t value=0;
-    uint32_t map_file_database_id=0;
-    uint32_t rescue_map_file_database_id=0;
-    uint32_t unvalidated_rescue_map_file_database_id=0;
+    CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
+    CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
+    CATCHCHALLENGER_TYPE_MAPID unvalidated_rescue_map_file_database_id=0;
     buf >> map_file_database_id >> map_entry.x >> map_entry.y >> value;
     map_entry.orientation=(Orientation)value;
     buf >> rescue_map_file_database_id >> rescue.x >> rescue.y >> value;
@@ -854,18 +842,20 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    map_entry.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id));
-    if(map_entry.map==nullptr)
+    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
     {
-        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        unsigned int index=0;
-        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
-        {
-            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
-            if(s!=nullptr)
-                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
-            index++;
-        }
+        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    map_entry.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_file_database_id);
+    if(map_entry.mapIndex>=65535)
+    {
+        std::cerr << "map_entry.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    if(rescue_map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
     if(rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
@@ -873,18 +863,15 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    rescue.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id));
-    if(rescue.map==nullptr)
+    rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_file_database_id);
+    if(rescue.mapIndex>=65535)
     {
-        std::cerr << "rescue_map_file_database_id have not reverse: " << std::to_string(rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        unsigned int index=0;
-        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
-        {
-            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
-            if(s!=nullptr)
-                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
-            index++;
-        }
+        std::cerr << "rescue.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
+    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
     if(unvalidated_rescue_map_file_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
@@ -892,41 +879,30 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "unvalidated_rescue_map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    unvalidated_rescue.map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id));
-    if(unvalidated_rescue.map==nullptr)
+    unvalidated_rescue.mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_file_database_id);
+    if(unvalidated_rescue.mapIndex>=65535)
     {
-        std::cerr << "unvalidated_rescue_map_file_database_id have not reverse: " << std::to_string(unvalidated_rescue_map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        unsigned int index=0;
-        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
-        {
-            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
-            if(s!=nullptr)
-                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
-            index++;
-        }
+        std::cerr << "unvalidated_rescue.mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
 
-    uint32_t map_id=0;
+    CATCHCHALLENGER_TYPE_MAPID map_id=0;
     uint8_t temp_direction=0;
     buf >> map_id >> x >> y >> temp_direction;
+    if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+    {
+        std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
+        abort();
+    }
     if(map_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
-    map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_id));
-    if(map==nullptr)
+    mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_id);
+    if(mapIndex>=65535)
     {
-        std::cerr << "map_file_database_id have not reverse: " << std::to_string(map_file_database_id) << ", mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
-        unsigned int index=0;
-        while(index<DictionaryServer::dictionary_map_database_to_internal.size())
-        {
-            const MapServer * const s=DictionaryServer::dictionary_map_database_to_internal.at(index);
-            if(s!=nullptr)
-                std::cerr << "map_file_database_id["+std::to_string(index)+"]="+s->map_file << std::endl;
-            index++;
-        }
+        std::cerr << "mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
 }

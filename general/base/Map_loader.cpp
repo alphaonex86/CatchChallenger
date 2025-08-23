@@ -876,29 +876,25 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             }
             else
             {
-                flat_map_list.pop_back();
                 std::cout << "error at loading: " << datapack_mapPath << fileName << ", error: " << map_temp.errorString()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
                           << std::endl;
 
-                /*see mapPathToId
-                 * flat_map_list_temp.push_back(new MapType);
-                MapType *mapServer=static_cast<MapType *>(flat_map_list_temp.back());
+                /* to always have id matching path id event if map not load
+                 * ON CLIENT SIDE the map is loaded on demand, then unable to know what can't be loaded */
+                mapFinal.top.mapIndex=65535;
+                mapFinal.top.x_offset=0;
+                mapFinal.bottom.mapIndex=65535;
+                mapFinal.bottom.x_offset=0;
+                mapFinal.right.mapIndex=65535;
+                mapFinal.right.y_offset=0;
+                mapFinal.left.mapIndex=65535;
+                mapFinal.left.y_offset=0;
 
-                mapServer->width			= 0;
-                mapServer->height			= 0;
-                mapServer->parsed_layer.simplifiedMapIndex=65535;
-
-                Map_semi map_semi;
-                map_semi.old_map				= mapServer;
-                map_semi.file=fileName;
-
-                map_semi.old_map=map_temp.map_to_send;
-
-                semi_loaded_map.push_back(map_semi);*/
-
-                //abort();
+                mapFinal.width			= 0;
+                mapFinal.height			= 0;
+                mapFinal.id=mapIdToSyncServerAndClient;
             }
         }
         index++;
@@ -925,10 +921,12 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
     {
         Map_semi &map_semi=semi_loaded_map.at(index);
         MapType &mapFinal=flat_map_list.at(index);
+        if(mapFinal.width==0 || mapFinal.height==0)
+            continue;
         unsigned int sub_index=0;
 
         //resolv the border map name into their pointer + resolv the offset to change of map
-        if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end())
+        if(map_semi.border.bottom.fileName.size()>0 && mapPathToId.find(map_semi.border.bottom.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.bottom.fileName)).width!=0)
         {
             mapFinal.border.bottom.mapIndex=mapPathToId.at(map_semi.border.bottom.fileName);
             mapFinal.border.bottom.x_offset=map_semi.border.bottom.x_offset;
@@ -939,7 +937,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             mapFinal.border.bottom.x_offset=0;
         }
 
-        if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end())
+        if(map_semi.border.top.fileName.size()>0 && mapPathToId.find(map_semi.border.top.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.top.fileName)).width!=0)
         {
             mapFinal.border.border.top.mapIndex=mapPathToId.at(map_semi.border.top.fileName);
             mapFinal.border.top.x_offset=map_semi.border.top.x_offset;
@@ -950,7 +948,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             mapFinal.border.top.x_offset=0;
         }
 
-        if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end())
+        if(map_semi.border.left.fileName.size()>0 && mapPathToId.find(map_semi.border.left.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.left.fileName)).width!=0)
         {
             mapFinal.border.border.left.mapIndex=mapPathToId.at(map_semi.border.left.fileName);
             mapFinal.border.left.y_offset=map_semi.border.left.y_offset;
@@ -961,7 +959,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             mapFinal.border.left.y_offset=0;
         }
 
-        if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end())
+        if(map_semi.border.right.fileName.size()>0 && mapPathToId.find(map_semi.border.right.fileName)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(map_semi.border.right.fileName)).width!=0)
         {
             mapFinal.border.border.right.mapIndex=mapPathToId.at(map_semi.border.right.fileName);
             mapFinal.border.right.y_offset=map_semi.border.right.y_offset;
@@ -978,7 +976,7 @@ void Map_loader::loadAllMapsAndLink(std::vector<MapType> &flat_map_list,const st
             const Map_semi_teleport &teleporter_semi=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleporter_semi.map;
             stringreplaceOne(teleportString,".tmx","");
-            if(mapPathToId.find(teleportString)!=mapPathToId.end())
+            if(mapPathToId.find(teleportString)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(teleportString)).width>0)
             {
                 if(teleporter_semi.destination_x<map_semi.old_map.width
                         && teleporter_semi.destination_y<map_semi.old_map.height)

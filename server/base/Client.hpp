@@ -116,11 +116,6 @@ public:
     #endif
     static std::vector<Client *> stat_client_list;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
-    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
-    #else
-    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
-    #endif
 
     static unsigned char *protocolReplyCharacterList;
     static uint16_t protocolReplyCharacterListSize;
@@ -286,7 +281,7 @@ private:
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
     uint64_t botFightCash;
-    std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;
+    std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;//pending fight
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
     //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;
@@ -303,7 +298,7 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static std::unordered_map<uint32_t,Client *> playerById;
+    static std::unordered_map<uint32_t,Client *> playerById_db;
     static std::unordered_map<ZONE_TYPE,std::vector<Client *> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
@@ -605,7 +600,7 @@ private:
     bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index) override;
 
     //return nullptr if can't move in this direction
-    const MapServer * mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
+    const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
     Client * otherPlayerTrade;

@@ -139,23 +139,6 @@ struct map_management_move
     std::vector<map_management_movement> movement_list;
 };
 
-class BotMap
-{
-public:
-    CATCHCHALLENGER_TYPE_BOTID fightBot;
-    CATCHCHALLENGER_TYPE_MAPID map;
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << fightBot << map;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> fightBot >> map;
-    }
-    #endif
-};
-
 struct Player_public_informations
 {
     SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
@@ -347,6 +330,18 @@ public:
     std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
     std::set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
 #endif
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << itemOnMap << plantOnMap << bot_already_beaten;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> itemOnMap >> plantOnMap >> bot_already_beaten;
+    }
+    #endif
+    #endif
 };
 
 class Player_private_and_public_informations
@@ -369,6 +364,12 @@ public:
      * Less dictionary resolution to improve the cache flush */
 
     #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
+    #else
+    std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
+    #endif
+
+    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
         std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
         //here to send at character login
         std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
@@ -377,7 +378,7 @@ public:
     #else
         std::set<ActionAllow> allow;
         //here to send at character login
-                std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
+        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
         std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
         std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
     #endif
@@ -1599,7 +1600,7 @@ public:
     {
     public:
         std::vector<Item> items;
-        std::vector<BotMap> fights;
+        std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::unordered_set<CATCHCHALLENGER_TYPE_MAPID>> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
@@ -1616,15 +1617,17 @@ public:
     public:
         std::vector<ItemMonster> itemsMonster;
         StepRequirements requirements;
-        BotMap botToTalk;
+        //who talk to continue
+        CATCHCHALLENGER_TYPE_BOTID botToTalkBotId;
+        CATCHCHALLENGER_TYPE_MAPID botToTalkMapId;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << itemsMonster << requirements << botToTalk;
+            buf << itemsMonster << requirements << botToTalkBotId << botToTalkMapId;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> itemsMonster >> requirements >> botToTalk;
+            buf >> itemsMonster >> requirements >> botToTalkBotId >> botToTalkMapId;
         }
         #endif
     };
