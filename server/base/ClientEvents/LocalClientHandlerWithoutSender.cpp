@@ -1,5 +1,5 @@
 #include "LocalClientHandlerWithoutSender.hpp"
-#include "../MapServer.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 
@@ -31,9 +31,9 @@ void LocalClientHandlerWithoutSender::doAllAction()
 void LocalClientHandlerWithoutSender::doDDOSChat()
 {
     unsigned int index=0;
-    while(index<GlobalServerData::serverPrivateVariables.map_list.size())
+    while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
     {
-        static_cast<MapServer *>(GlobalServerData::serverPrivateVariables.flat_map_list[index])->doDDOSLocalChat();
+        Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[index].doDDOSLocalChat();
         index++;
     }
 }

@@ -165,33 +165,42 @@ public:
     //visibility algorithm
     class MapVisibility
     {
+        enum Minimize : uint8_t
+        {
+            Minimize_CPU,
+            Minimize_Network
+        };
     public:
         class MapVisibility_Simple
         {
         public:
-            uint16_t max;
-            uint16_t reshow;
-            bool enable;
+            uint8_t max;
+            uint8_t reshow;
+            bool enable;//hysteresis value to take care if use max or reshow
             #ifdef CATCHCHALLENGER_CACHE_HPS
             template <class B>
             void serialize(B& buf) const {
-                buf << max << reshow << enable;
+                buf << max << reshow;
             }
             template <class B>
             void parse(B& buf) {
-                buf >> max >> reshow >> enable;
+                buf >> max >> reshow;
+                enable=true;
             }
             #endif
         };
         MapVisibility_Simple simple;
+        Minimize minimize;//most visibility algo will use it
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << simple;
+            buf << simple << (uint8_t)minimize;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> simple;
+            uint8_t t;
+            buf >> simple >> t;
+            minimize=(Minimize)t;
         }
         #endif
     };

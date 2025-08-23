@@ -95,7 +95,8 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
 
     //load the content
     bool ok;
-    BotMap defaultBots;
+    CATCHCHALLENGER_TYPE_BOTID botToTalkBotId=0;
+    CATCHCHALLENGER_TYPE_MAPID botToTalkMapId=65535;
     quest.id=0;
     quest.repeatable=false;
     if(root->Attribute("repeatable")!=NULL)
@@ -107,10 +108,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
         const CATCHCHALLENGER_TYPE_BOTID tempInt=stringtouint8(root->Attribute("bot"),&ok);
         if(ok)
         {
-            defaultBots.fightBot=tempInt;
+            botToTalkBotId=tempInt;
             const std::string tempS(root->Attribute("map"));
             if(mapPathToId.find(tempS)!=mapPathToId.cend())
-                defaultBots.map=mapPathToId.at(tempS);
+                botToTalkMapId=mapPathToId.at(tempS);
             else
             {
                 std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
@@ -311,8 +312,8 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     std::string tempS(step->Attribute("map"));
                     if(mapPathToId.find(tempS)!=mapPathToId.cend())
                     {
-                        stepObject.botToTalk.fightBot=tempInt;
-                        stepObject.botToTalk.map=mapPathToId.at(tempS);
+                        stepObject.botToTalkBotId=tempInt;
+                        stepObject.botToTalkMapId=mapPathToId.at(tempS);
                     }
                     else
                         std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
@@ -321,7 +322,10 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     std::cerr << "Unable to open the file: " << file << ", step bot count is not number: " << step->Attribute("bot") << std::endl;
             }
             else
-                stepObject.botToTalk=defaultBots;
+            {
+                stepObject.botToTalkBotId=botToTalkBotId;
+                stepObject.botToTalkMapId=botToTalkMapId;
+            }
             //do the item
             {
                 const tinyxml2::XMLElement * stepItem = step->FirstChildElement("item");
@@ -389,12 +393,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                         {
                             std::string tempS(fightItem->Attribute("map"));
                             if(mapPathToId.find(tempS)!=mapPathToId.cend())
-                            {
-                                BotMap t;
-                                t.fightBot=fightId;
-                                t.map=mapPathToId.at(tempS);
-                                stepObject.requirements.fights.push_back(t);
-                            }
+                                stepObject.requirements.fights[mapPathToId.at(tempS)].insert(fightId);
                             else
                                 std::cerr << "Unable to found the file: " << tempS << ", \"map\" into map list" << std::endl;
                         }

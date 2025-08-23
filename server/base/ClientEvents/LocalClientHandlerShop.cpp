@@ -1,5 +1,5 @@
 #include "../Client.hpp"
-#include "../MapServer.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 
@@ -7,26 +7,27 @@ using namespace CatchChallenger;
 
 void Client::getShopList(const uint8_t &query_id)
 {
-    remake
+    if(mapIndex>=65535)
+        return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("getShopList("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
-        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
+        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
     Shop shop;
     //check if is shop
-    if(mapServer->shops.find(pos)==mapServer->shops.cend())
+    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
     else
-        shop=mapServer->shops.at(pos);
+        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
     //send the shop items (no taxes from now)
 
     removeFromQueryReceived(query_id);
@@ -43,24 +44,16 @@ void Client::getShopList(const uint8_t &query_id)
         //size
         posOutput+=2;
 
-        unsigned int index=0;
         unsigned int objectCount=0;
-        while(index<shop.items.size())
+        for (const auto& [key, value] : shop.items)
         {
-            if(shop.prices.at(index)>0)
-            {
-                if(shop.prices.at(index)>0)
-                {
-                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(shop.items.at(index));
-                    posOutput+=2;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(shop.prices.at(index));
-                    posOutput+=4;
-                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
-                    posOutput+=4;
-                    objectCount++;
-                }
-            }
-            index++;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(key);
+            posOutput+=2;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(value);
+            posOutput+=4;
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(0);
+            posOutput+=4;
+            objectCount++;
         }
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(objectCount);
 
@@ -71,8 +64,10 @@ void Client::getShopList(const uint8_t &query_id)
     }
 }
 
-void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Client::buyObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM &objectId, const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity, const uint32_t &price)
 {
+    if(mapIndex>=65535)
+        return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("buyObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
     #endif
@@ -82,24 +77,21 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
         return;
     }
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
-        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
+        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
-    std::pair<uint8_t,uint8_t> shop_pos(x,y);
+    Shop shop;
     //check if is shop
-    if(mapServer->shops.find(pos)==mapServer->shops.cend())
+    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
     else
-        shop_pos=pos;
-    //send the shop items (no taxes from now)
-    const Shop &shop=mapServer->shops.at(shop_pos);
-    const int &priceIndex=vectorindexOf(shop.items,objectId);
+        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
 
     removeFromQueryReceived(query_id);
     //send the network reply
@@ -111,7 +103,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=query_id;
     posOutput+=1+4;
 
-    if(priceIndex==-1)
+    if(shop.items.find(objectId)==shop.items.cend())
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
         posOutput+=1;
@@ -122,7 +114,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         return;
     }
-    const uint32_t &realprice=shop.prices.at(priceIndex);
+    const uint32_t &realprice=shop.items.at(objectId);
     if(realprice==0)
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)BuyStat_HaveNotQuantity;
@@ -172,7 +164,7 @@ void Client::buyObject(const uint8_t &query_id,const uint16_t &objectId,const ui
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
-void Client::sellObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price)
+void Client::sellObject(const uint8_t &query_id,const CATCHCHALLENGER_TYPE_ITEM &objectId,const CATCHCHALLENGER_TYPE_ITEM_QUANTITY &quantity,const uint32_t &price)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("sellObject("+std::to_string(query_id)+","+std::to_string(shopId)+")");
@@ -183,20 +175,21 @@ void Client::sellObject(const uint8_t &query_id, const CATCHCHALLENGER_TYPE_ITEM
         return;
     }
     COORD_TYPE new_x=0,new_y=0;
-    const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
     if(new_map==nullptr)
     {
-        errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
+        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
+    Shop shop;
     //check if is shop
-    if(mapServer->shops.find(pos)==mapServer->shops.cend())
+    if(new_map->shops.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->shops.cend())
     {
         errorOutput("not shop into this direction");
         return;
     }
     else
-        shop_pos=pos;
+        shop=new_map->shops.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
     removeFromQueryReceived(query_id);
     //send the network reply
 

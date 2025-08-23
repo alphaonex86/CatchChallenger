@@ -84,7 +84,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.secondToPositionSync              = 0;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
-    GlobalServerData::serverSettings.mapVisibility.simple.enable                = true;
+    GlobalServerData::serverSettings.mapVisibility.simple.enable                = true;//hysteresis value to take care if use max or reshow
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
     GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;

@@ -10,14 +10,12 @@ using namespace CatchChallenger;
 //quest
 void Client::newQuestAction(const QuestAction &action,const CATCHCHALLENGER_TYPE_QUEST &questId)
 {
-    BotMap
-    GlobalServerData::serverPrivateVariables::
     if(CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().find(questId)==CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
     {
         errorOutput("unknown questId: "+std::to_string(questId));
         return;
     }
-    const QuestServer &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+    const CatchChallenger::Quest &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
     switch(action)
     {
         case QuestAction_Start:
@@ -122,7 +120,7 @@ MonsterDrops Client::questItemMonsterToMonsterDrops(const Quest::ItemMonster &qu
     return monsterDrops;
 }
 
-bool Client::haveNextStepQuestRequirements(const QuestServer &quest)
+bool Client::haveNextStepQuestRequirements(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("check quest step requirement for: "+std::to_string(quest.id));
@@ -150,21 +148,19 @@ bool Client::haveNextStepQuestRequirements(const QuestServer &quest)
         }
         index++;
     }
-    index=0;
-    while(index<requirements.fights.size())
-    {
-        const uint32_t &fightId=requirements.fights.at(index);
-        if(!haveBeatBot(mapServer->id,teleporter.condition.data.fightBot))
-        {
-            normalOutput("quest requirement, have not beat the bot: "+std::to_string(fightId));
-            return false;
+    for (const auto& pairMap : requirements.fights) {
+        for (const auto& pairBot : pairMap.second) {
+            if(!haveBeatBot(pairMap.first,pairBot))
+            {
+                normalOutput("quest requirement, have not beat the bot: "+std::to_string(pairMap.first)+" "+std::to_string(pairBot));
+                return false;
+            }
         }
-        index++;
     }
     return true;
 }
 
-bool Client::haveStartQuestRequirement(const QuestServer &quest)
+bool Client::haveStartQuestRequirement(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("check quest requirement for: "+std::to_string(quest.id));
@@ -306,7 +302,7 @@ void Client::syncDatabaseQuest()
     }
 }
 
-bool Client::nextStepQuest(const QuestServer &quest)
+bool Client::nextStepQuest(const CatchChallenger::Quest &quest)
 {
     #ifdef DEBUG_MESSAGE_CLIENT_QUESTS
     normalOutput("drop quest step requirement for: "+std::to_string(quest.id));
@@ -370,7 +366,7 @@ bool Client::nextStepQuest(const QuestServer &quest)
     return true;
 }
 
-bool Client::startQuest(const QuestServer &quest)
+bool Client::startQuest(const CatchChallenger::Quest &quest)
 {
     if(public_and_private_informations.quests.find(quest.id)==public_and_private_informations.quests.cend())
     {

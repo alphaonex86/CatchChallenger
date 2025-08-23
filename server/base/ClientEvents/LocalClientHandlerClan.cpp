@@ -541,9 +541,9 @@ void Client::insertIntoAClan(const uint32_t &clanId)
     #endif
     {
         if(public_and_private_informations.clan_leader)
-            clan_leader=StaticText::text_true;
+            clan_leader="true";
         else
-            clan_leader=StaticText::text_false;
+            clan_leader="false";
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_and_leader.asyncWrite({

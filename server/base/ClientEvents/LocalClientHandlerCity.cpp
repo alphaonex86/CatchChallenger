@@ -1,6 +1,6 @@
 #include "../Client.hpp"
 #include "../PreparedDBQuery.hpp"
-#include "../MapServer.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
 #include <string.h>
 #include "../../general/base/FacilityLib.hpp"
@@ -31,6 +31,8 @@ bool Client::captureCityInProgress()
 
 void Client::waitingForCityCaputre(const bool &cancel)
 {
+    if(mapIndex>=65535)
+        return;
     if(clan==NULL)
     {
         errorOutput("Try capture city when is not in clan");
@@ -38,7 +40,6 @@ void Client::waitingForCityCaputre(const bool &cancel)
     }
     if(!cancel)
     {
-        remake
         if(captureCityInProgress())
         {
             errorOutput("Try capture city when is already into that's");
@@ -53,21 +54,21 @@ void Client::waitingForCityCaputre(const bool &cancel)
         normalOutput("ask zonecapture at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
         #endif
         COORD_TYPE new_x=0,new_y=0;
-        const MapServer * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+        const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
         if(new_map==nullptr)
         {
-            errorOutput("Can't move at this direction from "+mapIndex+" ("+std::to_string(x)+","+std::to_string(y)+")");
+            errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
             return;
         }
         const std::pair<uint8_t,uint8_t> pos(x,y);
         //check if is zonecapture
-        if(mapServer->zoneCapture.find(pos)==mapServer->zoneCapture.cend())
+        if(new_map->zoneCapture.find(pos)==new_map->zoneCapture.cend())
         {
             errorOutput("no zonecapture point in this direction");
             return;
         }
         //send the zone capture
-        const ZONE_TYPE &zoneId=static_cast<MapServer*>(map)->zoneCapture.at(std::pair<uint8_t,uint8_t>(x,y));
+        const ZONE_TYPE &zoneId=new_map->zone;
         if(!public_and_private_informations.clan_leader)
         {
             if(clan->captureCityInProgress==65535)
@@ -205,15 +206,15 @@ void Client::startTheCityCapture()
                     {
                         const CATCHCHALLENGER_TYPE_MAPID &mapId=mapsList.at(index);
                         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                        if(mapId>=GlobalServerData::serverPrivateVariables.map_list.size())
+                        if(mapId>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
                         {
                             std::cerr << "Client::startTheCityCapture() mapId is > map list size" << std::endl;
                             abort();
                         }
                         #endif
-                        const CommonMap *map=GlobalServerData::serverPrivateVariables.flat_map_list[mapId];
+                        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
                         std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> temp;
-                        for (const std::pair<const uint8_t/*npc id*/,BotFight>& n : map->botFights)
+                        for (const std::pair<const uint8_t/*npc id*/,BotFight>& n : map.botFights)
                         {
                             temp.first=mapId;
                             temp.second=n.first;
