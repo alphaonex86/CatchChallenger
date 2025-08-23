@@ -3,17 +3,18 @@
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include "GlobalServerData.hpp"
-#include "MapServer.hpp"
+#include "MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
 void Client::sendLocalChatText(const std::string &text)
 {
-    if((static_cast<MapServer *>(map)->localChatDropTotalCache+static_cast<MapServer *>(map)->localChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
+    if(mapIndex>=65535)
         return;
-    static_cast<MapServer *>(map)->localChatDropNewValue++;
-    if(map==NULL)
+    Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex];
+    if((map.localChatDropTotalCache+map.localChatDropNewValue)>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
         return;
+    map.localChatDropNewValue++;
     if(text.size()>255)
     {
         errorOutput("text too big");
@@ -53,11 +54,11 @@ void Client::sendLocalChatText(const std::string &text)
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
-    const size_t &size=static_cast<MapServer *>(map)->clientsForLocalBroadcast.size();
+    const size_t &size=map.clientsForLocalBroadcast.size();
     unsigned int index=0;
     while(index<size)
     {
-        Client * const client=static_cast<MapServer *>(map)->clientsForLocalBroadcast.at(index);
+        Client * const client=map.clientsForLocalBroadcast.at(index);
         if(client!=this)
             client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         index++;
@@ -67,20 +68,20 @@ void Client::sendLocalChatText(const std::string &text)
 void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(vectorcontainsAtLeastOne(static_cast<MapServer *>(map)->clientsForBroadcast,this))
-        normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast already have this");
+    if(vectorcontainsAtLeastOne(map.clientsForBroadcast,this))
+        normalOutput("map.clientsForBroadcast already have this");
     else
     #endif
-    static_cast<MapServer *>(map)->clientsForLocalBroadcast.push_back(this);
+    map.clientsForLocalBroadcast.push_back(this);
 }
 
 void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
     #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)!=1)
-        normalOutput("static_cast<MapServer *>(map)->clientsForBroadcast.count(this)!=1: "+std::to_string(vectorcontainsCount(static_cast<MapServer *>(map)->clientsForBroadcast,this)));
+    if(vectorcontainsCount(map.clientsForBroadcast,this)!=1)
+        normalOutput("map.clientsForBroadcast.count(this)!=1: "+std::to_string(vectorcontainsCount(map.clientsForBroadcast,this)));
     #endif
-    vectorremoveOne(static_cast<MapServer *>(map)->clientsForLocalBroadcast,this);
+    vectorremoveOne(map.clientsForLocalBroadcast,this);
 
-    map=NULL;
+    mapIndex=65535;
 }

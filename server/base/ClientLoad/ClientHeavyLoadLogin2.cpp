@@ -11,6 +11,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
+#include <fstream>
 #endif
 
 /// \todo solve disconnecting/destroy during the SQL loading
@@ -682,11 +683,6 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
             abort();
             return;
-        }
-        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
-        {
-            std::cerr << "unable to save profile into DB FILE mode CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
         }
         if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
         {

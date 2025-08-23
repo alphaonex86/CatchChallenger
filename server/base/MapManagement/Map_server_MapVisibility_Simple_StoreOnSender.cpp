@@ -3,17 +3,12 @@
 #include "../GlobalServerData.hpp"
 #include "../Client.hpp"
 
-/// \todo optimise: preserialize, filter streaming to send + filter
-/** How use SIMD and better performance:
- *  Compose the full list with size-1
- *  char data[]
- *  int index=0;
- *  while()
- *    current client=list.at(index)
- *    sendRaw(data+0,data+pos)
- *    //skip current client pos
- *    sendRaw(data+pos+offset,size-offet-pos)
- * see line 560, after if(!GlobalServerData::serverSettings.mapVisibility.simple.reemit)
+/** limit visible 254 player at time (store internal index, 255, 65535 if not found), drop branch, /2 network, less code
+ *  way to do:
+ *  1) dropall + just do full insert and send all vector
+ *  2) store last state and do a diff for each player
+ * when diff, some entry in list can be null, allow quick compare, some entry will just be replaced, ELSE need database id or pseudo std::map resolution
+ * when broadcast, can if > 2M {while SIMD} else {C}
 */
 
 using namespace CatchChallenger;
@@ -21,6 +16,7 @@ using namespace CatchChallenger;
 std::vector<Map_server_MapVisibility_Simple_StoreOnSender> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
 
 Map_server_MapVisibility_Simple_StoreOnSender::Map_server_MapVisibility_Simple_StoreOnSender() :
+    player_id_db_to_index(nullptr)
     to_send_remove_size(0),
     show(true),
     to_send_insert(false),

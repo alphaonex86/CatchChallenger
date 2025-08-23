@@ -12,14 +12,14 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments.push_back(StaticText::text_1);
+            arguments.push_back("1");
         while(arguments.size()>3)
         {
             const std::string arg1=arguments.at(arguments.size()-3);
             arguments.erase(arguments.end()-3);
             const std::string arg2=arguments.at(arguments.size()-2);
             arguments.erase(arguments.end()-2);
-            arguments.insert(arguments.end(),arg1+StaticText::text_space+arg2);
+            arguments.insert(arguments.end(),arg1+" "+arg2);
         }
         if(arguments.size()!=3)
         {
@@ -49,7 +49,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                     arguments.erase(arguments.end()-2);
                     const std::string arg2=arguments.at(arguments.size()-1);
                     arguments.erase(arguments.end()-1);
-                    arguments.insert(arguments.end(),arg1+StaticText::text_space+arg2);
+                    arguments.insert(arguments.end(),arg1+" "+arg2);
                 }
                 quantity=1;
                 //receiveSystemText(std::stringLiteral("quantity is not a number, usage: /give objectId player [quantity=1]"));
@@ -71,7 +71,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         Client * const client=playerByPseudo.at(arguments.at(1));
         client->addObjectAndSend(objectId,quantity);
     }
-    else if(command==StaticText::text_setevent)
+    else if(command=="setevent")
     {
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
@@ -120,13 +120,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
     }
-    else if(command==StaticText::text_take)
+    else if(command=="take")
     {
         bool ok;
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==2)
-            arguments.push_back(StaticText::text_1);
+            arguments.push_back("1");
         if(arguments.size()!=3)
         {
             receiveSystemText("Wrong arguments number for the command, usage: /take objectId player [quantity=1]");
@@ -160,13 +160,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                     objectId,client->
                     removeObject(objectId,quantity));
     }
-    else if(command==StaticText::text_tp)
+    else if(command=="tp")
     {
         std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==3)
         {
-            if(arguments.at(1)!=StaticText::text_to)
+            if(arguments.at(1)!="to")
             {
                 receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
@@ -182,7 +182,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 return;
             }
             Client * const otherPlayerTo=playerByPseudo.at(arguments.back());
-            playerByPseudo.at(arguments.front())->receiveTeleportTo(otherPlayerTo->map,otherPlayerTo->x,otherPlayerTo->y,
+            Client * fromPlayer=playerByPseudo.at(arguments.front());
+            fromPlayer->receiveTeleportTo(otherPlayerTo->mapIndex,otherPlayerTo->x,otherPlayerTo->y,
                              MoveOnTheMap::directionToOrientation(otherPlayerTo->getLastDirection()));
         }
         else
@@ -193,7 +194,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
     }
     else if(command=="goto")
     {
-        std::vector<std::string> arguments=stringsplit(extraText,' ');
+        /* PUT MAP RESOLUTION INTO CLIENT
+         * std::vector<std::string> arguments=stringsplit(extraText,' ');
         vectorRemoveEmpty(arguments);
         if(arguments.size()==3)
         {
@@ -202,7 +204,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /goto map x y");
                 return;
             }
-            if(GlobalServerData::serverPrivateVariables.map_list.find(arguments.front())==GlobalServerData::serverPrivateVariables.map_list.end())
+            if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.find(arguments.front())==Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.end())
             {
                 receiveSystemText(arguments.front()+" map not found, usage: /goto map x y");
                 return;
@@ -220,18 +222,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText(arguments.front()+" y not number, usage: /goto map x y");
                 return;
             }
-            CommonMap * tempMap=GlobalServerData::serverPrivateVariables.map_list.at(arguments.front());
-            /*comparison is always false due to limited range of data type [-Wtype-limits]
-            if(tempX<0)
-            {
-                receiveSystemText(arguments.front()+" x too small, usage: /goto map x y");
-                return;
-            }
-            if(tempY<0)
-            {
-                receiveSystemText(arguments.front()+" y too small, usage: /goto map x y");
-                return;
-            }*/
+            CommonMap * tempMap=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(arguments.front());
             if(tempX>=tempMap->width)
             {
                 receiveSystemText(arguments.front()+" x too big, usage: /goto map x y");
@@ -248,9 +239,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         {
             receiveSystemText("Wrong arguments number for the command, usage: /goto map x y");
             return;
+        }*/
+        {
+            receiveSystemText("Disabled for remake");
+            return;
         }
     }
-    else if(command==StaticText::text_trade)
+    else if(command=="trade")
     {
         if(extraText.size()==0)
         {
@@ -299,7 +294,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         otherPlayerTrade=client;
         otherPlayerTrade->registerTradeRequest(this);
     }
-    else if(command==StaticText::text_battle)
+    else if(command=="battle")
     {
         if(extraText.size()==0)
         {
