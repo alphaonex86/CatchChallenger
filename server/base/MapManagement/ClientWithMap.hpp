@@ -17,6 +17,10 @@ public:
     //drop all clients
     void dropAllClients();
     void purgeBuffer() override;
+
+    /* static allocation, with holes, see doc/algo/visibility/constant-time-player-visibility.png
+     * can add carbage collector to not search free holes
+     IMPLEMENT INTO HIGHTER CLASS, like vector<Epoll> */
 protected:
     //add clients linked
     void insertClient() override;
@@ -25,10 +29,6 @@ protected:
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
 private:
-    /* static allocation, with holes, see doc/algo/visibility/constant-time-player-visibility.png
-     * can add carbage collector to not search free holes */
-    static std::vector<ClientWithMap> clientBroadCastList;
-
     //map load/unload and change
     void			loadOnTheMap();
     void			unloadFromTheMap();

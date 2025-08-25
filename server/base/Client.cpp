@@ -34,53 +34,9 @@ Client::Client() :
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         PacketModeTransmission_Server
         #endif
-        ),
-    mapSyncMiss(false),
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    stat_client(false),
-    #endif
-    stat(ClientStat::Free),
-    lastdaillygift(0),
-    pingInProgress(0),
-    index_on_map(255),
-    index_connected_player(65535),
-    account_id_db(0),
-    character_id_db(0),
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    isConnected(true),
-    #endif
-    randomIndex(0),
-    randomSize(0),
-    number_of_character(0),
-    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    datapackStatus(DatapackStatus::Main),
-    #else
-    datapackStatus(DatapackStatus::Base),
-    #endif
-    last_sended_connected_players(0),
-    stopIt(false),
-    profileIndex(0),
-    otherPlayerBattle(NULL),
-    battleIsValidated(false),
-    mCurrentSkillId(0),
-    mHaveCurrentSkill(false),
-    mMonsterChange(false),
-    botFightCash(0),
-    botFight(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0)),
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    isInCityCapture(false),
-    #endif
-    otherPlayerTrade(NULL),
-    tradeIsValidated(false),
-    clan(NULL)
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    ,socketString(NULL),
-    socketStringSize(0)
-    #endif
-    #ifndef EPOLLCATCHCHALLENGERSERVER
-    ,otherCityPlayerBattle(NULL)
-    #endif
+        )
 {
+    setToDefault();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
@@ -99,9 +55,60 @@ Client::Client() :
     public_and_private_informations.encyclopedia_item=nullptr;
 }
 
+void Client::setToDefault()
+{
+    mapSyncMiss=false;
+    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    stat_client=false;
+    #endif
+    stat=ClientStat::Free;
+    lastdaillygift=0;
+    pingInProgress=0;
+    index_on_map=255;
+    index_connected_player=65535;
+    account_id_db=0;
+    character_id_db=0;
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    isConnected=true;
+    #endif
+    randomIndex=0;
+    randomSize=0;
+    number_of_character=0;
+    #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+    datapackStatus=DatapackStatus::Main;
+    #else
+    datapackStatus=DatapackStatus::Base;
+    #endif
+    last_sended_connected_players=0;
+    stopIt=false;
+    profileIndex=0;
+    otherPlayerBattle=65535;
+    battleIsValidated=false;
+    mCurrentSkillId=0;
+    mHaveCurrentSkill=false;
+    mMonsterChange=false;
+    botFightCash=0;
+    botFight=std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0);
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    isInCityCapture=false;
+    #endif
+    otherPlayerTrade=65535;
+    tradeIsValidated=false;
+    clan=NULL;
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    socketString=NULL;
+    socketStringSize=0;
+    #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    otherCityPlayerBattle=NULL;
+    #endif
+}
+
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
+    std::cerr << "should never pass here, client now should just set to free slot" << std::endl;
+    abort();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=NULL;
     #endif
