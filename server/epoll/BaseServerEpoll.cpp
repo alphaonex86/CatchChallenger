@@ -75,3 +75,16 @@ BaseClassSwitch::EpollObjectType BaseServerEpoll::getType() const
 {
     return BaseClassSwitch::EpollObjectType::Server;
 }
+
+void BaseServerEpoll::preload_11_sync_the_players()
+{
+    ClientWithMap::clients.clear();
+    ClientWithMap::clients.resize(GlobalServerData::serverSettings.max_players);
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
+    while(index<GlobalServerData::serverSettings.max_players)
+    {
+        ClientWithMap::clients.at(index).setToDefault();
+        index++;
+    }
+    BaseServer::preload_11_sync_the_players();
+}

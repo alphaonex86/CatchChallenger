@@ -40,7 +40,6 @@ Client::Client() :
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
-    public_and_private_informations.repel_step=0;
     queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     {
         uint8_t index=0;
@@ -50,13 +49,54 @@ Client::Client() :
             index++;
         }
     }
-    public_and_private_informations.recipes=nullptr;
-    public_and_private_informations.encyclopedia_monster=nullptr;
-    public_and_private_informations.encyclopedia_item=nullptr;
 }
 
 void Client::setToDefault()
 {
+    //protocol
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    parseIncommingDataCount=0;
+    #endif
+    #ifndef EPOLLCATCHCHALLENGERSERVER
+    RXSize=0;
+    TXSize=0;
+    #endif
+    memset(inputQueryNumberToPacketCode,0x00,sizeof(inputQueryNumberToPacketCode));
+
+    //map move
+    mapIndex=65535;
+    x=0;
+    y=0;
+    last_direction=Direction_look_at_bottom;
+
+    //player info
+    public_and_private_informations.public_informations.monsterId=0;
+    public_and_private_informations.public_informations.pseudo.clear();
+    public_and_private_informations.public_informations.simplifiedId=0;
+    public_and_private_informations.public_informations.skinId=0;
+    public_and_private_informations.public_informations.speed=0;
+    public_and_private_informations.public_informations.type=0;
+    public_and_private_informations.cash=0;
+    public_and_private_informations.warehouse_cash=0;
+    public_and_private_informations.recipes=nullptr;
+    public_and_private_informations.playerMonster.clear();
+    public_and_private_informations.warehouse_playerMonster.clear();
+    public_and_private_informations.clan=0;
+    public_and_private_informations.encyclopedia_monster=nullptr;
+    public_and_private_informations.encyclopedia_item=nullptr;
+    public_and_private_informations.repel_step=0;
+    public_and_private_informations.clan_leader=false;
+    public_and_private_informations.mapData.clear();
+    public_and_private_informations.allow.clear();
+    public_and_private_informations.quests.clear();
+    public_and_private_informations.reputation.clear();
+    public_and_private_informations.items.clear();
+    public_and_private_informations.warehouse_items.clear();
+
+    //Fight engine
+    CommonFightEngine::resetAll();
+
+    //local
     mapSyncMiss=false;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     stat_client=false;
@@ -79,6 +119,33 @@ void Client::setToDefault()
     #else
     datapackStatus=DatapackStatus::Base;
     #endif
+    map_entry.mapIndex=65535;
+    map_entry.orientation=Orientation_bottom;
+    map_entry.x=0;
+    map_entry.y=0;
+    rescue.mapIndex=65535;
+    rescue.orientation=Orientation_bottom;
+    rescue.x=0;
+    rescue.y=0;
+    unvalidated_rescue.mapIndex=65535;
+    unvalidated_rescue.orientation=Orientation_bottom;
+    unvalidated_rescue.x=0;
+    unvalidated_rescue.y=0;
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    movePacketKick.clear();
+    chatPacketKick.clear();
+    otherPacketKick.clear();
+    #endif
+    lastTeleportation.clear();
+    queryNumberList.clear();
+    botFight.clear();
+    attackReturn.clear();
+    deferedEnduranceSync.clear();
+    tradeObjects.clear();
+    tradeMonster.clear();
+    inviteToClanList.clear();
+    questsDrop.clear();
+    connectedSince=0;
     last_sended_connected_players=0;
     stopIt=false;
     profileIndex=0;
