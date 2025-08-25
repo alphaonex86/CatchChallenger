@@ -22,6 +22,12 @@ public:
      * can add carbage collector to not search free holes
      IMPLEMENT INTO HIGHTER CLASS, like vector<Epoll> */
 protected:
+    // WARNING, need maintain same index include if one player is removed, then old index is an hole ClientStat::stat==Free
+    virtual void clients_insert() = 0;
+    virtual void clients_remove() = 0;
+    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED clients_size() = 0;
+    virtual ClientWithMap &clients_at() = 0;//can be hole, check this with ClientStat::stat!=Free
+protected:
     //add clients linked
     void insertClient() override;
     void moveClient(const uint8_t &previousMovedUnit,const Direction &direction) override;

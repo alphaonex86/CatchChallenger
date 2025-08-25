@@ -197,14 +197,6 @@ void BaseServer::preload_7_sync_the_skin()
 
 void BaseServer::preload_11_sync_the_players()
 {
-    ClientWithMap::clients.clear();
-    ClientWithMap::clients.resize(GlobalServerData::serverSettings.max_players);
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
-    while(index<GlobalServerData::serverSettings.max_players)
-    {
-        ClientWithMap::clients.at(index).setToDefault();
-        index++;
-    }
 }
 
 void BaseServer::preload_the_visibility_algorithm()

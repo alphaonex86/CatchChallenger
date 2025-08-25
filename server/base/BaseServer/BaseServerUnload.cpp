@@ -59,7 +59,6 @@ void BaseServer::unload_dictionary()
 
 void BaseServer::unload_the_static_data()
 {
-    Client::simplifiedIdList.clear();
 }
 
 void BaseServer::unload_zone()
@@ -121,7 +120,6 @@ void BaseServer::unload_the_gift()
 
 void BaseServer::unload_the_players()
 {
-    Client::simplifiedIdList.clear();
 }
 
 void BaseServer::unload_randomBlock()

@@ -100,7 +100,7 @@ protected:
     void preload_7_sync_the_skin();
     void preload_6_sync_the_datapack();
     void preload_10_sync_the_gift();
-    void preload_11_sync_the_players();
+    virtual void preload_11_sync_the_players();
     void preload_18_sync_profile();
     virtual void preload_the_visibility_algorithm();
     virtual void preload_finish();
