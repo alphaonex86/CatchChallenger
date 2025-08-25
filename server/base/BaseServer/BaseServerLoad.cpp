@@ -5,6 +5,7 @@
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../MapManagement/ClientWithMap.hpp"
 
 using namespace CatchChallenger;
 
@@ -196,11 +197,12 @@ void BaseServer::preload_7_sync_the_skin()
 
 void BaseServer::preload_11_sync_the_players()
 {
-    Client::clientBroadCastList.resize(GlobalServerData::serverSettings.max_players);
+    ClientWithMap::clients.clear();
+    ClientWithMap::clients.resize(GlobalServerData::serverSettings.max_players);
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
     while(index<GlobalServerData::serverSettings.max_players)
     {
-        Client::clientBroadCastList.at(index).stopIt=true;
+        ClientWithMap::clients.at(index).setToDefault();
         index++;
     }
 }

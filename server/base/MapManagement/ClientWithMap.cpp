@@ -5,7 +5,8 @@
 
 using namespace CatchChallenger;
 
-std::vector<ClientWithMap> ClientWithMap::clientBroadCastList;
+std::vector<ClientWithMap> ClientWithMap::clients;
+std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> ClientWithMap::clients_removed_index;
 
 ClientWithMap::ClientWithMap() :
     Client()

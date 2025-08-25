@@ -20,6 +20,14 @@
 #endif
 
 #ifdef EPOLLCATCHCHALLENGERSERVER
+public EpollClient,
+#elseifdef CATCHCHALLENGER_CLASS_QT
+public QtClient,
+#else
+#error the server have to be implemented into EPOLL or QT implementation, if you wish more write then here
+#endif
+
+#ifdef EPOLLCATCHCHALLENGERSERVER
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
         #if CATCHCHALLENGER_BIGBUFFERSIZE < CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB*1024
         #error CATCHCHALLENGER_BIGBUFFERSIZE can t be lower than CATCHCHALLENGER_SERVER_DATAPACK_MIN_FILEPURGE_KB
@@ -45,6 +53,7 @@ namespace CatchChallenger {
 void recordDisconnectByServer(void * client);
 #endif
 
+//herit from Epoll into server/epoll/ClientMapManagementEpoll.hpp ... for eatch implementation, then this code here is free of epoll/Qt structre
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
 public:
@@ -57,6 +66,7 @@ public:
     friend class BaseServer;
     friend class PlayerUpdaterBase;
     explicit Client();
+    void setToDefault();
     virtual ~Client();
     //to get some info
     virtual bool isValid() = 0;
