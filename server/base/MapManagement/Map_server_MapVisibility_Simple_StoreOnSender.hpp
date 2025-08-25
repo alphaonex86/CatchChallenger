@@ -9,8 +9,10 @@
 #define CATCHCHALLENGER_BIGBUFFERSIZE_FORTOPLAYER 128*1024
 #endif
 
+#define CATCHCHALLENGER_DYNAMIC_MAP_LIST 1
+
 namespace CatchChallenger {
-class MapVisibilityAlgorithm_Simple_StoreOnSender;
+class ClientWithMap;
 
 class Map_server_MapVisibility_Simple_StoreOnSender : public MapServer
 {
@@ -18,7 +20,6 @@ public:
     Map_server_MapVisibility_Simple_StoreOnSender();
     virtual ~Map_server_MapVisibility_Simple_StoreOnSender();
     void purgeBuffer();
-    std::vector<MapVisibilityAlgorithm_Simple_StoreOnSender *> clients;//manipulated by thread of ClientMapManagement()
 
     void send_dropAll();
     void send_reinsertAll();
@@ -97,16 +98,16 @@ public:
      * store CHOOSEN index connected player imply read each player attribute
      * store id_db imply read each player attribute only for insert + store resolution id_db to Object
      */
-    void * player_id_db_to_index;
+    #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clients;//65535 = empty slot
+    SIMPLIFIED_PLAYER_ID_FOR_MAP clients_count;
+    std::vector<SIMPLIFIED_PLAYER_ID_FOR_MAP> removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
+    #else
+    #error todo the static part
+    #endif
 
     //mostly less remove than don't remove
-    std::vector<uint16_t> to_send_remove;
-    int to_send_remove_size;
     bool show;
-    bool to_send_insert;
-    bool send_drop_all;
-    bool send_reinsert_all;//threasold, hide after 100 player, reshow below 50
-    bool have_change;
 
     /* drop, scan at each move is more problematic than scan whole map list each 100ms
      * static uint16_t * map_to_update;

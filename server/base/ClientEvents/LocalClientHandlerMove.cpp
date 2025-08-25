@@ -2,7 +2,7 @@
 
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
-#include "../MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "../MapManagement/ClientWithMap.hpp"
 
 using namespace CatchChallenger;
 

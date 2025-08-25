@@ -141,7 +141,7 @@ struct map_management_move
 
 struct Player_public_informations
 {
-    SIMPLIFIED_PLAYER_ID_TYPE simplifiedId;
+    SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedId;//asigned by map management
     std::string pseudo;
     Player_type type;
     uint8_t skinId;
@@ -152,12 +152,12 @@ struct Player_public_informations
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << simplifiedId << pseudo << (uint8_t)type << skinId << monsterId << speed;
+        buf << pseudo << (uint8_t)type << skinId << monsterId << speed;
     }
     template <class B>
     void parse(B& buf) {
         uint8_t t;
-        buf >> simplifiedId >> pseudo >> t >> skinId >> monsterId >> speed;
+        buf >> pseudo >> t >> skinId >> monsterId >> speed;
         type=(Player_type)t;
     }
     #endif

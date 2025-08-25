@@ -1,7 +1,7 @@
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "MapServer.hpp"
-#include "DictionaryServer.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
+#include "../MapServer.hpp"
+#include "../DictionaryServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include <iostream>

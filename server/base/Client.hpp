@@ -66,7 +66,7 @@ public:
     bool disconnectClient() override;
     static void disconnectClientById(const uint32_t &characterId);
     bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const override;
-    Client *getClientFight() const;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getClientFight() const;//65535 if not in fight
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
@@ -96,10 +96,9 @@ public:
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
-    static std::vector<uint16_t> simplifiedIdList;
-    static std::unordered_map<std::string,Client *> playerByPseudo;
+    static std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;
     static std::unordered_map<uint32_t,Clan *> clanList;
-    static std::vector<Client *> clientBroadCastList;
+
     static bool timeRangeEventNew;
     static uint64_t timeRangeEventTimestamps;
 
@@ -114,7 +113,7 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #endif
-    static std::vector<Client *> stat_client_list;
+    //static std::vector<Client *> stat_client_list;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static unsigned char *protocolReplyCharacterList;
@@ -149,15 +148,17 @@ protected:
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     bool stat_client;
     #endif
+    //this say if is free slot or not
     enum ClientStat : uint8_t
     {
-        None=0x00,
-        ProtocolGood=0x01,
-        LoginInProgress=0x02,
-        Logged=0x03,
-        LoggedStatClient=0x04,
-        CharacterSelecting=0x05,
-        CharacterSelected=0x06,
+        Free=0x00,
+        None=0x01,
+        ProtocolGood=0x02,
+        LoginInProgress=0x03,
+        Logged=0x04,
+        LoggedStatClient=0x05,
+        CharacterSelecting=0x06,
+        CharacterSelected=0x07,
     };
     ClientStat stat;
     uint64_t lastdaillygift;//datalocallity with ClientStat stat
@@ -210,10 +211,12 @@ protected:
         uint32_t index;
     };
     uint8_t pingInProgress;
+    SIMPLIFIED_PLAYER_ID_FOR_MAP index_on_map;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_connected_player;
 private:
     //-------------------
-    uint32_t account_id;//0 if not logged
-    uint32_t character_id;
+    uint32_t account_id_db;//0 if not logged
+    uint32_t character_id_db;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
     #endif
@@ -258,7 +261,7 @@ private:
     };
     DatapackStatus datapackStatus;
 
-    int32_t connected_players;//it's th last number of connected player send
+    int32_t last_sended_connected_players;//it's th last number of connected player send
     std::queue<void *> paramToPassToCallBack;
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::queue<std::string > paramToPassToCallBackType;
@@ -276,7 +279,7 @@ private:
     std::queue<PlayerOnMap> lastTeleportation;
     std::vector<uint8_t> queryNumberList;
 
-    Client *otherPlayerBattle;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
     bool battleIsValidated;
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
@@ -298,8 +301,8 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static std::unordered_map<uint32_t,Client *> playerById_db;
-    static std::unordered_map<ZONE_TYPE,std::vector<Client *> > captureCity;
+    static std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;
+    static std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
@@ -314,7 +317,7 @@ private:
     #endif
     //global slot
     bool sendPM(const std::string &text,const std::string &pseudo);
-    bool receiveChatText(const Chat_type &chatType, const std::string &text, const Client *sender_informations);
+    bool receiveChatText(const Chat_type &chatType, const std::string &text, const Client &sender_informations);
     bool receiveSystemText(const std::string &text,const bool &important=false);
     bool sendChatText(const Chat_type &chatType,const std::string &text);
     void sendBroadCastCommand(const std::string &command,const std::string &extraText);
@@ -482,7 +485,7 @@ private:
     void heal();
     void requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId);
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
-    Client * getLocalClientHandlerFight();
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getLocalClientHandlerFight();//65535 if not in fight
     //clan
     void clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text);
     void addClan_return(const uint8_t &query_id, const uint8_t &action, const std::string &text);
@@ -538,12 +541,12 @@ private:
     void getRandomNumberIfNeeded() const;
     bool botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map, const COORD_TYPE &x, const COORD_TYPE &y);
     bool checkFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y);
-    void registerBattleRequest(Client * otherPlayerBattle);
+    void registerBattleRequest(Client &otherPlayerBattle);
     void saveAllMonsterPosition();
 
     void battleFinished();
     void battleFinishedReset();
-    Client * getOtherPlayerBattle() const;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getOtherPlayerBattle() const;//if not in fight
     bool finishTheTurn(const bool &isBot);
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     void displayCurrentStatus();
@@ -551,8 +554,8 @@ private:
     bool useSkill(const uint16_t &skill) override;
     bool currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const override;
     void healAllMonsters() override;
-    void battleFakeAccepted(Client * otherPlayer);
-    void battleFakeAcceptedInternal(Client *otherPlayer);
+    void battleFakeAccepted(Client &otherPlayer);
+    void battleFakeAcceptedInternal(Client &otherPlayer);
     bool botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> &botFight);
     int addCurrentBuffEffect(const Skill::BuffEffect &effect) override;
     bool moveUpMonster(const uint8_t &number) override;
@@ -603,7 +606,7 @@ private:
     const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
-    Client * otherPlayerTrade;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;
     bool tradeIsValidated;
     bool tradeIsFreezed;
     uint64_t tradeCash;
@@ -611,7 +614,7 @@ private:
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
     Clan *clan;
-    Client * otherCityPlayerBattle;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     char *socketString;
@@ -624,14 +627,14 @@ private:
     void internalTradeAccepted(const bool &send);
     //other
     static MonsterDrops questItemMonsterToMonsterDrops(const Quest::ItemMonster &questItemMonster);
-    bool otherPlayerIsInRange(Client * otherPlayer);
+    bool otherPlayerIsInRange(Client &otherPlayer);
 
     #ifndef CATCHCHALLENGER_DB_FILE
     static uint32_t getMonsterId(bool * const ok);
     #endif
     static uint32_t getClanId(bool * const ok);
     bool getInTrade() const;
-    void registerTradeRequest(Client * otherPlayerTrade);
+    void registerTradeRequest(Client &otherPlayerTrade);
     bool getIsFreezed() const;
     uint64_t getTradeCash() const;
     std::unordered_map<uint16_t, uint32_t> getTradeObjects() const;

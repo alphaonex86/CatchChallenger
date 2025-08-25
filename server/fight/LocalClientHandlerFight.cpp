@@ -7,7 +7,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "../base/MapManagement/ClientWithMap.hpp"
 
 using namespace CatchChallenger;
 

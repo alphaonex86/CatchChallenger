@@ -1,6 +1,6 @@
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "DictionaryServer.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
+#include "../DictionaryServer.hpp"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
@@ -300,7 +300,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
         break;
     }
     //load the variables
-    character_id=characterId;
+    character_id_db=characterId;
     stat=ClientStat::CharacterSelecting;
     GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     connectedSince=sFrom1970();

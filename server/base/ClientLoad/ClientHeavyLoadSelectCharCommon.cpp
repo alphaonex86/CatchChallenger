@@ -1,6 +1,6 @@
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "DictionaryLogin.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
+#include "../DictionaryLogin.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #ifdef CATCHCHALLENGER_DB_FILE
 #include <sys/stat.h>
@@ -136,18 +136,18 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #elif CATCHCHALLENGER_DB_FILE
     if(simplifiedIdList.size()<1)
     {
-        std::cerr << "Need more simplifiedIdList entry to log the character " << characterId << " (" << account_id << ")" << std::endl;
-        character_id=0;
+        std::cerr << "Need more simplifiedIdList entry to log the character " << characterId << " (" << account_id_db << ")" << std::endl;
+        character_id_db=0;
         characterSelectionIsWrong(query_id,0x04,"Need more simplifiedIdList entry to log the character");
         return;
     }
     std::string hexa,pseudo;
     {
-        std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+        std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
-            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
-            character_id=0;
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
+            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -168,8 +168,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         }
         if(index>=characterEntryList.size())
         {
-            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
-            character_id=0;
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
+            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
@@ -185,7 +185,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #error Define what do here
     #endif
     {
-        std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
+        std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         std::cerr << "Via: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_character_by_id.queryText() << ", callback list size: " << paramToPassToCallBack.size() << std::endl;
         std::cerr << "Maybe connected on another db than login server: " <<  DatabaseBase::databaseTypeToString(GlobalServerData::serverPrivateVariables.db_common->databaseType()) << " at ";
@@ -199,7 +199,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         #else
         #error Define what do here
         #endif
-        character_id=0;
+        character_id_db=0;
         characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
         return;
     }
@@ -675,8 +675,8 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         std::ifstream in_file("database/characters/"+hexa, std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
-            std::cerr << "Try select character " << characterId << " but not found with account " << account_id << std::endl;
-            character_id=0;
+            std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
+            character_id_db=0;
             characterSelectionIsWrong(query_id,0x02,"Result return query wrong");
             return;
         }
