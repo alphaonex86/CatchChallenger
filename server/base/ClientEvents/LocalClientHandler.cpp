@@ -179,8 +179,15 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     //load the first time the random number list
     generateRandomNumber();
 
-    playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
-    playerById_db[character_id_db]=this;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index_connected_player==65535)
+    {
+        std::cerr << "index_connected_player is not set (abort)" << std::endl;
+        abort();
+    }
+    #endif
+    playerByPseudo[public_and_private_informations.public_informations.pseudo]=index_connected_player;
+    playerById_db[character_id_db]=index_connected_player;
     if(public_and_private_informations.clan>0)
         sendClanInfo();
 
