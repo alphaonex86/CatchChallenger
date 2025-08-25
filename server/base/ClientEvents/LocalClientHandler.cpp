@@ -2,7 +2,7 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "../MapManagement/ClientWithMap.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -180,7 +180,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     generateRandomNumber();
 
     playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
-    playerById_db[character_id]=this;
+    playerById_db[character_id_db]=this;
     if(public_and_private_informations.clan>0)
         sendClanInfo();
 

@@ -333,7 +333,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
     posOutput+=1;
     const PlayerMonster &monster=tradeMonster.back();
 
-    posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,monster,character_id);
+    posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,monster,character_id_db);
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);

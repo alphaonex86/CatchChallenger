@@ -15,7 +15,7 @@ bool Client::isInBattle() const
     return (otherPlayerBattle!=NULL && battleIsValidated);
 }
 
-void Client::registerBattleRequest(Client *otherPlayerBattle)
+void Client::registerBattleRequest(Client &otherPlayerBattle)
 {
     if(isInBattle())
     {

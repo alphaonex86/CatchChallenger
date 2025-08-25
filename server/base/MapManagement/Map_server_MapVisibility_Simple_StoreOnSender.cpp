@@ -1,5 +1,5 @@
 #include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
-#include "MapVisibilityAlgorithm_Simple_StoreOnSender.hpp"
+#include "ClientWithMap.hpp"
 #include "../GlobalServerData.hpp"
 #include "../Client.hpp"
 
@@ -36,7 +36,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_dropAll()
     unsigned int index=0;
     while(index<clients.size())
     {
-        MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients[index];
+        ClientWithMap * client=clients[index];
         //clientdropAllClients();
         if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
             client->sendRawBlock(reinterpret_cast<const char *>(mainCode),sizeof(mainCode));
@@ -84,7 +84,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
             unsigned int index=0;
             while(index<clients.size())
             {
-                MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                ClientWithMap * const client=clients.at(index);
                 posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                 ++index;
             }
@@ -92,7 +92,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll()
             index=0;
             while(index<clients.size())
             {
-                MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                ClientWithMap * const client=clients.at(index);
                 client->to_send_insert=false;
                 if(client->pingCountInProgress()<=0 && client->mapSyncMiss==false)
                 {
@@ -117,7 +117,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_pingAll()
     unsigned int index=0;
     while(index<clients.size())
     {
-        MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+        ClientWithMap * const client=clients.at(index);
         client->sendPing();
         index++;
     }
@@ -173,7 +173,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert(unsigned int &cl
                 unsigned int index=0;
                 while(index<clients.size())
                 {
-                    MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
+                    ClientWithMap * client=clients.at(index);
                     if(client->to_send_insert)
                         posOutput+=playerToFullInsert(clients.at(index),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                     ++index;
@@ -187,7 +187,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert(unsigned int &cl
                 unsigned int index=0;
                 while(index<clients.size())
                 {
-                    MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index);
+                    ClientWithMap * client=clients.at(index);
                     if(client->to_send_insert)
                     {
                         clientsToSendDataNewClients[clientsToSendDataSizeNewClients]=client;
@@ -219,7 +219,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert(unsigned int &cl
             unsigned int index=0;
             while(index<clients.size())
             {
-                const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index);
+                const ClientWithMap * const client=clients.at(index);
                 std::cerr << "- " << client->public_and_private_informations.public_informations.pseudo
                           << " to_send_insert: " << std::to_string(client->to_send_insert)
                           << " haveNewMove: " << std::to_string(client->haveNewMove)
@@ -294,7 +294,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insert_exclude()
                 unsigned int index_subindex=0;
                 while(index_subindex<clients.size())/// \todo optimize, use clientsToSendDataNewClients (exclude) + clientsToSendDataOldClients
                 {
-                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(index_subindex);
+                    const ClientWithMap * const client=clients.at(index_subindex);
                     if(index!=index_subindex)
                         posOutput+=playerToFullInsert(client,ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                     ++index_subindex;
@@ -425,7 +425,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert_reemit(un
             if(GlobalServerData::serverSettings.max_players<=255)
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                    const ClientWithMap * const client=clientsToSendDataOldClients[index_subindex];
                     if(client->haveNewMove)
                     {
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
@@ -439,7 +439,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert_reemit(un
             else
                 while(index_subindex<clientsToSendDataSizeOldClients)
                 {
-                    const MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clientsToSendDataOldClients[index_subindex];
+                    const ClientWithMap * const client=clientsToSendDataOldClients[index_subindex];
                     if(client->haveNewMove)
                     {
                         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId);
@@ -610,7 +610,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_a
     unsigned int indexSub=0;
     while(indexSub<clients.size())
     {
-        MapVisibilityAlgorithm_Simple_StoreOnSender * const client=clients.at(indexSub);
+        ClientWithMap * const client=clients.at(indexSub);
         posOutput+=playerToFullInsert(client,buffer+posOutput);
         ++indexSub;
     }
@@ -641,7 +641,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_insertcompose_content_a
             abort();
         }
         #endif
-        MapVisibilityAlgorithm_Simple_StoreOnSender * client=clients.at(index_subindex);
+        ClientWithMap * client=clients.at(index_subindex);
         client->to_send_insert=false;
         client->haveNewMove=false;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK

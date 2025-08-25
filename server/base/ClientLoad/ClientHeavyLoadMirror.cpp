@@ -1,6 +1,5 @@
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "StaticText.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include <sys/stat.h>
@@ -138,22 +137,22 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         {
             const std::string &fileName=files.at(index);
             const uint32_t &clientPartialHash=partialHashList.at(index);
-            if(fileName.find(StaticText::text_dotslash) != std::string::npos)
+            if(fileName.find("./")!=std::string::npos)
             {
                 errorOutput("file name contains illegale char (1): "+fileName);
                 return;
             }
-            if(fileName.find(StaticText::text_antislash) != std::string::npos)
+            if(fileName.find("\\")!=std::string::npos)
             {
                 errorOutput("file name contains illegale char (2): "+fileName);
                 return;
             }
-            if(fileName.find(StaticText::text_double_slash) != std::string::npos)
+            if(fileName.find("//")!=std::string::npos)
             {
                 errorOutput("file name contains illegale char (3): "+fileName);
                 return;
             }
-            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,StaticText::text_slash))
+            if(regex_search(fileName,fileNameStartStringRegex) || stringStartWith(fileName,"/"))
             {
                 errorOutput("start with wrong string: "+fileName);
                 return;

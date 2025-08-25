@@ -196,15 +196,13 @@ void BaseServer::preload_7_sync_the_skin()
 
 void BaseServer::preload_11_sync_the_players()
 {
-    Client::simplifiedIdList.clear();
-    uint16_t index=0;
+    Client::clientBroadCastList.resize(GlobalServerData::serverSettings.max_players);
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
     while(index<GlobalServerData::serverSettings.max_players)
     {
-        Client::simplifiedIdList.push_back(index);
+        Client::clientBroadCastList.at(index).stopIt=true;
         index++;
     }
-    //deprecated, then just skip
-    //std::random_shuffle(Client::simplifiedIdList.begin(),Client::simplifiedIdList.end());
 }
 
 void BaseServer::preload_the_visibility_algorithm()

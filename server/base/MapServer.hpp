@@ -16,7 +16,7 @@
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
-class MapVisibilityAlgorithm_Simple_StoreOnSender;
+class ClientWithMap;
 class Client;
 class Map_server_MapVisibility_Simple_StoreOnSender;
 

@@ -62,7 +62,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             int index=0;
             while(index<mapListSize)
             {
-                uint32_t mapId;
+                CATCHCHALLENGER_TYPE_MAPID mapId;
                 if(number_of_map==0)
                 {
                     parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -79,7 +79,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint8_t);
                     mapId=mapTempId;
                 }
-                else if(number_of_map<=65535)
+                else
                 {
                     if((size-pos)<(unsigned int)sizeof(uint16_t))
                     {
@@ -89,16 +89,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                     pos+=sizeof(uint16_t);
                     mapId=mapTempId;
-                }
-                else
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint32_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-                    pos+=sizeof(uint32_t);
                 }
 
                 uint16_t playerSizeList;
@@ -545,7 +535,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             int index=0;
             while(index<mapListSize)
             {
-                uint32_t mapId;
+                CATCHCHALLENGER_TYPE_MAPID mapId;
                 if(number_of_map==0)
                 {
                     parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -560,17 +550,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     }
                     uint8_t mapTempId=data[pos];
                     pos+=sizeof(uint8_t);
-                    mapId=mapTempId;
-                }
-                else if(number_of_map<=65535)
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint16_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-                    pos+=sizeof(uint16_t);
                     mapId=mapTempId;
                 }
                 else

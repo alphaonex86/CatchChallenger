@@ -8,11 +8,11 @@
 namespace CatchChallenger {
 class Map_server_MapVisibility_Simple_StoreOnSender;
 
-class MapVisibilityAlgorithm_Simple_StoreOnSender : public Client
+class ClientWithMap : public Client
 {
 public:
-    explicit MapVisibilityAlgorithm_Simple_StoreOnSender();
-    ~MapVisibilityAlgorithm_Simple_StoreOnSender();
+    explicit ClientWithMap();
+    ~ClientWithMap();
     void reinsertAllClient();
     //drop all clients
     void dropAllClients();
@@ -24,9 +24,11 @@ protected:
     void removeClient();
     void mapVisiblity_unloadFromTheMap();
     void reinsertClientForOthersOnSameMap();
-    void saveChange(Map_server_MapVisibility_Simple_StoreOnSender * const map);
 private:
-    static MapVisibilityAlgorithm_Simple_StoreOnSender *current_client;//static to drop down the memory
+    /* static allocation, with holes, see doc/algo/visibility/constant-time-player-visibility.png
+     * can add carbage collector to not search free holes */
+    static std::vector<ClientWithMap> clientBroadCastList;
+
     //map load/unload and change
     void			loadOnTheMap();
     void			unloadFromTheMap();
@@ -36,18 +38,13 @@ private:
     bool loadTheRawUTF8String();
     int sizeOfOneSmallReinsert();
 
-    static bool mapHaveChanged;
-
     #ifdef CATCHCHALLENGER_SERVER_MAP_DROP_BLOCKED_MOVE
     uint8_t previousMovedUnitBlocked;
     #endif
 public:
-    // stuff to send
-    bool                                to_send_insert;
-    bool                    			haveNewMove;
 public:
     //map slots, transmited by the current ClientNetworkRead
-    void put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
+    void put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation) override;
     bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
     void teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation) override;
 private:

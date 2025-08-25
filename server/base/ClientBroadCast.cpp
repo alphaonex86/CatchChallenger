@@ -104,7 +104,7 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
     {
         receiveSystemText("unable to found the connected player: pseudo: \""+pseudo+"\"",false);
         if(GlobalServerData::serverSettings.anonymous)
-            normalOutput(std::to_string(character_id)+" have try send message to not connected user");
+            normalOutput(std::to_string(character_id_db)+" have try send message to not connected user");
         else
             normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);
         return true;
@@ -115,7 +115,7 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
     return false;
 }
 
-bool Client::receiveChatText(const Chat_type &chatType,const std::string &text,const Client *sender_informations)
+bool Client::receiveChatText(const Chat_type &chatType, const std::string &text, const Client &sender_informations)
 {
     if(text.size()>255)
     {
@@ -298,9 +298,9 @@ void Client::receive_instant_player_number(const uint16_t &connected_players, co
     #endif
     if(stat!=ClientStat::CharacterSelected)
         return;
-    if(this->connected_players==connected_players)
+    if(this->last_sended_connected_players==connected_players)
         return;
-    this->connected_players=connected_players;
+    this->last_sended_connected_players=connected_players;
     sendRawBlock(data,size);
 }
 

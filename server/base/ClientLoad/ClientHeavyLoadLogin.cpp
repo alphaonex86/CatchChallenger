@@ -297,12 +297,12 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
             else
             {
                 #ifdef CATCHCHALLENGER_DB_FILE
-                s >> account_id;
+                s >> account_id_db;
                 flags|=0x08;
 
                 std::vector<CharacterEntry> characterEntryList;
                 {
-                    std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                    std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
                     {
                         std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
@@ -553,7 +553,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         //removeFromQueryReceived(askLoginParam->query_id);//->only if use fast path
         #endif
         GlobalServerData::serverPrivateVariables.maxAccountId++;
-        account_id=GlobalServerData::serverPrivateVariables.maxAccountId;
+        account_id_db=GlobalServerData::serverPrivateVariables.maxAccountId;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
                     std::to_string(account_id),
@@ -590,10 +590,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                     abort();
                 }
                 hps::to_stream(secretTokenBinary, out_file);
-                hps::to_stream(account_id, out_file);
+                hps::to_stream(account_id_db, out_file);
             }
             {
-                std::ofstream out_file("database/accounts/"+std::to_string(account_id), std::ofstream::binary);
+                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;

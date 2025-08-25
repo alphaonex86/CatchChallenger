@@ -16,6 +16,7 @@ public:
     virtual ~MapBasicMove();
     //info linked
 
+    //see Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list; on server
     CATCHCHALLENGER_TYPE_MAPID mapIndex;
     COORD_TYPE x,y;
     Direction last_direction;

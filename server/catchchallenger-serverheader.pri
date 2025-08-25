@@ -2,6 +2,7 @@ DEFINES += TILED_ZLIB
 LIBS += -lz
 
 HEADERS += \
+    $$PWD/base/MapManagement/ClientWithMap.hpp \
     $$PWD/base/VariableServer.hpp \
     $$PWD/base/NormalServerGlobal.hpp \
     $$PWD/base/GlobalServerData.hpp \
@@ -19,7 +20,6 @@ HEADERS += \
     $$PWD/base/MapManagement/ClientMapManagement.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.hpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp \

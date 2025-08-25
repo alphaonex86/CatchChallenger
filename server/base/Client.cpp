@@ -39,11 +39,13 @@ Client::Client() :
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     stat_client(false),
     #endif
-    stat(ClientStat::None),
+    stat(ClientStat::Free),
     lastdaillygift(0),
     pingInProgress(0),
-    account_id(0),
-    character_id(0),
+    index_on_map(255),
+    index_connected_player(65535),
+    account_id_db(0),
+    character_id_db(0),
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isConnected(true),
     #endif
@@ -55,7 +57,7 @@ Client::Client() :
     #else
     datapackStatus(DatapackStatus::Base),
     #endif
-    connected_players(0),
+    last_sended_connected_players(0),
     stopIt(false),
     profileIndex(0),
     otherPlayerBattle(NULL),
@@ -146,12 +148,12 @@ bool Client::disconnectClient()
         closeSocket();
         return false;
     }
-    if(account_id==0)
+    if(account_id_db==0)
     {
         closeSocket();
         return false;
     }
-    account_id=0;
+    account_id_db=0;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     if(character_id!=0)
         normalOutput("Disconnected client");
@@ -223,7 +225,7 @@ bool Client::disconnectClient()
     if(stat==ClientStat::CharacterSelecting)
     {
         stat=ClientStat::CharacterSelected;//to block the new connection util th destructor is invocked
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id_db);
         simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(character_id==0)
@@ -234,7 +236,7 @@ bool Client::disconnectClient()
     }
     else if(stat==ClientStat::CharacterSelected)
     {
-        const std::string &character_id_string=std::to_string(character_id);
+        const std::string &character_id_string=std::to_string(character_id_db);
         if(mapIndex<65535)
             removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
         if(GlobalServerData::serverSettings.sendPlayerNumber)
@@ -245,7 +247,7 @@ bool Client::disconnectClient()
         removeFromClan();
         GlobalServerData::serverPrivateVariables.connected_players--;
         simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id);
+        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id_db);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(character_id);
         #endif
@@ -254,8 +256,8 @@ bool Client::disconnectClient()
         if(!vectorremoveOne(clientBroadCastList,this))
             std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;
         playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
-        playerById_db.erase(character_id);
-        characterCreationDateList.erase(character_id);
+        playerById_db.erase(character_id_db);
+        characterCreationDateList.erase(character_id_db);
         #ifndef EPOLLCATCHCHALLENGERSERVER
         leaveTheCityCapture();
         #endif
@@ -317,7 +319,7 @@ bool Client::disconnectClient()
         if(mapIndex<65535)
             savePosition();
         mapIndex=65535;
-        character_id=0;
+        character_id_db=0;
         stat=ClientStat::None;
     }
 
@@ -373,7 +375,7 @@ std::string Client::headerOutput() const
     if(!public_and_private_informations.public_informations.pseudo.empty())
     {
         if(GlobalServerData::serverSettings.anonymous)
-            return std::to_string(character_id)+": ";
+            return std::to_string(character_id_db)+": ";
         else
             return public_and_private_informations.public_informations.pseudo+": ";
     }
@@ -424,6 +426,8 @@ void Client::dropAllClients()
 
 void Client::dropAllBorderClients()
 {
+    std::cerr << "seam buggy function, see client/libcatchchallenger/Api_protocol_message.cpp" << std::endl;
+    abort();
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x67;
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
 }
@@ -723,7 +727,7 @@ uint8_t Client::pingCountInProgress() const
 void Client::serialize(hps::StreamOutputBuffer& buf) const {
     /// \warning use dictionary
 
-    buf << character_id;
+    buf << character_id_db;
     std::string recipesS;
     if(public_and_private_informations.recipes!=nullptr)
         recipesS=std::string(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
@@ -776,7 +780,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
 void Client::parse(hps::StreamInputBuffer& buf) {
     /// \warning use dictionary
 
-    auto temp_character_id=character_id;
+    auto temp_character_id=character_id_db;
     buf >> temp_character_id;
     std::string recipesS;
     std::string encyclopedia_monsterS;
