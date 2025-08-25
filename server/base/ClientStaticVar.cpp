@@ -3,8 +3,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string,Client *> Client::playerByPseudo;
-std::vector<Client *> Client::clientBroadCastList;
+std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> Client::playerByPseudo;
 
 unsigned char Client::protocolReplyProtocolNotSupported[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x02/*return code*/};
 unsigned char Client::protocolReplyServerFull[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x03/*return code*/};
@@ -25,7 +24,7 @@ unsigned char Client::protocolReplyCompresssionZstandard[]={0x7F/*reply server t
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 unsigned char Client::loginIsWrongBuffer[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x00/*temp return code*/};
-std::vector<Client *> Client::stat_client_list;
+//std::vector<Client *> Client::stat_client_list;
 unsigned char Client::private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 #endif
 
@@ -63,8 +62,8 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
 
 std::regex Client::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 
-std::unordered_map<uint32_t,Client *> Client::playerById_db;
-std::unordered_map<ZONE_TYPE,std::vector<Client *> > Client::captureCity;
+std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> Client::playerById_db;
+std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > Client::captureCity;
 std::unordered_map<ZONE_TYPE,CaptureCityValidated> Client::captureCityValidatedList;
 std::unordered_map<uint32_t,uint64_t> Client::characterCreationDateList;
 std::unordered_map<uint32_t,Clan *> Client::clanList;

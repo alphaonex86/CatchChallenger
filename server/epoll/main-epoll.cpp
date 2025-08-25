@@ -671,7 +671,11 @@ if(c->getPlayerId()>0)
                         {
                             int *socketStringSize=nullptr;
                             char **socketString=nullptr;
-                            void *client;
+
+                            search stat(ClientStat::Free) into std::vector<Client> Client::clientBroadCastList;
+                            and change ClientStat::Free
+                                    set index_connected_player
+
                             switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
                             {
                                 case MapVisibilityAlgorithmSelection_Simple:

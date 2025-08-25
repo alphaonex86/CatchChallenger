@@ -643,10 +643,10 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::vector<CharacterEntry> characterEntryList;
 
             {
-                std::ifstream in_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                 if(!in_file.good() || !in_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file " << "database/accounts/" << account_id << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file " << "database/accounts/" << account_id_db << " (abort)" << std::endl;
                     abort();
                     return;
                 }
@@ -665,7 +665,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                std::ofstream out_file("database/accounts/"+std::to_string(account_id), std::ifstream::binary);
+                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -721,13 +721,13 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         playerForProfile.warehouse_cash=0;*/
 
         //the internal profile
-        map=(CommonMap *)serverProfileInternal.map;
+        mapIndex=serverProfileInternal.mapIndex;
         last_direction=(Direction)serverProfileInternal.orientation;
         x=serverProfileInternal.x;
         y=serverProfileInternal.y;
 
         PlayerOnMap temp;
-        temp.map=(CommonMap *)serverProfileInternal.map;
+        temp.mapIndex=serverProfileInternal.mapIndex;
         temp.orientation=serverProfileInternal.orientation;
         temp.x=serverProfileInternal.x;
         temp.y=serverProfileInternal.y;
@@ -803,7 +803,6 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 m.level=monster.level;
                 m.monster=monster.id;
                 m.remaining_xp=0;
-                m.sp=0;
                 m.skills=CommonFightEngine::generateWildSkill(monsterDatapack,monster.level);
                 #ifdef CATCHCHALLENGER_DEBUG_FIGHT
                 {
@@ -851,20 +850,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         if(public_and_private_informations.encyclopedia_item!=nullptr)
             std::cerr << "strange public_and_private_informations.encyclopedia_item!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
         public_and_private_informations.encyclopedia_item=nullptr;
-        if(public_and_private_informations.bot_already_beaten!=nullptr)
-            std::cerr << "strange public_and_private_informations.bot_already_beaten!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
-        public_and_private_informations.bot_already_beaten=nullptr;
 
         hps::to_stream(*this, out_file);
         out_file.close();
 
         //reset all the variables
-        map=nullptr;
+        mapIndex=65535;
         last_direction=Direction_look_at_bottom;
         x=0;
         y=0;
         PlayerOnMap tempEmpty;
-        tempEmpty.map=nullptr;
+        tempEmpty.mapIndex=65535;
         tempEmpty.orientation=Orientation_bottom;
         tempEmpty.x=0;
         tempEmpty.y=0;

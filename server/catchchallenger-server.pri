@@ -1,5 +1,6 @@
 SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
+    $$PWD/base/MapManagement/ClientWithMap.cpp \
     $$PWD/base/PlayerUpdaterBase.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer/BaseServer.cpp \
@@ -54,7 +55,6 @@ SOURCES += \
     $$PWD/base/MapManagement/ClientMapManagement.cpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.cpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_Simple_StoreOnSender.cpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.cpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.cpp \

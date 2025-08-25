@@ -1,6 +1,6 @@
-#include "Client.hpp"
-#include "GlobalServerData.hpp"
-#include "DictionaryServer.hpp"
+#include "../Client.hpp"
+#include "../GlobalServerData.hpp"
+#include "../DictionaryServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
@@ -159,7 +159,7 @@ void Client::characterIsRightFinalStep()
             abort();
         }
         #endif
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index),character_id);
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index),character_id_db);
         index++;
     }
     index=0;
@@ -175,7 +175,7 @@ void Client::characterIsRightFinalStep()
             abort();
         }
         #endif
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index),character_id);
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index),character_id_db);
         index++;
     }
 
@@ -506,12 +506,12 @@ void Client::characterIsRightFinalStep()
         uint8_t outputSize;
         if(GlobalServerData::serverSettings.max_players<=255)
         {
-            ProtocolParsingBase::tempBigBufferForOutput[0x01]=static_cast<uint8_t>(connected_players);
+            ProtocolParsingBase::tempBigBufferForOutput[0x01]=static_cast<uint8_t>(last_sended_connected_players);
             outputSize=2;
         }
         else
         {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x01)=htole16(connected_players);
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+0x01)=htole16(last_sended_connected_players);
             outputSize=3;
         }
         //can't use receive_instant_player_number() due this->connected_players==connected_players

@@ -18,6 +18,9 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
 {
     if(!GlobalServerData::serverSettings.mapVisibility.simple.enable)
         return;
+    //if display 0 or 1 player mean just display them self
+    if(!GlobalServerData::serverSettings.mapVisibility.simple.max<2)
+        return;
     if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==nullptr)
         return;
     unsigned int index=0;
