@@ -104,8 +104,8 @@ void Client::setToDefault()
     stat=ClientStat::Free;
     lastdaillygift=0;
     pingInProgress=0;
-    index_on_map=255;
-    index_connected_player=65535;
+    index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    index_connected_player=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     account_id_db=0;
     character_id_db=0;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -149,7 +149,7 @@ void Client::setToDefault()
     last_sended_connected_players=0;
     stopIt=false;
     profileIndex=0;
-    otherPlayerBattle=65535;
+    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     battleIsValidated=false;
     mCurrentSkillId=0;
     mHaveCurrentSkill=false;
@@ -159,7 +159,7 @@ void Client::setToDefault()
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isInCityCapture=false;
     #endif
-    otherPlayerTrade=65535;
+    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     tradeIsValidated=false;
     clan=NULL;
     #ifdef EPOLLCATCHCHALLENGERSERVER

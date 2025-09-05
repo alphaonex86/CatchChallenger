@@ -14,7 +14,9 @@ MapServer::MapServer() :
     localChatDropTotalCache(0),
     localChatDropNewValue(0),
     id_db(0),
-    zone(65535)
+    zone(65535),
+    map_clients_id(nullptr),
+    map_removed_index(nullptr)
 {
     border.bottom.x_offset=0;
     border.bottom.mapIndex=65535;

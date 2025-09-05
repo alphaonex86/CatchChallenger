@@ -41,8 +41,24 @@ public:
     void check6B(const char * const data,const unsigned int size);
     #endif
 
-    //at last to improve the other variable cache
-    std::vector<Client *> clientsForLocalBroadcast;//frequent remove/insert due to map change
+private:
+    /* clients list on map
+    can be 1000 player but only 10 visible
+    16Bits if max connected player is >=255 else 8Bits
+    client know their map index, then O(1) remove */
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_clients_id;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_removed_index;
+
+public:
+#error to write
+    //return index into map list
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insertOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global);
+    void removeOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global);
+
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED map_clients_list_size() const;
+    bool map_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
+    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &map_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+public:
     std::unordered_map<std::pair<uint8_t,uint8_t>,Orientation,pairhash> rescue;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_map<std::pair<uint8_t,uint8_t> is better
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_set<std::pair<uint8_t,uint8_t> is better
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> zoneCapture;//ZONE_TYPE removed, will use the zone of current map (prevent error and resolv zone to id), 5% of the map

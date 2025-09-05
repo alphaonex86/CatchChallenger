@@ -98,7 +98,7 @@ public:
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
-    static std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;
+    static std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEpoll.hpp or QtClientWithMap
     static std::unordered_map<uint32_t,Clan *> clanList;
 
     static bool timeRangeEventNew;
@@ -213,7 +213,7 @@ protected:
         uint32_t index;
     };
     uint8_t pingInProgress;
-    SIMPLIFIED_PLAYER_ID_FOR_MAP index_on_map;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_on_map;//can have 1000 connected player on a map where visibility is 10
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_connected_player;
 private:
     //-------------------
@@ -303,7 +303,7 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;
+    static std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;//whwrew used?
     static std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
@@ -786,6 +786,14 @@ protected:
     virtual void teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
     virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
     virtual void extraStop() = 0;
+
+/* access to glocal/map client list
+see ClientWithMapEpoll.hpp or QtClientWithMap */
+protected:
+    #error to write
+    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_size() const = 0;
+    virtual bool global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
+    virtual Client &global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid
 };
 }
 
