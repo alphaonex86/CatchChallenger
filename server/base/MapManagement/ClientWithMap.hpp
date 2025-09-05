@@ -20,7 +20,7 @@ public:
 
     /* static allocation, with holes, see doc/algo/visibility/constant-time-player-visibility.png
      * can add carbage collector to not search free holes
-     IMPLEMENT INTO HIGHTER CLASS, like vector<Epoll> */
+     IMPLEMENT INTO HIGHTER CLASS, like vector<Epoll> ClientWithMapEpoll.hpp or QtClientWithMap */
 protected:
     // WARNING, need maintain same index include if one player is removed, then old index is an hole ClientStat::stat==Free
     virtual void clients_insert() = 0;
