@@ -18,6 +18,7 @@ SOURCES += \
     $$PWD/QFakeSocket.cpp \
     $$PWD/QSslServer.cpp \
     $$PWD/QtClient.cpp \
+    $$PWD/QtClientList.cpp \
     $$PWD/QtClientMapManagement.cpp \
     $$PWD/timer/QtPlayerUpdater.cpp \
     $$PWD/timer/QtTimeRangeEventScanBase.cpp \

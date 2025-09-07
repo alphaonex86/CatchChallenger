@@ -261,15 +261,6 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
 {
     const uint8_t &event_value=GlobalServerData::serverPrivateVariables.events.at(event);
     const auto &now = sFrom1970();
-    std::vector<Client *> playerList;
-    playerList.reserve(playerByPseudo.size());
-    auto i=playerByPseudo.begin();
-    while(i!=playerByPseudo.cend())
-    {
-        i->second->addEventInQueue(event,event_value,now);
-        playerList.push_back(i->second);
-        ++i;
-    }
 
     //send the network reply
     ProtocolParsingBase::tempBigBufferForOutput[0x00]=0xE2;
@@ -277,9 +268,14 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     ProtocolParsingBase::tempBigBufferForOutput[0x03]=new_value;
 
     unsigned int index=0;
-    while(index<playerList.size())
+    while(indexglobal_clients_list_size())
     {
-        playerList.at(index)->sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);
+        if(global_clients_list_isValid(index))
+        {
+            Client &c=global_clients_list_at(index);
+            c.sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);
+            c.addEventInQueue(event,event_value,now);
+        }
         index++;
     }
     GlobalServerData::serverPrivateVariables.events[event]=new_value;

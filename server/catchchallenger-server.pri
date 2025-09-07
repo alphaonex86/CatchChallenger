@@ -35,6 +35,7 @@ SOURCES += \
     $$PWD/base/ClientEvents/LocalClientHandlerTrade.cpp \
     $$PWD/base/ClientLocalBroadcast.cpp \
     $$PWD/base/Client.cpp \
+    $$PWD/base/ClientList.cpp \
     $$PWD/base/ClientStaticVar.cpp \
     $$PWD/base/ClientLoad/ClientHeavyLoad.cpp \
     $$PWD/base/ClientLoad/ClientHeavyLoadLogin.cpp \
