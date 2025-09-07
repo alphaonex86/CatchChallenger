@@ -50,10 +50,9 @@ private:
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_removed_index;
 
 public:
-#error to write
     //return index into map list
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insertOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global);
-    void removeOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global);
+    void removeOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_map);
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED map_clients_list_size() const;
     bool map_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;

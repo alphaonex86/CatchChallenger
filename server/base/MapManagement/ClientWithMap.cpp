@@ -97,17 +97,7 @@ void ClientWithMap::loadOnTheMap()
     }
     #endif
     Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex];
-    if(map.removed_index.empty())
-    {
-        index_on_map=map.clients.size();
-        map.clients.push_back(index_connected_player);
-    }
-    else
-    {
-        index_on_map=map.removed_index.back();
-        map.removed_index.pop_back();
-        map.clients[index_on_map]=index_connected_player;
-    }
+    index_on_map=map.insertOnMap(index_connected_player);
 }
 
 void ClientWithMap::unloadFromTheMap()
@@ -120,10 +110,8 @@ void ClientWithMap::unloadFromTheMap()
     }
     #endif
     Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex];
-    map.clients[index_on_map]=255;
-    map.removed_index.push_back(index_on_map);
-    mapVisiblity_unloadFromTheMap();
-    index_on_map=255;
+    map.removeOnMap(index_on_map);
+    index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
 }
 
 //mapIndex slots, transmited by the current ClientNetworkRead

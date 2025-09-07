@@ -25,6 +25,9 @@ QtServerPrivateVariables *QtServer::qtServerPrivateVariables=nullptr;//point to 
 
 QtServer::QtServer()
 {
+    if(ClientList::list==nullptr)
+        ClientList::list=new QtClientList();
+    
     if(QtServer::qtServerPrivateVariables==nullptr)
         QtServer::qtServerPrivateVariables=new QtServerPrivateVariables();
     qRegisterMetaType<std::string>("std::string");

@@ -459,6 +459,7 @@ int main(int argc, char *argv[])
     #error Define what do here
     #endif
 
+    ClientList::list=new EpollClientList();
     GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEpoll();
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
