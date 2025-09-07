@@ -34,6 +34,66 @@ MapServer::MapServer() :
     memset(localChatDrop,0x00,CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE);
 }
 
+//return index into map list
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global)
+{
+    if(!map_removed_index.empty())
+    {
+        SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=map_removed_index.back();
+        map_removed_index.pop_back();
+        map_clients_id[b]=index_global;
+        return b;
+    }
+    else
+    {
+        SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=map_clients_id.size();
+        map_clients_id.resize(b+1);
+        map_clients_id[b]=index_global;
+        return b;
+    }
+}
+
+void MapServer::removeOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_map)
+{
+    map_clients_id[index_map]=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    map_removed_index.push_back(index_map);
+}
+
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::map_clients_list_size() const
+{
+    return map_clients_id.size();
+}
+
+bool MapServer::map_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index>=map_clients_id.size())
+    {
+        std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << map_clients_id.size() << std::endl;
+        abort();
+    }
+    #endif
+    return map_clients_id.at(index)!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+}
+
+//abort if index is not valid
+const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &MapServer::map_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index>=map_clients_id.size())
+    {
+        std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << map_clients_id.size() << std::endl;
+        abort();
+    }
+    if(map_clients_id.at(index)==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
+        abort();
+    }
+    #endif
+    return map_clients_id.at(index);
+}
+
 #ifdef CATCHCHALLENGER_EXTRA_CHECK
 void MapServer::check6B(const char * const data,const unsigned int size)
 {

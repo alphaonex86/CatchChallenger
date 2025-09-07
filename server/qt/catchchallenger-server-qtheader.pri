@@ -9,6 +9,7 @@ HEADERS += \
     $$PWD/QFakeSocket.hpp \
     $$PWD/QSslServer.hpp \
     $$PWD/QtClient.hpp \
+    $$PWD/QtClientList.hpp \
     $$PWD/QtClientMapManagement.hpp \
     $$PWD/timer/QtPlayerUpdater.hpp \
     $$PWD/QtServerStructures.hpp \

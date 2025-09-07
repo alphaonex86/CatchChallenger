@@ -14,6 +14,7 @@ HEADERS += \
     $$PWD/base/LocalClientHandler/LocalClientHandlerWithoutSender.hpp \
     $$PWD/base/ServerStructures.hpp \
     $$PWD/base/Client.hpp \
+    $$PWD/base/ClientList.hpp \
     $$PWD/base/ClientNetworkReadWithoutSender.hpp \
     $$PWD/base/BroadCastWithoutSender.hpp \
     $$PWD/base/MapServer.hpp \
