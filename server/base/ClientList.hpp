@@ -10,16 +10,30 @@ public:
     see ClientWithMapEpoll.hpp or QtClientWithMap
     see BaseServerEpoll.hpp and QtServer.hpp */
     ClientList();
-    virtual ClientList();
+    virtual ~ClientList();
     static ClientList *list;
 public:
     //return index into map list
-    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert() = 0;
-    virtual void remove(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global) = 0;
+    virtual void remove(const Client &client);
 
     virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_size() const = 0;
     virtual bool global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
     virtual Client &global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_bypseudo(const std::string &pseudo);//return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX if not found
+
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert_characterSelected(const std::string &pseudo);
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert_StatusWatcher();
+protected:
+    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert() = 0;
+private:
+    //std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;//where used?
+    std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEpoll.hpp or QtClientWithMap
+    std::unordered_set<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clientForStatus;//to directly send status update to this specific client (without search into whole list)
+    #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
+    static std::vector<SIMPLIFIED_PLAYER_ID_FOR_MAP> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
+    #else
+    #error todo the static part
+    #endif
 };
 }
 

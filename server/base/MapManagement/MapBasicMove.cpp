@@ -28,9 +28,9 @@ Direction MapBasicMove::getLastDirection() const
     return last_direction;
 }
 
-CommonMap* MapBasicMove::getMap() const
+CATCHCHALLENGER_TYPE_MAPID MapBasicMove::getMapId() const
 {
-    return map;
+    return mapIndex;
 }
 
 COORD_TYPE MapBasicMove::getX() const

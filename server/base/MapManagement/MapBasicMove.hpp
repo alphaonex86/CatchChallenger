@@ -22,7 +22,7 @@ public:
     Direction last_direction;
 
     Direction getLastDirection() const;
-    CommonMap* getMap() const;
+    CATCHCHALLENGER_TYPE_MAPID getMapId() const;
     COORD_TYPE getX() const;
     COORD_TYPE getY() const;
 public:

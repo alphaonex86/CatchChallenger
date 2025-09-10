@@ -406,10 +406,10 @@ struct MarketItem
 
 struct Clan
 {
-    uint16_t captureCityInProgress;//65535 no capture in progress
-    uint16_t capturedCity;//65535 no city captured
+    ZONE_TYPE captureCityInProgress;//ZONE_TYPE_MAX no capture in progress
+    ZONE_TYPE capturedCity;//ZONE_TYPE_MAX no city captured
     uint32_t clanId;
-    std::vector<Client *> players;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> players;
 
     //the db info
     std::string name;
@@ -418,8 +418,8 @@ struct Clan
 
 struct CaptureCityValidated
 {
-    std::vector<Client *> players;
-    std::vector<Client *> playersInFight;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> players;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playersInFight;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > bots;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > botsInFight;
     std::unordered_map<uint32_t,uint16_t> clanSize;

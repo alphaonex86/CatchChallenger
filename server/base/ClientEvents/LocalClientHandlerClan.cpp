@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include "../ClientList.hpp"
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_DB_PREPAREDSTATEMENT
@@ -137,13 +138,13 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            if(clan->captureCityInProgress!=65535)
+            if(clan->captureCityInProgress!=ZONE_TYPE_MAX)
             {
                 errorOutput("You can't disolv the clan if is in city capture");
                 return;
             }
             #endif
-            const std::vector<Client *> copyOf_players=clanList.at(public_and_private_informations.clan)->players;
+            const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> copyOf_players=clanList.at(public_and_private_informations.clan)->players;
             //send the network reply
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -217,27 +218,34 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 errorOutput("You are not a leader to invite into the clan");
                 return;
             }
-            bool haveAClan=true;
-            if(playerByPseudo.find(text)!=playerByPseudo.cend())
-                if(!playerByPseudo.at(text)->haveAClan())
-                    haveAClan=false;
-            bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
-            //send the network reply
-            removeFromQueryReceived(query_id);
+
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
-            if(isFound && !haveAClan)
+
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
+            if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
-                if(playerByPseudo.at(text)->inviteToClan(public_and_private_informations.clan))
-                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+                if(ClientList::list->global_clients_list_isValid(indexConnected))
+                {
+                    Client &otherClient=ClientList::list->global_clients_list_at(indexConnected);
+                    if(!otherClient.haveAClan())
+                    {
+                        if(otherClient.inviteToClan(public_and_private_informations.clan))
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+                        else
+                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                    }
+                    else
+                    {
+                        normalOutput("Clan invite: Player "+text+" is already into a clan");
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                    }
+                }
                 else
                     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
             else
             {
-                if(!isFound)
-                    normalOutput("Clan invite: Player "+text+" not found, is connected?");
-                if(haveAClan)
-                    normalOutput("Clan invite: Player "+text+" is already into a clan");
+                normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
             posOutput+=1;
@@ -262,40 +270,49 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 errorOutput("You can't eject your self");
                 return;
             }
-            bool isIntoTheClan=false;
-            if(playerByPseudo.find(text)!=playerByPseudo.cend())
-                if(playerByPseudo.at(text)->getClanId()==public_and_private_informations.clan)
-                    isIntoTheClan=true;
-            bool isFound=playerByPseudo.find(text)!=playerByPseudo.cend();
+
             //send the network reply
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
-            if(isFound && isIntoTheClan)
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
+            if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            {
+                if(ClientList::list->global_clients_list_isValid(indexConnected))
+                {
+                    Client &otherClient=ClientList::list->global_clients_list_at(indexConnected);
+                    if(otherClient.haveAClan() && otherClient.getClanId()==public_and_private_informations.clan)
+                    {
+
+                        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+                        #error check if same clan too
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
+                        #elif CATCHCHALLENGER_DB_BLACKHOLE
+                        #elif CATCHCHALLENGER_DB_FILE
+                        #else
+                        #error Define what do here
+                        #endif
+
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
+
+                        otherClient.ejectToClan();
+                    }
+                    else
+                    {
+                        normalOutput("Clan invite: Player "+text+" is not into your clan");
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+                    }
+                }
+                else
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+            }
             else
             {
-                if(!isFound)
-                    normalOutput("Clan invite: Player "+text+" not found, is connected?");
-                if(!isIntoTheClan)
-                    normalOutput("Clan invite: Player "+text+" is not into your clan");
+                normalOutput("Clan invite: Player "+text+" not found, is connected?");
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
             }
             posOutput+=1;
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-
-            if(!isFound)
-            {
-                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
-                #elif CATCHCHALLENGER_DB_BLACKHOLE
-                #elif CATCHCHALLENGER_DB_FILE
-                #else
-                #error Define what do here
-                #endif
-                return;
-            }
-            else if(isIntoTheClan)
-                playerByPseudo[text]->ejectToClan();
         }
         break;
         default:
