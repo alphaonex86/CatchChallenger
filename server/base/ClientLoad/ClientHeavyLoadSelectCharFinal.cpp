@@ -19,6 +19,7 @@ void Client::characterIsRightFinalStep()
     #endif
 
     stat=ClientStat::CharacterSelected;
+    ClientList::list->characterSelected(public_and_private_informations.public_informations.pseudo,index_connected_player);
     Client::timeRangeEventNew=true;
     checkLoose(false);
 

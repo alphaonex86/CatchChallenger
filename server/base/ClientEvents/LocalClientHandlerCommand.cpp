@@ -1,6 +1,7 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../ClientList.hpp"
 
 using namespace CatchChallenger;
 
@@ -56,7 +57,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 //return;
             }
         }
-        if(playerByPseudo.find(arguments.at(1))==playerByPseudo.cend())
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
+        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
             return;
@@ -68,8 +70,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(objectId)+
                      " in quantity: "+
                      std::to_string(quantity));
-        Client * const client=playerByPseudo.at(arguments.at(1));
-        client->addObjectAndSend(objectId,quantity);
+        if(ClientList::list->global_clients_list_isValid(indexConnected))
+        {
+            Client &client=ClientList::list->global_clients_list_at(indexConnected);
+            client.addObjectAndSend(objectId,quantity);
+        }
+        else
+            receiveSystemText("player is not connected/bug, usage: /give objectId player [quantity=1]");
     }
     else if(command=="setevent")
     {
@@ -149,16 +156,23 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("quantity is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        if(playerByPseudo.find(arguments.at(1))==playerByPseudo.end())
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
+        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
-        Client * const client=playerByPseudo.at(arguments.at(1));
-        client->sendRemoveObject(
-                    objectId,client->
-                    removeObject(objectId,quantity));
+
+        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        {
+            receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
+            return;
+        }
+
+        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+
+        client.sendRemoveObject(objectId,client.removeObject(objectId,quantity));
     }
     else if(command=="tp")
     {
@@ -171,20 +185,35 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
             }
-            if(playerByPseudo.find(arguments.front())==playerByPseudo.end())
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnectedFront=ClientList::list->global_clients_list_bypseudo(arguments.front());
+            if(indexConnectedFront==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 receiveSystemText(arguments.front()+" is not connected, usage: /tp player1 to player2");
                 return;
             }
-            if(playerByPseudo.find(arguments.back())==playerByPseudo.end())
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnectedBack=ClientList::list->global_clients_list_bypseudo(arguments.back());
+            if(indexConnectedBack==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 receiveSystemText(arguments.back()+" is not connected, usage: /tp player1 to player2");
                 return;
             }
-            Client * const otherPlayerTo=playerByPseudo.at(arguments.back());
-            Client * fromPlayer=playerByPseudo.at(arguments.front());
-            fromPlayer->receiveTeleportTo(otherPlayerTo->mapIndex,otherPlayerTo->x,otherPlayerTo->y,
-                             MoveOnTheMap::directionToOrientation(otherPlayerTo->getLastDirection()));
+
+            if(!ClientList::list->global_clients_list_isValid(indexConnectedFront))
+            {
+                receiveSystemText("player front is not connected or bug");
+                return;
+            }
+            if(!ClientList::list->global_clients_list_isValid(indexConnectedBack))
+            {
+                receiveSystemText("player back is not connected or bug");
+                return;
+            }
+
+            Client &clientFront=ClientList::list->global_clients_list_at(indexConnectedFront);
+            Client &clientBack=ClientList::list->global_clients_list_at(indexConnectedBack);
+
+            clientFront.receiveTeleportTo(clientBack.mapIndex,clientBack.x,clientBack.y,
+                             MoveOnTheMap::directionToOrientation(clientBack.getLastDirection()));
         }
         else
         {
@@ -252,11 +281,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("no player given, syntaxe: /trade player");
             return;
         }
-        if(playerByPseudo.find(extraText)==playerByPseudo.end())
-        {
-            receiveSystemText(extraText+" is not connected");
-            return;
-        }
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
             receiveSystemText("You can't trade with yourself");
@@ -272,13 +298,19 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("You are already in battle");
             return;
         }
-        Client * const client=playerByPseudo.at(extraText);
-        if(client->getInTrade())
+
+        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        {
+            receiveSystemText("player is not connected/bug");
+            return;
+        }
+        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+        if(client.getInTrade())
         {
             receiveSystemText(extraText+" is already in trade");
             return;
         }
-        if(client->isInBattle())
+        if(client.isInBattle())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
@@ -291,8 +323,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Trade requested");
         #endif
-        otherPlayerTrade=client;
-        otherPlayerTrade->registerTradeRequest(this);
+        otherPlayerTrade=client.getIndexConnect();
+        client.registerTradeRequest(*this);
     }
     else if(command=="battle")
     {
@@ -301,7 +333,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("no player given, syntaxe: /battle player");
             return;
         }
-        if(playerByPseudo.find(extraText)==playerByPseudo.end())
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText(extraText+" is not connected");
             return;
@@ -321,13 +354,20 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("you are already in trade");
             return;
         }
-        Client * const client=playerByPseudo.at(extraText);
-        if(client->isInBattle())
+
+        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        {
+            receiveSystemText("player is not connected/bug");
+            return;
+        }
+        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+
+        if(client.isInBattle())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
         }
-        if(client->getInTrade())
+        if(client.getInTrade())
         {
             receiveSystemText(extraText+" is already in battle");
             return;
@@ -337,7 +377,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText(extraText+" is not in range");
             return;
         }
-        if(!client->getAbleToFight())
+        if(!client.getAbleToFight())
         {
             receiveSystemText("The other player can't fight");
             return;
@@ -347,7 +387,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("You can't fight");
             return;
         }
-        if(client->isInFight())
+        if(client.isInFight())
         {
             receiveSystemText("The other player is in fight");
             return;
@@ -367,6 +407,6 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Battle requested");
         #endif
-        client->registerBattleRequest(this);
+        client.registerBattleRequest(*this);
     }
 }

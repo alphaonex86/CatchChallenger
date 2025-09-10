@@ -21,6 +21,7 @@
 #define CLAN_ID_TYPE uint32_t
 #define SPEED_TYPE uint8_t
 #define ZONE_TYPE uint8_t
+#define ZONE_TYPE_MAX 255
 #define SHOP_TYPE uint8_t
 #define FACTORY_TYPE uint16_t
 

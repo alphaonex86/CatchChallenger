@@ -3,6 +3,7 @@
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../MapManagement/ClientWithMap.hpp"
+#include "../ClientList.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -180,14 +181,12 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     generateRandomNumber();
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(index_connected_player==65535)
+    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "index_connected_player is not set (abort)" << std::endl;
         abort();
     }
     #endif
-    playerByPseudo[public_and_private_informations.public_informations.pseudo]=index_connected_player;
-    playerById_db[character_id_db]=index_connected_player;
     if(public_and_private_informations.clan>0)
         sendClanInfo();
 
@@ -207,6 +206,13 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 
 void Client::createMemoryClan()
 {
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        std::cout << "not connected player, abort" << std::endl;
+        abort();
+    }
+    #endif
     if(clanList.find(public_and_private_informations.clan)==clanList.end())
     {
         clan=new Clan;
@@ -220,7 +226,7 @@ void Client::createMemoryClan()
     }
     else
         clan=clanList.at(public_and_private_informations.clan);
-    clan->players.push_back(this);
+    clan->players.push_back(index_connected_player);
 }
 
 void Client::addCash(const uint64_t &cash, const bool &forceSave)
@@ -268,11 +274,11 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     ProtocolParsingBase::tempBigBufferForOutput[0x03]=new_value;
 
     unsigned int index=0;
-    while(indexglobal_clients_list_size())
+    while(index<ClientList::list->global_clients_list_size())
     {
-        if(global_clients_list_isValid(index))
+        if(ClientList::list->global_clients_list_isValid(index))
         {
-            Client &c=global_clients_list_at(index);
+            Client &c=ClientList::list->global_clients_list_at(index);
             c.sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);
             c.addEventInQueue(event,event_value,now);
         }
@@ -293,7 +299,7 @@ void Client::addEventInQueue(const uint8_t &event, const uint8_t &event_value, c
 
 void Client::removeFirstEventInQueue()
 {
-    if(oldEvents.oldEventList.size()==00)
+    if(oldEvents.oldEventList.size()==0)
     {
         errorOutput("Not event in queue to remove");
         return;

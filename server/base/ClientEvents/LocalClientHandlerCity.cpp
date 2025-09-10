@@ -12,7 +12,7 @@ bool Client::captureCityInProgress()
 {
     if(clan==NULL)
         return false;
-    if(clan->captureCityInProgress==65535)
+    if(clan->captureCityInProgress==ZONE_TYPE_MAX)
         return false;
     //search in capture not validated
     if(captureCity.find(clan->captureCityInProgress)!=captureCity.end())
@@ -71,7 +71,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         const ZONE_TYPE &zoneId=new_map->zone;
         if(!public_and_private_informations.clan_leader)
         {
-            if(clan->captureCityInProgress==65535)
+            if(clan->captureCityInProgress==ZONE_TYPE_MAX)
             {
                 //send the network message
                 uint32_t posOutput=0;
@@ -88,7 +88,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
         }
         else
         {
-            if(clan->captureCityInProgress==65535)
+            if(clan->captureCityInProgress==ZONE_TYPE_MAX)
                 clan->captureCityInProgress=zoneId;
         }
         if(clan->captureCityInProgress!=zoneId)
@@ -124,7 +124,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
     }
     else
     {
-        if(clan->captureCityInProgress==65535)
+        if(clan->captureCityInProgress==ZONE_TYPE_MAX)
         {
             errorOutput("your clan is not in capture city");
             return;
@@ -142,7 +142,7 @@ void Client::leaveTheCityCapture()
 {
     if(clan==NULL)
         return;
-    if(clan->captureCityInProgress==65535)
+    if(clan->captureCityInProgress==ZONE_TYPE_MAX)
         return;
     if(vectorremoveOne(captureCity[clan->captureCityInProgress],this))
     {
@@ -150,7 +150,7 @@ void Client::leaveTheCityCapture()
         if(captureCity.at(clan->captureCityInProgress).size()==0)
         {
             captureCity.erase(clan->captureCityInProgress);
-            clan->captureCityInProgress=65535;
+            clan->captureCityInProgress=ZONE_TYPE_MAX;
         }
         else
         {
@@ -163,7 +163,7 @@ void Client::leaveTheCityCapture()
                 index++;
             }
             if(index==captureCity.at(clan->captureCityInProgress).size())
-                clan->captureCityInProgress=65535;
+                clan->captureCityInProgress=ZONE_TYPE_MAX;
         }
     }
     setInCityCapture(false);
@@ -408,7 +408,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
 {
     if(clan!=NULL)
     {
-        if(clan->captureCityInProgress!=65535 && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
+        if(clan->captureCityInProgress!=ZONE_TYPE_MAX && captureCityValidatedList.find(clan->captureCityInProgress)!=captureCityValidatedList.cend())
         {
             CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan->captureCityInProgress];
             //check if this player is into the capture city with the other player of the team
@@ -481,7 +481,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 if(captureCityValidated.bots.size()==0 && captureCityValidated.botsInFight.size()==0 && captureCityValidated.playersInFight.size()==0)
                 {
                     if(clan->capturedCity==clan->captureCityInProgress)
-                        clan->captureCityInProgress=65535;
+                        clan->captureCityInProgress=ZONE_TYPE_MAX;
                     else
                     {
                         if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan->capturedCity)
@@ -530,7 +530,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan->clanId]=clan->captureCityInProgress;
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=clan->clanId;
                         clan->capturedCity=clan->captureCityInProgress;
-                        clan->captureCityInProgress=65535;
+                        clan->captureCityInProgress=ZONE_TYPE_MAX;
                         unsigned int index=0;
                         while(index<captureCityValidated.players.size())
                         {
