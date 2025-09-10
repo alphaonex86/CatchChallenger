@@ -213,6 +213,11 @@ Client::~Client()
     }
 }
 
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getIndexConnect()
+{
+    return index_connected_player;
+}
+
 /// \warning called in one other thread!!!
 bool Client::disconnectClient()
 {
@@ -749,6 +754,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         stat_client=true;
         //flags|=0x08;->just listen
 
+        ClientList::list->addStatusWatcher(index_connected_player);
         stat_client_list.push_back(this);
 
         stat=ClientStat::LoggedStatClient;

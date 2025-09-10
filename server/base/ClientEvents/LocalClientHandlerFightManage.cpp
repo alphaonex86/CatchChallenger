@@ -93,11 +93,9 @@ void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHA
     errorOutput("no fight with id "+std::to_string(botId)+" in this direction");
 }
 
-bool Client::otherPlayerIsInRange(Client * otherPlayer)
+bool Client::otherPlayerIsInRange(Client &otherPlayer)
 {
-    if(getMap()==NULL)
-        return false;
-    return getMap()==otherPlayer->getMap();
+    return getMapId()==otherPlayer.getMapId();
 }
 
 void Client::moveMonster(const bool &up,const uint8_t &number)

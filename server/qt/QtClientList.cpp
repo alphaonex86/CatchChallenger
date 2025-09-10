@@ -19,10 +19,11 @@ QtClientList MapServer::insert()
     }
 }
 
-void QtClientList::remove(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global)
+void QtClientList::remove(const Client &client)
 {
     clients[index_map]=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     clients_removed_index.push_back(index_map);
+    ClientList::remove(index_global);
 }
 
 SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED QtClientList::global_clients_list_size() const

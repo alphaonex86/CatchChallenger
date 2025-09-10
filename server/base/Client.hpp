@@ -60,6 +60,7 @@ public:
     explicit Client();
     virtual void setToDefault();
     virtual ~Client();
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getIndexConnect();
     //to get some info
     virtual bool isValid() = 0;
     std::string getPseudo() const;
@@ -98,7 +99,6 @@ public:
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
-    static std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerByPseudo;//see ClientWithMapEpoll.hpp or QtClientWithMap
     static std::unordered_map<uint32_t,Clan *> clanList;
 
     static bool timeRangeEventNew;
@@ -303,7 +303,6 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;//whwrew used?
     static std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;

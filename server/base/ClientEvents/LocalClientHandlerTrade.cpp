@@ -12,7 +12,7 @@ bool Client::getInTrade() const
     return (otherPlayerTrade!=NULL);
 }
 
-void Client::registerTradeRequest(Client * otherPlayerTrade)
+void Client::registerTradeRequest(Client &otherPlayerTrade)
 {
     if(getInTrade())
     {

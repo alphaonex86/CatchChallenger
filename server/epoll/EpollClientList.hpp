@@ -54,13 +54,12 @@ public:
      */
     #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
     static std::vector<ClientWithMapEpoll> clients;//65535 = empty slot
-    static std::vector<SIMPLIFIED_PLAYER_ID_FOR_MAP> clients_removed_index;//garbage collector, reuse slot and only grow memory, never remove vector index and have to move whole back data
     #else
     #error todo the static part
     #endif
 public:
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert();
-    void remove(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global);
+    void remove(const Client &client);
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_size() const;
     bool global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
