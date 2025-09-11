@@ -606,7 +606,7 @@ uint32_t Client::getMonsterId(bool * const ok)
 }
 #endif
 
-uint32_t Client::getClanId(bool * const ok)
+uint32_t Client::getMaxClanId(bool * const ok)
 {
     *ok=true;
     const uint32_t clanId=GlobalServerData::serverPrivateVariables.maxClanId;
