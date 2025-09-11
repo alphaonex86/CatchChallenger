@@ -213,11 +213,13 @@ void Client::createMemoryClan()
         abort();
     }
     #endif
+
     if(clanList.find(public_and_private_informations.clan)==clanList.end())
     {
-        clan=new Clan;
-        clan->cash=0;
-        clan->clanId=public_and_private_informations.clan;
+        Clan clan;
+        clan.cash=0;
+        clan.clanId=public_and_private_informations.clan;
+        clan.connected_players.push_back(index_connected_player);
         clanList[public_and_private_informations.clan]=clan;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(clan->clanId)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
@@ -225,8 +227,7 @@ void Client::createMemoryClan()
         #endif
     }
     else
-        clan=clanList.at(public_and_private_informations.clan);
-    clan->players.push_back(index_connected_player);
+        clanList[public_and_private_informations.clan].connected_players.push_back(index_connected_player);
 }
 
 void Client::addCash(const uint64_t &cash, const bool &forceSave)

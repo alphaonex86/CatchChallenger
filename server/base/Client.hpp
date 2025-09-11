@@ -85,7 +85,7 @@ public:
     #endif
     static void timeRangeEvent(const uint64_t &timestamps);
     uint32_t getPlayerId() const;
-    uint32_t getClanId() const;
+    uint32_t getMaxClanId() const;
     bool haveAClan() const;
 
     bool sendRawBlock(const char * const data,const unsigned int &size);
@@ -99,7 +99,7 @@ public:
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
-    static std::unordered_map<uint32_t,Clan *> clanList;
+    static std::unordered_map<uint32_t,Clan> clanList;
 
     static bool timeRangeEventNew;
     static uint64_t timeRangeEventTimestamps;
@@ -614,7 +614,7 @@ private:
     std::unordered_map<uint16_t,uint32_t> tradeObjects;
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
-    Clan *clan;
+    //Clan *clan;->public_and_private_informations.clan + clanList
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
@@ -633,7 +633,7 @@ private:
     #ifndef CATCHCHALLENGER_DB_FILE
     static uint32_t getMonsterId(bool * const ok);
     #endif
-    static uint32_t getClanId(bool * const ok);
+    static uint32_t getMaxClanId(bool * const ok);
     bool getInTrade() const;
     void registerTradeRequest(Client &otherPlayerTrade);
     bool getIsFreezed() const;
