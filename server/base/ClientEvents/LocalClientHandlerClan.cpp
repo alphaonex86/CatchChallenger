@@ -144,7 +144,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             #endif
-            const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> copyOf_players=clanList.at(public_and_private_informations.clan)->players;
+            const Clan clan=clanList.at(public_and_private_informations.clan);
+            const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
             //send the network reply
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -183,17 +184,17 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             #endif
             {
                 unsigned int index=0;
-                while(index<copyOf_players.size())
+                while(index<temp_connected_players.size())
                 {
-                    if(copyOf_players.at(index)!=nullptr)
+                    if(ClientList::list->global_clients_list_isValid(temp_connected_players.at(index)))
                     {
-                        if(copyOf_players.at(index)==this)
+                        if(temp_connected_players.at(index)==index_connected_player)
                         {
                             public_and_private_informations.clan=0;
                             clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
                         }
                         else
-                            copyOf_players.at(index)->dissolvedClan();
+                            ClientList::list->global_clients_list_at(index).dissolvedClan();
                     }
                     index++;
                 }
@@ -281,7 +282,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 if(ClientList::list->global_clients_list_isValid(indexConnected))
                 {
                     Client &otherClient=ClientList::list->global_clients_list_at(indexConnected);
-                    if(otherClient.haveAClan() && otherClient.getClanId()==public_and_private_informations.clan)
+                    if(otherClient.haveAClan() && otherClient.getMaxClanId()==public_and_private_informations.clan)
                     {
 
                         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -390,7 +391,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     #error Define what do here
     #endif
     bool ok;
-    const uint32_t clanId=getClanId(&ok);
+    const uint32_t clanId=getMaxClanId(&ok);
     if(!ok)
     {
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -401,7 +402,10 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     }
     public_and_private_informations.clan=clanId;
     createMemoryClan();
-    clan->name=text;
+    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+        return;
+    Clan &clan=clanList[public_and_private_informations.clan];
+    clan.name=text;
     public_and_private_informations.clan_leader=true;
     //send the network reply
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1+4);//set the dynamic size
@@ -445,17 +449,18 @@ void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,con
     }
     normalOutput("First client of the clan: "+clanName+", clanId: "+std::to_string(clanId)+" to connect");
     createMemoryClan();
-    clanList[clanId]->name=clanName;
-    clanList[clanId]->cash=cash;
+    clanList[clanId].name=clanName;
+    clanList[clanId].cash=cash;
 }
 
 void Client::sendClanInfo()
 {
     if(public_and_private_informations.clan==0)
         return;
-    if(clan==NULL)
+    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
         return;
-    normalOutput("Send the clan info: "+clan->name+", clanId: "+std::to_string(public_and_private_informations.clan)+", get the info");
+    const Clan &clan=clanList.at(public_and_private_informations.clan);
+    normalOutput("Send the clan info: "+clan.name+", clanId: "+std::to_string(public_and_private_informations.clan)+", get the info");
 
     //send the network message
     uint32_t posOutput=0;
@@ -463,10 +468,10 @@ void Client::sendClanInfo()
     posOutput+=1+4;
 
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clan->name.size());
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(clan.name.size());
         posOutput+=1;
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan->name.data(),clan->name.size());
-        posOutput+=clan->name.size();
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,clan.name.data(),clan.name.size());
+        posOutput+=clan.name.size();
     }
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
     sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -475,7 +480,6 @@ void Client::sendClanInfo()
 void Client::dissolvedClan()
 {
     public_and_private_informations.clan=0;
-    clan=NULL;
 
     //send the network message
     uint32_t posOutput=0;
@@ -492,8 +496,10 @@ bool Client::inviteToClan(const uint32_t &clanId)
 {
     if(inviteToClanList.size()>0)
         return false;
-    if(clan==NULL)
+    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
         return false;
+    const Clan &clan=clanList.at(public_and_private_informations.clan);
+
     inviteToClanList.push_back(clanId);
 
     //send the network message
@@ -504,7 +510,7 @@ bool Client::inviteToClan(const uint32_t &clanId)
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(clanId);
     posOutput+=4;
     {
-        const std::string &text=clan->name;
+        const std::string &text=clan.name;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
@@ -592,7 +598,7 @@ void Client::ejectToClan()
     #endif
 }
 
-uint32_t Client::getClanId() const
+uint32_t Client::getMaxClanId() const
 {
     return public_and_private_informations.clan;
 }

@@ -63,8 +63,8 @@ void Client::clanChangeWithoutDb(const uint32_t &clanId)
 {
     if(clan!=NULL)
     {
-        vectorremoveOne(clan->players,this);
-        if(clan->players.empty())
+        vectorremoveOne(clan->connected_players,this);
+        if(clan->connected_players.empty())
         {
             clanList.erase(public_and_private_informations.clan);
             delete clan;
@@ -78,7 +78,7 @@ void Client::clanChangeWithoutDb(const uint32_t &clanId)
         {
             public_and_private_informations.clan=clanId;
             clan=clanList[clanId];
-            clan->players.push_back(this);
+            clan->connected_players.push_back(this);
         }
         else
             errorOutput("Clan not found for insert");
@@ -207,7 +207,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 normalOutput("[chat] "+public_and_private_informations.public_informations.pseudo+
                              ": To the clan "+clan->name+": "+text
                             );
-            const std::vector<Client *> &playerWithSameClan = clan->players;
+            const std::vector<Client *> &playerWithSameClan = clan->connected_players;
 
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
             posOutput+=1;

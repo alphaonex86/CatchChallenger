@@ -409,7 +409,7 @@ struct Clan
     ZONE_TYPE captureCityInProgress;//ZONE_TYPE_MAX no capture in progress
     ZONE_TYPE capturedCity;//ZONE_TYPE_MAX no city captured
     uint32_t clanId;
-    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> players;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> connected_players;
 
     //the db info
     std::string name;
