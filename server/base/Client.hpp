@@ -65,9 +65,9 @@ public:
     virtual bool isValid() = 0;
     std::string getPseudo() const;
     void savePosition();
-    static bool characterConnected(const uint32_t &characterId);
+    static bool characterConnected_db(const uint32_t &characterId_db);
     bool disconnectClient() override;
-    static void disconnectClientById(const uint32_t &characterId);
+    static void disconnectClientById_db(const uint32_t &characterId_db);
     bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const override;
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getClientFight() const;//65535 if not in fight
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
@@ -115,7 +115,7 @@ public:
     #ifndef EPOLLCATCHCHALLENGERSERVERNOCOMPRESSION
     static unsigned char protocolReplyCompresssionZstandard[7+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
     #endif
-    //static std::vector<Client *> stat_client_list;
+    //static std::vector<Client *> stat_client_list;-> see ClientList.hpp:    std::unordered_set<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clientForStatus;
     static unsigned char private_token_statclient[TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT+TOKEN_SIZE_FOR_CLIENT_AUTH_AT_CONNECT];
 
     static unsigned char *protocolReplyCharacterList;
@@ -148,7 +148,7 @@ public:
     #endif
 protected:
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    bool stat_client;
+    //bool stat_client;-> replace by stat=ClientStat::LoggedStatClient;
     #endif
     //this say if is free slot or not
     enum ClientStat : uint8_t
@@ -218,7 +218,7 @@ protected:
 private:
     //-------------------
     uint32_t account_id_db;//0 if not logged
-    uint32_t character_id_db;
+    uint32_t character_id_db;//0 if not selected
     #ifndef EPOLLCATCHCHALLENGERSERVER
     bool isConnected;
     #endif
@@ -228,7 +228,7 @@ private:
     PlayerOnMap map_entry;
     PlayerOnMap rescue;
     PlayerOnMap unvalidated_rescue;
-    std::unordered_map<uint32_t,std::vector<MonsterDrops> > questsDrop;
+    std::unordered_map<uint8_t/*quest id*/,std::vector<MonsterDrops> > questsDrop;
     uint64_t connectedSince;
     struct OldEvents
     {
@@ -286,7 +286,7 @@ private:
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
     uint64_t botFightCash;
-    std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;//pending fight
+    std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;//pending fight, mapId=65535,botId=255 if empty
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;
     //std::unordered_map<uint32_t/*currentMonster->id*/, std::unordered_map<uint32_t/*skill*/,uint32_t> > deferedEnduranceSync;

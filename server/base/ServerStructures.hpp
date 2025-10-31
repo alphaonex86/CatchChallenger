@@ -388,27 +388,11 @@ struct CityStatus
     uint32_t clan;
 };
 
-struct MarketPlayerMonster
-{
-    PlayerMonster monster;
-    uint32_t player;
-    uint64_t price;
-};
-
-struct MarketItem
-{
-    uint32_t marketObjectUniqueId;
-    uint16_t item;
-    uint32_t quantity;
-    uint32_t player;
-    uint64_t price;
-};
-
 struct Clan
 {
     ZONE_TYPE captureCityInProgress;//ZONE_TYPE_MAX no capture in progress
     ZONE_TYPE capturedCity;//ZONE_TYPE_MAX no city captured
-    uint32_t clanId;
+    uint32_t clanId;//clan db id
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> connected_players;
 
     //the db info
@@ -422,7 +406,7 @@ struct CaptureCityValidated
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playersInFight;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > bots;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > botsInFight;
-    std::unordered_map<uint32_t,uint16_t> clanSize;
+    std::unordered_map<uint32_t/*clan db id*/,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clanSize;
 };
 
 struct ServerProfileInternal
@@ -528,10 +512,6 @@ struct ServerPrivateVariables
     std::unordered_set<uint32_t> tradedMonster;
     std::vector<char> randomData;
 
-    //market
-    std::vector<MarketItem> marketItemList;
-    std::vector<MarketPlayerMonster> marketPlayerMonsterList;
-
     //general data
     bool stopIt;
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -555,8 +535,8 @@ struct ServerPrivateVariables
     int8_t sizeofInsertRequest;
 
     //connection
-    uint16_t connected_players;
-    std::unordered_set<uint32_t> connected_players_id_list;
+    //std::unordered_set<uint32_t> connected_players_id_list; see playerById_db
+    std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;
     std::vector<std::string> server_message;
     struct GiftEntry
     {

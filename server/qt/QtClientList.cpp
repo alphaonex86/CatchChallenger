@@ -26,12 +26,12 @@ void QtClientList::remove(const Client &client)
     ClientList::remove(index_global);
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED QtClientList::global_clients_list_size() const
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED QtClientList::size() const
 {
     return clients.size();
 }
 
-bool QtClientList::global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+bool QtClientList::empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -44,7 +44,7 @@ bool QtClientList::global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR
 }
 
 //abort if index is not valid
-Client &QtClientList::global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index)
+const Client &QtClientList::at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -61,3 +61,20 @@ Client &QtClientList::global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_C
     return clients.at(index);
 }
 
+//abort if index is not valid
+Client &QtClientList::rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index)
+{
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(index>=clients.size())
+    {
+        std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
+        abort();
+    }
+    if(clients.at(index)==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
+        abort();
+    }
+    #endif
+    return clients[index];
+}

@@ -70,9 +70,9 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                      std::to_string(objectId)+
                      " in quantity: "+
                      std::to_string(quantity));
-        if(ClientList::list->global_clients_list_isValid(indexConnected))
+        if(ClientList::list->empty(indexConnected))
         {
-            Client &client=ClientList::list->global_clients_list_at(indexConnected);
+            Client &client=ClientList::list->rw(indexConnected);
             client.addObjectAndSend(objectId,quantity);
         }
         else
@@ -164,13 +164,13 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         }
         normalOutput(public_and_private_informations.public_informations.pseudo+" have take to "+arguments.at(1)+" the item with id: "+std::to_string(objectId)+" in quantity: "+std::to_string(quantity));
 
-        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        if(!ClientList::list->empty(indexConnected))
         {
             receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
         }
 
-        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+        Client &client=ClientList::list->rw(indexConnected);
 
         client.sendRemoveObject(objectId,client.removeObject(objectId,quantity));
     }
@@ -198,19 +198,19 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 return;
             }
 
-            if(!ClientList::list->global_clients_list_isValid(indexConnectedFront))
+            if(!ClientList::list->empty(indexConnectedFront))
             {
                 receiveSystemText("player front is not connected or bug");
                 return;
             }
-            if(!ClientList::list->global_clients_list_isValid(indexConnectedBack))
+            if(!ClientList::list->empty(indexConnectedBack))
             {
                 receiveSystemText("player back is not connected or bug");
                 return;
             }
 
-            Client &clientFront=ClientList::list->global_clients_list_at(indexConnectedFront);
-            Client &clientBack=ClientList::list->global_clients_list_at(indexConnectedBack);
+            Client &clientFront=ClientList::list->rw(indexConnectedFront);
+            Client &clientBack=ClientList::list->rw(indexConnectedBack);
 
             clientFront.receiveTeleportTo(clientBack.mapIndex,clientBack.x,clientBack.y,
                              MoveOnTheMap::directionToOrientation(clientBack.getLastDirection()));
@@ -299,12 +299,12 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        if(!ClientList::list->empty(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;
         }
-        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+        Client &client=ClientList::list->rw(indexConnected);
         if(client.getInTrade())
         {
             receiveSystemText(extraText+" is already in trade");
@@ -355,12 +355,12 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             return;
         }
 
-        if(!ClientList::list->global_clients_list_isValid(indexConnected))
+        if(!ClientList::list->empty(indexConnected))
         {
             receiveSystemText("player is not connected/bug");
             return;
         }
-        Client &client=ClientList::list->global_clients_list_at(indexConnected);
+        Client &client=ClientList::list->rw(indexConnected);
 
         if(client.isInBattle())
         {

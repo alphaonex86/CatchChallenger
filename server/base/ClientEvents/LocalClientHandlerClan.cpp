@@ -186,7 +186,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 unsigned int index=0;
                 while(index<temp_connected_players.size())
                 {
-                    if(ClientList::list->global_clients_list_isValid(temp_connected_players.at(index)))
+                    if(ClientList::list->empty(temp_connected_players.at(index)))
                     {
                         if(temp_connected_players.at(index)==index_connected_player)
                         {
@@ -194,7 +194,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                             clanChangeWithoutDb(public_and_private_informations.clan);//to send to another thread the clan change, 0 to remove
                         }
                         else
-                            ClientList::list->global_clients_list_at(index).dissolvedClan();
+                            ClientList::list->rw(index).dissolvedClan();
                     }
                     index++;
                 }
@@ -225,9 +225,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
-                if(ClientList::list->global_clients_list_isValid(indexConnected))
+                if(ClientList::list->empty(indexConnected))
                 {
-                    Client &otherClient=ClientList::list->global_clients_list_at(indexConnected);
+                    Client &otherClient=ClientList::list->rw(indexConnected);
                     if(!otherClient.haveAClan())
                     {
                         if(otherClient.inviteToClan(public_and_private_informations.clan))
@@ -279,9 +279,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
             if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
-                if(ClientList::list->global_clients_list_isValid(indexConnected))
+                if(ClientList::list->empty(indexConnected))
                 {
-                    Client &otherClient=ClientList::list->global_clients_list_at(indexConnected);
+                    Client &otherClient=ClientList::list->rw(indexConnected);
                     if(otherClient.haveAClan() && otherClient.getMaxClanId()==public_and_private_informations.clan)
                     {
 

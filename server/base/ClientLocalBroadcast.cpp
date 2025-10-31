@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "ClientList.hpp"
 #include <string.h>
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -54,34 +55,36 @@ void Client::sendLocalChatText(const std::string &text)
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
-    const size_t &size=map.clientsForLocalBroadcast.size();
-    unsigned int index=0;
+    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &size=map.map_clients_list_size();
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
     while(index<size)
     {
-        Client * const client=map.clientsForLocalBroadcast.at(index);
-        if(client!=this)
-            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        if(map.map_clients_list_isValid(index))
+        {
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &global_index=map.map_clients_list_at(index);
+            ClientList::list->rw(global_index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+        }
         index++;
     }
 }
 
 void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(vectorcontainsAtLeastOne(map.clientsForBroadcast,this))
-        normalOutput("map.clientsForBroadcast already have this");
-    else
-    #endif
-    map.clientsForLocalBroadcast.push_back(this);
+    if(getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return;
+    if(index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        std::cout << "index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::insertClientOnMap()" << std::endl;
+    index_on_map=map.insertOnMap(getIndexConnect());
 }
 
 void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
-    #ifdef CATCHCHALLENGER_SERVER_EXTRA_CHECK
-    if(vectorcontainsCount(map.clientsForBroadcast,this)!=1)
-        normalOutput("map.clientsForBroadcast.count(this)!=1: "+std::to_string(vectorcontainsCount(map.clientsForBroadcast,this)));
-    #endif
-    vectorremoveOne(map.clientsForLocalBroadcast,this);
+    if(getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return;
+    if(index_on_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        std::cout << "index_on_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::removeClientOnMap()" << std::endl;
+    map.removeOnMap(getIndexConnect());
 
+    index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     mapIndex=65535;
 }
