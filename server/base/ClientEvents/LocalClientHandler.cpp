@@ -275,11 +275,11 @@ void Client::setEvent(const uint8_t &event, const uint8_t &new_value)
     ProtocolParsingBase::tempBigBufferForOutput[0x03]=new_value;
 
     unsigned int index=0;
-    while(index<ClientList::list->global_clients_list_size())
+    while(index<ClientList::list->size())
     {
-        if(ClientList::list->global_clients_list_isValid(index))
+        if(ClientList::list->empty(index))
         {
-            Client &c=ClientList::list->global_clients_list_at(index);
+            Client &c=ClientList::list->rw(index);
             c.sendNewEvent(ProtocolParsingBase::tempBigBufferForOutput,4);
             c.addEventInQueue(event,event_value,now);
         }

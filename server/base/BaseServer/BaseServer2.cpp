@@ -31,7 +31,6 @@ BaseServer::BaseServer() :
 
     CompressionProtocol::compressionTypeServer                                = CompressionProtocol::CompressionType::Zstandard;
 
-    GlobalServerData::serverPrivateVariables.connected_players      = 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged  = 0;
     GlobalServerData::serverPrivateVariables.time_city_capture      = 0;
 
@@ -299,7 +298,6 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     }
     #endif
 
-    std::cout << GlobalServerData::serverPrivateVariables.marketItemList.size() << " SQL market item" << std::endl;
     const auto &now = msFrom1970();
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_30_sync_other();

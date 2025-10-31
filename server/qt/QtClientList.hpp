@@ -62,9 +62,10 @@ protected:
 public:
     void remove(const Client &client);
     
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_size() const;
-    bool global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
-    Client &global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const;
+    bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
+    const Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+    Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
 };
 }
 

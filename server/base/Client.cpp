@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
@@ -75,7 +76,7 @@ void Client::setToDefault()
     public_and_private_informations.public_informations.simplifiedId=0;
     public_and_private_informations.public_informations.skinId=0;
     public_and_private_informations.public_informations.speed=0;
-    public_and_private_informations.public_informations.type=0;
+    public_and_private_informations.public_informations.type=Player_type_normal;
     public_and_private_informations.cash=0;
     public_and_private_informations.warehouse_cash=0;
     public_and_private_informations.recipes=nullptr;
@@ -104,6 +105,16 @@ void Client::setToDefault()
     stat=ClientStat::Free;
     lastdaillygift=0;
     pingInProgress=0;
+
+    //disable reserve
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+        otherPlayerTrade.battleCanceled();
+        otherPlayerTrade.otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+        otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    }
+
     index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     index_connected_player=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     account_id_db=0;
@@ -132,13 +143,15 @@ void Client::setToDefault()
     unvalidated_rescue.x=0;
     unvalidated_rescue.y=0;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
-    movePacketKick.clear();
-    chatPacketKick.clear();
-    otherPacketKick.clear();
+    movePacketKick.reset();
+    chatPacketKick.reset();
+    otherPacketKick.reset();
     #endif
-    lastTeleportation.clear();
+    while(!lastTeleportation.empty())
+        lastTeleportation.pop();
     queryNumberList.clear();
-    botFight.clear();
+    botFight.first=65535;
+    botFight.second=255;
     attackReturn.clear();
     deferedEnduranceSync.clear();
     tradeObjects.clear();
@@ -149,19 +162,26 @@ void Client::setToDefault()
     last_sended_connected_players=0;
     stopIt=false;
     profileIndex=0;
-    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     battleIsValidated=false;
     mCurrentSkillId=0;
     mHaveCurrentSkill=false;
     mMonsterChange=false;
     botFightCash=0;
+
+    while(!plant_list_in_waiting.empty())
+        plant_list_in_waiting.pop();
+    while(!paramToPassToCallBack.empty())
+        paramToPassToCallBack.pop();
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    while(!paramToPassToCallBackType.empty())
+        paramToPassToCallBackType.pop();
+    #endif
+
     botFight=std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(0,0);
     #ifndef EPOLLCATCHCHALLENGERSERVER
     isInCityCapture=false;
     #endif
-    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     tradeIsValidated=false;
-    clan=NULL;
     #ifdef EPOLLCATCHCHALLENGERSERVER
     socketString=NULL;
     socketStringSize=0;
@@ -287,7 +307,8 @@ bool Client::disconnectClient()
     }
     if(stat_client)
     {
-        unsigned int index=0;
+        /* done into ClientList::remove(const Client &client)
+         * unsigned int index=0;
         while(index<stat_client_list.size())
         {
             const Client * const client=stat_client_list.at(index);
@@ -297,15 +318,15 @@ bool Client::disconnectClient()
                 break;
             }
             index++;
-        }
+        }*/
     }
     #endif
 
     if(stat==ClientStat::CharacterSelecting)
     {
         stat=ClientStat::CharacterSelected;//to block the new connection util th destructor is invocked
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id_db);
-        simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
+        GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
+        //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         if(character_id==0)
             std::cerr << "character_id==0, set it before to correctly unload to master" << std::endl;
@@ -315,28 +336,28 @@ bool Client::disconnectClient()
     }
     else if(stat==ClientStat::CharacterSelected)
     {
-        const std::string &character_id_string=std::to_string(character_id_db);
+        //const std::string &character_id_string=std::to_string(character_id_db);
         if(mapIndex<65535)
             removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
+        /*        if(!vectorremoveOne(clientBroadCastList,this))
+            std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;*/
         if(GlobalServerData::serverSettings.sendPlayerNumber)
             GlobalServerData::serverPrivateVariables.player_updater->removeConnectedPlayer();
         extraStop();
         tradeCanceled();
         battleCanceled();
         removeFromClan();
-        GlobalServerData::serverPrivateVariables.connected_players--;
-        simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
-        GlobalServerData::serverPrivateVariables.connected_players_id_list.erase(character_id_db);
+        //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
+        GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
         LinkToMaster::linkToMaster->characterDisconnected(character_id);
         #endif
-        playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
+        //playerByPseudo.erase(public_and_private_informations.public_informations.pseudo); done by ClientList::remove(const Client &client)
         clanChangeWithoutDb(0);
-        if(!vectorremoveOne(clientBroadCastList,this))
-            std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;
-        playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
+        ClientList::list->remove(*this);
+        /*playerByPseudo.erase(public_and_private_informations.public_informations.pseudo);
         playerById_db.erase(character_id_db);
-        characterCreationDateList.erase(character_id_db);
+        characterCreationDateList.erase(character_id_db);*/
         #ifndef EPOLLCATCHCHALLENGERSERVER
         leaveTheCityCapture();
         #endif
@@ -615,17 +636,18 @@ uint32_t Client::getMaxClanId(bool * const ok)
 }
 #endif
 
-bool Client::characterConnected(const uint32_t &characterId)
+bool Client::characterConnected_db(const uint32_t &characterId_db)
 {
-    return playerById_db.find(characterId)!=playerById_db.cend();
+    return GlobalServerData::serverPrivateVariables.playerById_db.find(characterId_db)!=GlobalServerData::serverPrivateVariables.playerById_db.cend();
 }
 
-void Client::disconnectClientById(const uint32_t &characterId)
+void Client::disconnectClientById_db(const uint32_t &characterId_db)
 {
-    if(playerById_db.find(characterId)!=playerById_db.cend())
+    if(GlobalServerData::serverPrivateVariables.playerById_db.find(characterId_db)!=GlobalServerData::serverPrivateVariables.playerById_db.cend())
     {
-        Client * client=playerById_db.at(characterId);
-        client->disconnectClient();
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index=GlobalServerData::serverPrivateVariables.playerById_db.at(characterId_db);
+        if(!ClientList::list->empty(index))
+            ClientList::list->rw(index).disconnectClient();
     }
 }
 
@@ -754,8 +776,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         stat_client=true;
         //flags|=0x08;->just listen
 
-        ClientList::list->addStatusWatcher(index_connected_player);
-        stat_client_list.push_back(this);
+        index_connected_player=ClientList::list->insert_StatusWatcher();
 
         stat=ClientStat::LoggedStatClient;
     }
