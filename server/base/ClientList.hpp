@@ -16,9 +16,11 @@ public:
     //return index into map list
     virtual void remove(const Client &client);
 
-    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_size() const = 0;
-    virtual bool global_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
-    virtual Client &global_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid
+    virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const = 0;
+    virtual bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
+    virtual const Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;//abort if index is not valid
+    virtual Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) = 0;//abort if index is not valid
+
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_bypseudo(const std::string &pseudo);//return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX if not found
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert_characterSelected(const std::string &pseudo);

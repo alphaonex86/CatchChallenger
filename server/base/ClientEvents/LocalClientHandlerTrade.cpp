@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include "../ClientList.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../base/PreparedDBQuery.hpp"
@@ -9,7 +10,7 @@ using namespace CatchChallenger;
 
 bool Client::getInTrade() const
 {
-    return (otherPlayerTrade!=NULL);
+    return (otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX);
 }
 
 void Client::registerTradeRequest(Client &otherPlayerTrade)
@@ -22,7 +23,7 @@ void Client::registerTradeRequest(Client &otherPlayerTrade)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(otherPlayerTrade->public_and_private_informations.public_informations.pseudo+" have requested trade with you");
     #endif
-    this->otherPlayerTrade=otherPlayerTrade;
+    this->otherPlayerTrade=otherPlayerTrade.getIndexConnect();
 
     uint32_t pos=0;
 
@@ -30,13 +31,13 @@ void Client::registerTradeRequest(Client &otherPlayerTrade)
     pos=1+1+4;
 
     //sender pseudo
-    const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
+    const std::string &pseudo=otherPlayerTrade.public_and_private_informations.public_informations.pseudo;
     ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
     pos+=1;
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
     pos+=pseudo.size();
     //skin
-    ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
+    ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade.public_and_private_informations.public_informations.skinId;
     pos+=1;
 
     //set the dynamic size
@@ -67,15 +68,15 @@ std::vector<PlayerMonster> Client::getTradeMonster() const
 
 void Client::tradeCanceled()
 {
-    if(otherPlayerTrade!=NULL)
-        otherPlayerTrade->internalTradeCanceled(true);
+    if(otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        ClientList::list->rw(otherPlayerTrade).internalTradeCanceled(true);
     internalTradeCanceled(false);
 }
 
 void Client::tradeAccepted()
 {
-    if(otherPlayerTrade!=NULL)
-        otherPlayerTrade->internalTradeAccepted(true);
+    if(otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        ClientList::list->rw(otherPlayerTrade).internalTradeAccepted(true);
     internalTradeAccepted(false);
 }
 
@@ -92,29 +93,30 @@ void Client::tradeFinished()
         return;
     }
     tradeIsFreezed=true;
-    if(getIsFreezed() && otherPlayerTrade->getIsFreezed())
+    Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+    if(getIsFreezed() && otherPlayerTrade.getIsFreezed())
     {
         #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
         normalOutput("Trade finished");
         #endif
         //cash
-        otherPlayerTrade->addCash(tradeCash,(otherPlayerTrade->getTradeCash()!=0));
-        addCash(otherPlayerTrade->getTradeCash(),(tradeCash!=0));
+        otherPlayerTrade.addCash(tradeCash,(otherPlayerTrade.getTradeCash()!=0));
+        addCash(otherPlayerTrade.getTradeCash(),(tradeCash!=0));
 
         //object
         auto i=tradeObjects.begin();
         while(i!=tradeObjects.cend())
         {
-            otherPlayerTrade->addObject(i->first,i->second);
+            otherPlayerTrade.addObject(i->first,i->second);
             saveObjectRetention(i->first);
             ++i;
         }
-        const std::unordered_map<uint16_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade->getTradeObjects();
+        const std::unordered_map<uint16_t,uint32_t> otherPlayerTradeGetTradeObjects=otherPlayerTrade.getTradeObjects();
         auto j=otherPlayerTradeGetTradeObjects.begin();
         while (j!=otherPlayerTradeGetTradeObjects.cend())
         {
             addObject(j->first,j->second);
-            otherPlayerTrade->saveObjectRetention(j->first);
+            otherPlayerTrade.saveObjectRetention(j->first);
             ++j;
         }
 
@@ -127,23 +129,23 @@ void Client::tradeFinished()
                 index++;
             }
             index=0;
-            while(index<otherPlayerTrade->tradeMonster.size())
+            while(index<otherPlayerTrade.tradeMonster.size())
             {
-                GlobalServerData::serverPrivateVariables.tradedMonster.insert(otherPlayerTrade->tradeMonster.at(index).id);
+                GlobalServerData::serverPrivateVariables.tradedMonster.insert(otherPlayerTrade.tradeMonster.at(index).id);
                 index++;
             }
         }
         //monster
-        otherPlayerTrade->transferExistingMonster(tradeMonster);
-        transferExistingMonster(otherPlayerTrade->tradeMonster);
+        otherPlayerTrade.transferExistingMonster(tradeMonster);
+        transferExistingMonster(otherPlayerTrade.tradeMonster);
 
 
         //send the network message
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x5B;
 
-        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
+        otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,0x01);
-        otherPlayerTrade->resetTheTrade();
+        otherPlayerTrade.resetTheTrade();
         resetTheTrade();
     }
     else
@@ -155,7 +157,7 @@ void Client::tradeFinished()
         //send the network message
         ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x5A;//fixed size
 
-        otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1);
+        otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1);
     }
 }
 
@@ -163,7 +165,7 @@ void Client::resetTheTrade()
 {
     //reset out of trade
     tradeIsValidated=false;
-    otherPlayerTrade=NULL;
+    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     tradeCash=0;
     tradeObjects.clear();
     tradeMonster.clear();
@@ -231,7 +233,8 @@ void Client::tradeAddTradeCash(const uint64_t &cash)
     memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&converted_cash,8);
     posOutput+=8;
 
-    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+    otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
@@ -280,8 +283,8 @@ void Client::tradeAddTradeObject(const uint16_t &item,const uint32_t &quantity)
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(quantity);
     posOutput+=4;
 
-
-    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+    otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 }
 
 void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
@@ -336,7 +339,8 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
     posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,monster,character_id_db);
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
-    otherPlayerTrade->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+    Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+    otherPlayerTrade.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
 
     /*while(index<public_and_private_informations.playerMonster.size())
     {
@@ -352,7 +356,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
 
 void Client::internalTradeCanceled(const bool &send)
 {
-    if(otherPlayerTrade==NULL)
+    if(otherPlayerTrade==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         //normalOutput("Trade already canceled");
         return;
@@ -378,7 +382,7 @@ void Client::internalTradeCanceled(const bool &send)
         tradeMonster.clear();
         updateCanDoFight();
     }
-    otherPlayerTrade=NULL;
+    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     if(send)
     {
         if(tradeIsValidated)
@@ -394,7 +398,7 @@ void Client::internalTradeCanceled(const bool &send)
 
 void Client::internalTradeAccepted(const bool &send)
 {
-    if(otherPlayerTrade==NULL)
+    if(otherPlayerTrade==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         normalOutput("Can't accept trade if not in trade");
         return;
@@ -417,13 +421,14 @@ void Client::internalTradeAccepted(const bool &send)
         unsigned int pos=1+4;
 
         //sender pseudo
-        const std::string &pseudo=otherPlayerTrade->public_and_private_informations.public_informations.pseudo;
+        Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+        const std::string &pseudo=otherPlayerTrade.public_and_private_informations.public_informations.pseudo;
         ProtocolParsingBase::tempBigBufferForOutput[pos]=static_cast<uint8_t>(pseudo.size());
         pos+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+pos,pseudo.data(),pseudo.size());
         pos+=pseudo.size();
         //skin
-        ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade->public_and_private_informations.public_informations.skinId;
+        ProtocolParsingBase::tempBigBufferForOutput[pos]=otherPlayerTrade.public_and_private_informations.public_informations.skinId;
         pos+=1;
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(pos-1-4);//set the dynamic size
