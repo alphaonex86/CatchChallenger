@@ -13,9 +13,9 @@ bool Client::captureCityInProgress()
 {
     if(public_and_private_informations.clan==0)
         return false;
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return false;
-    const Clan &clan=clanList.at(public_and_private_informations.clan);
+    const Clan &clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
     if(clan.captureCityInProgress==ZONE_TYPE_MAX)
         return false;
     //search in capture not validated
@@ -44,12 +44,12 @@ void Client::waitingForCityCaputre(const bool &cancel)
         errorOutput("Try capture city when is not in clan");
         return;
     }
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
     {
         errorOutput("Try capture city when clan not found");
         return;
     }
-    Clan &clan=clanList[public_and_private_informations.clan];
+    Clan &clan=GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan];
     if(!cancel)
     {
         if(captureCityInProgress())
@@ -154,9 +154,9 @@ void Client::leaveTheCityCapture()
 {
     if(public_and_private_informations.clan==0)
         return;
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return;
-    Clan &clan=clanList[public_and_private_informations.clan];
+    Clan &clan=GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan];
     if(clan.captureCityInProgress==ZONE_TYPE_MAX)
         return;
     if(vectorremoveOne(captureCity[clan.captureCityInProgress],index_connected_player))
@@ -174,7 +174,7 @@ void Client::leaveTheCityCapture()
             unsigned int index=0;
             while(index<playerListInCaptures.size())
             {
-                if(ClientList::list->empty(playerListInCaptures.at(index)) && ClientList::list->at(playerListInCaptures.at(index)).clanId()==clanId())
+                if(ClientList::list->empty(playerListInCaptures.at(index)) && ClientList::list->at(playerListInCaptures.at(index)).getClanId()==getClanId())
                     break;
                 index++;
             }
@@ -260,7 +260,7 @@ void Client::startTheCityCapture()
                     index=0;
                     while(index<tempCaptureCityValidated.players.size())
                     {
-                        const uint32_t &clanId=client.clanId();
+                        const uint32_t &clanId=client.getClanId();
                         if(tempCaptureCityValidated.clanSize.find(clanId)!=tempCaptureCityValidated.clanSize.cend())
                             tempCaptureCityValidated.clanSize[clanId]++;
                         else
@@ -281,7 +281,7 @@ void Client::startTheCityCapture()
                         Client &sub_client=ClientList::list->rw(playersub_Index);
                         while(sub_index<tempCaptureCityValidated.players.size())
                         {
-                            if(client.clanId()!=sub_client.clanId())
+                            if(client.getClanId()!=sub_client.getClanId())
                             {
                                 client.otherCityPlayerBattle=tempCaptureCityValidated.players.at(sub_index);
                                 sub_client.otherCityPlayerBattle=tempCaptureCityValidated.players.at(index);
@@ -442,9 +442,10 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
 {
     if(public_and_private_informations.clan==0)
         return;
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return;
-    Clan &clan=clanList[public_and_private_informations.clan];
+    const CLAN_ID_TYPE clanId=public_and_private_informations.clan;
+    Clan &clan=GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan];
     if(clan.captureCityInProgress!=ZONE_TYPE_MAX && captureCityValidatedList.find(clan.captureCityInProgress)!=captureCityValidatedList.cend())
     {
         CaptureCityValidated &captureCityValidated=captureCityValidatedList[clan.captureCityInProgress];
@@ -471,7 +472,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 {
                     const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED player_index=captureCityValidated.players.at(index);
                     Client &client=ClientList::list->rw(player_index);
-                    if(clanId()!=client.clanId())
+                    if(clanId!=client.getClanId())
                     {
                         battleFakeAccepted(client);
                         captureCityValidated.playersInFight.push_back(player_index);
@@ -510,9 +511,9 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                     vectorremoveOne(captureCityValidated.playersInFight,index_connected_player);
                     otherCityPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
                 }
-                captureCityValidated.clanSize[clanId()]--;
-                if(captureCityValidated.clanSize.at(clanId())==0)
-                    captureCityValidated.clanSize.erase(clanId());
+                captureCityValidated.clanSize[clanId]--;
+                if(captureCityValidated.clanSize.at(clanId)==0)
+                    captureCityValidated.clanSize.erase(clanId);
             }
             uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
             uint16_t clan_count=cityCaptureClanCount(captureCityValidated);
@@ -525,7 +526,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 {
                     if(GlobalServerData::serverPrivateVariables.cityStatusList.size()>clan.capturedCity)
                     {
-                        GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan.clanId);
+                        GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clanId);
                         GlobalServerData::serverPrivateVariables.cityStatusList[clan.capturedCity].clan=0;
                     }
                     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -566,8 +567,8 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #error Define what do here
                         #endif
                     }
-                    GlobalServerData::serverPrivateVariables.cityStatusListReverse[clan.clanId]=clan.captureCityInProgress;
-                    GlobalServerData::serverPrivateVariables.cityStatusList[clan.captureCityInProgress].clan=clan.clanId;
+                    GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=clan.captureCityInProgress;
+                    GlobalServerData::serverPrivateVariables.cityStatusList[clan.captureCityInProgress].clan=clanId;
                     clan.capturedCity=clan.captureCityInProgress;
                     clan.captureCityInProgress=ZONE_TYPE_MAX;
                     unsigned int index=0;

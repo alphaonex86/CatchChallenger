@@ -5,7 +5,6 @@
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../MapManagement/ClientWithMap.hpp"
 
 using namespace CatchChallenger;
 

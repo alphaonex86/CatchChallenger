@@ -2,8 +2,9 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
-#include "../MapManagement/ClientWithMap.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../ClientList.hpp"
+#include "../GlobalServerData.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -118,7 +119,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     {
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x01;
         posOutput+=1;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=1;
     }
     else
@@ -127,7 +128,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x00;
         posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=2;
     }
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=x;
@@ -214,20 +215,19 @@ void Client::createMemoryClan()
     }
     #endif
 
-    if(clanList.find(public_and_private_informations.clan)==clanList.end())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.end())
     {
         Clan clan;
         clan.cash=0;
-        clan.clanId=public_and_private_informations.clan;
         clan.connected_players.push_back(index_connected_player);
-        clanList[public_and_private_informations.clan]=clan;
+        GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]=clan;
         #ifndef EPOLLCATCHCHALLENGERSERVER
         if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(clan->clanId)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
             clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.at(clan->clanId);
         #endif
     }
     else
-        clanList[public_and_private_informations.clan].connected_players.push_back(index_connected_player);
+        GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan].connected_players.push_back(index_connected_player);
 }
 
 void Client::addCash(const uint64_t &cash, const bool &forceSave)
@@ -327,6 +327,10 @@ void Client::teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,cons
     MapBasicMove::teleportValidatedTo(mapIndex,x,y,orientation);
     if(GlobalServerData::serverSettings.positionTeleportSync)
         savePosition();
+    bool mapChange=(this->mapIndex!=mapIndex);
+    normalOutput("MapVisibilityAlgorithm_Simple_StoreOnSender::teleportValidatedTo() with mapChange: "+std::to_string(mapChange));
+    if(mapChange)
+        removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex));
 }
 
 Direction Client::lookToMove(const Direction &direction)
