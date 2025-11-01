@@ -1,8 +1,7 @@
 #include "../Client.hpp"
-
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
-#include "../MapManagement/ClientWithMap.hpp"
 
 using namespace CatchChallenger;
 

@@ -141,7 +141,7 @@ struct map_management_move
 
 struct Player_public_informations
 {
-    SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedId;//asigned by map management
+    SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedId_forMap;//asigned by map management
     std::string pseudo;
     Player_type type;
     uint8_t skinId;

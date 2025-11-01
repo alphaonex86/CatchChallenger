@@ -83,7 +83,7 @@ void Client::loadMonsters_return()
     #else
     #error Define what do here
     #endif
-    characterIsRightFinalStep();
+    characterIsRightSendData();
 }
 
 PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)

@@ -1,25 +1,36 @@
 #include "../Client.hpp"
+#include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
-void Client::characterIsRightFinalStep()
+void Client::characterIsRightSendData()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(this->map==NULL)
+    if(this->mapIndex==65535)
         return;
-    {
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
     #endif
 
     stat=ClientStat::CharacterSelected;
-    ClientList::list->characterSelected(public_and_private_informations.public_informations.pseudo,index_connected_player);
+
+    index_connected_player=ClientList::list->insert_characterSelected(public_and_private_informations.public_informations.pseudo);
+    if(public_and_private_informations.clan!=0)
+    {
+        if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())
+            GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan].connected_players.push_back(index_connected_player);
+        else
+        {
+            std::cerr << "clan have to be loaded at this step, because the clan info will be send (abort)" << std::endl;
+            abort();
+        }
+    }
+
+    insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);//imply set index_on_map
     Client::timeRangeEventNew=true;
     checkLoose(false);
 
@@ -93,12 +104,12 @@ void Client::characterIsRightFinalStep()
     //temporary character id
     if(GlobalServerData::serverSettings.max_players<=255)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId);
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=1;
     }
     else
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=2;
     }
 

@@ -73,7 +73,7 @@ void Client::setToDefault()
     //player info
     public_and_private_informations.public_informations.monsterId=0;
     public_and_private_informations.public_informations.pseudo.clear();
-    public_and_private_informations.public_informations.simplifiedId=0;
+    public_and_private_informations.public_informations.simplifiedId_forMap=0;
     public_and_private_informations.public_informations.skinId=0;
     public_and_private_informations.public_informations.speed=0;
     public_and_private_informations.public_informations.type=Player_type_normal;
@@ -99,9 +99,6 @@ void Client::setToDefault()
 
     //local
     mapSyncMiss=false;
-    #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    stat_client=false;
-    #endif
     stat=ClientStat::Free;
     lastdaillygift=0;
     pingInProgress=0;
@@ -233,9 +230,14 @@ Client::~Client()
     }
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getIndexConnect()
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getIndexConnect() const
 {
     return index_connected_player;
+}
+
+Client::ClientStat Client::getClientStat() const
+{
+    return stat;
 }
 
 /// \warning called in one other thread!!!
@@ -305,9 +307,9 @@ bool Client::disconnectClient()
             index++;
         }
     }
-    if(stat_client)
+    /*if(stat==ClientStat::LoggedStatClient)
     {
-        /* done into ClientList::remove(const Client &client)
+        done into ClientList::remove(const Client &client)
          * unsigned int index=0;
         while(index<stat_client_list.size())
         {
@@ -318,8 +320,8 @@ bool Client::disconnectClient()
                 break;
             }
             index++;
-        }*/
-    }
+        }
+    }*/
     #endif
 
     if(stat==ClientStat::CharacterSelecting)
@@ -773,7 +775,7 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
         internalSendRawSmallPacket(reinterpret_cast<char *>(ProtocolParsingBase::tempBigBufferForOutput),3);
         internalSendRawSmallPacket((char *)Client::protocolMessageLogicalGroupAndServerList,Client::protocolMessageLogicalGroupAndServerListSize);
 
-        stat_client=true;
+        //stat_client=true;
         //flags|=0x08;->just listen
 
         index_connected_player=ClientList::list->insert_StatusWatcher();

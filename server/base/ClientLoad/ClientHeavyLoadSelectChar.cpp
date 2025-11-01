@@ -78,7 +78,7 @@ void Client::purgeTokenAuthList()
 }
 #endif
 
-void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
+void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t characterId, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
                   const std::string &rescue_map, const std::string &rescue_x, const std::string &rescue_y, const std::string &rescue_orientation,
                   const std::string &unvalidated_rescue_map, const std::string &unvalidated_rescue_x, const std::string &unvalidated_rescue_y, const std::string &unvalidated_rescue_orientation
                                              )
@@ -241,7 +241,7 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
     #elif CATCHCHALLENGER_DB_FILE
     (void)query_id;
     (void)characterId;
-    (void)map;
+    (void)mapIndex;
     (void)x;
     (void)y;
     (void)orientation;
@@ -258,14 +258,14 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
     #endif
 }
 
-void Client::characterIsRight(const uint8_t &query_id,uint32_t characterId, CommonMap *map, const uint8_t &x, const uint8_t &y, const Orientation &orientation)
+void Client::characterIsRight(const uint8_t &query_id,uint32_t characterId, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_t &x, const uint8_t &y, const Orientation &orientation)
 {
-    characterIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,map,x,y,orientation,map,x,y,orientation);
+    characterIsRightWithParsedRescue(query_id,characterId,mapIndex,x,y,orientation,mapIndex,x,y,orientation,mapIndex,x,y,orientation);
 }
 
-void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
-                  CommonMap* rescue_map, const /*COORD_TYPE*/ uint8_t &rescue_x, const /*COORD_TYPE*/ uint8_t &rescue_y, const Orientation &rescue_orientation,
-                  CommonMap *unvalidated_rescue_map, const uint8_t &unvalidated_rescue_x, const uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
+void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t characterId, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
+                  const CATCHCHALLENGER_TYPE_MAPID &rescue_map, const /*COORD_TYPE*/ uint8_t &rescue_x, const /*COORD_TYPE*/ uint8_t &rescue_y, const Orientation &rescue_orientation,
+                  const CATCHCHALLENGER_TYPE_MAPID &unvalidated_rescue_map, const uint8_t &unvalidated_rescue_x, const uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
                   )
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
@@ -282,60 +282,29 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     #error Define what do here
     #endif
 
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        default:
-        case MapVisibilityAlgorithmSelection_Simple:
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        if(simplifiedIdList.empty())
-        {
-            errorOutput("Client::characterIsRightWithParsedRescue(): simplifiedIdList is empty, no more id");
-            return;
-        }
-        public_and_private_informations.public_informations.simplifiedId = simplifiedIdList.front();
-        simplifiedIdList.erase(simplifiedIdList.begin());
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        public_and_private_informations.public_informations.simplifiedId = 0;
-        break;
-    }
+    public_and_private_informations.public_informations.simplifiedId_forMap = 0;
     //load the variables
     character_id_db=characterId;
     stat=ClientStat::CharacterSelecting;
-    GlobalServerData::serverPrivateVariables.connected_players_id_list.insert(characterId);
     connectedSince=sFrom1970();
-    this->map=map;
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    {
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
+    this->mapIndex=mapIndex;
     this->x=x;
     this->y=y;
     this->last_direction=static_cast<Direction>(orientation);
-    this->rescue.map=rescue_map;
+    this->rescue.mapIndex=rescue_map;
     this->rescue.x=rescue_x;
     this->rescue.y=rescue_y;
     this->rescue.orientation=rescue_orientation;
-    this->unvalidated_rescue.map=unvalidated_rescue_map;
+    this->unvalidated_rescue.mapIndex=unvalidated_rescue_map;
     this->unvalidated_rescue.x=unvalidated_rescue_x;
     this->unvalidated_rescue.y=unvalidated_rescue_y;
     this->unvalidated_rescue.orientation=unvalidated_rescue_orientation;
     selectCharacterQueryId.push_back(query_id);
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    {
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
-
     if(public_and_private_informations.clan!=0)
     {
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())
         {
-            GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]->players.push_back(this);
             loadMonsters();
             return;
         }
@@ -363,12 +332,6 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     }
     else
     {
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        {
-            std::string mapToDebug=this->map->map_file;
-            mapToDebug+=this->map->map_file;
-        }
-        #endif
         loadMonsters();
         return;
     }

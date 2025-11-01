@@ -15,27 +15,15 @@ ClientList::~ClientList()
 
 void ClientList::remove(const Client &client)
 {
-    if(client.index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(client.getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    switch(client.stat)
+    switch(client.getClientStat())
     {
     case Client::LoggedStatClient:
-        if(clientForStatus.remove(client.index_connected_player)==clientForStatus.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "this clientForStatus not found for remove" << std::endl;
-            abort();
-            #endif
-        }
+        clientForStatus.erase(client.getIndexConnect());
         break;
     case Client::CharacterSelected:
-        if(playerByPseudo.remove(client.public_and_private_informations.public_informations.pseudo)==playerByPseudo.cend())
-        {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            std::cerr << "this clientForStatus not found for remove" << std::endl;
-            abort();
-            #endif
-        }
+        playerByPseudo.erase(client.public_and_private_informations.public_informations.pseudo);
         break;
     default:
         break;
@@ -46,7 +34,7 @@ SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::global_clients_list_bypseudo(c
 {
     if(playerByPseudo.find(pseudo)==playerByPseudo.cend())
         return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
-    playerByPseudo.at(pseudo);
+    return playerByPseudo.at(pseudo);
 }
 
 SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::insert_characterSelected(const std::string &pseudo)
@@ -85,4 +73,13 @@ SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::insert_StatusWatcher()
     #endif
     clientForStatus.insert(alloc_id);
     return alloc_id;
+}
+
+bool ClientList::haveFreeSlot() const
+{
+    if(!clients_removed_index.empty())
+        return true;
+    if((playerByPseudo.size()+clientForStatus.size())<254)
+        return true;
+    return false;
 }
