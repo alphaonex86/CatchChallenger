@@ -188,7 +188,7 @@ void MapServer::check6B(const char * const data,const unsigned int size)
                 }
                 uint8_t playerSmallId=data[pos];
                 pos+=sizeof(uint8_t);
-                public_informations.simplifiedId=playerSmallId;
+                public_informations.simplifiedId_forMap=playerSmallId;
             }
             else
             {
@@ -198,7 +198,7 @@ void MapServer::check6B(const char * const data,const unsigned int size)
                     abort();
                     return;
                 }
-                public_informations.simplifiedId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                public_informations.simplifiedId_forMap=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                 pos+=sizeof(uint16_t);
             }
 
@@ -330,7 +330,7 @@ void MapServer::check6B(const char * const data,const unsigned int size)
             std::cerr << std::string("- player:") +
                         " " + std::to_string((int)temp.monsterId) +
                         " \"" + temp.pseudo +
-                        "\" " + std::to_string((int)temp.simplifiedId) +
+                        "\" " + std::to_string((int)temp.simplifiedId_forMap) +
                         " " + std::to_string((int)temp.skinId) +
                         " " + std::to_string((int)temp.speed) +
                         " " + std::to_string((int)temp.type)
@@ -365,12 +365,12 @@ unsigned int MapServer::playerToFullInsert(const Client * const client, char * c
     if(GlobalServerData::serverSettings.max_players<=255)
     {
         bufferForOutput[posOutput]=
-                static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId);
+                static_cast<uint8_t>(client->public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=1;
     }
     else
     {
-        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId);
+        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=htole16(client->public_and_private_informations.public_informations.simplifiedId_forMap);
         posOutput+=2;
     }
     bufferForOutput[posOutput]=client->getX();

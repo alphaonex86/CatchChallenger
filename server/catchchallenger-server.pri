@@ -1,6 +1,5 @@
 SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
-    $$PWD/base/MapManagement/ClientWithMap.cpp \
     $$PWD/base/PlayerUpdaterBase.cpp \
     $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer/BaseServer.cpp \

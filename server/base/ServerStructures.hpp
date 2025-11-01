@@ -392,10 +392,9 @@ struct Clan
 {
     ZONE_TYPE captureCityInProgress;//ZONE_TYPE_MAX no capture in progress
     ZONE_TYPE capturedCity;//ZONE_TYPE_MAX no city captured
-    uint32_t clanId;//clan db id
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> connected_players;
 
-    //the db info
+    //the db info, async load
     std::string name;
     uint64_t cash;
 };
@@ -519,7 +518,7 @@ struct ServerPrivateVariables
     uint32_t maxCharacterId;
     #endif
     uint64_t time_city_capture;
-    std::unordered_map<uint32_t,Clan *> clanList;
+    std::unordered_map<uint32_t,Clan> clanList;
 
     /* MOVED TO CommonMap
      * Server use ServerMap, Client use Common Map

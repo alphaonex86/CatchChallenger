@@ -49,6 +49,19 @@ void recordDisconnectByServer(void * client);
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
 public:
+    //this say if is free slot or not
+    enum ClientStat : uint8_t
+    {
+        Free=0x00,
+        None=0x01,
+        ProtocolGood=0x02,
+        LoginInProgress=0x03,
+        Logged=0x04,
+        LoggedStatClient=0x05,
+        CharacterSelecting=0x06,
+        CharacterSelected=0x07,
+    };
+public:
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void serialize(hps::StreamOutputBuffer& buf) const;
@@ -60,7 +73,8 @@ public:
     explicit Client();
     virtual void setToDefault();
     virtual ~Client();
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getIndexConnect();
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getIndexConnect() const;
+    ClientStat getClientStat() const;
     //to get some info
     virtual bool isValid() = 0;
     std::string getPseudo() const;
@@ -99,7 +113,6 @@ public:
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     static uint64_t datapack_list_cache_timestamp_base,datapack_list_cache_timestamp_main,datapack_list_cache_timestamp_sub;
     #endif
-    static std::unordered_map<uint32_t,Clan> clanList;
 
     static bool timeRangeEventNew;
     static uint64_t timeRangeEventTimestamps;
@@ -148,20 +161,8 @@ public:
     #endif
 protected:
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-    //bool stat_client;-> replace by stat=ClientStat::LoggedStatClient;
+    //bool stat_client;-> replace by stat==ClientStat::LoggedStatClient;
     #endif
-    //this say if is free slot or not
-    enum ClientStat : uint8_t
-    {
-        Free=0x00,
-        None=0x01,
-        ProtocolGood=0x02,
-        LoginInProgress=0x03,
-        Logged=0x04,
-        LoggedStatClient=0x05,
-        CharacterSelecting=0x06,
-        CharacterSelected=0x07,
-    };
     ClientStat stat;
     uint64_t lastdaillygift;//datalocallity with ClientStat stat
 
@@ -495,7 +496,7 @@ private:
     void haveClanInfo(const uint32_t &clanId, const std::string &clanName, const uint64_t &cash);
     void sendClanInfo();
     void clanInvite(const bool &accept);
-    uint32_t clanId() const;
+    uint32_t getClanId() const;
     void removeFromClan();
     void waitingForCityCaputre(const bool &cancel);
     void previousCityCaptureNotFinished();
@@ -685,16 +686,16 @@ private:
     // ------------------------------
     bool sendFile(const std::string &datapackPath,const std::string &fileName);
 
-    void characterIsRight(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation);
-    void characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t characterId, CommonMap* map, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
-                      CommonMap* rescue_map, const /*COORD_TYPE*/ uint8_t &rescue_x, const /*COORD_TYPE*/ uint8_t &rescue_y, const Orientation &rescue_orientation,
-                      CommonMap* unvalidated_rescue_map, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_x, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
-                      );
-    void characterIsRightWithRescue(const uint8_t &query_id,uint32_t characterId,CommonMap* map,const /*COORD_TYPE*/ uint8_t &x,const /*COORD_TYPE*/ uint8_t &y,const Orientation &orientation,
+    void characterIsRight(const uint8_t &query_id, uint32_t characterId, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation);
+    void characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t characterId, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const /*COORD_TYPE*/ uint8_t &x, const /*COORD_TYPE*/ uint8_t &y, const Orientation &orientation,
+                                          const uint16_t &rescue_map, const /*COORD_TYPE*/ uint8_t &rescue_x, const /*COORD_TYPE*/ uint8_t &rescue_y, const Orientation &rescue_orientation,
+                                          const uint16_t &unvalidated_rescue_map, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_x, const /*COORD_TYPE*/ uint8_t &unvalidated_rescue_y, const Orientation &unvalidated_rescue_orientation
+                                          );
+    void characterIsRightWithRescue(const uint8_t &query_id,uint32_t characterId,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/ uint8_t &x,const /*COORD_TYPE*/ uint8_t &y,const Orientation &orientation,
                       const std::string &rescue_map,const std::string &rescue_x,const std::string &rescue_y,const std::string &rescue_orientation,
                       const std::string &unvalidated_rescue_map,const std::string &unvalidated_rescue_x,const std::string &unvalidated_rescue_y,const std::string &unvalidated_rescue_orientation
                       );
-    void characterIsRightFinalStep();
+    void characterIsRightSendData();
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     void loginIsWrong(const uint8_t &query_id,const uint8_t &returnCode,const std::string &debugMessage);
     void askStatClient(const uint8_t &query_id,const char *rawdata);

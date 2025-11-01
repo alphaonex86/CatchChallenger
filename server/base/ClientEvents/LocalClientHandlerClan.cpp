@@ -144,7 +144,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 return;
             }
             #endif
-            const Clan clan=clanList.at(public_and_private_informations.clan);
+            const Clan clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
             const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
             //send the network reply
             removeFromQueryReceived(query_id);
@@ -177,7 +177,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             #endif
             //update the object
-            clanList.erase(public_and_private_informations.clan);
+            GlobalServerData::serverPrivateVariables.clanList.erase(public_and_private_informations.clan);
             #ifndef EPOLLCATCHCHALLENGERSERVER
             GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
             GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
@@ -402,9 +402,9 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     }
     public_and_private_informations.clan=clanId;
     createMemoryClan();
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return;
-    Clan &clan=clanList[public_and_private_informations.clan];
+    Clan &clan=GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan];
     clan.name=text;
     public_and_private_informations.clan_leader=true;
     //send the network reply
@@ -449,17 +449,17 @@ void Client::haveClanInfo(const uint32_t &clanId,const std::string &clanName,con
     }
     normalOutput("First client of the clan: "+clanName+", clanId: "+std::to_string(clanId)+" to connect");
     createMemoryClan();
-    clanList[clanId].name=clanName;
-    clanList[clanId].cash=cash;
+    GlobalServerData::serverPrivateVariables.clanList[clanId].name=clanName;
+    GlobalServerData::serverPrivateVariables.clanList[clanId].cash=cash;
 }
 
 void Client::sendClanInfo()
 {
     if(public_and_private_informations.clan==0)
         return;
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return;
-    const Clan &clan=clanList.at(public_and_private_informations.clan);
+    const Clan &clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
     normalOutput("Send the clan info: "+clan.name+", clanId: "+std::to_string(public_and_private_informations.clan)+", get the info");
 
     //send the network message
@@ -496,9 +496,9 @@ bool Client::inviteToClan(const uint32_t &clanId)
 {
     if(inviteToClanList.size()>0)
         return false;
-    if(clanList.find(public_and_private_informations.clan)==clanList.cend())
+    if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         return false;
-    const Clan &clan=clanList.at(public_and_private_informations.clan);
+    const Clan &clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
 
     inviteToClanList.push_back(clanId);
 
@@ -543,7 +543,7 @@ void Client::clanInvite(const bool &accept)
     inviteToClanList.erase(inviteToClanList.begin());
 }
 
-uint32_t Client::clanId() const
+uint32_t Client::getClanId() const
 {
     return public_and_private_informations.clan;
 }

@@ -3,7 +3,7 @@
 
 using namespace CatchChallenger;
 
-std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> Client::playerByPseudo;
+//std::unordered_map<std::string,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> Client::playerByPseudo;
 
 unsigned char Client::protocolReplyProtocolNotSupported[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x02/*return code*/};
 unsigned char Client::protocolReplyServerFull[]={0x7F/*reply server to client*/,0x00/*the init reply query number*/,0x01,0x00,0x00,0x00/*reply size, little endian*/,0x03/*return code*/};
@@ -45,7 +45,7 @@ DdosBuffer<uint16_t,3> Client::clanChatDrop;
 DdosBuffer<uint16_t,3> Client::privateChatDrop;
 
 std::vector<uint8_t> Client::selectCharacterQueryId;
-std::vector<uint16_t> Client::simplifiedIdList;
+//std::vector<uint16_t> Client::simplifiedIdList;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
 uint8_t Client::tempDatapackListReplySize=0;
@@ -65,7 +65,6 @@ std::regex Client::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > Client::captureCity;
 std::unordered_map<ZONE_TYPE,CaptureCityValidated> Client::captureCityValidatedList;
 std::unordered_map<uint32_t,uint64_t> Client::characterCreationDateList;
-std::unordered_map<uint32_t,Clan *> Client::clanList;
 
 unsigned char *Client::characterIsRightFinalStepHeader=NULL;
 uint32_t Client::characterIsRightFinalStepHeaderSize=0;

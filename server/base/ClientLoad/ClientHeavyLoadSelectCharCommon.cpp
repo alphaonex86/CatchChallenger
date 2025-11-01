@@ -1,4 +1,5 @@
 #include "../Client.hpp"
+#include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryLogin.hpp"
 #include "../../general/base/CommonDatapack.hpp"
@@ -134,7 +135,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     if(!GlobalServerData::serverPrivateVariables.db_common->next())
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    if(simplifiedIdList.size()<1)
+    if(!ClientList::list->haveFreeSlot())
     {
         std::cerr << "Need more simplifiedIdList entry to log the character " << characterId << " (" << account_id_db << ")" << std::endl;
         character_id_db=0;
@@ -683,17 +684,15 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         hps::StreamInputBuffer s(in_file);
         s >> *this;
         public_and_private_informations.public_informations.pseudo=pseudo;
-        public_and_private_informations.public_informations.simplifiedId=simplifiedIdList.back();
-        simplifiedIdList.pop_back();
         selectCharacterQueryId.push_back(query_id);
     }
-    if(this->map==NULL)
+    if(this->mapIndex==65535)
     {
         std::cerr << "select char into FILE DB this->map==NULL (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
         return;
     }
-    characterIsRightFinalStep();
+    characterIsRightSendData();
     #else
     #error Define what do here
     #endif

@@ -151,17 +151,17 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
         characterIsRightWithParsedRescue(query_id,
             characterId,
-            serverProfileInternal.map,
+            serverProfileInternal.mapIndex,
             serverProfileInternal.x,
             serverProfileInternal.y,
             serverProfileInternal.orientation,
             //rescue
-            serverProfileInternal.map,
+            serverProfileInternal.mapIndex,
             serverProfileInternal.x,
             serverProfileInternal.y,
             serverProfileInternal.orientation,
             //last unvalidated
-            serverProfileInternal.map,
+            serverProfileInternal.mapIndex,
             serverProfileInternal.x,
             serverProfileInternal.y,
             serverProfileInternal.orientation

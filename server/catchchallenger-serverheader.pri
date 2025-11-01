@@ -2,7 +2,6 @@ DEFINES += TILED_ZLIB CATCHCHALLENGER_DYNAMIC_MAP_LIST
 LIBS += -lz
 
 HEADERS += \
-    $$PWD/base/MapManagement/ClientWithMap.hpp \
     $$PWD/base/VariableServer.hpp \
     $$PWD/base/NormalServerGlobal.hpp \
     $$PWD/base/GlobalServerData.hpp \

@@ -428,7 +428,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert_reemit(un
                     const ClientWithMap * const client=clientsToSendDataOldClients[index_subindex];
                     if(client->haveNewMove)
                     {
-                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput+0]=(uint8_t)client->public_and_private_informations.public_informations.simplifiedId_forMap;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+1]=(uint8_t)client->getX();
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+2]=(uint8_t)client->getY();
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+3]=(uint8_t)client->getLastDirection();
@@ -442,7 +442,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::send_samllreinsert_reemit(un
                     const ClientWithMap * const client=clientsToSendDataOldClients[index_subindex];
                     if(client->haveNewMove)
                     {
-                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId);
+                        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=(uint16_t)htole16((uint16_t)client->public_and_private_informations.public_informations.simplifiedId_forMap);
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+0]=(uint8_t)client->getX();
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+1]=(uint8_t)client->getY();
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput+sizeof(uint16_t)+2]=(uint8_t)client->getLastDirection();
