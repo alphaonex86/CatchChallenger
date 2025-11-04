@@ -807,77 +807,124 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         index++;
     }
 
-    //compressed block
-    if((size-pos)<(int)sizeof(uint32_t))
+    //map
     {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    sub_size32=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-    pos+=sizeof(uint32_t);
-    if((size-pos)<(int)sub_size32)
-    {
-        parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-        return false;
-    }
-    decompressedSize=0;
-    if(CompressionProtocol::compressionTypeClient==CompressionProtocol::CompressionType::None)
-    {
-        decompressedSize=sub_size32;
-        memcpy(CompressionProtocol::tempBigBufferForUncompressedInput,data+pos,sub_size32);
-    }
-    else
-        decompressedSize=CompressionProtocol::computeDecompression(data+pos,CompressionProtocol::tempBigBufferForUncompressedInput,sub_size32,
-            sizeof(CompressionProtocol::tempBigBufferForUncompressedInput),CompressionProtocol::compressionTypeClient);
-    {
-        const char * const data2=CompressionProtocol::tempBigBufferForUncompressedInput;
-        int pos2=0;
-        int size2=decompressedSize;
-
-        //alloc
-        if(player_informations.bot_already_beaten!=NULL)
+        if((size-pos)<(int)sizeof(uint16_t))
         {
-            delete[] player_informations.bot_already_beaten;
-            player_informations.bot_already_beaten=NULL;
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+            return false;
         }
-        player_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-        memset(player_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()<=0)
-             std::cerr << "CommonDatapackServerSpec::commonDatapackServerSpec.botFightsMaxId == 0, take care" << std::endl;
-
-        //bot
+        sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+        pos+=sizeof(uint16_t);
+        uint16_t index=0;
+        player_informations.mapData.clear();
+        while(index<sub_size16)
         {
-            if((size2-pos2)<(int)sizeof(uint16_t))
+            if((size-pos)<(int)sizeof(uint16_t))
             {
-                parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t sub_size16=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
-            pos2+=sizeof(uint16_t);
-            if(sub_size16>0)
+            const uint16_t mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
+
+            if((size-pos)<(int)sizeof(int8_t))
             {
-                if((size2-pos2)<sub_size16)
+                parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            uint8_t size8=data[pos];
+            pos+=sizeof(uint8_t);
+            uint8_t sub_index=0;
+            while(sub_index<size8)
+            {
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint8_t x=data[pos];
+                pos+=sizeof(uint8_t);
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint8_t y=data[pos];
+                pos+=sizeof(uint8_t);
+                std::pair<COORD_TYPE,COORD_TYPE> key(x,y);
+                player_informations.mapData[mapId].itemOnMap.insert(key);
+                sub_index++;
+            }
+
+            if((size-pos)<(int)sizeof(int8_t))
+            {
+                parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            size8=data[pos];
+            pos+=sizeof(uint8_t);
+            sub_index=0;
+            while(sub_index<size8)
+            {
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint8_t x=data[pos];
+                pos+=sizeof(uint8_t);
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint8_t y=data[pos];
+                PlayerPlant p;
+                pos+=sizeof(uint8_t);
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                p.plant=data[pos];
+                pos+=sizeof(uint8_t);
+                if((size-pos)<(int)sizeof(uint64_t))
                 {
                     parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation list size, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                if(sub_size16>CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1)
-                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-                else
-                    memcpy(player_informations.bot_already_beaten,CompressionProtocol::tempBigBufferForUncompressedInput+pos2,sub_size16);
-                pos2+=sub_size16;
+                p.mature_at=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
+                std::pair<COORD_TYPE,COORD_TYPE> key(x,y);
+                player_informations.mapData[mapId].plantOnMap.insert(key,p);
+                sub_index++;
             }
-        }
 
-        if(size2!=pos2)
-        {
-            parseError("Procotol wrong or corrupted","wrong size to get the in2.device()->size() "+
-                       std::to_string(size2)+" != pos2 "+
-                       std::to_string(pos2)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-            return false;
+            if((size-pos)<(int)sizeof(int8_t))
+            {
+                parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            size8=data[pos];
+            pos+=sizeof(uint8_t);
+            sub_index=0;
+            while(sub_index<size8)
+            {
+                if((size-pos)<(int)sizeof(int8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the reputation point, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                uint8_t bot_id=data[pos];
+                pos+=sizeof(uint8_t);
+                player_informations.mapData[mapId].bot_already_beaten.insert(bot_id);
+                sub_index++;
+            }
+
+            index++;
         }
     }
-    pos+=sub_size32;
 
     //item on map
     {

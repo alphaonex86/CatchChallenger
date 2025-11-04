@@ -332,46 +332,53 @@ void Client::characterIsRightSendData()
     }
 
     {
-        char *buffer;
-        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
-            buffer=ProtocolParsingBase::tempBigBufferForOutput+posOutput+4;
-        else
-            buffer=CompressionProtocol::tempBigBufferForCompressedOutput;
-        uint32_t posOutputTemp=0;
-        //bot
-        if(public_and_private_informations.bot_already_beaten!=NULL)
+        const uint16_t &mapDataSize=public_and_private_informations.mapData.size();
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapDataSize);
+        posOutput+=2;
+        for(const auto& pair : public_and_private_informations.mapData)
         {
-            const auto &binarySize=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1;
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=htole16(binarySize);
-            posOutputTemp+=2;
-            memcpy(buffer+posOutputTemp,public_and_private_informations.bot_already_beaten,binarySize);
-            posOutputTemp+=binarySize;
-        }
-        else
-        {
-            *reinterpret_cast<int16_t *>(buffer+posOutputTemp)=0;
-            posOutputTemp+=2;
-        }
+            const uint16_t &mapId=pair.first;
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapId);
+            posOutput+=2;
+            const Player_private_and_public_informations_Map &mapData=pair.second;
 
-        if(CompressionProtocol::compressionTypeServer==CompressionProtocol::CompressionType::None)
-        {
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(posOutputTemp);
-            posOutput+=4;
-            posOutput+=posOutputTemp;
-        }
-        else
-        {
-            //compress
-            const int32_t &compressedSize=CompressionProtocol::computeCompression(buffer,ProtocolParsingBase::tempBigBufferForOutput+posOutput+4,posOutputTemp,sizeof(ProtocolParsingBase::tempBigBufferForOutput)-posOutput-1-4,CompressionProtocol::compressionTypeServer);
-            if(compressedSize<0)
+            uint8_t size8=mapData.itemOnMap.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
+            posOutput+=1;
+            for(std::pair<COORD_TYPE,COORD_TYPE> key : mapData.itemOnMap)
             {
-                errorOutput("Error to compress the data");
-                return;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key.first;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key.second;
+                posOutput+=1;
             }
-            //copy
-            *reinterpret_cast<int32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(compressedSize);
-            posOutput+=4;
-            posOutput+=compressedSize;
+
+            size8=mapData.plantOnMap.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
+            posOutput+=1;
+            for(const auto& planKey : mapData.plantOnMap)
+            {
+                const std::pair<COORD_TYPE,COORD_TYPE> &pos=planKey.first;
+                const PlayerPlant &plant=planKey.second;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=pos.first;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=pos.second;
+                posOutput+=1;
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=plant.plant;
+                posOutput+=1;
+                const uint64_t &mature_at=plant.mature_at;
+                *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(mature_at);
+                posOutput+=8;
+            }
+
+            size8=mapData.bot_already_beaten.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
+            posOutput+=1;
+            for(CATCHCHALLENGER_TYPE_BOTID key : mapData.bot_already_beaten)
+            {
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key;
+                posOutput+=1;
+            }
         }
     }
 
