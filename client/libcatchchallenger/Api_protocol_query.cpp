@@ -33,44 +33,16 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
         //Teleport the player
         case 0xE1:
         {
-            uint32_t mapId;
-            if(number_of_map==0)
+            uint16_t mapId=0;
+            
+            if((size-pos)<(unsigned int)sizeof(uint16_t))
             {
-                parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            else if(number_of_map<=255)
-            {
-                if((size-pos)<(unsigned int)sizeof(uint8_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
-                }
-                uint8_t mapTempId=data[pos];
-                pos+=sizeof(uint8_t);
-                mapId=mapTempId;
-            }
-            else if(number_of_map<=65535)
-            {
-                if((size-pos)<(unsigned int)sizeof(uint16_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
-                }
-                uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-                pos+=sizeof(uint16_t);
-                mapId=mapTempId;
-            }
-            else
-            {
-                if((size-pos)<(unsigned int)sizeof(uint32_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
-                }
-                mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-                pos+=sizeof(uint32_t);
-            }
+            uint16_t mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            pos+=sizeof(uint16_t);
+                
             uint8_t x,y;
             if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
             {

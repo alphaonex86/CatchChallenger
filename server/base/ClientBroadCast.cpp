@@ -1,8 +1,8 @@
 #include "Client.hpp"
+#include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "PreparedDBQuery.hpp"
-#include "StaticText.hpp"
 #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "LinkToMaster.hpp"
@@ -40,45 +40,50 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-    const size_t &size=clientBroadCastList.size();
+    const size_t &size=ClientList::list->size();
     unsigned int index=0;
     if(!playerInclude)
+    {
         while(index<size)
         {
-            Client * const client=clientBroadCastList.at(index);
-            if(client!=this)
-                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            if(!ClientList::list->empty(index) && index!=index_connected_player)
+                ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
+    }
     else
+    {
         while(index<size)
         {
-            Client * const client=clientBroadCastList.at(index);
-            client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            if(!ClientList::list->empty(index))
+                ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             index++;
         }
+    }
 }
 
-void Client::clanChangeWithoutDb(const uint32_t &clanId)
+void Client::clanChangeWithoutDb(const CLAN_ID_TYPE &clanId)
 {
-    if(clan!=NULL)
+    //if into clan, remove
+    if(public_and_private_informations.clan!=0)
     {
-        vectorremoveOne(clan->connected_players,this);
-        if(clan->connected_players.empty())
+        if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())
         {
-            clanList.erase(public_and_private_informations.clan);
-            delete clan;
+            Clan &clan=GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan];
+            vectorremoveOne(clan.connected_players,index_connected_player);
+            if(clan.connected_players.empty())
+                GlobalServerData::serverPrivateVariables.clanList.erase(public_and_private_informations.clan);
+            public_and_private_informations.clan=0;
         }
-        clan=NULL;
-        public_and_private_informations.clan=0;
     }
+    //if enter into new clan insert
     if(clanId>0)
     {
-        if(clanList.find(clanId)!=clanList.cend())
+        if(GlobalServerData::serverPrivateVariables.clanList.find(clanId)!=GlobalServerData::serverPrivateVariables.clanList.cend())
         {
+            Clan &clan=GlobalServerData::serverPrivateVariables.clanList[clanId];
             public_and_private_informations.clan=clanId;
-            clan=clanList[clanId];
-            clan->connected_players.push_back(this);
+            clan.connected_players.push_back(index_connected_player);
         }
         else
             errorOutput("Clan not found for insert");
@@ -94,25 +99,30 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
     }
     if(privateChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
         return false;
+    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return false;
     privateChatDrop.incrementLastValue();
     if(this->public_and_private_informations.public_informations.pseudo==pseudo)
     {
         errorOutput("Can't send them self the PM");
         return false;
     }
-    if(playerByPseudo.find(pseudo)==playerByPseudo.cend())
+    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(pseudo);
+    if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         receiveSystemText("unable to found the connected player: pseudo: \""+pseudo+"\"",false);
-        if(GlobalServerData::serverSettings.anonymous)
+        /*if(GlobalServerData::serverSettings.anonymous)
             normalOutput(std::to_string(character_id_db)+" have try send message to not connected user");
         else
-            normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);
-        return true;
+            normalOutput(this->public_and_private_informations.public_informations.pseudo+" have try send message to not connected user: "+pseudo);*/
+        return false;
     }
+    if(ClientList::list->empty(index))
+        return false;
     if(!GlobalServerData::serverSettings.anonymous)
         normalOutput("[chat PM]: "+this->public_and_private_informations.public_informations.pseudo+" -> "+pseudo+": "+text);
-    playerByPseudo.at(pseudo)->receiveChatText(Chat_type_pm,text,this);
-    return false;
+    ClientList::list->rw(index).receiveChatText(Chat_type_pm,text,*this);
+    return true;
 }
 
 bool Client::receiveChatText(const Chat_type &chatType, const std::string &text, const Client &sender_informations)
@@ -136,7 +146,7 @@ bool Client::receiveChatText(const Chat_type &chatType, const std::string &text,
         posOutput+=text.size();
     }
     {
-        const std::string &text=sender_informations->public_and_private_informations.public_informations.pseudo;
+        const std::string &text=sender_informations.public_and_private_informations.public_informations.pseudo;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
@@ -145,7 +155,7 @@ bool Client::receiveChatText(const Chat_type &chatType, const std::string &text,
     if(GlobalServerData::serverSettings.dontSendPlayerType)
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
     else
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)sender_informations->public_and_private_informations.public_informations.type;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)sender_informations.public_and_private_informations.public_informations.type;
     posOutput+=1;
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
@@ -199,47 +209,53 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
         if(clanChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessageLocalClan)
             return false;
         clanChatDrop.incrementLastValue();
-        if(clan==0)
+        if(public_and_private_informations.clan==0)
             errorOutput("Unable to chat with clan, you have not clan");
         else
         {
-            if(!GlobalServerData::serverSettings.anonymous)
-                normalOutput("[chat] "+public_and_private_informations.public_informations.pseudo+
-                             ": To the clan "+clan->name+": "+text
-                            );
-            const std::vector<Client *> &playerWithSameClan = clan->connected_players;
-
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
-            posOutput+=1;
+            if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
             {
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
+                const Clan &clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
+                if(!GlobalServerData::serverSettings.anonymous)
+                    normalOutput("[chat] "+public_and_private_informations.public_informations.pseudo+
+                                 ": To the clan "+clan.name+": "+text
+                                );
+
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)chatType;
                 posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
-            }
-            {
-                const std::string &text=public_and_private_informations.public_informations.pseudo;
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
+                {
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                {
+                    const std::string &text=public_and_private_informations.public_informations.pseudo;
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
+                    posOutput+=1;
+                    memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
+                    posOutput+=text.size();
+                }
+                if(GlobalServerData::serverSettings.dontSendPlayerType)
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
+                else
+                    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)public_and_private_informations.public_informations.type;
                 posOutput+=1;
-                memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
-                posOutput+=text.size();
-            }
-            if(GlobalServerData::serverSettings.dontSendPlayerType)
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)Player_type_normal;
-            else
-                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)public_and_private_informations.public_informations.type;
-            posOutput+=1;
 
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
+                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-            const size_t &size=playerWithSameClan.size();
-            unsigned int index=0;
-            while(index<size)
-            {
-                Client * const client=playerWithSameClan.at(index);
-                if(client!=this)
-                    client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                index++;
+                const size_t &size=clan.connected_players.size();
+                unsigned int index=0;
+                while(index<size)
+                {
+                    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_player=clan.connected_players.at(index);
+                    if(index_player!=index_connected_player)
+                    {
+                        if(!ClientList::list->empty(index_player))
+                            ClientList::list->rw(index_player).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    }
+                    index++;
+                }
             }
         }
         return true;
@@ -277,13 +293,15 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
 
-        const size_t &size=clientBroadCastList.size();
+        const size_t &size=ClientList::list->size();
         unsigned int index=0;
         while(index<size)
         {
-            Client * const client=clientBroadCastList.at(index);
-            if(client!=this)
-                client->sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            if(index!=index_connected_player)
+            {
+                if(!ClientList::list->empty(index))
+                    ClientList::list->rw(index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            }
             index++;
         }
         return true;
@@ -306,23 +324,23 @@ void Client::receive_instant_player_number(const uint16_t &connected_players, co
 
 void Client::sendBroadCastCommand(const std::string &command,const std::string &extraText)
 {
-    normalOutput(StaticText::text_command+command+StaticText::text_space+extraText);
-    if(command==StaticText::text_chat)
+    normalOutput("command: "+command+" "+extraText);
+    if(command=="chat")
     {
         std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()<2)
         {
-            receiveSystemText(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
-            normalOutput(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
+            receiveSystemText("command not understand"+command+" "+extraText);
+            normalOutput("command not understand"+command+" "+extraText);
             return;
         }
-        if(list.front()==StaticText::text_system)
+        if(list.front()=="system")
         {
             list.erase(list.begin());
             sendChatText(Chat_type_system,stringimplode(list,' '));
             return;
         }
-        if(list.front()==StaticText::text_system_important)
+        if(list.front()=="system_important")
         {
             list.erase(list.begin());
             sendChatText(Chat_type_system_important,stringimplode(list,' '));
@@ -330,112 +348,105 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         }
         else
         {
-            receiveSystemText(StaticText::text_commandnotunderstand+extraText);
-            normalOutput(StaticText::text_commandnotunderstand+extraText);
+            receiveSystemText("command not understand"+extraText);
+            normalOutput("command not understand"+extraText);
             return;
         }
     }
-    else if(command==StaticText::text_setrights)
+    else if(command=="setrights")
     {
         std::vector<std::string> list=stringsplit(extraText,' ');
         if(list.size()!=2)
         {
-            receiveSystemText(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
-            normalOutput(StaticText::text_commandnotunderstand+command+StaticText::text_space+extraText);
+            receiveSystemText("command not understand"+command+" "+extraText);
+            normalOutput("command not understand"+command+" "+extraText);
             return;
         }
-        if(playerByPseudo.find(list.front())==playerByPseudo.cend())
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(list.front());
+        if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
-            receiveSystemText(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
-            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
+            receiveSystemText("unable to found the connected player: pseudo: \""+list.front()+"\"",false);
             return;
         }
-        Client * client=playerByPseudo.at(list.front());
-        if(client==NULL)
-        {
-            std::cerr << "Internal bug for setrights, client is NULL" << std::endl;
-            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
+        if(ClientList::list->empty(index))
             return;
-        }
-        if(list.back()==StaticText::text_normal)
-            client->setRights(Player_type_normal);
-        else if(list.back()==StaticText::text_premium)
-            client->setRights(Player_type_premium);
-        else if(list.back()==StaticText::text_gm)
-            client->setRights(Player_type_gm);
-        else if(list.back()==StaticText::text_dev)
-            client->setRights(Player_type_dev);
+        if(list.back()=="normal")
+            ClientList::list->rw(index).setRights(Player_type_normal);
+        else if(list.back()=="premium")
+            ClientList::list->rw(index).setRights(Player_type_premium);
+        else if(list.back()=="gm")
+            ClientList::list->rw(index).setRights(Player_type_gm);
+        else if(list.back()=="dev")
+            ClientList::list->rw(index).setRights(Player_type_dev);
         else
         {
-            receiveSystemText(StaticText::text_unabletofoundthisrightslevel+list.back());
-            normalOutput(StaticText::text_unabletofoundthisrightslevel+list.back());
+            receiveSystemText("Unable to found into allowed list:  \"normal\", \"premium\", \"dev\", \"gm\", this rights level: "+list.back());
+            normalOutput("Unable to found into allowed list:  \"normal\", \"premium\", \"dev\", \"gm\", this rights level: "+list.back());
             return;
         }
     }
-    else if(command==StaticText::text_playerlist)
+    else if(command=="playerlist")
     {
         if(!GlobalServerData::serverSettings.sendPlayerNumber)
         {
-            receiveSystemText(StaticText::text_forbidenonthisserver);
+            receiveSystemText("This is forbidden on this server!");
             return;
         }
-        /*if(playerByPseudo.size()==1)
-            receiveSystemText(StaticText::text_Youarealoneontheserver);
-        else*/ if(playerByPseudo.size()>200)
+        if(ClientList::list->connected_size()>200)
         {
-            receiveSystemText(StaticText::text_toolongplayerlist);
+            receiveSystemText("Too long player list to be send!");
             return;
         }
         else
         {
             uint16_t textSize=0;
             std::vector<std::string> playerStringList;
-            auto i=playerByPseudo.begin();
-            while(i!=playerByPseudo.cend())
+            SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
+            while(index<ClientList::list->size())
             {
-                const std::string &pseudo=i->second->public_and_private_informations.public_informations.pseudo;
-                textSize+=3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
-                if(textSize>5000)
+                if(!ClientList::list->empty(index))
                 {
-                    receiveSystemText(StaticText::text_toolongplayerlist);
-                    return;
+                    const std::string &pseudo=ClientList::list->at(index).public_and_private_informations.public_informations.pseudo;
+                    textSize+=3/*text_startbold*/+pseudo.size()+4/*text_stopbold*/+2/*text_commaspace*/;
+                    if(textSize>5000)
+                    {
+                        receiveSystemText("Too long player list to be send!");
+                        return;
+                    }
+                    playerStringList.push_back("<b>"+pseudo+"</b>");
                 }
-                playerStringList.push_back(StaticText::text_startbold+pseudo+StaticText::text_stopbold);
-                ++i;
+                index++;
             }
-            receiveSystemText(StaticText::text_playersconnectedspace+stringimplode(playerStringList,StaticText::text_commaspace));
+            receiveSystemText("players connected "+stringimplode(playerStringList,", "));
         }
         return;
     }
-    else if(command==StaticText::text_playernumber)
+    else if(command=="playernumber")
     {
         if(!GlobalServerData::serverSettings.sendPlayerNumber)
         {
-            receiveSystemText(StaticText::text_forbidenonthisserver);
+            receiveSystemText("This is forbidden on this server!");
             return;
         }
-        if(playerByPseudo.size()==1)
-            receiveSystemText(StaticText::text_Youarealoneontheserver);
+        if(ClientList::list->connected_size()==1)
+            receiveSystemText("You are alone on the server!");
         else
-            receiveSystemText(StaticText::text_startbold+std::to_string(playerByPseudo.size())+StaticText::text_stopbold+StaticText::text_playersconnected);
+            receiveSystemText("<b>"+std::to_string(ClientList::list->connected_size())+"</b> players connected");
         return;
     }
-    else if(command==StaticText::text_kick)
+    else if(command=="kick")
     {
-        //drop, and do the command here to separate the loop
-        if(playerByPseudo.find(extraText)==playerByPseudo.cend())
-        {
-            receiveSystemText(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
-            normalOutput(StaticText::text_unabletofoundtheconnectedplayertokick+extraText);
+        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
             return;
-        }
-        Client * const player=playerByPseudo.at(extraText);
-        player->kick();
-        sendSystemMessage(extraText+StaticText::text_havebeenkickedby+public_and_private_informations.public_informations.pseudo,false,true);
+        if(ClientList::list->empty(index))
+            return;
+        ClientList::list->rw(index).kick();
+        sendSystemMessage(extraText+" have been kicked by "+public_and_private_informations.public_informations.pseudo,false,true);
         return;
     }
     #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
-    else if(command==StaticText::text_debug)
+    else if(command=="debug")
     {
         if(extraText=="moreid")
         {

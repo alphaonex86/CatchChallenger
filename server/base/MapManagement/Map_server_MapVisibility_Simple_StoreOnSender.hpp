@@ -21,17 +21,14 @@ public:
     virtual ~Map_server_MapVisibility_Simple_StoreOnSender();
     void purgeBuffer();
 
-    void send_dropAll();
+    //void send_dropAll();
     void send_reinsertAll();
-    void send_pingAll();
-    void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
-    void send_insert_exclude();
-    void send_remove(unsigned int &clientsToSendDataSizeOldClients);
-    void send_samllreinsert_reemit(unsigned int &clientsToSendDataSizeOldClients);
-    void send_insertcompose_header(char *buffer,int &posOutput);
-    void send_insertcompose_map(char *buffer,int &posOutput);
-    void send_insertcompose_playercount(char *buffer,int &posOutput);
-    void send_insertcompose_content_and_send(char *buffer,int &posOutput);
+    //void send_SYNCAll();
+    //void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
+    // broadcast all, no filter then resend same data
+    void min_CPU();
+    // filter if already send, then consume CPU
+    void min_network();
 
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map
@@ -53,9 +50,6 @@ public:
      */
     //size set via MapServer::mapListSize, NO holes, map valid and exists, NOT map_list.size() to never load the path
     static std::vector<Map_server_MapVisibility_Simple_StoreOnSender> flat_map_list;//std::vector<CommonMap *> will request 2x more memory fetch, one to get the pointer, one to get the data. With the actual pointer, just get the data, need one list for server and multiple list for client
-
-    //mostly less remove than don't remove
-    bool show;
 };
 }
 

@@ -21,15 +21,10 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     //if display 0 or 1 player mean just display them self
     if(!GlobalServerData::serverSettings.mapVisibility.simple.max<2)
         return;
-    if(Map_server_MapVisibility_Simple_StoreOnSender::map_to_update==nullptr)
-        return;
     unsigned int index=0;
-    const unsigned int &list_size=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size;
-    while(index<list_size)
+    while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
     {
-        Map_server_MapVisibility_Simple_StoreOnSender * const map=Map_server_MapVisibility_Simple_StoreOnSender::map_to_update[index];
-        map->purgeBuffer();
+        Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).purgeBuffer();
         index++;
     }
-    Map_server_MapVisibility_Simple_StoreOnSender::map_to_update_size=0;
 }

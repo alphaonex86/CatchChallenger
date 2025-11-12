@@ -71,51 +71,27 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
         //Get shop list
         case 0x87:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint16_t))
-            {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                return false;
-            }
-            #endif
-            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            getShopList(queryNumber,shopId);
+            getShopList(queryNumber);
             return true;
         }
         break;
         //Buy object
         case 0x88:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
-            {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                return false;
-            }
-            #endif
-            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
-            buyObject(queryNumber,shopId,objectId,quantity,price);
+            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
+            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)+sizeof(uint32_t))));
+            buyObject(queryNumber,objectId,quantity,price);
             return true;
         }
         break;
         //Sell object
         case 0x89:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint16_t)*2+sizeof(uint32_t)*2)
-            {
-                errorOutput("wrong size with the main ident: "+std::to_string(packetCode)+", data: "+binarytoHexa(data,size));
-                return false;
-            }
-            #endif
-            const SHOP_TYPE &shopId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data+sizeof(uint16_t))));
-            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2)));
-            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)*2+sizeof(uint32_t))));
-            sellObject(queryNumber,shopId,objectId,quantity,price);
+            const uint16_t &objectId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
+            const uint32_t &quantity=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t))));
+            const uint32_t &price=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+sizeof(uint16_t)+sizeof(uint32_t))));
+            sellObject(queryNumber,objectId,quantity,price);
             return true;
         }
         break;

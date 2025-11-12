@@ -52,12 +52,10 @@ SOURCES += \
     $$PWD/base/ClientBroadCast.cpp \
     $$PWD/base/MapServer.cpp \
     $$PWD/base/BroadCastWithoutSender.cpp \
+    $$PWD/base/MapManagement/ClientWithMap.cpp \
     $$PWD/base/MapManagement/ClientMapManagement.cpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.cpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.cpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.cpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.cpp \
-    $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.cpp \
     $$PWD/base/MapManagement/MapBasicMove.cpp \
     $$PWD/base/DictionaryLogin.cpp \
     $$PWD/base/DictionaryServer.cpp \
