@@ -1108,7 +1108,7 @@ void Api_protocol::takeAnObjectOnMap()
     packOutcommingData(0x18,NULL,0);
 }
 
-void Api_protocol::getShopList(const uint16_t &shopId)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+void Api_protocol::getShopList(const uint16_t &mapId)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {
@@ -1120,13 +1120,10 @@ void Api_protocol::getShopList(const uint16_t &shopId)/// \see CommonMap, std::u
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2];
-    const uint16_t &shopIdLittleEndian=htole16(shopId);
-    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
-    packOutcommingQuery(0x87,queryNumber(),buffer,sizeof(buffer));
+    packOutcommingQuery(0x87,queryNumber(),NULL,0);
 }
 
-void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+void Api_protocol::buyObject(const uint16_t &mapId,const uint8_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {
@@ -1138,19 +1135,17 @@ void Api_protocol::buyObject(const uint16_t &shopId, const uint16_t &objectId, c
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2+2+4+4];
-    const uint16_t &shopIdLittleEndian=htole16(shopId);
-    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
+    char buffer[2+4+4];
     const uint16_t &objectIdLittleEndian=htole16(objectId);
-    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    memcpy(buffer,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
     const uint32_t &quantityLittleEndian=htole32(quantity);
-    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    memcpy(buffer+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
     const uint32_t &priceLittleEndian=htole32(price);
-    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    memcpy(buffer+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
     packOutcommingQuery(0x88,queryNumber(),buffer,sizeof(buffer));
 }
 
-void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+void Api_protocol::sellObject(const uint16_t &mapId,const uint8_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 {
     if(!is_logged)
     {
@@ -1162,15 +1157,13 @@ void Api_protocol::sellObject(const uint16_t &shopId,const uint16_t &objectId,co
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2+2+4+4];
-    const uint16_t &shopIdLittleEndian=htole16(shopId);
-    memcpy(buffer,&shopIdLittleEndian,sizeof(shopIdLittleEndian));
+    char buffer[2+4+4];
     const uint16_t &objectIdLittleEndian=htole16(objectId);
-    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    memcpy(buffer,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
     const uint32_t &quantityLittleEndian=htole32(quantity);
-    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    memcpy(buffer+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
     const uint32_t &priceLittleEndian=htole32(price);
-    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    memcpy(buffer+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
     packOutcommingQuery(0x89,queryNumber(),buffer,sizeof(buffer));
 }
 
@@ -1270,7 +1263,7 @@ void Api_protocol::heal()
     packOutcommingData(0x0B,NULL,0);
 }
 
-void Api_protocol::requestFight(const uint16_t &fightId)
+void Api_protocol::requestFight(const uint16_t &mapId,const uint16_t &fightId)
 {
     if(!is_logged)
     {
@@ -1287,19 +1280,10 @@ void Api_protocol::requestFight(const uint16_t &fightId)
         newError(std::string("Internal problem"),std::string("in trade to change on monster"));
         return;
     }
-    if(player_informations.bot_already_beaten==NULL)
-    {
-        std::cerr << "player_informations.bot_already_beaten==NULL, line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        abort();
-    }
-    if(player_informations.bot_already_beaten[fightId/8] & (1<<(7-fightId%8)))
-    {
-        std::cerr << "player_informations.bot_already_beaten["+std::to_string(fightId)+"], line: " << __FILE__ << ": " << __LINE__ << std::endl;
-        abort();
-    }
-    char buffer[2];
-    const uint16_t &fightIdLittleEndian=htole16(fightId);
-    memcpy(buffer,&fightIdLittleEndian,sizeof(fightIdLittleEndian));
+    char buffer[3];
+    buffer[0]=fightId;
+    const uint16_t &fightIdLittleEndian=htole16(mapId);
+    memcpy(buffer+1,&fightIdLittleEndian,sizeof(fightIdLittleEndian));
     packOutcommingData(0x0C,buffer,sizeof(buffer));
 }
 

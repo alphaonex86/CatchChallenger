@@ -327,7 +327,7 @@ private:
     //normal slots
     void sendSystemMessage(const std::string &text,const bool &important=false,const bool &playerInclude=false);
     //clan
-    void clanChangeWithoutDb(const uint32_t &clanId);
+    void clanChangeWithoutDb(const CLAN_ID_TYPE &clanId);
 
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     bool askLogin(const uint8_t &query_id, const char *rawdata);

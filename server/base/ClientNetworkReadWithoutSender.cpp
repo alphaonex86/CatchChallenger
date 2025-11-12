@@ -1,4 +1,5 @@
 #include "ClientNetworkReadWithoutSender.hpp"
+#include "ClientList.hpp"
 #include "Client.hpp"
 
 using namespace CatchChallenger;
@@ -10,12 +11,12 @@ void ClientNetworkReadWithoutSender::doDDOSAction()
 {
     if(CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE>0)
     {
-        const size_t &size=Client::clientBroadCastList.size();
+        const size_t &size=ClientList::list->size();
         unsigned int index=0;
         while(index<size)
         {
-            Client *c=Client::clientBroadCastList.at(index);
-            c->doDDOSCompute();
+            if(!ClientList::list->empty(index))
+                ClientList::list->rw(index).doDDOSCompute();
             index++;
         }
     }

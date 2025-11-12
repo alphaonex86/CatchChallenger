@@ -1,7 +1,8 @@
 #include "Client.hpp"
+#include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-#include "BaseServerLogin.hpp"
+#include "BaseServer/BaseServerLogin.hpp"
 #endif
 #include <cstring>
 
@@ -33,7 +34,7 @@ void Client::sendNewEvent(char * const data, const uint32_t &size)
     queryNumberList.pop_back();
 }
 
-void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, constuint8_t &x, constuint8_t &y, const Orientation &orientation)
+void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const uint8_t &x, const uint8_t &y, const Orientation &orientation)
 {
     if(queryNumberList.empty())
     {
@@ -41,7 +42,7 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, constuint8_t
         return;
     }
     PlayerOnMap teleportationPoint;
-    teleportationPoint.map=mapIndex;
+    teleportationPoint.mapIndex=mapIndex;
     teleportationPoint.x=x;
     teleportationPoint.y=y;
     teleportationPoint.orientation=orientation;
@@ -53,25 +54,13 @@ void Client::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, constuint8_t
     registerOutputQuery(queryNumberList.back(),0xE1);
     queryNumberList.pop_back();
 
-    if(CommonMap::flat_map_list_count<=255)
-    {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/1+1+1+1);//set the dynamic size
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+0]=static_cast<uint8_t>(mapIndex->id);
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+1]=x;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=y;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=(uint8_t)orientation;
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/1+1+1+1);
-    }
-    else
-    {
-        *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/2+1+1+1);//set the dynamic size
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(mapIndex->id);
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
-        ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
+    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(/*map:*/2+1+1+1);//set the dynamic size
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1+4)=htole16(mapIndex);
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+4+2]=x;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+4+3]=y;
+    ProtocolParsingBase::tempBigBufferForOutput[1+1+4+4]=(uint8_t)orientation;
 
-        sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/2+1+1+1);
-    }
+    sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,1+1+4+/*map:*/2+1+1+1);
 }
 
 void Client::sendTradeRequest(char * const data,const uint32_t &size)
@@ -131,7 +120,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
                 removeFromQueryReceived(queryNumber);
                 #endif
                 inputQueryNumberToPacketCode[queryNumber]=0;
-                if(GlobalServerData::serverPrivateVariables.connected_players>=GlobalServerData::serverSettings.max_players)
+                if(!ClientList::list->haveFreeSlot())
                 {
                     *(Client::protocolReplyServerFull+1)=queryNumber;
                     internalSendRawSmallPacket(reinterpret_cast<char *>(Client::protocolReplyServerFull),sizeof(Client::protocolReplyServerFull));
@@ -438,9 +427,12 @@ bool Client::parseReplyData(const uint8_t &packetCode,const uint8_t &queryNumber
         break;
         //teleportation
         case 0xE1:
+        {
             normalOutput("teleportValidatedTo() from protocol");
-            teleportValidatedTo(lastTeleportation.front().map,lastTeleportation.front().x,lastTeleportation.front().y,lastTeleportation.front().orientation);
+            const PlayerOnMap lTeleportation=lastTeleportation.front();
+            teleportValidatedTo(lTeleportation.mapIndex,lTeleportation.x,lTeleportation.y,lTeleportation.orientation);
             lastTeleportation.pop();
+        }
         break;
         //Event change
         case 0xE2:

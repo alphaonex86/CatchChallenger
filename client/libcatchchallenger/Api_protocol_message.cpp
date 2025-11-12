@@ -40,10 +40,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
     }
     switch(packetCode)
     {
-        //Insert player on map, need be delayed if number_of_map==0
+        //Insert player on map, need be delayed if no map loaded
         case 0x6B:
         {
-            if(!character_selected || number_of_map==0)
+            if(!character_selected)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -62,34 +62,15 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             int index=0;
             while(index<mapListSize)
             {
-                CATCHCHALLENGER_TYPE_MAPID mapId;
-                if(number_of_map==0)
+                CATCHCHALLENGER_TYPE_MAPID mapId=0;
+
+                if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                else if(number_of_map<=255)
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint8_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint8_t mapTempId=data[pos];
-                    pos+=sizeof(uint8_t);
-                    mapId=mapTempId;
-                }
-                else
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint16_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint16_t mapTempId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-                    pos+=sizeof(uint16_t);
-                    mapId=mapTempId;
-                }
+                mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
 
                 uint16_t playerSizeList;
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
@@ -250,7 +231,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                            " CommonSettingsServer::commonSettingsServer.forcedSpeed: "+std::to_string((unsigned int)CommonSettingsServer::commonSettingsServer.forcedSpeed)+
                            " max_players: "+std::to_string((unsigned int)max_players)+
                            " character_selected: "+std::to_string((unsigned int)character_selected)+
-                           " number_of_map: "+std::to_string((unsigned int)number_of_map)+
                            " player_informations.public_informations.simplifiedId: "+std::to_string((unsigned int)player_informations.public_informations.simplifiedId)+
                            " last_direction_is_set: "+std::to_string((unsigned int)last_direction_is_set)
                            );
@@ -262,7 +242,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         case 0x68:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected || number_of_map==0)
+            if(!character_selected)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -342,7 +322,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         case 0x69:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected || number_of_map==0)
+            if(!character_selected)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -444,7 +424,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         case 0x66:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected || number_of_map==0)
+            if(!character_selected)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -516,7 +496,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         case 0x67:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
-            if(!character_selected || number_of_map==0)
+            if(!character_selected)
             {
                 //because befine max_players
                 DelayedMessage delayedMessageTemp;
@@ -536,32 +516,15 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             while(index<mapListSize)
             {
                 CATCHCHALLENGER_TYPE_MAPID mapId;
-                if(number_of_map==0)
+
+                if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Internal error","number_of_map==0 with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                else if(number_of_map<=255)
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint8_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint8_t mapTempId=data[pos];
-                    pos+=sizeof(uint8_t);
-                    mapId=mapTempId;
-                }
-                else
-                {
-                    if((size-pos)<(unsigned int)sizeof(uint32_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    mapId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-                    pos+=sizeof(uint32_t);
-                }
+                mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                pos+=sizeof(uint16_t);
+
                 uint16_t playerSizeList;
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
