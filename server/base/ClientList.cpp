@@ -30,7 +30,7 @@ void ClientList::remove(const Client &client)
     }
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::global_clients_list_bypseudo(const std::string &pseudo)//return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX if not found
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::global_clients_list_bypseudo(const std::string &pseudo) const//return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX if not found
 {
     if(playerByPseudo.find(pseudo)==playerByPseudo.cend())
         return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;

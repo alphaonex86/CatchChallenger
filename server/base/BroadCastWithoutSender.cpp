@@ -1,5 +1,6 @@
 #include "BroadCastWithoutSender.hpp"
 #include "Client.hpp"
+#include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 
 using namespace CatchChallenger;
@@ -16,7 +17,7 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
 {
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        if(Client::clientBroadCastList.empty())
+        if(ClientList::list->connected_size()<1)
             return;
 
         uint8_t outputSize;
@@ -35,9 +36,10 @@ void BroadCastWithoutSender::receive_instant_player_number(const int16_t &connec
         #ifdef DEBUG_MESSAGE_CLIENT_RAW_NETWORK
         std::cout << "Send to " << Client::clientBroadCastList.size() << " players: " << binarytoHexa(reinterpret_cast<char *>(bufferSendPlayer),outputSize) << std::endl;
         #endif
-        while(index<Client::clientBroadCastList.size())
+        while(index<ClientList::list->size())
         {
-            Client::clientBroadCastList.at(index)->receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);
+            if(!ClientList::list->empty(index))
+                ClientList::list->rw(index).receive_instant_player_number(connected_players,reinterpret_cast<char *>(bufferSendPlayer),outputSize);
             index++;
         }
     }
@@ -51,14 +53,16 @@ void BroadCastWithoutSender::timeRangeEventTrigger()
         return;
     uint32_t updatedClient=0;
     unsigned int index=0;
-    while(index<Client::clientBroadCastList.size())
+    while(index<ClientList::list->size())
     {
-        Client *client=Client::clientBroadCastList.at(index);
-        if(client->triggerDaillyGift(Client::timeRangeEventTimestamps))
+        if(!ClientList::list->empty(index))
         {
-            updatedClient++;
-            if(updatedClient==10)
-                return;
+            if(ClientList::list->rw(index).triggerDaillyGift(Client::timeRangeEventTimestamps))
+            {
+                updatedClient++;
+                if(updatedClient==10)
+                    return;
+            }
         }
         index++;
     }

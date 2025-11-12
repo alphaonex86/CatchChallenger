@@ -16,9 +16,7 @@
 
 namespace CatchChallenger {
 class MapVisibilityAlgorithm_Simple_StoreOnReceiver;
-class ClientWithMap;
 class Client;
-class Map_server_MapVisibility_Simple_StoreOnSender;
 
 class MapServer : public CommonMap, public MapServerCrafting
 {
@@ -29,7 +27,7 @@ public:
     bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text) override;
     bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text) override;
     bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step) override;
-    static unsigned int playerToFullInsert(const Client * const player, char * const bufferForOutput);
+    static unsigned int playerToFullInsert(const Client &player, char * const bufferForOutput);
 
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
     uint8_t localChatDropTotalCache;
@@ -206,13 +204,13 @@ public:
     #endif
 };
 
-class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer
+/*class Map_server_MapVisibility_Simple_StoreOnReceiver : public MapServer
 {
 public:
     std::vector<MapVisibilityAlgorithm_Simple_StoreOnReceiver *> clients;//manipulated by thread of ClientMapManagement()
 
     bool show;
-};
+};*/
 }
 
 #endif

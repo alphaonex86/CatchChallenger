@@ -391,92 +391,19 @@ void Client::characterIsRightSendData()
             std::cerr << t.datapack_index_item << " " << t.map->id << " " << t.x << " " << t.y << " " << std::endl;
     }*/
 
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.itemOnMap.size());
-    posOutput+=2;
-    {
-        auto i=public_and_private_informations.itemOnMap.begin();
-        while (i!=public_and_private_informations.itemOnMap.cend())
-        {
-            /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size()<=*i)
-            {
-                std::cerr << "DictionaryServer::dictionary_pointOnMap_item_database_to_internal<=*i" << std::endl;
-                abort();
-            }
-            #endif
-            const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(*i).datapack_index_item;
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
-            posOutput+=2;
-            ++i;
-        }
-    }
-
-    const auto &time=sFrom1970();
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.plantOnMap.size());
-    posOutput+=2;
-    auto i=public_and_private_informations.plantOnMap.begin();
-    while(i!=public_and_private_informations.plantOnMap.cend())
-    {
-        /** \warning can have entry in database but not into datapack, deleted. Used only to send to player the correct pos */
-        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=i->first)
-        {
-            std::cerr << "DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size()<=i->first" << std::endl;
-            abort();
-        }
-        #endif
-        const uint16_t &pointOnMapOnlyIntoDatapackIndex=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(i->first).datapack_index_plant;
-        const PlayerPlant &playerPlant=i->second;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(pointOnMapOnlyIntoDatapackIndex);
-        posOutput+=2;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=playerPlant.plant;
-        posOutput+=1;
-        /// \todo Can essaylly int 16 ovbertflow
-        if(time<playerPlant.mature_at)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(playerPlant.mature_at-time);
-        else
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=0;
-        posOutput+=2;
-        ++i;
-    }
-
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(this->map==NULL)
-        return;
-    {
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
-
-
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
     if(posOutput>100000 || posOutput>sizeof(ProtocolParsingBase::tempBigBufferForOutput))
         std::cerr << "strange output is bigger than 100K" << std::endl;
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
         return;
 
-    if(this->map==NULL)
-        return;
 
     if(!sendInventory())
         return;
     updateCanDoFight();
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(this->map==NULL)
-        return;
-    {
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
-
     //send signals into the server
     #ifndef SERVERBENCHMARK
-    if(this->map==NULL)
-        return;
     /*normalOutput("Logged: "+public_and_private_informations.public_informations.pseudo+
                  " on the map: "+map->map_file+
                  " ("+std::to_string(x)+","+std::to_string(y)+")");*/
@@ -485,39 +412,16 @@ void Client::characterIsRightSendData()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("load the normal player id: "+std::to_string(character_id)+", simplified id: "+std::to_string(public_and_private_informations.public_informations.simplifiedId));
     #endif
-    GlobalServerData::serverPrivateVariables.connected_players++;
     if(GlobalServerData::serverSettings.sendPlayerNumber)
         GlobalServerData::serverPrivateVariables.player_updater->addConnectedPlayer();
-    playerByPseudo[public_and_private_informations.public_informations.pseudo]=this;
-    clientBroadCastList.push_back(this);
 
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    {
-        if(this->map==NULL)
-            return;
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
-
-    if(this->map==NULL)
-        return;
     //need be before send monster because can be teleported for 0 hp
     put_on_the_map(
-                map,//map pointer
+                mapIndex,//map pointer
         x,
         y,
         static_cast<Orientation>(last_direction)
     );
-
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    {
-        if(this->map==NULL)
-            return;
-        std::string mapToDebug=this->map->map_file;
-        mapToDebug+=this->map->map_file;
-    }
-    #endif
 
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {

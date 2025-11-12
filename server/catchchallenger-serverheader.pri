@@ -17,6 +17,7 @@ HEADERS += \
     $$PWD/base/ClientNetworkReadWithoutSender.hpp \
     $$PWD/base/BroadCastWithoutSender.hpp \
     $$PWD/base/MapServer.hpp \
+    $$PWD/base/MapManagement/ClientWithMap.cpp \
     $$PWD/base/MapManagement/ClientMapManagement.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.hpp \
