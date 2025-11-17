@@ -111,14 +111,6 @@ public:
     bool teleportIfMapNotFoundOrOutOfMap;
     bool everyBodyIsRoot;
     int32_t datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
-
-    enum FightSync : uint8_t
-    {
-        FightSync_AtEachTurn=0x00,
-        FightSync_AtTheEndOfBattle=0x01,//or at the object usage
-        FightSync_AtTheDisconnexion=0x02
-    };
-    FightSync fightSync;
     bool positionTeleportSync;
     uint32_t secondToPositionSync;//0 is disabled
 
@@ -165,18 +157,17 @@ public:
     //visibility algorithm
     class MapVisibility
     {
+    public:
         enum Minimize : uint8_t
         {
             Minimize_CPU,
             Minimize_Network
         };
-    public:
         class MapVisibility_Simple
         {
         public:
-            uint8_t max;
-            uint8_t reshow;
-            bool enable;//hysteresis value to take care if use max or reshow
+            uint8_t max;//<254 if player count on map is >=255 then simplified id is 255
+            uint8_t reshow;//only apply to Minimize_Network
             #ifdef CATCHCHALLENGER_CACHE_HPS
             template <class B>
             void serialize(B& buf) const {
@@ -185,11 +176,11 @@ public:
             template <class B>
             void parse(B& buf) {
                 buf >> max >> reshow;
-                enable=true;
             }
             #endif
         };
         MapVisibility_Simple simple;
+        bool enable;
         Minimize minimize;//most visibility algo will use it
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
@@ -285,7 +276,6 @@ void serialize(B& buf) const {
     buf << everyBodyIsRoot;
     buf << datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
-    buf << (uint8_t)fightSync;
     buf << positionTeleportSync;
     buf << secondToPositionSync;//0 is disabled
 
@@ -344,8 +334,6 @@ void parse(B& buf) {
     buf >> everyBodyIsRoot;
     buf >> datapackCache;//-1 = disable, 0 = no timeout, else it's the timeout in s
 
-    buf >> smallTemp;
-    fightSync=(FightSync)smallTemp;
     buf >> positionTeleportSync;
     buf >> secondToPositionSync;//0 is disabled
 

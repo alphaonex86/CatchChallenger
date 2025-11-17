@@ -200,5 +200,5 @@ void BaseServer::preload_11_sync_the_players()
 
 void BaseServer::preload_the_visibility_algorithm()
 {
-    std::cout << "Visibility: MapVisibilityAlgorithmSelection_Simple: " << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.enable) << " " << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.reshow) << "/" << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.max) << std::endl;
+    std::cout << "Visibility: MapVisibilityAlgorithmSelection_Simple: " << std::to_string(GlobalServerData::serverSettings.mapVisibility.enable) << " " << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.reshow) << "/" << std::to_string(GlobalServerData::serverSettings.mapVisibility.simple.max) << std::endl;
 }

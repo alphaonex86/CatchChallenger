@@ -140,11 +140,6 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     else
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=uint8_t((uint8_t)orientation | (uint8_t)public_and_private_informations.public_informations.type);
     posOutput+=1;
-    if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.speed;
-        posOutput+=1;
-    }
 
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {

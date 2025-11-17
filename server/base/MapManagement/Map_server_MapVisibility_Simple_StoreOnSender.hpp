@@ -22,13 +22,17 @@ public:
     void purgeBuffer();
 
     //void send_dropAll();
-    void send_reinsertAll();
+    //void send_reinsertAll();
     //void send_SYNCAll();
     //void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
+    unsigned int send_reinsertAll(char *output, const size_t &clients_size);
     // broadcast all, no filter then resend same data
     void min_CPU();
     // filter if already send, then consume CPU
     void min_network();
+    //to prevent allocate memory
+    static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
+    static char tempBigBufferForRemove[1+4+1+255];
 
     /* WHY HERE?
      * Server use ServerMap, Client use Common Map

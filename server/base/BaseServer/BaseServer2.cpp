@@ -38,7 +38,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.datapack_rightFileName	= std::regex(DATAPACK_FILE_REGEX,std::regex_constants::optimize);
 
     GlobalServerData::serverSettings.automatic_account_creation             = false;
-    GlobalServerData::serverSettings.max_players                            = 1;
+    GlobalServerData::serverSettings.max_players                            = 20;
     GlobalServerData::serverSettings.sendPlayerNumber                       = true;
     GlobalServerData::serverSettings.pvp                                    = true;
 
@@ -52,7 +52,6 @@ BaseServer::BaseServer() :
     GlobalServerData::serverSettings.compressionType                            = CompressionProtocol::CompressionType::Zstandard;
     GlobalServerData::serverSettings.dontSendPlayerType                         = false;
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange = true;
-    CommonSettingsServer::commonSettingsServer.forcedSpeed            = CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters            = 8;
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters   = 30;
     CommonSettingsCommon::commonSettingsCommon.maxPlayerItems               = 30;
@@ -78,12 +77,12 @@ BaseServer::BaseServer() :
     CommonSettingsServer::commonSettingsServer.factoryPriceChange     = 20;
     CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=30;
     CommonSettingsServer::commonSettingsServer.everyBodyIsRoot           = false;//this is value *1000, then 1.0
-    GlobalServerData::serverSettings.fightSync                         = GameServerSettings::FightSync_AtTheEndOfBattle;
     GlobalServerData::serverSettings.positionTeleportSync              = true;
     GlobalServerData::serverSettings.secondToPositionSync              = 0;
     GlobalServerData::serverSettings.mapVisibility.simple.max                   = 30;
     GlobalServerData::serverSettings.mapVisibility.simple.reshow                = 20;
-    GlobalServerData::serverSettings.mapVisibility.simple.enable                = true;//hysteresis value to take care if use max or reshow
+    GlobalServerData::serverSettings.mapVisibility.minimize                = GameServerSettings::MapVisibility::Minimize_CPU;
+    GlobalServerData::serverSettings.mapVisibility.enable                = true;
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     GlobalServerData::serverSettings.ddos.kickLimitMove                         = 60;
     GlobalServerData::serverSettings.ddos.kickLimitChat                         = 5;
@@ -186,7 +185,6 @@ NormalServerSettings BaseServer::loadSettingsFromBinaryCache(std::string &master
 {
     *serialBuffer >> GlobalServerData::serverSettings;
 
-    *serialBuffer >> CommonSettingsServer::commonSettingsServer.forcedSpeed;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.dontSendPseudo;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange;
     *serialBuffer >> CommonSettingsServer::commonSettingsServer.mainDatapackCode;

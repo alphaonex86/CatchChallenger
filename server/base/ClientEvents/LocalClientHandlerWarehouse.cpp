@@ -165,8 +165,7 @@ bool Client::wareHouseStore(const uint64_t &withdrawCash, const uint64_t &deposi
     public_and_private_informations.warehouse_playerMonster=warehouse_playerMonster;
     if(depositeMonsters.size()>0 || withdrawMonsters.size()>0)
     {
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
-            saveMonsterStat(public_and_private_informations.playerMonster.back());
+        saveMonsterStat(public_and_private_informations.playerMonster.back());
         {
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             unsigned int index=lowerMonsterPos;

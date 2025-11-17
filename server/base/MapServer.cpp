@@ -220,21 +220,6 @@ void MapServer::check6B(const char * const data,const unsigned int size)
             }
             public_informations.type=playerType;
 
-            //the speed
-            if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-            {
-                if((size-pos)<(unsigned int)sizeof(uint8_t))
-                {
-                    std::cerr << "MapServer::checkB6(" << binarytoHexa(data,size) << ") error (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-                    abort();
-                    return;
-                }
-                public_informations.speed=data[pos];
-                pos+=sizeof(uint8_t);
-            }
-            else
-                public_informations.speed=CommonSettingsServer::commonSettingsServer.forcedSpeed;
-
             if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
             {
                 //the pseudo
@@ -307,7 +292,6 @@ void MapServer::check6B(const char * const data,const unsigned int size)
                         " \"" + temp.pseudo +
                         "\" " + std::to_string((int)temp.simplifiedId_forMap) +
                         " " + std::to_string((int)temp.skinId) +
-                        " " + std::to_string((int)temp.speed) +
                         " " + std::to_string((int)temp.type)
                       << std::endl;
             index++;
@@ -357,11 +341,6 @@ unsigned int MapServer::playerToFullInsert(const Client& client, char * const bu
     else
         bufferForOutput[posOutput]=((uint8_t)client.getLastDirection() | (uint8_t)client.public_and_private_informations.public_informations.type);
     posOutput+=1;
-    if(CommonSettingsServer::commonSettingsServer.forcedSpeed==0)
-    {
-        bufferForOutput[posOutput]=client.public_and_private_informations.public_informations.speed;
-        posOutput+=1;
-    }
     //pseudo
     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
     {

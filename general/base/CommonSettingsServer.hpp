@@ -13,7 +13,6 @@ public:
     #ifndef CATCHCHALLENGER_CLASS_GATEWAY
     std::string httpDatapackMirrorServer;
     #endif
-    uint8_t forcedSpeed;
     bool dontSendPseudo;
     bool forceClientToSendAtMapChange;
     bool everyBodyIsRoot;
