@@ -5,7 +5,6 @@ CommonSettingsServer CommonSettingsServer::commonSettingsServer;
 CommonSettingsServer::CommonSettingsServer()
 {
     everyBodyIsRoot=false;
-    forcedSpeed=0;
     dontSendPseudo=false;
     forceClientToSendAtMapChange=false;
     waitBeforeConnectAfterKick=0;

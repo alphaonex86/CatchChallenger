@@ -9,8 +9,6 @@
 
 namespace CatchChallenger {
 
-class Client;
-
 class ClientWithMap : public Client
 {
 public:
@@ -21,10 +19,10 @@ public:
         COORD_TYPE y;
         Direction direction;
     };
-protected:
+public:
     //max 255 size
     std::vector<SendedStatus> sendedStatus;
-    CATCHCHALLENGER_TYPE_MAPID sendedMap;
+    CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex
 };
 }
 

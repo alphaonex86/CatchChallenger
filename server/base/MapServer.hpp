@@ -39,7 +39,7 @@ public:
     void check6B(const char * const data,const unsigned int size);
     #endif
 
-private:
+protected:
     /* clients list on map
     can be 1000 player but only 10 visible
     16Bits if max connected player is >=255 else 8Bits

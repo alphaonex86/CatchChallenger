@@ -105,6 +105,7 @@ public:
     bool sendRawBlock(const char * const data,const unsigned int &size);
 
     void sendPing();
+    size_t sendPing(char * output);
     uint8_t pingCountInProgress() const;
 
     static DdosBuffer<uint16_t,3> generalChatDrop;

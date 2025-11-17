@@ -146,18 +146,17 @@ struct Player_public_informations
     Player_type type;
     uint8_t skinId;
     uint16_t monsterId;//the monster follow the player on map, other player can see it
-    SPEED_TYPE speed;
 
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << pseudo << (uint8_t)type << skinId << monsterId << speed;
+        buf << pseudo << (uint8_t)type << skinId << monsterId;
     }
     template <class B>
     void parse(B& buf) {
         uint8_t t;
-        buf >> pseudo >> t >> skinId >> monsterId >> speed;
+        buf >> pseudo >> t >> skinId >> monsterId;
         type=(Player_type)t;
     }
     #endif
