@@ -9,6 +9,7 @@
 
 namespace CatchChallenger {
 class Client;
+class ClientWithMap;
 class ClientList
 {
 public:
@@ -25,6 +26,7 @@ public:
     virtual SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED connected_size() const = 0;
     virtual bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;
     virtual const Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;//abort if index is not valid
+    virtual ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;//abort if index is not valid
     virtual Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const = 0;//abort if index is not valid
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED global_clients_list_bypseudo(const std::string &pseudo) const;//return SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX if not found

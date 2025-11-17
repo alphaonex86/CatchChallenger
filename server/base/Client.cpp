@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "MapManagement/ClientWithMap.hpp"
 #include "ClientList.hpp"
 #include "GlobalServerData.hpp"
 #include "../base/PreparedDBQuery.hpp"
@@ -75,7 +76,6 @@ void Client::setToDefault()
     public_and_private_informations.public_informations.pseudo.clear();
     public_and_private_informations.public_informations.simplifiedId_forMap=0;
     public_and_private_informations.public_informations.skinId=0;
-    public_and_private_informations.public_informations.speed=0;
     public_and_private_informations.public_informations.type=Player_type_normal;
     public_and_private_informations.cash=0;
     public_and_private_informations.warehouse_cash=0;
@@ -385,39 +385,8 @@ bool Client::disconnectClient()
             #endif
         }
         //save the monster
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle && isInFight())
+        if(isInFight())
             saveCurrentMonsterStat();
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheDisconnexion)
-        {
-            unsigned int index=0;
-            while(index<public_and_private_informations.playerMonster.size())
-            {
-                const PlayerMonster &playerMonster=public_and_private_informations.playerMonster.at(index);
-                #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                if(CommonSettingsServer::commonSettingsServer.useSP)
-                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
-                                std::to_string(playerMonster.hp),
-                                std::to_string(playerMonster.remaining_xp),
-                                std::to_string(playerMonster.level),
-                                std::to_string(playerMonster.sp),
-                                std::to_string(playerMonster.id)
-                                });
-                else
-                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
-                                std::to_string(playerMonster.hp),
-                                std::to_string(playerMonster.remaining_xp),
-                                std::to_string(playerMonster.level),
-                                std::to_string(playerMonster.id)
-                                });
-                #elif CATCHCHALLENGER_DB_BLACKHOLE
-                #elif CATCHCHALLENGER_DB_FILE
-                #else
-                #error Define what do here
-                #endif
-                syncMonsterSkillAndEndurance(playerMonster);
-                index++;
-            }
-        }
         if(mapIndex<65535)
             savePosition();
         mapIndex=65535;
@@ -818,6 +787,26 @@ void Client::sendPing()
     sendRawBlock(buffer,sizeof(buffer));
 
     queryNumberList.pop_back();
+}
+
+size_t Client::sendPing(char * output)
+{
+    if(queryNumberList.empty())
+    {
+        errorOutput("Sorry, no free query number to send this query of teleportation");
+        return 0;
+    }
+
+    if(pingInProgress<255)
+        pingInProgress++;
+
+    //send the network reply
+    output[0x00]=0xE3;
+    output[0x01]=queryNumberList.back();
+    registerOutputQuery(queryNumberList.back(),0xE3);
+
+    queryNumberList.pop_back();
+    return 2;
 }
 
 uint8_t Client::pingCountInProgress() const

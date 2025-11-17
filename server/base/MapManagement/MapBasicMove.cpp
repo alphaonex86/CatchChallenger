@@ -51,7 +51,7 @@ void MapBasicMove::normalOutput(const std::string &) const
 {
 }
 
-void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void MapBasicMove::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     //store the starting informations
     last_direction=static_cast<Direction>(orientation);
@@ -75,7 +75,7 @@ void MapBasicMove::put_on_the_map(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,
     #endif
 }
 
-void MapBasicMove::teleportValidatedTo(CommonMap *map,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
+void MapBasicMove::teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation)
 {
     MapBasicMove::put_on_the_map(map,x,y,orientation);
 }

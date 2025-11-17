@@ -421,7 +421,6 @@ void BaseServer::setSettings(const GameServerSettings &settings)
     {
         hps::to_stream(GlobalServerData::serverSettings, *out_file);
 
-        hps::to_stream(CommonSettingsServer::commonSettingsServer.forcedSpeed, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.dontSendPseudo, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange, *out_file);
         hps::to_stream(CommonSettingsServer::commonSettingsServer.mainDatapackCode, *out_file);
