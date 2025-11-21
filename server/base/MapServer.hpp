@@ -35,9 +35,6 @@ public:
     CATCHCHALLENGER_TYPE_MAPID id_db;
     //the next variable is related to GlobalServerData::serverPrivateVariables.idToZone
     ZONE_TYPE zone;//255 if no zone
-    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    void check6B(const char * const data,const unsigned int size);
-    #endif
 
 protected:
     /* clients list on map
@@ -94,8 +91,8 @@ public:
             buf << n.first.second;
             buf << n.second;
         }
-        buf << (uint8_t)pointOnMap_Item.size();
-        for(const auto& n : pointOnMap_Item)
+        buf << (uint8_t)items.size();
+        for(const auto& n : items)
         {
             buf << n.first.first;
             buf << n.first.second;
@@ -163,7 +160,7 @@ public:
             buf >> y;
             ItemOnMap s;
             buf >> s;
-            pointOnMap_Item[std::pair<uint8_t,uint8_t>(x,y)]=s;
+            items[std::pair<uint8_t,uint8_t>(x,y)]=s;
         }
 
         for(int i=0;i<tempSize;i++)

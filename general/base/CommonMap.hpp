@@ -50,7 +50,7 @@ public:
     // in same map
     std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//6% of the map
     std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y
-    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> pointOnMap_Item;//2% of the map
+    std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> items;//2% of the map
     /* ONLY SERVER, see MapServer.hpp
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
     std::vector<std::pair<uint8_t,uint8_t>> rescue_points;*/

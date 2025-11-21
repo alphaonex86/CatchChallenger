@@ -55,6 +55,7 @@ Api_protocol::Api_protocol() :
         extensionAllowed=std::unordered_set<std::string>(v.cbegin(),v.cend());
     }
 
+    playerIdExcludeId=255;
     player_informations.recipes=NULL;
     player_informations.encyclopedia_monster=NULL;
     player_informations.encyclopedia_item=NULL;

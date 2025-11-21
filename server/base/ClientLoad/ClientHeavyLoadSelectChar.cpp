@@ -282,7 +282,6 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
     #error Define what do here
     #endif
 
-    public_and_private_informations.public_informations.simplifiedId_forMap = 0;
     //load the variables
     character_id_db=characterId;
     stat=ClientStat::CharacterSelecting;

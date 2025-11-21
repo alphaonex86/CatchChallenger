@@ -93,7 +93,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     MapBasicMove::put_on_the_map(mapIndex,x,y,orientation);
     insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
 
-    uint32_t posOutput=0;
+/* now send via Client::characterIsRightSendData() and now player on map is independant algo   uint32_t posOutput=0;
 
     //packet code
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6B;
@@ -171,7 +171,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
 
     if(!sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput))
-        return;
+        return;*/
 
     //load the first time the random number list
     generateRandomNumber();

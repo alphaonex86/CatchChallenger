@@ -141,7 +141,7 @@ struct map_management_move
 
 struct Player_public_informations
 {
-    SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedId_forMap;//asigned by map management
+    //need use as index: SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedId_forMap;//asigned by map management
     std::string pseudo;
     Player_type type;
     uint8_t skinId;
@@ -325,7 +325,7 @@ public:
     std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
     std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
 #else
-    std::set<std::pair<COORD_TYPE,COORD_TYPE>> itemOnMap;
+    std::set<std::pair<COORD_TYPE,COORD_TYPE>> items;
     std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
     std::set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
 #endif
@@ -333,11 +333,11 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << itemOnMap << plantOnMap << bot_already_beaten;
+        buf << items << plantOnMap << bot_already_beaten;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> itemOnMap >> plantOnMap >> bot_already_beaten;
+        buf >> items >> plantOnMap >> bot_already_beaten;
     }
     #endif
     #endif

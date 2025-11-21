@@ -124,6 +124,7 @@ protected:
     bool haveTheLogicalGroupList;
     uint16_t last_players_number;
     uint16_t last_max_players;
+    uint8_t playerIdExcludeId;
 
     LogicialGroup logicialGroup;
 

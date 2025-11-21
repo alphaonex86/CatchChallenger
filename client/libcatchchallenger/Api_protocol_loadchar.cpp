@@ -400,28 +400,63 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         setEvents(events);
     }
 
-    if(this->max_players<=255)
     {
+        if((size2-pos2)<(int)sizeof(uint16_t))
+        {
+            parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+            return false;
+        }
+        uint16_t mapIndex=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+        pos+=sizeof(uint16_t);
+        player_informations.public_informations.mapIndex=mapIndex;
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint8_t simplifiedId=data[pos];
+        uint8_t x=data[pos];
         pos+=sizeof(uint8_t);
-        player_informations.public_informations.simplifiedId=simplifiedId;
-    }
-    else
-    {
-        if((size-pos)<(int)sizeof(uint16_t))
+        player_informations.public_informations.x=x;
+        if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        player_informations.public_informations.simplifiedId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-        pos+=sizeof(uint16_t);
-    }
-    {
+        uint8_t y=data[pos];
+        pos+=sizeof(uint8_t);
+        player_informations.public_informations.y=y;
+        //direction and player type
+                    if((size-pos)<(unsigned int)sizeof(uint8_t))
+                    {
+                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    uint8_t directionAndPlayerType=data[pos];
+                    pos+=sizeof(uint8_t);
+                    uint8_t directionInt,playerTypeInt;
+                    directionInt=directionAndPlayerType & 0x0F;
+                    playerTypeInt=directionAndPlayerType & 0xF0;
+                    if(directionInt<1 || directionInt>8)
+                    {
+                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                                   std::to_string(directionInt)+", at main ident: "+
+                                   std::to_string(packetCode)+", directionAndPlayerType: "+
+                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                                   ", data: "+binarytoHexa(data,size));
+                        return false;
+                    }
+                    Direction direction=(Direction)directionInt;
+                    Player_type playerType=(Player_type)playerTypeInt;
+                    if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
+                    {
+                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                                   std::to_string(playerType)+", at main ident: "+
+                                   std::to_string(packetCode)+", directionAndPlayerType: "+
+                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                                   ", data: "+binarytoHexa(data,size));
+                        return false;
+                    }
+                    public_informations.type=playerType;
         //pseudo
         if((size-pos)<(int)sizeof(uint8_t))
         {
@@ -442,6 +477,16 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         }
         else
             player_informations.public_informations.pseudo.clear();
+        
+                            //the skin
+                    if((size-pos)<(unsigned int)sizeof(uint8_t))
+                    {
+                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    uint8_t skinId=data[pos];
+                    pos+=sizeof(uint8_t);
+                    public_informations.skinId=skinId;
     }
     if((size-pos)<(int)sizeof(uint8_t))
     {

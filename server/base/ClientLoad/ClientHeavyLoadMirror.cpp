@@ -485,6 +485,7 @@ bool Client::sendFile(const std::string &datapackPath,const std::string &fileNam
             )
         {
             uint32_t posOutput=0;
+            /// \todo maybe cache will be usefull here, on files group
             {
                 const std::string &text=fileName;
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
