@@ -104,7 +104,7 @@ void Client::takeAnObjectOnMap()
         return;
     }
     Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map->id];
-    if(mapData.plantOnMap.find(std::pair<uint8_t,uint8_t>(new_x,new_y))!=mapData.plantOnMap.cend())
+    if(mapData.plants.find(std::pair<uint8_t,uint8_t>(new_x,new_y))!=mapData.plants.cend())
     {
         errorOutput("Have already this item: "+std::to_string(new_map->id)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
         return;

@@ -321,23 +321,23 @@ class Player_private_and_public_informations_Map
 public:
 #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
     //here to send at character login
-    std::unordered_set<std::pair<COORD_TYPE,COORD_TYPE>> itemOnMap;
-    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
-    std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
+    std::unordered_set<std::pair<COORD_TYPE,COORD_TYPE>> items;
+    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plants;
+    std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
 #else
     std::set<std::pair<COORD_TYPE,COORD_TYPE>> items;
-    std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plantOnMap;
-    std::set<CATCHCHALLENGER_TYPE_BOTID> bot_already_beaten;
+    std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plants;
+    std::set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
 #endif
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << items << plantOnMap << bot_already_beaten;
+        buf << items << plants << bots_beaten;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> items >> plantOnMap >> bot_already_beaten;
+        buf >> items >> plants >> bots_beaten;
     }
     #endif
     #endif

@@ -356,10 +356,10 @@ void Client::characterIsRightSendData()
                 posOutput+=1;
             }
 
-            size8=mapData.plantOnMap.size();
+            size8=mapData.plants.size();
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
             posOutput+=1;
-            for(const auto& planKey : mapData.plantOnMap)
+            for(const auto& planKey : mapData.plants)
             {
                 const std::pair<COORD_TYPE,COORD_TYPE> &pos=planKey.first;
                 const PlayerPlant &plant=planKey.second;
@@ -374,10 +374,10 @@ void Client::characterIsRightSendData()
                 posOutput+=8;
             }
 
-            size8=mapData.bot_already_beaten.size();
+            size8=mapData.bots_beaten.size();
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
             posOutput+=1;
-            for(CATCHCHALLENGER_TYPE_BOTID key : mapData.bot_already_beaten)
+            for(CATCHCHALLENGER_TYPE_BOTID key : mapData.bots_beaten)
             {
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key;
                 posOutput+=1;
