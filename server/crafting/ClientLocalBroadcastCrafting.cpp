@@ -36,7 +36,7 @@ void Client::plantSeed(const uint8_t &plant_id)
     //check if is free
     {
         const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(new_map->id);
-        if(mapData.plantOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plantOnMap.cend())
+        if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
         {
             errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
             return;
@@ -118,7 +118,7 @@ void Client::seedValidated(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MA
     PlayerPlant plantOnMapPlayer;
     plantOnMapPlayer.plant=plant_id;
     plantOnMapPlayer.mature_at=current_time+CommonDatapack::commonDatapack.get_plants().at(plantOnMapPlayer.plant).fruits_seconds;
-    mapData.plantOnMap[pos]=plantOnMapPlayer;
+    mapData.plants[pos]=plantOnMapPlayer;
     syncDatabasePlant();
 }
 
@@ -143,9 +143,9 @@ void Client::collectPlant()
     //check if is free
     const auto &current_time=sFrom1970();
     Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map->id];
-    if(mapData.plantOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plantOnMap.cend())
+    if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
     {
-        const PlayerPlant /*can't reference because deleted later*/playerPlant=mapData.plantOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
+        const PlayerPlant /*can't reference because deleted later*/playerPlant=mapData.plants.at(std::pair<uint8_t,uint8_t>(x,y));
         if(CommonDatapack::commonDatapack.get_plants().find(playerPlant.plant)==CommonDatapack::commonDatapack.get_plants().cend())
         {
             errorOutput("plant not found to collect: "+std::to_string(playerPlant.plant));
@@ -158,7 +158,7 @@ void Client::collectPlant()
         }
 
         //clear the server dirt
-        mapData.plantOnMap.erase(std::pair<uint8_t,uint8_t>(x,y));
+        mapData.plants.erase(std::pair<uint8_t,uint8_t>(x,y));
         syncDatabasePlant();
 
         //add into the inventory

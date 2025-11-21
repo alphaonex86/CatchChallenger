@@ -624,7 +624,7 @@ bool Client::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHAL
     if(public_and_private_informations.mapData.find(mapId)==public_and_private_informations.mapData.cend())
         return false;
     const Player_private_and_public_informations_Map &tempMapData=public_and_private_informations.mapData.at(mapId);
-    if(tempMapData.bot_already_beaten.find(botId)==tempMapData.bot_already_beaten.cend())
+    if(tempMapData.bots_beaten.find(botId)==tempMapData.bots_beaten.cend())
         return false;
     return true;
 }
