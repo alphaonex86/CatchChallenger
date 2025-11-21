@@ -143,6 +143,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[0x69]=0xFE;
             packetFixedSize[0x6A]=0;
             packetFixedSize[0x6B]=0xFE;
+            packetFixedSize[0x6C]=1;
 
             packetFixedSize[0x75]=4+4;
             packetFixedSize[0x76]=0xFE;

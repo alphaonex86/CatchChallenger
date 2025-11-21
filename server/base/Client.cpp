@@ -74,7 +74,6 @@ void Client::setToDefault()
     //player info
     public_and_private_informations.public_informations.monsterId=0;
     public_and_private_informations.public_informations.pseudo.clear();
-    public_and_private_informations.public_informations.simplifiedId_forMap=0;
     public_and_private_informations.public_informations.skinId=0;
     public_and_private_informations.public_informations.type=Player_type_normal;
     public_and_private_informations.cash=0;
@@ -165,8 +164,6 @@ void Client::setToDefault()
     mMonsterChange=false;
     botFightCash=0;
 
-    while(!plant_list_in_waiting.empty())
-        plant_list_in_waiting.pop();
     while(!paramToPassToCallBack.empty())
         paramToPassToCallBack.pop();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK

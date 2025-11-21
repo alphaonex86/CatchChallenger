@@ -65,10 +65,50 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
     return posOutput;
 }
 
+unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWithFilter(char *output,const size_t &clients_size,const size_t &skipped_id)
+{
+    if(skipped_id>=255)
+        return send_reinsertAll(output,clients_size);
+    uint32_t posOutput=0;
+    output[posOutput]=0x6B;
+    posOutput+=1+4;
+    //////////////////////////// insert //////////////////////////
+    // can be only this map with this algo, then 1 map
+    output[posOutput]=0x01;//map list count
+    posOutput+=1;
+    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(id);//map id
+    posOutput+=2;
+    posOutput+=1;
+    unsigned int count=0;
+    if(clients_size>1)
+    {
+        unsigned int index=0;
+        while(index<clients_size && index<255)
+        {
+            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
+            if(index_c!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX && index_c!=skipped_id)
+            {
+                Client &c=ClientList::list->rw(index_c);
+                posOutput+=playerToFullInsert(c,output+posOutput);
+                count++;
+            }
+            index++;
+        }
+        *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
+    }
+    if(count<254)
+        output[1+4+1+2]=static_cast<uint8_t>(count);//player count
+    else
+        output[1+4+1+2]=static_cast<uint8_t>(254);//player count
+    return posOutput;
+}
+
 // broadcast all, no filter then resend same data
 void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
 {
     uint32_t posOutput=0;//if > 0 then cache created
+    uint32_t baseOutput=0;
+    bool cached=false;
     //if to many player then just stop update
     const size_t clients_size=map_clients_id.size()-map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
@@ -84,16 +124,36 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
             #endif
             {
                 Client &client=ClientList::list->rw(map_c_idP);
+                ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);
                 if(client.pingCountInProgress()<=0)
                 {
-                    if(posOutput<=0)
+                    if(clientWithMap.sendedMap!=client.mapIndex)//async multiple map change to more performance
                     {
+                        clientWithMap.sendedMap=client.mapIndex;
+                        posOutput=0;
+                        baseOutput=0;
+
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x6C;//ignore id, first insert on this map
+                        posOutput+=1;
+                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=(uint8_t)index_client;
+                        posOutput+=1;
+                    }
+                    else
+                    {
+                        posOutput=2;
+                        baseOutput=2;
+                    }
+                    if(cached==false)
+                    {
+                        cached=true;
+
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
                         posOutput+=1;//drop all
+
                         posOutput+=send_reinsertAll(ProtocolParsingBase::tempBigBufferForOutput+1,clients_size);
                     }
                     posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
-                    client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                    client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput+baseOutput,posOutput-baseOutput);
                 }
             }
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -123,20 +183,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
             if(!ClientList::list->empty(map_c_idP))
             #endif
             {
-                ClientWithMap &client=ClientList::list->rwWithMap(map_c_idP);
-                if(client.pingCountInProgress()<=0)
+                ClientWithMap &clientWithMap=ClientList::list->rwWithMap(map_c_idP);
+                if(clientWithMap.pingCountInProgress()<=0)
                 {
                     //see /doc/algo/visibility/constant-time-player-visibility.png
-                    if(client.sendedMap!=client.mapIndex)//async multiple map change to more performance
+                    if(clientWithMap.sendedMap!=clientWithMap.mapIndex)//async multiple map change to more performance
                     {
-                        client.sendedMap=client.mapIndex;
+                        clientWithMap.sendedMap=clientWithMap.mapIndex;
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
                         posOutput+=1;//drop all
-                        posOutput+=send_reinsertAll(ProtocolParsingBase::tempBigBufferForOutput+1,clients_size);
-                        posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
-                        client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
-                        client.sendedStatus.clear();
+                        posOutput+=send_reinsertAllWithFilter(ProtocolParsingBase::tempBigBufferForOutput+1,clients_size,index_client);
+                        posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
+                        clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                        clientWithMap.sendedStatus.clear();
                     }
                     else
                     {
@@ -152,10 +212,12 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                         unsigned int index=0;
                         while(index<map_clients_id.size() && index<255)
                         {
+                            if(index_client==index)
+                                continue;
                             //new entry
-                            if(index<client.sendedStatus.size())
+                            if(index<clientWithMap.sendedStatus.size())
                             {
-                                ClientWithMap::SendedStatus &c_stat=client.sendedStatus[index];
+                                ClientWithMap::SendedStatus &c_stat=clientWithMap.sendedStatus[index];
                                 const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
                                 if(other_client_id!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
                                 {
@@ -247,8 +309,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges,1+4+1+changesCount*(1+1+1+1));
                                 posOutput+=1+4+1+changesCount*(1+1+1+1);
                             }
-                            posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
-                            client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+                            posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
+                            clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         }
                     }
                 }

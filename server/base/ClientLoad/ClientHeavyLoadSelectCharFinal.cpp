@@ -101,18 +101,17 @@ void Client::characterIsRightSendData()
         }
     }
 
-    //temporary character id
-    if(GlobalServerData::serverSettings.max_players<=255)
-    {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.public_informations.simplifiedId_forMap);
-        posOutput+=1;
-    }
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mapIndex;
+    posOutput+=2;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=getX();
+    posOutput+=1;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=getY();
+    posOutput+=1;
+    if(GlobalServerData::serverSettings.dontSendPlayerType)
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)getLastDirection() | (uint8_t)Player_type_normal);
     else
-    {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.public_informations.simplifiedId_forMap);
-        posOutput+=2;
-    }
-
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=((uint8_t)getLastDirection() | (uint8_t)public_and_private_informations.public_informations.type);
+    posOutput+=1;
     //pseudo
     {
         const std::string &text=public_and_private_informations.public_informations.pseudo;
@@ -121,6 +120,10 @@ void Client::characterIsRightSendData()
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
+    //skin
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
+    posOutput+=1;
+
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allow.size());
     posOutput+=1;
     {
@@ -342,10 +345,10 @@ void Client::characterIsRightSendData()
             posOutput+=2;
             const Player_private_and_public_informations_Map &mapData=pair.second;
 
-            uint8_t size8=mapData.itemOnMap.size();
+            uint8_t size8=mapData.items.size();
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
             posOutput+=1;
-            for(std::pair<COORD_TYPE,COORD_TYPE> key : mapData.itemOnMap)
+            for(std::pair<COORD_TYPE,COORD_TYPE> key : mapData.items)
             {
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key.first;
                 posOutput+=1;

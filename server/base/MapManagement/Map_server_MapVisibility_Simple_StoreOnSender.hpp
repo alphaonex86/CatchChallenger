@@ -26,6 +26,7 @@ public:
     //void send_SYNCAll();
     //void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
     unsigned int send_reinsertAll(char *output, const size_t &clients_size);
+    unsigned int send_reinsertAllWithFilter(char *output,const size_t &clients_size,const size_t &skipped_id);
     // broadcast all, no filter then resend same data
     void min_CPU();
     // filter if already send, then consume CPU
