@@ -79,8 +79,8 @@ void Client::setToDefault()
     public_and_private_informations.cash=0;
     public_and_private_informations.warehouse_cash=0;
     public_and_private_informations.recipes=nullptr;
-    public_and_private_informations.playerMonster.clear();
-    public_and_private_informations.warehouse_playerMonster.clear();
+    public_and_private_informations.monsters.clear();
+    public_and_private_informations.warehouse_monsters.clear();
     public_and_private_informations.clan=0;
     public_and_private_informations.encyclopedia_monster=nullptr;
     public_and_private_informations.encyclopedia_item=nullptr;
@@ -832,7 +832,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     //serialise list of bot fight in form: map DB id + id
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
-        << public_and_private_informations.playerMonster << public_and_private_informations.warehouse_playerMonster << encyclopedia_monsterS << encyclopedia_itemS
+        << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS
         << public_and_private_informations.quests << public_and_private_informations.reputation
         << public_and_private_informations.items << public_and_private_informations.warehouse_items;
@@ -875,7 +875,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     std::string encyclopedia_monsterS;
     std::string encyclopedia_itemS;
     buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash >> public_and_private_informations.warehouse_cash
-        >> recipesS >> public_and_private_informations.playerMonster >> public_and_private_informations.warehouse_playerMonster
+        >> recipesS >> public_and_private_informations.monsters >> public_and_private_informations.warehouse_monsters
         >> encyclopedia_monsterS >> encyclopedia_itemS
         >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader;
     buf >> public_and_private_informations.quests

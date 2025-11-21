@@ -162,35 +162,35 @@ void Client::characterIsRightSendData()
 
     //send monster
     index=0;
-    size=static_cast<uint8_t>(public_and_private_informations.playerMonster.size());
+    size=static_cast<uint8_t>(public_and_private_informations.monsters.size());
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
     posOutput+=1;
     while(index<size)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(public_and_private_informations.playerMonster.size()<=index)
+        if(public_and_private_informations.monsters.size()<=index)
         {
             std::cerr << "public_and_private_informations.playerMonster.size()<=index" << std::endl;
             abort();
         }
         #endif
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.playerMonster.at(index),character_id_db);
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.monsters.at(index),character_id_db);
         index++;
     }
     index=0;
-    size=static_cast<uint8_t>(public_and_private_informations.warehouse_playerMonster.size());
+    size=static_cast<uint8_t>(public_and_private_informations.warehouse_monsters.size());
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size;
     posOutput+=1;
     while(index<size)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(public_and_private_informations.warehouse_playerMonster.size()<=index)
+        if(public_and_private_informations.warehouse_monsters.size()<=index)
         {
             std::cerr << "public_and_private_informations.warehouse_playerMonster.size()<=index" << std::endl;
             abort();
         }
         #endif
-        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_playerMonster.at(index),character_id_db);
+        posOutput+=FacilityLib::privateMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,public_and_private_informations.warehouse_monsters.at(index),character_id_db);
         index++;
     }
 

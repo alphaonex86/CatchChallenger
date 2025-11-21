@@ -299,7 +299,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
         errorOutput("Trade is freezed, unable to change something");
         return;
     }
-    if(public_and_private_informations.playerMonster.size()<=1)
+    if(public_and_private_informations.monsters.size()<=1)
     {
         errorOutput("Unable to trade your last monster");
         return;
@@ -309,7 +309,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
         errorOutput("You can't trade monster because you are in fight");
         return;
     }
-    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.monsters.size())
     {
         errorOutput("Trade monster not found");
         return;
@@ -323,8 +323,8 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
         errorOutput("You can't trade this msonter because you will be without monster to fight");
         return;
     }
-    tradeMonster.push_back(public_and_private_informations.playerMonster.at(index));
-    public_and_private_informations.playerMonster.erase(public_and_private_informations.playerMonster.begin()+index);
+    tradeMonster.push_back(public_and_private_informations.monsters.at(index));
+    public_and_private_informations.monsters.erase(public_and_private_informations.monsters.begin()+index);
     updateCanDoFight();
 
     //send the network message
@@ -378,7 +378,7 @@ void Client::internalTradeCanceled(const bool &send)
             ++i;
         }
         tradeObjects.clear();
-        public_and_private_informations.playerMonster.insert(public_and_private_informations.playerMonster.cend(),tradeMonster.cbegin(),tradeMonster.cend());
+        public_and_private_informations.monsters.insert(public_and_private_informations.monsters.cend(),tradeMonster.cbegin(),tradeMonster.cend());
         tradeMonster.clear();
         updateCanDoFight();
     }

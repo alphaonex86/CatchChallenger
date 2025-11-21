@@ -283,7 +283,7 @@ uint32_t CommonFightEngine::tryCapture(const uint16_t &item)
         newMonster.remaining_xp=0;
         newMonster.skills=wildMonsters.front().skills;
         #ifndef CATCHCHALLENGER_VERSION_SINGLESERVER
-        newMonster.id=catchAWild(get_public_and_private_informations().playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters,newMonster);
+        newMonster.id=catchAWild(get_public_and_private_informations().monsters.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters,newMonster);
         return newMonster.id;
         #else
         catchAWild(get_public_and_private_informations().playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters,newMonster);

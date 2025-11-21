@@ -131,8 +131,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
 
     if(toStorage)
     {
-        public_and_private_informations.warehouse_playerMonster.push_back(newMonster);
-        public_and_private_informations.warehouse_playerMonster.back().id=monster_id;
+        public_and_private_informations.warehouse_monsters.push_back(newMonster);
+        public_and_private_informations.warehouse_monsters.back().id=monster_id;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
@@ -167,8 +167,8 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
     }
     else
     {
-        public_and_private_informations.playerMonster.push_back(newMonster);
-        public_and_private_informations.playerMonster.back().id=monster_id;
+        public_and_private_informations.monsters.push_back(newMonster);
+        public_and_private_informations.monsters.back().id=monster_id;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         position=static_cast<int>(public_and_private_informations.playerMonster.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({

@@ -48,7 +48,7 @@ bool CommonFightEngine::getAbleToFight() const
 
 bool CommonFightEngine::haveMonsters() const
 {
-    return !get_public_and_private_informations_ro().playerMonster.empty();
+    return !get_public_and_private_informations_ro().monsters.empty();
 }
 
 //return is have random seed to do random step
@@ -95,7 +95,7 @@ void CommonFightEngine::updateCanDoFight()
     }
     ableToFight=false;
     uint8_t index=0;
-    const std::vector<PlayerMonster> &playerMonster=get_public_and_private_informations().playerMonster;
+    const std::vector<PlayerMonster> &playerMonster=get_public_and_private_informations().monsters;
     while(index<playerMonster.size())
     {
         const PlayerMonster &playerMonsterEntry=playerMonster.at(index);
@@ -112,9 +112,9 @@ void CommonFightEngine::updateCanDoFight()
 bool CommonFightEngine::haveAnotherMonsterOnThePlayerToFight() const
 {
     unsigned int index=0;
-    while(index<get_public_and_private_informations_ro().playerMonster.size())
+    while(index<get_public_and_private_informations_ro().monsters.size())
     {
-        const PlayerMonster &playerMonsterEntry=get_public_and_private_informations_ro().playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=get_public_and_private_informations_ro().monsters.at(index);
         if(!monsterIsKO(playerMonsterEntry))
             return true;
         index++;
@@ -134,17 +134,17 @@ bool CommonFightEngine::haveAnotherEnnemyMonsterToFight()
 
 PlayerMonster * CommonFightEngine::getCurrentMonster()//no const due to error message
 {
-    const size_t &playerMonsterSize=get_public_and_private_informations().playerMonster.size();
+    const size_t &playerMonsterSize=get_public_and_private_informations().monsters.size();
     if(selectedMonster<playerMonsterSize)
     {
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
-        if(CommonDatapack::commonDatapack.get_monsters().find(get_public_and_private_informations().playerMonster.at(selectedMonster).monster)==CommonDatapack::commonDatapack.get_monsters().cend())
+        if(CommonDatapack::commonDatapack.get_monsters().find(get_public_and_private_informations().monsters.at(selectedMonster).monster)==CommonDatapack::commonDatapack.get_monsters().cend())
         {
-            errorFightEngine("Current monster don't exists: "+std::to_string(get_public_and_private_informations().playerMonster.at(selectedMonster).monster));
+            errorFightEngine("Current monster don't exists: "+std::to_string(get_public_and_private_informations().monsters.at(selectedMonster).monster));
             return NULL;
         }
         #endif
-        return &get_public_and_private_informations().playerMonster[selectedMonster];
+        return &get_public_and_private_informations().monsters[selectedMonster];
     }
     else
     {
@@ -176,9 +176,9 @@ PublicPlayerMonster *CommonFightEngine::getOtherMonster()
 bool CommonFightEngine::remainMonstersToFightWithoutThisMonster(const uint8_t &monsterPosition) const
 {
     unsigned int index=0;
-    while(index<get_public_and_private_informations_ro().playerMonster.size())
+    while(index<get_public_and_private_informations_ro().monsters.size())
     {
-        const PlayerMonster &playerMonsterEntry=get_public_and_private_informations_ro().playerMonster.at(index);
+        const PlayerMonster &playerMonsterEntry=get_public_and_private_informations_ro().monsters.at(index);
         if(index==monsterPosition)
         {
             //the current monster can't fight, echange it will do nothing
@@ -327,7 +327,7 @@ void CommonFightEngine::hpChange(PlayerMonster * currentMonster,const uint32_t &
 
 bool CommonFightEngine::changeOfMonsterInFight(const uint8_t &monsterPosition)
 {
-    if(monsterPosition>=get_public_and_private_informations().playerMonster.size())
+    if(monsterPosition>=get_public_and_private_informations().monsters.size())
     {
         errorFightEngine("The monster is not found: "+std::to_string(monsterPosition));
         return false;
@@ -339,7 +339,7 @@ bool CommonFightEngine::changeOfMonsterInFight(const uint8_t &monsterPosition)
         errorFightEngine("try change monster but is already on the current monster");
         return false;
     }
-    const PlayerMonster &playerMonsterEntry=get_public_and_private_informations().playerMonster.at(monsterPosition);
+    const PlayerMonster &playerMonsterEntry=get_public_and_private_informations().monsters.at(monsterPosition);
     if(!monsterIsKO(playerMonsterEntry))
     {
         selectedMonster=monsterPosition;
@@ -381,11 +381,11 @@ std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const std::vector<Playe
         uint8_t index=0;
         while(index<playerMonster.size())
         {
-            positionList.push_back(static_cast<uint8_t>(get_public_and_private_informations().playerMonster.size())+index);
+            positionList.push_back(static_cast<uint8_t>(get_public_and_private_informations().monsters.size())+index);
             index++;
         }
     }
-    get_public_and_private_informations().playerMonster.insert(get_public_and_private_informations().playerMonster.cend(),playerMonster.cbegin(),playerMonster.cend());
+    get_public_and_private_informations().monsters.insert(get_public_and_private_informations().monsters.cend(),playerMonster.cbegin(),playerMonster.cend());
     updateCanDoFight();
     return positionList;
 }
@@ -393,21 +393,21 @@ std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const std::vector<Playe
 std::vector<uint8_t> CommonFightEngine::addPlayerMonster(const PlayerMonster &playerMonster)
 {
     std::vector<uint8_t> positionList;
-    positionList.push_back(static_cast<uint8_t>(get_public_and_private_informations().playerMonster.size()));
-    get_public_and_private_informations().playerMonster.push_back(playerMonster);
+    positionList.push_back(static_cast<uint8_t>(get_public_and_private_informations().monsters.size()));
+    get_public_and_private_informations().monsters.push_back(playerMonster);
     updateCanDoFight();
     return positionList;
 }
 
 void CommonFightEngine::insertPlayerMonster(const uint8_t &place,const PlayerMonster &playerMonster)
 {
-    get_public_and_private_informations().playerMonster.insert(get_public_and_private_informations().playerMonster.cbegin()+place,playerMonster);
+    get_public_and_private_informations().monsters.insert(get_public_and_private_informations().monsters.cbegin()+place,playerMonster);
     updateCanDoFight();
 }
 
 std::vector<PlayerMonster> CommonFightEngine::getPlayerMonster() const
 {
-    return get_public_and_private_informations_ro().playerMonster;
+    return get_public_and_private_informations_ro().monsters;
 }
 
 bool CommonFightEngine::moveUpMonster(const uint8_t &number)
@@ -416,9 +416,9 @@ bool CommonFightEngine::moveUpMonster(const uint8_t &number)
         return false;
     if(number==0)
         return false;
-    if(number>=(get_public_and_private_informations().playerMonster.size()))
+    if(number>=(get_public_and_private_informations().monsters.size()))
         return false;
-    std::swap(get_public_and_private_informations().playerMonster[number],get_public_and_private_informations().playerMonster[number-1]);
+    std::swap(get_public_and_private_informations().monsters[number],get_public_and_private_informations().monsters[number-1]);
     updateCanDoFight();
     return true;
 }
@@ -427,20 +427,20 @@ bool CommonFightEngine::moveDownMonster(const uint8_t &number)
 {
     if(isInFight())
         return false;
-    if(number>=(get_public_and_private_informations().playerMonster.size()-1))
+    if(number>=(get_public_and_private_informations().monsters.size()-1))
         return false;
-    std::swap(get_public_and_private_informations().playerMonster[number],get_public_and_private_informations().playerMonster[number+1]);
+    std::swap(get_public_and_private_informations().monsters[number],get_public_and_private_informations().monsters[number+1]);
     updateCanDoFight();
     return true;
 }
 
 bool CommonFightEngine::removeMonsterByPosition(const uint8_t &monsterPosition)
 {
-    if(monsterPosition>=get_public_and_private_informations().playerMonster.size())
+    if(monsterPosition>=get_public_and_private_informations().monsters.size())
         return false;
     else
     {
-        get_public_and_private_informations().playerMonster.erase(get_public_and_private_informations().playerMonster.cbegin()+monsterPosition);
+        get_public_and_private_informations().monsters.erase(get_public_and_private_informations().monsters.cbegin()+monsterPosition);
         updateCanDoFight();
         return true;
     }
@@ -448,7 +448,7 @@ bool CommonFightEngine::removeMonsterByPosition(const uint8_t &monsterPosition)
 
 bool CommonFightEngine::haveThisMonsterByPosition(const uint8_t &monsterPosition) const
 {
-    if(monsterPosition>=get_public_and_private_informations_ro().playerMonster.size())
+    if(monsterPosition>=get_public_and_private_informations_ro().monsters.size())
         return false;
     else
         return true;
@@ -456,10 +456,10 @@ bool CommonFightEngine::haveThisMonsterByPosition(const uint8_t &monsterPosition
 
 PlayerMonster * CommonFightEngine::monsterByPosition(const uint8_t &monsterPosition)
 {
-    if(monsterPosition>=get_public_and_private_informations().playerMonster.size())
+    if(monsterPosition>=get_public_and_private_informations().monsters.size())
         return NULL;
     else
-        return &get_public_and_private_informations().playerMonster[monsterPosition];
+        return &get_public_and_private_informations().monsters[monsterPosition];
 }
 
 bool CommonFightEngine::canDoFightAction()
