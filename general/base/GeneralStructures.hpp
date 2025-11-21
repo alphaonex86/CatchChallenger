@@ -351,7 +351,7 @@ public:
     //crafting
     char * recipes;//CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1, if store with HFS then store CommonDatapack::commonDatapack.get_craftingRecipesMaxId() as header
     /// max monster 255 inventory, 255 storage
-    std::vector<PlayerMonster> playerMonster,warehouse_playerMonster;
+    std::vector<PlayerMonster> monsters,warehouse_monsters;
     CLAN_ID_TYPE clan;//0 == no clan, id DB
     char * encyclopedia_monster;//CommonDatapack::commonDatapack.get_monstersMaxId()/8+1, if store with HFS then store get_monstersMaxId() as header
     char * encyclopedia_item;//CommonDatapack::commonDatapack.items.item.size()/8+1, if store with HFS then store CommonDatapack::commonDatapack.items.item.size() as header

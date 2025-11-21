@@ -137,7 +137,7 @@ bool CommonFightEngine::removeSkill(PlayerMonster * currentMonster,const unsigne
 std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex)
 {
     std::vector<Monster::AttackToLearn> returnVar;
-    const PlayerMonster &monster=get_public_and_private_informations().playerMonster.at(monsterIndex);
+    const PlayerMonster &monster=get_public_and_private_informations().monsters.at(monsterIndex);
     unsigned int sub_index=0;
     unsigned int sub_index2=0;
     const size_t &learn_size=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size();
@@ -155,7 +155,7 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
                 {
                     if(monster.skills.at(sub_index2).level<learn.learnSkillLevel)
                     {
-                        setSkillLevel(&get_public_and_private_informations().playerMonster[monsterIndex],sub_index2,learn.learnSkillLevel);
+                        setSkillLevel(&get_public_and_private_informations().monsters[monsterIndex],sub_index2,learn.learnSkillLevel);
                         returnVar.push_back(learn);
                     }
                     break;
@@ -170,7 +170,7 @@ std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint
                     temp.skill=learn.learnSkill;
                     temp.level=1;
                     temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
-                    addSkill(&get_public_and_private_informations().playerMonster[monsterIndex],temp);
+                    addSkill(&get_public_and_private_informations().monsters[monsterIndex],temp);
                     returnVar.push_back(learn);
                 }
             }

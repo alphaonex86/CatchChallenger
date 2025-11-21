@@ -133,10 +133,10 @@ unsigned int MapServer::playerToFullInsert(const Client& client, char * const bu
     bufferForOutput[posOutput]=client.public_and_private_informations.public_informations.skinId;
     posOutput+=1;
     //the following monster id to show
-    if(client.public_and_private_informations.playerMonster.empty())
+    if(client.public_and_private_informations.monsters.empty())
         *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=0;
     else
-        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=htole16(client.public_and_private_informations.playerMonster.front().monster);
+        *reinterpret_cast<uint16_t *>(bufferForOutput+posOutput)=htole16(client.public_and_private_informations.monsters.front().monster);
     posOutput+=2;
     return posOutput;
 }

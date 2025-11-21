@@ -85,9 +85,9 @@ void CommonFightEngine::healAllMonsters()
     if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
         return;
     unsigned int index=0;
-    while(index<get_public_and_private_informations().playerMonster.size())
+    while(index<get_public_and_private_informations().monsters.size())
     {
-        PlayerMonster &playerMonster=get_public_and_private_informations().playerMonster[index];
+        PlayerMonster &playerMonster=get_public_and_private_informations().monsters[index];
         if(playerMonster.egg_step==0)
         {
             const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster),playerMonster.level);
@@ -155,22 +155,22 @@ bool CommonFightEngine::internalTryEscape()
 void CommonFightEngine::fightFinished()
 {
     unsigned int index=0;
-    while(index<get_public_and_private_informations().playerMonster.size())
+    while(index<get_public_and_private_informations().monsters.size())
     {
         unsigned int sub_index=0;
-        while(sub_index<get_public_and_private_informations().playerMonster.at(index).buffs.size())
+        while(sub_index<get_public_and_private_informations().monsters.at(index).buffs.size())
         {
-            if(CommonDatapack::commonDatapack.get_monsterBuffs().find(get_public_and_private_informations().playerMonster.at(index).buffs.at(sub_index).buff)!=
+            if(CommonDatapack::commonDatapack.get_monsterBuffs().find(get_public_and_private_informations().monsters.at(index).buffs.at(sub_index).buff)!=
                     CommonDatapack::commonDatapack.get_monsterBuffs().cend())
             {
-                const PlayerBuff &playerBuff=get_public_and_private_informations().playerMonster.at(index).buffs.at(sub_index);
+                const PlayerBuff &playerBuff=get_public_and_private_informations().monsters.at(index).buffs.at(sub_index);
                 if(CommonDatapack::commonDatapack.get_monsterBuffs().at(playerBuff.buff).level.at(playerBuff.level-1).duration!=Buff::Duration_Always)
-                    get_public_and_private_informations().playerMonster[index].buffs.erase(get_public_and_private_informations().playerMonster[index].buffs.begin()+sub_index);
+                    get_public_and_private_informations().monsters[index].buffs.erase(get_public_and_private_informations().monsters[index].buffs.begin()+sub_index);
                 else
                     sub_index++;
             }
             else
-                get_public_and_private_informations().playerMonster[index].buffs.erase(get_public_and_private_informations().playerMonster[index].buffs.begin()+sub_index);
+                get_public_and_private_informations().monsters[index].buffs.erase(get_public_and_private_informations().monsters[index].buffs.begin()+sub_index);
         }
         index++;
     }
@@ -319,10 +319,10 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
         return false;
     }
     uint8_t monsterIndex=0;
-    const int &monsterListSize=static_cast<uint32_t>(get_public_and_private_informations().playerMonster.size());
+    const int &monsterListSize=static_cast<uint32_t>(get_public_and_private_informations().monsters.size());
     while(monsterIndex<monsterListSize)
     {
-        if(&get_public_and_private_informations().playerMonster.at(monsterIndex)==monster)
+        if(&get_public_and_private_informations().monsters.at(monsterIndex)==monster)
             break;
         monsterIndex++;
     }
@@ -332,7 +332,7 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
         return false;
     }
     const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster->monster);
-    const uint8_t &level=get_public_and_private_informations().playerMonster.at(monsterIndex).level;
+    const uint8_t &level=get_public_and_private_informations().monsters.at(monsterIndex).level;
     const uint32_t &old_max_hp=getStat(monsterInformations,level).hp;
     const uint32_t &new_max_hp=getStat(monsterInformations,level+1).hp;
     if(new_max_hp>old_max_hp)
@@ -341,11 +341,11 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
     messageFightEngine("You pass to the level "+std::to_string(level));
     #endif
 
-    if((get_public_and_private_informations().playerMonster.at(monsterIndex).level+numberOfLevel)>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
-        get_public_and_private_informations().playerMonster[monsterIndex].level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
+    if((get_public_and_private_informations().monsters.at(monsterIndex).level+numberOfLevel)>=CATCHCHALLENGER_MONSTER_LEVEL_MAX)
+        get_public_and_private_informations().monsters[monsterIndex].level=CATCHCHALLENGER_MONSTER_LEVEL_MAX;
     else
-        get_public_and_private_informations().playerMonster[monsterIndex].level+=numberOfLevel;
-    get_public_and_private_informations().playerMonster[monsterIndex].remaining_xp=0;
+        get_public_and_private_informations().monsters[monsterIndex].level+=numberOfLevel;
+    get_public_and_private_informations().monsters[monsterIndex].remaining_xp=0;
     levelUp(level,monsterIndex);
     return true;
 }
