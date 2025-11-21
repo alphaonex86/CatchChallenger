@@ -409,14 +409,14 @@ private:
     //chat
     void sendLocalChatText(const std::string &text);
     //seed
-    void seedValidated();
+    void seedValidated(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
     void plantSeed(const uint8_t &plant_id);
     void collectPlant();
 
     void createMemoryClan();
     Direction lookToMove(const Direction &direction);
     //seed
-    void useSeed(const uint8_t &plant_id);
+    void useSeed(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
     //crafting
     void useRecipe(const uint8_t &query_id, const uint16_t &recipe_id);
     void takeAnObjectOnMap();
@@ -658,13 +658,14 @@ private:
     void errorFightEngine(const std::string &error) override;
     void messageFightEngine(const std::string &message) const override;
 
+    /* why this structure exists ?
     struct PlantInWaiting
     {
         uint8_t plant_id;
-        CommonMap *map;
+        CATCHCHALLENGER_TYPE_MAPID mapIndex;
         uint8_t x,y;
     };
-    std::queue<PlantInWaiting> plant_list_in_waiting;
+    std::queue<PlantInWaiting> plant_list_in_waiting;*/
 
     bool parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data,const unsigned int &size);
     //have message without reply

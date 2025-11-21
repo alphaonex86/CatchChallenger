@@ -1,13 +1,14 @@
 #include "../base/Client.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/MapServer.hpp"
 #include "../base/PreparedDBQuery.hpp"
 
 using namespace CatchChallenger;
 
-void Client::useSeed(const uint8_t &plant_id)
+void Client::useSeed(const uint8_t &plant_id,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_plants().at(plant_id).requirements.reputation))
     {
@@ -23,7 +24,7 @@ void Client::useSeed(const uint8_t &plant_id)
     {
         appendReputationRewards(CommonDatapack::commonDatapack.get_plants().at(plant_id).rewards.reputation);
         removeObject(CommonDatapack::commonDatapack.get_plants().at(plant_id).itemUsed);
-        seedValidated();
+        seedValidated(plant_id,mapIndex,x,y);
     }
 }
 
@@ -89,94 +90,30 @@ void Client::takeAnObjectOnMap()
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("takeAnObjectOnMap()");
     #endif
-    CommonMap *map=this->map;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
-    //resolv the dirt
-    switch(getLastDirection())
+    COORD_TYPE new_x=0,new_y=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    if(new_map==nullptr)
     {
-        case Direction_look_at_top:
-            if(MoveOnTheMap::canGoTo(Direction_move_at_top,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(Direction_move_at_top,&map,&x,&y,false))
-                {
-                    errorOutput("takeAnObjectOnMap() Can't move at top from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        case Direction_look_at_right:
-            if(MoveOnTheMap::canGoTo(Direction_move_at_right,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(Direction_move_at_right,&map,&x,&y,false))
-                {
-                    errorOutput("takeAnObjectOnMap() Can't move at right from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        case Direction_look_at_bottom:
-            if(MoveOnTheMap::canGoTo(Direction_move_at_bottom,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(Direction_move_at_bottom,&map,&x,&y,false))
-                {
-                    errorOutput("takeAnObjectOnMap() Can't move at bottom from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        case Direction_look_at_left:
-            if(MoveOnTheMap::canGoTo(Direction_move_at_left,*map,x,y,false))
-            {
-                if(!MoveOnTheMap::move(Direction_move_at_left,&map,&x,&y,false))
-                {
-                    errorOutput("takeAnObjectOnMap() Can't move at left from "+map->map_file+" ("+std::to_string(x)+","+std::to_string(y)+")");
-                    return;
-                }
-            }
-            else
-            {
-                errorOutput("No valid map in this direction");
-                return;
-            }
-        break;
-        default:
-            errorOutput("Wrong direction to take object on map: "+std::to_string(getLastDirection()));
+        errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
         return;
     }
-    std::pair<uint8_t,uint8_t> pos(x,y);
     //check if is item
-    const MapServer * const tempItempOnMap=static_cast<MapServer *>(map);
-    if(tempItempOnMap->pointOnMap_Item.find(pos)==tempItempOnMap->pointOnMap_Item.cend())
+    if(new_map->items.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->items.cend())
     {
-        errorOutput("Not on map item on this place: "+tempItempOnMap->map_file+" ("+std::to_string(pos.first)+","+std::to_string(pos.second)+") from "+std::to_string(this->x)+","+std::to_string(this->y)+" "+MoveOnTheMap::directionToString(getLastDirection()));
+        errorOutput("Not on map item on this place: "+std::to_string(new_map->id)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
         return;
     }
-    const MapServer::ItemOnMap &item=tempItempOnMap->pointOnMap_Item.at(pos);
+    Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map->id];
+    if(mapData.plantOnMap.find(std::pair<uint8_t,uint8_t>(new_x,new_y))!=mapData.plantOnMap.cend())
+    {
+        errorOutput("Have already this item: "+std::to_string(new_map->id)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
+        return;
+    }
+    const ItemOnMap &item=new_map->items.at(std::pair<uint8_t,uint8_t>(new_x,new_y));
     //add get item from db
     if(!item.infinite)
     {
-        if(public_and_private_informations.itemOnMap.find(item.pointOnMapDbCode)!=public_and_private_informations.itemOnMap.cend())
-        {
-            errorOutput("Have already this item: "+std::to_string(item.item)+" ("+std::to_string(map->id)+") at "+map->map_file+" "+std::to_string(x)+","+std::to_string(y)+" item.pointOnMapDbCode: "+std::to_string(item.pointOnMapDbCode));
-            return;
-        }
-        public_and_private_informations.itemOnMap.insert(item.pointOnMapDbCode);
+        mapData.items.insert(std::pair<uint8_t,uint8_t>(new_x,new_y));
 
         /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_itemonmap.co;
         stringreplaceOne(queryText,"%1",std::to_string(character_id));
@@ -190,8 +127,9 @@ void Client::takeAnObjectOnMap()
 //item on map
 bool Client::syncDatabaseItemOnMap()
 {
-    if(public_and_private_informations.plantOnMap.size()*(1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
-    {
+    return true;
+    //if(public_and_private_informations.plantOnMap.size()*(1)>=sizeof(ProtocolParsingBase::tempBigBufferForOutput))
+    /*{
         errorOutput("Too many item on map");
         return false;
     }
@@ -236,5 +174,5 @@ bool Client::syncDatabaseItemOnMap()
         #error Define what do here
         #endif
         return true;
-    }
+    }*/
 }

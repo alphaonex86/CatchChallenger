@@ -83,7 +83,6 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     }
     #endif
     //save into the db
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         if(CommonSettingsServer::commonSettingsServer.useSP)
@@ -155,7 +154,7 @@ bool Client::checkLoose(bool withTeleport)
         doTurnIfChangeOfMonster=true;
         //teleport
         if(withTeleport)
-            teleportTo(rescue.map,rescue.x,rescue.y,rescue.orientation);
+            teleportTo(rescue.mapIndex,rescue.x,rescue.y,rescue.orientation);
         //regen all the monsters
         bool tempInBattle=isInBattle();
         healAllMonsters();
@@ -170,7 +169,7 @@ bool Client::checkLoose(bool withTeleport)
             return true;
         }
         #endif
-        fightOrBattleFinish(false,0);
+        fightOrBattleFinish(false,std::pair<uint16_t,uint8_t>(rescue.mapIndex,0));
         return true;
     }
     return false;

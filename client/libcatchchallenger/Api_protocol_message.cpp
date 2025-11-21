@@ -193,7 +193,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint16_t);
                     public_informations.monsterId=monsterId;
 
-                    if(public_informations.simplifiedId==player_informations.public_informations.simplifiedId)
+                    if(public_informations.simplifiedId==playerIdExcludeId)
                     {
                         if(last_direction_is_set==false)//to work with reemit
                         {
@@ -295,7 +295,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     movement.push_back(new_movement);
                     index_sub_loop++;
                 }
-                move_player(playerId,movement);
+                if(playerId!=playerIdExcludeId)
+                    move_player(playerId,movement);
                 index++;
             }
         }
@@ -338,9 +339,37 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 playerId=data[pos];
                 pos+=sizeof(uint8_t);
-                remove_player(playerId);
+                if(playerId!=playerIdExcludeId)
+                    remove_player(playerId);
                 index++;
             }
+        }
+        #else
+        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        return false;
+        #endif
+        break;
+        //exclude current player index
+        case 0x6C:
+        #ifndef BENCHMARKMUTIPLECLIENT
+        {
+            if(!character_selected)
+            {
+                //because befine max_players
+                DelayedMessage delayedMessageTemp;
+                delayedMessageTemp.data=std::string(data,size);
+                delayedMessageTemp.packetCode=packetCode;
+                delayedMessages.push_back(delayedMessageTemp);
+                return true;
+            }
+            //remove player
+            if((size-pos)<(unsigned int)sizeof(uint8_t))
+            {
+                parseError("Procotol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            playerIdExcludeId=data[pos];
+            pos+=sizeof(uint8_t);
         }
         #else
         parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -466,7 +495,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 Direction direction=(Direction)directionInt;
 
-                reinsert_player(simplifiedId,x,y,direction);
+                if(simplifiedId!=playerIdExcludeId)
+                    reinsert_player(simplifiedId,x,y,direction);
                 index_sub_loop++;
             }
         }
