@@ -835,7 +835,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                     messageFightEngine("random monster id: "+std::to_string(playerMonster.monster));
                 }
                 #endif
-                this->public_and_private_informations.playerMonster.push_back(m);
+                this->public_and_private_informations.monsters.push_back(m);
                 index++;
             }
         }
@@ -872,7 +872,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
         this->public_and_private_informations.reputation.clear();
         this->public_and_private_informations.public_informations.skinId=0;
         this->public_and_private_informations.public_informations.type=Player_type::Player_type_normal;
-        this->public_and_private_informations.playerMonster.clear();
+        this->public_and_private_informations.monsters.clear();
     }
     #else
     #error Define what do here

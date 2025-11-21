@@ -9,13 +9,13 @@ using namespace CatchChallenger;
 
 bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill)
 {
-    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.monsters.size())
     {
         errorOutput("The monster is not found: "+std::to_string(monsterPosition));
         return false;
     }
     unsigned int index=monsterPosition;
-    const PlayerMonster &monster=public_and_private_informations.playerMonster.at(index);
+    const PlayerMonster &monster=public_and_private_informations.monsters.at(index);
     unsigned int sub_index2=0;
     while(sub_index2<monster.skills.size())
     {
@@ -40,7 +40,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                         errorOutput("The attack require "+std::to_string(sp)+" sp to be learned, you have only "+std::to_string(monster.sp));
                         return false;
                     }
-                    public_and_private_informations.playerMonster[index].sp-=sp;
+                    public_and_private_informations.monsters[index].sp-=sp;
                     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_sp_only.asyncWrite({
                                 std::to_string(public_and_private_informations.playerMonster.at(index).sp),
@@ -58,7 +58,7 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                     temp.skill=skill;
                     temp.level=1;
                     temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(temp.skill).level.front().endurance;
-                    public_and_private_informations.playerMonster[index].skills.push_back(temp);
+                    public_and_private_informations.monsters[index].skills.push_back(temp);
                     /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_skill;
                     stringreplaceOne(queryText,"%1",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%2",std::to_string(temp.skill));
@@ -68,14 +68,14 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
                 }
                 else
                 {
-                    public_and_private_informations.playerMonster[index].skills[sub_index2].level++;
+                    public_and_private_informations.monsters[index].skills[sub_index2].level++;
                     /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_skill_level;
                     stringreplaceOne(queryText,"%1",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index2).level));
                     stringreplaceOne(queryText,"%2",std::to_string(monsterId));
                     stringreplaceOne(queryText,"%3",std::to_string(skill));
                     dbQueryWriteCommon(queryText);*/
                 }
-                syncMonsterSkillAndEndurance(public_and_private_informations.playerMonster[index]);
+                syncMonsterSkillAndEndurance(public_and_private_informations.monsters[index]);
                 return true;
             }
         }

@@ -10,7 +10,7 @@ bool Client::learnSkillByMonsterPosition(const uint8_t &monsterPosition, const u
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("learnSkill("+std::to_string(monsterId)+","+std::to_string(skill)+")");
     #endif
-    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.monsters.size())
     {
         errorOutput("The monster is not found: "+std::to_string(monsterPosition));
         return false;

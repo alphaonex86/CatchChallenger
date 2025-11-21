@@ -35,8 +35,8 @@ uint32_t Client::tryCapture(const uint16_t &item)
     if(captureSuccessId!=0)//if success
     {
         saveCurrentMonsterStat();
-        if(!public_and_private_informations.playerMonster.empty())
-            if(addToEncyclopedia(public_and_private_informations.playerMonster.at(public_and_private_informations.playerMonster.size()-1).monster))
+        if(!public_and_private_informations.monsters.empty())
+            if(addToEncyclopedia(public_and_private_informations.monsters.at(public_and_private_informations.monsters.size()-1).monster))
                 updateMonsterInDatabaseEncyclopedia();
     }
     else
@@ -51,7 +51,7 @@ bool Client::getBattleIsValidated()
 
 void Client::saveCurrentMonsterStat()
 {
-    if(public_and_private_informations.playerMonster.empty())
+    if(public_and_private_informations.monsters.empty())
         return;//no monsters
     PlayerMonster * monster=getCurrentMonster();
     if(monster==NULL)
@@ -179,14 +179,14 @@ void Client::healAllMonsters()
 {
     unsigned int sub_index;
     unsigned int index=0;
-    while(index<public_and_private_informations.playerMonster.size())
+    while(index<public_and_private_informations.monsters.size())
     {
-        if(public_and_private_informations.playerMonster.at(index).egg_step==0)
+        if(public_and_private_informations.monsters.at(index).egg_step==0)
         {
-            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.playerMonster.at(index).monster),public_and_private_informations.playerMonster.at(index).level);
-            if(public_and_private_informations.playerMonster.at(index).hp!=stat.hp)
+            const Monster::Stat &stat=getStat(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.monsters.at(index).monster),public_and_private_informations.monsters.at(index).level);
+            if(public_and_private_informations.monsters.at(index).hp!=stat.hp)
             {
-                public_and_private_informations.playerMonster[index].hp=stat.hp;
+                public_and_private_informations.monsters[index].hp=stat.hp;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
                             std::to_string(public_and_private_informations.playerMonster.at(index).hp),
@@ -198,7 +198,7 @@ void Client::healAllMonsters()
                 #error Define what do here
                 #endif
             }
-            if(!public_and_private_informations.playerMonster.at(index).buffs.empty())
+            if(!public_and_private_informations.monsters.at(index).buffs.empty())
             {
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.playerMonster.at(index).id)});
@@ -207,17 +207,17 @@ void Client::healAllMonsters()
                 #else
                 #error Define what do here
                 #endif
-                public_and_private_informations.playerMonster[index].buffs.clear();
+                public_and_private_informations.monsters[index].buffs.clear();
             }
             bool endurance_have_change=false;
             sub_index=0;
-            while(sub_index<public_and_private_informations.playerMonster.at(index).skills.size())
+            while(sub_index<public_and_private_informations.monsters.at(index).skills.size())
             {
                 uint8_t endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(
-                        public_and_private_informations.playerMonster.at(index).skills.at(sub_index).skill
+                        public_and_private_informations.monsters.at(index).skills.at(sub_index).skill
                         )
-                        .level.at(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).level-1).endurance;
-                if(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).endurance!=endurance)
+                        .level.at(public_and_private_informations.monsters.at(index).skills.at(sub_index).level-1).endurance;
+                if(public_and_private_informations.monsters.at(index).skills.at(sub_index).endurance!=endurance)
                 {
                     /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_skill.compose(
 
@@ -226,13 +226,13 @@ void Client::healAllMonsters()
                     stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.playerMonster.at(index).id));
                     stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).skill));
                     dbQueryWriteCommon(queryText);*/
-                    public_and_private_informations.playerMonster[index].skills[sub_index].endurance=endurance;
+                    public_and_private_informations.monsters[index].skills[sub_index].endurance=endurance;
                     endurance_have_change=true;
                 }
                 sub_index++;
             }
             if(endurance_have_change)
-                syncMonsterEndurance(public_and_private_informations.playerMonster[index]);
+                syncMonsterEndurance(public_and_private_informations.monsters[index]);
         }
         index++;
     }
@@ -543,8 +543,8 @@ bool Client::moveUpMonster(const uint8_t &number)
     }
     if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
-        saveMonsterPosition(public_and_private_informations.playerMonster.at(number-1).id,number);
-        saveMonsterPosition(public_and_private_informations.playerMonster.at(number).id,number+1);
+        saveMonsterPosition(public_and_private_informations.monsters.at(number-1).id,number);
+        saveMonsterPosition(public_and_private_informations.monsters.at(number).id,number+1);
     }
     return true;
 }
@@ -558,8 +558,8 @@ bool Client::moveDownMonster(const uint8_t &number)
     }
     if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
-        saveMonsterPosition(public_and_private_informations.playerMonster.at(number).id,number+1);
-        saveMonsterPosition(public_and_private_informations.playerMonster.at(number+1).id,number+2);
+        saveMonsterPosition(public_and_private_informations.monsters.at(number).id,number+1);
+        saveMonsterPosition(public_and_private_informations.monsters.at(number+1).id,number+2);
     }
     return true;
 
@@ -769,26 +769,26 @@ bool Client::addToEncyclopedia(const uint16_t &monster)
 
 void Client::confirmEvolution(const uint8_t &monsterPosition)
 {
-    if(monsterPosition>=public_and_private_informations.playerMonster.size())
+    if(monsterPosition>=public_and_private_informations.monsters.size())
     {
         errorOutput("Monster for evolution not found");
         return;
     }
     unsigned int index=monsterPosition;
-    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.playerMonster.at(index).monster);
+    const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(public_and_private_informations.monsters.at(index).monster);
     unsigned int sub_index=0;
     while(sub_index<monsterInformations.evolutions.size())
     {
         if(
                 (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Level &&
-                 monsterInformations.evolutions.at(sub_index).data.level<=public_and_private_informations.playerMonster.at(index).level)
+                 monsterInformations.evolutions.at(sub_index).data.level<=public_and_private_informations.monsters.at(index).level)
                 ||
                 (monsterInformations.evolutions.at(sub_index).type==Monster::EvolutionType_Trade &&
-                 GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.playerMonster.at(index).id)!=
+                 GlobalServerData::serverPrivateVariables.tradedMonster.find(public_and_private_informations.monsters.at(index).id)!=
                  GlobalServerData::serverPrivateVariables.tradedMonster.cend())
         )
         {
-            confirmEvolutionTo(&public_and_private_informations.playerMonster[index],monsterInformations.evolutions.at(sub_index).evolveTo);
+            confirmEvolutionTo(&public_and_private_informations.monsters[index],monsterInformations.evolutions.at(sub_index).evolveTo);
             return;
         }
         sub_index++;
