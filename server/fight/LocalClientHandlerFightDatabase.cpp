@@ -155,8 +155,8 @@ void Client::saveAllMonsterPosition()
 
 void Client::syncForEndOfTurn()
 {
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
-        saveStat();
+    //if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
+    //    saveStat();
 }
 
 void Client::saveStat()

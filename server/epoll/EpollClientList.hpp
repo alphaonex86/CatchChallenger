@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_EPOLLCLIENTLIST_H
 
 #include "ClientWithMapEpoll.hpp"
+#include "../base/ClientList.hpp"
 
 namespace CatchChallenger {
 class EpollClientList : public ClientList

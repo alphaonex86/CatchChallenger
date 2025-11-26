@@ -2,7 +2,7 @@
 #define CATCHCHALLENGER_CLIENTMAPMANAGEMENTEPOLL_H
 
 #include "EpollClient.hpp"
-#include "../base/ClientMapManagement/ClientWithMap.hpp"
+#include "../base/MapManagement/ClientWithMap.hpp"
 
 class ClientWithMapEpoll : public CatchChallenger::EpollClient, public CatchChallenger::ClientWithMap
 {
