@@ -287,7 +287,6 @@ private:
     bool battleIsValidated;
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
-    uint64_t botFightCash;
     std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> botFight;//pending fight, mapId=65535,botId=255 if empty
     bool isInCityCapture;
     std::vector<Skill::AttackReturn> attackReturn;

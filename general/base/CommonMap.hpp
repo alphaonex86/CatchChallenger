@@ -49,7 +49,7 @@ public:
 
     // in same map
     std::unordered_map<std::pair<uint8_t,uint8_t>,Shop,pairhash> shops;//6% of the map
-    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y
+    std::unordered_map<std::pair<uint8_t,uint8_t>,uint8_t/*npc id*/,pairhash> botsFightTrigger;//force 1 fight by x,y, never cross line of fight (this reduce lot of the memory allocation and presure, each std::vector is 1 pointer)
     std::unordered_map<std::pair<uint8_t,uint8_t>,ItemOnMap,pairhash> items;//2% of the map
     /* ONLY SERVER, see MapServer.hpp
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;

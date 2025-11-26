@@ -1,7 +1,5 @@
 #include "TimerSendInsertMoveRemove.hpp"
 
-#include "../../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
-
 #include <iostream>
 
 TimerSendInsertMoveRemove::TimerSendInsertMoveRemove()
@@ -10,5 +8,5 @@ TimerSendInsertMoveRemove::TimerSendInsertMoveRemove()
 
 void TimerSendInsertMoveRemove::exec()
 {
-    CatchChallenger::MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.generalPurgeBuffer();
+//    CatchChallenger::MapVisibilityAlgorithm_WithoutSender::mapVisibilityAlgorithm_WithoutSender.generalPurgeBuffer();
 }

@@ -1,7 +1,5 @@
 #include "TimerPositionSync.hpp"
 
-#include "../../base/LocalClientHandlerWithoutSender.hpp"
-
 #include <iostream>
 
 TimerPositionSync::TimerPositionSync()
@@ -10,5 +8,5 @@ TimerPositionSync::TimerPositionSync()
 
 void TimerPositionSync::exec()
 {
-    CatchChallenger::LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doAllAction();
+    //CatchChallenger::LocalClientHandlerWithoutSender::localClientHandlerWithoutSender.doAllAction();
 }

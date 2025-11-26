@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <signal.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -13,9 +14,10 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
+#include "../../general/base/ProtocolParsing.hpp"
 #include "EpollServer.hpp"
+#include "EpollClientList.hpp"
 #include "Epoll.hpp"
-#include "ClientMapManagementEpoll.hpp"
 #ifdef CATCHCHALLENGER_DB_POSTGRESQL
 #include "db/EpollPostgresql.hpp"
 #endif
@@ -83,7 +85,7 @@ void signal_callback_handler(int signum){
         printf("Caught signal SIGPIPE %d\n",signum);
 }
 
-void CatchChallenger::recordDisconnectByServer(void * client)
+/*void CatchChallenger::recordDisconnectByServer(void * client)
 {
     unsigned int mainIndex=0;
     while(mainIndex<16)
@@ -103,7 +105,7 @@ void CatchChallenger::recordDisconnectByServer(void * client)
     }
     elementsToDelete[elementsToDeleteIndex].push_back(client);
     elementsToDeleteSize++;
-}
+}*/
 
 void send_settings(
         #ifdef SERVERSSL

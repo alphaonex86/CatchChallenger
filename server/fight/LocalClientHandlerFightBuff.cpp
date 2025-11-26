@@ -1,6 +1,6 @@
 #include "../base/Client.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../base/Client.hpp"
+#include "../base/ClientList.hpp"
 
 using namespace CatchChallenger;
 
@@ -50,7 +50,14 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
                 {
-                    syncMonsterBuff(*otherPlayerBattle->getCurrentMonster());
+                    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                        return returnCode;
+                    if(ClientList::list->empty(otherPlayerBattle))
+                        return returnCode;
+                    Client &c=ClientList::list->rw(otherPlayerBattle);
+                    PlayerMonster * p=c.getCurrentMonster();
+                    if(p!=NULL)
+                        syncMonsterBuff(*p);
                     /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
                     stringreplaceOne(queryText,"%1",std::to_string(->id));
                     stringreplaceOne(queryText,"%2",std::to_string(effect.buff));
@@ -61,7 +68,9 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_Themself:
                 case ApplyOn_AllAlly:
                 {
-                    syncMonsterBuff(*getCurrentMonster());
+                    PlayerMonster * p=getCurrentMonster();
+                    if(p!=NULL)
+                        syncMonsterBuff(*p);
                     /*std::string queryText=PreparedDBQueryCommon::db_query_insert_monster_buff;
                     stringreplaceOne(queryText,"%1",std::to_string(getCurrentMonster()->id));
                     stringreplaceOne(queryText,"%2",std::to_string(effect.buff));

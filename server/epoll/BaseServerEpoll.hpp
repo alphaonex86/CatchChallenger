@@ -1,7 +1,7 @@
 #ifndef CATCHCHALLENGER_BASESERVEREPOLL_H
 #define CATCHCHALLENGER_BASESERVEREPOLL_H
 
-#include "../base/BaseServer.hpp"
+#include "../base/BaseServer/BaseServer.hpp"
 #include "BaseClassSwitch.hpp"
 
 class BaseServerEpoll : public CatchChallenger::BaseServer, public BaseClassSwitch
