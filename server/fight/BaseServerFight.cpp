@@ -1,9 +1,9 @@
-#include "../base/BaseServer.hpp"
+#include "../base/BaseServer/BaseServer.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/DatabaseFunction.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/DatapackGeneralLoader.hpp"
+#include "../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 
 #include <string>
 #include <vector>

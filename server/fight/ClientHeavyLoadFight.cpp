@@ -213,17 +213,6 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
         ok=loadSkillEnduranceBlock(GlobalServerData::serverPrivateVariables.db_common->value(13),playerMonster);
     if(ok)
     {
-        if(CommonSettingsServer::commonSettingsServer.useSP)
-        {
-            playerMonster.sp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(14),&ok);
-            if(!ok)
-                std::cerr << "monster sp: "+GlobalServerData::serverPrivateVariables.db_common->value(14)+" is not a number" << std::endl;
-        }
-        else
-            playerMonster.sp=0;
-    }
-    if(ok)
-    {
         const Monster::Stat &stat=CommonFightEngine::getStat(monster,playerMonster.level);
         if(playerMonster.hp>stat.hp)
         {
@@ -248,7 +237,6 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
     playerMonster.level=0;
     playerMonster.monster=0;
     playerMonster.remaining_xp=0;
-    playerMonster.sp=0;
     #elif CATCHCHALLENGER_DB_FILE
     playerMonster.catched_with=0;
     playerMonster.character_origin=0;
@@ -259,7 +247,6 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
     playerMonster.level=0;
     playerMonster.monster=0;
     playerMonster.remaining_xp=0;
-    playerMonster.sp=0;
     #else
     #error Define what do here
     #endif

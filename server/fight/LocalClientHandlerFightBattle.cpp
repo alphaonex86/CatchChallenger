@@ -1,18 +1,18 @@
 #include "../base/Client.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../base/Client.hpp"
+#include "../base/ClientList.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
 
-Client *Client::getOtherPlayerBattle() const
+SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getOtherPlayerBattle() const
 {
     return otherPlayerBattle;
 }
 
 bool Client::isInBattle() const
 {
-    return (otherPlayerBattle!=NULL && battleIsValidated);
+    return (otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX && battleIsValidated);
 }
 
 void Client::registerBattleRequest(Client &otherPlayerBattle)
@@ -25,8 +25,8 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput(otherPlayerBattle->public_and_private_informations.public_informations.pseudo+" have requested battle with you");
     #endif
-    this->otherPlayerBattle=otherPlayerBattle;
-    otherPlayerBattle->otherPlayerBattle=this;
+    this->otherPlayerBattle=otherPlayerBattle.getOtherPlayerBattle();
+    otherPlayerBattle.otherPlayerBattle=getOtherPlayerBattle();
 
     //send the network reply
     uint32_t posOutput=0;
@@ -34,13 +34,13 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
     posOutput+=1+1+4;
 
     {
-        const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
+        const std::string &text=otherPlayerBattle.getPseudo();
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
         posOutput+=1;
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
         posOutput+=text.size();
     }
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle.get_public_and_private_informations().public_informations.skinId;
     posOutput+=1;
 
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(posOutput-1-1-4);//set the dynamic size
@@ -49,55 +49,75 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
 
 void Client::battleCanceled()
 {
-    if(otherPlayerBattle!=NULL)
-        otherPlayerBattle->internalBattleCanceled(true);
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        if(ClientList::list->empty(otherPlayerBattle))
+            return;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        c.internalBattleCanceled(true);
+    }
     internalBattleCanceled(true);
 }
 
 void Client::battleAccepted()
 {
-    if(otherPlayerBattle!=NULL)
-        otherPlayerBattle->internalBattleAccepted(true);
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        if(ClientList::list->empty(otherPlayerBattle))
+            return;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        c.internalBattleAccepted(true);
+    }
     internalBattleAccepted(true);
 }
 
-void Client::battleFakeAccepted(Client *otherPlayer)
+void Client::battleFakeAccepted(Client &otherPlayer)
 {
     battleFakeAcceptedInternal(otherPlayer);
-    otherPlayer->battleFakeAcceptedInternal(this);
-    otherPlayerBattle->internalBattleAccepted(true);
+    otherPlayer.battleFakeAcceptedInternal(*this);
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
+        if(ClientList::list->empty(otherPlayerBattle))
+            return;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        c.internalBattleAccepted(true);
+    }
     internalBattleAccepted(true);
 }
 
-void Client::battleFakeAcceptedInternal(Client * otherPlayer)
+void Client::battleFakeAcceptedInternal(Client &otherPlayer)
 {
-    this->otherPlayerBattle=otherPlayer;
+    this->otherPlayerBattle=otherPlayer.getIndexConnect();
 }
 
 void Client::battleFinished()
 {
-    if(!battleIsValidated)
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(otherPlayerBattle==NULL)
+    if(ClientList::list->empty(otherPlayerBattle))
+        return;
+    Client &c=ClientList::list->rw(otherPlayerBattle);
+    if(!battleIsValidated)
         return;
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("Battle finished");
     #endif
-    otherPlayerBattle->resetBattleAction();
+    c.resetBattleAction();
     resetBattleAction();
-    Client *tempOtherPlayerBattle=otherPlayerBattle;
-    otherPlayerBattle->battleFinishedReset();
+    c.battleFinishedReset();
     battleFinishedReset();
     updateCanDoFight();
-    tempOtherPlayerBattle->updateCanDoFight();
+    c.updateCanDoFight();
 }
 
 void Client::battleFinishedReset()
 {
-    otherPlayerBattle=NULL;
+    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     battleIsValidated=false;
     mHaveCurrentSkill=false;
     mMonsterChange=false;
+    botFight.first=65535;
+    botFight.second=0;
 }
 
 void Client::resetTheBattle()
@@ -106,13 +126,13 @@ void Client::resetTheBattle()
     mHaveCurrentSkill=false;
     mMonsterChange=false;
     battleIsValidated=false;
-    otherPlayerBattle=NULL;
+    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     updateCanDoFight();
 }
 
 void Client::internalBattleCanceled(const bool &send)
 {
-    if(otherPlayerBattle==NULL)
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         //normalOutput(QStringLiteral("Battle already canceled"));
         return;
@@ -123,7 +143,7 @@ void Client::internalBattleCanceled(const bool &send)
     bool needUpdateCanDoFight=false;
     if(battleIsValidated)
         needUpdateCanDoFight=true;
-    otherPlayerBattle=NULL;
+    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     if(send)
     {
         //send the network message
@@ -140,7 +160,12 @@ void Client::internalBattleCanceled(const bool &send)
 
 void Client::internalBattleAccepted(const bool &send)
 {
-    if(otherPlayerBattle==NULL)
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return;
+    if(ClientList::list->empty(otherPlayerBattle))
+        return;
+    Client &c=ClientList::list->rw(otherPlayerBattle);
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         normalOutput("Can't accept battle if not in battle");
         return;
@@ -150,7 +175,7 @@ void Client::internalBattleAccepted(const bool &send)
         normalOutput("Battle already validated");
         return;
     }
-    if(!otherPlayerBattle->getAbleToFight())
+    if(!c.getAbleToFight())
     {
         errorOutput("The other player can't fight");
         return;
@@ -169,7 +194,7 @@ void Client::internalBattleAccepted(const bool &send)
     mMonsterChange=false;
     if(send)
     {
-        std::vector<PlayerMonster> playerMonstersPreview=otherPlayerBattle->public_and_private_informations.playerMonster;
+        std::vector<PlayerMonster> playerMonstersPreview=c.public_and_private_informations.monsters;
 
         //send the network message
         uint32_t posOutput=0;
@@ -177,13 +202,13 @@ void Client::internalBattleAccepted(const bool &send)
         posOutput+=1+4;
 
         {
-            const std::string &text=otherPlayerBattle->public_and_private_informations.public_informations.pseudo;
+            const std::string &text=c.getPseudo();
             ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(text.size());
             posOutput+=1;
             memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,text.data(),text.size());
             posOutput+=text.size();
         }
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=otherPlayerBattle->public_and_private_informations.public_informations.skinId;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=c.get_public_and_private_informations().public_informations.skinId;
         posOutput+=1;
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(playerMonstersPreview.size());
         posOutput+=1;
@@ -199,7 +224,10 @@ void Client::internalBattleAccepted(const bool &send)
         }
         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
         posOutput+=1;
-        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*otherPlayerBattle->getCurrentMonster()));
+        PlayerMonster * p=c.getCurrentMonster();
+        if(p==NULL)
+            return;
+        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,FacilityLib::playerMonsterToPublicPlayerMonster(*p));
 
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);//set the dynamic size
         sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
@@ -300,11 +328,17 @@ void Client::sendBattleReturn()
         }
         master_index++;
     }
-    if(otherPlayerBattle!=NULL && otherPlayerBattle->haveMonsterChange())
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
-        posOutput+=1;
-        posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
+        if(ClientList::list->empty(otherPlayerBattle))
+            return;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        if(c.haveMonsterChange())
+        {
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=selectedMonsterNumberToMonsterPlace(getOtherSelectedMonsterNumber());
+            posOutput+=1;
+            posOutput+=FacilityLib::publicPlayerMonsterToBinary(ProtocolParsingBase::tempBigBufferForOutput+posOutput,*getOtherMonster());
+        }
     }
     attackReturn.clear();
 
@@ -335,5 +369,5 @@ void Client::sendBattleMonsterChange()
 
 void Client::emitBattleWin()
 {
-    fightOrBattleFinish(true,0);
+    fightOrBattleFinish(true,std::pair<CATCHCHALLENGER_TYPE_MAPID,uint8_t>(mapIndex,0));
 }

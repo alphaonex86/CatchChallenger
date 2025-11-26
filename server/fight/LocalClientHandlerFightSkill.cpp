@@ -31,27 +31,6 @@ bool Client::learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &s
         {
             if((sub_index2==monster.skills.size() && learn.learnSkillLevel==1) || (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
             {
-                if(CommonSettingsServer::commonSettingsServer.useSP)
-                {
-                    const Skill &skillStructure=CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill);
-                    const uint32_t &sp=skillStructure.level.at(learn.learnSkillLevel-1).sp_to_learn;
-                    if(sp>monster.sp)
-                    {
-                        errorOutput("The attack require "+std::to_string(sp)+" sp to be learned, you have only "+std::to_string(monster.sp));
-                        return false;
-                    }
-                    public_and_private_informations.monsters[index].sp-=sp;
-                    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_sp_only.asyncWrite({
-                                std::to_string(public_and_private_informations.playerMonster.at(index).sp),
-                                std::to_string(public_and_private_informations.playerMonster.at(index).id)
-                                });
-                    #elif CATCHCHALLENGER_DB_BLACKHOLE
-                    #elif CATCHCHALLENGER_DB_FILE
-                    #else
-                    #error Define what do here
-                    #endif
-                }
                 if(learn.learnSkillLevel==1)
                 {
                     PlayerMonster::PlayerSkill temp;
@@ -128,18 +107,18 @@ uint8_t Client::decreaseSkillEndurance(PlayerMonster::PlayerSkill * skill)
     if(skill->endurance>0)
     {
         const uint8_t &newEndurance=CommonFightEngine::decreaseSkillEndurance(skill);
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
+        //if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
         {
             /*std::string queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_monster_skill;
             stringreplaceOne(queryText,"%1",std::to_string(newEndurance));
             stringreplaceOne(queryText,"%2",std::to_string(currentMonster->id));
             stringreplaceOne(queryText,"%3",std::to_string(skill));
             dbQueryWriteCommon(queryText);*/
-            syncMonsterEndurance(*currentMonster);
+            //syncMonsterEndurance(*currentMonster);
         }
-        else
+        //else
         {
-            if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
+            //if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
             {
                 //deferedEnduranceSync[currentMonster][skill]=newEndurance;
                 deferedEnduranceSync.insert(currentMonster);

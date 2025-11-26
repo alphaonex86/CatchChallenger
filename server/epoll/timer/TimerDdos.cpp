@@ -1,6 +1,6 @@
 #include "TimerDdos.hpp"
 
-#include "../../base/LocalClientHandlerWithoutSender.hpp"
+#include "../../base/ClientEvents/LocalClientHandlerWithoutSender.hpp"
 #include "../../base/BroadCastWithoutSender.hpp"
 #include "../../base/ClientNetworkReadWithoutSender.hpp"
 #include "../../../general/base/GeneralVariable.hpp"

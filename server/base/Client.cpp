@@ -95,6 +95,8 @@ void Client::setToDefault()
 
     //Fight engine
     CommonFightEngine::resetAll();
+    botFight.first=65535;
+    botFight.second=0;
 
     //local
     mapSyncMiss=false;
@@ -162,7 +164,6 @@ void Client::setToDefault()
     mCurrentSkillId=0;
     mHaveCurrentSkill=false;
     mMonsterChange=false;
-    botFightCash=0;
 
     while(!paramToPassToCallBack.empty())
         paramToPassToCallBack.pop();
@@ -849,7 +850,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << botFightMonsters;
     buf << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
-    buf << botFightCash << botFight << isInCityCapture;
+    buf << botFight << isInCityCapture;
 
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
     CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
@@ -917,7 +918,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> botFightMonsters;
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
-    buf >> botFightCash >> isInCityCapture;
+    buf >> isInCityCapture;
 
     uint8_t value=0;
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;

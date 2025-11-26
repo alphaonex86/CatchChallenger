@@ -1,13 +1,14 @@
 #include "../base/GlobalServerData.hpp"
 #include "../base/MapServer.hpp"
 #include "../base/Client.hpp"
-#include "../base/Client.hpp"
+#include "../base/ClientList.hpp"
 #include "../base/PreparedDBQuery.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
 #include "../base/MapManagement/ClientWithMap.hpp"
+#include "../base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 using namespace CatchChallenger;
 
@@ -250,27 +251,18 @@ bool Client::botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSend
 {
     if(isInFight())
     {
-        errorOutput("error: map: "+map.map_file+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
+        errorOutput("error: map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
     if(map.botsFightTrigger.find(pos)!=map.botsFightTrigger.cend())
     {
-        const std::vector<uint8_t> &botList=map.botsFightTrigger.at(pos);
-        unsigned int index=0;
-        while(index<botList.size())
+        const uint8_t &botFightId=map.botsFightTrigger.at(pos);
+        if(!haveBeatBot(map.id,botFightId))
         {
-            const uint16_t &botFightId=botList.at(index);
-            if(public_and_private_informations.bot_already_beaten!=NULL)
-            {
-                if(!haveBeatBot(botFightId))
-                {
-                    normalOutput("is now in fight on map "+map.map_file+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
-                    botFightStart(botFightId);
-                    return true;
-                }
-            }
-            index++;
+            normalOutput("is now in fight on map "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
+            botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(map.id,botFightId));
+            return true;
         }
     }
 
@@ -285,23 +277,29 @@ bool Client::botFightStart(const std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,u
         errorOutput("error: is already in fight");
         return false;
     }
-    if(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(botFight)==CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
+    const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
+    const uint8_t &botFightId=botFight.second;
+    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    if(map.botFights.find(botFightId)==map.botFights.cend())
     {
-        errorOutput("error: bot id "+std::to_string(botFight)+" not found");
+        errorOutput("error: bot id "+std::to_string(botFightId)+" not found");
         return false;
     }
-    const BotFight &botFight=CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(botFight);
-    if(botFight.monsters.empty())
+    const BotFight &botFightContent=map.botFights.at(botFightId);
+    if(botFightContent.monsters.empty())
     {
-        errorOutput("error: bot id "+std::to_string(botFight)+" have no monster to fight");
+        errorOutput("error: bot id "+std::to_string(botFightId)+" have no monster to fight");
         return false;
     }
     startTheFight();
-    botFightCash=botFight.cash;
+    //const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
+    //const uint8_t &botFightId=botFight.second;
+    //const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    //const BotFight &botFightContent=map.botFights.at(botFightId);
     unsigned int index=0;
-    while(index<botFight.monsters.size())
+    while(index<botFightContent.monsters.size())
     {
-        const BotFight::BotFightMonster &monster=botFight.monsters.at(index);
+        const BotFight::BotFightMonster &monster=botFightContent.monsters.at(index);
         const Monster::Stat &stat=getStat(CommonDatapack::commonDatapack.get_monsters().at(monster.id),monster.level);
         botFightMonsters.push_back(FacilityLib::botFightMonsterToPlayerMonster(monster,stat));
         index++;
@@ -324,9 +322,12 @@ void Client::setInCityCapture(const bool &isInCityCapture)
 
 PublicPlayerMonster *Client::getOtherMonster()
 {
-    if(otherPlayerBattle!=NULL)
+    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        PlayerMonster * otherPlayerBattleCurrentMonster=otherPlayerBattle->getCurrentMonster();
+        if(ClientList::list->empty(otherPlayerBattle))
+            return NULL;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        PlayerMonster * otherPlayerBattleCurrentMonster=c.getCurrentMonster();
         if(otherPlayerBattleCurrentMonster!=NULL)
             return otherPlayerBattleCurrentMonster;
         else
@@ -341,7 +342,7 @@ bool Client::isInFight() const
 {
     if(CommonFightEngine::isInFight())
         return true;
-    return otherPlayerBattle!=NULL || battleIsValidated;
+    return otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX || battleIsValidated;
 }
 
 uint8_t Client::getOtherSelectedMonsterNumber() const
@@ -349,7 +350,12 @@ uint8_t Client::getOtherSelectedMonsterNumber() const
     if(!isInBattle())
         return 0;
     else
-        return otherPlayerBattle->getCurrentSelectedMonsterNumber();
+    {
+        if(ClientList::list->empty(otherPlayerBattle))
+            return 0;
+        const Client &c=ClientList::list->at(otherPlayerBattle);
+        return c.getCurrentSelectedMonsterNumber();
+    }
 }
 
 bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,const PublicPlayerMonster * otherMonster) const
@@ -373,7 +379,7 @@ bool Client::currentMonsterAttackFirst(const PlayerMonster * currentMonster,cons
 bool Client::giveXP(int xp)
 {
     const bool &haveChangeOfLevel=CommonFightEngine::giveXP(xp);
-    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
+/*    if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtEachTurn)
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         auto currentMonster=getCurrentMonster();
@@ -395,12 +401,27 @@ bool Client::giveXP(int xp)
         #else
         #error Define what do here
         #endif
-    }
+    }*/
     return haveChangeOfLevel;
 }
 
 bool Client::finishTheTurn(const bool &isBot)
 {
+    const CATCHCHALLENGER_TYPE_MAPID &mapId=botFight.first;
+    if(mapId==65535)
+    {
+        normalOutput("Client::finishTheTurn() but when mapId==65535");
+        return false;
+    }
+    const uint8_t &botFightId=botFight.second;
+    const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId);
+    if(map.botFights.find(botFightId)==map.botFights.cend())
+    {
+        normalOutput("Client::finishTheTurn() but when map.botFights.find(botFightId)==map.botFights.cend()");
+        return false;
+    }
+    const BotFight &botFightContent=map.botFights.at(botFightId);
+
     const bool &win=!currentMonsterIsKO() && otherMonsterIsKO();
     if(currentMonsterIsKO() || otherMonsterIsKO())
     {
@@ -419,10 +440,20 @@ bool Client::finishTheTurn(const bool &isBot)
                 if(!isInCityCapture)
                 #endif
                 {
-                    addCash(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(botFightId).cash);
-                    if(public_and_private_informations.bot_already_beaten!=NULL)
+                    addCash(botFightContent.cash);
+                    bool found=false;
+                    if(public_and_private_informations.mapData.find(mapId)!=public_and_private_informations.mapData.cend())
                     {
-                        public_and_private_informations.bot_already_beaten[botFightId/8]|=(1<<(7-botFightId%8));
+                        const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(mapId);
+                        if(mapData.bots_beaten.find(botFightId)!=mapData.bots_beaten.cend())
+                        {
+                            found=true;
+                        }
+                    }
+                    if(!found)
+                    {
+                        Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[mapId];
+                        mapData.bots_beaten.insert(botFightId);
                         /*const std::string &queryText=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_insert_bot_already_beaten;
                         stringreplaceOne(queryText,"%1",std::to_string(character_id));
                         stringreplaceOne(queryText,"%2",std::to_string(botFightId));
@@ -430,13 +461,13 @@ bool Client::finishTheTurn(const bool &isBot)
                         syncBotAlreadyBeaten();
                     }
                 }
-                fightOrBattleFinish(win,botFightId);
-                normalOutput("Register the win against the bot fight: "+std::to_string(botFightId));
+                fightOrBattleFinish(win,botFight);
+                normalOutput("Register the win against the bot fight: map "+std::to_string(botFight.first)+" id "+std::to_string(botFight.second));
             }
             else
                 normalOutput("Have win agains a wild monster");
         }
-        fightOrBattleFinish(win,0);
+        fightOrBattleFinish(win,botFight);
     }
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     displayCurrentStatus();
@@ -462,7 +493,11 @@ bool Client::bothRealPlayerIsReady() const
 {
     if(!haveBattleAction())
         return false;
-    if(!otherPlayerBattle->haveBattleAction())
+    if(ClientList::list->empty(otherPlayerBattle))
+        return false;
+    const Client &c=ClientList::list->at(otherPlayerBattle);
+    return c.getCurrentSelectedMonsterNumber();
+    if(!c.haveBattleAction())
         return false;
     return true;
 }
@@ -475,14 +510,17 @@ bool Client::checkIfCanDoTheTurn()
         CommonFightEngine::useSkill(mCurrentSkillId);
     else
         doTheOtherMonsterTurn();
-    if(otherPlayerBattle==NULL)
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
+    if(ClientList::list->empty(otherPlayerBattle))
+        return false;
+    Client &c=ClientList::list->rw(otherPlayerBattle);
     sendBattleReturn();
-    otherPlayerBattle->sendBattleReturn();
+    c.sendBattleReturn();
     if(currentMonsterIsKO() || otherMonsterIsKO())
     {
         //sendBattleMonsterChange() at changing to not block if both is KO
-        if(haveAnotherMonsterOnThePlayerToFight() && otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight())
+        if(haveAnotherMonsterOnThePlayerToFight() && c.haveAnotherMonsterOnThePlayerToFight())
         {
             dropKOCurrentMonster();
             dropKOOtherMonster();
@@ -491,22 +529,21 @@ bool Client::checkIfCanDoTheTurn()
         else
         {
             const bool &youWin=haveAnotherMonsterOnThePlayerToFight();
-            const bool &theOtherWin=otherPlayerBattle->haveAnotherMonsterOnThePlayerToFight();
+            const bool &theOtherWin=c.haveAnotherMonsterOnThePlayerToFight();
             dropKOCurrentMonster();
             dropKOOtherMonster();
-            Client *tempOtherPlayerBattle=otherPlayerBattle;
             checkLoose();
-            tempOtherPlayerBattle->checkLoose();
+            c.checkLoose();
             normalOutput("Have win the battle");
             if(youWin)
                 emitBattleWin();
             if(theOtherWin)
-                tempOtherPlayerBattle->emitBattleWin();
+                c.emitBattleWin();
             return true;
         }
     }
     resetBattleAction();
-    otherPlayerBattle->resetBattleAction();
+    c.resetBattleAction();
     return true;
 }
 
@@ -516,10 +553,17 @@ bool Client::dropKOOtherMonster()
 
     bool battleReturn=false;
     if(isInBattle())
-        battleReturn=otherPlayerBattle->dropKOCurrentMonster();
+    {
+        if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            return false;
+        if(ClientList::list->empty(otherPlayerBattle))
+            return false;
+        Client &c=ClientList::list->rw(otherPlayerBattle);
+        battleReturn=c.dropKOCurrentMonster();
+    }
     else
     {
-        if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
+        //if(GlobalServerData::serverSettings.fightSync==GameServerSettings::FightSync_AtTheEndOfBattle)
         {
             if(!isInFight())
                 saveCurrentMonsterStat();
@@ -541,11 +585,11 @@ bool Client::moveUpMonster(const uint8_t &number)
         errorOutput("Move monster have failed");
         return false;
     }
-    if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
+    /*if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.monsters.at(number-1).id,number);
         saveMonsterPosition(public_and_private_informations.monsters.at(number).id,number+1);
-    }
+    }*/
     return true;
 }
 
@@ -556,11 +600,11 @@ bool Client::moveDownMonster(const uint8_t &number)
         errorOutput("Move monster have failed");
         return false;
     }
-    if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
+    /*if(GlobalServerData::serverSettings.fightSync!=GameServerSettings::FightSync_AtTheDisconnexion)
     {
         saveMonsterPosition(public_and_private_informations.monsters.at(number).id,number+1);
         saveMonsterPosition(public_and_private_informations.monsters.at(number+1).id,number+2);
-    }
+    }*/
     return true;
 
 }
@@ -595,7 +639,14 @@ bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
     if(isInBattle())
     {
         if(!doTurnIfChangeOfMonster)
-            otherPlayerBattle->sendBattleMonsterChange();
+        {
+            if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                return false;
+            if(ClientList::list->empty(otherPlayerBattle))
+                return false;
+            Client &c=ClientList::list->rw(otherPlayerBattle);
+            c.sendBattleMonsterChange();
+        }
         else
             mMonsterChange=true;
     }
@@ -608,7 +659,12 @@ bool Client::doTheOtherMonsterTurn()
         return CommonFightEngine::doTheOtherMonsterTurn();
     if(!bothRealPlayerIsReady())
         return false;
-    if(!otherPlayerBattle->haveCurrentSkill())
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return false;
+    if(ClientList::list->empty(otherPlayerBattle))
+        return false;
+    const Client &c=ClientList::list->at(otherPlayerBattle);
+    if(!c.haveCurrentSkill())
         return false;
     return CommonFightEngine::doTheOtherMonsterTurn();
 }
@@ -635,13 +691,18 @@ Skill::AttackReturn Client::generateOtherAttack()
         errorOutput("Both player is not ready at generateOtherAttack()");
         return attackReturnTemp;
     }
-    if(!otherPlayerBattle->haveCurrentSkill())
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return attackReturnTemp;
+    if(ClientList::list->empty(otherPlayerBattle))
+        return attackReturnTemp;
+    Client &c=ClientList::list->rw(otherPlayerBattle);
+    if(!c.haveCurrentSkill())
     {
         errorOutput("The other player have not skill at generateOtherAttack()");
         return attackReturnTemp;
     }
-    const uint16_t &skill=otherPlayerBattle->getCurrentSkill();
-    uint8_t skillLevel=otherPlayerBattle->getSkillLevel(skill);
+    const uint16_t &skill=c.getCurrentSkill();
+    uint8_t skillLevel=c.getSkillLevel(skill);
     if(skillLevel==0)
     {
         if(!haveMoreEndurance() && skill==0 && CommonDatapack::commonDatapack.get_monsterSkills().find(skill)!=CommonDatapack::commonDatapack.get_monsterSkills().cend())
@@ -652,7 +713,7 @@ Skill::AttackReturn Client::generateOtherAttack()
             return attackReturnTemp;
         }
     }
-    otherPlayerBattle->doTheCurrentMonsterAttack(skill,skillLevel);
+    c.doTheCurrentMonsterAttack(skill,skillLevel);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return attackReturn.back();
@@ -665,7 +726,12 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint16_t &skill, con
     attackReturn.push_back(CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel));
     Skill::AttackReturn attackReturnTemp=attackReturn.back();
     attackReturnTemp.doByTheCurrentMonster=false;
-    otherPlayerBattle->attackReturn.push_back(attackReturnTemp);
+    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        return attackReturnTemp;
+    if(ClientList::list->empty(otherPlayerBattle))
+        return attackReturnTemp;
+    Client &c=ClientList::list->rw(otherPlayerBattle);
+    c.attackReturn.push_back(attackReturnTemp);
     if(currentMonsterIsKO() && haveAnotherMonsterOnThePlayerToFight())
         doTurnIfChangeOfMonster=false;
     return attackReturn.back();
