@@ -43,6 +43,7 @@ protected:
     client know their map index, then O(1) remove */
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_clients_id;
     std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_removed_index;
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> map_removed_index_greater_than_254;
 
 public:
     //return index into map list
