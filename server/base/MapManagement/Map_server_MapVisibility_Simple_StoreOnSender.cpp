@@ -109,10 +109,14 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
     uint32_t posOutput=0;//if > 0 then cache created
     uint32_t baseOutput=0;
     bool cached=false;
-    //if to many player then just stop update
-    const size_t clients_size=map_clients_id.size()-map_removed_index.size();
+    //if too many player then just stop update
+    size_t clients_size=map_clients_id.size();
+    if(clients_size>254)
+        clients_size=254;
+    clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
         return;
+
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {
@@ -168,9 +172,14 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
 // filter if already send, then consume CPU and use MapManagement/ClientWithMap sendedStatus/sendedMap
 void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
 {
-    const size_t clients_size=map_clients_id.size()-map_removed_index.size();
+    //if too many player then just stop update
+    size_t clients_size=map_clients_id.size();
+    if(clients_size>254)
+        clients_size=254;
+    clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
         return;
+
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {

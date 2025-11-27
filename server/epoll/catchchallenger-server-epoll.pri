@@ -19,6 +19,7 @@ CONFIG   += console
 SOURCES += \
     $$PWD/EpollSocket.cpp \
     $$PWD/EpollClient.cpp \
+    $$PWD/EpollClientList.cpp \
     $$PWD/EpollServer.cpp \
     $$PWD/EpollSslClient.cpp \
     $$PWD/EpollSslServer.cpp \
@@ -43,6 +44,7 @@ SOURCES += \
 
 HEADERS += $$PWD/EpollSocket.h \
     $$PWD/EpollClient.h \
+    $$PWD/EpollClientList.hpp \
     $$PWD/EpollServer.h \
     $$PWD/EpollSslClient.h \
     $$PWD/EpollSslServer.h \

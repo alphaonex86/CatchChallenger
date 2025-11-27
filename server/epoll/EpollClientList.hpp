@@ -4,8 +4,7 @@
 #include "ClientWithMapEpoll.hpp"
 #include "../base/ClientList.hpp"
 
-namespace CatchChallenger {
-class EpollClientList : public ClientList
+class EpollClientList : public CatchChallenger::ClientList
 {
 public:
      /* list start at (max player*map id)
@@ -53,20 +52,23 @@ public:
      * store CHOOSEN index connected player imply read each player attribute
      * store id_db imply read each player attribute only for insert + store resolution id_db to Object
      */
+    EpollClientList();
     #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
-    static std::vector<ClientWithMapEpoll> clients;//65535 = empty slot
+    std::vector<ClientWithMapEpoll> clients;//65535 = empty slot
     #else
     #error todo the static part
     #endif
+    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clients_removed_index;
 public:
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert();
-    void remove(const Client &client);
+    void remove(const CatchChallenger::Client &client);
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const;
     bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
-    const Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
-    Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    const CatchChallenger::Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+    CatchChallenger::Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED connected_size() const;
+    CatchChallenger::ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
 };
-}
 
 #endif // CATCHCHALLENGER_CLIENTLIST_H
