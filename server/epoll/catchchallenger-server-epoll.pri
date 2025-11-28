@@ -40,6 +40,7 @@ SOURCES += \
     $$PWD/ClientMapManagementEpoll.cpp \
     $$PWD/ServerPrivateVariablesEpoll.cpp \
     $$PWD/timer/PlayerUpdaterEpoll.cpp \
+    $$PWD/ClientWithMapEpoll.cpp \
     $$PWD/timer/TimeRangeEventScan.cpp
 
 HEADERS += $$PWD/EpollSocket.h \
@@ -64,6 +65,7 @@ HEADERS += $$PWD/EpollSocket.h \
     $$PWD/base/BaseServerEpoll.hpp \
     $$PWD/ServerPrivateVariablesEpoll.hpp \
     $$PWD/timer/PlayerUpdaterEpoll.hpp \
+    $$PWD/ClientWithMapEpoll.hpp \
     $$PWD/timer/TimeRangeEventScan.hpp
 
 contains(DEFINES, CATCHCHALLENGER_NOXML) {
