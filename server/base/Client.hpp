@@ -70,7 +70,7 @@ public:
     #endif
     friend class BaseServer;
     friend class PlayerUpdaterBase;
-    explicit Client();
+    explicit Client(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
     virtual void setToDefault();
     virtual ~Client();
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getIndexConnect() const;
@@ -215,8 +215,8 @@ protected:
         uint32_t index;
     };
     uint8_t pingInProgress;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_on_map;//can have 1000 connected player on a map where visibility is 10
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_connected_player;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_on_map;//can have 1000 connected player on a map where visibility is 10, 65535 if not on map
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_connected_player;//always set
 private:
     //-------------------
     uint32_t account_id_db;//0 if not logged
@@ -783,10 +783,11 @@ protected:
     void messageParsingLayer(const std::string &message) const override;
     //map move
     virtual bool singleMove(const Direction &direction) override;
+    //CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex -> not need change directly, Client::removeClientOnMap(() Client::singleMove()
     virtual void put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
     virtual void teleportValidatedTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const /*COORD_TYPE*/uint8_t &x,const /*COORD_TYPE*/uint8_t &y,const Orientation &orientation) override;
     virtual bool moveThePlayer(const uint8_t &previousMovedUnit,const Direction &direction) override;
-    virtual void extraStop() = 0;
+    //virtual void extraStop() = 0;//why this?
 };
 }
 

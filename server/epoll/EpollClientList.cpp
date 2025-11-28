@@ -1,8 +1,10 @@
 #include "EpollClientList.hpp"
+#include "../base/GlobalServerData.hpp"
 
 EpollClientList::EpollClientList()
 {
-    size_t max=maxplayer;
+    maxIndex=0;
+    size_t max=CatchChallenger::GlobalServerData::serverSettings.max_players;
     if(max>SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
         max=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX-1;
 
@@ -13,49 +15,52 @@ EpollClientList::EpollClientList()
         clients_removed_index[max-tmax]=tmax;
     } while(tmax>0);
 
-    clients.resize(tmax);
-    int index=0;
+    clients.reserve(tmax);
+    unsigned int index=0;
     while(index<tmax)
     {
-        clients[index].reset();
-        clients[index].pos=index;
+        clients.push_back(ClientWithMapEpoll(index));
+        ClientWithMapEpoll &c=clients[index];
+        c.resetAll();
+        c.setToDefault();
+        c.reset(-1);
         index++;
     }
 }
 
 //return index into map list
-EpollClientList EpollClientList::insert()
+ClientWithMapEpoll &EpollClientList::getByReference()
 {
     if(!clients_removed_index.empty())
     {
         const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=clients_removed_index.back();
         clients_removed_index.pop_back();
-        clients[b]=index_global;
-        return b;
+        return clients[b];
     }
     else
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=clients.size();
-        clients.push_back(new ClientWithMapEpoll);
-        return b;
+        if(maxIndex>=65535)
+        {
+            std::cout << "EpollClientList::getByReference() maxIndex>=65535" << std::endl;
+            abort();
+        }
+        maxIndex++;
+        return clients[maxIndex-1];
     }
 }
 
 void EpollClientList::remove(const CatchChallenger::Client &client)
 {
     const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_map=client.getIndexConnect();
-    if(index_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
-        return;
     if(empty(index_map))
         return;
-    clients[index_map]=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     clients_removed_index.push_back(index_map);
     CatchChallenger::ClientList::remove(index_global);
 }
 
 SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
 {
-    return clients.size();
+    return maxIndex;
 }
 
 bool EpollClientList::empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
@@ -67,7 +72,16 @@ bool EpollClientList::empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) 
         abort();
     }
     #endif
-    return clients.at(index)!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    switch(clients.at(index).getStatus())
+    {
+        case CatchChallenger::Client::CharacterSelected:
+            break;
+        default:
+            return true;
+            break;
+    }
+
+    return false;
 }
 
 //abort if index is not valid
@@ -108,7 +122,7 @@ CatchChallenger::Client &EpollClientList::rw(const SIMPLIFIED_PLAYER_INDEX_FOR_C
 
 SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED EpollClientList::connected_size() const
 {
-    return clients.size()-clients_removed_index.size();
+    return maxIndex-clients_removed_index.size();
 }
 
 CatchChallenger::ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
