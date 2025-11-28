@@ -53,14 +53,9 @@ public:
      * store id_db imply read each player attribute only for insert + store resolution id_db to Object
      */
     EpollClientList();
-    #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
-    std::vector<ClientWithMapEpoll> clients;//65535 = empty slot
-    #else
-    #error todo the static part
-    #endif
-    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clients_removed_index;
+    std::vector<ClientWithMapEpoll> clients;//65535 = empty slot, else pending auth
 public:
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert();
+    ClientWithMapEpoll &getByReference();
     void remove(const CatchChallenger::Client &client);
 
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const;

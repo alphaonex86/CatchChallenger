@@ -18,7 +18,7 @@ void Client::characterIsRightSendData()
 
     stat=ClientStat::CharacterSelected;
 
-    index_connected_player=ClientList::list->insert_characterSelected(public_and_private_informations.public_informations.pseudo);
+    ClientList::list->insert_characterSelected(*this);
     if(public_and_private_informations.clan!=0)
     {
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.clanList.cend())

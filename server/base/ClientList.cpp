@@ -5,7 +5,8 @@ using namespace CatchChallenger;
 
 ClientList * ClientList::list=nullptr;
 
-ClientList::ClientList()
+ClientList::ClientList() :
+    maxIndex(0)
 {
 }
 
@@ -37,42 +38,40 @@ SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::global_clients_list_bypseudo(c
     return playerByPseudo.at(pseudo);
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::insert_characterSelected(const std::string &pseudo)
+void ClientList::insert_characterSelected(const Client &c)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(playerByPseudo.find(pseudo)!=playerByPseudo.cend())
+    if(playerByPseudo.find(c.getPseudo())!=playerByPseudo.cend())
     {
         std::cerr << "this pseudo is already found" << std::endl;
         abort();
     }
     #endif
-    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED alloc_id=insert();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     for (const auto& n : playerByPseudo)
     {
-        if(n.second==alloc_id)
+        if(n.second==c.getIndexConnect())
         {
             std::cerr << "this playerByPseudo index is already found" << std::endl;
             abort();
         }
     }
     #endif
-    playerByPseudo[pseudo]=alloc_id;
-    return alloc_id;
+    playerByPseudo[c.getPseudo()]=c.getIndexConnect();
+    return;
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED ClientList::insert_StatusWatcher()
+void ClientList::insert_StatusWatcher(const Client &c)
 {
-    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED alloc_id=insert();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(clientForStatus.find(alloc_id)!=clientForStatus.cend())
+    if(clientForStatus.find(c.getIndexConnect())!=clientForStatus.cend())
     {
         std::cerr << "this clientForStatus is already found" << std::endl;
         abort();
     }
     #endif
-    clientForStatus.insert(alloc_id);
-    return alloc_id;
+    clientForStatus.insert(c.getIndexConnect());
+    return;
 }
 
 bool ClientList::haveFreeSlot() const

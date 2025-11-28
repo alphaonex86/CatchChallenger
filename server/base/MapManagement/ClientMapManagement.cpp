@@ -24,7 +24,7 @@ bool ClientMapManagement::moveThePlayer(const uint8_t &previousMovedUnit,const D
     #endif
     if(!MapBasicMove::moveThePlayer(previousMovedUnit,direction))
         return false;
-    moveClient(previousMovedUnit,direction);
+    //moveClient(previousMovedUnit,direction);
     return true;
 }
 

@@ -31,13 +31,14 @@ using namespace CatchChallenger;
 /// \todo drop instant player number notification, and before do the signal without signal/slot, check if the number have change
 /// \todo change push position recording, from ClientMapManagement to ClientLocalCalcule, to disable ALL operation for MapVisibilityAlgorithm_None
 
-Client::Client() :
+Client::Client(const uint16_t &index_connected_player) :
     ProtocolParsingInputOutput(
         #ifndef CATCHCHALLENGERSERVERDROPIFCLENT
         PacketModeTransmission_Server
         #endif
         )
 {
+    this->index_connected_player=index_connected_player;
     setToDefault();
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
@@ -114,7 +115,6 @@ void Client::setToDefault()
     }
 
     index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
-    index_connected_player=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
     account_id_db=0;
     character_id_db=0;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -343,7 +343,7 @@ bool Client::disconnectClient()
             std::cout << "Client::disconnectClient(): vectorremoveOne(clientBroadCastList,this)" << std::endl;*/
         if(GlobalServerData::serverSettings.sendPlayerNumber)
             GlobalServerData::serverPrivateVariables.player_updater->removeConnectedPlayer();
-        extraStop();
+        //extraStop();
         tradeCanceled();
         battleCanceled();
         removeFromClan();
@@ -744,8 +744,6 @@ void Client::askStatClient(const uint8_t &query_id,const char *rawdata)
 
         //stat_client=true;
         //flags|=0x08;->just listen
-
-        index_connected_player=ClientList::list->insert_StatusWatcher();
 
         stat=ClientStat::LoggedStatClient;
     }

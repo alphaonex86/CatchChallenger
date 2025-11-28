@@ -89,6 +89,7 @@ std::string Client::orientationToStringToSave(const Orientation &orientation)
  * the overhead for the network it just at the connexion */
 void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Orientation &orientation)
 {
+    //CATCHCHALLENGER_TYPE_MAPID sendedMap;//see mapIndex -> not need change directly, Client::removeClientOnMap(() Client::singleMove()
     Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     MapBasicMove::put_on_the_map(mapIndex,x,y,orientation);
     insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
