@@ -114,7 +114,15 @@ chmod a+x catchchallenger
 * The sources of the datapack: https://github.com/alphaonex86/CatchChallenger-datapack
 * The sources of the site: https://github.com/alphaonex86/CatchChallenger-site
 
-# Hardware
-You need CPU with support of unaligned access on 8/16/32Bits for the server at least (plan to support all CPU)
+# Hardware server
+Tested on physical hardware:
+* Intel i486DX2-66 at 66Mhz for x86
+* Geode LX800 (i486/i586 like) at 500MHz for x86
+* RISC-V (without SIMD)
+* MIPS2 big endian a 200MHz
+* RPI1 at 700MHz 32-bit for ARM11
+* Pentium 3 at 750MHz for x86
+Without problem with 200 players.
+And of course more modern CPU like AMD Ryzen 9 7950X3D 16-Core Processor in x86_64, all qemu arch
 
-The server is actually 10-20MB of memory (1MB measured by massif) and 2KB by player
+The server is actually 10-20MB of memory (3MB measured by massif) and 1-4KB by player
