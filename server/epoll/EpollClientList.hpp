@@ -63,7 +63,7 @@ public:
     const CatchChallenger::Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
     CatchChallenger::Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED connected_size() const;
-    CatchChallenger::ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+    CatchChallenger::ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
 };
 
 #endif // CATCHCHALLENGER_CLIENTLIST_H
