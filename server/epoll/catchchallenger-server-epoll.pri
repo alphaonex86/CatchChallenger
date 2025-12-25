@@ -37,7 +37,6 @@ SOURCES += \
     $$PWD/main-epoll.cpp \
     $$PWD/main-epoll2.cpp \
     $$PWD/BaseServerEpoll.cpp \
-    $$PWD/ClientMapManagementEpoll.cpp \
     $$PWD/ServerPrivateVariablesEpoll.cpp \
     $$PWD/timer/PlayerUpdaterEpoll.cpp \
     $$PWD/ClientWithMapEpoll.cpp \
