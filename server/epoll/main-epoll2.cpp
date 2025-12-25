@@ -40,9 +40,6 @@ void send_settings(
     NormalServerSettings formatedServerNormalSettings=server->getNormalSettings();
 
     //common var
-    CommonSettingsServer::commonSettingsServer.useSP                            = stringtobool(settings->value("useSP"));
-    CommonSettingsServer::commonSettingsServer.autoLearn                        = stringtobool(settings->value("autoLearn")) && !CommonSettingsServer::commonSettingsServer.useSP;
-    CommonSettingsServer::commonSettingsServer.forcedSpeed                      = stringtouint8(settings->value("forcedSpeed"));
     CommonSettingsServer::commonSettingsServer.dontSendPseudo					= stringtobool(settings->value("dontSendPseudo"));
     CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange		= stringtobool(settings->value("forceClientToSendAtMapChange"));
     formatedServerSettings.dontSendPlayerType                                   = stringtobool(settings->value("dontSendPlayerType"));
@@ -86,28 +83,6 @@ void send_settings(
     formatedServerNormalSettings.proxy					= settings->value("proxy");
     formatedServerNormalSettings.proxy_port				= stringtouint16(settings->value("proxy_port"));
     formatedServerNormalSettings.useSsl					= stringtobool(settings->value("useSsl"));
-    formatedServerSettings.common_blobversion_datapack= stringtouint8(settings->value("common_blobversion_datapack"),&ok);
-    if(!ok)
-    {
-        std::cerr << "common_blobversion_datapack is not a number" << std::endl;
-        abort();
-    }
-    if(formatedServerSettings.common_blobversion_datapack>15)
-    {
-        std::cerr << "common_blobversion_datapack > 15" << std::endl;
-        abort();
-    }
-    formatedServerSettings.server_blobversion_datapack= stringtouint8(settings->value("server_blobversion_datapack"),&ok);
-    if(!ok)
-    {
-        std::cerr << "server_blobversion_datapack is not a number" << std::endl;
-        abort();
-    }
-    if(formatedServerSettings.server_blobversion_datapack>15)
-    {
-        std::cerr << "server_blobversion_datapack > 15" << std::endl;
-        abort();
-    }
 
     settings->beginGroup("content");
         if(settings->contains("mainDatapackCode"))
@@ -458,12 +433,6 @@ void send_settings(
     #endif
 
     settings->beginGroup("db");
-    if(settings->value("db_fight_sync")=="FightSync_AtEachTurn")
-        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtEachTurn;
-    else if(settings->value("db_fight_sync")=="FightSync_AtTheDisconnexion")
-        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheDisconnexion;
-    else
-        formatedServerSettings.fightSync                       = CatchChallenger::GameServerSettings::FightSync_AtTheEndOfBattle;
     formatedServerSettings.positionTeleportSync=stringtobool(settings->value("positionTeleportSync"));
     formatedServerSettings.secondToPositionSync=stringtouint32(settings->value("secondToPositionSync"));
     settings->endGroup();
@@ -472,40 +441,26 @@ void send_settings(
     formatedServerSettings.max_players					= stringtouint16(settings->value("max-players"));
 
     //visibility algorithm
-    settings->beginGroup("MapVisibilityAlgorithm");
-    switch(stringtouint32(settings->value("MapVisibilityAlgorithm")))
+    settings->beginGroup("mapVisibility");
+    formatedServerSettings.mapVisibility.enable				= stringtobool(settings->value("enable"));
+    formatedServerSettings.mapVisibility.simple.max				= stringtouint8(settings->value("Max"));
+    formatedServerSettings.mapVisibility.simple.reshow			= stringtouint8(settings->value("Reshow"));
+    if(formatedServerSettings.mapVisibility.simple.max<1)
+        formatedServerSettings.mapVisibility.simple.max=1;
+    if(formatedServerSettings.mapVisibility.simple.reshow>=formatedServerSettings.mapVisibility.simple.max)
+        formatedServerSettings.mapVisibility.simple.reshow=formatedServerSettings.mapVisibility.simple.max-1;
+    uint8_t t=stringtouint8(settings->value("minimize"));
+    switch(t)
     {
-        case 0:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
+    case 0:
+    case 1:
+        formatedServerSettings.mapVisibility.minimize          = (GameServerSettings::MapVisibility::Minimize)t;
         break;
-        case 1:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_None;
-        break;
-        case 2:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_WithBorder;
-        break;
-        default:
-            formatedServerSettings.mapVisibility.mapVisibilityAlgorithm		= MapVisibilityAlgorithmSelection_Simple;
+    default:
+        formatedServerSettings.mapVisibility.minimize=GameServerSettings::MapVisibility::Minimize_Network;
         break;
     }
     settings->endGroup();
-    if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_Simple)
-    {
-        settings->beginGroup("MapVisibilityAlgorithm-Simple");
-        formatedServerSettings.mapVisibility.simple.max				= stringtouint16(settings->value("Max"));
-        formatedServerSettings.mapVisibility.simple.reshow			= stringtouint16(settings->value("Reshow"));
-        formatedServerSettings.mapVisibility.simple.reemit          = stringtobool(settings->value("Reemit"));
-        settings->endGroup();
-    }
-    else if(formatedServerSettings.mapVisibility.mapVisibilityAlgorithm==MapVisibilityAlgorithmSelection_WithBorder)
-    {
-        settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-        formatedServerSettings.mapVisibility.withBorder.maxWithBorder	= stringtouint16(settings->value("MaxWithBorder"));
-        formatedServerSettings.mapVisibility.withBorder.reshowWithBorder= stringtouint16(settings->value("ReshowWithBorder"));
-        formatedServerSettings.mapVisibility.withBorder.max				= stringtouint16(settings->value("Max"));
-        formatedServerSettings.mapVisibility.withBorder.reshow			= stringtouint16(settings->value("Reshow"));
-        settings->endGroup();
-    }
 
     {
         settings->beginGroup("programmedEvent");

@@ -27,18 +27,12 @@ void BaseServerEpoll::setEventTimer(const uint8_t &event,const uint8_t &value,co
 
 void BaseServerEpoll::preload_the_visibility_algorithm()
 {
-    switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+    if(ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove!=NULL)
+        delete ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove;
+    if(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.enable)
     {
-        case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-        case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-        if(ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove!=NULL)
-            delete ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove;
         ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove=new TimerSendInsertMoveRemove();
         ServerPrivateVariablesEpoll::serverPrivateVariablesEpoll.timer_to_send_insert_move_remove->start(CATCHCHALLENGER_SERVER_MAP_TIME_TO_SEND_MOVEMENT);
-        break;
-        case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-        default:
-        break;
     }
 
     BaseServer::preload_the_visibility_algorithm();
@@ -76,7 +70,7 @@ BaseClassSwitch::EpollObjectType BaseServerEpoll::getType() const
     return BaseClassSwitch::EpollObjectType::Server;
 }
 
-void BaseServerEpoll::preload_11_sync_the_players()
+/*void BaseServerEpoll::preload_11_sync_the_players()
 {
     ClientWithMap::clients.clear();
     ClientWithMap::clients.resize(GlobalServerData::serverSettings.max_players);
@@ -87,4 +81,4 @@ void BaseServerEpoll::preload_11_sync_the_players()
         index++;
     }
     BaseServer::preload_11_sync_the_players();
-}
+}*/
