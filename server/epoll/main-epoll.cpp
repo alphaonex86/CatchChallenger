@@ -461,7 +461,8 @@ int main(int argc, char *argv[])
     #error Define what do here
     #endif
 
-    ClientList::list=new EpollClientList();
+    EpollClientList *epollClientList=new EpollClientList();
+    ClientList::list=epollClientList;
     GlobalServerData::serverPrivateVariables.player_updater=new PlayerUpdaterEpoll();
     TimerCityCapture timerCityCapture;
     TimerDdos timerDdos;
@@ -670,46 +671,15 @@ if(c->getPlayerId()>0)
                         const int s = 0;
                         if(s == -1)
                             std::cerr << "unable to make to socket non blocking" << std::endl;
+                        else if(!EpollClientList::list->haveFreeSlot())
+                            std::cerr << "!EpollClientList::haveFreeSlot()" << std::endl;
                         else
                         {
-                            int *socketStringSize=nullptr;
-                            char **socketString=nullptr;
-
-                            search stat(ClientStat::Free) into std::vector<Client> Client::clientBroadCastList;
-                            and change ClientStat::Free
-                                    set index_connected_player
-
-                            switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                            {
-                                case MapVisibilityAlgorithmSelection_Simple:
-                                {
-                                    MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll *c=new MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll(infd);
-                                    socketStringSize=&c->socketStringSize;
-                                    socketString=&c->socketString;
-                                    client=c;
-                                }
-                                break;
-                                case MapVisibilityAlgorithmSelection_WithBorder:
-                                {
-                                    MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll *c=new MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll(infd);
-                                    socketStringSize=&c->socketStringSize;
-                                    socketString=&c->socketString;
-                                    client=c;
-                                }
-                                break;
-                                default:
-                                case MapVisibilityAlgorithmSelection_None:
-                                {
-                                    MapVisibilityAlgorithm_NoneEpoll *c=new MapVisibilityAlgorithm_NoneEpoll(infd);
-                                    socketStringSize=&c->socketStringSize;
-                                    socketString=&c->socketString;
-                                    client=c;
-                                }
-                                break;
-                            }
+                            ClientWithMapEpoll &client=epollClientList->getByReference();
+                            client.reset(infd);
                             #ifdef CATCHCHALLENGER_EXTRA_CHECK
                             ++clientnumberToDebug;
-                            if(static_cast<BaseClassSwitch *>(client)->getType()!=BaseClassSwitch::EpollObjectType::Client)
+                            if(client.getType()!=BaseClassSwitch::EpollObjectType::Client)
                             {
                                 std::cerr << "Wrong post check type (abort)" << std::endl;
                                 abort();
@@ -719,7 +689,7 @@ if(c->getPlayerId()>0)
                             std::cout << "new MapVisibilityAlgorithm: " << infd << " " << client << std::endl;
                             #endif
                             //just for informations
-                            {
+                            /*{
                                 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
                                 const int &s2 = getnameinfo(&in_addr, in_len,
                                 hbuf, sizeof hbuf,
@@ -739,49 +709,27 @@ if(c->getPlayerId()>0)
                                     strcat(*socketString,sbuf);
                                     (*socketString)[*socketStringSize-1]='\0';
                                 }
-                                /*else
-                                    std::cout << "Accepted connection on descriptor " << infd << ", client: " << client << std::endl;*/
-                            }
+                            }*/
                             epoll_event event;
                             memset(&event,0,sizeof(event));
-                            event.data.ptr = client;
+                            event.data.ptr = &client;
                             event.events = EPOLLIN | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLRDHUP | EPOLLOUT;
                             const int s2 = Epoll::epoll.ctl(EPOLL_CTL_ADD, infd, &event);
                             if(s2 == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
-                                switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                                {
-                                    case MapVisibilityAlgorithmSelection_Simple:
-                                        delete static_cast<MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll *>(client);
-                                    break;
-                                    case MapVisibilityAlgorithmSelection_WithBorder:
-                                        delete static_cast<MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll *>(client);
-                                    break;
-                                    default:
-                                    case MapVisibilityAlgorithmSelection_None:
-                                        delete static_cast<MapVisibilityAlgorithm_NoneEpoll *>(client);
-                                    break;
-                                }
+                                client.setToDefault();
+                                client.disconnectClient();
+                                epollClientList->remove(client);
                             }
                             else
                             {
                                 if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
                                 {
                                     std::cerr << "socket first byte write error" << std::endl;
-                                    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                                    {
-                                        case MapVisibilityAlgorithmSelection_Simple:
-                                            delete static_cast<MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll *>(client);
-                                        break;
-                                        case MapVisibilityAlgorithmSelection_WithBorder:
-                                            delete static_cast<MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll *>(client);
-                                        break;
-                                        default:
-                                        case MapVisibilityAlgorithmSelection_None:
-                                            delete static_cast<MapVisibilityAlgorithm_NoneEpoll *>(client);
-                                        break;
-                                    }
+                                    client.setToDefault();
+                                    client.disconnectClient();
+                                    epollClientList->remove(client);
                                 }
                             }
                             #ifdef PROTOCOLPARSINGDEBUG
@@ -793,117 +741,42 @@ if(c->getPlayerId()>0)
                 break;
                 case BaseClassSwitch::EpollObjectType::Client:
                 {
-                    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+                    ClientWithMapEpoll *client=static_cast<ClientWithMapEpoll *>(events[i].data.ptr);
+                    #ifdef PROTOCOLPARSINGDEBUG
+                    std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
+                    #endif
+                    if((events[i].events & EPOLLERR) ||
+                    (events[i].events & EPOLLHUP) ||
+                    (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
-                        case MapVisibilityAlgorithmSelection_Simple:
-                        {
-                            MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll * const client=static_cast<MapVisibilityAlgorithm_Simple_StoreOnSenderEpoll *>(events[i].data.ptr);
-                            #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
-                            #endif
-                            if((events[i].events & EPOLLERR) ||
-                            (events[i].events & EPOLLHUP) ||
-                            (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                            {
-                                /* An error has occured on this fd, or the socket is not
-                                ready for reading (why were we notified then?) */
-                                if(!(events[i].events & EPOLLHUP))
-                                    std::cerr << "client epoll error: " << events[i].events << std::endl;
-                                numberOfConnectedClient--;
+                        /* An error has occured on this fd, or the socket is not
+                        ready for reading (why were we notified then?) */
+                        if(!(events[i].events & EPOLLHUP))
+                            std::cerr << "client epoll error: " << events[i].events << std::endl;
+                        numberOfConnectedClient--;
 
-                                client->disconnectClient();
+                        client->setToDefault();
+                        client->disconnectClient();
+                        epollClientList->remove(*client);
 
-                                continue;
-                            }
-                            //ready to read
-                            if(events[i].events & EPOLLIN)
-                            {
-                                #ifdef PROTOCOLPARSINGDEBUG
-                                std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
-                                #endif
-                                client->parseIncommingData();
-                            }
-                            if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
-                            {
-                                // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
-                                numberOfConnectedClient--;
-                                client->disconnectClient();
-                            }
-                        }
-                        break;
-                        case MapVisibilityAlgorithmSelection_WithBorder:
-                        {
-                            MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll * const client=static_cast<MapVisibilityAlgorithm_WithBorder_StoreOnSenderEpoll *>(events[i].data.ptr);
-                            #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
-                            #endif
-                            if((events[i].events & EPOLLERR) ||
-                            (events[i].events & EPOLLHUP) ||
-                            (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                            {
-                                /* An error has occured on this fd, or the socket is not
-                                ready for reading (why were we notified then?) */
-                                if(!(events[i].events & EPOLLHUP))
-                                    std::cerr << "client epoll error: " << events[i].events << std::endl;
-                                numberOfConnectedClient--;
+                        continue;
+                    }
+                    //ready to read
+                    if(events[i].events & EPOLLIN)
+                    {
+                        #ifdef PROTOCOLPARSINGDEBUG
+                        std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
+                        #endif
+                        client->parseIncommingData();
+                    }
+                    if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
+                    {
+                        // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
+                        numberOfConnectedClient--;
 
-                                client->disconnectClient();
-
-                                continue;
-                            }
-                            //ready to read
-                            if(events[i].events & EPOLLIN)
-                            {
-                                #ifdef PROTOCOLPARSINGDEBUG
-                                std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
-                                #endif
-                                client->parseIncommingData();
-                            }
-                            if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
-                            {
-                                // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
-                                numberOfConnectedClient--;
-                                client->disconnectClient();
-                            }
-                        }
-                        break;
-                        default:
-                        case MapVisibilityAlgorithmSelection_None:
-                        {
-                            MapVisibilityAlgorithm_NoneEpoll * const client=static_cast<MapVisibilityAlgorithm_NoneEpoll *>(events[i].data.ptr);
-                            #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "client " << events[i].data.ptr << " event: " << events[i].events << std::endl;
-                            #endif
-                            if((events[i].events & EPOLLERR) ||
-                            (events[i].events & EPOLLHUP) ||
-                            (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
-                            {
-                                /* An error has occured on this fd, or the socket is not
-                                ready for reading (why were we notified then?) */
-                                if(!(events[i].events & EPOLLHUP))
-                                    std::cerr << "client epoll error: " << events[i].events << std::endl;
-                                numberOfConnectedClient--;
-
-                                client->disconnectClient();
-
-                                continue;
-                            }
-                            //ready to read
-                            if(events[i].events & EPOLLIN)
-                            {
-                                #ifdef PROTOCOLPARSINGDEBUG
-                                std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
-                                #endif
-                                client->parseIncommingData();
-                            }
-                            if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())
-                            {
-                                // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
-                                numberOfConnectedClient--;
-                                client->disconnectClient();
-                            }
-                        }
-                        break;
+                        client->setToDefault();
+                        client->disconnectClient();
+                        epollClientList->remove(*client);
                     }
                 }
                 break;
