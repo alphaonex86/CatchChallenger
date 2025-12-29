@@ -39,7 +39,7 @@ public:
     uint8_t width;
     uint8_t height;
 
-    std::vector<MonstersCollisionValue> monstersCollisionList;
+    std::vector<MonstersCollisionValue> zones;
 
     //any where on the map, need broadcast the state
     std::vector<Industry> industries;

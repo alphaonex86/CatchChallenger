@@ -73,7 +73,7 @@ public:
 
         buf << width;
         buf << height;
-        buf << monstersCollisionList;
+        buf << zones;
         buf << industries;
         buf << botFights;
 
@@ -129,7 +129,7 @@ public:
 
         buf >> width;
         buf >> height;
-        buf >> monstersCollisionList;
+        buf >> zones;
         buf >> industries;
         buf >> botFights;
 

@@ -163,21 +163,21 @@ bool CommonFightEngine::generateWildFightIfCollision(const CommonMap &map, const
         return false;
     }
 
-    const uint8_t &zoneCode=MoveOnTheMap::getZoneCode(map,x,y);
+    const uint8_t &mapZoneCode=MoveOnTheMap::getMapZoneCode(map,x,y);
     /* No wild monster into:
      * 253 ParsedLayerLedges_LedgesBottom
      * 252 ParsedLayerLedges_LedgesTop
      * 251 ParsedLayerLedges_LedgesRight
      * 250 ParsedLayerLedges_LedgesLeft */
-    if(zoneCode==250 || zoneCode==251 || zoneCode==252 || zoneCode==253)
+    if(mapZoneCode==250 || mapZoneCode==251 || mapZoneCode==252 || mapZoneCode==253)
         return false;
-    if(zoneCode>=map.monstersCollisionList.size())
+    if(mapZoneCode>=map.zones.size())
     {
         //errorFightEngine("error: map ("+std::to_string(x)+","+std::to_string(y)+"), zone code out of range"); -> bug is TP in colision
         /// no fight in this zone
         return false;
     }
-    const MonstersCollisionValue &monstersCollisionValue=map.monstersCollisionList.at(zoneCode);
+    const MonstersCollisionValue &monstersCollisionValue=map.zones.at(mapZoneCode);
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {

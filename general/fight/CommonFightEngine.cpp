@@ -69,13 +69,13 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
 
     const uint8_t &zoneCode=map.flat_simplified_map.at(x+y*map.width);
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(zoneCode>=map.monstersCollisionList.size())
+    if(zoneCode>=map.zones.size())
     {
         std::cerr << "CommonFightEngine::canDoRandomFight() zoneCode>=map.monstersCollisionList.size()" << std::endl;
         abort();
     }
     #endif
-    const MonstersCollisionValue &monstersCollisionValue=map.monstersCollisionList.at(zoneCode);
+    const MonstersCollisionValue &monstersCollisionValue=map.zones.at(zoneCode);
     if(monstersCollisionValue.walkOn.empty())
         return true;
     else
