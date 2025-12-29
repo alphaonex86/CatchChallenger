@@ -41,10 +41,6 @@
 
 namespace CatchChallenger {
 
-#ifdef EPOLLCATCHCHALLENGERSERVER
-void recordDisconnectByServer(void * client);
-#endif
-
 //herit from Epoll into server/epoll/ClientMapManagementEpoll.hpp ... for eatch implementation, then this code here is free of epoll/Qt structre
 class Client : public ProtocolParsingInputOutput, public CommonFightEngine, public ClientMapManagement, public ClientBase
 {
