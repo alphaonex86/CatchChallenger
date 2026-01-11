@@ -5,8 +5,7 @@ using namespace CatchChallenger;
 bool Client::sendInventory()
 {
     if(sizeof(ProtocolParsingBase::tempBigBufferForOutput)<=(1+4+
-                                                            (2+4)*public_and_private_informations.items.size()+
-                                                            (2+4)*public_and_private_informations.warehouse_items.size()
+                                                            (2+4)*public_and_private_informations.items.size()
                                                             ))
     {
         errorOutput("Too many items to be send");
@@ -28,19 +27,6 @@ bool Client::sendInventory()
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(i->second);
             posOutput+=4;
             ++i;
-        }
-    }
-    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(public_and_private_informations.warehouse_items.size());
-    posOutput+=2;
-    {
-        auto  j=public_and_private_informations.warehouse_items.begin();
-        while(j!=public_and_private_informations.warehouse_items.cend())
-        {
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(j->first);
-            posOutput+=2;
-            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(j->second);
-            posOutput+=4;
-            ++j;
         }
     }
 

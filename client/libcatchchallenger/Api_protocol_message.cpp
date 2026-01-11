@@ -40,7 +40,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
     }
     switch(packetCode)
     {
-        //full Insert player on map, need be delayed if no map loaded
+        //full Insert player on map, need be delayed if no map loaded, append to current player list, need clear if send whole list
         case 0x6B:
         {
             if(!character_selected)
@@ -305,7 +305,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         return false;
         #endif
         break;
-        //Remove player from map
+        //Remove player from same map
         case 0x69:
         #ifndef BENCHMARKMUTIPLECLIENT
         {
@@ -459,13 +459,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             while(index_sub_loop<playerSizeList)
             {
                 //player id
-                uint8_t simplifiedId=0;
+                uint8_t playerIndex=0;
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                uint8_t simplifiedId=data[pos];
+                uint8_t playerIndex=data[pos];
                 pos+=sizeof(uint8_t);
 
                 //x and y

@@ -347,11 +347,10 @@ bool Client::nextStepQuest(const CatchChallenger::Quest &quest)
             appendReputationPoint(quest.rewards.reputation.at(index).reputationId,quest.rewards.reputation.at(index).point);
             index++;
         }
-        index=0;
-        while(index<quest.rewards.allow.size())
+        if(quest.rewards.allowCreateClan)
         {
-            appendAllow(quest.rewards.allow.at(index));
-            index++;
+            public_and_private_informations.allowCreateClan=true;
+            syncDatabaseAllow();
         }
         syncDatabaseQuest();
     }

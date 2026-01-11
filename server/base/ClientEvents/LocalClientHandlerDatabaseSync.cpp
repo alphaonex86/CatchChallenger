@@ -101,99 +101,6 @@ void Client::updateObjectInDatabase()
     }
 }*/
 
-void Client::updateObjectInWarehouseDatabase()
-{
-    if(public_and_private_informations.items.empty())
-    {
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_warehouse.asyncWrite({
-            std::string(),
-            std::to_string(character_id)
-            });
-        #elif CATCHCHALLENGER_DB_BLACKHOLE
-        #elif CATCHCHALLENGER_DB_FILE
-        #else
-        #error Define what do here
-        #endif
-    }
-    else
-    {
-        uint16_t lastItemId=0;
-        uint32_t pos=0;
-        char item_raw[(2+4)*public_and_private_informations.warehouse_items.size()];
-        auto i=public_and_private_informations.warehouse_items.begin();
-        while(i!=public_and_private_informations.warehouse_items.cend())
-        {
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            //not ordened
-            uint16_t item;
-            if(lastItemId<=i->first)
-            {
-                item=i->first-lastItemId;
-                lastItemId=i->first;
-            }
-            else
-            {
-                item=static_cast<uint16_t>(65536-lastItemId)+static_cast<uint16_t>(i->first);
-                lastItemId=i->first;
-            }
-            #else
-            //ordened
-            const uint16_t &item=i->first-lastItemId;
-            lastItemId=i->first;
-            #endif
-            const uint32_t &quantity=i->second;
-            *reinterpret_cast<uint16_t *>(item_raw+pos)=htole16(item);
-            pos+=2;
-            *reinterpret_cast<uint32_t *>(item_raw+pos)=htole32(quantity);
-            pos+=4;
-            ++i;
-        }
-        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item_warehouse.asyncWrite({
-            binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw))),
-            std::to_string(character_id)
-            });
-        #elif CATCHCHALLENGER_DB_BLACKHOLE
-        #elif CATCHCHALLENGER_DB_FILE
-        #else
-        #error Define what do here
-        #endif
-    }
-}
-
-/*void Client::updateMonsterInWarehouseDatabase()
-{
-    if(public_and_private_informations.warehouse_playerMonster.empty())
-    {
-        dbQueryWriteCommon(
-                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_warehouse.compose(
-                        std::string()
-                        )
-                    );
-    }
-    else
-    {
-        std::string monster;
-        uint32_t pos=0;
-        char monster_raw[(2+4)*public_and_private_informations.warehouse_playerMonster.size()];
-        unsigned int index=0;
-        while(index<public_and_private_informations.warehouse_playerMonster.size())
-        {
-            *reinterpret_cast<uint32_t *>(monster_raw+pos)=htole32(public_and_private_informations.warehouse_playerMonster.at(index).id);
-            pos+=4;
-            index++;
-        }
-        monster=binarytoHexa(monster_raw,sizeof(monster_raw));
-        dbQueryWriteCommon(
-                    GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_warehouse.compose(
-                        binarytoHexa(monster_raw,sizeof(monster_raw)),
-                    std::to_string(character_id)
-                        )
-                    );
-    }
-}*/
-
 void Client::updateObjectInDatabaseAndEncyclopedia()
 {
     std::string item;
@@ -263,7 +170,7 @@ void Client::updateMonsterInDatabaseEncyclopedia()
 
 void Client::syncDatabaseAllow()
 {
-    uint8_t allowflat[public_and_private_informations.allow.size()];
+    /*uint8_t allowflat[public_and_private_informations.allow.size()];
     uint32_t index=0;
     auto i=public_and_private_informations.allow.begin();
     while(i!=public_and_private_informations.allow.cend())
@@ -282,7 +189,7 @@ void Client::syncDatabaseAllow()
     (void)allowflat;
     #else
     #error Define what do here
-    #endif
+    #endif*/
 }
 
 void Client::syncDatabaseReputation()

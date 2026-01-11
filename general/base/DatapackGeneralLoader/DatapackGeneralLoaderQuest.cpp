@@ -57,6 +57,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
     }
     CatchChallenger::Quest quest;
     quest.id=0;
+    quest.rewards.allowCreateClan=false;
     tinyxml2::XMLDocument *domDocument;
     #ifndef EPOLLCATCHCHALLENGERSERVER
     if(CommonDatapack::commonDatapack.xmlLoadedFile.find(file)!=CommonDatapack::commonDatapack.xmlLoadedFile.cend())
@@ -273,7 +274,7 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 if(allowItem->Attribute("type")!=NULL)
                 {
                     if(strcmp(allowItem->Attribute("type"),"clan")==0)
-                        quest.rewards.allow.push_back(CatchChallenger::ActionAllow_Clan);
+                        quest.rewards.allowCreateClan=true;
                     else
                         std::cerr << "Unable to open the file: " << file << ", allow type not understand " <<
                                      allowItem->Attribute("id") << ": child->Name(): " << allowItem->Name() << std::endl;
