@@ -272,10 +272,10 @@ public:
 
     //map move
     virtual void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
-    virtual void remove_player(const uint16_t &id) = 0;
-    virtual void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) = 0;
+    virtual void move_player(const uint8_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
+    virtual void remove_player(const uint8_t &id) = 0;
+    virtual void reinsert_player(const uint8_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void full_reinsert_player(const uint8_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
     virtual void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
 

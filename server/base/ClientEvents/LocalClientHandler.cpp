@@ -408,22 +408,6 @@ bool CatchChallenger::operator==(const CatchChallenger::MonsterDrops &monsterDro
     return true;
 }
 
-void Client::appendAllow(const ActionAllow &allow)
-{
-    if(public_and_private_informations.allow.find(allow)!=public_and_private_informations.allow.cend())
-        return;
-    public_and_private_informations.allow.insert(allow);
-    syncDatabaseAllow();
-}
-
-void Client::removeAllow(const ActionAllow &allow)
-{
-    if(public_and_private_informations.allow.find(allow)==public_and_private_informations.allow.cend())
-        return;
-    public_and_private_informations.allow.erase(allow);
-    syncDatabaseAllow();
-}
-
 //return true if validated and gift sended
 bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
 {
