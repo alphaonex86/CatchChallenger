@@ -297,6 +297,10 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                         {
                             if(insertCount>0)
                             {
+                                ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;//full Insert player on map, need be delayed if no map loaded, append to current player list, need clear if send whole list
+                                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput);
+                                ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(id);//map id
                                 if(insertCount<254)
                                     ProtocolParsingBase::tempBigBufferForOutput[1+4+1+2]=static_cast<uint8_t>(insertCount);//player count
                                 else
@@ -306,14 +310,18 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                             //merge memory block to minimize the kernel syscall count
                             if(removeCount>0)
                             {
+                                // lack of the header, 0x69, Remove player from same map -> set for tempBigBufferForRemove
                                 Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove[1+4]=static_cast<uint8_t>(removeCount);//player count
+                                *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove+1)=htole32(removeCount);//map id
 
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForRemove,1+4+1+removeCount);
                                 posOutput+=1+4+1+removeCount;
                             }
                             if(changesCount>0)
                             {
+                                // lack of the header, 0x66, Reinser player on same map, set for tempBigBufferForChanges
                                 Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges[1+4]=static_cast<uint8_t>(changesCount);//player count
+                                *reinterpret_cast<uint32_t *>(Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges+1)=htole32(changesCount*(1+1+1+1));//map id
 
                                 memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,Map_server_MapVisibility_Simple_StoreOnSender::tempBigBufferForChanges,1+4+1+changesCount*(1+1+1+1));
                                 posOutput+=1+4+1+changesCount*(1+1+1+1);

@@ -423,21 +423,12 @@ private:
     void sendRemoveObject(const uint16_t &item,const uint32_t &quantity=1);
     void updateObjectInDatabase();
     //void updateMonsterInDatabase();
-    void updateObjectInWarehouseDatabase();
     //void updateMonsterInWarehouseDatabase();
     void updateObjectInDatabaseAndEncyclopedia();
     void updateMonsterInDatabaseEncyclopedia();
     uint32_t objectQuantity(const uint16_t &item) const;
     void addCash(const uint64_t &cash,const bool &forceSave=false);
     void removeCash(const uint64_t &cash);
-    void addWarehouseCash(const uint64_t &cash,const bool &forceSave=false);
-    void removeWarehouseCash(const uint64_t &cash);
-    bool wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash, const std::vector<std::pair<uint16_t, uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t, uint32_t> > &depositeItems, const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
-    bool wareHouseStoreCheck(const uint64_t &withdrawCash, const uint64_t &depositeCash,
-                             const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
-                             const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
-    void addWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
-    uint32_t removeWarehouseObject(const uint16_t &item,const uint32_t &quantity=1,const bool databaseSync=true);
 
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void confirmEvolution(const uint8_t &monsterPosition);
@@ -463,8 +454,6 @@ private:
     void tradeAddTradeMonster(const uint8_t &monsterPosition);
     //quest
     void newQuestAction(const QuestAction &action, const CATCHCHALLENGER_TYPE_QUEST &questId);
-    void appendAllow(const ActionAllow &allow);
-    void removeAllow(const ActionAllow &allow);
     void syncDatabaseAllow();
     //plant
     bool syncDatabasePlant();

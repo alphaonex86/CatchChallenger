@@ -124,17 +124,8 @@ void Client::characterIsRightSendData()
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=public_and_private_informations.public_informations.skinId;
     posOutput+=1;
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allow.size());
+    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(public_and_private_informations.allowCreateClan);
     posOutput+=1;
-    {
-        auto i=public_and_private_informations.allow.begin();
-        while(i!=public_and_private_informations.allow.cend())
-        {
-            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=*i;
-            posOutput+=1;
-            ++i;
-        }
-    }
 
     //clan related
     *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(public_and_private_informations.clan);
@@ -147,11 +138,6 @@ void Client::characterIsRightSendData()
 
     {
         const uint64_t cash=htole64(public_and_private_informations.cash);
-        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
-        posOutput+=8;
-    }
-    {
-        const uint64_t cash=htole64(public_and_private_informations.warehouse_cash);
         memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&cash,8);
         posOutput+=8;
     }

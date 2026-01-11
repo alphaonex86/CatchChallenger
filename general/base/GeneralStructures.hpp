@@ -5,23 +5,11 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-
-#include "GeneralType.hpp"
-
-#if defined(CATCHCHALLENGER_CLIENT)
-//client
-#ifndef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-#define MAXIMIZEPERFORMANCEOVERDATABASESIZE
-#endif
-#else
-//server
-//#define MAXIMIZEPERFORMANCEOVERDATABASESIZE
-#endif
-
-#ifndef MAXIMIZEPERFORMANCEOVERDATABASESIZE
 #include <map>
 #include <set>
-#endif
+#include <utility>
+
+#include "GeneralType.hpp"
 
 namespace CatchChallenger {
 
@@ -50,12 +38,6 @@ enum Orientation : uint8_t
     Orientation_right = 2,
     Orientation_bottom = 3,
     Orientation_left = 4
-};
-
-enum ActionAllow : uint8_t
-{
-    ActionAllow_Nothing=0x00,
-    ActionAllow_Clan=0x01
 };
 
 enum Direction : uint8_t
@@ -319,16 +301,14 @@ class Player_private_and_public_informations_Map
 {
     //std::pair<COORD_TYPE,COORD_TYPE> allow directly work without DB resolution
 public:
-#ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-    //here to send at character login
-    std::unordered_set<std::pair<COORD_TYPE,COORD_TYPE>> items;
-    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plants;
-    std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
-#else
+    /* why not std::set/std::map to generate diferencial compress?
+     * few probability is continue, then low compression
+     * too few data, then unable to compress
+     * loaded by map and near map, then not able to generate relative compression, and near map don't have similar data
+     * 1 unique type, more simple */
     std::set<std::pair<COORD_TYPE,COORD_TYPE>> items;
     std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plants;
-    std::set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
-#endif
+    std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -347,11 +327,11 @@ class Player_private_and_public_informations
 {
 public:
     Player_public_informations public_informations;
-    uint64_t cash,warehouse_cash;
+    uint64_t cash;
     //crafting
     char * recipes;//CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1, if store with HFS then store CommonDatapack::commonDatapack.get_craftingRecipesMaxId() as header
     /// max monster 255 inventory, 255 storage
-    std::vector<PlayerMonster> monsters,warehouse_monsters;
+    std::vector<PlayerMonster> monsters,warehouse_monsters;//need wrehouse to limit monster count to have battle to other player
     CLAN_ID_TYPE clan;//0 == no clan, id DB
     char * encyclopedia_monster;//CommonDatapack::commonDatapack.get_monstersMaxId()/8+1, if store with HFS then store get_monstersMaxId() as header
     char * encyclopedia_item;//CommonDatapack::commonDatapack.items.item.size()/8+1, if store with HFS then store CommonDatapack::commonDatapack.items.item.size() as header
@@ -362,25 +342,18 @@ public:
      * More memory usage by 2x, but improve the code maintenance because the id in memory is id in database
      * Less dictionary resolution to improve the cache flush */
 
-    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
-    #else
+    /* why not std::set/std::map to generate diferencial compress?
+    * few probability is continue, then low compression
+    * too few data, then unable to compress
+    * loaded by map and near map, then not able to generate relative compression, and near map don't have similar data
+    * 1 unique type, more simple */
     std::map<CATCHCHALLENGER_TYPE_MAPID,Player_private_and_public_informations_Map> mapData;
-    #endif
 
-    #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-        std::unordered_set<ActionAllow,std::hash<uint8_t>/*what hash use*/ > allow;
-        //here to send at character login
-        std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
-        std::unordered_map<uint8_t,PlayerReputation> reputation;
-        std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
-    #else
-        std::set<ActionAllow> allow;
-        //here to send at character login
-        std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
-        std::map<uint8_t/*internal id*/,PlayerReputation> reputation;
-        std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items,warehouse_items;
-    #endif
+    bool allowCreateClan;
+    //here to send at character login
+    std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quests;
+    std::map<uint8_t,PlayerReputation> reputation;
+    std::map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> items;
 };
 
 class CharacterEntry
@@ -1573,25 +1546,17 @@ public:
     public:
         std::vector<Item> items;
         std::vector<ReputationRewards> reputation;
-        std::vector<ActionAllow> allow;
+        bool allowCreateClan;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
             buf << items << reputation;
-            buf << (uint8_t)allow.size();
-            for(auto const& v: allow)
-                buf << (uint8_t)v;
+            buf << allowCreateClan;
         }
         template <class B>
         void parse(B& buf) {
             buf >> items >> reputation;
-            uint8_t vectorsize=0;
-            buf >> vectorsize;
-            for(unsigned int i=0; i<vectorsize; i++) {
-                uint8_t value=0;
-                buf >> value;
-                allow.push_back((ActionAllow)value);
-            }
+            buf >> allowCreateClan;
         }
         #endif
     };

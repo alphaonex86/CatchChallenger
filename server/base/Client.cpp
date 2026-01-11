@@ -78,7 +78,6 @@ void Client::setToDefault()
     public_and_private_informations.public_informations.skinId=0;
     public_and_private_informations.public_informations.type=Player_type_normal;
     public_and_private_informations.cash=0;
-    public_and_private_informations.warehouse_cash=0;
     public_and_private_informations.recipes=nullptr;
     public_and_private_informations.monsters.clear();
     public_and_private_informations.warehouse_monsters.clear();
@@ -88,11 +87,9 @@ void Client::setToDefault()
     public_and_private_informations.repel_step=0;
     public_and_private_informations.clan_leader=false;
     public_and_private_informations.mapData.clear();
-    public_and_private_informations.allow.clear();
     public_and_private_informations.quests.clear();
     public_and_private_informations.reputation.clear();
     public_and_private_informations.items.clear();
-    public_and_private_informations.warehouse_items.clear();
 
     //Fight engine
     CommonFightEngine::resetAll();
@@ -827,18 +824,12 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     //see Player_private_and_public_informations_Map
     //serialise list of bot fight in form: map DB id + id
 
-    buf << public_and_private_informations.public_informations << public_and_private_informations.cash << public_and_private_informations.warehouse_cash << recipesS
+    buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS
         << public_and_private_informations.quests << public_and_private_informations.reputation
-        << public_and_private_informations.items << public_and_private_informations.warehouse_items;
-    buf << public_and_private_informations.mapData;
-    const uint8_t allowSize=public_and_private_informations.allow.size();
-    buf << allowSize;
-    std::set<ActionAllow>::iterator it;
-    for (it = public_and_private_informations.allow.begin(); it != public_and_private_informations.allow.end(); ++it) {
-        buf << (uint8_t)*it;
-    }
+        << public_and_private_informations.items;
+    buf << public_and_private_informations.mapData << public_and_private_informations.allowCreateClan;
 
     buf << ableToFight;
     buf << wildMonsters;
@@ -870,25 +861,13 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     std::string recipesS;
     std::string encyclopedia_monsterS;
     std::string encyclopedia_itemS;
-    buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash >> public_and_private_informations.warehouse_cash
+    buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash
         >> recipesS >> public_and_private_informations.monsters >> public_and_private_informations.warehouse_monsters
         >> encyclopedia_monsterS >> encyclopedia_itemS
         >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader;
     buf >> public_and_private_informations.quests
-        >> public_and_private_informations.reputation >> public_and_private_informations.items >> public_and_private_informations.warehouse_items;
-    buf >> public_and_private_informations.mapData;
-    uint8_t allowSize=0;
-    buf >> allowSize;
-    {
-        unsigned int index=0;
-        while(index<allowSize)
-        {
-            uint8_t t=0;
-            buf >> t;
-            public_and_private_informations.allow.insert((ActionAllow)t);
-            index++;
-        }
-    }
+        >> public_and_private_informations.reputation >> public_and_private_informations.items;
+    buf >> public_and_private_informations.mapData >> public_and_private_informations.allowCreateClan;
     public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     size_t min=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
