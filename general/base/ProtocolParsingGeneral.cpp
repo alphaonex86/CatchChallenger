@@ -84,7 +84,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             packetFixedSize[0x09]=1+2;
             packetFixedSize[0x0A]=0xFE;
             packetFixedSize[0x0B]=0;
-            packetFixedSize[0x0C]=2;
+            packetFixedSize[0x0C]=0;
             packetFixedSize[0x0D]=2;
             packetFixedSize[0x0E]=1;//monster position
             packetFixedSize[0x0F]=0xFE;

@@ -85,14 +85,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     //player id
                     Player_public_informations public_informations;
-                    if((size-pos)<(unsigned int)sizeof(uint8_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint8_t playerSmallId=data[pos];
-                    pos+=sizeof(uint8_t);
-                    public_informations.simplifiedId=playerSmallId;
 
                     //x and y
                     if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
@@ -137,9 +129,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         return false;
                     }
                     public_informations.type=playerType;
-
-                    //the speed
-                    public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
 
                     if(!CommonSettingsServer::commonSettingsServer.dontSendPseudo)
                     {
@@ -193,18 +182,17 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint16_t);
                     public_informations.monsterId=monsterId;
 
-                    if(public_informations.simplifiedId==playerIdExcludeId)
+                    if(index!=playerExcludeIndex)
                     {
-                        if(last_direction_is_set==false)//to work with reemit
+                        /*if(last_direction_is_set==false)//to work with reemit
                         {
                             setLastDirection(direction);
                             player_informations.public_informations=public_informations;
                             have_current_player_info(player_informations);
                             insert_player(public_informations,mapId,x,y,direction);
-                        }
-                    }
-                    else
+                        } now have pos and map is send into loaded data, see Api_protocol::parseCharacterBlockCharacter() */
                         insert_player(public_informations,mapId,x,y,direction);
+                    }
                     index_sub_loop++;
                 }
                 index++;
@@ -218,7 +206,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                            " CommonSettingsServer::commonSettingsServer.dontSendPseudo: "+std::to_string((unsigned int)CommonSettingsServer::commonSettingsServer.dontSendPseudo)+
                            " max_players: "+std::to_string((unsigned int)max_players)+
                            " character_selected: "+std::to_string((unsigned int)character_selected)+
-                           " player_informations.public_informations.simplifiedId: "+std::to_string((unsigned int)player_informations.public_informations.simplifiedId)+
                            " last_direction_is_set: "+std::to_string((unsigned int)last_direction_is_set)
                            );
                 return false;
@@ -295,7 +282,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     movement.push_back(new_movement);
                     index_sub_loop++;
                 }
-                if(playerId!=playerIdExcludeId)
+                if(playerId!=playerExcludeIndex)
                     move_player(playerId,movement);
                 index++;
             }
@@ -339,7 +326,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 playerId=data[pos];
                 pos+=sizeof(uint8_t);
-                if(playerId!=playerIdExcludeId)
+                if(playerId!=playerExcludeIndex)
                     remove_player(playerId);
                 index++;
             }
@@ -368,7 +355,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 parseError("Procotol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            playerIdExcludeId=data[pos];
+            playerExcludeIndex=data[pos];
             pos+=sizeof(uint8_t);
         }
         #else
@@ -465,7 +452,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
-                uint8_t playerIndex=data[pos];
+                playerIndex=data[pos];
                 pos+=sizeof(uint8_t);
 
                 //x and y
@@ -495,8 +482,8 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 Direction direction=(Direction)directionInt;
 
-                if(simplifiedId!=playerIdExcludeId)
-                    reinsert_player(simplifiedId,x,y,direction);
+                if(playerIndex!=playerExcludeIndex)
+                    reinsert_player(playerIndex,x,y,direction);
                 index_sub_loop++;
             }
         }
@@ -1343,8 +1330,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             #else
             for (auto itr = items.cbegin(); itr != items.cend(); ++itr)
                 player_informations.items[itr->first]=itr->second;
-            for (auto itr = warehouse_items.cbegin(); itr != warehouse_items.cend(); ++itr)
-                player_informations.warehouse_items[itr->first]=itr->second;
             have_inventory(items,warehouse_items);
             #endif
         }

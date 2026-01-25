@@ -37,10 +37,10 @@ public:
     bool haveNextStepQuestRequirements(const CatchChallenger::Quest &quest) const;
     bool haveStartQuestRequirement(const CatchChallenger::Quest &quest) const;
     //item
-    uint32_t itemQuantity(const uint16_t &itemId) const;
+    uint32_t itemQuantity(const CATCHCHALLENGER_TYPE_ITEM &itemId) const;
     //fight
-    void addBeatenBotFight(const uint16_t &botFightId);
-    virtual bool haveBeatBot(const uint16_t &botFightId) const = 0;
+    void addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId);
+    virtual bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const = 0;
 
     //protocol command
     void hashSha224(const char * const data,const int size,char *buffer);
@@ -57,7 +57,6 @@ public:
     Player_private_and_public_informations &get_player_informations();
     const Player_private_and_public_informations &get_player_informations_ro() const;
     std::string getPseudo() const;
-    uint16_t getId() const;
 
     virtual void tryDisconnect() = 0;
     virtual std::string datapackPathBase() const;
@@ -106,7 +105,7 @@ public:
     };
     ProxyMode proxyMode;
 
-    bool setMapNumber(const unsigned int number_of_map);
+    bool setMapNumber(const CATCHCHALLENGER_TYPE_MAPID number_of_map);
     virtual bool disconnectClient() override;
     std::pair<uint16_t,uint16_t> getLast_number_of_player();
 protected:
@@ -124,7 +123,7 @@ protected:
     bool haveTheLogicalGroupList;
     uint16_t last_players_number;
     uint16_t last_max_players;
-    uint8_t playerIdExcludeId;
+    uint8_t playerExcludeIndex;
 
     LogicialGroup logicialGroup;
 
@@ -199,7 +198,7 @@ protected:
     //stored local player info
     uint16_t max_players;
     uint16_t max_players_real;
-    uint32_t number_of_map;
+    CATCHCHALLENGER_TYPE_MAPID number_of_map;
 
     //to send trame
     uint8_t queryNumber();
@@ -260,7 +259,7 @@ public:
     virtual void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression) = 0;
 
     //general info
-    virtual void number_of_player(const uint16_t &number,const uint16_t &max_players) = 0;
+    virtual void number_of_player(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &number,const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &max_players) = 0;
     virtual void random_seeds(const std::string &data) = 0;
 
     //character
@@ -271,17 +270,17 @@ public:
     virtual void newEvent(const uint8_t &event,const uint8_t &event_value) = 0;
 
     //map move
-    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void move_player(const uint8_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
-    virtual void remove_player(const uint8_t &id) = 0;
-    virtual void reinsert_player(const uint8_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void full_reinsert_player(const uint8_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) = 0;
+    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
+    virtual void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id) = 0;
+    virtual void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
-    virtual void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) = 0;
 
     //plant
-    virtual void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) = 0;
-    virtual void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) = 0;
+    virtual void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) = 0;
+    virtual void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y) = 0;
     virtual void seed_planted(const bool &ok) = 0;
     virtual void plant_collected(const CatchChallenger::Plant_collect &stat) = 0;
     //crafting
@@ -296,9 +295,9 @@ public:
 
     //player info
     virtual void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) = 0;
-    virtual void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) = 0;
-    virtual void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) = 0;
-    virtual void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) = 0;
+    virtual void have_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) = 0;
+    virtual void add_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) = 0;
+    virtual void remove_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) = 0;
 
     //datapack
     virtual void haveTheDatapack() = 0;
@@ -307,17 +306,17 @@ public:
     virtual void newFileBase(const std::string &fileName,const std::string &data) = 0;
     virtual void newHttpFileBase(const std::string &url,const std::string &fileName) = 0;
     virtual void removeFileBase(const std::string &fileName) = 0;
-    virtual void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
+    virtual void datapackSizeBase(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
     //main
     virtual void newFileMain(const std::string &fileName,const std::string &data) = 0;
     virtual void newHttpFileMain(const std::string &url,const std::string &fileName) = 0;
     virtual void removeFileMain(const std::string &fileName) = 0;
-    virtual void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
+    virtual void datapackSizeMain(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
     //sub
     virtual void newFileSub(const std::string &fileName,const std::string &data) = 0;
     virtual void newHttpFileSub(const std::string &url,const std::string &fileName) = 0;
     virtual void removeFileSub(const std::string &fileName) = 0;
-    virtual void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
+    virtual void datapackSizeSub(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) = 0;
 
     //shop
     virtual void haveShopList(const std::vector<ItemToSellOrBuy> &items) = 0;
@@ -336,7 +335,7 @@ public:
     virtual void tradeFinishedByOther() = 0;
     virtual void tradeValidatedByTheServer() = 0;
     virtual void tradeAddTradeCash(const uint64_t &cash) = 0;
-    virtual void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) = 0;
+    virtual void tradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity) = 0;
     virtual void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) = 0;
 
     //battle
@@ -357,9 +356,9 @@ public:
     virtual void captureCityYourAreNotLeader() = 0;
     virtual void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone) = 0;
     virtual void captureCityPreviousNotFinished() = 0;
-    virtual void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count) = 0;
-    virtual void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId) = 0;
-    virtual void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count) = 0;
+    virtual void captureCityStartBattle(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
+    virtual void captureCityStartBotFight(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId) = 0;
+    virtual void captureCityDelayedStart(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
     virtual void captureCityWin() = 0;
 public:
     virtual std::string getLanguage() const = 0;
@@ -380,11 +379,11 @@ public:
     LogicialGroup getLogicialGroup() const;
 
     //plant, can do action only if the previous is finish
-    void useSeed(const uint8_t &plant_id);
+    void useSeed(const CATCHCHALLENGER_TYPE_PLAN &plant_id);
     void collectMaturePlant();
     //crafting
-    void useRecipe(const uint16_t &recipeId);
-    void addRecipe(const uint16_t &recipeId);
+    void useRecipe(const CATCHCHALLENGER_TYPE_ITEM &recipeId);
+    void addRecipe(const CATCHCHALLENGER_TYPE_ITEM &recipeId);
 
     //trade
     void tradeRefused();
@@ -392,7 +391,7 @@ public:
     void tradeCanceled();
     void tradeFinish();
     void addTradeCash(const uint64_t &cash);
-    void addObject(const uint16_t &item,const uint32_t &quantity);
+    void addObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity);
     void addMonsterByPosition(const uint8_t &monsterPosition);
 
     //battle
@@ -400,42 +399,40 @@ public:
     void battleAccepted();
 
     //inventory
-    void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
-    bool useObject(const uint16_t &object);
-    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition);
-    bool wareHouseStore(const uint64_t &withdrawCash, const uint64_t &depositeCash,
-                        const std::vector<std::pair<uint16_t,uint32_t> > &withdrawItems, const std::vector<std::pair<uint16_t,uint32_t> > &depositeItems,
-                        const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
+    void destroyObject(const CATCHCHALLENGER_TYPE_ITEM &object,const uint32_t &quantity=1);
+    bool useObject(const CATCHCHALLENGER_TYPE_ITEM &object);
+    bool useObjectOnMonsterByPosition(const CATCHCHALLENGER_TYPE_ITEM &object, const uint8_t &monsterPosition);
+    bool wareHouseStore(const std::vector<uint8_t> &withdrawMonsters, const std::vector<uint8_t> &depositeMonsters);
     void takeAnObjectOnMap();
 
     //shop
-    void getShopList(const uint16_t &shopId);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-    void buyObject(const uint16_t &shopId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-    void sellObject(const uint16_t &shopId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    void getShopList();/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    void buyObject(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
+    void sellObject(const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
 
     //factory
-    void getFactoryList(const uint16_t &factoryId);
-    void buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price);
-    void sellFactoryResource(const uint16_t &factoryId, const uint16_t &objectId, const uint32_t &quantity, const uint32_t &price);
+    void getFactoryList();
+    void buyFactoryProduct(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price);
+    void sellFactoryResource(const CATCHCHALLENGER_TYPE_ITEM &objectId, const uint32_t &quantity, const uint32_t &price);
 
     //fight
     void sendTryEscape();
-    void useSkill(const uint16_t &skill);
+    void useSkill(const CATCHCHALLENGER_TYPE_SKILL &skill);
     void heal();
-    void requestFight(const uint16_t &fightId);
+    void requestFight();
     void changeOfMonsterInFightByPosition(const uint8_t &monsterPosition);
 
     //monster
-    void learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
+    void learnSkillByPosition(const uint8_t &monsterPosition, const CATCHCHALLENGER_TYPE_SKILL &skill);
     void monsterMoveDown(const uint8_t &number);
     void monsterMoveUp(const uint8_t &number);
     void confirmEvolutionByPosition(const uint8_t &monterPosition);
 
     //quest
-    void startQuest(const uint16_t &questId);
-    void finishQuest(const uint16_t &questId);
-    void cancelQuest(const uint16_t &questId);
-    void nextQuestStep(const uint16_t &questId);
+    void startQuest(const CATCHCHALLENGER_TYPE_QUEST &questId);
+    void finishQuest(const CATCHCHALLENGER_TYPE_QUEST &questId);
+    void cancelQuest(const CATCHCHALLENGER_TYPE_QUEST &questId);
+    void nextQuestStep(const CATCHCHALLENGER_TYPE_QUEST &questId);
 
     //clan
     void createClan(const std::string &name);

@@ -48,7 +48,7 @@ void Client::heal()
     rescue=unvalidated_rescue;
 }
 
-void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId)
+void Client::requestFight()
 {
     if(mapIndex>=65535)
         return;
@@ -64,11 +64,6 @@ void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHA
         return;
     }
     #endif
-    if(haveBeatBot(mapId,botId))
-    {
-        errorOutput("You can't rebeat this fighter");
-        return;
-    }
     #ifdef DEBUG_MESSAGE_CLIENT_COMPLEXITY_LINEARE
     normalOutput("request fight at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
@@ -83,14 +78,16 @@ void Client::requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHA
     if(new_map->botsFightTrigger.find(pos)!=new_map->botsFightTrigger.cend())
     {
         const uint8_t botsFightId=new_map->botsFightTrigger.at(pos);
-        if(botsFightId==botId)
+        if(haveBeatBot(new_map->id,botsFightId))
         {
-            normalOutput("is now in fight (after a request) on map with the bot "+std::to_string(botId));
-            botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(new_map->id,botId));
+            errorOutput("You can't rebeat this fighter");
             return;
         }
+        normalOutput("is now in fight (after a request) on map with the bot "+std::to_string(botsFightId));
+        botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(new_map->id,botsFightId));
+        return;
     }
-    errorOutput("no fight with id "+std::to_string(botId)+" in this direction");
+    errorOutput("no fight with in this direction");
 }
 
 bool Client::otherPlayerIsInRange(Client &otherPlayer)

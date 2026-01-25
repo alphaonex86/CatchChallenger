@@ -296,6 +296,28 @@ public:
     #endif
 };
 
+/* when trade failed then update this status
+ * when come in range, update this status
+ private the player to prevent problem with gameplay, less mesages, less protocol */
+struct IndustryStatus
+{
+    uint64_t last_update;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> resources;//max cycletobefull*resouces
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> products;//max cycletobefull*resouces
+    #ifdef CATCHCHALLENGER_DB_FILE
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    template <class B>
+    void serialize(B& buf) const {
+        buf << last_update << resources << products;
+    }
+    template <class B>
+    void parse(B& buf) {
+        buf >> last_update >> resources >> products;
+    }
+    #endif
+    #endif
+};
+
 //this structure allow load only map and near map and not all the data (not implemented)
 class Player_private_and_public_informations_Map
 {
@@ -309,15 +331,16 @@ public:
     std::set<std::pair<COORD_TYPE,COORD_TYPE>> items;
     std::map<std::pair<COORD_TYPE,COORD_TYPE>,PlayerPlant> plants;
     std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> bots_beaten;
+    std::vector<IndustryStatus> industriesStatus;
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << items << plants << bots_beaten;
+        buf << items << plants << bots_beaten << industriesStatus;
     }
     template <class B>
     void parse(B& buf) {
-        buf >> items >> plants >> bots_beaten;
+        buf >> items >> plants >> bots_beaten >> industriesStatus;
     }
     #endif
     #endif
@@ -477,27 +500,6 @@ public:
     void parse(B& buf) {
         buf >> capture;
     }
-    #endif
-};
-
-/* when trade failed then update this status
- * when come in range, update this status*/
-struct IndustryStatus
-{
-    uint64_t last_update;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> resources;//max cycletobefull*resouces
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> products;//max cycletobefull*resouces
-    #ifdef CATCHCHALLENGER_DB_FILE
-    #ifdef CATCHCHALLENGER_CACHE_HPS
-    template <class B>
-    void serialize(B& buf) const {
-        buf << last_update << resources << products;
-    }
-    template <class B>
-    void parse(B& buf) {
-        buf >> last_update >> resources >> products;
-    }
-    #endif
     #endif
 };
 
@@ -1564,7 +1566,7 @@ public:
     {
     public:
         std::vector<Item> items;
-        std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::unordered_set<CATCHCHALLENGER_TYPE_MAPID>> fights;
+        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>> fights;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {

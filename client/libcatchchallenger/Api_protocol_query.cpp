@@ -40,7 +40,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            uint16_t mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+            mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
                 
             uint8_t x,y;
