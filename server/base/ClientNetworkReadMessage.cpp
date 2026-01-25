@@ -384,19 +384,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //Request bot fight
         case 0x0C:
         {
-            if(size!=((int)sizeof(uint8_t)))
-            {
-                errorOutput("wrong remaining size for request bot fight");
-                return false;
-            }
-            const uint8_t &fightId=data[0x00];
-            if(size!=((int)sizeof(uint16_t)))
-            {
-                errorOutput("wrong remaining size for request bot fight");
-                return false;
-            }
-            const uint16_t &mapId=le16toh(*reinterpret_cast<uint16_t *>(const_cast<char *>(data)));
-            requestFight(mapId,fightId);
+            requestFight();
             return true;
         }
         break;
