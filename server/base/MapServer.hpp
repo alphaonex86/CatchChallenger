@@ -74,7 +74,7 @@ public:
         buf << width;
         buf << height;
         buf << zones;
-        buf << industries;
+        buf << industries << industries_pos;
         buf << botFights;
 
         //std::unordered_map<std::pair<uint8_t,uint8_t> and std::unordered_set<std::pair<uint8_t,uint8_t> not supported by HPS
@@ -130,7 +130,7 @@ public:
         buf >> width;
         buf >> height;
         buf >> zones;
-        buf >> industries;
+        buf >> industries >> industries_pos;
         buf >> botFights;
 
         uint8_t tempSize=0;
@@ -191,13 +191,6 @@ public:
         }
 
         buf >> monsterDrops;
-
-        for(unsigned int i=0;i<industries.size();i++)
-        {
-            IndustryStatus s;
-            s.last_update=0;
-            industriesStatus.push_back(s);
-        }
     }
     #endif
 };

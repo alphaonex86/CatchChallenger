@@ -470,7 +470,7 @@ private:
     void battleAccepted();
     virtual bool tryEscape() override;
     void heal();
-    void requestFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId);
+    void requestFight();
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
     SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getLocalClientHandlerFight();//65535 if not in fight
     //clan
