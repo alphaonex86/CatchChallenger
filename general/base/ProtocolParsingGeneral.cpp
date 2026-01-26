@@ -73,7 +73,7 @@ void ProtocolParsing::initialiseTheVariable(const InitialiseTheVariableType &ini
             memset(packetFixedSize,0xFF,sizeof(packetFixedSize));
             #endif
 
-            //Value: 0xFF not found (blocked), 0xFE not fixed size
+            //Value: 0xFF not found (blocked), 0xFE not fixed size, fixed size used to prevent DDOS attack before login (can't send 4G size packet before login and saturate the bandwith)
             packetFixedSize[0x02]=2;
             packetFixedSize[0x03]=0xFE;
             packetFixedSize[0x04]=1;

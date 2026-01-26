@@ -106,7 +106,6 @@ struct map_management_insert
     COORD_TYPE x;
     COORD_TYPE y;
     Direction direction;//can be insert as direction when changing of map
-    uint16_t speed;
 };
 
 struct map_management_movement
@@ -127,7 +126,12 @@ struct Player_public_informations
     std::string pseudo;
     Player_type type;
     uint8_t skinId;
-    uint16_t monsterId;//the monster follow the player on map, other player can see it
+    CATCHCHALLENGER_TYPE_MONSTER monsterId;//the monster follow the player on map, other player can see it
+    /* on server MapBasicMove store:
+     *     CATCHCHALLENGER_TYPE_MAPID mapIndex;
+    COORD_TYPE x,y;
+    Direction last_direction;
+    STORE specific for client */
 
     #ifdef CATCHCHALLENGER_DB_FILE
     #ifdef CATCHCHALLENGER_CACHE_HPS

@@ -260,13 +260,14 @@ protected:
     std::unordered_map<uint32_t,ProfileText> profileTextList;
     std::unordered_map<std::string,VisualCategory> visualCategories;
     std::string language;
-    std::vector<std::string> maps,skins;
+    std::vector<std::string> skins;
+    /*std::vector<std::string> maps;
     ///todo drop the full path and .tmx
     std::unordered_map<std::string,uint32_t> mapToId;
     std::unordered_map<std::string,uint32_t> fullMapPathToId;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > itemOnMap;
     std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > plantOnMap;
-    std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;
+    std::unordered_map<uint16_t,PlantIndexContent> plantIndexOfOnMap;*/
 public:
     bool isParsingDatapack() const;
     std::string getDatapackPath() const;

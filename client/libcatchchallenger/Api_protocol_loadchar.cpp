@@ -344,6 +344,10 @@ bool Api_protocol::parseCharacterBlockServer(const uint8_t &packetCode, const ui
 bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const int &size)
 {
     int pos=0;
+    CATCHCHALLENGER_TYPE_MAPID player_mapIndex=0;
+    COORD_TYPE player_x=0;
+    COORD_TYPE player_y=0;
+    Direction player_last_direction=Direction_look_at_bottom;
 
     //Events not with default value list size
     {
@@ -394,14 +398,14 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
 
     {
-        if((size2-pos2)<(int)sizeof(uint16_t))
+        if((size-pos)<(int)sizeof(uint16_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the max player, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
-        uint16_t mapIndex=le16toh(*reinterpret_cast<const uint16_t *>(data2+pos2));
+        uint16_t mapIndex=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
         pos+=sizeof(uint16_t);
-        player_informations.public_informations.mapIndex=mapIndex;
+        player_mapIndex=mapIndex;
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -409,7 +413,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         }
         uint8_t x=data[pos];
         pos+=sizeof(uint8_t);
-        player_informations.public_informations.x=x;
+        player_x=x;
         if((size-pos)<(int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -417,39 +421,39 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         }
         uint8_t y=data[pos];
         pos+=sizeof(uint8_t);
-        player_informations.public_informations.y=y;
+        player_y=y;
         //direction and player type
-                    if((size-pos)<(unsigned int)sizeof(uint8_t))
-                    {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                        return false;
-                    }
-                    uint8_t directionAndPlayerType=data[pos];
-                    pos+=sizeof(uint8_t);
-                    uint8_t directionInt,playerTypeInt;
-                    directionInt=directionAndPlayerType & 0x0F;
-                    playerTypeInt=directionAndPlayerType & 0xF0;
-                    if(directionInt<1 || directionInt>8)
-                    {
-                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
-                                   std::to_string(directionInt)+", at main ident: "+
-                                   std::to_string(packetCode)+", directionAndPlayerType: "+
-                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
-                                   ", data: "+binarytoHexa(data,size));
-                        return false;
-                    }
-                    Direction direction=(Direction)directionInt;
-                    Player_type playerType=(Player_type)playerTypeInt;
-                    if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
-                    {
-                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
-                                   std::to_string(playerType)+", at main ident: "+
-                                   std::to_string(packetCode)+", directionAndPlayerType: "+
-                                   std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
-                                   ", data: "+binarytoHexa(data,size));
-                        return false;
-                    }
-                    public_informations.type=playerType;
+        if((size-pos)<(unsigned int)sizeof(uint8_t))
+        {
+            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+            return false;
+        }
+        uint8_t directionAndPlayerType=data[pos];
+        pos+=sizeof(uint8_t);
+        uint8_t directionInt,playerTypeInt;
+        directionInt=directionAndPlayerType & 0x0F;
+        playerTypeInt=directionAndPlayerType & 0xF0;
+        if(directionInt<1 || directionInt>8)
+        {
+            parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                       std::to_string(directionInt)+", at main ident: "+
+                       std::to_string(packetCode)+", directionAndPlayerType: "+
+                       std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                       ", data: "+binarytoHexa(data,size));
+            return false;
+        }
+        player_last_direction=(Direction)directionInt;
+        Player_type playerType=(Player_type)playerTypeInt;
+        if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
+        {
+            parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                       std::to_string(playerType)+", at main ident: "+
+                       std::to_string(packetCode)+", directionAndPlayerType: "+
+                       std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
+                       ", data: "+binarytoHexa(data,size));
+            return false;
+        }
+        player_informations.public_informations.type=playerType;
         //pseudo
         if((size-pos)<(int)sizeof(uint8_t))
         {
@@ -471,7 +475,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         else
             player_informations.public_informations.pseudo.clear();
         
-                            //the skin
+                    //the skin
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -479,31 +483,15 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                     }
                     uint8_t skinId=data[pos];
                     pos+=sizeof(uint8_t);
-                    public_informations.skinId=skinId;
+                    player_informations.public_informations.skinId=skinId;
     }
     if((size-pos)<(int)sizeof(uint8_t))
     {
         newError("Procotol wrong or corrupted",std::string("wrong text with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    uint8_t tempAllowSize=data[pos];
+    player_informations.allowCreateClan=data[pos];
     pos+=sizeof(uint8_t);
-    {
-        player_informations.allow.clear();
-        int index=0;
-        while(index<tempAllowSize)
-        {
-            if((size-pos)<(int)sizeof(uint8_t))
-            {
-                newError("Procotol wrong or corrupted",std::string("wrong id with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                return false;
-            }
-            uint8_t tempAllow=data[pos];
-            pos+=sizeof(uint8_t);
-            player_informations.allow.insert(static_cast<ActionAllow>(tempAllow));
-            index++;
-        }
-    }
     if((size-pos)<(int)sizeof(uint32_t))
     {
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player clan, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
@@ -535,8 +523,6 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         parseError("Procotol wrong or corrupted",std::string("wrong size to get the player cash ware house, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
     }
-    player_informations.warehouse_cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
-    pos+=sizeof(uint64_t);
 
     //monsters
     if((size-pos)<(int)sizeof(uint8_t))
@@ -547,7 +533,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     uint8_t monster_list_size=data[pos];
     pos+=sizeof(uint8_t);
     uint32_t index=0;
-    player_informations.playerMonster.clear();
+    player_informations.monsters.clear();
     while(index<monster_list_size)
     {
         PlayerMonster monster;
@@ -560,12 +546,11 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         monster.level=0;
         monster.monster=0;
         monster.remaining_xp=0;
-        monster.sp=0;
         const int returnVar=dataToPlayerMonster(data+pos,size-pos,monster);
         if(returnVar<0)
             return false;
         pos+=returnVar;
-        player_informations.playerMonster.push_back(monster);
+        player_informations.monsters.push_back(monster);
         index++;
     }
     //monsters
@@ -577,7 +562,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     monster_list_size=data[pos];
     pos+=sizeof(uint8_t);
     index=0;
-    player_informations.warehouse_playerMonster.clear();
+    player_informations.warehouse_monsters.clear();
     while(index<monster_list_size)
     {
         PlayerMonster monster;
@@ -585,7 +570,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         if(returnVar<0)
             return false;
         pos+=returnVar;
-        player_informations.warehouse_playerMonster.push_back(monster);
+        player_informations.warehouse_monsters.push_back(monster);
         index++;
     }
     //reputation
@@ -865,6 +850,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             }
             const uint16_t mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
+            Player_private_and_public_informations_Map &mapData=player_informations.mapData[mapId];
 
             if((size-pos)<(int)sizeof(int8_t))
             {
@@ -891,7 +877,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 uint8_t y=data[pos];
                 pos+=sizeof(uint8_t);
                 std::pair<COORD_TYPE,COORD_TYPE> key(x,y);
-                player_informations.mapData[mapId].itemOnMap.insert(key);
+                mapData.items.insert(key);
                 sub_index++;
             }
 
@@ -935,7 +921,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 p.mature_at=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
                 pos+=sizeof(uint64_t);
                 std::pair<COORD_TYPE,COORD_TYPE> key(x,y);
-                player_informations.mapData[mapId].plantOnMap.insert(key,p);
+                mapData.plants[key]=p;
                 sub_index++;
             }
 
@@ -956,7 +942,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 }
                 uint8_t bot_id=data[pos];
                 pos+=sizeof(uint8_t);
-                player_informations.mapData[mapId].bot_already_beaten.insert(bot_id);
+                mapData.bots_beaten.insert(bot_id);
                 sub_index++;
             }
 
@@ -965,7 +951,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
 
     character_selected=true;
-    haveCharacter();
+    haveCharacter(player_mapIndex,player_x,player_y,player_last_direction);
     return true;
 }
 #endif
