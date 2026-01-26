@@ -200,15 +200,15 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
             }
         }
     }
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(
-                datapackPath,mainDatapackCode,subDatapackCode);
 
     parseMaps();
+    parseZoneExtra();
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(datapackPath,mainDatapackCode,subDatapackCode);
+
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
     parseBotFightsExtra();
-    parseZoneExtra();
     parseTopLib();
 
     inProgress=false;
@@ -955,12 +955,12 @@ void DatapackClientLoader::parseMaps()
                                     && object->Attribute("y")!=NULL
                                     )
                             {
-                                /** the -1 is important to fix object layer bug into tiled!!!
-                                 * Don't remove! */
-                                const uint32_t &object_y=/*16Bits: /tileheight at final*/stringtouint32(object->Attribute("y"),&ok)/tileheight-1;
+                                // the -1 is important to fix object layer bug into tiled!!!
+                                // Don't remove!
+                                const uint32_t &object_y=stringtouint32(object->Attribute("y"),&ok)/tileheight-1;
                                 if(ok && object_y<256)
                                 {
-                                    const uint32_t &object_x=/*16Bits: /tileheight at final*/stringtouint32(object->Attribute("x"),&ok)/tilewidth;
+                                    const uint32_t &object_x=stringtouint32(object->Attribute("x"),&ok)/tilewidth;
                                     if(ok && object_x<256)
                                     {
                                         itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+file]
