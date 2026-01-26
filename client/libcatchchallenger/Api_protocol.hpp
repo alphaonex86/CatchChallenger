@@ -107,7 +107,7 @@ public:
 
     bool setMapNumber(const CATCHCHALLENGER_TYPE_MAPID number_of_map);
     virtual bool disconnectClient() override;
-    std::pair<uint16_t,uint16_t> getLast_number_of_player();
+    std::pair<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> getLast_number_of_player();
 protected:
     std::vector<ChatEntry> chat_list;
 
@@ -121,9 +121,9 @@ protected:
     bool tolerantMode;
     bool haveTheServerList;
     bool haveTheLogicalGroupList;
-    uint16_t last_players_number;
-    uint16_t last_max_players;
-    uint8_t playerExcludeIndex;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED last_players_number;
+    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED last_max_players;
+    SIMPLIFIED_PLAYER_ID_FOR_MAP playerExcludeIndex;
 
     LogicialGroup logicialGroup;
 
@@ -264,7 +264,7 @@ public:
 
     //character
     virtual void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) = 0;
-    virtual void haveCharacter() = 0;
+    virtual void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &last_direction) = 0;
     //events
     virtual void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events) = 0;
     virtual void newEvent(const uint8_t &event,const uint8_t &event_value) = 0;

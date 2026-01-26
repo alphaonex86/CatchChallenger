@@ -1293,36 +1293,6 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                               );
                 return false;
             }
-            std::unordered_map<uint16_t,uint32_t> warehouse_items;
-            inventorySize=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-            pos+=sizeof(uint16_t);
-            index=0;
-            while(index<inventorySize)
-            {
-                if((size-pos)<(unsigned int)sizeof(uint16_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
-                               ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
-                                  );
-                    return false;
-                }
-                id=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-                pos+=sizeof(uint16_t);
-                if((size-pos)<(unsigned int)sizeof(uint32_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
-                               ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
-                                  );
-                    return false;
-                }
-                quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
-                pos+=sizeof(uint32_t);
-                if(warehouse_items.find(id)!=warehouse_items.cend())
-                    warehouse_items[id]+=quantity;
-                else
-                    warehouse_items[id]=quantity;
-                index++;
-            }
             #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
             player_informations.items=items;
             player_informations.warehouse_items=warehouse_items;
@@ -1330,7 +1300,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             #else
             for (auto itr = items.cbegin(); itr != items.cend(); ++itr)
                 player_informations.items[itr->first]=itr->second;
-            have_inventory(items,warehouse_items);
+            have_inventory(items);
             #endif
         }
         break;
