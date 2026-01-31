@@ -13,9 +13,22 @@
 //#define DEBUG_CLIENT_BOT
 //#define DEBUG_CLIENT_NETWORK_USAGE
 
-#define CATCHCHALLENGER_SERVER_LIST_URL "https://catchchallenger.herman-brule.com/server_list.xml"
-#define CATCHCHALLENGER_UPDATER_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/updater.txt"
-#define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/rss_global.xml"
+#ifdef __GNUC__
+    //workaround for too old openssl version to connect via https
+    #if __GNUC__ < 8
+        #define CATCHCHALLENGER_SERVER_LIST_URL "http://catchchallenger.herman-brule.com/server_list.xml"
+        #define CATCHCHALLENGER_UPDATER_URL "http://catchchallenger.herman-brule.com/updater.txt"
+        #define CATCHCHALLENGER_RSS_URL "http://catchchallenger.herman-brule.com/rss_global.xml"
+    #else
+        #define CATCHCHALLENGER_SERVER_LIST_URL "https://catchchallenger.herman-brule.com/server_list.xml"
+        #define CATCHCHALLENGER_UPDATER_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/updater.txt"
+        #define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/rss_global.xml"
+    #endif
+#else
+    #define CATCHCHALLENGER_SERVER_LIST_URL "https://catchchallenger.herman-brule.com/server_list.xml"
+    #define CATCHCHALLENGER_UPDATER_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/updater.txt"
+    #define CATCHCHALLENGER_RSS_URL "https://cdn.confiared.com/catchchallenger.herman-brule.com/rss_global.xml"
+#endif
 
 #define CATCHCHALLENGER_CLIENT_MUSIC_LOADING "/music/loading.opus"
 #define CATCHCHALLENGER_CLIENT_INSTANT_SHOP
