@@ -69,8 +69,8 @@ void InternetUpdater::httpFinished()
     if (!reply->isFinished())
     {
         std::cerr << "get the new update failed: not finished" << std::endl;
-        reply->deleteLater();
         errorUpdate(tr("Reply should not be finished").toStdString());
+        reply->deleteLater();
         return;
     }
     else if(reply->error())
@@ -78,41 +78,41 @@ void InternetUpdater::httpFinished()
         newUpdateTimer.stop();
         newUpdateTimer.start(24*60*60*1000);
         std::cerr << "get the new update failed: "+reply->errorString().toStdString() << std::endl;
-        reply->deleteLater();
         errorUpdate(tr("Reply error: %1").arg((int)reply->error()).toStdString());
+        reply->deleteLater();
         return;
     } else if (!redirectionTarget.isNull()) {
         std::cerr << "redirection denied to: "+redirectionTarget.toUrl().toString().toStdString() << std::endl;
-        reply->deleteLater();
         errorUpdate(tr("Reply can't be redirect").toStdString());
+        reply->deleteLater();
         return;
     }
     std::string newVersion=QString::fromUtf8(reply->readAll()).toStdString();
     if(newVersion.empty())
     {
         std::cerr << "version string is empty" << std::endl;
-        reply->deleteLater();
         errorUpdate(tr("New version can't be empty").toStdString());
+        reply->deleteLater();
         return;
     }
     stringreplaceAll(newVersion,"\n","");
     if(!QString::fromStdString(newVersion).contains(QRegularExpression(QStringLiteral("^[0-9]+(\\.[0-9]+)+$"))))
     {
         std::cerr << "version string don't match: "+newVersion << std::endl;
-        reply->deleteLater();
         errorUpdate(tr("Version is not into correct format").toStdString());
+        reply->deleteLater();
         return;
     }
     if(newVersion==CatchChallenger::Version::str)
     {
-        reply->deleteLater();
         emit noNewUpdate();
+        reply->deleteLater();
         return;
     }
     if(!versionIsNewer(newVersion))
     {
-        reply->deleteLater();
         emit noNewUpdate();
+        reply->deleteLater();
         return;
     }
     newUpdateTimer.stop();

@@ -201,10 +201,8 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
         }
     }
 
+    parseZoneExtra();//need be before map
     parseMaps();
-    parseZoneExtra();
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(datapackPath,mainDatapackCode,subDatapackCode);
-
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
@@ -825,166 +823,13 @@ void DatapackClientLoader::parseItemsExtra()
 
 void DatapackClientLoader::parseMaps()
 {
-    /// \todo do a sub overlay
-    const std::vector<std::string> &returnList=
-                CatchChallenger::FacilityLibGeneral::listFolder(datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN);
+    mapIdToPath.clear();
+    mapPathToId.clear();
+    std::vector<CatchChallenger::Map_semi> semi_loaded_map;
+    CatchChallenger::Map_loader::loadAllMapsAndLink<CatchChallenger::CommonMap>(commonMapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
 
-    //load the map
-    uint16_t pointOnMapIndexItem=0;
-    uint16_t pointOnMapIndexPlant=0;
-    unsigned int index=0;
-    std::unordered_map<std::string,std::string> sortToFull;
-    std::vector<std::string> tempMapList;
-    while(index<returnList.size())
-    {
-        const std::string &fileName=returnList.at(index);
-        std::string sortFileName=fileName;
-        if(stringEndsWith(fileName,".tmx") &&
-                fileName.find("\"") == std::string::npos &&
-                fileName.find("'\\'") == std::string::npos
-                )
-        {
-            sortFileName.resize(sortFileName.size()-4);
-            sortToFull[sortFileName]=fileName;
-            tempMapList.push_back(sortFileName);
-        }
-        index++;
-    }
-    std::sort(tempMapList.begin(),tempMapList.end());
-    const std::string &basePath=datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN;
-    index=0;
-    while(index<tempMapList.size())
-    {
-        std::string entry=tempMapList.at(index);
-        mapToId[sortToFull.at(entry)]=index;
-        std::string temp=basePath+sortToFull.at(entry);
-        stringreplaceAll(temp,"\\\\","\\");
-        stringreplaceAll(temp,"//","/");
-        fullMapPathToId[temp]=index;
-        maps.push_back(sortToFull.at(entry));
-
-        const std::string &file=sortToFull.at(entry);
-        {
-            tinyxml2::XMLDocument domDocument;
-            const auto loadOkay = domDocument.LoadFile((basePath+file).c_str());
-            if(loadOkay!=0)
-            {
-                std::cerr << file+", "+tinyxml2errordoc(&domDocument) << std::endl;
-                index++;
-                continue;
-            }
-
-            const tinyxml2::XMLElement *root = domDocument.RootElement();
-            if(root==NULL || root->Name()==NULL || strcmp(root->Name(),"map")!=0)
-            {
-                std::cerr << "\"map\" root balise not found for the xml file" << file << std::endl;
-                index++;
-                continue;
-            }
-            bool ok;
-            int tilewidth=16;
-            int tileheight=16;
-            if(root->Attribute("tilewidth")!=NULL)
-            {
-                tilewidth=stringtouint8(root->Attribute("tilewidth"),&ok);
-                if(!ok)
-                {
-                    std::cerr << "tilewidth is not a number" << file << std::endl;
-                    tilewidth=16;
-                }
-            }
-            if(root->Attribute("tileheight")!=NULL)
-            {
-                tileheight=stringtouint8(root->Attribute("tileheight"),&ok);
-                if(!ok)
-                {
-                    std::cerr << "tileheight is not a number" << file << std::endl;
-                    tileheight=16;
-                }
-            }
-
-            bool haveDirtLayer=false;
-            {
-                const tinyxml2::XMLElement *layergroup = root->FirstChildElement("layer");
-                while(layergroup!=NULL)
-                {
-                    if(layergroup->Attribute("name") &&
-                            strcmp(layergroup->Attribute("name"),"Dirt")==0)
-                    {
-                        haveDirtLayer=true;
-                        break;
-                    }
-                    layergroup = layergroup->NextSiblingElement("layer");
-                }
-            }
-            if(haveDirtLayer)
-            {
-                CatchChallenger::Map_loader mapLoader;
-                if(mapLoader.tryLoadMap(basePath+file))
-                {
-                    unsigned int index=0;
-                    while(index<mapLoader.map_to_send.dirts.size())
-                    {
-                        const CatchChallenger::Map_to_send::DirtOnMap_Semi &dirt=mapLoader.map_to_send.dirts.at(index);
-                        plantOnMap[basePath+file][std::pair<uint8_t,uint8_t>(dirt.point.x,dirt.point.y)]=pointOnMapIndexPlant;
-                        PlantIndexContent plantIndexContent;
-                        plantIndexContent.map=basePath+file;
-                        plantIndexContent.x=dirt.point.x;
-                        plantIndexContent.y=dirt.point.y;
-                        plantIndexOfOnMap[pointOnMapIndexPlant]=plantIndexContent;
-                        pointOnMapIndexPlant++;
-                        index++;
-                    }
-                }
-            }
-
-            //load name
-            {
-                const tinyxml2::XMLElement *objectgroup = root->FirstChildElement("objectgroup");
-                while(objectgroup!=NULL)
-                {
-                    if(objectgroup->Attribute("name")!=NULL &&
-                            strcmp(objectgroup->Attribute("name"),"Object")==0)
-                    {
-                        const tinyxml2::XMLElement *object = objectgroup->FirstChildElement("object");
-                        while(object!=NULL)
-                        {
-                            if(
-                                    object->Attribute("type")!=NULL && strcmp(object->Attribute("type"),"object")==0
-                                    && object->Attribute("x")!=NULL
-                                    && object->Attribute("y")!=NULL
-                                    )
-                            {
-                                // the -1 is important to fix object layer bug into tiled!!!
-                                // Don't remove!
-                                const uint32_t &object_y=stringtouint32(object->Attribute("y"),&ok)/tileheight-1;
-                                if(ok && object_y<256)
-                                {
-                                    const uint32_t &object_x=stringtouint32(object->Attribute("x"),&ok)/tilewidth;
-                                    if(ok && object_x<256)
-                                    {
-                                        itemOnMap[datapackPath+DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN+file]
-                                                [std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(object_x),static_cast<uint8_t>(object_y))]=
-                                                pointOnMapIndexItem;
-                                        pointOnMapIndexItem++;
-                                    }
-                                    else
-                                        std::cerr << "object_y too big or not number" << object->Attribute("y") << " " << file << std::endl;
-                                }
-                                else
-                                    std::cerr << "object_x too big or not number" << object->Attribute("x") << " " << file << std::endl;
-                            }
-                            object = object->NextSiblingElement("object");
-                        }
-                    }
-                    objectgroup = objectgroup->NextSiblingElement("objectgroup");
-                }
-            }
-        }
-        index++;
-    }
-
-    std::cout << std::to_string(maps.size()) << " map(s) extra loaded" << std::endl;
+    std::cout << std::to_string(mapPathToId.size()) << " map(s) extra loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseSkins()
@@ -998,16 +843,13 @@ void DatapackClientLoader::resetAll()
 {
     CatchChallenger::CommonDatapack::commonDatapack.unload();
     language.clear();
-    mapToId.clear();
-    fullMapPathToId.clear();
+    mapIdToPath.clear();
+    mapPathToId.clear();
     visualCategories.clear();
     datapackPath.clear();
     itemsExtra.clear();
-    maps.clear();
     skins.clear();
 
-    itemOnMap.clear();
-    plantOnMap.clear();
     itemToPlants.clear();
     questsExtra.clear();
     botToQuestStart.clear();
