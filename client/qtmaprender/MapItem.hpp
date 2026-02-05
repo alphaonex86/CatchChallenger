@@ -2,7 +2,7 @@
 #include "MapVisualiserOrder.hpp"
 #include "ObjectGroupItem.hpp"
 #include "TileLayerItem.hpp"
-#include <libtiled/map.h>
+#include <map.h>
 #include "../libcatchchallenger/ClientStructures.hpp"
 
 #ifndef MAPITEM_H

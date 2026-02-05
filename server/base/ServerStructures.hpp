@@ -103,7 +103,7 @@ public:
     bool anonymous;
     //fight
     bool pvp;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED max_players;//not common because if null info not send, if == 1 then internal
+    PLAYER_INDEX_FOR_CONNECTED max_players;//not common because if null info not send, if == 1 then internal
 
     //the listen, implicit on the client
     std::string datapack_basePath;
@@ -380,7 +380,7 @@ struct Clan
 {
     ZONE_TYPE captureCityInProgress;//ZONE_TYPE_MAX no capture in progress
     ZONE_TYPE capturedCity;//ZONE_TYPE_MAX no city captured
-    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> connected_players;
+    std::vector<PLAYER_INDEX_FOR_CONNECTED> connected_players;
 
     //the db info, async load
     std::string name;
@@ -389,11 +389,11 @@ struct Clan
 
 struct CaptureCityValidated
 {
-    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> players;
-    std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playersInFight;
+    std::vector<PLAYER_INDEX_FOR_CONNECTED> players;
+    std::vector<PLAYER_INDEX_FOR_CONNECTED> playersInFight;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > bots;
     std::vector<std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/> > botsInFight;
-    std::unordered_map<uint32_t/*clan db id*/,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> clanSize;
+    std::unordered_map<uint32_t/*clan db id*/,PLAYER_INDEX_FOR_CONNECTED> clanSize;
 };
 
 struct ServerProfileInternal
@@ -523,7 +523,7 @@ struct ServerPrivateVariables
 
     //connection
     //std::unordered_set<uint32_t> connected_players_id_list; see playerById_db
-    std::unordered_map<uint32_t,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerById_db;
+    std::unordered_map<uint32_t,PLAYER_INDEX_FOR_CONNECTED> playerById_db;
     std::vector<std::string> server_message;
     struct GiftEntry
     {

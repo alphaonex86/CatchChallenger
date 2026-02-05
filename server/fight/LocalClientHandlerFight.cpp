@@ -322,7 +322,7 @@ void Client::setInCityCapture(const bool &isInCityCapture)
 
 PublicPlayerMonster *Client::getOtherMonster()
 {
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         if(ClientList::list->empty(otherPlayerBattle))
             return NULL;
@@ -342,7 +342,7 @@ bool Client::isInFight() const
 {
     if(CommonFightEngine::isInFight())
         return true;
-    return otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX || battleIsValidated;
+    return otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX || battleIsValidated;
 }
 
 uint8_t Client::getOtherSelectedMonsterNumber() const
@@ -510,7 +510,7 @@ bool Client::checkIfCanDoTheTurn()
         CommonFightEngine::useSkill(mCurrentSkillId);
     else
         doTheOtherMonsterTurn();
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
     if(ClientList::list->empty(otherPlayerBattle))
         return false;
@@ -554,7 +554,7 @@ bool Client::dropKOOtherMonster()
     bool battleReturn=false;
     if(isInBattle())
     {
-        if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
             return false;
         if(ClientList::list->empty(otherPlayerBattle))
             return false;
@@ -640,7 +640,7 @@ bool Client::changeOfMonsterInFight(const uint8_t &monsterPosition)
     {
         if(!doTurnIfChangeOfMonster)
         {
-            if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
                 return false;
             if(ClientList::list->empty(otherPlayerBattle))
                 return false;
@@ -659,7 +659,7 @@ bool Client::doTheOtherMonsterTurn()
         return CommonFightEngine::doTheOtherMonsterTurn();
     if(!bothRealPlayerIsReady())
         return false;
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
     if(ClientList::list->empty(otherPlayerBattle))
         return false;
@@ -691,7 +691,7 @@ Skill::AttackReturn Client::generateOtherAttack()
         errorOutput("Both player is not ready at generateOtherAttack()");
         return attackReturnTemp;
     }
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return attackReturnTemp;
     if(ClientList::list->empty(otherPlayerBattle))
         return attackReturnTemp;
@@ -726,7 +726,7 @@ Skill::AttackReturn Client::doTheCurrentMonsterAttack(const uint16_t &skill, con
     attackReturn.push_back(CommonFightEngine::doTheCurrentMonsterAttack(skill,skillLevel));
     Skill::AttackReturn attackReturnTemp=attackReturn.back();
     attackReturnTemp.doByTheCurrentMonster=false;
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return attackReturnTemp;
     if(ClientList::list->empty(otherPlayerBattle))
         return attackReturnTemp;

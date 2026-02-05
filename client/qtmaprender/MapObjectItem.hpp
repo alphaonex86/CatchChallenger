@@ -1,6 +1,6 @@
 #include <unordered_map>
-#include <libtiled/mapobject.h>
-#include <libtiled/maprenderer.h>
+#include <mapobject.h>
+#include <maprenderer.h>
 
 #ifndef MAPOBJECTITEM_H
 #define MAPOBJECTITEM_H

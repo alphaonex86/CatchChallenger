@@ -35,7 +35,7 @@ bool Client::captureCityInProgress()
 
 void Client::waitingForCityCaputre(const bool &cancel)
 {
-    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
     if(mapIndex>=65535)
         return;
@@ -125,7 +125,7 @@ void Client::waitingForCityCaputre(const bool &cancel)
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             return;
         }
-        std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> &playerListInCapture=captureCity[zoneId];
+        std::vector<PLAYER_INDEX_FOR_CONNECTED> &playerListInCapture=captureCity[zoneId];
         if(vectorcontainsAtLeastOne(playerListInCapture,index_connected_player))
         {
             errorOutput("already in capture city");
@@ -161,7 +161,7 @@ void Client::leaveTheCityCapture()
         return;
     if(vectorremoveOne(captureCity[clan.captureCityInProgress],index_connected_player))
     {
-        const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> playerListInCaptures=captureCity.at(clan.captureCityInProgress);
+        const std::vector<PLAYER_INDEX_FOR_CONNECTED> playerListInCaptures=captureCity.at(clan.captureCityInProgress);
         //drop all the capture because no body clam it
         if(playerListInCaptures.size()==0)
         {
@@ -183,7 +183,7 @@ void Client::leaveTheCityCapture()
         }
     }
     setInCityCapture(false);
-    otherCityPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
 }
 
 void Client::startTheCityCapture()
@@ -197,7 +197,7 @@ void Client::startTheCityCapture()
             unsigned int index=0;
             while(index<i->second.size())
             {
-                const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &clientIndex=i->second.at(index);
+                const PLAYER_INDEX_FOR_CONNECTED &clientIndex=i->second.at(index);
                 if(ClientList::list->empty(clientIndex))
                     ClientList::list->rw(clientIndex).previousCityCaptureNotFinished();
                 index++;
@@ -247,7 +247,7 @@ void Client::startTheCityCapture()
             unsigned int sub_index=0;
             //do the clan count
             //why 16Bits? because is 16 fight, is too much to capture the city
-            SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED player_count=static_cast<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED>(tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size());
+            PLAYER_INDEX_FOR_CONNECTED player_count=static_cast<PLAYER_INDEX_FOR_CONNECTED>(tempCaptureCityValidated.players.size()+tempCaptureCityValidated.bots.size());
             int clan_count=0;
             if(tempCaptureCityValidated.bots.size()>0)
                 clan_count++;
@@ -275,7 +275,7 @@ void Client::startTheCityCapture()
                 while(index<tempCaptureCityValidated.players.size())
                 {
                     sub_index=index+1;
-                    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &playersub_Index=tempCaptureCityValidated.players.at(sub_index);
+                    const PLAYER_INDEX_FOR_CONNECTED &playersub_Index=tempCaptureCityValidated.players.at(sub_index);
                     if(ClientList::list->empty(playersub_Index))
                     {
                         Client &sub_client=ClientList::list->rw(playersub_Index);
@@ -327,7 +327,7 @@ void Client::cityCaptureSendInWait(const CaptureCityValidated &captureCityValida
     unsigned int index=0;
     while(index<captureCityValidated.players.size())
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &playerIndex=captureCityValidated.players.at(index);
+        const PLAYER_INDEX_FOR_CONNECTED &playerIndex=captureCityValidated.players.at(index);
         if(ClientList::list->empty(playerIndex))
         {
             Client &client=ClientList::list->rw(playerIndex);
@@ -458,10 +458,10 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                     vectorremoveOne(captureCityValidated.botsInFight,fight);
                 else
                 {
-                    if(otherCityPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                    if(otherCityPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
                     {
                         vectorremoveOne(captureCityValidated.playersInFight,otherCityPlayerBattle);
-                        otherCityPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+                        otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
                     }
                 }
                 uint16_t player_count=cityCapturePlayerCount(captureCityValidated);
@@ -470,7 +470,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 unsigned int index=0;
                 while(index<captureCityValidated.players.size())
                 {
-                    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED player_index=captureCityValidated.players.at(index);
+                    const PLAYER_INDEX_FOR_CONNECTED player_index=captureCityValidated.players.at(index);
                     Client &client=ClientList::list->rw(player_index);
                     if(clanId!=client.getClanId())
                     {
@@ -496,7 +496,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 {
                     vectorremoveOne(captureCityValidated.playersInFight,index_connected_player);
                     captureCityValidated.players.push_back(index_connected_player);
-                    otherCityPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+                    otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
                 }
             }
             else
@@ -509,7 +509,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                 else
                 {
                     vectorremoveOne(captureCityValidated.playersInFight,index_connected_player);
-                    otherCityPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+                    otherCityPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
                 }
                 captureCityValidated.clanSize[clanId]--;
                 if(captureCityValidated.clanSize.at(clanId)==0)
@@ -574,7 +574,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                     unsigned int index=0;
                     while(index<captureCityValidated.players.size())
                     {
-                        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED player_index=captureCityValidated.players.back();
+                        const PLAYER_INDEX_FOR_CONNECTED player_index=captureCityValidated.players.back();
                         Client &client=ClientList::list->rw(player_index);
                         client.cityCaptureWin();
                         index++;

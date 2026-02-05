@@ -47,8 +47,8 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
         unsigned int index=0;
         while(index<clients_size && index<255)
         {
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
-            if(index_c!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
+            if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 Client &c=ClientList::list->rw(index_c);
                 posOutput+=playerToFullInsert(c,output+posOutput);
@@ -85,8 +85,8 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWith
         unsigned int index=0;
         while(index<clients_size && index<255)
         {
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
-            if(index_c!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX && index_c!=skipped_id)
+            const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
+            if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX && index_c!=skipped_id)
             {
                 Client &c=ClientList::list->rw(index_c);
                 posOutput+=playerToFullInsert(c,output+posOutput);
@@ -120,8 +120,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
-        if(map_c_idP!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
+        if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(!ClientList::list->empty(map_c_idP))
@@ -185,8 +185,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
     {
         if(index_client==0)
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(id);//map id
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
-        if(map_c_idP!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
+        if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
             if(!ClientList::list->empty(map_c_idP))
@@ -227,8 +227,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                             if(index<clientWithMap.sendedStatus.size())
                             {
                                 ClientWithMap::SendedStatus &c_stat=clientWithMap.sendedStatus[index];
-                                const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
-                                if(other_client_id!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                                const PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
+                                if(other_client_id!=PLAYER_INDEX_FOR_CONNECTED_MAX)
                                 {
                                     const Client &other_client=ClientList::list->at(other_client_id);
                                     if(other_client.getPlayerId()==c_stat.characterId_db)
@@ -278,8 +278,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                             }
                             else
                             {
-                                const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
-                                if(other_client_id!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                                const PLAYER_INDEX_FOR_CONNECTED &other_client_id=map_clients_id.at(index);
+                                if(other_client_id!=PLAYER_INDEX_FOR_CONNECTED_MAX)
                                 {
                                     //if(insertCount<255)//implied into while(index<map_clients_id.size() && index<255)
                                     //if(!ClientList::empty(other_client_id)) should not be needed

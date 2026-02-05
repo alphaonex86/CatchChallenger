@@ -58,12 +58,12 @@ public:
     ClientWithMapEpoll &getByReference();
     void remove(const CatchChallenger::Client &client);
 
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const;
-    bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
-    const CatchChallenger::Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
-    CatchChallenger::Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED connected_size() const;
-    CatchChallenger::ClientWithMap &rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    PLAYER_INDEX_FOR_CONNECTED size() const;
+    bool empty(const PLAYER_INDEX_FOR_CONNECTED &index) const;
+    const CatchChallenger::Client &at(const PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+    CatchChallenger::Client &rw(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    PLAYER_INDEX_FOR_CONNECTED connected_size() const;
+    CatchChallenger::ClientWithMap &rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
 };
 
 #endif // CATCHCHALLENGER_CLIENTLIST_H

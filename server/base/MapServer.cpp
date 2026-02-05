@@ -33,11 +33,11 @@ MapServer::MapServer() :
 }
 
 //return index into map list
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_global)
+PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const PLAYER_INDEX_FOR_CONNECTED &index_global)
 {
     if(!map_removed_index.empty())
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=map_removed_index.back();
+        const PLAYER_INDEX_FOR_CONNECTED b=map_removed_index.back();
         map_removed_index.pop_back();
         map_clients_id[b]=index_global;
         return b;
@@ -46,14 +46,14 @@ SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const SIMPLIFIED_PL
     {
         if(!map_removed_index_greater_than_254.empty())
         {
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=map_removed_index_greater_than_254.back();
+            const PLAYER_INDEX_FOR_CONNECTED b=map_removed_index_greater_than_254.back();
             map_removed_index_greater_than_254.pop_back();
             map_clients_id[b]=index_global;
             return b;
         }
         else
         {
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=map_clients_id.size();
+            const PLAYER_INDEX_FOR_CONNECTED b=map_clients_id.size();
             map_clients_id.resize(b+1);
             map_clients_id[b]=index_global;
             return b;
@@ -61,21 +61,21 @@ SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::insertOnMap(const SIMPLIFIED_PL
     }
 }
 
-void MapServer::removeOnMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_map)
+void MapServer::removeOnMap(const PLAYER_INDEX_FOR_CONNECTED &index_map)
 {
-    map_clients_id[index_map]=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    map_clients_id[index_map]=PLAYER_INDEX_FOR_CONNECTED_MAX;
     if(index_map<=254)
         map_removed_index.push_back(index_map);
     else
         map_removed_index_greater_than_254.push_back(index_map);
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED MapServer::map_clients_list_size() const
+PLAYER_INDEX_FOR_CONNECTED MapServer::map_clients_list_size() const
 {
     return map_clients_id.size();
 }
 
-bool MapServer::map_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+bool MapServer::map_clients_list_isValid(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=map_clients_id.size())
@@ -84,11 +84,11 @@ bool MapServer::map_clients_list_isValid(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNE
         abort();
     }
     #endif
-    return map_clients_id.at(index)!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    return map_clients_id.at(index)!=PLAYER_INDEX_FOR_CONNECTED_MAX;
 }
 
 //abort if index is not valid
-const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &MapServer::map_clients_list_at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+const PLAYER_INDEX_FOR_CONNECTED &MapServer::map_clients_list_at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=map_clients_id.size())
@@ -96,7 +96,7 @@ const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &MapServer::map_clients_list_at(cons
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << map_clients_id.size() << std::endl;
         abort();
     }
-    if(map_clients_id.at(index)==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(map_clients_id.at(index)==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
         abort();

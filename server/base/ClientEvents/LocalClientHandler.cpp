@@ -178,7 +178,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
     generateRandomNumber();
 
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "index_connected_player is not set (abort)" << std::endl;
         abort();
@@ -204,7 +204,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 void Client::createMemoryClan()
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cout << "not connected player, abort" << std::endl;
         abort();

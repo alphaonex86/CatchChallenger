@@ -1702,9 +1702,9 @@ Api_protocol::StageConnexion Api_protocol::stage() const
     return stageConnexion;
 }
 
-std::pair<uint16_t,uint16_t> Api_protocol::getLast_number_of_player()
+std::pair<PLAYER_INDEX_FOR_CONNECTED,PLAYER_INDEX_FOR_CONNECTED> Api_protocol::getLast_number_of_player()
 {
-    return std::pair<uint16_t,uint16_t>(last_players_number,last_max_players);
+    return std::pair<PLAYER_INDEX_FOR_CONNECTED,PLAYER_INDEX_FOR_CONNECTED>(last_players_number,last_max_players);
 }
 
 //to reset all

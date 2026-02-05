@@ -1,6 +1,6 @@
 #include "ClientWithMapEpoll.hpp"
 
-ClientWithMapEpoll::ClientWithMapEpoll(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_connected_player) :
+ClientWithMapEpoll::ClientWithMapEpoll(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player) :
     CatchChallenger::EpollClient(-1),
     ClientWithMap(index_connected_player)
 {
