@@ -206,7 +206,7 @@ void DatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapackC
     parseQuestsLink();
     parseQuestsExtra();
     parseQuestsText();
-    parseBotFightsExtra();
+    //parseBotFightsExtra();-> load ondemand with map
     parseTopLib();
 
     inProgress=false;
@@ -825,9 +825,31 @@ void DatapackClientLoader::parseMaps()
 {
     mapIdToPath.clear();
     mapPathToId.clear();
-    std::vector<CatchChallenger::Map_semi> semi_loaded_map;
+    /*std::vector<CatchChallenger::Map_semi> semi_loaded_map;
     CatchChallenger::Map_loader::loadAllMapsAndLink<CatchChallenger::CommonMap>(commonMapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,
+CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
+    load on demand map*/
+    std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(getDatapackPath()+getMainDatapackPath());
+    if(returnList.size()==0)
+    {
+        std::cerr << "No file map to list" << std::endl;
+        abort();
+    }
+    //load the map
+    unsigned int index=0;
+    std::regex mapFilter("\\.tmx$");
+    std::regex mapExclude("[\"']");
+    while(index<returnList.size())
+    {
+        std::string fileName=returnList.at(index);
+        stringreplaceAll(fileName,"\\","/");
+        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
+        {
+            mapPathToId[fileName]=mapIdToPath.size();
+            mapIdToPath.push_back(fileName);
+        }
+    }
 
     std::cout << std::to_string(mapPathToId.size()) << " map(s) extra loaded" << std::endl;
 }
@@ -853,7 +875,7 @@ void DatapackClientLoader::resetAll()
     itemToPlants.clear();
     questsExtra.clear();
     botToQuestStart.clear();
-    botFightsExtra.clear();
+    //botFightsExtra.clear();
     monsterExtra.clear();
     monsterBuffsExtra.clear();
     monsterSkillsExtra.clear();
@@ -986,7 +1008,7 @@ void DatapackClientLoader::parseQuestsExtra()
                     tempid=stringtouint8(step->Attribute("id"),&ok);
                     if(!ok)
                     {
-                        std::cerr << "Unable to open the file: %1, id is not a number: child.Name(): " << file << " " << step->Name() << std::endl;
+                        std::cerr << "Unable to open the file: " << file << ", id is not a number: child.Name(): " << step->Name() << std::endl;
                         tempid=-1;
                     }
                 }
@@ -996,18 +1018,24 @@ void DatapackClientLoader::parseQuestsExtra()
                     CatchChallenger::Quest::Step stepObject;
                     std::string text;
 
-                    if(step->Attribute("bot")!=NULL)
+                    if(step->Attribute("bot")!=NULL && step->Attribute("map")!=NULL)
                     {
-                        const std::vector<std::string> &tempStringList=
-                                stringsplit(step->Attribute("bot"),';');
-                        unsigned int index=0;
-                        while(index<tempStringList.size())
+                        std::string mapPath(step->Attribute("map"));
+                        if(mapPathToId.find(mapPath)!=mapPathToId.cend())
                         {
-                            const uint32_t tempInt=stringtouint32(tempStringList.at(index),&ok);
-                            if(ok && tempInt<65536)
-                                stepObject.bots.push_back(static_cast<uint16_t>(tempInt));
-                            index++;
+                            const CATCHCHALLENGER_TYPE_MAPID mapId=mapPathToId.at(mapPath);
+                            const std::vector<std::string> &tempStringList=stringsplit(step->Attribute("bot"),';');
+                            unsigned int index=0;
+                            while(index<tempStringList.size())
+                            {
+                                const uint8_t tempInt=stringtouint8(tempStringList.at(index),&ok);
+                                if(ok)
+                                    stepObject.requirements.fights[mapId].insert(tempInt);
+                                index++;
+                            }
                         }
+                        else
+                            std::cerr << "Unable to find map " << mapPath << ": " << file << ", id is not a number: child.Name(): " << step->Name() << std::endl;
                     }
                     const tinyxml2::XMLElement *stepItem = step->FirstChildElement("text");
                     bool found=false;
@@ -1233,22 +1261,28 @@ void DatapackClientLoader::parseAudioAmbiance()
 
 void DatapackClientLoader::parseQuestsLink()
 {
-    auto i=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cbegin();
-    while(i!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().cend())
+    CATCHCHALLENGER_TYPE_QUEST questCount=0;
+    for (const std::pair<CATCHCHALLENGER_TYPE_QUEST,CatchChallenger::Quest> n : CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests())
     {
-        if(!i->second.steps.empty())
+        const CATCHCHALLENGER_TYPE_QUEST &questId=n.first;
+        const CatchChallenger::Quest &quest=n.second;
+        if(!quest.steps.empty())
         {
-            std::vector<uint16_t> bots=i->second.steps.front().bots;
-            unsigned int index=0;
-            while(index<bots.size())
+            const CatchChallenger::Quest::Step &step=quest.steps.front();
+            const CatchChallenger::Quest::StepRequirements &stepRequirements=step.requirements;
+            for (const std::pair<CATCHCHALLENGER_TYPE_MAPID,std::unordered_set<CATCHCHALLENGER_TYPE_BOTID>> m : stepRequirements.fights)
             {
-                botToQuestStart[bots.at(index)].push_back(i->first);
-                index++;
+                const CATCHCHALLENGER_TYPE_MAPID &mapId=m.first;
+                const std::unordered_set<CATCHCHALLENGER_TYPE_BOTID> &botIdList=m.second;
+                for (const CATCHCHALLENGER_TYPE_BOTID& elem : botIdList)
+                {
+                    botToQuestStart[mapId][elem].push_back(questId);
+                    questCount++;
+                }
             }
         }
-        ++i;
     }
-    std::cout << std::to_string(botToQuestStart.size()) << " bot linked with quest(s) loaded" << std::endl;
+    std::cout << std::to_string(questCount) << " bot linked with quest(s) loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseZoneExtra()
@@ -1628,7 +1662,7 @@ void DatapackClientLoader::parseTypesExtra()
 
     std::cerr << std::to_string(typeExtra.size()) << " type(s) extra loaded" << std::endl;
 }
-void DatapackClientLoader::parseBotFightsExtra()
+/*void DatapackClientLoader::parseBotFightsExtra()
 {
     const std::string &language=getLanguage();
     bool found;
@@ -1782,7 +1816,7 @@ void DatapackClientLoader::parseBotFightsExtra()
     }
 
     std::cerr << std::to_string(botFightsExtra.size()) << " fight extra(s) loaded" << std::endl;
-}
+}*/
 
 std::vector<std::string> DatapackClientLoader::listFolderNotRecursive(const std::string& folder,const std::string& suffix)
 {
@@ -1842,20 +1876,20 @@ const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,DatapackClientLoader::QuestE
     return questsExtra;
 }
 
-const std::unordered_map<std::string,uint16_t> &DatapackClientLoader::get_questsPathToId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> &DatapackClientLoader::get_questsPathToId() const
 {
     return questsPathToId;
 }
 
-const std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > &DatapackClientLoader::get_botToQuestStart() const
+const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> &DatapackClientLoader::get_botToQuestStart() const
 {
     return botToQuestStart;
 }
 
-const std::unordered_map<uint16_t,DatapackClientLoader::BotFightExtra> &DatapackClientLoader::get_botFightsExtra() const
+/*const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,DatapackClientLoader::BotFightExtra>> &DatapackClientLoader::get_botFightsExtra() const
 {
     return botFightsExtra;
-}
+}*/
 
 const std::unordered_map<std::string,DatapackClientLoader::ZoneExtra> &DatapackClientLoader::get_zonesExtra() const
 {
@@ -1884,7 +1918,7 @@ const std::string &DatapackClientLoader::get_language() const
 
 const std::vector<std::string> &DatapackClientLoader::get_maps() const
 {
-    return maps;
+    return mapIdToPath;
 }
 
 const std::vector<std::string> &DatapackClientLoader::get_skins() const
@@ -1892,22 +1926,22 @@ const std::vector<std::string> &DatapackClientLoader::get_skins() const
     return skins;
 }
 
-const std::unordered_map<std::string,uint32_t> &DatapackClientLoader::get_mapToId() const
+const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &DatapackClientLoader::get_mapToId() const
 {
-    return mapToId;
+    return mapPathToId;
 }
 
-const std::unordered_map<std::string,uint32_t> &DatapackClientLoader::get_fullMapPathToId() const
+/*const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &DatapackClientLoader::get_fullMapPathToId() const
 {
     return fullMapPathToId;
-}
+}*/
 
-const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &DatapackClientLoader::get_itemOnMap() const
+/*const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_itemOnMap() const
 {
     return itemOnMap;
 }
 
-const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_t>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &DatapackClientLoader::get_plantOnMap() const
+const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &DatapackClientLoader::get_plantOnMap() const
 {
     return plantOnMap;
 }
@@ -1915,5 +1949,5 @@ const std::unordered_map<std::string,std::unordered_map<std::pair<uint8_t,uint8_
 const std::unordered_map<uint16_t,DatapackClientLoader::PlantIndexContent> &DatapackClientLoader::get_plantIndexOfOnMap() const
 {
     return plantIndexOfOnMap;
-}
+}*/
 
