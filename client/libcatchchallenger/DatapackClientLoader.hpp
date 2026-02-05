@@ -9,7 +9,6 @@
 #include "../../general/base/lib.h"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/GeneralType.hpp"
-#include "../../general/base/CommonMap.hpp"
 
 class DLL_PUBLIC DatapackClientLoader
 {
@@ -87,11 +86,11 @@ public:
         std::string name;
         std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
     };
-    struct BotFightExtra
+    /*struct BotFightExtra
     {
         std::string start;
         std::string win;
-    };
+    };*/
     class MonsterExtra
     {
     public:
@@ -228,8 +227,8 @@ public:
     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> &get_itemToPlants() const;
     const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> &get_questsExtra() const;
     const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> &get_questsPathToId() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,std::vector<CATCHCHALLENGER_TYPE_QUEST> > &get_botToQuestStart() const;
-    const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> &get_botFightsExtra() const;
+    const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> &get_botToQuestStart() const;
+    //const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> &get_botFightsExtra() const;-> load ondemand with map
     const std::unordered_map<std::string,ZoneExtra> &get_zonesExtra() const;
     const std::unordered_map<std::string,std::string> &get_audioAmbiance() const;
     const std::unordered_map<uint32_t,ProfileText> &get_profileTextList() const;
@@ -239,10 +238,10 @@ public:
     const std::vector<std::string> &get_skins() const;
     ///todo drop the full path and .tmx
     const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &get_mapToId() const;
-    const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &get_fullMapPathToId() const;
-    const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &get_itemOnMap() const;
-    const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM,pairhash> > &get_plantOnMap() const;
-    const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;
+    //const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> &get_fullMapPathToId() const;
+    /*const std::unordered_map<std::string,std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,CATCHCHALLENGER_TYPE_ITEM> > &get_itemOnMap() const;
+    const std::unordered_map<std::string, std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t> > &get_plantOnMap() const;
+    const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;*/
 protected:
     std::unordered_map<uint8_t,TypeExtra> typeExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> monsterExtra;
@@ -254,17 +253,16 @@ protected:
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint8_t> itemToPlants;
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> questsPathToId;
-    std::unordered_map<uint16_t,std::vector<CATCHCHALLENGER_TYPE_QUEST> > botToQuestStart;
-    std::unordered_map<uint16_t,BotFightExtra> botFightsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> botToQuestStart;
+    //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> botFightsExtra;-> load ondemand with map
     std::unordered_map<std::string,ZoneExtra> zonesExtra;
     std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;
     std::unordered_map<uint32_t,ProfileText> profileTextList;
     std::unordered_map<std::string,VisualCategory> visualCategories;
-    std::vector<CatchChallenger::CommonMap> commonMapList;//same loader, then should be same data on the server
     std::string language;
     std::vector<std::string> skins;
     std::vector<std::string> mapIdToPath;
-    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
+    std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> mapPathToId;//used into parseQuestsExtra()
     /*
     ///todo drop the full path and .tmx
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MAPID> fullMapPathToId;
@@ -307,7 +305,7 @@ private:
     void parseQuestsText();
     void parseQuestsLink();
     void parseSkins();
-    void parseBotFightsExtra();
+    //void parseBotFightsExtra();-> load ondemand with map
     void parseAudioAmbiance();
     void parseZoneExtra();
     void parseReputationExtra();
