@@ -103,15 +103,15 @@ void Client::setToDefault()
     pingInProgress=0;
 
     //disable reserve
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
         otherPlayerTrade.battleCanceled();
-        otherPlayerTrade.otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
-        otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+        otherPlayerTrade.otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
+        otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     }
 
-    index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    index_on_map=PLAYER_INDEX_FOR_CONNECTED_MAX;
     account_id_db=0;
     character_id_db=0;
     #ifndef EPOLLCATCHCHALLENGERSERVER
@@ -225,7 +225,7 @@ Client::~Client()
     }
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getIndexConnect() const
+PLAYER_INDEX_FOR_CONNECTED Client::getIndexConnect() const
 {
     return index_connected_player;
 }
@@ -608,7 +608,7 @@ void Client::disconnectClientById_db(const uint32_t &characterId_db)
 {
     if(GlobalServerData::serverPrivateVariables.playerById_db.find(characterId_db)!=GlobalServerData::serverPrivateVariables.playerById_db.cend())
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index=GlobalServerData::serverPrivateVariables.playerById_db.at(characterId_db);
+        const PLAYER_INDEX_FOR_CONNECTED &index=GlobalServerData::serverPrivateVariables.playerById_db.at(characterId_db);
         if(!ClientList::list->empty(index))
             ClientList::list->rw(index).disconnectClient();
     }

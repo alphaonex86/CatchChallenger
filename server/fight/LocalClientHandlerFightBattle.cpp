@@ -5,14 +5,14 @@
 
 using namespace CatchChallenger;
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED Client::getOtherPlayerBattle() const
+PLAYER_INDEX_FOR_CONNECTED Client::getOtherPlayerBattle() const
 {
     return otherPlayerBattle;
 }
 
 bool Client::isInBattle() const
 {
-    return (otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX && battleIsValidated);
+    return (otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX && battleIsValidated);
 }
 
 void Client::registerBattleRequest(Client &otherPlayerBattle)
@@ -49,7 +49,7 @@ void Client::registerBattleRequest(Client &otherPlayerBattle)
 
 void Client::battleCanceled()
 {
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         if(ClientList::list->empty(otherPlayerBattle))
             return;
@@ -61,7 +61,7 @@ void Client::battleCanceled()
 
 void Client::battleAccepted()
 {
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         if(ClientList::list->empty(otherPlayerBattle))
             return;
@@ -75,7 +75,7 @@ void Client::battleFakeAccepted(Client &otherPlayer)
 {
     battleFakeAcceptedInternal(otherPlayer);
     otherPlayer.battleFakeAcceptedInternal(*this);
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         if(ClientList::list->empty(otherPlayerBattle))
             return;
@@ -92,7 +92,7 @@ void Client::battleFakeAcceptedInternal(Client &otherPlayer)
 
 void Client::battleFinished()
 {
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
     if(ClientList::list->empty(otherPlayerBattle))
         return;
@@ -112,7 +112,7 @@ void Client::battleFinished()
 
 void Client::battleFinishedReset()
 {
-    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     battleIsValidated=false;
     mHaveCurrentSkill=false;
     mMonsterChange=false;
@@ -126,13 +126,13 @@ void Client::resetTheBattle()
     mHaveCurrentSkill=false;
     mMonsterChange=false;
     battleIsValidated=false;
-    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     updateCanDoFight();
 }
 
 void Client::internalBattleCanceled(const bool &send)
 {
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         //normalOutput(QStringLiteral("Battle already canceled"));
         return;
@@ -143,7 +143,7 @@ void Client::internalBattleCanceled(const bool &send)
     bool needUpdateCanDoFight=false;
     if(battleIsValidated)
         needUpdateCanDoFight=true;
-    otherPlayerBattle=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
     if(send)
     {
         //send the network message
@@ -160,12 +160,12 @@ void Client::internalBattleCanceled(const bool &send)
 
 void Client::internalBattleAccepted(const bool &send)
 {
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
     if(ClientList::list->empty(otherPlayerBattle))
         return;
     Client &c=ClientList::list->rw(otherPlayerBattle);
-    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         normalOutput("Can't accept battle if not in battle");
         return;
@@ -328,7 +328,7 @@ void Client::sendBattleReturn()
         }
         master_index++;
     }
-    if(otherPlayerBattle!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         if(ClientList::list->empty(otherPlayerBattle))
             return;

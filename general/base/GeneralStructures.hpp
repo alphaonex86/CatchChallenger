@@ -180,7 +180,7 @@ class PublicPlayerMonster
     CATCHCHALLENGER_TYPE_MONSTER monster;
     uint8_t level;
     uint32_t hp;
-    uint16_t catched_with;
+    CATCHCHALLENGER_TYPE_ITEM catched_with;
     Gender gender;
     std::vector<PlayerBuff> buffs;
     #ifdef CATCHCHALLENGER_DB_FILE

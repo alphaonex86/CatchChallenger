@@ -12,7 +12,7 @@ namespace CatchChallenger {
 class ClientWithMap : public Client
 {
 public:
-    ClientWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
+    ClientWithMap(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
     struct SendedStatus {
         uint32_t characterId_db;//0xffffffff if removed
         COORD_TYPE x;

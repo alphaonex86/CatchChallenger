@@ -99,7 +99,7 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
     }
     if(privateChatDrop.total()>=GlobalServerData::serverSettings.ddos.dropGlobalChatMessagePrivate)
         return false;
-    if(index_connected_player==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_connected_player==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return false;
     privateChatDrop.incrementLastValue();
     if(this->public_and_private_informations.public_informations.pseudo==pseudo)
@@ -107,8 +107,8 @@ bool Client::sendPM(const std::string &text,const std::string &pseudo)
         errorOutput("Can't send them self the PM");
         return false;
     }
-    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(pseudo);
-    if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    const PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(pseudo);
+    if(index==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         receiveSystemText("unable to found the connected player: pseudo: \""+pseudo+"\"",false);
         /*if(GlobalServerData::serverSettings.anonymous)
@@ -248,7 +248,7 @@ bool Client::sendChatText(const Chat_type &chatType,const std::string &text)
                 unsigned int index=0;
                 while(index<size)
                 {
-                    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_player=clan.connected_players.at(index);
+                    const PLAYER_INDEX_FOR_CONNECTED &index_player=clan.connected_players.at(index);
                     if(index_player!=index_connected_player)
                     {
                         if(!ClientList::list->empty(index_player))
@@ -362,8 +362,8 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
             normalOutput("command not understand"+command+" "+extraText);
             return;
         }
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(list.front());
-        if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(list.front());
+        if(index==PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText("unable to found the connected player: pseudo: \""+list.front()+"\"",false);
             return;
@@ -401,7 +401,7 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
         {
             uint16_t textSize=0;
             std::vector<std::string> playerStringList;
-            SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
+            PLAYER_INDEX_FOR_CONNECTED index=0;
             while(index<ClientList::list->size())
             {
                 if(!ClientList::list->empty(index))
@@ -436,8 +436,8 @@ void Client::sendBroadCastCommand(const std::string &command,const std::string &
     }
     else if(command=="kick")
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(extraText);
-        if(index==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED index=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(index==PLAYER_INDEX_FOR_CONNECTED_MAX)
             return;
         if(ClientList::list->empty(index))
             return;

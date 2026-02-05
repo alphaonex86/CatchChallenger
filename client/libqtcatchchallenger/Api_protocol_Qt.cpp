@@ -34,7 +34,8 @@ Api_protocol_Qt::Api_protocol_Qt(ConnectedSocket *socket)
     #endif
 
     mLastGivenXP=0;
-    fightId=0;
+    fightInProgress.botId=255;
+    fightInProgress.mapId=65535;
 
     this->socket=socket;
     if(!QObject::connect(socket,&ConnectedSocket::destroyed,this,&Api_protocol_Qt::QtsocketDestroyed))
@@ -127,9 +128,9 @@ void Api_protocol_Qt::stateChanged(QAbstractSocket::SocketState socketState)
     }
 }
 
-bool Api_protocol_Qt::haveBeatBot(const uint16_t &botFightId) const
+bool Api_protocol_Qt::haveBeatBot(const uint16_t &mapId, const uint8_t &botFightId) const
 {
-    return CommonFightEngine::haveBeatBot(botFightId);
+    return CommonFightEngine::haveBeatBot(mapId,botFightId);
 }
 
 void Api_protocol_Qt::errorFromFightEngine(const std::string &error)
@@ -414,10 +415,10 @@ void Api_protocol_Qt::resetAll()
     Api_protocol::resetAll();
 
     mLastGivenXP=0;
-    fightId=0;
+    fightInProgress.botId=255;
+    fightInProgress.mapId=65535;
 
     randomSeeds.clear();
-    player_informations_local.playerMonster.clear();
     fightEffectList.clear();
 
     battleCurrentMonster.clear();
@@ -512,7 +513,7 @@ void Api_protocol_Qt::gatewayCacheUpdate(const uint8_t gateway,const uint8_t pro
 }
 
 //general info
-void Api_protocol_Qt::number_of_player(const uint16_t &number,const uint16_t &max_players)
+void Api_protocol_Qt::number_of_player(const PLAYER_INDEX_FOR_CONNECTED &number,const PLAYER_INDEX_FOR_CONNECTED &max_players)
 {
     emit Qtnumber_of_player(number,max_players);
 }
@@ -526,9 +527,9 @@ void Api_protocol_Qt::newCharacterId(const uint8_t &returnCode,const uint32_t &c
 {
     emit QtnewCharacterId(returnCode,characterId);
 }
-void Api_protocol_Qt::haveCharacter()
+void Api_protocol_Qt::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &last_direction)
 {
-    emit QthaveCharacter();
+    emit QthaveCharacter(mapIndex,x,y,last_direction);
 }
 //events
 void Api_protocol_Qt::setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events)
@@ -541,23 +542,23 @@ void Api_protocol_Qt::newEvent(const uint8_t &event,const uint8_t &event_value)
 }
 
 //map move
-void Api_protocol_Qt::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+void Api_protocol_Qt::insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     emit Qtinsert_player(player,mapId,x,y,direction);
 }
-void Api_protocol_Qt::move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
+void Api_protocol_Qt::move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
 {
     emit Qtmove_player(id,movement);
 }
-void Api_protocol_Qt::remove_player(const uint16_t &id)
+void Api_protocol_Qt::remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id)
 {
     emit Qtremove_player(id);
 }
-void Api_protocol_Qt::reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+void Api_protocol_Qt::reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     emit Qtreinsert_player(id,x,y,direction);
 }
-void Api_protocol_Qt::full_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction)
+void Api_protocol_Qt::full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction)
 {
     emit Qtfull_reinsert_player(id,mapId,x,y,direction);
 }
@@ -565,17 +566,17 @@ void Api_protocol_Qt::dropAllPlayerOnTheMap()
 {
     emit QtdropAllPlayerOnTheMap();
 }
-void Api_protocol_Qt::teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+void Api_protocol_Qt::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     emit QtteleportTo(mapId,x,y,direction);
 }
 
 //plant
-void Api_protocol_Qt::insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
+void Api_protocol_Qt::insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
 {
     emit Qtinsert_plant(mapId,x,y,plant_id,seconds_to_mature);
 }
-void Api_protocol_Qt::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
+void Api_protocol_Qt::remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     emit Qtremove_plant(mapId,x,y);
 }
@@ -619,15 +620,15 @@ void Api_protocol_Qt::have_current_player_info(const CatchChallenger::Player_pri
     emit Qthave_current_player_info(informations);
     updateCanDoFight();
 }
-void Api_protocol_Qt::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items)
+void Api_protocol_Qt::have_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items)
 {
-    emit Qthave_inventory(items,warehouse_items);
+    emit Qthave_inventory(items);
 }
-void Api_protocol_Qt::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
+void Api_protocol_Qt::add_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items)
 {
     emit Qtadd_to_inventory(items);
 }
-void Api_protocol_Qt::remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
+void Api_protocol_Qt::remove_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items)
 {
     emit Qtremove_to_inventory(items);
 }
@@ -655,7 +656,7 @@ void Api_protocol_Qt::removeFileBase(const std::string &fileName)
 {
     emit QtremoveFileBase(fileName);
 }
-void Api_protocol_Qt::datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+void Api_protocol_Qt::datapackSizeBase(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize)
 {
     emit QtdatapackSizeBase(datapckFileNumber,datapckFileSize);
 }
@@ -672,7 +673,7 @@ void Api_protocol_Qt::removeFileMain(const std::string &fileName)
 {
     emit QtremoveFileMain(fileName);
 }
-void Api_protocol_Qt::datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+void Api_protocol_Qt::datapackSizeMain(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize)
 {
     emit QtdatapackSizeMain(datapckFileNumber,datapckFileSize);
 }
@@ -689,7 +690,7 @@ void Api_protocol_Qt::removeFileSub(const std::string &fileName)
 {
     emit QtremoveFileSub(fileName);
 }
-void Api_protocol_Qt::datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize)
+void Api_protocol_Qt::datapackSizeSub(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize)
 {
     emit QtdatapackSizeSub(datapckFileNumber,datapckFileSize);
 }
@@ -747,7 +748,7 @@ void Api_protocol_Qt::tradeAddTradeCash(const uint64_t &cash)
 {
     emit QttradeAddTradeCash(cash);
 }
-void Api_protocol_Qt::tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity)
+void Api_protocol_Qt::tradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity)
 {
     emit QttradeAddTradeObject(item,quantity);
 }
@@ -813,15 +814,15 @@ void Api_protocol_Qt::captureCityPreviousNotFinished()
 {
     emit QtcaptureCityPreviousNotFinished();
 }
-void Api_protocol_Qt::captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count)
+void Api_protocol_Qt::captureCityStartBattle(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count)
 {
     emit QtcaptureCityStartBattle(player_count,clan_count);
 }
-void Api_protocol_Qt::captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId)
+void Api_protocol_Qt::captureCityStartBotFight(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId)
 {
     emit QtcaptureCityStartBotFight(player_count,clan_count,fightId);
 }
-void Api_protocol_Qt::captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count)
+void Api_protocol_Qt::captureCityDelayedStart(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count)
 {
     emit QtcaptureCityDelayedStart(player_count,clan_count);
 }
@@ -894,7 +895,7 @@ void Api_protocol_Qt::setBattleMonster(const std::vector<uint8_t> &stat,const ui
     mLastGivenXP=0;
 }
 
-void Api_protocol_Qt::setBotMonster(const std::vector<PlayerMonster> &botFightMonsters,const uint16_t &fightId)
+void Api_protocol_Qt::setBotMonster(const std::vector<PlayerMonster> &botFightMonsters,const FightInProgressType &fightInProgress)
 {
     if(!battleCurrentMonster.empty() || !battleStat.empty() || !this->botFightMonsters.empty())
     {
@@ -906,13 +907,13 @@ void Api_protocol_Qt::setBotMonster(const std::vector<PlayerMonster> &botFightMo
         error("monster list size can't be empty");
         return;
     }
-    if(this->fightId!=0)
+    if(this->fightInProgress.mapId!=65535)
     {
         error("Api_protocol_Qt::setBotMonster() fightId!=0");
         return;
     }
     startTheFight();
-    this->fightId=fightId;
+    this->fightInProgress=fightInProgress;
     this->botFightMonsters=botFightMonsters;
     unsigned int index=0;
     while(index<botFightMonsters.size())
@@ -1059,7 +1060,8 @@ void Api_protocol_Qt::fightFinished()
     battleStat.clear();
     battleMonsterPlace.clear();
     doTurnIfChangeOfMonster=true;
-    fightId=0;
+    fightInProgress.botId=255;
+    fightInProgress.mapId=65535;
     CommonFightEngine::fightFinished();
 }
 
@@ -1095,12 +1097,13 @@ std::vector<uint8_t> Api_protocol_Qt::addPlayerMonster(const std::vector<PlayerM
         return std::vector<uint8_t>();
     }*/
     std::vector<uint8_t> positionList;
-    const uint8_t basePosition=static_cast<uint8_t>(player_informations.playerMonster.size());
+    const uint8_t basePosition=static_cast<uint8_t>(player_informations.monsters.size());
     Player_private_and_public_informations &informations=get_player_informations();
     unsigned int index=0;
     while(index<playerMonster.size())
     {
-        const uint16_t &monsterId=playerMonster.at(index).monster;
+        const PlayerMonster &m=playerMonster.at(index);
+        const CATCHCHALLENGER_TYPE_MONSTER &monsterId=m.monster;
         if(informations.encyclopedia_monster!=NULL)
             informations.encyclopedia_monster[monsterId/8]|=(1<<(7-monsterId%8));
         else
@@ -1147,7 +1150,6 @@ bool Api_protocol_Qt::tryCatchClient(const uint16_t &item)
     newMonster.monster=wildMonsters.front().monster;
     newMonster.remaining_xp=0;
     newMonster.skills=wildMonsters.front().skills;
-    newMonster.sp=0;
     playerMonster_catchInProgress.push_back(newMonster);
     //need wait the server reply, monsterCatch(const bool &success)
     return true;
@@ -1452,7 +1454,8 @@ bool Api_protocol_Qt::finishTheTurn(const bool &isBot)
                              ": Register the win against the bot fight: "+std::to_string(fightId) << std::endl;
             }
         }
-        fightId=0;
+        fightInProgress.botId=255;
+        fightInProgress.mapId=65535;
     }
     return win;
 }
@@ -1472,7 +1475,7 @@ bool Api_protocol_Qt::doTheOtherMonsterTurn()
 void Api_protocol_Qt::levelUp(const uint8_t &level, const uint8_t &monsterIndex)//call after done the level
 {
     CommonFightEngine::levelUp(level,monsterIndex);
-    const PlayerMonster &monster=player_informations.playerMonster.at(monsterIndex);
+    const PlayerMonster &monster=player_informations.monsters.at(monsterIndex);
     const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(monster.monster);
     unsigned int index=0;
     while(index<monsterInformations.evolutions.size())
@@ -1493,15 +1496,15 @@ PlayerMonster * Api_protocol_Qt::evolutionByLevelUp()
         return NULL;
     uint8_t monsterIndex=mEvolutionByLevelUp.front();
     mEvolutionByLevelUp.erase(mEvolutionByLevelUp.cbegin());
-    return &player_informations.playerMonster[monsterIndex];
+    return &player_informations.monsters[monsterIndex];
 }
 
 uint8_t Api_protocol_Qt::getPlayerMonsterPosition(const PlayerMonster * const playerMonster)
 {
     unsigned int index=0;
-    while(index<player_informations.playerMonster.size())
+    while(index<player_informations.monsters.size())
     {
-        if(&player_informations.playerMonster.at(index)==playerMonster)
+        if(&player_informations.monsters.at(index)==playerMonster)
             return static_cast<uint8_t>(index);
         index++;
     }
@@ -1521,7 +1524,7 @@ void Api_protocol_Qt::addToEncyclopedia(const uint16_t &monster)
 void Api_protocol_Qt::confirmEvolutionByPosition(const uint8_t &monterPosition)
 {
     Api_protocol::confirmEvolutionByPosition(monterPosition);
-    CatchChallenger::PlayerMonster &playerMonster=player_informations.playerMonster[monterPosition];
+    CatchChallenger::PlayerMonster &playerMonster=player_informations.monsters[monterPosition];
     const Monster &monsterInformations=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
     unsigned int sub_index=0;
     while(sub_index<monsterInformations.evolutions.size())
@@ -1542,12 +1545,12 @@ void Api_protocol_Qt::confirmEvolutionByPosition(const uint8_t &monterPosition)
 }
 
 //return true if change level, multiplicator do at datapack loading
-bool Api_protocol_Qt::giveXPSP(int xp,int sp)
+/*bool Api_protocol_Qt::giveXPSP(int xp,int sp)
 {
     bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
     mLastGivenXP=xp;
     return haveChangeOfLevel;
-}
+}*/
 
 uint32_t Api_protocol_Qt::lastGivenXP()
 {

@@ -66,10 +66,10 @@ public:
     #endif
     friend class BaseServer;
     friend class PlayerUpdaterBase;
-    explicit Client(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
+    explicit Client(const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
     virtual void setToDefault();
     virtual ~Client();
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getIndexConnect() const;
+    PLAYER_INDEX_FOR_CONNECTED getIndexConnect() const;
     ClientStat getClientStat() const;
     //to get some info
     virtual bool isValid() = 0;
@@ -79,7 +79,7 @@ public:
     bool disconnectClient() override;
     static void disconnectClientById_db(const uint32_t &characterId_db);
     bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botId) const override;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getClientFight() const;//65535 if not in fight
+    PLAYER_INDEX_FOR_CONNECTED getClientFight() const;//65535 if not in fight
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
@@ -211,8 +211,8 @@ protected:
         uint32_t index;
     };
     uint8_t pingInProgress;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_on_map;//can have 1000 connected player on a map where visibility is 10, 65535 if not on map
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_connected_player;//always set
+    PLAYER_INDEX_FOR_CONNECTED index_on_map;//can have 1000 connected player on a map where visibility is 10, 65535 if not on map
+    PLAYER_INDEX_FOR_CONNECTED index_connected_player;//always set
 private:
     //-------------------
     uint32_t account_id_db;//0 if not logged
@@ -279,7 +279,7 @@ private:
     std::queue<PlayerOnMap> lastTeleportation;
     std::vector<uint8_t> queryNumberList;
 
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
+    PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
     bool battleIsValidated;
     uint16_t mCurrentSkillId;
     bool mHaveCurrentSkill,mMonsterChange;
@@ -300,7 +300,7 @@ private:
     static std::regex fileNameStartStringRegex;
 
     //info linked
-    static std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > captureCity;
+    static std::unordered_map<ZONE_TYPE,std::vector<PLAYER_INDEX_FOR_CONNECTED> > captureCity;
     static std::unordered_map<ZONE_TYPE,CaptureCityValidated> captureCityValidatedList;
     static std::unordered_map<uint32_t,uint64_t> characterCreationDateList;
 
@@ -472,7 +472,7 @@ private:
     void heal();
     void requestFight();
     bool learnSkillByMonsterPosition(const uint8_t &monsterPosition,const uint16_t &skill);
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getLocalClientHandlerFight();//65535 if not in fight
+    PLAYER_INDEX_FOR_CONNECTED getLocalClientHandlerFight();//65535 if not in fight
     //clan
     void clanAction(const uint8_t &query_id,const uint8_t &action,const std::string &text);
     void addClan_return(const uint8_t &query_id, const uint8_t &action, const std::string &text);
@@ -533,7 +533,7 @@ private:
 
     void battleFinished();
     void battleFinishedReset();
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED getOtherPlayerBattle() const;//if not in fight
+    PLAYER_INDEX_FOR_CONNECTED getOtherPlayerBattle() const;//if not in fight
     bool finishTheTurn(const bool &isBot);
     #ifdef CATCHCHALLENGER_DEBUG_FIGHT
     void displayCurrentStatus();
@@ -593,7 +593,7 @@ private:
     const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;
+    PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;
     bool tradeIsValidated;
     bool tradeIsFreezed;
     uint64_t tradeCash;
@@ -601,7 +601,7 @@ private:
     std::vector<PlayerMonster> tradeMonster;
     std::vector<uint32_t> inviteToClanList;
     //Clan *clan;->public_and_private_informations.clan + clanList
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;
+    PLAYER_INDEX_FOR_CONNECTED otherCityPlayerBattle;
 public:
     #ifdef EPOLLCATCHCHALLENGERSERVER
     char *socketString;

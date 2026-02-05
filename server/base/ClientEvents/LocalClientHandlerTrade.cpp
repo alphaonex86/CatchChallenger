@@ -10,7 +10,7 @@ using namespace CatchChallenger;
 
 bool Client::getInTrade() const
 {
-    return (otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX);
+    return (otherPlayerTrade!=PLAYER_INDEX_FOR_CONNECTED_MAX);
 }
 
 void Client::registerTradeRequest(Client &otherPlayerTrade)
@@ -68,14 +68,14 @@ std::vector<PlayerMonster> Client::getTradeMonster() const
 
 void Client::tradeCanceled()
 {
-    if(otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerTrade!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         ClientList::list->rw(otherPlayerTrade).internalTradeCanceled(true);
     internalTradeCanceled(false);
 }
 
 void Client::tradeAccepted()
 {
-    if(otherPlayerTrade!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerTrade!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         ClientList::list->rw(otherPlayerTrade).internalTradeAccepted(true);
     internalTradeAccepted(false);
 }
@@ -165,7 +165,7 @@ void Client::resetTheTrade()
 {
     //reset out of trade
     tradeIsValidated=false;
-    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerTrade=PLAYER_INDEX_FOR_CONNECTED_MAX;
     tradeCash=0;
     tradeObjects.clear();
     tradeMonster.clear();
@@ -356,7 +356,7 @@ void Client::tradeAddTradeMonster(const uint8_t &monsterPosition)
 
 void Client::internalTradeCanceled(const bool &send)
 {
-    if(otherPlayerTrade==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerTrade==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         //normalOutput("Trade already canceled");
         return;
@@ -382,7 +382,7 @@ void Client::internalTradeCanceled(const bool &send)
         tradeMonster.clear();
         updateCanDoFight();
     }
-    otherPlayerTrade=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerTrade=PLAYER_INDEX_FOR_CONNECTED_MAX;
     if(send)
     {
         if(tradeIsValidated)
@@ -398,7 +398,7 @@ void Client::internalTradeCanceled(const bool &send)
 
 void Client::internalTradeAccepted(const bool &send)
 {
-    if(otherPlayerTrade==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(otherPlayerTrade==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         normalOutput("Can't accept trade if not in trade");
         return;

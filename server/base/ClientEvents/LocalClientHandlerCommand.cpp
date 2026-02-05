@@ -57,8 +57,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 //return;
             }
         }
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
-        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
+        if(indexConnected==PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText("player is not connected, usage: /give objectId player [quantity=1]");
             return;
@@ -156,8 +156,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("quantity is not a number, usage: /take objectId player [quantity=1]");
             return;
         }
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
-        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(arguments.at(1));
+        if(indexConnected==PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText("player is not connected, usage: /take objectId player [quantity=1]");
             return;
@@ -185,14 +185,14 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
                 receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
             }
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnectedFront=ClientList::list->global_clients_list_bypseudo(arguments.front());
-            if(indexConnectedFront==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            const PLAYER_INDEX_FOR_CONNECTED indexConnectedFront=ClientList::list->global_clients_list_bypseudo(arguments.front());
+            if(indexConnectedFront==PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 receiveSystemText(arguments.front()+" is not connected, usage: /tp player1 to player2");
                 return;
             }
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnectedBack=ClientList::list->global_clients_list_bypseudo(arguments.back());
-            if(indexConnectedBack==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            const PLAYER_INDEX_FOR_CONNECTED indexConnectedBack=ClientList::list->global_clients_list_bypseudo(arguments.back());
+            if(indexConnectedBack==PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 receiveSystemText(arguments.back()+" is not connected, usage: /tp player1 to player2");
                 return;
@@ -281,8 +281,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("no player given, syntaxe: /trade player");
             return;
         }
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
-        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(indexConnected==PLAYER_INDEX_FOR_CONNECTED_MAX)
         if(public_and_private_informations.public_informations.pseudo==extraText)
         {
             receiveSystemText("You can't trade with yourself");
@@ -333,8 +333,8 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
             receiveSystemText("no player given, syntaxe: /battle player");
             return;
         }
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
-        if(indexConnected==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+        const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(extraText);
+        if(indexConnected==PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             receiveSystemText(extraText+" is not connected");
             return;

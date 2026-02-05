@@ -15,6 +15,11 @@ class DLL_PUBLIC Api_protocol_Qt : public QObject, public Api_protocol, public C
 {
     Q_OBJECT
 public:
+    struct FightInProgressType
+    {
+        CATCHCHALLENGER_TYPE_MAPID mapId;//65535 no map defined
+        CATCHCHALLENGER_TYPE_BOTID botId;//255 no bot defined
+    };
     explicit Api_protocol_Qt(ConnectedSocket *socket);
     ~Api_protocol_Qt();
     virtual void stateChanged(QAbstractSocket::SocketState socketState);
@@ -33,7 +38,7 @@ public:
     void sslHandcheckIsFinished();
     void closeSocket() override;
     void errorFromFightEngine(const std::string &error);
-    bool haveBeatBot(const uint16_t &botFightId) const override;
+    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const override;
 
     //facility to call from logged() signal if cache hash is not matched and just call Api_client_real/Api_client_virtual implementation
     virtual void sendDatapackContentBase(const std::string &hashBase=std::string()) = 0;
@@ -53,7 +58,7 @@ public:
 
     void useSeed(const uint8_t &plant_id);
     void collectMaturePlant();
-    void destroyObject(const uint16_t &object,const uint32_t &quantity=1);
+    void destroyObject(const CATCHCHALLENGER_TYPE_ITEM &object,const uint32_t &quantity=1);
 
     //protocol/connection info
     virtual void readForFirstHeader() override;
@@ -69,30 +74,28 @@ public:
     void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression) override;
 
     //general info
-    void number_of_player(const uint16_t &number,const uint16_t &max_players) override;
+    void number_of_player(const PLAYER_INDEX_FOR_CONNECTED &number,const PLAYER_INDEX_FOR_CONNECTED &max_players) override;
     void random_seeds(const std::string &data) override;
 
     //character
     void newCharacterId(const uint8_t &returnCode,const uint32_t &characterId) override;
-    void haveCharacter() override;
+    void haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &last_direction) override;
     //events
     void setEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events) override;
     void newEvent(const uint8_t &event,const uint8_t &event_value) override;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,
-                       const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
-    void move_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) override;
-    void remove_player(const uint16_t &id) override;
-    void reinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
-    void full_reinsert_player(const uint16_t &id,const uint32_t &mapId,
-                              const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction) override;
+    void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) override;
+    void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) override;
+    void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id) override;
+    void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
+    void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) override;
     void dropAllPlayerOnTheMap() override;
-    void teleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
+    void teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) override;
 
     //plant
-    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) override;
-    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y) override;
+    void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) override;
+    void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y) override;
     void seed_planted(const bool &ok) override;
     void plant_collected(const CatchChallenger::Plant_collect &stat) override;
     //crafting
@@ -108,9 +111,9 @@ public:
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations) override;
-    void have_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items) override;
-    void add_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) override;
-    void remove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items) override;
+    void have_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) override;
+    void add_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) override;
+    void remove_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items) override;
 
     //datapack
     void haveTheDatapack() override;
@@ -119,17 +122,17 @@ public:
     void newFileBase(const std::string &fileName,const std::string &data) override;
     void newHttpFileBase(const std::string &url,const std::string &fileName) override;
     void removeFileBase(const std::string &fileName) override;
-    void datapackSizeBase(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
+    void datapackSizeBase(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) override;
     //main
     void newFileMain(const std::string &fileName,const std::string &data) override;
     void newHttpFileMain(const std::string &url,const std::string &fileName) override;
     void removeFileMain(const std::string &fileName) override;
-    void datapackSizeMain(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
+    void datapackSizeMain(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) override;
     //sub
     void newFileSub(const std::string &fileName,const std::string &data) override;
     void newHttpFileSub(const std::string &url,const std::string &fileName) override;
     void removeFileSub(const std::string &fileName) override;
-    void datapackSizeSub(const uint32_t &datapckFileNumber,const uint32_t &datapckFileSize) override;
+    void datapackSizeSub(const DATAPACK_FILE_NUMBER &datapckFileNumber,const uint32_t &datapckFileSize) override;
 
     //shop
     void haveShopList(const std::vector<ItemToSellOrBuy> &items) override;
@@ -149,7 +152,7 @@ public:
     void tradeFinishedByOther() override;
     void tradeValidatedByTheServer() override;
     void tradeAddTradeCash(const uint64_t &cash) override;
-    void tradeAddTradeObject(const uint32_t &item,const uint32_t &quantity) override;
+    void tradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity) override;
     void tradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster) override;
 
     //battle
@@ -171,9 +174,9 @@ public:
     void captureCityYourAreNotLeader() override;
     void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone) override;
     void captureCityPreviousNotFinished() override;
-    void captureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count) override;
-    void captureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId) override;
-    void captureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count) override;
+    void captureCityStartBattle(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) override;
+    void captureCityStartBotFight(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId) override;
+    void captureCityDelayedStart(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) override;
     void captureCityWin() override;
 
     void error(const std::string &error);
@@ -194,12 +197,12 @@ signals:
     void QtgatewayCacheUpdate(const uint8_t gateway,const uint8_t progression);
 
     //general info
-    void Qtnumber_of_player(const uint16_t &number,const uint16_t &max_players);
+    void Qtnumber_of_player(const PLAYER_INDEX_FOR_CONNECTED &number,const PLAYER_INDEX_FOR_CONNECTED &max_players);
     void Qtrandom_seeds(const std::string &data);
 
     //character
     void QtnewCharacterId(const uint8_t &returnCode,const uint32_t &characterId);
-    void QthaveCharacter();
+    void QthaveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &last_direction);
     //events
     void QtsetEvents(const std::vector<std::pair<uint8_t,uint8_t> > &events);
     void QtnewEvent(const uint8_t &event,const uint8_t &event_value);
@@ -214,8 +217,8 @@ signals:
     void QtteleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
 
     //plant
-    void Qtinsert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void Qtremove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y);
+    void Qtinsert_plant(const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void Qtremove_plant(const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y);
     void Qtseed_planted(const bool &ok);
     void Qtplant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting
@@ -230,9 +233,9 @@ signals:
 
     //player info
     void Qthave_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
-    void Qthave_inventory(const std::unordered_map<uint16_t,uint32_t> &items,const std::unordered_map<uint16_t,uint32_t> &warehouse_items);
-    void Qtadd_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
-    void Qtremove_to_inventory(const std::unordered_map<uint16_t,uint32_t> &items);
+    void Qthave_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items);
+    void Qtadd_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items);
+    void Qtremove_to_inventory(const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,uint32_t> &items);
 
     //datapack
     void QthaveTheDatapack();
@@ -270,7 +273,7 @@ signals:
     void QttradeFinishedByOther();
     void QttradeValidatedByTheServer();
     void QttradeAddTradeCash(const uint64_t &cash);
-    void QttradeAddTradeObject(const uint32_t &item,const uint32_t &quantity);
+    void QttradeAddTradeObject(const CATCHCHALLENGER_TYPE_ITEM &item,const uint32_t &quantity);
     void QttradeAddTradeMonster(const CatchChallenger::PlayerMonster &monster);
 
     //battle
@@ -291,9 +294,9 @@ signals:
     void QtcaptureCityYourAreNotLeader();
     void QtcaptureCityYourLeaderHaveStartInOtherCity(const std::string &zone);
     void QtcaptureCityPreviousNotFinished();
-    void QtcaptureCityStartBattle(const uint16_t &player_count,const uint16_t &clan_count);
-    void QtcaptureCityStartBotFight(const uint16_t &player_count,const uint16_t &clan_count,const uint32_t &fightId);
-    void QtcaptureCityDelayedStart(const uint16_t &player_count,const uint16_t &clan_count);
+    void QtcaptureCityStartBattle(const SIMPLIFIED_PLAYER_ID_FOR_MAP &player_count,const uint16_t &clan_count);
+    void QtcaptureCityStartBotFight(const SIMPLIFIED_PLAYER_ID_FOR_MAP &player_count,const uint16_t &clan_count,const uint32_t &fightId);
+    void QtcaptureCityDelayedStart(const SIMPLIFIED_PLAYER_ID_FOR_MAP &player_count,const uint16_t &clan_count);
     void QtcaptureCityWin();
 
 public:
@@ -308,7 +311,7 @@ public:
         uint32_t skill;
     };
     virtual bool isInFight() const override;
-    bool useObjectOnMonsterByPosition(const uint16_t &object, const uint8_t &monsterPosition) override;
+    bool useObjectOnMonsterByPosition(const CATCHCHALLENGER_TYPE_ITEM &object, const uint8_t &monsterPosition) override;
     void errorFightEngine(const std::string &error) override;
     void messageFightEngine(const std::string &message) const override;
     std::vector<uint8_t> addPlayerMonster(const std::vector<PlayerMonster> &playerMonster) override;
@@ -317,11 +320,11 @@ public:
     std::vector<PublicPlayerMonster> battleCurrentMonster;
     std::vector<uint8_t> battleStat,botMonstersStat;
     std::vector<uint8_t> battleMonsterPlace;//is number with range of 1-max (2 if have 2 monster)
-    std::vector<uint32_t> otherMonsterAttack;
+    std::vector<CATCHCHALLENGER_TYPE_SKILL> otherMonsterAttack;
     std::vector<PlayerMonster> playerMonster_catchInProgress;
     virtual void fightFinished() override;
     void setBattleMonster(const std::vector<uint8_t> &stat,const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
-    void setBotMonster(const std::vector<PlayerMonster> &publicPlayerMonster, const uint16_t &fightId);
+    void setBotMonster(const std::vector<PlayerMonster> &publicPlayerMonster, const FightInProgressType &fightInProgress);
     bool addBattleMonster(const uint8_t &monsterPlace,const PublicPlayerMonster &publicPlayerMonster);
     bool haveWin();
     void addAndApplyAttackReturnList(const std::vector<Skill::AttackReturn> &fightEffectList);
@@ -339,7 +342,7 @@ public:
     Skill::AttackReturn generateOtherAttack() override;
     bool isInBattle() const override;
     bool haveBattleOtherMonster() const;
-    virtual bool useSkill(const uint16_t &skill) override;
+    virtual bool useSkill(const CATCHCHALLENGER_TYPE_SKILL &skill) override;
     bool finishTheTurn(const bool &isBot);
     bool dropKOOtherMonster() override;
     bool tryCatchClient(const uint16_t &item);
@@ -351,7 +354,7 @@ public:
     uint8_t getPlayerMonsterPosition(const PlayerMonster * const playerMonster);
     void confirmEvolutionByPosition(const uint8_t &monterPosition);
     void addToEncyclopedia(const uint16_t &monster);
-    bool giveXPSP(int xp,int sp) override;
+    //bool giveXPSP(int xp,int sp) override;
     uint32_t lastGivenXP();
     void newRandomNumber(const std::string &data);
     bool dropKOCurrentMonster();
@@ -364,7 +367,7 @@ private:
     std::vector<Skill::AttackReturn> fightEffectList;
     Player_private_and_public_informations player_informations_local;
     std::string randomSeeds;
-    uint16_t fightId;
+    FightInProgressType fightInProgress;
     Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel) override;
     bool applyCurrentLifeEffectReturn(const Skill::LifeEffectReturn &effectReturn);
     bool internalTryEscape() override;

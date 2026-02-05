@@ -50,7 +50,7 @@ int Client::addCurrentBuffEffect(const Skill::BuffEffect &effect)
                 case ApplyOn_AllEnemy:
                 if(isInBattle())
                 {
-                    if(otherPlayerBattle==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+                    if(otherPlayerBattle==PLAYER_INDEX_FOR_CONNECTED_MAX)
                         return returnCode;
                     if(ClientList::list->empty(otherPlayerBattle))
                         return returnCode;

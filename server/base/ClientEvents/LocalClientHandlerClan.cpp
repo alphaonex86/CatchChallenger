@@ -145,7 +145,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             #endif
             const Clan clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
-            const std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
+            const std::vector<PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
             //send the network reply
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
@@ -222,8 +222,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
-            if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
+            if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 if(ClientList::list->empty(indexConnected))
                 {
@@ -276,8 +276,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             removeFromQueryReceived(query_id);
             *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);//set the dynamic size
 
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
-            if(indexConnected!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+            const PLAYER_INDEX_FOR_CONNECTED indexConnected=ClientList::list->global_clients_list_bypseudo(text);
+            if(indexConnected!=PLAYER_INDEX_FOR_CONNECTED_MAX)
             {
                 if(ClientList::list->empty(indexConnected))
                 {

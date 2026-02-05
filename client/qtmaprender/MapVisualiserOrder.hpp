@@ -6,11 +6,11 @@
 #include <QHash>
 #include <QRegularExpression>
 
-#include <libtiled/map.h>
-#include <libtiled/maprenderer.h>
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/tile.h>
+#include <map.h>
+#include <maprenderer.h>
+#include <mapobject.h>
+#include <objectgroup.h>
+#include <tile.h>
 
 #include "MapDoor.hpp"
 #include "Map_client.hpp"
