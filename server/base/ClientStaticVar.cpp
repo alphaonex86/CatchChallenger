@@ -62,7 +62,7 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
 
 std::regex Client::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
 
-std::unordered_map<ZONE_TYPE,std::vector<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> > Client::captureCity;
+std::unordered_map<ZONE_TYPE,std::vector<PLAYER_INDEX_FOR_CONNECTED> > Client::captureCity;
 std::unordered_map<ZONE_TYPE,CaptureCityValidated> Client::captureCityValidatedList;
 std::unordered_map<uint32_t,uint64_t> Client::characterCreationDateList;
 

@@ -55,13 +55,13 @@ void Client::sendLocalChatText(const std::string &text)
         *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput-1-4);
     }
 
-    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &size=map.map_clients_list_size();
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index=0;
+    const PLAYER_INDEX_FOR_CONNECTED &size=map.map_clients_list_size();
+    PLAYER_INDEX_FOR_CONNECTED index=0;
     while(index<size)
     {
         if(map.map_clients_list_isValid(index))
         {
-            const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &global_index=map.map_clients_list_at(index);
+            const PLAYER_INDEX_FOR_CONNECTED &global_index=map.map_clients_list_at(index);
             ClientList::list->rw(global_index).sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
         }
         index++;
@@ -70,21 +70,21 @@ void Client::sendLocalChatText(const std::string &text)
 
 void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
-    if(getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_on_map!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         std::cout << "index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::insertClientOnMap()" << std::endl;
     index_on_map=map.insertOnMap(getIndexConnect());
 }
 
 void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &map)
 {
-    if(getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(index_on_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(index_on_map==PLAYER_INDEX_FOR_CONNECTED_MAX)
         std::cout << "index_on_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::removeClientOnMap()" << std::endl;
     map.removeOnMap(getIndexConnect());
 
-    index_on_map=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX;
+    index_on_map=PLAYER_INDEX_FOR_CONNECTED_MAX;
     mapIndex=65535;
 }

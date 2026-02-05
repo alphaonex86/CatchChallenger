@@ -21,7 +21,7 @@ HEADERS  += \
     $$PWD/ExtraSocket.hpp \
     $$PWD/ConnectedSocket.hpp
 
-INCLUDEPATH += /usr/include/libtiled/
+INCLUDEPATH += /usr/include/tiled/
 
 !contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 QT += multimedia

@@ -19,10 +19,13 @@
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/lib.h"
 #include "../libcatchchallenger/DatapackClientLoader.hpp"
-#include <tileset.h>
 
 class QtDatapackClientLoaderThread;
 
+/* just load all, more simple and no load time (frame perfect but RAM intensive)
+ * can be loaded ondemand but generate load time and reduce RAM needed
+ * to be correctly loaded, the ideal is async + prefetch (prefetch monster/buff/item linked with the map), but need hurge rework
+ * QPixmap only can be loaded into the main thread, QImage -> QPixmap have cost, then to prevent slowdown and have good experience, all QPixmap is loaded */
 class DLL_PUBLIC QtDatapackClientLoader
         #ifndef NOTHREADS
         : public QThread
@@ -64,15 +67,16 @@ public:
     struct QtPlantExtra
     {
         //Tiled::Tileset * tileset;
-        Tiled::SharedTileset tileset;
+        //Tiled::SharedTileset tileset;
+        QImage tiles;
     };
     struct QtBuffExtra
     {
         QPixmap icon;
     };
-    const QtMonsterExtra &getMonsterExtra(const uint16_t &id);
-    const QtItemExtra &getItemExtra(const uint16_t &id);
-    const QtBuffExtra &getMonsterBuffExtra(const uint8_t &id);
+    const QtMonsterExtra &getMonsterExtra(const CATCHCHALLENGER_TYPE_MONSTER &id);
+    const QtItemExtra &getItemExtra(const CATCHCHALLENGER_TYPE_ITEM &id);
+    const QtBuffExtra &getMonsterBuffExtra(const CATCHCHALLENGER_TYPE_BUFF &id);
     const QtPlantExtra &getPlantExtra(const uint8_t &id);
 
     QPixmap defaultInventoryImage();
@@ -97,24 +101,24 @@ signals:
     void datapackParsedMainSub();
     void datapackChecksumError();
 
-    void newItemImage(uint16_t id);
-    void newMonsterImage(uint16_t id);
+    void newItemImage(CATCHCHALLENGER_TYPE_ITEM id);
+    void newMonsterImage(CATCHCHALLENGER_TYPE_MONSTER id);
 private:
     QPixmap *mDefaultInventoryImage;
     std::string getLanguage() override;
 
-    std::unordered_map<uint16_t,QtItemExtra> QtitemsExtra;
-    std::unordered_map<uint16_t,QtMonsterExtra> QtmonsterExtra;
-    std::unordered_map<uint8_t,QtBuffExtra> QtmonsterBuffsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,QtItemExtra> QtitemsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,QtMonsterExtra> QtmonsterExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,QtBuffExtra> QtmonsterBuffsExtra;
     std::unordered_map<uint8_t,QtPlantExtra> QtplantExtra;
     std::unordered_set<QtDatapackClientLoaderThread *> threads;
     QtItemExtra emptyItem;
     QtMonsterExtra emptyMonster;
 protected:
-    std::unordered_map<uint16_t,ImageItemExtra> ImageitemsExtra;
-    std::unordered_map<uint16_t,ImageMonsterExtra> ImagemonsterExtra;
-    std::vector<uint16_t> ImageitemsToLoad;
-    std::vector<uint16_t> ImagemonsterToLoad;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,ImageItemExtra> ImageitemsExtra;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,ImageMonsterExtra> ImagemonsterExtra;
+    std::vector<CATCHCHALLENGER_TYPE_ITEM> ImageitemsToLoad;
+    std::vector<CATCHCHALLENGER_TYPE_MONSTER> ImagemonsterToLoad;
 private slots:
     void parsePlantsExtra();
     void parseItemsExtra() override;
@@ -124,8 +128,8 @@ private slots:
 
     void startThread();
     void threadFinished();
-    void loadItemImage(uint16_t id,void *v);
-    void loadMonsterImage(uint16_t id,void *v);
+    void loadItemImage(CATCHCHALLENGER_TYPE_ITEM id,void *v);
+    void loadMonsterImage(CATCHCHALLENGER_TYPE_MONSTER id,void *v);
 };
 
 #endif // DATAPACKCLIENTLOADER_H

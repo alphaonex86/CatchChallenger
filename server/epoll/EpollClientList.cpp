@@ -5,8 +5,8 @@ EpollClientList::EpollClientList()
 {
     maxIndex=0;
     size_t max=CatchChallenger::GlobalServerData::serverSettings.max_players;
-    if(max>SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
-        max=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX-1;
+    if(max>PLAYER_INDEX_FOR_CONNECTED_MAX)
+        max=PLAYER_INDEX_FOR_CONNECTED_MAX-1;
 
     size_t tmax=max;
     clients_removed_index.resize(tmax);
@@ -33,7 +33,7 @@ ClientWithMapEpoll &EpollClientList::getByReference()
 {
     if(!clients_removed_index.empty())
     {
-        const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED b=clients_removed_index.back();
+        const PLAYER_INDEX_FOR_CONNECTED b=clients_removed_index.back();
         clients_removed_index.pop_back();
         return clients[b];
     }
@@ -51,19 +51,19 @@ ClientWithMapEpoll &EpollClientList::getByReference()
 
 void EpollClientList::remove(const CatchChallenger::Client &client)
 {
-    const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED index_global=client.getIndexConnect();
+    const PLAYER_INDEX_FOR_CONNECTED index_global=client.getIndexConnect();
     if(empty(index_global))
         return;
     clients_removed_index.push_back(index_global);
     CatchChallenger::ClientList::remove(client);
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
+PLAYER_INDEX_FOR_CONNECTED EpollClientList::size() const
 {
     return maxIndex;
 }
 
-bool EpollClientList::empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+bool EpollClientList::empty(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -86,7 +86,7 @@ bool EpollClientList::empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) 
 }
 
 //abort if index is not valid
-const CatchChallenger::Client &EpollClientList::at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const
+const CatchChallenger::Client &EpollClientList::at(const PLAYER_INDEX_FOR_CONNECTED &index) const
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -94,7 +94,7 @@ const CatchChallenger::Client &EpollClientList::at(const SIMPLIFIED_PLAYER_INDEX
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
         abort();
     }
-    if(clients.at(index).getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(clients.at(index).getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
         abort();
@@ -104,7 +104,7 @@ const CatchChallenger::Client &EpollClientList::at(const SIMPLIFIED_PLAYER_INDEX
 }
 
 //abort if index is not valid
-CatchChallenger::Client &EpollClientList::rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index)
+CatchChallenger::Client &EpollClientList::rw(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -112,7 +112,7 @@ CatchChallenger::Client &EpollClientList::rw(const SIMPLIFIED_PLAYER_INDEX_FOR_C
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
         abort();
     }
-    if(clients.at(index).getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(clients.at(index).getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
         abort();
@@ -121,12 +121,12 @@ CatchChallenger::Client &EpollClientList::rw(const SIMPLIFIED_PLAYER_INDEX_FOR_C
     return clients[index];
 }
 
-SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED EpollClientList::connected_size() const
+PLAYER_INDEX_FOR_CONNECTED EpollClientList::connected_size() const
 {
     return maxIndex-clients_removed_index.size();
 }
 
-CatchChallenger::ClientWithMap &EpollClientList::rwWithMap(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index)
+CatchChallenger::ClientWithMap &EpollClientList::rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index)
 {
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(index>=clients.size())
@@ -134,7 +134,7 @@ CatchChallenger::ClientWithMap &EpollClientList::rwWithMap(const SIMPLIFIED_PLAY
         std::cerr << "MapServer::map_clients_list_isValid out of range: " << index << "/" << clients.size() << std::endl;
         abort();
     }
-    if(clients.at(index).getIndexConnect()==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX)
+    if(clients.at(index).getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
         std::cerr << "MapServer::map_clients_list_isValid wrong value: " << index << std::endl;
         abort();

@@ -107,7 +107,7 @@ public:
 
     bool setMapNumber(const CATCHCHALLENGER_TYPE_MAPID number_of_map);
     virtual bool disconnectClient() override;
-    std::pair<SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED,SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED> getLast_number_of_player();
+    std::pair<PLAYER_INDEX_FOR_CONNECTED,PLAYER_INDEX_FOR_CONNECTED> getLast_number_of_player();
 protected:
     std::vector<ChatEntry> chat_list;
 
@@ -121,8 +121,8 @@ protected:
     bool tolerantMode;
     bool haveTheServerList;
     bool haveTheLogicalGroupList;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED last_players_number;
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED last_max_players;
+    PLAYER_INDEX_FOR_CONNECTED last_players_number;
+    PLAYER_INDEX_FOR_CONNECTED last_max_players;
     SIMPLIFIED_PLAYER_ID_FOR_MAP playerExcludeIndex;
 
     LogicialGroup logicialGroup;
@@ -259,7 +259,7 @@ public:
     virtual void gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression) = 0;
 
     //general info
-    virtual void number_of_player(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &number,const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &max_players) = 0;
+    virtual void number_of_player(const PLAYER_INDEX_FOR_CONNECTED &number,const PLAYER_INDEX_FOR_CONNECTED &max_players) = 0;
     virtual void random_seeds(const std::string &data) = 0;
 
     //character
@@ -356,9 +356,9 @@ public:
     virtual void captureCityYourAreNotLeader() = 0;
     virtual void captureCityYourLeaderHaveStartInOtherCity(const std::string &zone) = 0;
     virtual void captureCityPreviousNotFinished() = 0;
-    virtual void captureCityStartBattle(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
-    virtual void captureCityStartBotFight(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId) = 0;
-    virtual void captureCityDelayedStart(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
+    virtual void captureCityStartBattle(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
+    virtual void captureCityStartBotFight(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count,const uint32_t &fightId) = 0;
+    virtual void captureCityDelayedStart(const PLAYER_INDEX_FOR_CONNECTED &player_count,const uint16_t &clan_count) = 0;
     virtual void captureCityWin() = 0;
 public:
     virtual std::string getLanguage() const = 0;

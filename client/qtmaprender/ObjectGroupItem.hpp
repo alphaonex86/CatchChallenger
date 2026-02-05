@@ -1,5 +1,5 @@
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
+#include <mapobject.h>
+#include <objectgroup.h>
 
 #ifndef OBJECTGROUPITEM_H
 #define OBJECTGROUPITEM_H
