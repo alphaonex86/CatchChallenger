@@ -10,6 +10,7 @@
 
 #include <QLocalSocket>
 #include <QCoreApplication>
+#include <iostream>
 
 LocalListener::LocalListener(QObject *parent) :
     QObject(parent)
@@ -43,7 +44,7 @@ bool LocalListener::tryListen()
         }
         count++;
     }
-    qDebug() << "Too many instance open";
+    std::cerr << "Too many instance open" << std::endl;
     QCoreApplication::quit();
     return false;
 }

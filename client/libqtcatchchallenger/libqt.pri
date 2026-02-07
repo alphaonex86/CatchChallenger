@@ -1,11 +1,5 @@
 DEFINES += CATCHCHALLENGER_CLIENT
 
-wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
-# see the file ClientVariableAudio.h
-#DEFINES += CATCHCHALLENGER_NOAUDIO
-!contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
-QT += multimedia
-}
 LIBS += -ltiled
 
 SOURCES += \
@@ -31,10 +25,8 @@ SOURCES += \
 
 DEFINES += CATCHCHALLENGERLIB
 
-!contains(DEFINES, CATCHCHALLENGER_NOAUDIO) {
 QT += multimedia
 LIBS += -lopus -logg
 SOURCES += \
     $$PWD/Audio.cpp \
     $$PWD/QInfiniteBuffer.cpp
-}

@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QTimer>
 
-#include <libtiled/mapobject.h>
-#include <libtiled/tile.h>
+#include <tiled/mapobject.h>
+#include <tiled/tile.h>
 
 class TriggerAnimation : public QObject
 {

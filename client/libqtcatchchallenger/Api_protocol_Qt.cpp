@@ -1443,15 +1443,11 @@ bool Api_protocol_Qt::finishTheTurn(const bool &isBot)
         {
             if(isBot)
             {
-                if(player_informations.bot_already_beaten!=NULL)
-                    player_informations.bot_already_beaten[fightId/8]|=(1<<(7-fightId%8));
-                else
-                {
-                    std::cerr << "Api_protocol_Qt::finishTheTurn() player_informations.bot_already_beaten==NULL: "+std::to_string(fightId) << std::endl;
-                    abort();
-                }
+                ///todo check if map exist and bot before add
+                Player_private_and_public_informations_Map &mapData=player_informations.mapData[fightInProgress.mapId];
+                mapData.bots_beaten.insert(fightInProgress.botId);
                 std::cout << player_informations.public_informations.pseudo <<
-                             ": Register the win against the bot fight: "+std::to_string(fightId) << std::endl;
+                             ": Register the win against the bot fight: "+std::to_string(fightInProgress.botId) << " on map " << std::to_string(fightInProgress.mapId) << std::endl;
             }
         }
         fightInProgress.botId=255;

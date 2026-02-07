@@ -3,8 +3,8 @@
 
 #include <unordered_map>
 #include <vector>
-#include <libtiled/mapobject.h>
-#include <libtiled/tileset.h>
+#include <tiled/mapobject.h>
+#include <tiled/tileset.h>
 
 class TemporaryTile;
 

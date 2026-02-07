@@ -1,7 +1,6 @@
 #ifndef Audio_H
 #define Audio_H
 
-#ifndef CATCHCHALLENGER_NOAUDIO
 #include <opusfile.h>
 #include "../../general/base/lib.h"
 #include "QInfiniteBuffer.hpp"
@@ -40,6 +39,5 @@ protected:
     QInfiniteBuffer *ambiance_buffer;
     QByteArray ambiance_data;
 };
-#endif
 
 #endif // RSSNEWS_H
