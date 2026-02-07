@@ -315,8 +315,18 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
     DatapackClientLoader::parseDatapackMainSub(mainDatapackCode,subDatapackCode,hashMain,hashSub);
     if(mDefaultInventoryImage==NULL)
         mDefaultInventoryImage=new QPixmap(QStringLiteral(":/CC/images/inventory/unknown-object.png"));
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(
-                datapackPath,mainDatapackCode,subDatapackCode);
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(
+                datapackPath,mainDatapackCode,subDatapackCode,mapPathToId);
+
+    //convert mapPathToId to mapIdToPath
+    mapIdToPath.clear();
+    for (const std::pair<const std::string, CATCHCHALLENGER_TYPE_MAPID>& n : mapPathToId)
+    {
+        const std::string path(n.first);
+        const CATCHCHALLENGER_TYPE_MAPID &id=n.second;
+        mapIdToPath[id]=path;
+    }
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto time = end_time - start_time;
     std::cout << "parseDatapackMainSub took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath <<
@@ -920,6 +930,7 @@ void QtDatapackClientLoader::parsePlantsExtra()
     const std::string &basePath=datapackPath+DATAPACK_BASE_PATH_PLANTS;
     auto i = CatchChallenger::CommonDatapack::commonDatapack.get_plants().begin();
     while (i != CatchChallenger::CommonDatapack::commonDatapack.get_plants().cend()) {
+        //todo load in parallel into QImage on only after pass to tileset into the main tile
         //try load the tileset
         QtDatapackClientLoader::QtPlantExtra plant;
         plant.tileset=Tiled::Tileset::create(QString::fromStdString(text_plant),16,32);

@@ -15,6 +15,7 @@
 #include <QIcon>
 #include <QColor>
 #include <utility>
+#include <tileset.h>
 
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/lib.h"
@@ -67,8 +68,7 @@ public:
     struct QtPlantExtra
     {
         //Tiled::Tileset * tileset;
-        //Tiled::SharedTileset tileset;
-        QImage tiles;
+        Tiled::SharedTileset tileset;
     };
     struct QtBuffExtra
     {

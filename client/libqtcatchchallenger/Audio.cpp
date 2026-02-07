@@ -1,4 +1,3 @@
-#ifndef CATCHCHALLENGER_NOAUDIO
 #include "Audio.hpp"
 #include "PlatformMacro.hpp"
 #include "../../general/base/cpp11addition.hpp"
@@ -12,7 +11,7 @@ Audio::Audio()
     //init audio here
     m_format.setSampleRate(48000);
     m_format.setChannelCount(2);
-    m_format.setSampleSize(16);
+    /* todo change to Qt6: m_format.setSampleSize(16);
     m_format.setCodec("audio/pcm");
     m_format.setByteOrder(QAudioFormat::LittleEndian);
     m_format.setSampleType(QAudioFormat::SignedInt);
@@ -21,7 +20,7 @@ Audio::Audio()
     if (!info.isFormatSupported(m_format)) {
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
         return;
-    }
+    }*/
 
     volume=100;
     ambiance_player=nullptr;
@@ -135,7 +134,7 @@ std::string Audio::startAmbiance(const std::string &soundPath)
 {
     stopCurrentAmbiance();
 
-    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    /* todo change to Qt6: QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
     if (!info.isFormatSupported(m_format))
         return "raw audio format not supported by backend, cannot play audio.";
 
@@ -161,7 +160,7 @@ std::string Audio::startAmbiance(const std::string &soundPath)
             ambiance_data.clear();
             return "Audio::decodeOpus failed";
         }
-    }
+    }*/
     return "ambiance_player==nullptr";
 }
 
@@ -170,10 +169,9 @@ void Audio::stopCurrentAmbiance()
     if(ambiance_player!=nullptr)
     {
         removePlayer(ambiance_player);
-        ambiance_player->stop();
+        /* todo change to Qt6: ambiance_player->stop();*/
         delete ambiance_player;
         ambiance_player=nullptr;
         ambiance_data.clear();
     }
 }
-#endif
