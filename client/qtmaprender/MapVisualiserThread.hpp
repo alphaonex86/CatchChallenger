@@ -53,7 +53,7 @@ public slots:
 private:
     std::unordered_map<std::string,Map_full> mapCache;
     Tiled::MapReader reader;
-    std::unordered_map<std::string/*name*/,std::unordered_map<uint32_t/*bot id*/,CatchChallenger::Bot> > botFiles;
+    std::unordered_map<std::string/*name*/,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::string language;
 };
 

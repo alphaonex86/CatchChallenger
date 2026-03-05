@@ -13,9 +13,8 @@ class DLL_PUBLIC MapVisualiserPlayerWithFight : public MapVisualiserPlayer
 public:
     explicit MapVisualiserPlayerWithFight(const bool &centerOnPlayer=true, const bool &debugTags=false, const bool &useCache=true, const bool &openGL=false);
     ~MapVisualiserPlayerWithFight();
-    void setBotsAlreadyBeaten(const char * const botAlreadyBeaten);
-    void addBeatenBotFight(const uint16_t &botFightId);
-    bool haveBeatBot(const uint16_t &botFightId) const;
+    void addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId);
+    bool haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const;
     void addRepelStep(const uint32_t &repel_step);
 protected slots:
     virtual void keyPressParse();

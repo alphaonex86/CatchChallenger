@@ -825,11 +825,9 @@ void DatapackClientLoader::parseMaps()
 {
     mapIdToPath.clear();
     mapPathToId.clear();
-    /*std::vector<CatchChallenger::Map_semi> semi_loaded_map;
-    CatchChallenger::Map_loader::loadAllMapsAndLink<CatchChallenger::CommonMap>(commonMapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
-    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,
-CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
-    load on demand map*/
+    mapList.clear();
+
+#ifdef ONDEMANDMAP
     std::vector<std::string> returnList=CatchChallenger::FacilityLibGeneral::listFolder(getDatapackPath()+getMainDatapackPath());
     if(returnList.size()==0)
     {
@@ -850,7 +848,14 @@ CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
             mapIdToPath.push_back(fileName);
         }
     }
-
+    Api_protocol::mapList.resize(mapPathToId.size());
+#else
+    //more simple just load all, yes it's more slow
+    std::vector<CatchChallenger::Map_semi> semi_loaded_map;
+    CatchChallenger::Map_loader::loadAllMapsAndLink<CatchChallenger::Map_client>(mapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
+    CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,
+    CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
+#endif
     std::cout << std::to_string(mapPathToId.size()) << " map(s) extra loaded" << std::endl;
 }
 
@@ -867,6 +872,7 @@ void DatapackClientLoader::resetAll()
     language.clear();
     mapIdToPath.clear();
     mapPathToId.clear();
+    mapList.clear();
     visualCategories.clear();
     datapackPath.clear();
     itemsExtra.clear();

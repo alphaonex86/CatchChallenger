@@ -58,7 +58,7 @@ private:
          * 200 - 248 reserved */
         uint8_t *simplifiedMap;//to know if have the item
 
-        uint8_t width,height;
+        COORD_TYPE width,height;
 
         struct Map_Border
         {

@@ -1770,12 +1770,6 @@ void MapVisualiserPlayer::resetAll()
     playerMapObject = new Tiled::MapObject();
 }
 
-void MapVisualiserPlayer::setSpeed(const SPEED_TYPE &speed)
-{
-    currentPlayerSpeed=speed;
-    moveTimer.setInterval(speed/5);
-}
-
 bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
 {
     CatchChallenger::CommonMap *mapPointer=&map;

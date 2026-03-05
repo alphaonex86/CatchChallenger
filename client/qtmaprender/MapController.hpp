@@ -19,17 +19,17 @@ public:
     ~MapController();
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     virtual void resetAll();
-    std::string mapIdToString(const uint32_t &mapId) const;
-    void remove_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y);
-    void insert_plant_full(const std::string &map,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    std::string mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
+    void remove_plant_full(const std::string &map,const COORD_TYPE &x,const COORD_TYPE &y);
+    void insert_plant_full(const std::string &map,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void setColor(const QColor &color, const uint32_t &timeInMS=0);
     virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
     {
-        uint32_t mapId;
-        uint8_t x,y;
+        CATCHCHALLENGER_TYPE_MAPID mapId;
+        COORD_TYPE x,y;
         uint8_t plant_id;
         uint16_t seconds_to_mature;
     };
@@ -52,8 +52,8 @@ protected slots:
     //plant
     void getPlantTimerEvent();
     bool updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant);//return true if is growing
-    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y);
+    void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
@@ -67,7 +67,7 @@ public slots:
     virtual void datapackParsedMainSub();
     virtual void reinject_signals();
 private slots:
-    void loadBotOnTheMap(Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y, const std::string &lookAt, const std::string &skin);
+    void loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin);
 protected:
     static std::string text_random;
     static std::string text_loop;

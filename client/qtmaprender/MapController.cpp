@@ -73,7 +73,7 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
 {
     if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
     {
-        {
+        /*{
             if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(fileName)!=
                     QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
             {
@@ -101,7 +101,7 @@ bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMa
                     }
                 }
             }
-        }
+        }*/
         return true;
     }
     else
@@ -412,7 +412,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
-        if(parsedMap->logicalMap.learn.find(pos)!=parsedMap->logicalMap.learn.cend())
+        /*if(parsedMap->logicalMap.learn.find(pos)!=parsedMap->logicalMap.learn.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Learn");
@@ -424,7 +424,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
-        }
+        }*/
         /*if(parsedMap->logicalMap.clan.find(pos)!=parsedMap->logicalMap.clan.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
@@ -450,7 +450,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
-        if(parsedMap->logicalMap.market.find(pos)!=parsedMap->logicalMap.market.cend())
+        /*if(parsedMap->logicalMap.market.find(pos)!=parsedMap->logicalMap.market.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Market");
@@ -462,7 +462,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
-        }
+        }*/
         if(parsedMap->logicalMap.zonecapture.find(pos)!=parsedMap->logicalMap.zonecapture.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
