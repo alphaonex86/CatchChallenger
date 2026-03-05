@@ -3,6 +3,7 @@ HEADERS  += \
     $$PWD/Api_protocol.hpp \
     $$PWD/ClientStructures.hpp \
     $$PWD/ClientVariable.hpp \
+    $$PWD/Map_client.hpp \
     $$PWD/DatapackClientLoader.hpp \
     $$PWD/DatapackChecksum.hpp \
     $$PWD/ZstdDecode.hpp  \

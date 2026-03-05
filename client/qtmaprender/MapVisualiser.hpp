@@ -37,7 +37,7 @@ public:
     ~MapVisualiser();
 
     void setTargetFPS(int targetFPS);
-    virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
+    virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,COORD_TYPE x,COORD_TYPE y);
 
     Map_full * getMap(const std::string &map) const;
 
@@ -58,10 +58,10 @@ protected:
 
     uint8_t waitRenderTime;
     QTimer timerRender;
-    QElapsedTimer timeRender;
+    QBasicTimer timeRender;
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
-    QElapsedTimer timeUpdateFPS;
+    QBasicTimer timeUpdateFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;
@@ -77,7 +77,7 @@ protected slots:
     virtual void resetAll();
 public slots:
     void loadOtherMap(const std::string &resolvedFileName);
-    virtual void loadBotOnTheMap(Map_full *parsedMap, const uint32_t &botId, const uint8_t &x, const uint8_t &y,
+    virtual void loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y,
                                  const std::string &lookAt, const std::string &skin);
     //virtual std::unordered_set<QString> loadMap(Map_full *map, const bool &display);
     virtual void removeUnusedMap();
