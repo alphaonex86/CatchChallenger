@@ -13,7 +13,7 @@
 #include <tile.h>
 
 #include "MapDoor.hpp"
-#include "Map_client.hpp"
+#include "QMap_client.hpp"
 #include "TriggerAnimation.hpp"
 
 class Map_full;
@@ -60,7 +60,7 @@ class Map_full
 public:
     Map_full();
 public:
-    CatchChallenger::Map_client logicalMap;
+    CATCHCHALLENGER_TYPE_MAPID logicalMapIndex;//need keep global list and index to match file path always, to client and server speak about the same file, see std::vector<CatchChallenger::Map_client> DatapackClientLoader::mapList
     std::shared_ptr<Tiled::Map> tiledMap;
     Tiled::MapRenderer * tiledRender;
     Tiled::ObjectGroup * objectGroup;
@@ -69,8 +69,8 @@ public:
     int relative_x,relative_y;//needed for the async load
     int relative_x_pixel,relative_y_pixel;
     bool displayed;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,MapDoor*,pairhash> doors;
-    std::unordered_map<std::pair<uint8_t,uint8_t>,TriggerAnimation*,pairhash> triggerAnimations;
+    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,MapDoor*,pairhash> doors;
+    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,TriggerAnimation*,pairhash> triggerAnimations;
     std::string visualType;
     std::string name;
     std::string zone;

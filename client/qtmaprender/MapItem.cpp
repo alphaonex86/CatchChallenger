@@ -149,13 +149,13 @@ void MapItem::removeMap(Tiled::Map *map)
     displayed_layer.erase(map);
 }
 
-void MapItem::setMapPosition(Tiled::Map *map, int16_t x/*pixel, need be 16Bits*/, int16_t y/*pixel, need be 16Bits*/)
+void MapItem::setMapPosition(Tiled::Map *map, int16_t global_x/*pixel, need be 16Bits*/, int16_t global_y/*pixel, need be 16Bits*/)
 {
     if(displayed_layer.find(map)==displayed_layer.cend())
             return;
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
     for( const auto& value : values ) {
-        value->setPos(static_cast<qreal>(static_cast<double>(x)),static_cast<qreal>(static_cast<double>(y)));
+        value->setPos(static_cast<qreal>(static_cast<double>(global_x)),static_cast<qreal>(static_cast<double>(global_y)));
     }
 }
 

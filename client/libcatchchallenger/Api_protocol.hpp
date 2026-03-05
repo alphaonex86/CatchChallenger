@@ -12,6 +12,7 @@
 #endif
 #include "../../general/base/MoveOnTheMap.hpp"
 #include "../../general/base/lib.h"
+#include "Map_client.hpp"
 
 namespace CatchChallenger {
 class DLL_PUBLIC Api_protocol : public ProtocolParsingInputOutput, public MoveOnTheMap

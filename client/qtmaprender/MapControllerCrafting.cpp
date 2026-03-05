@@ -6,7 +6,7 @@
 #include <QDebug>
 #include <QFileInfo>
 
-std::string MapController::mapIdToString(const uint32_t &mapId) const
+std::string MapController::mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId) const
 {
     if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
@@ -19,7 +19,7 @@ std::string MapController::mapIdToString(const uint32_t &mapId) const
 }
 
 //plant
-void MapController::insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
+void MapController::insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -182,7 +182,7 @@ bool MapController::updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *pl
     return true;
 }
 
-void MapController::remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y)
+void MapController::remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId, const uint8_t &x, const uint8_t &y)
 {
     if(!mHaveTheDatapack)
     {

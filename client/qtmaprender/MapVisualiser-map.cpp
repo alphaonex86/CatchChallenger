@@ -448,8 +448,8 @@ void MapVisualiser::applyTheAnimationTimer()
     }
 }
 
-void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,
-                                    const uint8_t &x,const uint8_t &y,const std::string &lookAt,const std::string &skin)
+void MapVisualiser::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId,
+                                    const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin)
 {
     Q_UNUSED(botId);
     Q_UNUSED(parsedMap);

@@ -18,6 +18,6 @@ SOURCES += \
     $$PWD/TemporaryTile.cpp \
     $$PWD/TileLayerItem.cpp \
     $$PWD/TriggerAnimation.cpp \
-    $$PWD/Map_client.cpp \
+    $$PWD/QMap_client.cpp \
     $$PWD/MapVisualiserPlayerWithFight.cpp \
     $$PWD/MapControllerCrafting.cpp

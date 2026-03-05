@@ -19,7 +19,7 @@ public:
     explicit MapVisualiserPlayer(const bool &centerOnPlayer=true,const bool &debugTags=false,
                                  const bool &useCache=true, const bool &openGL=false);
     ~MapVisualiserPlayer();
-    std::pair<uint8_t,uint8_t> getPos() const;
+    std::pair<COORD_TYPE,COORD_TYPE> getPos() const;
     const Tiled::MapObject * getPlayerMapObject() const;
     bool isInMove() const;
     CatchChallenger::Direction getDirection() const;
@@ -54,13 +54,13 @@ public:
         struct StartPoint
         {
             std::string map;
-            uint8_t x,y;
+            COORD_TYPE x,y;
         };
         StartPoint startPoint;
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
     };
-    uint8_t getX();
-    uint8_t getY();
+    COORD_TYPE getX();
+    COORD_TYPE getY();
     CatchChallenger::Map_client * getMapObject();
 
     //the datapack
@@ -68,11 +68,11 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(std::unordered_map<uint16_t,uint32_t> *items, std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests,
-                         std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap,
-                         std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap);
+    void setInformations(std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> *items, std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests,
+                         std::vector<uint8_t> *events, std::unordered_set<CATCHCHALLENGER_TYPE_ITEM> *itemOnMap,
+                         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
-    virtual bool teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction);
+    virtual bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
 private:
     //player
     Tiled::MapObject * playerMapObject;
@@ -116,7 +116,7 @@ protected:
     QTimer lookToMove;
     QTimer moveAnimationTimer;
     //QTime
-    QElapsedTimer lastAction;//to prevent flood
+    QBasicTimer lastAction;//to prevent flood
 
     //control
     std::unordered_set<int> keyPressed;
@@ -129,7 +129,6 @@ protected:
     bool haveNextCurrentObject;
     Tiled::MapObject * nextCurrentObject;
     Tiled::SharedTileset animationTileset;
-    uint16_t currentPlayerSpeed;
     bool animationDisplayed;
 
     std::vector<uint8_t> *events;
@@ -171,7 +170,6 @@ protected slots:
 
     //void setAnimationTilset(std::string animationTilset);
     virtual void resetAll();
-    void setSpeed(const SPEED_TYPE &speed);
     virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
     void mapDisplayedSlot(const std::string &fileName);
     virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
@@ -184,12 +182,12 @@ protected slots:
     void stopMove();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
-    void actionOn(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void stopped_in_front_of(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void actionOn(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
-    void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void wildFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void botFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
     void error(const std::string &error);
     void errorWithTheCurrentMap();
     void inWaitingOfMap();

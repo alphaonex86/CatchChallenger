@@ -9,6 +9,7 @@
 #include "../../general/base/lib.h"
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/GeneralType.hpp"
+#include "Map_client.hpp"
 
 class DLL_PUBLIC DatapackClientLoader
 {
@@ -243,6 +244,7 @@ public:
     const std::unordered_map<std::string, std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t> > &get_plantOnMap() const;
     const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;*/
 protected:
+    std::vector<CatchChallenger::Map_client> mapList;
     std::unordered_map<uint8_t,TypeExtra> typeExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> monsterExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
