@@ -19,11 +19,11 @@ public:
     ~MapController();
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     virtual void resetAll();
-    std::string mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
-    void remove_plant_full(const std::string &map,const COORD_TYPE &x,const COORD_TYPE &y);
-    void insert_plant_full(const std::string &map,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    //std::string mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
+    void remove_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
+    void insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void setColor(const QColor &color, const uint32_t &timeInMS=0);
-    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
@@ -34,7 +34,7 @@ private:
         uint16_t seconds_to_mature;
     };
     std::vector<DelayedPlantInsert> delayedPlantInsert;
-    std::unordered_map<std::string,std::vector<DelayedPlantInsert> > delayedPlantInsertOnMap;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<DelayedPlantInsert> > delayedPlantInsertOnMap;
     struct PlantTimer
     {
         Tiled::MapObject * mapObject;
@@ -56,8 +56,8 @@ protected slots:
     void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
-    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
-    void tryLoadPlantOnMapDisplayed(const std::string &fileName);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x,const COORD_TYPE &y, const bool &checkCollision);
+    void tryLoadPlantOnMapDisplayed(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     void updateGrowing();
     void updateColor();
     void loadPlayerFromCurrentMap();
@@ -68,22 +68,6 @@ public slots:
     virtual void reinject_signals();
 private slots:
     void loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin);
-protected:
-    static std::string text_random;
-    static std::string text_loop;
-    static std::string text_move;
-    static std::string text_left;
-    static std::string text_right;
-    static std::string text_top;
-    static std::string text_bottom;
-    static std::string text_slash;
-    static std::string text_type;
-    static std::string text_fightRange;
-    static std::string text_fight;
-    static std::string text_fightid;
-    static std::string text_bot;
-    static std::string text_slashtrainerpng;
-    static std::string text_DATAPACK_BASE_PATH_SKIN;
 };
 
 #endif // MAPCONTROLLER_H

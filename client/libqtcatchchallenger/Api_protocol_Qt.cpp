@@ -542,9 +542,9 @@ void Api_protocol_Qt::newEvent(const uint8_t &event,const uint8_t &event_value)
 }
 
 //map move
-void Api_protocol_Qt::insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
+void Api_protocol_Qt::insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
-    emit Qtinsert_player(player,mapId,x,y,direction);
+    emit Qtinsert_player(simplifiedIndex,player,mapId,x,y,direction);
 }
 void Api_protocol_Qt::move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
 {
@@ -571,23 +571,6 @@ void Api_protocol_Qt::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const C
     emit QtteleportTo(mapId,x,y,direction);
 }
 
-//plant
-void Api_protocol_Qt::insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature)
-{
-    emit Qtinsert_plant(mapId,x,y,plant_id,seconds_to_mature);
-}
-void Api_protocol_Qt::remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y)
-{
-    emit Qtremove_plant(mapId,x,y);
-}
-void Api_protocol_Qt::seed_planted(const bool &ok)
-{
-    emit Qtseed_planted(ok);
-}
-void Api_protocol_Qt::plant_collected(const CatchChallenger::Plant_collect &stat)
-{
-    emit Qtplant_collected(stat);
-}
 //crafting
 void Api_protocol_Qt::recipeUsed(const RecipeUsage &recipeUsage)
 {

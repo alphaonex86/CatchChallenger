@@ -39,11 +39,11 @@ public:
     void setTargetFPS(int targetFPS);
     virtual void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,COORD_TYPE x,COORD_TYPE y);
 
-    Map_full * getMap(const std::string &map) const;
+    Map_full * getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) const;
 
-    std::string current_map;
-    std::unordered_map<std::string,Map_full *> all_map,old_all_map;
-    std::unordered_map<std::string,QDateTime> old_all_map_time;
+    CATCHCHALLENGER_TYPE_MAPID current_map;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,Map_full *> all_map,old_all_map;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,uint8_t> old_all_map_time_count;
     //put to protected again:
     MapItem* mapItem;
 protected:
@@ -68,7 +68,7 @@ protected:
     MapMark *mark;
 
     MapVisualiserThread mapVisualiserThread;
-    std::vector<std::string> asyncMap;
+    std::vector<CATCHCHALLENGER_TYPE_MAPID> asyncMap;
     std::unordered_map<uint16_t/*intervale*/,QTimer *> animationTimer;
 
     virtual void destroyMap(Map_full *map);
@@ -76,7 +76,7 @@ protected:
 protected slots:
     virtual void resetAll();
 public slots:
-    void loadOtherMap(const std::string &resolvedFileName);
+    void loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     virtual void loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y,
                                  const std::string &lookAt, const std::string &skin);
     //virtual std::unordered_set<QString> loadMap(Map_full *map, const bool &display);
@@ -90,11 +90,11 @@ private slots:
     void applyTheAnimationTimer();
 protected slots:
     void render();
-    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
     void passMapIntoOld();
 signals:
-    void loadOtherMapAsync(const std::string &fileName);
-    void mapDisplayed(const std::string &fileName);
+    void loadOtherMapAsync(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    void mapDisplayed(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     void newFPSvalue(const unsigned int FPS);
 };
 

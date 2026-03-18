@@ -7,6 +7,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Map_loader.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
@@ -1837,6 +1838,16 @@ std::vector<std::string> DatapackClientLoader::listFolderNotRecursive(const std:
     return returnList;
 }
 
+const CatchChallenger::Map_client &DatapackClientLoader::getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+{
+    if(mapIndex>=mapList.size())
+    {
+        std::cerr << "try get map index " << std::to_string(mapIndex) << " out of bound" << std::endl;
+        abort();
+    }
+    return mapList.at(mapIndex);
+}
+
 const std::unordered_map<uint8_t,DatapackClientLoader::TypeExtra> &DatapackClientLoader::get_typeExtra() const
 {
     return typeExtra;
@@ -1956,4 +1967,25 @@ const std::unordered_map<uint16_t,DatapackClientLoader::PlantIndexContent> &Data
 {
     return plantIndexOfOnMap;
 }*/
+
+bool DatapackClientLoader::canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport)
+{
+    const CatchChallenger::Map_client &map=mapList.at(mapIndex);
+    return CatchChallenger::MoveOnTheMap::canGoTo<CatchChallenger::Map_client>(mapList,direction,map,x,y,checkCollision,allowTeleport);
+}
+
+bool DatapackClientLoader::teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y)
+{
+    return CatchChallenger::MoveOnTheMap::teleport<CatchChallenger::Map_client>(mapList,mapIndex,x,y);
+}
+
+bool DatapackClientLoader::move(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+{
+    return CatchChallenger::MoveOnTheMap::move<CatchChallenger::Map_client>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
+}
+
+bool DatapackClientLoader::moveWithoutTeleport(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+{
+    return CatchChallenger::MoveOnTheMap::moveWithoutTeleport<CatchChallenger::Map_client>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
+}
 

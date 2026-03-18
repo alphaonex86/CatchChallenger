@@ -280,6 +280,12 @@ public:
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
     static std::vector<std::string> listFolderNotRecursive(const std::string& folder,const std::string& suffix);
+    const CatchChallenger::Map_client &getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+
+    bool canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport=true);
+    bool teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y);
+    bool move(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport=true);
+    bool moveWithoutTeleport(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport=true);
 protected:
     bool inProgress;
     std::string datapackPath;
