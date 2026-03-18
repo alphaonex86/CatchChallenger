@@ -336,7 +336,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                                 if(property_text.find("condition-file")!=property_text.cend() &&
                                                         property_text.find("condition-id")!=property_text.cend())
                                                 {
-                                                    uint32_t conditionId=stringtouint32(property_text.at("condition-id"),&ok);
+                                                    //uint32_t conditionId=stringtouint32(property_text.at("condition-id"),&ok);
                                                     if(!ok)
                                                         std::cerr << "condition id is not a number, id: " << property_text.at("condition-id")
                                                                   << " (" << file << ")" << std::endl;

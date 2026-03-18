@@ -31,6 +31,8 @@ Map_server_MapVisibility_Simple_StoreOnSender::~Map_server_MapVisibility_Simple_
 
 unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(char *output,const size_t &clients_size)
 {
+    if(clients_size<=1)
+        return 0;
     uint32_t posOutput=0;
     output[posOutput]=0x6B;
     posOutput+=1+4;
@@ -42,22 +44,21 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
     posOutput+=2;
     posOutput+=1;
     unsigned int count=0;
-    if(clients_size>1)
+    unsigned int index=0;
+    while(index<clients_size && index<255)
     {
-        unsigned int index=0;
-        while(index<clients_size && index<255)
+        const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
+        if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
-            const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
-            if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX)
-            {
-                Client &c=ClientList::list->rw(index_c);
-                posOutput+=playerToFullInsert(c,output+posOutput);
-                count++;
-            }
-            index++;
+            output[posOutput]=index_c;//map list count
+            posOutput+=1;
+            const Client &c=ClientList::list->at(index_c);
+            posOutput+=playerToFullInsert(c,output+posOutput);
+            count++;
         }
-        *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
+        index++;
     }
+    *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
     if(count<254)
         output[1+4+1+2]=static_cast<uint8_t>(count);//player count
     else
@@ -67,6 +68,8 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
 
 unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWithFilter(char *output,const size_t &clients_size,const size_t &skipped_id)
 {
+    if(clients_size<=1)
+        return 0;
     if(skipped_id>=255)
         return send_reinsertAll(output,clients_size);
     uint32_t posOutput=0;
@@ -80,22 +83,21 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWith
     posOutput+=2;
     posOutput+=1;
     unsigned int count=0;
-    if(clients_size>1)
+    unsigned int index=0;
+    while(index<clients_size && index<255)
     {
-        unsigned int index=0;
-        while(index<clients_size && index<255)
+        const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
+        if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX && index_c!=skipped_id)
         {
-            const PLAYER_INDEX_FOR_CONNECTED &index_c=map_clients_id.at(index);
-            if(index_c!=PLAYER_INDEX_FOR_CONNECTED_MAX && index_c!=skipped_id)
-            {
-                Client &c=ClientList::list->rw(index_c);
-                posOutput+=playerToFullInsert(c,output+posOutput);
-                count++;
-            }
-            index++;
+            output[posOutput]=index_c;//map list count
+            posOutput+=1;
+            const Client &c=ClientList::list->at(index_c);
+            posOutput+=playerToFullInsert(c,output+posOutput);
+            count++;
         }
-        *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
+        index++;
     }
+    *reinterpret_cast<uint32_t *>(output+1)=htole32(posOutput-1-4);//set the dynamic size
     if(count<254)
         output[1+4+1+2]=static_cast<uint8_t>(count);//player count
     else
@@ -256,6 +258,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                                         //if(insertCount<255)//implied into while(index<map_clients_id.size() && index<255)
                                         //if(!ClientList::empty(other_client_id)) should not be needed
                                         {
+                                            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//map list count
+                                            posOutput+=1;
                                             posOutput+=playerToFullInsert(ClientList::list->at(other_client_id),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                                             insertCount++;
                                         }
@@ -284,6 +288,8 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                                     //if(insertCount<255)//implied into while(index<map_clients_id.size() && index<255)
                                     //if(!ClientList::empty(other_client_id)) should not be needed
                                     {
+                                        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=index;//map list count
+                                        posOutput+=1;
                                         posOutput+=playerToFullInsert(ClientList::list->at(other_client_id),ProtocolParsingBase::tempBigBufferForOutput+posOutput);
                                         insertCount++;
                                     }

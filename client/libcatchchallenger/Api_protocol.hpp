@@ -271,19 +271,14 @@ public:
     virtual void newEvent(const uint8_t &event,const uint8_t &event_value) = 0;
 
     //map move
-    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
-    virtual void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id) = 0;
-    virtual void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) = 0;
+    virtual void insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) = 0;
+    virtual void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex) = 0;
+    virtual void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
     virtual void teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) = 0;
 
-    //plant
-    virtual void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) = 0;
-    virtual void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y) = 0;
-    virtual void seed_planted(const bool &ok) = 0;
-    virtual void plant_collected(const CatchChallenger::Plant_collect &stat) = 0;
     //crafting
     virtual void recipeUsed(const RecipeUsage &recipeUsage) = 0;
     //inventory

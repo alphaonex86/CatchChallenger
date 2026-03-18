@@ -1,6 +1,4 @@
-#include "Map_client.hpp"
+#include "QMap_client.hpp"
 
 using namespace CatchChallenger;
-Map_client::Map_client()
-{
-}
+

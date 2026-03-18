@@ -6,37 +6,33 @@
 #include <QDebug>
 #include <QFileInfo>
 
-void MapControllerMP::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+void MapControllerMP::insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     if(client==nullptr)
     {
         std::cerr << "MapControllerMP::insert_player( call but client == nullptr, this will crash all (abort)" << std::endl;
         abort();
     }
-    CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations();
-    setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
-    std::vector<uint8_t> &events=client->getEvents();
-    setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
     setDatapackPath(client->datapackPathBase(),client->mainDatapackCode());
-    insert_player_final(player,mapId,x,y,direction,false);
+    insert_player_final(simplifiedIndex,player,mapId,x,y,direction,false);
 }
 
-void MapControllerMP::move_player(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
+void MapControllerMP::move_player(const uint8_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement)
 {
     move_player_final(id,movement,false);
 }
 
-void MapControllerMP::remove_player(const uint16_t &id)
+void MapControllerMP::remove_player(const uint8_t &id)
 {
     remove_player_final(id,false);
 }
 
-void MapControllerMP::reinsert_player(const uint16_t &id, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction)
+void MapControllerMP::reinsert_player(const uint8_t &id, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction)
 {
     reinsert_player_final(id,x,y,direction,false);
 }
 
-void MapControllerMP::full_reinsert_player(const uint16_t &id, const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction)
+void MapControllerMP::full_reinsert_player(const uint8_t &id, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction)
 {
     full_reinsert_player_final(id,mapId,x,y,direction,false);
 }
@@ -47,8 +43,7 @@ void MapControllerMP::dropAllPlayerOnTheMap()
 }
 
 //map move
-bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_informations &player,
-             const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction,bool inReplayMode)
+bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction,bool inReplayMode)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -65,9 +60,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
             multiplex.insert.mapId=0;
             multiplex.insert.player.monsterId=0;
-            multiplex.insert.player.simplifiedId=0;
             multiplex.insert.player.skinId=0;
-            multiplex.insert.player.speed=0;
             multiplex.insert.player.type=CatchChallenger::Player_type_normal;
             multiplex.insert.x=0;
             multiplex.insert.y=0;
@@ -89,7 +82,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             delayedActions.push_back(multiplex);
         }
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(mapId).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed: insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(simplifiedIndex).arg(mapId).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
         return false;
     }
@@ -101,30 +94,28 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(simplifiedIndex).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
     #endif
     //current player
-    if(player.simplifiedId==player_informations.public_informations.simplifiedId)
-        MapVisualiserPlayer::insert_player_internal(player,mapId,x,y,direction,skinFolderList);
+    /*if(simplifiedIndex==player_informations.public_informations.simplifiedId)
+        MapVisualiserPlayer::insert_player_internal(player,mapId,x,y,direction,skinFolderList);*/
     //other player
-    else
+    //else
     {
-        if(otherPlayerList.find(player.simplifiedId)!=otherPlayerList.cend())
+        /*if(otherPlayerList.find(simplifiedIndex)!=otherPlayerList.cend())
         {
-            qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(player.simplifiedId);
+            qDebug() << QStringLiteral("Other player (%1) already loaded on the map").arg(simplifiedIndex);
             //return true;-> ignored to fix temporally, but need remove at map unload
 
             //clean other player
-            remove_player_final(player.simplifiedId,false);
-        }
+            remove_player_final(simplifiedIndex,false);
+        }*/
 
         OtherPlayer otherPlayer;
         otherPlayer.playerMapObject=nullptr;
         otherPlayer.playerTileset=nullptr;
         otherPlayer.informations.monsterId=0;
-        otherPlayer.informations.simplifiedId=0;
         otherPlayer.informations.skinId=0;
-        otherPlayer.informations.speed=0;
         otherPlayer.informations.type=CatchChallenger::Player_type_normal;
         otherPlayer.labelMapObject=nullptr;
         otherPlayer.labelTileset=nullptr;
@@ -134,7 +125,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         otherPlayer.monsterTileset=nullptr;
         otherPlayer.monster_x=0;
         otherPlayer.monster_y=0;
-        otherPlayer.presumed_map=nullptr;
+        otherPlayer.presumed_map=65535;
         otherPlayer.presumed_x=0;
         otherPlayer.presumed_y=0;
 
@@ -150,11 +141,11 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         otherPlayer.pendingMonsterMoves.clear();
         otherPlayer.stepAlternance=false;
 
-        const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
-                .absoluteFilePath().toStdString();
-        if(all_map.find(mapPath)==all_map.cend())
+        /*const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
+                .absoluteFilePath().toStdString();*/
+        if(all_map.find(mapId)==all_map.cend())
         {
-            qDebug() << "MapControllerMP::insert_player(): current map " << QString::fromStdString(mapPath) << " not loaded, delayed: ";
+            qDebug() << "MapControllerMP::insert_player(): current map " << QString::number(mapId) << " not loaded, delayed: ";
             for (const auto &n : all_map)
                 std::cout << n.first << std::endl;
             qDebug() << "List end";
@@ -171,9 +162,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                 multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
                 multiplex.insert.mapId=0;
                 multiplex.insert.player.monsterId=0;
-                multiplex.insert.player.simplifiedId=0;
                 multiplex.insert.player.skinId=0;
-                multiplex.insert.player.speed=0;
                 multiplex.insert.player.type=CatchChallenger::Player_type_normal;
                 multiplex.insert.x=0;
                 multiplex.insert.y=0;
@@ -303,9 +292,9 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
             }
         }
 
-        otherPlayer.current_map=mapPath;
-        otherPlayer.presumed_map=all_map.at(mapPath);
-        otherPlayer.current_monster_map=mapPath;
+        otherPlayer.current_map=mapId;
+        otherPlayer.presumed_map=mapId;
+        otherPlayer.current_monster_map=mapId;
 
         switch(direction)
         {
@@ -357,14 +346,13 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
         otherPlayer.oneStepMore->setSingleShot(true);
         otherPlayer.moveAnimationTimer=new QTimer();
         otherPlayer.moveAnimationTimer->setSingleShot(true);
-        otherPlayer.playerSpeed=player.speed;
-        otherPlayerListByTimer[otherPlayer.oneStepMore]=player.simplifiedId;
-        otherPlayerListByAnimationTimer[otherPlayer.moveAnimationTimer]=player.simplifiedId;
+        otherPlayerListByTimer[otherPlayer.oneStepMore]=simplifiedIndex;
+        otherPlayerListByAnimationTimer[otherPlayer.moveAnimationTimer]=simplifiedIndex;
         if(!connect(otherPlayer.oneStepMore,&QTimer::timeout,this,&MapControllerMP::moveOtherPlayerStepSlot))
             abort();
         if(!connect(otherPlayer.moveAnimationTimer,&QTimer::timeout,this,&MapControllerMP::doMoveOtherAnimation))
             abort();
-        otherPlayerList[player.simplifiedId]=otherPlayer;
+        otherPlayerList[simplifiedIndex]=otherPlayer;
 
         switch(direction)
         {
@@ -378,7 +366,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
                 move.first=0;
                 move.second=direction;
                 movement.push_back(move);
-                move_player_final(player.simplifiedId,movement,inReplayMode);
+                move_player_final(simplifiedIndex,movement,inReplayMode);
             }
             break;
             default:
@@ -391,7 +379,7 @@ bool MapControllerMP::insert_player_final(const CatchChallenger::Player_public_i
 }
 
 bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlayer, const bool &haveMoved,
-    const uint8_t &previous_different_x, const uint8_t &previous_different_y, const CatchChallenger::CommonMap * previous_different_map,
+    const uint8_t &previous_different_x, const uint8_t &previous_different_y, const CATCHCHALLENGER_TYPE_MAPID &previous_different_map_index,
     CatchChallenger::Direction &previous_different_move, const std::vector<CatchChallenger::Direction> &lastMovedDirection)
 {
     if(otherPlayer.monsterMapObject==NULL)
@@ -408,7 +396,7 @@ bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlaye
             otherPlayer.pendingMonsterMoves.clear();
 
             //detect last monster pos (player -1 pos)
-            const bool mapChange=otherPlayer.current_monster_map!=previous_different_map->map_file;
+            const bool mapChange=otherPlayer.current_monster_map!=previous_different_map_index;
             if(mapChange)
                 unloadOtherMonsterFromCurrentMap(otherPlayer);
             else
@@ -416,7 +404,7 @@ bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlaye
                 otherPlayer.monsterMapObject->setPosition(QPointF(otherPlayer.monster_x-0.5,otherPlayer.monster_y+1));
                 MapObjectItem::objectLink.at(otherPlayer.monsterMapObject)->setZValue(otherPlayer.monster_y);
             }
-            otherPlayer.current_monster_map=previous_different_map->map_file;
+            otherPlayer.current_monster_map=previous_different_map_index;
             otherPlayer.monster_x=previous_different_x;
             otherPlayer.monster_y=previous_different_y;
             if(mapChange)
@@ -443,7 +431,7 @@ bool MapControllerMP::move_otherMonster(MapControllerMP::OtherPlayer &otherPlaye
     return false;
 }
 
-bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t, CatchChallenger::Direction> > &movement,bool inReplayMode)
+bool MapControllerMP::move_player_final(const uint8_t &id, const std::vector<std::pair<uint8_t, CatchChallenger::Direction> > &movement,bool inReplayMode)
 {
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
@@ -457,9 +445,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
             multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
             multiplex.insert.mapId=0;
             multiplex.insert.player.monsterId=0;
-            multiplex.insert.player.simplifiedId=0;
             multiplex.insert.player.skinId=0;
-            multiplex.insert.player.speed=0;
             multiplex.insert.player.type=CatchChallenger::Player_type_normal;
             multiplex.insert.x=0;
             multiplex.insert.y=0;
@@ -532,9 +518,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
                 multiplex.insert.direction=CatchChallenger::Direction_look_at_top;
                 multiplex.insert.mapId=0;
                 multiplex.insert.player.monsterId=0;
-                multiplex.insert.player.simplifiedId=0;
                 multiplex.insert.player.skinId=0;
-                multiplex.insert.player.speed=0;
                 multiplex.insert.player.type=CatchChallenger::Player_type_normal;
                 multiplex.insert.x=0;
                 multiplex.insert.y=0;
@@ -727,7 +711,7 @@ bool MapControllerMP::move_player_final(const uint16_t &id, const std::vector<st
     return true;
 }
 
-bool MapControllerMP::remove_player_final(const uint16_t &id,bool inReplayMode)
+bool MapControllerMP::remove_player_final(const uint8_t &id,bool inReplayMode)
 {
     if(id==player_informations.public_informations.simplifiedId)
     {

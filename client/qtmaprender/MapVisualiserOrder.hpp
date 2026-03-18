@@ -15,6 +15,8 @@
 #include "MapDoor.hpp"
 #include "QMap_client.hpp"
 #include "TriggerAnimation.hpp"
+#include "../libqtcatchchallenger/DisplayStructures.hpp"
+#include "../libcatchchallenger/ClientStructures.hpp"
 
 class Map_full;
 
@@ -60,7 +62,11 @@ class Map_full
 public:
     Map_full();
 public:
-    CATCHCHALLENGER_TYPE_MAPID logicalMapIndex;//need keep global list and index to match file path always, to client and server speak about the same file, see std::vector<CatchChallenger::Map_client> DatapackClientLoader::mapList
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;//need keep global list and index to match file path always, to client and server speak about the same file, see std::vector<CatchChallenger::Map_client> DatapackClientLoader::mapList
+
+    //std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot,pairhash> bots;-> to detect colision then in logical map just mark as colision to have same data into server and client
+    std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay,pairhash> botsDisplay;
+
     std::shared_ptr<Tiled::Map> tiledMap;
     Tiled::MapRenderer * tiledRender;
     Tiled::ObjectGroup * objectGroup;

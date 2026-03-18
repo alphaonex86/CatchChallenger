@@ -907,7 +907,7 @@ bool Api_protocol::wareHouseStore(const std::vector<uint8_t> &withdrawMonsters, 
     uint8_t index8=withdrawMonsters.size();
     memcpy(buffer+pos,&index8,sizeof(index8));
     pos+=sizeof(uint8_t);
-    int index=0;
+    unsigned int index=0;
     while(index<withdrawMonsters.size())
     {
         index8=withdrawMonsters.at(index);

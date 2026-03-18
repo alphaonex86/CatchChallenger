@@ -12,25 +12,7 @@
 #include <QDebug>
 #include <QDir>
 
-std::string MapController::text_random="random";
-std::string MapController::text_loop="loop";
-std::string MapController::text_move="move";
-std::string MapController::text_left="left";
-std::string MapController::text_right="right";
-std::string MapController::text_top="top";
-std::string MapController::text_bottom="bottom";
-std::string MapController::text_slash="/";
-std::string MapController::text_type="type";
-std::string MapController::text_fightRange="fightRange";
-std::string MapController::text_fight="fight";
-std::string MapController::text_fightid="fightid";
-std::string MapController::text_bot="bot";
-std::string MapController::text_slashtrainerpng="/trainer.png";
-std::string MapController::text_DATAPACK_BASE_PATH_SKIN=DATAPACK_BASE_PATH_SKIN;
-
-/*#define IMAGEOVERSIZEWITDH 800*2*2
-#define IMAGEOVERSIZEHEIGHT 600*2*2*/
-
+//#define BOT_ICON_FEATURES
 
 MapController::MapController(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache) :
     MapControllerMP(centerOnPlayer,debugTags,useCache)
@@ -69,9 +51,9 @@ MapController::~MapController()
     }
 }
 
-bool MapController::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
+bool MapController::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject)
 {
-    if(MapControllerMP::asyncMapLoaded(fileName,tempMapObject))
+    if(MapControllerMP::asyncMapLoaded(mapIndex,tempMapObject))
     {
         /*{
             if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(fileName)!=
@@ -121,7 +103,7 @@ void MapController::updateBot()
 {
     if(!player_informations_is_set)
         return;
-    if(current_map.empty())
+    if(current_map==65535)
         return;
     if(all_map.find(current_map)==all_map.cend())
         return;
@@ -129,8 +111,8 @@ void MapController::updateBot()
     if(currentMap==NULL)
         return;
 
-    for (const auto &n : currentMap->logicalMap.botsDisplay) {
-        CatchChallenger::BotDisplay &botDisplay=currentMap->logicalMap.botsDisplay[n.first];
+    for (const auto &n : currentMap->botsDisplay) {
+        CatchChallenger::BotDisplay &botDisplay=currentMap->botsDisplay[n.first];
         if(botDisplay.mapObject==getPlayerMapObject())
             continue;
         if(botDisplay.tileset!=NULL && botDisplay.mapObject!=NULL)
@@ -194,7 +176,7 @@ void MapController::updateBot()
 void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 {
     MapControllerMP::connectAllSignals(client);
-    #if ! defined (ONLYMAPRENDER)
+    /*#if ! defined (ONLYMAPRENDER)
     if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,this,&MapController::insert_plant))
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,this,&MapController::remove_plant))
@@ -203,7 +185,7 @@ void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
         abort();
     if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&MapController::plant_collected))
         abort();
-    #endif
+    #endif*/
     if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsed,this,&MapController::datapackParsed,Qt::QueuedConnection))
         abort();
     if(!connect(QtDatapackClientLoader::datapackLoader,  &QtDatapackClientLoader::datapackParsedMainSub,this,&MapController::datapackParsedMainSub,Qt::QueuedConnection))
@@ -236,23 +218,26 @@ void MapController::datapackParsedMainSub()
     delayedPlantInsert.clear();
 }
 
-bool MapController::canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision)
+bool MapController::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x,const COORD_TYPE &y, const bool &checkCollision)
 {
-    if(!MapVisualiserPlayerWithFight::canGoTo(direction,map,x,y,checkCollision))
+    if(!MapVisualiserPlayerWithFight::canGoTo(direction,mapIndex,x,y,checkCollision))
         return false;
-    CatchChallenger::CommonMap *new_map=&map;
-    if(!CatchChallenger::MoveOnTheMap::move(direction,&new_map,&x,&y,false))
+    CATCHCHALLENGER_TYPE_MAPID new_map=mapIndex;
+    COORD_TYPE new_x=x;
+    COORD_TYPE new_y=y;
+    if(!QtDatapackClientLoader::datapackLoader->move(direction,new_map,new_x,new_y,false))
         return false;
-    if(all_map.at(new_map->map_file)->
-            logicalMap.bots.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-            all_map.at(new_map->map_file)->
-                        logicalMap.bots.cend())
+    const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
+    if(maps_convert.size()>=new_map)
+        return false;
+    const Map_full * map_full=all_map.at(new_map);
+    // to detect colision then in logical map just mark as colision to have same data into server and client
+    if(map_full->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->botsDisplay.cend())
         return false;
     return true;
 }
 
-void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,const uint8_t &x,const uint8_t &y,
-                                    const std::string &lookAt,const std::string &skin)
+void MapController::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin)
 {
     Q_UNUSED(botId);
     if(skin.empty())
@@ -261,16 +246,16 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         return;
     }
 
-    if(parsedMap->logicalMap.botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-            parsedMap->logicalMap.botsDisplay.cend())
+    if(parsedMap->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
+            parsedMap->botsDisplay.cend())
     {
-        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+        /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
         ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         botDisplay->mapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.value(botDisplay->mapObject)->setZValue(y);*/
 
-        std::cerr << "MapController::loadBotOnTheMap() parsedMap->logicalMap.botsDisplay.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))" << std::endl;
+        std::cerr << "MapController::loadBotOnTheMap() parsedMap->botsDisplay.contains(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))" << std::endl;
         return;
     }
 
@@ -279,11 +264,11 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         qDebug() << QStringLiteral("loadBotOnTheMap(), ObjectGroupItem::objectGroupLink not contains parsedMap->objectGroup");
         return;
     }
-    CatchChallenger::BotDisplay *botDisplay=&parsedMap->logicalMap.botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
+    CatchChallenger::BotDisplay *botDisplay=&parsedMap->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
     botDisplay->botMove=CatchChallenger::BotMove::BotMove_Fixed;
     CatchChallenger::Direction direction;
     int baseTile=-1;
-    if(lookAt==MapController::text_random || lookAt==MapController::text_loop || lookAt==MapController::text_move)
+    if(lookAt=="random" || lookAt=="loop" || lookAt=="move")
     {
         switch(rand()%4)
         {
@@ -305,32 +290,32 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
                 direction=CatchChallenger::Direction_move_at_bottom;
             break;
         }
-        if(lookAt==MapController::text_random)
+        if(lookAt=="random")
             botDisplay->botMove=CatchChallenger::BotMove::BotMove_Random;
-        else if(lookAt==MapController::text_loop)
+        else if(lookAt=="loop")
             botDisplay->botMove=CatchChallenger::BotMove::BotMove_Loop;
         else
             botDisplay->botMove=CatchChallenger::BotMove::BotMove_Move;
     }
-    else if(lookAt==MapController::text_left)
+    else if(lookAt=="left")
     {
         baseTile=10;
         direction=CatchChallenger::Direction_move_at_left;
     }
-    else if(lookAt==MapController::text_right)
+    else if(lookAt=="right")
     {
         baseTile=4;
         direction=CatchChallenger::Direction_move_at_right;
     }
-    else if(lookAt==MapController::text_top)
+    else if(lookAt=="top")
     {
         baseTile=1;
         direction=CatchChallenger::Direction_move_at_top;
     }
     else
     {
-        if(lookAt!=MapController::text_bottom)
-            qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y));
+        if(lookAt!="bottom")
+            qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->mapIndex).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
@@ -338,7 +323,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
     botDisplay->mapObject=new Tiled::MapObject();
     botDisplay->mapObject->setName("botDisplay");
     botDisplay->tileset=Tiled::Tileset::create("bot",16,24);
-    std::string skinPath=datapackPath+MapController::text_DATAPACK_BASE_PATH_SKIN+MapController::text_slash+skin+MapController::text_slashtrainerpng;
+    std::string skinPath=datapackPath+DATAPACK_BASE_PATH_SKIN+"/"+skin+"/trainer.png";
     if(!QFile(QString::fromStdString(skinPath)).exists())
     {
         QDir folderList(QStringLiteral("%1/skin/").arg(QString::fromStdString(datapackPath)));
@@ -347,7 +332,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         while(entryListIndex<entryList.size())
         {
             skinPath=datapackPath+DATAPACK_BASE_PATH_SKINBASE+entryList.at(entryListIndex).toStdString()+
-                    MapController::text_slash+skin+MapController::text_slashtrainerpng;
+                    "/"+skin+"/trainer.png";
             if(QFile(QString::fromStdString(skinPath)).exists())
                 break;
             entryListIndex++;
@@ -378,8 +363,13 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
         MapObjectItem::objectLink.at(botDisplay->mapObject)->setZValue(y);
     }
 
-    std::pair<uint8_t,uint8_t> pos(x,y);
+    const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
+    if(maps_convert.size()>=parsedMap->mapIndex)
+        return;
+#ifdef BOT_ICON_FEATURES
+    const CatchChallenger::Map_client &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(parsedMap->mapIndex);
     std::pair<uint8_t,uint8_t> Qtpos(x,y);
+    std::pair<uint8_t,uint8_t> pos(x,y);
     {
         //add flags
         if(botFlags==NULL)
@@ -399,7 +389,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.5));
             MapObjectItem::objectLink.at(flag)->setZValue(9999);
         }
-        if(parsedMap->logicalMap.shops.find(pos)!=parsedMap->logicalMap.shops.cend())
+        if(logicalMap.shops.find(pos)!=logicalMap.shops.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Shops");
@@ -412,20 +402,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
-        /*if(parsedMap->logicalMap.learn.find(pos)!=parsedMap->logicalMap.learn.cend())
-        {
-            Tiled::MapObject * flag=new Tiled::MapObject();
-            flag->setName("Learn");
-            botDisplay->flags.push_back(flag);
-            Tiled::Cell cell=flag->cell();
-            cell.setTile(botFlags->tileAt(3));
-            flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
-            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.at(flag)->setZValue(y);
-        }*/
-        /*if(parsedMap->logicalMap.clan.find(pos)!=parsedMap->logicalMap.clan.cend())
+        /*if(logicalMap.clan.find(pos)!=logicalMap.clan.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Clan");
@@ -438,7 +415,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
         }*/
-        if(parsedMap->logicalMap.heal.find(pos)!=parsedMap->logicalMap.heal.cend())
+        if(logicalMap.heal.find(pos)!=logicalMap.heal.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             botDisplay->flags.push_back(flag);
@@ -450,20 +427,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
-        /*if(parsedMap->logicalMap.market.find(pos)!=parsedMap->logicalMap.market.cend())
-        {
-            Tiled::MapObject * flag=new Tiled::MapObject();
-            flag->setName("Market");
-            botDisplay->flags.push_back(flag);
-            Tiled::Cell cell=flag->cell();
-            cell.setTile(botFlags->tileAt(4));
-            flag->setCell(cell);
-            ObjectGroupItem::objectGroupLink.at(parsedMap->objectGroup)->addObject(flag);
-            //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
-            flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
-            MapObjectItem::objectLink.at(flag)->setZValue(y);
-        }*/
-        if(parsedMap->logicalMap.zonecapture.find(pos)!=parsedMap->logicalMap.zonecapture.cend())
+        if(logicalMap.zonecapture.find(pos)!=logicalMap.zonecapture.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Zonecapture");
@@ -476,7 +440,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.at(flag)->setZValue(y);
         }
-        /*if(parsedMap->logicalMap.industry.find(pos)!=parsedMap->logicalMap.industry.cend())
+        if(logicalMap.industries_pos.find(pos)!=logicalMap.industries_pos.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("Industry");
@@ -488,8 +452,8 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
-        }*/
-        /* asked by tgjklmda if(parsedMap->logicalMap.botsFight.find(pos)!=parsedMap->logicalMap.botsFight.cend())
+        }
+        if(logicalMap.botsFightTrigger.find(pos)!=logicalMap.botsFightTrigger.cend())
         {
             Tiled::MapObject * flag=new Tiled::MapObject();
             flag->setName("botsFight");
@@ -501,12 +465,13 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
             flag->setPosition(QPointF(x,y-1.0*botDisplay->flags.size()+0.5));
             MapObjectItem::objectLink.value(flag)->setZValue(y);
-        }*/
+        }
     }
+#endif
 
-    if(parsedMap->logicalMap.bots.at(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.at(Qtpos).step.cend())
+    /*if(logicalMap.bots.at(Qtpos).step.find(1)!=logicalMap.bots.at(Qtpos).step.cend())
     {
-        auto stepBot=parsedMap->logicalMap.bots.at(Qtpos).step.at(1);
+        auto stepBot=logicalMap.bots.at(Qtpos).step.at(1);
         if(stepBot->Attribute("type")!=NULL && strcmp(stepBot->Attribute("type"),"fight")==0)
         {
             if(stepBot->Attribute("fightid")!=NULL)
@@ -520,18 +485,18 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
                             CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
                     {
                         #ifdef DEBUG_CLIENT_BOT
-                        qDebug() << (QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(parsedMap->logicalMap.map_file).arg(x).arg(y).arg(direction));
+                        qDebug() << (QStringLiteral("Put bot fight point %1 at %2 (%3,%4) in direction: %5").arg(fightid).arg(logicalMap.map_file).arg(x).arg(y).arg(direction));
                         #endif
 
                         uint32_t fightRange=5;
-                        if(parsedMap->logicalMap.bots.at(Qtpos).properties.find("fightRange")!=parsedMap->logicalMap.bots.at(Qtpos).properties.cend())
+                        if(logicalMap.bots.at(Qtpos).properties.find("fightRange")!=logicalMap.bots.at(Qtpos).properties.cend())
                         {
-                            fightRange=stringtouint32(parsedMap->logicalMap.bots.at(Qtpos).properties.at("fightRange"),&ok);
+                            fightRange=stringtouint32(logicalMap.bots.at(Qtpos).properties.at("fightRange"),&ok);
                             if(!ok)
                             {
                                 qDebug() << (QStringLiteral("fightRange is not a number at %1 (%2,%3): %4")
-                                    .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
-                                    .arg(QString::fromStdString(parsedMap->logicalMap.bots.at(Qtpos).properties.at("fightRange"))));
+                                    .arg(QString::fromStdString(logicalMap.map_file)).arg(x).arg(y)
+                                    .arg(QString::fromStdString(logicalMap.bots.at(Qtpos).properties.at("fightRange"))));
                                 fightRange=5;
                             }
                             else
@@ -539,7 +504,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
                                 if(fightRange>10)
                                 {
                                     qDebug() << (QStringLiteral("fightRange is greater than 10 at %1 (%2,%3): %4")
-                                        .arg(QString::fromStdString(parsedMap->logicalMap.map_file)).arg(x).arg(y)
+                                        .arg(QString::fromStdString(logicalMap.map_file)).arg(x).arg(y)
                                         .arg(fightRange)
                                         );
                                     fightRange=5;
@@ -561,8 +526,8 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
                                 break;
                             std::pair<uint8_t,uint8_t> temp_pos(temp_x,temp_y);
                             std::pair<uint8_t,uint8_t> Qttemp_pos(temp_x,temp_y);
-                            parsedMap->logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
-                            parsedMap->logicalMap.botsFightTriggerExtra[Qttemp_pos].push_back(Qtpos);
+                            logicalMap.botsFightTrigger[temp_pos].push_back(fightid);
+                            logicalMap.botsFightTriggerExtra[Qttemp_pos].push_back(Qtpos);
                             index_botfight_range++;
                         }
                     }
@@ -574,14 +539,14 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap,const uint32_t &botId,co
             }
             else
                 qDebug() << QStringLiteral("stepBot->Attribute(std::string(\"type\"))!=NULL && *stepBot->Attribute(std::string(\"type\"))==\"fight\" && stepBot->Attribute(std::string(\"fightid\"))!=NULL")
-                         << " at " << QString::fromStdString(parsedMap->logicalMap.map_file) << "" << Qtpos.first << "," << Qtpos.second
+                         << " at " << QString::fromStdString(logicalMap.map_file) << "" << Qtpos.first << "," << Qtpos.second
                          << QString::number(stepBot->Attribute("type")!=NULL)
                          << QString::number(strcmp(stepBot->Attribute("type"),"fight"))
                          << QString::number(stepBot->Attribute("fightid")!=NULL);
         }
-    }
+    }*/
     /*else
-        qDebug() << QStringLiteral("parsedMap->logicalMap.bots.value(Qtpos).step.find(1)!=parsedMap->logicalMap.bots.value(Qtpos).step.cend()");*/
+        qDebug() << QStringLiteral("logicalMap.bots.value(Qtpos).step.find(1)!=logicalMap.bots.value(Qtpos).step.cend()");*/
 }
 
 void MapController::setColor(const QColor &color, const uint32_t &timeInMS)

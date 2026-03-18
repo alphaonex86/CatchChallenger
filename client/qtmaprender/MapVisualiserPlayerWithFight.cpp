@@ -174,7 +174,7 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     return false;
 }
 
-bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
+bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y, const bool &checkCollision)
 {
     if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
         return false;
