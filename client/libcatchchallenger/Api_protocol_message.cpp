@@ -72,19 +72,27 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                 pos+=sizeof(uint16_t);
 
-                uint8_t playerSizeList=0;
-                if((size-pos)<(unsigned int)sizeof(uint8_t))
+                COORD_TYPE playerSizeList=0;
+                if((size-pos)<(unsigned int)sizeof(COORD_TYPE))
                 {
                     parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerSizeList=data[pos];
-                pos+=sizeof(uint8_t);
+                pos+=sizeof(COORD_TYPE);
                 int index_sub_loop=0;
                 while(index_sub_loop<playerSizeList)
                 {
                     //player id
                     Player_public_informations public_informations;
+
+                    if((size-pos)<(unsigned int)sizeof(uint8_t))
+                    {
+                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedIndex=data[pos];
+                    pos+=sizeof(uint8_t);
 
                     //x and y
                     if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
@@ -92,10 +100,10 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
-                    uint8_t x=data[pos];
-                    pos+=sizeof(uint8_t);
-                    uint8_t y=data[pos];
-                    pos+=sizeof(uint8_t);
+                    COORD_TYPE x=data[pos];
+                    pos+=sizeof(COORD_TYPE);
+                    COORD_TYPE y=data[pos];
+                    pos+=sizeof(COORD_TYPE);
 
                     //direction and player type
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
@@ -182,7 +190,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=sizeof(uint16_t);
                     public_informations.monsterId=monsterId;
 
-                    if(index!=playerExcludeIndex)
+                    if(simplifiedIndex!=playerExcludeIndex)
                     {
                         /*if(last_direction_is_set==false)//to work with reemit
                         {
@@ -191,7 +199,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             have_current_player_info(player_informations);
                             insert_player(public_informations,mapId,x,y,direction);
                         } now have pos and map is send into loaded data, see Api_protocol::parseCharacterBlockCharacter() */
-                        insert_player(public_informations,mapId,x,y,direction);
+                        insert_player(simplifiedIndex,public_informations,mapId,x,y,direction);
                     }
                     index_sub_loop++;
                 }

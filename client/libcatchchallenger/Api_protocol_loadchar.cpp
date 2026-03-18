@@ -423,7 +423,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         pos+=sizeof(uint8_t);
         player_y=y;
         //direction and player type
-        if((size-pos)<(unsigned int)sizeof(uint8_t))
+        if((unsigned int)(size-pos)<(unsigned int)sizeof(uint8_t))
         {
             parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
@@ -476,7 +476,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
             player_informations.public_informations.pseudo.clear();
         
                     //the skin
-                    if((size-pos)<(unsigned int)sizeof(uint8_t))
+                    if((unsigned int)(size-pos)<(unsigned int)sizeof(uint8_t))
                     {
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;

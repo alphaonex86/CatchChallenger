@@ -60,7 +60,7 @@ bool CommonFightEngine::canDoRandomFight(const CommonMap &map,const uint8_t &x,c
         return false;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if((x+y*map.width)>=map.flat_simplified_map.size())
+    if((unsigned int)(x+y*map.width)>=map.flat_simplified_map.size())
     {
         std::cerr << "CommonFightEngine::canDoRandomFight() map.flat_simplified_map_first_index>=CommonMap::flat_simplified_map_list_size" << std::endl;
         abort();

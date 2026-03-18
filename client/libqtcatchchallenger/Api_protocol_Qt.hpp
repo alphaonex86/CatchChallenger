@@ -85,19 +85,14 @@ public:
     void newEvent(const uint8_t &event,const uint8_t &event_value) override;
 
     //map move
-    void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) override;
-    void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) override;
-    void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id) override;
-    void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
-    void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) override;
+    void insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) override;
+    void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement) override;
+    void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex) override;
+    void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) override;
+    void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE y,const CatchChallenger::Direction &direction) override;
     void dropAllPlayerOnTheMap() override;
     void teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction) override;
 
-    //plant
-    void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature) override;
-    void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y) override;
-    void seed_planted(const bool &ok) override;
-    void plant_collected(const CatchChallenger::Plant_collect &stat) override;
     //crafting
     void recipeUsed(const RecipeUsage &recipeUsage) override;
     //inventory
@@ -208,19 +203,14 @@ signals:
     void QtnewEvent(const uint8_t &event,const uint8_t &event_value);
 
     //map move
-    void Qtinsert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void Qtmove_player(const uint16_t &id,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
-    void Qtremove_player(const uint16_t &id);
-    void Qtreinsert_player(const uint16_t &id,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void Qtfull_reinsert_player(const uint16_t &id,const uint32_t &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction);
+    void Qtinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void Qtmove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
+    void Qtremove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex);
+    void Qtreinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void Qtfull_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t y,const CatchChallenger::Direction &direction);
     void QtdropAllPlayerOnTheMap();
-    void QtteleportTo(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void QtteleportTo(const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
 
-    //plant
-    void Qtinsert_plant(const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void Qtremove_plant(const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y);
-    void Qtseed_planted(const bool &ok);
-    void Qtplant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting
     void QtrecipeUsed(const RecipeUsage &recipeUsage);
     //inventory

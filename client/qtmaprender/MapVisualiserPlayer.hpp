@@ -23,11 +23,11 @@ public:
     const Tiled::MapObject * getPlayerMapObject() const;
     bool isInMove() const;
     CatchChallenger::Direction getDirection() const;
-    virtual bool haveMapInMemory(const std::string &mapPath);
+    virtual bool haveMapInMemory(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     void keyPressEvent(QKeyEvent * event);
     void keyReleaseEvent(QKeyEvent *event);
-    std::string lastLocation() const;
-    std::string currentMap() const;
+    //CATCHCHALLENGER_TYPE_MAPID lastLocation() const;
+    CATCHCHALLENGER_TYPE_MAPID currentMap() const;
     Map_full * currentMapFull() const;
     bool currentMapIsLoaded() const;
     std::string currentMapType() const;
@@ -53,7 +53,7 @@ public:
     {
         struct StartPoint
         {
-            std::string map;
+            CATCHCHALLENGER_TYPE_MAPID map;
             COORD_TYPE x,y;
         };
         StartPoint startPoint;
@@ -68,9 +68,6 @@ public:
     virtual void datapackParsed();
     virtual void datapackParsedMainSub();
 
-    void setInformations(std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> *items, std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests,
-                         std::vector<uint8_t> *events, std::unordered_set<CATCHCHALLENGER_TYPE_ITEM> *itemOnMap,
-                         std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, CatchChallenger::PlayerPlant> *plantOnMap);
     void unblock();
     virtual bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
 private:
@@ -84,15 +81,15 @@ private:
     bool inMove;
     bool teleportedOnPush;
     bool stepAlternance;
-    std::string mLastLocation;
+    //std::string mLastLocation;last displayed info?
     bool blocked;
     bool wasPathFindingUsed;
     //monster
     std::vector<CatchChallenger::Direction> pendingMonsterMoves;
     Tiled::MapObject * monsterMapObject;
     Tiled::SharedTileset monsterTileset;
-    std::string current_monster_map;
-    uint8_t monster_x,monster_y;
+    CATCHCHALLENGER_TYPE_MAPID current_monster_map;
+    COORD_TYPE monster_x,monster_y;
 
 protected:
     CatchChallenger::Api_protocol_Qt * client;
@@ -131,14 +128,14 @@ protected:
     Tiled::SharedTileset animationTileset;
     bool animationDisplayed;
 
+    /*all of this variable is now into CatchChallenger::Api_protocol_Qt * client;
     std::vector<uint8_t> *events;
     std::unordered_map<uint16_t,uint32_t> *items;
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests;
-    std::unordered_set<uint16_t> *itemOnMap;
-    std::unordered_map<uint16_t/*dirtOnMap*/,CatchChallenger::PlayerPlant> *plantOnMap;
+    std::map<CATCHCHALLENGER_TYPE_MAPID,CatchChallenger::Player_private_and_public_informations_Map> mapData;
 protected:
     //current player
-    CatchChallenger::Player_private_and_public_informations player_informations;
+    CatchChallenger::Player_private_and_public_informations player_informations;*/
     bool player_informations_is_set;
 protected slots:
     virtual void keyPressParse();
@@ -148,7 +145,7 @@ protected slots:
     virtual void finalPlayerStep(bool parseKey=true);
     virtual bool finalPlayerStepTeleported(bool &isTeleported);
     virtual bool nextPathStep() = 0;//true if have step
-    void pathFindingResultInternal(std::vector<PathResolved> &pathList, const std::string &current_map, const uint8_t &x, const uint8_t &y,
+    void pathFindingResultInternal(std::vector<PathResolved> &pathList, const CATCHCHALLENGER_TYPE_MAPID &current_map, const COORD_TYPE &x, const COORD_TYPE &y,
                                    const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path);
     bool nextPathStepInternal(std::vector<PathResolved> &pathList, const CatchChallenger::Direction &direction);//true if have step
     virtual bool haveStopTileAction();
@@ -170,12 +167,12 @@ protected slots:
 
     //void setAnimationTilset(std::string animationTilset);
     virtual void resetAll();
-    virtual bool canGoTo(const CatchChallenger::Direction &direction,CatchChallenger::CommonMap map,COORD_TYPE x,COORD_TYPE y,const bool &checkCollision);
-    void mapDisplayedSlot(const std::string &fileName);
-    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision);
+    void mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
 
     void resetMonsterTile();
-    virtual bool loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y);
+    virtual bool loadPlayerMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const uint8_t &x,const uint8_t &y);
     virtual bool insert_player_internal(const CatchChallenger::Player_public_informations &player, const uint32_t &mapId,
                                      const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction,
                                      const std::vector<std::string> &skinFolderList);

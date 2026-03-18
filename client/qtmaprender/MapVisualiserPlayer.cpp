@@ -802,24 +802,6 @@ bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * 
         return false;
 }
 
-void MapVisualiserPlayer::setInformations(std::unordered_map<uint16_t, uint32_t> *items, std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, CatchChallenger::PlayerQuest> *quests, std::vector<uint8_t> *events, std::unordered_set<uint16_t> *itemOnMap, std::unordered_map<uint16_t, CatchChallenger::PlayerPlant> *plantOnMap)
-{
-    std::cout << "MapVisualiserPlayer::setInformations()" << std::endl;
-    this->events=events;
-    this->items=items;
-    this->quests=quests;
-    this->itemOnMap=itemOnMap;
-    this->plantOnMap=plantOnMap;
-    if(plantOnMap->size()>65535)
-        abort();
-    if(items->size()>65535)
-        abort();
-    if(quests->size()>65535)
-        abort();
-    if(itemOnMap->size()>65535)
-        abort();
-}
-
 void MapVisualiserPlayer::unblock()
 {
     blocked=false;
@@ -1478,10 +1460,10 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         keyPressParse();
 }
 
-std::string MapVisualiserPlayer::lastLocation() const
+/*std::string MapVisualiserPlayer::lastLocation() const
 {
     return mLastLocation;
-}
+}*/
 
 std::string MapVisualiserPlayer::currentMap() const
 {
@@ -1770,17 +1752,19 @@ void MapVisualiserPlayer::resetAll()
     playerMapObject = new Tiled::MapObject();
 }
 
-bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap map, uint8_t x, uint8_t y, const bool &checkCollision)
+bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y, const bool &checkCollision)
 {
-    CatchChallenger::CommonMap *mapPointer=&map;
+    CatchChallenger::CommonMap *mapPointer=&mapIndex;
     CatchChallenger::ParsedLayerLedges ledge;
     do
     {
+        DatapackClientLoader::canGoTo(
         if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*mapPointer,x,y,checkCollision && !clip))
             return false;
+                DatapackClientLoader::canGoTo(
         if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision && !clip))
             return false;
-        CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.at(map.map_file)->logicalMap);
+                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.at(mapIndex.map_file)->logicalMap);
         if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
                 map_client->itemsOnMap.cend())
         {
@@ -1789,7 +1773,7 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, C
             if(item.tileObject!=NULL)
                 return false;
         }
-        ledge=CatchChallenger::MoveOnTheMap::getLedge(map,x,y);
+        ledge=CatchChallenger::MoveOnTheMap::getLedge(mapIndex,x,y);
         if(ledge==CatchChallenger::ParsedLayerLedges_NoLedges)
             return true;
         switch(direction)
@@ -2018,9 +2002,9 @@ void MapVisualiserPlayer::loadGrassTile()
     }
 }
 
-void MapVisualiserPlayer::mapDisplayedSlot(const std::string &fileName)
+void MapVisualiserPlayer::mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
-    if(current_map==fileName)
+    if(current_map==mapIndex)
     {
         emit currentMapLoaded();
         loadPlayerFromCurrentMap();

@@ -38,8 +38,8 @@ public:
         COORD_TYPE x,y;
         bool inMove;
         bool stepAlternance;
-        std::string current_map;
-        std::unordered_set<std::string> mapUsed;
+        CATCHCHALLENGER_TYPE_MAPID current_map;
+        std::unordered_set<CATCHCHALLENGER_TYPE_MAPID> mapUsed;
         CatchChallenger::Player_public_informations informations;
         Tiled::MapObject * labelMapObject;
         Tiled::SharedTileset labelTileset;
@@ -49,39 +49,39 @@ public:
         std::vector<CatchChallenger::Direction> pendingMonsterMoves;
         Tiled::MapObject * monsterMapObject;
         Tiled::SharedTileset monsterTileset;
-        std::string current_monster_map;
+        CATCHCHALLENGER_TYPE_MAPID current_monster_map;
         COORD_TYPE monster_x,monster_y;
 
         //presumed map
-        Map_full *presumed_map;
+        CATCHCHALLENGER_TYPE_MAPID presumed_map;
         COORD_TYPE presumed_x,presumed_y;
         CatchChallenger::Direction presumed_direction;
         //pointer to allow copy of OtherPlayer
         QTimer *oneStepMore;
         QTimer *moveAnimationTimer;
     };
-    const std::unordered_map<uint16_t,OtherPlayer> &getOtherPlayerList() const;
+    const std::unordered_map<uint8_t,OtherPlayer> &getOtherPlayerList() const;
 public slots:
     //map move Qt
-    void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
-    void move_player(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
-    void remove_player(const uint16_t &id);
-    void reinsert_player(const uint16_t &id, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction);
-    void full_reinsert_player(const uint16_t &id, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction);
+    void insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    void move_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement);
+    void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex);
+    void reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction);
+    void full_reinsert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction);
     void dropAllPlayerOnTheMap();
     //map move
-    bool insert_player_final(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction,bool inReplayMode);
-    bool move_player_final(const uint16_t &id, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
+    bool insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction,bool inReplayMode);
+    bool move_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const std::vector<std::pair<uint8_t,CatchChallenger::Direction> > &movement, bool inReplayMode);
     bool move_otherMonster(OtherPlayer &otherPlayer, const bool &haveMoved,
-                           const uint8_t &previous_different_x, const uint8_t &previous_different_y, const CatchChallenger::CommonMap *previous_different_map,
+                           const COORD_TYPE &previous_different_x, const COORD_TYPE &previous_different_y, const CATCHCHALLENGER_TYPE_MAPID &previous_different_map_index,
                            CatchChallenger::Direction &previous_different_move, const std::vector<CatchChallenger::Direction> &lastMovedDirection);
-    bool remove_player_final(const uint16_t &id, bool inReplayMode);
-    bool reinsert_player_final(const uint16_t &id, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction, bool inReplayMode);
-    bool full_reinsert_player_final(const uint16_t &id, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    bool remove_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, bool inReplayMode);
+    bool reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction, bool inReplayMode);
+    bool full_reinsert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex, const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction, bool inReplayMode);
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
-    bool teleportTo(const uint32_t &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject);
+    bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -93,9 +93,9 @@ public slots:
     virtual void reinject_signals_on_valid_map();
 private:
     PathFinding pathFinding;
-    std::unordered_map<uint16_t,OtherPlayer> otherPlayerList;
-    std::unordered_map<QTimer *,uint16_t> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
-    std::unordered_map<std::string,uint16_t> mapUsedByOtherPlayer;
+    std::unordered_map<SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> otherPlayerList;
+    std::unordered_map<QTimer *,SIMPLIFIED_PLAYER_ID_FOR_MAP> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
+    //std::unordered_map<std::string,SIMPLIFIED_PLAYER_ID_FOR_MAP> mapUsedByOtherPlayer;
 
     //datapack
     std::vector<std::string> skinFolderList;
@@ -111,19 +111,19 @@ private:
     };
     struct DelayedMove
     {
-        uint16_t id;
+        SIMPLIFIED_PLAYER_ID_FOR_MAP id;
         std::vector<std::pair<uint8_t,CatchChallenger::Direction> > movement;
     };
     struct DelayedReinsertSingle
     {
-        uint16_t id;
+        SIMPLIFIED_PLAYER_ID_FOR_MAP id;
         COORD_TYPE x;
         COORD_TYPE y;
         CatchChallenger::Direction direction;
     };
     struct DelayedReinsertFull
     {
-        uint16_t id;
+        SIMPLIFIED_PLAYER_ID_FOR_MAP id;
         CATCHCHALLENGER_TYPE_MAPID mapId;
         COORD_TYPE x;
         COORD_TYPE y;
@@ -143,7 +143,7 @@ private:
         DelayedType type;
         DelayedInsert insert;
         DelayedMove move;
-        uint16_t remove;
+        SIMPLIFIED_PLAYER_ID_FOR_MAP remove;
         DelayedReinsertSingle reinsert_single;
         DelayedReinsertFull reinsert_full;
     };
@@ -180,13 +180,13 @@ private slots:
     void loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
     void unloadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlayer);
 protected slots:
-    bool loadPlayerMap(const std::string &fileName,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool loadPlayerMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
     virtual void finalPlayerStep(bool parseKey=true);
     //call after enter on new map
     virtual void loadOtherPlayerFromMap(const OtherPlayer &otherPlayer, const bool &display=true);
     //call before leave the old map (and before loadPlayerFromCurrentMap())
     virtual void unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer);
-    void pathFindingResult(const std::string &current_map, const COORD_TYPE &x, const COORD_TYPE &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path, const PathFinding::PathFinding_status &status);
+    void pathFindingResult(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path, const PathFinding::PathFinding_status &status);
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:

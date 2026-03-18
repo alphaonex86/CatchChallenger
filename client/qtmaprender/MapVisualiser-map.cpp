@@ -92,7 +92,7 @@ void MapVisualiser::resetAll()
 }
 
 //open the file, and load it into the variables
-void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
+void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     if(current_map.empty())
     {
@@ -100,34 +100,34 @@ void MapVisualiser::loadOtherMap(const std::string &resolvedFileName)
         return;
     }
     //already loaded
-    if(all_map.find(resolvedFileName)!=all_map.cend())
+    if(all_map.find(mapIndex)!=all_map.cend())
         return;
     //already in progress
-    if(vectorcontainsAtLeastOne(asyncMap,resolvedFileName))
+    if(vectorcontainsAtLeastOne(asyncMap,mapIndex))
         return;
     //previously loaded
-    if(old_all_map.find(resolvedFileName)!=old_all_map.cend())
+    if(old_all_map.find(mapIndex)!=old_all_map.cend())
     {
-        Map_full * tempMapObject=old_all_map.at(resolvedFileName);
+        Map_full * tempMapObject=old_all_map.at(mapIndex);
         tempMapObject->displayed=false;
-        old_all_map.erase(resolvedFileName);
-        old_all_map_time.erase(resolvedFileName);
+        old_all_map.erase(mapIndex);
+        old_all_map_time.erase(mapIndex);
         tempMapObject->logicalMap.border.bottom.map=NULL;
         tempMapObject->logicalMap.border.top.map=NULL;
         tempMapObject->logicalMap.border.left.map=NULL;
         tempMapObject->logicalMap.border.right.map=NULL;
         tempMapObject->logicalMap.teleporter=NULL;
         tempMapObject->logicalMap.teleporter_list_size=0;
-        asyncMap.push_back(resolvedFileName);
-        asyncMapLoaded(resolvedFileName,tempMapObject);
+        asyncMap.push_back(mapIndex);
+        asyncMapLoaded(mapIndex,tempMapObject);
         return;
     }
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-    if(!QFileInfo(QString::fromStdString(resolvedFileName)).exists())
-        qDebug() << (QStringLiteral("file not found to async: %1").arg(QString::fromStdString(resolvedFileName)));
+    if(!QFileInfo(QString::fromStdString(mapIndex)).exists())
+        qDebug() << (QStringLiteral("file not found to async: %1").arg(QString::fromStdString(mapIndex)));
     #endif
-    asyncMap.push_back(resolvedFileName);
-    emit loadOtherMapAsync(resolvedFileName);
+    asyncMap.push_back(mapIndex);
+    emit loadOtherMapAsync(mapIndex);
 }
 
 void MapVisualiser::asyncDetectBorder(Map_full * tempMapObject)
