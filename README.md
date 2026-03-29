@@ -1,51 +1,22 @@
 # Intro
 
-The client and server is under GPL3. And part of the project:
 http://catchchallenger.first-world.info/
 
-## Description
-This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, lineage for the crafting/clan/MMORPG, X3 for the commerce/fabric/industry. With mod possibility, and datapack.
+![structure](structure.png)
 
-It's a pixel art game. The work is concentrated on the gameplay/performance/security/creativity/accessibility. The income is to paid the developing and the artwork. The game is fully open source (GPL3).
-
-The gameplay have strong team part, but remain interesting in single player. Have clear advantage on 3G/wifi/TOR connexion or into the tiers world.
+This game is a MMORPG, Lan game and a single player game. It's mix of pokemon for the RPG part, crafting/clan/TvT, industry. Modular datapck.
 
 ## License
 client/tiled/ is extracted version of http://www.mapeditor.org/, https://github.com/bjorn/tiled
 libogg and fileopus is extracted from other project
 Interface UI is from bought template (then under copyright)
 
-## Programming
-
-Asynchronous protocol with no influence of internet and server latency. Thread isolation for the important or heavy server task. It can be hosted on ADSL connection.
-
-DBMS for Qt version: Mysql 5+, SQLite, PostgreSQL 9+. DBMS for epoll version (async to high performance): Mysql 5.5+, PostgreSQL 9+.
-
-## Prerequisites
-
-### Postgresql
-
-You need to create this roles:
-* catchchallenger-login
-* catchchallenger-base
-
-Then:
-```sh
-su -l postgres
-cd server/databases/postgresql
-echo 'CREATE DATABASE catchchallenger_login;' | psql postgres postgres
-echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
-echo 'CREATE DATABASE catchchallenger_common;' | psql postgres postgres
-echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
-psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
-psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
-psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
-psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_login postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-base";' | psql catchchallenger_base postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_common postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO "catchchallenger-login";' | psql catchchallenger_server postgres
-```
+# Target
+- minimal dependency (searcg dependency hell, bug/security problem in dependency)
+- no bloatware (no stupid features, no features used for only 1 person if imply lot of code or dangerous code, no unrelated features)
+- async, support high latency, very low bandwidth (tipical of TOR/I2P)
+- send datapack by internal protocol (overall compression to group similar part into multiple file) and http mirror, and when datapack is downloaded by client can be used to mount new server with same datapack
+- most processing is cliend side
 
 ## Compiling
 
@@ -67,36 +38,6 @@ Dependency:
 
 **Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
-### Gui server
-```sh
-cd server/
-qmake catchchallenger-server-gui.pro
-make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
-```
-
-### CLI server
-```sh
-cd server/
-qmake catchchallenger-server-cli.pro
-make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
-```
-
-### Epoll server (linux only, high performance)
-**Ubuntu**: apt-get install libzstd-dev zlib1g-dev libssl-dev libpq-dev
-
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev
-
-```sh
-cd server/
-qmake catchchallenger-server-cli-epoll.pro
-make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
-chmod a+x catchchallenger-server-cli-epoll
-./catchchallenger-server-cli-epoll
-```
-
 ### Client
 **Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qtdeclarative5-dev qtscript5-dev
 
@@ -112,17 +53,3 @@ chmod a+x catchchallenger
 # Sources
 * The sources of the client/server: https://github.com/alphaonex86/CatchChallenger
 * The sources of the datapack: https://github.com/alphaonex86/CatchChallenger-datapack
-* The sources of the site: https://github.com/alphaonex86/CatchChallenger-site
-
-# Hardware server
-Tested on physical hardware:
-* Intel i486DX2-66 at 66Mhz for x86
-* Geode LX800 (i486/i586 like) at 500MHz for x86
-* RISC-V (without SIMD)
-* MIPS2 big endian a 200MHz
-* RPI1 at 700MHz 32-bit for ARM11
-* Pentium 3 at 750MHz for x86
-Without problem with 200 players.
-And of course more modern CPU like AMD Ryzen 9 7950X3D 16-Core Processor in x86_64, all qemu arch
-
-The server is actually 10-20MB of memory (3MB measured by massif) and 1-4KB by player
