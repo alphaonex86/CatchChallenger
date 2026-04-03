@@ -21,7 +21,8 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<std::vector<std::pair<uint8_t,CatchChallenger::Direction> > >("std::vector<std::pair<uint8_t,CatchChallenger::Direction> >");
-    qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
+    qRegisterMetaType<std::vector<CatchChallenger::QMap_client> >("std::vector<CatchChallenger::QMap_client>");
+    qRegisterMetaType<CatchChallenger::QMap_client>("CatchChallenger::QMap_client");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Direction,uint8_t> > >("std::vector<std::pair<CatchChallenger::Direction,uint8_t> >");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > >("std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >");
     if(!connect(&pathFinding,&PathFinding::result,this,&MapControllerMP::pathFindingResult))
@@ -71,7 +72,7 @@ void MapControllerMP::resetAll()
 {
     std::cout << "MapControllerMP::resetAll()" << std::endl;
     unloadPlayerFromCurrentMap();
-    current_map.clear();
+    current_map=65535;
     pathList.clear();
     delayedActions.clear();
     skinFolderList.clear();
@@ -128,32 +129,27 @@ void MapControllerMP::resizeEvent(QResizeEvent *event)
     updateScale();
 }
 
-const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &MapControllerMP::getOtherPlayerList() const
+const std::unordered_map<uint8_t,MapControllerMP::OtherPlayer> &MapControllerMP::getOtherPlayerList() const
 {
     return otherPlayerList;
 }
 
-bool MapControllerMP::loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y)
+bool MapControllerMP::loadPlayerMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     //position
     mapVisualiserThread.stopIt=false;
-    if(current_map.empty())
+    if(current_map==65535)
     {
         error("MapControllerMP::loadPlayerMap() map empty");
         return false;
     }
-    if(fileName.empty())
+    if(mapIndex==65535)
     {
         error("MapControllerMP::loadPlayerMap() fileName empty");
         return false;
     }
-    if(stringEndsWith(fileName,"/"))
-    {
-        error("MapControllerMP::loadPlayerMap() map is directory");
-        return false;
-    }
-    loadOtherMap(fileName);
-    return MapVisualiserPlayer::loadPlayerMap(fileName,x,y);
+    loadOtherMap(mapIndex);
+    return MapVisualiserPlayer::loadPlayerMap(mapIndex,x,y);
 }
 
 void MapControllerMP::updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const uint16_t &monster)

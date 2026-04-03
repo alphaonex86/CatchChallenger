@@ -1,7 +1,8 @@
 #include "MapController.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
-#include "../qtmaprender/TemporaryTile.hpp"
+#include "TemporaryTile.hpp"
+#include "QMap_client.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -51,7 +52,7 @@ MapController::~MapController()
     }
 }
 
-bool MapController::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject)
+bool MapController::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
     if(MapControllerMP::asyncMapLoaded(mapIndex,tempMapObject))
     {
@@ -105,9 +106,9 @@ void MapController::updateBot()
         return;
     if(current_map==65535)
         return;
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
         return;
-    Map_full * currentMap=all_map.at(current_map);
+    CatchChallenger::QMap_client * currentMap=CatchChallenger::QMap_client::all_map.at(current_map);
     if(currentMap==NULL)
         return;
 
@@ -230,14 +231,14 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction, const C
     const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
     if(maps_convert.size()>=new_map)
         return false;
-    const Map_full * map_full=all_map.at(new_map);
+    const CatchChallenger::QMap_client * map_full=CatchChallenger::QMap_client::all_map.at(new_map);
     // to detect colision then in logical map just mark as colision to have same data into server and client
     if(map_full->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->botsDisplay.cend())
         return false;
     return true;
 }
 
-void MapController::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin)
+void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin)
 {
     Q_UNUSED(botId);
     if(skin.empty())
@@ -245,9 +246,9 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_T
         std::cerr << "MapController::loadBotOnTheMap() skin empty" << std::endl;
         return;
     }
+    CatchChallenger::QMap_client *parsedMap=CatchChallenger::QMap_client::all_map.at(mapIndex);
 
-    if(parsedMap->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-            parsedMap->botsDisplay.cend())
+    if(parsedMap->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=parsedMap->botsDisplay.cend())
     {
         /*CatchChallenger::BotDisplay *botDisplay=&parsedMap->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
         ObjectGroupItem::objectGroupLink.value(parsedMap->objectGroup)->addObject(botDisplay->mapObject);
@@ -315,7 +316,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_T
     else
     {
         if(lookAt!="bottom")
-            qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(parsedMap->mapIndex).arg(x).arg(y));
+            qDebug() << (QStringLiteral("Wrong direction for the bot at %1 (%2,%3)").arg(mapIndex).arg(x).arg(y));
         baseTile=7;
         direction=CatchChallenger::Direction_move_at_bottom;
     }
@@ -364,7 +365,7 @@ void MapController::loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_T
     }
 
     const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
-    if(maps_convert.size()>=parsedMap->mapIndex)
+    if(maps_convert.size()>=mapIndex)
         return;
 #ifdef BOT_ICON_FEATURES
     const CatchChallenger::Map_client &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(parsedMap->mapIndex);

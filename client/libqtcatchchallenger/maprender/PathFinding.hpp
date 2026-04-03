@@ -37,7 +37,8 @@ signals:
     void internalCancel();
     void emitSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const uint8_t &destination_x,const uint8_t &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
 public slots:
-    void searchPath(const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, Map_full *> &all_map,const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,
+    //,const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, QMap_client *> &all_map
+    void searchPath(const std::vector<CatchChallenger::Map_client> &mapList,const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,
                     const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,
                     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
     void internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index, const COORD_TYPE &destination_x, const COORD_TYPE &destination_y, const CATCHCHALLENGER_TYPE_MAPID &source_map_index, const COORD_TYPE &source_x, const COORD_TYPE &source_y, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
@@ -98,7 +99,8 @@ private:
     QMutex mutex;
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> simplifiedMapList;
     bool tryCancel;
-    std::vector<Map_full> mapList;
+    //std::vector<QMap_client> qmapList;
+    std::vector<CatchChallenger::Map_client> mapList;
 public:
     static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const COORD_TYPE &x, const COORD_TYPE &y);
     static bool canMove(const CatchChallenger::Orientation &orientation, CATCHCHALLENGER_TYPE_MAPID &current_map_index, COORD_TYPE &x, COORD_TYPE &y, const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, SimplifiedMapForPathFinding> &simplifiedMapList);

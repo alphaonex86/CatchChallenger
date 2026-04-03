@@ -81,7 +81,7 @@ public slots:
     bool dropAllPlayerOnTheMap_final(bool inReplayMode);
 
     bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
-    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -95,7 +95,7 @@ private:
     PathFinding pathFinding;
     std::unordered_map<SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> otherPlayerList;
     std::unordered_map<QTimer *,SIMPLIFIED_PLAYER_ID_FOR_MAP> otherPlayerListByTimer,otherPlayerListByAnimationTimer;
-    //std::unordered_map<std::string,SIMPLIFIED_PLAYER_ID_FOR_MAP> mapUsedByOtherPlayer;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SIMPLIFIED_PLAYER_ID_FOR_MAP> mapUsedByOtherPlayer;//other player count on each map
 
     //datapack
     std::vector<std::string> skinFolderList;
@@ -165,14 +165,14 @@ private:
     static QPixmap *imgForPseudoPremium;
     std::vector<PathResolved> pathList;
 public:
-    void eventOnMap(CatchChallenger::MapEvent event, Map_full * tempMapObject, COORD_TYPE x, COORD_TYPE y);
+    void eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y);
 private slots:
     void moveOtherPlayerStepSlot();
     void moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer);
     void finalOtherPlayerStep(OtherPlayer &otherPlayer);
     void doMoveOtherAnimation();
     /// \warning all ObjectGroupItem destroyed into removeMap()
-    virtual void destroyMap(Map_full *map);
+    virtual void destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     CatchChallenger::Direction moveFromPath();
     //virtual std::unordered_set<std::string> loadMap(Map_full *map,const bool &display);
     void updateOtherPlayerMonsterTile(OtherPlayer &tempPlayer,const CATCHCHALLENGER_TYPE_MONSTER &monster);
@@ -190,7 +190,7 @@ protected slots:
     bool nextPathStep();//true if have step
     virtual void keyPressParse();
 signals:
-    void searchPath(std::vector<Map_full> mapList);
+    void searchPath(std::vector<QMap_client> mapList);
     void pathFindingNotFound();
     void pathFindingInternalError();
 };

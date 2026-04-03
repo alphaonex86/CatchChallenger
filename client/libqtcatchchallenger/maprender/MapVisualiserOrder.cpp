@@ -43,7 +43,7 @@ Map_full::Map_full()
     displayed=0;
 }
 
-void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,bool hideTheDoors)
+void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObject, bool hideTheDoors)
 {
     //remove the hidden tags, and unknown layer
     int index=0;
