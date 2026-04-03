@@ -49,17 +49,7 @@ MapVisualiserThread::~MapVisualiserThread()
 
 void MapVisualiserThread::loadOtherMapAsync(const std::string &fileName)
 {
-    /*cash due to the pointerif(mapCache.contains(fileName))
-    {
-        Map_full *tempMapObject=new Map_full();
-        *tempMapObject=mapCache.value(fileName);
-        emit asyncMapLoaded(fileName,tempMapObject);
-        return;
-    }*/
     Map_full *tempMapObject=loadOtherMap(fileName);
-    /*if(mapCache.size()>200)
-        mapCache.clear();
-    mapCache[fileName]=*tempMapObject;*/
     emit asyncMapLoaded(fileName,tempMapObject);
 }
 

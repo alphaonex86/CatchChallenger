@@ -40,18 +40,17 @@ public:
     bool hideTheDoors;
     std::string error();
 signals:
-    void asyncMapLoaded(const std::string &fileName,Map_full *parsedMap);
+    void asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client *parsedMap);
 public slots:
-    void loadOtherMapAsync(const std::string &fileName);
-    Map_full * loadOtherMap(const std::string &fileName);
+    void loadOtherMapAsync(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    QMap_client * loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     //drop and remplace by Map_loader info
-    bool loadOtherMapClientPart(Map_full *parsedMap);
-    bool loadOtherMapMetaData(Map_full *parsedMap);
-    void loadBotFile(const std::string &file);
+    bool loadOtherMapClientPart(QMap_client *parsedMap);
+    bool loadOtherMapMetaData(QMap_client *parsedMap);
+    void loadBotFile();
 public slots:
     virtual void resetAll();
 private:
-    std::unordered_map<std::string,Map_full> mapCache;
     Tiled::MapReader reader;
     std::unordered_map<std::string/*name*/,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID/*bot id*/,CatchChallenger::Bot> > botFiles;
     std::string language;

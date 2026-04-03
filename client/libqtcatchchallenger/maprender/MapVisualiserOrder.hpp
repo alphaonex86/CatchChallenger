@@ -13,12 +13,11 @@
 #include <tile.h>
 
 #include "MapDoor.hpp"
-#include "QMap_client.hpp"
 #include "TriggerAnimation.hpp"
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../libcatchchallenger/ClientStructures.hpp"
 
-class Map_full;
+class QMap_client;
 
 class MapVisualiserOrder
 {
@@ -49,37 +48,12 @@ public:
 
     explicit MapVisualiserOrder();
     ~MapVisualiserOrder();
-    static void layerChangeLevelAndTagsChange(Map_full *tempMapObject, bool hideTheDoors=false);
+    static void layerChangeLevelAndTagsChange(QMap_client *tempMapObject, bool hideTheDoors=false);
 protected:
     static QRegularExpression regexMs;
     static QRegularExpression regexFrames;
     static QRegularExpression regexTrigger;
     static QRegularExpression regexTriggerAgain;
-};
-
-class Map_full
-{
-public:
-    Map_full();
-public:
-    CATCHCHALLENGER_TYPE_MAPID mapIndex;//need keep global list and index to match file path always, to client and server speak about the same file, see std::vector<CatchChallenger::Map_client> DatapackClientLoader::mapList
-
-    //std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot,pairhash> bots;-> to detect colision then in logical map just mark as colision to have same data into server and client
-    std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::BotDisplay,pairhash> botsDisplay;
-
-    std::shared_ptr<Tiled::Map> tiledMap;
-    Tiled::MapRenderer * tiledRender;
-    Tiled::ObjectGroup * objectGroup;
-    std::unordered_map<uint16_t/*ms*/,std::unordered_map<int/*minId*/,MapVisualiserOrder::Map_animation> > animatedObject;
-    int objectGroupIndex;
-    int relative_x,relative_y;//needed for the async load
-    int relative_x_pixel,relative_y_pixel;
-    bool displayed;
-    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,MapDoor*,pairhash> doors;
-    std::unordered_map<std::pair<COORD_TYPE,COORD_TYPE>,TriggerAnimation*,pairhash> triggerAnimations;
-    std::string visualType;
-    std::string name;
-    std::string zone;
 };
 
 #endif // MapVisualiserOrder_H

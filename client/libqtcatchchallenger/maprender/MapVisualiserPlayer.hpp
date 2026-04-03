@@ -28,7 +28,7 @@ public:
     void keyReleaseEvent(QKeyEvent *event);
     //CATCHCHALLENGER_TYPE_MAPID lastLocation() const;
     CATCHCHALLENGER_TYPE_MAPID currentMap() const;
-    Map_full * currentMapFull() const;
+    QMap_client * currentMapFull() const;
     bool currentMapIsLoaded() const;
     std::string currentMapType() const;
     std::string currentZone() const;
@@ -169,7 +169,7 @@ protected slots:
     virtual void resetAll();
     virtual bool canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision);
     void mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
-    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
 
     void resetMonsterTile();
     virtual bool loadPlayerMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const uint8_t &x,const uint8_t &y);

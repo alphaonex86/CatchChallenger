@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_MAPCONTROLLER_H
 
 #include "MapControllerMP.hpp"
+#include "QMap_client.hpp"
 #include "../../general/base/lib.h"
 
 #include <string>
@@ -23,7 +24,7 @@ public:
     void remove_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
     void insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void setColor(const QColor &color, const uint32_t &timeInMS=0);
-    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Map_full * tempMapObject);
+    virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
 private:
     //the delayed action
     struct DelayedPlantInsert
@@ -67,7 +68,7 @@ public slots:
     virtual void datapackParsedMainSub();
     virtual void reinject_signals();
 private slots:
-    void loadBotOnTheMap(Map_full *parsedMap, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin);
+    void loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const CATCHCHALLENGER_TYPE_BOTID &botId, const COORD_TYPE &x, const COORD_TYPE &y, const std::string &lookAt, const std::string &skin);
 };
 
 #endif // MAPCONTROLLER_H
