@@ -4,6 +4,7 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "QMap_client.hpp"
 #include <iostream>
 #include <QDebug>
 #include <QFileInfo>
@@ -229,6 +230,12 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
 {
     std::cout << "MapControllerMP::loadOtherPlayerFromMap();" << std::endl;
     Q_UNUSED(display);
+    if(CatchChallenger::QMap_client::all_map.find(otherPlayer.presumed_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cout << "MapControllerMP::loadOtherPlayerFromMap(); not found otherPlayer.presumed_map" << std::endl;
+        return;
+    }
+    const CatchChallenger::QMap_client *presumed_map_pointer=CatchChallenger::QMap_client::all_map.at(otherPlayer.presumed_map);
     //remove the player tile if needed
     Tiled::ObjectGroup *currentGroup=otherPlayer.playerMapObject->objectGroup();
     if(currentGroup!=NULL)
@@ -239,7 +246,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
             if(otherPlayer.labelMapObject!=NULL)
                 ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(otherPlayer.labelMapObject);
         }
-        if(currentGroup!=otherPlayer.presumed_map->objectGroup)
+        if(currentGroup!=presumed_map_pointer->objectGroup)
             qDebug() << QStringLiteral("loadOtherPlayerFromMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
     }
 
@@ -270,11 +277,11 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
     if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
         centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));
 
-    if(ObjectGroupItem::objectGroupLink.find(otherPlayer.presumed_map->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+    if(ObjectGroupItem::objectGroupLink.find(presumed_map_pointer->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
     {
-        ObjectGroupItem::objectGroupLink.at(otherPlayer.presumed_map->objectGroup)->addObject(otherPlayer.playerMapObject);
+        ObjectGroupItem::objectGroupLink.at(presumed_map_pointer->objectGroup)->addObject(otherPlayer.playerMapObject);
         if(otherPlayer.labelMapObject!=NULL)
-            ObjectGroupItem::objectGroupLink.at(otherPlayer.presumed_map->objectGroup)->addObject(otherPlayer.labelMapObject);
+            ObjectGroupItem::objectGroupLink.at(presumed_map_pointer->objectGroup)->addObject(otherPlayer.labelMapObject);
         if(MapObjectItem::objectLink.find(otherPlayer.playerMapObject)==MapObjectItem::objectLink.cend())
             qDebug() << QStringLiteral("loadOtherPlayerFromMap(), MapObjectItem::objectLink don't have otherPlayer.playerMapObject");
         else
@@ -300,9 +307,9 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
     if(tempPlayer.monsterMapObject==nullptr)
         return;
     //monster
-    if(all_map.find(tempPlayer.current_monster_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(tempPlayer.current_monster_map)==CatchChallenger::QMap_client::all_map.cend())
     {
-        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::fromStdString(tempPlayer.current_monster_map));
+        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::number(tempPlayer.current_monster_map));
         return;
     }
     {
@@ -312,11 +319,11 @@ void MapControllerMP::loadOtherMonsterFromCurrentMap(const OtherPlayer &tempPlay
             if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(tempPlayer.monsterMapObject);
             //currentGroup->removeObject(monsterMapObject);
-            if(currentGroup!=all_map.at(tempPlayer.current_map)->objectGroup)
+            if(currentGroup!=CatchChallenger::QMap_client::all_map.at(tempPlayer.current_map)->objectGroup)
                 qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the monsterMapObject group is wrong: %1").arg(currentGroup->name());
         }
-        if(ObjectGroupItem::objectGroupLink.find(all_map.at(tempPlayer.current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-            ObjectGroupItem::objectGroupLink.at(all_map.at(tempPlayer.current_map)->objectGroup)->addObject(tempPlayer.monsterMapObject);
+        if(ObjectGroupItem::objectGroupLink.find(CatchChallenger::QMap_client::all_map.at(tempPlayer.current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(CatchChallenger::QMap_client::all_map.at(tempPlayer.current_map)->objectGroup)->addObject(tempPlayer.monsterMapObject);
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -356,16 +363,15 @@ void MapControllerMP::unloadOtherPlayerFromMap(const OtherPlayer &otherPlayer)
     }*/
 
     for (const auto &n : otherPlayer.mapUsed) {
-        std::string map = n;
-        if(mapUsedByOtherPlayer.find(map)!=mapUsedByOtherPlayer.cend())
+        CATCHCHALLENGER_TYPE_MAPID mapIndex = n;
+        if(mapUsedByOtherPlayer.find(mapIndex)!=mapUsedByOtherPlayer.cend())
         {
-            mapUsedByOtherPlayer[map]--;
-            if(mapUsedByOtherPlayer.at(map)==0)
-                mapUsedByOtherPlayer.erase(map);
+            mapUsedByOtherPlayer[mapIndex]--;
+            if(mapUsedByOtherPlayer.at(mapIndex)==0)
+                mapUsedByOtherPlayer.erase(mapIndex);
         }
         else
-            qDebug() << QStringLiteral("map not found into mapUsedByOtherPlayer for player: %1, map: %2")
-                        .arg(otherPlayer.informations.simplifiedId).arg(QString::fromStdString(map));
+            qDebug() << QStringLiteral("map not found into mapUsedByOtherPlayer for this player: map: %1").arg(QString::number(mapIndex));
     }
 }
 
@@ -385,10 +391,10 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
     }
 }
 
-bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+bool MapControllerMP::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     #if defined (ONLYMAPRENDER)
-    (void)mapId;
+    (void)mapIndex;
     (void)x;
     (void)y;
     (void)direction;
@@ -396,19 +402,19 @@ bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
     if(!mHaveTheDatapack || !player_informations_is_set)
     {
         DelayedTeleportTo tempItem;
-        tempItem.mapId=mapId;
+        tempItem.mapId=mapIndex;
         tempItem.x=x;
         tempItem.y=y;
         tempItem.direction=direction;
         delayedTeleportTo.push_back(tempItem);
         #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
+        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapIndex)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
         #endif
         return true;
     }
     client->teleportDone();
     MapVisualiserPlayer::unloadPlayerFromCurrentMap();
-    if(!MapVisualiserPlayer::teleportTo(mapId,x,y,direction))
+    if(!MapVisualiserPlayer::teleportTo(mapIndex,x,y,direction))
         return false;
 
     passMapIntoOld();
@@ -428,12 +434,12 @@ bool MapControllerMP::teleportTo(const uint32_t &mapId,const uint16_t &x,const u
 
 void MapControllerMP::finalPlayerStep(bool parseKey)
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
-    const Map_full * current_map_pointer=all_map.at(current_map);
+    const CatchChallenger::QMap_client * current_map_pointer=CatchChallenger::QMap_client::all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -455,7 +461,6 @@ void MapControllerMP::have_current_player_info(const CatchChallenger::Player_pri
         //qDebug() << "player information already set";
         return;
     }
-    this->player_informations=informations;
     player_informations_is_set=true;
 
     if(mHaveTheDatapack)
@@ -513,32 +518,33 @@ void MapControllerMP::reinject_signals()
                 qDebug() << QStringLiteral("Too hight delayedActions");
                 abort();
             }
-            switch(delayedActions.at(index).type)
+            const DelayedMultiplex &a=delayedActions.at(index);
+            switch(a.type)
             {
                 case DelayedType_Insert:
-                    if(insert_player_final(delayedActions.at(index).insert.player,
-                                           delayedActions.at(index).insert.mapId,delayedActions.at(index).insert.x,
-                                           delayedActions.at(index).insert.y,delayedActions.at(index).insert.direction,true))
+                    if(insert_player_final(a.insert.id,a.insert.player,
+                                           a.insert.mapId,a.insert.x,
+                                           a.insert.y,a.insert.direction,true))
                         delayedActions.erase(delayedActions.cbegin()+index);
                 break;
                 case DelayedType_Move:
-                    if(move_player_final(delayedActions.at(index).move.id,delayedActions.at(index).move.movement,true))
+                    if(move_player_final(a.move.id,a.move.movement,true))
                         delayedActions.erase(delayedActions.cbegin()+index);
                 break;
                 case DelayedType_Remove:
-                    if(remove_player_final(delayedActions.at(index).remove,true))
+                    if(remove_player_final(a.remove,true))
                         delayedActions.erase(delayedActions.cbegin()+index);
                 break;
                 case DelayedType_Reinsert_single:
-                    if(reinsert_player_final(delayedActions.at(index).reinsert_single.id,
-                                             delayedActions.at(index).reinsert_single.x,delayedActions.at(index).reinsert_single.y,
-                                             delayedActions.at(index).reinsert_single.direction,true))
+                    if(reinsert_player_final(a.reinsert_single.id,
+                                             a.reinsert_single.x,a.reinsert_single.y,
+                                             a.reinsert_single.direction,true))
                         delayedActions.erase(delayedActions.cbegin()+index);
                 break;
                 case DelayedType_Reinsert_full:
-                    if(full_reinsert_player_final(delayedActions.at(index).reinsert_full.id,
-                                                  delayedActions.at(index).reinsert_full.mapId,delayedActions.at(index).reinsert_full.x,
-                                                  delayedActions.at(index).reinsert_full.y,delayedActions.at(index).reinsert_full.direction,true))
+                    if(full_reinsert_player_final(a.reinsert_full.id,
+                                                  a.reinsert_full.mapId,a.reinsert_full.x,
+                                                  a.reinsert_full.y,a.reinsert_full.direction,true))
                         delayedActions.erase(delayedActions.cbegin()+index);
                 break;
                 case DelayedType_Drop_all:
@@ -591,10 +597,10 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 qDebug() << QStringLiteral("Too hight delayedActions");
                 abort();
             }
-            switch(delayedActions.at(index).type)
+            const DelayedMultiplex &a=delayedActions.at(index);
+            switch(a.type)
             {
                 case DelayedType_Insert:
-                if(delayedActions.at(index).insert.player.simplifiedId!=player_informations.public_informations.simplifiedId)
                 {
                     if(delayedActions.size()>delayedActions_size)
                     {
@@ -602,15 +608,13 @@ void MapControllerMP::reinject_signals_on_valid_map()
                         qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
                         abort();
                     }
-                    const std::string &mapPath=QFileInfo(QString::fromStdString(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(
-                                                             delayedActions.at(index).insert.mapId))).absoluteFilePath().toStdString();
                     if(delayedActions.size()>delayedActions_size)
                     {
                         size_t sizenow=delayedActions.size();
                         qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
                         abort();
                     }
-                    if(all_map.find(mapPath)!=all_map.cend())
+                    if(CatchChallenger::QMap_client::all_map.find(a.insert.mapId)!=CatchChallenger::QMap_client::all_map.cend())
                     {
                         if(delayedActions.size()>delayedActions_size)
                         {
@@ -618,9 +622,9 @@ void MapControllerMP::reinject_signals_on_valid_map()
                             qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
                             abort();
                         }
-                        if(insert_player_final(delayedActions.at(index).insert.player,delayedActions.at(index).insert.mapId,
-                                               delayedActions.at(index).insert.x,delayedActions.at(index).insert.y,
-                                               delayedActions.at(index).insert.direction,true))
+                        if(insert_player_final(a.insert.id,a.insert.player,a.insert.mapId,
+                                               a.insert.x,a.insert.y,
+                                               a.insert.direction,true))
                         {
                             if(delayedActions.size()>delayedActions_size)
                             {
@@ -642,7 +646,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                 }
                 break;
                 case DelayedType_Move:
-                    if(otherPlayerList.find(delayedActions.at(index).move.id)!=otherPlayerList.cend())
+                    if(otherPlayerList.find(a.move.id)!=otherPlayerList.cend())
                     {
                         if(delayedActions.size()>delayedActions_size)
                         {
@@ -650,7 +654,7 @@ void MapControllerMP::reinject_signals_on_valid_map()
                             qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): can't grow delayedActions") << sizenow;
                             abort();
                         }
-                        if(move_player_final(delayedActions.at(index).move.id,delayedActions.at(index).move.movement,true))
+                        if(move_player_final(a.move.id,a.move.movement,true))
                         {
                             if(delayedActions.size()>delayedActions_size)
                             {
@@ -689,13 +693,13 @@ void MapControllerMP::reinject_signals_on_valid_map()
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals_on_valid_map(): should not pass here because all is not previously loaded");
 }
 
-bool MapControllerMP::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
+bool MapControllerMP::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
     if(!mHaveTheDatapack)
         return false;
     if(!player_informations_is_set)
         return false;
-    const bool &result=MapVisualiserPlayer::asyncMapLoaded(fileName,tempMapObject);
+    const bool &result=MapVisualiserPlayer::asyncMapLoaded(mapIndex,tempMapObject);
     reinject_signals_on_valid_map();
     return result;
 }
@@ -719,7 +723,12 @@ void MapControllerMP::doMoveOtherAnimation()
 
 void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
 {
-    const Map_full * current_map_pointer=otherPlayer.presumed_map;
+    if(CatchChallenger::QMap_client::all_map.find(otherPlayer.presumed_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
+        return;
+    }
+    const CatchChallenger::QMap_client * current_map_pointer=CatchChallenger::QMap_client::all_map.at(otherPlayer.presumed_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -731,15 +740,19 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
         //locate the right layer for monster
         if(otherPlayer.monsterMapObject!=NULL)
         {
-            const Map_full * current_monster_map_pointer=all_map.at(otherPlayer.current_monster_map);
+            if(CatchChallenger::QMap_client::all_map.find(otherPlayer.current_monster_map)==CatchChallenger::QMap_client::all_map.cend())
+            {
+                qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
+                return;
+            }
+            const CatchChallenger::QMap_client * current_monster_map_pointer=CatchChallenger::QMap_client::all_map.at(otherPlayer.current_monster_map);
             if(current_monster_map_pointer==NULL)
             {
                 qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
                 return;
             }
             {
-                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
-                        CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,otherPlayer.monster_x,otherPlayer.monster_y);
+                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,otherPlayer.monster_x,otherPlayer.monster_y);
                 otherPlayer.monsterMapObject->setVisible(false);
                 unsigned int index=0;
                 while(index<monstersCollisionValue.walkOn.size())
@@ -763,8 +776,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
             }
         }
         //locate the right layer
-        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
-                CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,otherPlayer.presumed_x,otherPlayer.presumed_y);
+        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,otherPlayer.presumed_x,otherPlayer.presumed_y);
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
@@ -829,7 +841,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
 }
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
-void MapControllerMP::destroyMap(Map_full *map)
+void MapControllerMP::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //remove the other player
     std::unordered_map<uint16_t,OtherPlayer> otherPlayerList2=otherPlayerList;
@@ -965,7 +977,7 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * temp
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
             MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
+            pathFinding.searchPath(CatchChallenger::QMap_client::all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
             if(pathList.empty())
             {
                 while(pathList.size()>1)
@@ -996,7 +1008,7 @@ bool MapControllerMP::nextPathStep()//true if have step
     return false;
 }
 
-void MapControllerMP::pathFindingResult(const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path, const PathFinding::PathFinding_status &status)
+void MapControllerMP::pathFindingResult(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const std::vector<std::pair<CatchChallenger::Orientation, uint8_t> > &path, const PathFinding::PathFinding_status &status)
 {
     switch (status) {
     case PathFinding::PathFinding_status_OK:
