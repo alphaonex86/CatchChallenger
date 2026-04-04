@@ -671,7 +671,7 @@ void MapVisualiserPlayer::moveStepSlot()
         moveTimer.start();
 }
 
-bool MapVisualiserPlayer::asyncMapLoaded(const std::string &fileName,Map_full * tempMapObject)
+bool MapVisualiserPlayer::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
     if(itemOnMap==nullptr)
     {

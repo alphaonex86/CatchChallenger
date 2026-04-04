@@ -52,6 +52,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
         if(!inReplayMode)
         {
             DelayedInsert tempItem;
+            tempItem.id=simplifiedIndex;
             tempItem.player=player;
             tempItem.mapId=mapId;
             tempItem.x=x;
@@ -154,6 +155,7 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
             if(!inReplayMode)
             {
                 DelayedInsert tempItem;
+                tempItem.id=simplifiedIndex;
                 tempItem.player=player;
                 tempItem.mapId=mapId;
                 tempItem.x=x;

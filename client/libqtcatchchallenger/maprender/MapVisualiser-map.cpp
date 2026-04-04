@@ -37,7 +37,7 @@ bool MapVisualiser::rectTouch(QRect r1,QRect r2)
 }
 
 /// \warning all ObjectGroupItem destroyed into removeMap()
-void MapVisualiser::destroyMap(Map_full *map)
+void MapVisualiser::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //logicalMap.plantList, delete plants useless, destroyed into removeMap()
     //logicalMap.botsDisplay, delete bot useless, destroyed into removeMap()

@@ -103,6 +103,7 @@ private:
     //the delayed action
     struct DelayedInsert
     {
+        SIMPLIFIED_PLAYER_ID_FOR_MAP id;
         CatchChallenger::Player_public_informations player;
         CATCHCHALLENGER_TYPE_MAPID mapId;
         COORD_TYPE x;
