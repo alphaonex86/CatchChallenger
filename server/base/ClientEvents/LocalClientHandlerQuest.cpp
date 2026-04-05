@@ -1,7 +1,7 @@
 #include "../Client.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../base/PreparedDBQuery.hpp"
+#include "../PreparedDBQuery.hpp"
 #include "../BaseServer/BaseServer.hpp"
 #include "../GlobalServerData.hpp"
 

@@ -9,7 +9,6 @@ include(libqt.pri)
 include(libqtheader.pri)
 include(../libcatchchallenger/lib.pri)
 include(../libcatchchallenger/libheader.pri)
-include(tiled.pri)
 include(maprender/render.pri)
 include(maprender/renderheader.pri)
 contains(DEFINES, CATCHCHALLENGER_SOLO) {
