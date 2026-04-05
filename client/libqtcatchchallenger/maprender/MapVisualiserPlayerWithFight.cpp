@@ -4,7 +4,7 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
-#include "../qtmaprender/TemporaryTile.hpp"
+#include "TemporaryTile.hpp"
 
 #include <iostream>
 #include <QDebug>

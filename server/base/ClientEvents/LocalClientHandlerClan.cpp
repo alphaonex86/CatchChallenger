@@ -286,7 +286,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                     {
 
                         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                        #error check if same clan too
+                        //#error check if same clan too
                         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
                         #elif CATCHCHALLENGER_DB_BLACKHOLE
                         #elif CATCHCHALLENGER_DB_FILE

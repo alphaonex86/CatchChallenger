@@ -1,5 +1,5 @@
 #include "MapObjectItem.hpp"
-#include <libtiled/objectgroup.h>
+#include <tiled/objectgroup.h>
 
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
