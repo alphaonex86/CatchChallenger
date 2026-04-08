@@ -1029,7 +1029,7 @@ void Api_protocol::sellObject(const uint16_t &objectId,const uint32_t &quantity,
     packOutcommingQuery(0x89,queryNumber(),buffer,sizeof(buffer));
 }
 
-/*void Api_protocol::getFactoryList(const uint16_t &factoryId)
+void Api_protocol::getFactoryList()
 {
     if(!is_logged)
     {
@@ -1041,13 +1041,10 @@ void Api_protocol::sellObject(const uint16_t &objectId,const uint32_t &quantity,
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2];
-    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
-    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
-    packOutcommingQuery(0x8A,queryNumber(),buffer,sizeof(buffer));
+    packOutcommingQuery(0x8A,queryNumber(),nullptr,0);
 }
 
-void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Api_protocol::buyFactoryProduct(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -1059,19 +1056,17 @@ void Api_protocol::buyFactoryProduct(const uint16_t &factoryId,const uint16_t &o
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2+2+4+4];
-    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
-    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
+    char buffer[2+4+4];
     const uint16_t &objectIdLittleEndian=htole16(objectId);
-    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    memcpy(buffer,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
     const uint32_t &quantityLittleEndian=htole32(quantity);
-    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    memcpy(buffer+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
     const uint32_t &priceLittleEndian=htole32(price);
-    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    memcpy(buffer+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
     packOutcommingQuery(0x8B,queryNumber(),buffer,sizeof(buffer));
 }
 
-void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t &objectId,const uint32_t &quantity,const uint32_t &price)
+void Api_protocol::sellFactoryResource(const CATCHCHALLENGER_TYPE_ITEM &objectId,const uint32_t &quantity,const uint32_t &price)
 {
     if(!is_logged)
     {
@@ -1083,17 +1078,15 @@ void Api_protocol::sellFactoryResource(const uint16_t &factoryId,const uint16_t 
         std::cerr << "character not selected, line: " << __FILE__ << ": " << __LINE__ << std::endl;
         return;
     }
-    char buffer[2+2+4+4];
-    const uint16_t &factoryIdLittleEndian=htole16(factoryId);
-    memcpy(buffer,&factoryIdLittleEndian,sizeof(factoryIdLittleEndian));
+    char buffer[2+4+4];
     const uint16_t &objectIdLittleEndian=htole16(objectId);
-    memcpy(buffer+2,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
+    memcpy(buffer,&objectIdLittleEndian,sizeof(objectIdLittleEndian));
     const uint32_t &quantityLittleEndian=htole32(quantity);
-    memcpy(buffer+2+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
+    memcpy(buffer+2,&quantityLittleEndian,sizeof(quantityLittleEndian));
     const uint32_t &priceLittleEndian=htole32(price);
-    memcpy(buffer+2+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
+    memcpy(buffer+2+4,&priceLittleEndian,sizeof(priceLittleEndian));
     packOutcommingQuery(0x8C,queryNumber(),buffer,sizeof(buffer));
-}*/
+}
 
 void Api_protocol::sendTryEscape()
 {

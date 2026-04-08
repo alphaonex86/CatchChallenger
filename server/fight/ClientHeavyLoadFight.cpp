@@ -28,11 +28,11 @@ void Client::loadMonsters()
     //don't filter by place, dispatched in internal, market volume should be low
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(static_cast<Client *>(this),&Client::loadMonsters_static,{std::to_string(character_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.asyncRead(static_cast<Client *>(this),&Client::loadMonsters_static,{std::to_string(character_id_db)});
     if(callback==NULL)
     {
         std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_select_monsters_by_player_id.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
-        characterIsRightFinalStep();
+        characterIsRightSendData();
         return;
     }
     else
@@ -73,9 +73,9 @@ void Client::loadMonsters_return()
         {
             public_and_private_informations.encyclopedia_monster[playerMonster.monster/8]|=(1<<(7-playerMonster.monster%8));
             if(place==0x01)
-                public_and_private_informations.playerMonster.push_back(playerMonster);
+                public_and_private_informations.monsters.push_back(playerMonster);
             else
-                public_and_private_informations.warehouse_playerMonster.push_back(playerMonster);
+                public_and_private_informations.warehouse_monsters.push_back(playerMonster);
         }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -83,7 +83,7 @@ void Client::loadMonsters_return()
     #else
     #error Define what do here
     #endif
-    characterIsRightSendData();
+    loadCharacterByMap();
 }
 
 PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)

@@ -58,8 +58,10 @@ void MapObjectItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget
         // Set the translate flag
         translate = true;
     }
-    mRendererList.at(mMapObject->objectGroup())->drawMapObject(p, mMapObject,
-                             color.isValid() ? color : Qt::transparent);
+    Tiled::MapObjectColors colors;
+    colors.main = color.isValid() ? color : Qt::transparent;
+    colors.fill = colors.main;
+    mRendererList.at(mMapObject->objectGroup())->drawMapObject(p, mMapObject, colors);
     if(translate){
         // If the painter was translated, we need to de-translate
         p->translate(-xx,-yy);

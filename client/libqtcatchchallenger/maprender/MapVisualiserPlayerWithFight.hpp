@@ -19,7 +19,7 @@ public:
 protected slots:
     virtual void keyPressParse();
     virtual bool haveStopTileAction();
-    virtual bool canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y, const bool &checkCollision);
+    virtual bool canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const bool &checkCollision);
     virtual void resetAll();
 protected:
     char * botAlreadyBeaten;

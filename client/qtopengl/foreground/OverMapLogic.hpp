@@ -2,15 +2,15 @@
 #define OVERMAPLOGIC_HPP
 
 #include "OverMap.hpp"
-#include "../../qtmaprender/Map_client.hpp"
 #include "../DisplayStructures.hpp"
-#include "../../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include <QAudioOutput>
 #include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
 #endif
 #include <QListWidgetItem>
+#include <QElapsedTimer>
 
 class CCMap;
 class ConnexionManager;
@@ -39,11 +39,11 @@ public:
     {
         uint16_t seedItemId;
         uint8_t x,y;
-        std::string map;
+        CATCHCHALLENGER_TYPE_MAPID map;
     };
     struct ClientPlantInCollecting
     {
-        std::string map;
+        CATCHCHALLENGER_TYPE_MAPID map;
         uint8_t x,y;
         uint8_t plant_id;
         uint16_t seconds_to_mature;
@@ -99,12 +99,12 @@ public slots:
     void pathFindingNotFound();
     void repelEffectIsOver();
     void teleportConditionNotRespected(const std::string &text);
-    void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
-    void actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    void stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    bool actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
-    int32_t havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const;
+    bool actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    int32_t havePlant(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y) const;
     void errorWithTheCurrentMap();
     void currentMapLoaded();
     void setIG_dialog(QString text,QString name=QString());
@@ -124,7 +124,7 @@ public slots:
     void updateQueryList();
     void updateTheTurtle();
     void detectSlowDown();
-    bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    bool stopped_in_front_of_check_bot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
 
     //clan
     void clanActionSuccess(const uint32_t &clanId);
@@ -171,7 +171,7 @@ public slots:
     //plant
     void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y);
-    void cancelAllPlantQuery(const std::string map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
+    void cancelAllPlantQuery(const CATCHCHALLENGER_TYPE_MAPID map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     //crafting -> go to inventory
@@ -223,8 +223,8 @@ public slots:
     */
     //fight
     void botFight(const uint16_t &fightId);
-    void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
-    void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
 signals:
     void error(const std::string &error);
     //plant, can do action only if the previous is finish
@@ -250,7 +250,7 @@ private:
 
     QTimer checkQueryTime;
     int lastReplyTimeValue;
-    QTime lastReplyTimeSince;
+    QElapsedTimer lastReplyTimeSince;
     uint32_t worseQueryTime;
     uint8_t lastStepUsed;
 
@@ -258,9 +258,9 @@ private:
     std::vector<ClientPlantInCollecting> plant_collect_in_waiting;
 
     std::vector<std::string> add_to_inventoryGainList;
-    std::vector<QTime> add_to_inventoryGainTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainTime;
     std::vector<std::string> add_to_inventoryGainExtraList;
-    std::vector<QTime> add_to_inventoryGainExtraTime;
+    std::vector<QElapsedTimer> add_to_inventoryGainExtraTime;
 private:
     std::string lastPlaceDisplayed;
     std::string currentAmbianceFile;

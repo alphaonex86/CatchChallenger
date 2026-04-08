@@ -17,7 +17,7 @@ SOURCES += $$PWD/qt/QtServer.cpp \
     $$PWD/qt/QFakeSocket.cpp \
     $$PWD/qt/QSslServer.cpp \
     $$PWD/qt/QtClient.cpp \
-    $$PWD/qt/QtClientMapManagement.cpp \
+    $$PWD/qt/QtClientWithMap.cpp \
     $$PWD/qt/time/QtPlayerUpdater.cpp \
     $$PWD/qt/time/QtTimeRangeEventScanBase.cpp \
     $$PWD/qt/time/QtTimerEvents.cpp \
@@ -31,7 +31,7 @@ HEADERS += $$PWD/qt/QtServer.hpp \
     $$PWD/qt/QFakeSocket.hpp \
     $$PWD/qt/QSslServer.hpp \
     $$PWD/qt/QtClient.hpp \
-    $$PWD/qt/QtClientMapManagement.hpp \
+    $$PWD/qt/QtClientWithMap.hpp \
     $$PWD/qt/time/QtPlayerUpdater.hpp \
     $$PWD/qt/QtServerStructures.hpp \
     $$PWD/qt/time/QtTimeRangeEventScanBase.hpp \

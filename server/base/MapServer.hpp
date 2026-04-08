@@ -4,7 +4,7 @@
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
 #endif
-#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/GeneralStructures.hpp"
 #include "../crafting/MapServerCrafting.hpp"
 #include "VariableServer.hpp"

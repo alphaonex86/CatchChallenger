@@ -1,0 +1,23 @@
+QMAKE_CXX.QT_COMPILER_STDCXX = 201703L
+QMAKE_CXX.QMAKE_GCC_MAJOR_VERSION = 15
+QMAKE_CXX.QMAKE_GCC_MINOR_VERSION = 2
+QMAKE_CXX.QMAKE_GCC_PATCH_VERSION = 1
+QMAKE_CXX.COMPILER_MACROS = \
+    QT_COMPILER_STDCXX \
+    QMAKE_GCC_MAJOR_VERSION \
+    QMAKE_GCC_MINOR_VERSION \
+    QMAKE_GCC_PATCH_VERSION
+QMAKE_CXX.INCDIRS = \
+    /usr/lib/gcc/x86_64-pc-linux-gnu/15/include/g++-v15 \
+    /usr/lib/gcc/x86_64-pc-linux-gnu/15/include/g++-v15/x86_64-pc-linux-gnu \
+    /usr/lib/gcc/x86_64-pc-linux-gnu/15/include/g++-v15/backward \
+    /usr/lib/gcc/x86_64-pc-linux-gnu/15/include \
+    /usr/local/include \
+    /usr/include
+QMAKE_CXX.LIBDIRS = \
+    /usr/lib/gcc/x86_64-pc-linux-gnu/15 \
+    /usr/lib64 \
+    /lib64 \
+    /usr/x86_64-pc-linux-gnu/lib \
+    /usr/lib \
+    /lib

@@ -4,6 +4,7 @@
 #include "../QGraphicsPixmapItemClick.hpp"
 #include "../background/CCMap.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../above/inventory/Inventory.hpp"
 #include "../above/inventory/Plant.hpp"
 #include "../above/inventory/Crafting.hpp"
@@ -173,61 +174,31 @@ void OverMapLogic::teleportConditionNotRespected(const std::string &text)
     showTip(text);
 }
 
-void OverMapLogic::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+void OverMapLogic::stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    if(stopped_in_front_of_check_bot(map,x,y))
+    if(stopped_in_front_of_check_bot(mapIndex,x,y))
         return;
-    else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
+    const CatchChallenger::CommonMap &map=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    if(CatchChallenger::MoveOnTheMap::isDirt(map,x,y))
     {
-        unsigned int index=0;
-        while(index<map->plantList.size())
+        const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+        const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
+        auto mapIt=playerInformations.mapData.find(mapIndex);
+        if(mapIt!=playerInformations.mapData.cend())
         {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
+            auto plantIt=mapIt->second.plants.find(pos);
+            if(plantIt!=mapIt->second.plants.cend())
             {
                 uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map->plantList.at(index)->mature_at<=current_time)
+                if(plantIt->second.mature_at<=current_time)
                     showTip(tr("To recolt the plant press <i>Enter</i>").toStdString());
                 else
                     showTip(tr("This plant is growing and can't be collected").toStdString());
                 return;
             }
-            index++;
         }
         showTip(tr("To plant a seed press <i>Enter</i>").toStdString());
         return;
-    }
-    else
-    {
-        if(!CatchChallenger::MoveOnTheMap::isWalkable(*map,x,y))
-        {
-            //check bot with border
-            CatchChallenger::CommonMap * current_map=map;
-            switch(ccmap->mapController.getDirection())
-            {
-                case CatchChallenger::Direction_look_at_left:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
-                break;
-                case CatchChallenger::Direction_look_at_right:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
-                break;
-                case CatchChallenger::Direction_look_at_top:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
-                break;
-                case CatchChallenger::Direction_look_at_bottom:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
-                break;
-                default:
-                break;
-            }
-        }
     }
 }
 
@@ -286,14 +257,7 @@ void OverMapLogic::connectAllSignals()
         abort();
     if(!connect(this,&OverMapLogic::collectMaturePlant,   connexionManager->client,&CatchChallenger::Api_client_real::collectMaturePlant))
         abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtinsert_plant,   this,&OverMapLogic::insert_plant))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtremove_plant,   this,&OverMapLogic::remove_plant))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtseed_planted,   this,&OverMapLogic::seed_planted))
-        abort();
-    if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&OverMapLogic::plant_collected))
-        abort();
+    //plant signals dropped, plant is now globally visible and sync
     //crafting
     /*if(!connect(connexionManager->client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&OverMapLogic::recipeUsed))
         abort();*/
@@ -366,38 +330,38 @@ void OverMapLogic::selectObject(const ObjectType &objectType)
 {
 }
 
-void OverMapLogic::actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+void OverMapLogic::actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
     setIG_dialog(QString());
-    if(actionOnCheckBot(map,x,y))
+    if(actionOnCheckBot(mapIndex,x,y))
         return;
-    else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
+    const CatchChallenger::CommonMap &map=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    if(CatchChallenger::MoveOnTheMap::isDirt(map,x,y))
     {
-        /* -1 == not found */
-        int index=havePlant(map,x,y);
-        if(index>=0)
+        const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+        const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
+        auto mapIt=playerInformations.mapData.find(mapIndex);
+        bool hasPlant=false;
+        if(mapIt!=playerInformations.mapData.cend())
         {
-            uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-            if(map->plantList.at(index)->mature_at<=current_time)
+            auto plantIt=mapIt->second.plants.find(pos);
+            if(plantIt!=mapIt->second.plants.cend())
             {
-                if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file)==
-                        QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-                    return;
-                const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
-                if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-                    return;
-                emit collectMaturePlant();
-
-                connexionManager->client->remove_plant(ccmap->mapController.getMap(map->map_file)->logicalMap.id,x,y);
-                connexionManager->client->plant_collected(CatchChallenger::Plant_collect::Plant_collect_correctly_collected);
+                hasPlant=true;
+                uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
+                if(plantIt->second.mature_at<=current_time)
+                {
+                    //plant is now globally visible and sync
+                    emit collectMaturePlant();
+                }
+                else
+                    showTip(tr("This plant is growing and can't be collected").toStdString());
             }
-            else
-                showTip(tr("This plant is growing and can't be collected").toStdString());
         }
-        else
+        if(!hasPlant)
         {
             SeedInWaiting seedInWaiting;
-            seedInWaiting.map=map->map_file;
+            seedInWaiting.map=mapIndex;
             seedInWaiting.x=x;
             seedInWaiting.y=y;
             seed_in_waiting.push_back(seedInWaiting);
@@ -406,46 +370,18 @@ void OverMapLogic::actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t
         }
         return;
     }
-    else if(map->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=map->itemsOnMap.cend())
+    else if(map.items.find(std::pair<uint8_t,uint8_t>(x,y))!=map.items.cend())
     {
         CatchChallenger::Player_private_and_public_informations &informations=connexionManager->client->get_player_informations();
-        const CatchChallenger::Map_client::ItemOnMapForClient &item=map->itemsOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
-        if(informations.itemOnMap.find(item.indexOfItemOnMap)==informations.itemOnMap.cend())
+        const CatchChallenger::ItemOnMap &item=map.items.at(std::pair<uint8_t,uint8_t>(x,y));
+        const std::pair<uint8_t,uint8_t> pos(x,y);
+        if(informations.mapData.find(mapIndex)==informations.mapData.cend() ||
+           informations.mapData.at(mapIndex).items.find(pos)==informations.mapData.at(mapIndex).items.cend())
         {
             if(!item.infinite)
-                informations.itemOnMap.insert(item.indexOfItemOnMap);
+                informations.mapData[mapIndex].items.insert(pos);
             add_to_inventory(item.item);
             connexionManager->client->takeAnObjectOnMap();
-        }
-    }
-    else
-    {
-        //check bot with border
-        CatchChallenger::CommonMap * current_map=map;
-        switch(ccmap->mapController.getDirection())
-        {
-            case CatchChallenger::Direction_look_at_left:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
-                    actionOnCheckBot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_right:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
-                    actionOnCheckBot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_top:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
-                    actionOnCheckBot(map,x,y);
-            break;
-            case CatchChallenger::Direction_look_at_bottom:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
-                    actionOnCheckBot(map,x,y);
-            break;
-            default:
-            break;
         }
     }
 }
@@ -455,20 +391,16 @@ void OverMapLogic::actionOnNothing()
     setIG_dialog(QString());
 }
 
-int32_t OverMapLogic::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const
+int32_t OverMapLogic::havePlant(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y) const
 {
-    if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file)==
-            QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-        return -1;
-    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
-    if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-        return -1;
-    unsigned int index=0;
-    while(index<map->plantList.size())
+    //isDirt() already checked by caller, check if plant exists at this position in mapData
+    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
+    auto mapIt=playerInformations.mapData.find(mapIndex);
+    if(mapIt!=playerInformations.mapData.cend())
     {
-        if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-            return index;
-        index++;
+        const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
+        if(mapIt->second.plants.find(pos)!=mapIt->second.plants.cend())
+            return 0;
     }
     return -1;
 }
@@ -799,11 +731,11 @@ void OverMapLogic::playerBack()
 
 void OverMapLogic::currentMapLoaded()
 {
-    qDebug() << "OverMapLogic::currentMapLoaded(): map: " << QString::fromStdString(ccmap->mapController.currentMap())
+    qDebug() << "OverMapLogic::currentMapLoaded(): map: " << ccmap->mapController.currentMap()
              << " with type: " << QString::fromStdString(ccmap->mapController.currentMapType());
     //name
     {
-        Map_full *mapFull=ccmap->mapController.currentMapFull();
+        CatchChallenger::QMap_client *mapFull=ccmap->mapController.currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
             if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=
@@ -832,7 +764,7 @@ void OverMapLogic::currentMapLoaded()
         if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
             soundList.push_back(backgroundsound);
         //zone sound
-        Map_full *mapFull=ccmap->mapController.currentMapFull();
+        CatchChallenger::QMap_client *mapFull=ccmap->mapController.currentMapFull();
         if(!mapFull->zone.empty())
             if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
             {
@@ -971,7 +903,7 @@ void OverMapLogic::hideTip()
 void OverMapLogic::showPlace(const std::string &place)
 {
     add_to_inventoryGainExtraList.push_back(place);
-    add_to_inventoryGainExtraTime.push_back(QTime::currentTime());
+    { QElapsedTimer t; t.start(); add_to_inventoryGainExtraTime.push_back(t); }
     //ui->gain->setVisible(true);
     composeAndDisplayGain();
     gain_timeout.start();
@@ -1107,22 +1039,32 @@ void OverMapLogic::updateTheTurtle()
     labelSlow->hide();
 }
 
-bool OverMapLogic::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+bool OverMapLogic::stopped_in_front_of_check_bot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
-        return false;
-    showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());
-    return true;
+    /*    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())                                                                                                 
+              return false;                                                                                                                                                     
+          showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());                                                                                      
+          return true;*/
+    (void)mapIndex;
+    (void)x;
+    (void)y;
+    // Bot detection is handled by the maprender layer
+    return false;
 }
 
-bool OverMapLogic::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+bool OverMapLogic::actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
-        return false;
-    actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));
-    isInQuest=false;
-    goToBotStep(1);
-    return true;
+    /*          if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())                                                                                                 
+              return false;                                                                                                                                                     
+          actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));                                                                                                              
+          isInQuest=false;                                                                                                                                                      
+          goToBotStep(1);                                                                                                                                                       
+         return true;*/
+    (void)mapIndex;
+    (void)x;
+    (void)y;
+    // Bot detection is handled by the maprender layer
+    return false;
 }
 
 /*void OverMapLogic::on_clanActionLeave_clicked()
@@ -1430,7 +1372,7 @@ void OverMapLogic::add_to_inventory(const std::unordered_map<uint16_t,uint32_t> 
         if(objects.size()>=16)
             objects.push_back("...");
         add_to_inventoryGainList.push_back(stringimplode(objects,", "));
-        add_to_inventoryGainTime.push_back(QTime::currentTime());
+        { QElapsedTimer t; t.start(); add_to_inventoryGainTime.push_back(t); }
         OverMapLogic::showGain();
     }
     else
@@ -1596,9 +1538,9 @@ void OverMapLogic::botFight(const uint16_t &fightId)
     std::cerr << "OverMapLogic::botFight " << fightId << std::endl;
 }
 
-void OverMapLogic::wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
+void OverMapLogic::wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    (void)map;
+    (void)mapIndex;
     (void)x;
     (void)y;
     std::cerr << "OverMapLogic::wildFightCollision" << std::endl;
@@ -1608,9 +1550,9 @@ void OverMapLogic::wildFightCollision(CatchChallenger::Map_client *map, const ui
     emit setForeground(Battle::battle);
 }
 
-void OverMapLogic::botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
+void OverMapLogic::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    (void)map;
+    (void)mapIndex;
     (void)x;
     (void)y;
     std::cerr << "OverMapLogic::botFightCollision" << std::endl;
@@ -1638,27 +1580,35 @@ void OverMapLogic::cityCapture(const uint32_t &remainingTime,const uint8_t &type
 
 void OverMapLogic::insert_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y, const uint8_t &plant_id, const uint16_t &seconds_to_mature)
 {
-    Q_UNUSED(plant_id);
-    Q_UNUSED(seconds_to_mature);
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_mapList().size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        qDebug() << "MapController::insert_plant() mapId greater than mapList.size()";
         return;
     }
-    cancelAllPlantQuery(ccmap->mapController.mapIdToString(mapId),x,y);
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
+    CatchChallenger::PlayerPlant &plant=playerInformations.mapData[mapId].plants[pos];
+    plant.plant=plant_id;
+    plant.mature_at=QDateTime::currentMSecsSinceEpoch()/1000+seconds_to_mature;
+    cancelAllPlantQuery(mapId,x,y);
 }
 
 void OverMapLogic::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
 {
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
+    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_mapList().size())
     {
-        qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
+        qDebug() << "MapController::remove_plant() mapId greater than mapList.size()";
         return;
     }
-    cancelAllPlantQuery(ccmap->mapController.mapIdToString(mapId),x,y);
+    CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations();
+    const std::pair<COORD_TYPE,COORD_TYPE> pos(x,y);
+    auto mapIt=playerInformations.mapData.find(mapId);
+    if(mapIt!=playerInformations.mapData.cend())
+        mapIt->second.plants.erase(pos);
+    cancelAllPlantQuery(mapId,x,y);
 }
 
-void OverMapLogic::cancelAllPlantQuery(const std::string map,const uint8_t x,const uint8_t y)
+void OverMapLogic::cancelAllPlantQuery(const CATCHCHALLENGER_TYPE_MAPID map,const uint8_t x,const uint8_t y)
 {
     unsigned int index;
     index=0;
@@ -1667,7 +1617,7 @@ void OverMapLogic::cancelAllPlantQuery(const std::string map,const uint8_t x,con
         const SeedInWaiting &seedInWaiting=seed_in_waiting.at(index);
         if(seedInWaiting.map==map && seedInWaiting.x==x && seedInWaiting.y==y)
         {
-            seed_in_waiting[index].map=std::string();
+            seed_in_waiting[index].map=0;
             seed_in_waiting[index].x=0;
             seed_in_waiting[index].y=0;
         }
@@ -1679,7 +1629,7 @@ void OverMapLogic::cancelAllPlantQuery(const std::string map,const uint8_t x,con
         const ClientPlantInCollecting &clientPlantInCollecting=plant_collect_in_waiting.at(index);
         if(clientPlantInCollecting.map==map && clientPlantInCollecting.x==x && clientPlantInCollecting.y==y)
         {
-            plant_collect_in_waiting[index].map=std::string();
+            plant_collect_in_waiting[index].map=0;
             plant_collect_in_waiting[index].x=0;
             plant_collect_in_waiting[index].y=0;
         }
@@ -1710,7 +1660,7 @@ void OverMapLogic::seed_planted(const bool &ok)
     }
     else
     {
-        if(!seed_in_waiting.front().map.empty())
+        if(seed_in_waiting.front().map!=0)
         {
             ccmap->mapController.remove_plant_full(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
             cancelAllPlantQuery(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);

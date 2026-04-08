@@ -244,7 +244,7 @@ public:
     const std::unordered_map<std::string, std::unordered_map<std::pair<uint8_t, uint8_t>, uint16_t> > &get_plantOnMap() const;
     const std::unordered_map<uint16_t,PlantIndexContent> &get_plantIndexOfOnMap() const;*/
 protected:
-    std::vector<CatchChallenger::Map_client> mapList;
+    std::vector<CatchChallenger::CommonMap> mapList;
     std::unordered_map<uint8_t,TypeExtra> typeExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra> monsterExtra;
     std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,MonsterExtra::Buff> monsterBuffsExtra;
@@ -280,7 +280,8 @@ public:
     void parseDatapackMainSub(const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::string &cacheHashMain=std::string(), const std::string &cacheHashBase=std::string());
     static CCColor namedColorToCCColor(const std::string &str,bool *ok);
     static std::vector<std::string> listFolderNotRecursive(const std::string& folder,const std::string& suffix);
-    const CatchChallenger::Map_client &getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    const CatchChallenger::CommonMap &getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
+    const std::vector<CatchChallenger::CommonMap> &get_mapList() const;
 
     bool canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport=true);
     bool teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y);

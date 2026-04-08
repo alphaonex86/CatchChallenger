@@ -6,7 +6,7 @@
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
 #include "../../libqtcatchchallenger/Ultimate.hpp"
-#include "../../../general/base/DatapackGeneralLoader.hpp"
+#include "../../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/GeneralVariable.hpp"
 #include <QDesktopServices>

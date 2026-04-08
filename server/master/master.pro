@@ -59,28 +59,26 @@ SOURCES += \
     ../../general/base/ProtocolParsingOutput.cpp \
     ../../general/base/FacilityLibGeneral.cpp \
     ../../general/base/CommonDatapack.cpp \
-    ../../general/base/DatapackGeneralLoader.cpp \
-    ../../general/base/DatapackGeneralLoaderCrafting.cpp \
-    ../../general/base/DatapackGeneralLoaderIndustry.cpp \
-    ../../general/base/DatapackGeneralLoaderItem.cpp \
-    ../../general/base/DatapackGeneralLoaderMap.cpp \
-    ../../general/base/DatapackGeneralLoaderMonsterDrop.cpp \
-    ../../general/base/DatapackGeneralLoaderPlant.cpp \
-    ../../general/base/DatapackGeneralLoaderQuest.cpp \
-    ../../general/base/DatapackGeneralLoaderReputation.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderMap.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderMonsterDrop.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp \
     ../../general/fight/CommonFightEngineBase.cpp \
     ../../general/fight/FightLoader.cpp \
     ../../general/fight/FightLoaderBuff.cpp \
-    ../../general/fight/FightLoaderFight.cpp \
     ../../general/fight/FightLoaderMonster.cpp \
     ../../general/fight/FightLoaderSkill.cpp \
     ../../general/base/CommonSettingsCommon.cpp \
     ../../general/base/cpp11addition.cpp \
     ../../general/base/cpp11additionstringtointc.cpp \
     ../../general/base/cpp11additionstringtointcpp.cpp \
-    ../base/BaseServerMasterLoadDictionary.cpp \
+    ../base/BaseServer/BaseServerMasterLoadDictionary.cpp \
     ../base/DatabaseBase.cpp \
-    ../base/BaseServerMasterSendDatapack.cpp \
+    ../base/BaseServer/BaseServerMasterSendDatapack.cpp \
     ../base/DatabaseFunction.cpp \
     ../base/SqlFunction.cpp \
     ../base/TinyXMLSettings.cpp \
@@ -109,7 +107,7 @@ HEADERS += \
     ../../general/base/ProtocolParsingCheck.h \
     ../../general/base/FacilityLibGeneral.h \
     ../../general/base/CommonDatapack.h \
-    ../../general/base/DatapackGeneralLoader.h \
+    ../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.h \
     ../../general/fight/CommonFightEngineBase.h \
     ../../general/base/GeneralStructures.h \
     ../../general/base/GeneralType.h \
@@ -117,11 +115,11 @@ HEADERS += \
     ../../general/base/CommonSettingsCommon.h \
     ../../general/base/cpp11addition.h \
     ../../general/base/GeneralVariable.h \
-    ../base/BaseServerMasterLoadDictionary.h \
+    ../base/BaseServer/BaseServerMasterLoadDictionary.h \
     ../base/DatabaseBase.h \
     ../base/TinyXMLSettings.h \
     ../base/DatabaseFunction.h \
-    ../base/BaseServerMasterSendDatapack.h \
+    ../base/BaseServer/BaseServerMasterSendDatapack.h \
     ../base/SqlFunction.h \
     ../VariableServer.h
 

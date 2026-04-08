@@ -2,7 +2,7 @@
 #include "LinkToGameServer.hpp"
 #include "LinkToMaster.hpp"
 #include "CharactersGroupForLogin.hpp"
-#include "../base/BaseServerLogin.hpp"
+#include "../base/BaseServer/BaseServerLogin.hpp"
 
 #include <iostream>
 #include <string>

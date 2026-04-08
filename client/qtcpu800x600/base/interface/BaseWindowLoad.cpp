@@ -347,9 +347,8 @@ void BaseWindow::have_main_and_sub_datapack_loaded()
     //always after monster load on CatchChallenger::ClientFightEngine::fightEngine
     mapController->have_current_player_info(informations);
 
-    qDebug() << (QStringLiteral("%1 is logged with id: %2, cash: %3")
+    qDebug() << (QStringLiteral("%1 is logged, cash: %2")
                  .arg(QString::fromStdString(informations.public_informations.pseudo))
-                 .arg(informations.public_informations.simplifiedId)
                  .arg(informations.cash)
                  );
     updateConnectingStatus();
@@ -396,7 +395,7 @@ void BaseWindow::updatePlayerType()
     }
 }
 
-void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+void BaseWindow::insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);
@@ -404,7 +403,7 @@ void BaseWindow::insert_player(const CatchChallenger::Player_public_informations
     Q_UNUSED(y);
     Q_UNUSED(direction);
     const Player_public_informations &informations=client->get_player_informations().public_informations;
-    if(informations.simplifiedId==player.simplifiedId)
+    if(informations.pseudo==player.pseudo)
         updatePlayerImage();
 }
 
@@ -495,10 +494,9 @@ void BaseWindow::progressingDatapackFile(const uint32_t &size)
     updateConnectingStatus();
 }
 
-void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+void BaseWindow::have_inventory(const std::unordered_map<uint16_t,uint32_t> &items)
 {
     (void)items;
-    (void)warehouse_items;
     //const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::have_inventory()";
@@ -843,16 +841,8 @@ void BaseWindow::updateConnectingStatus()
         waitedData << tr("Opening the datapack");
     if(waitedData.isEmpty())
     {
-        Player_private_and_public_informations &playerInformations=client->get_player_informations();
-        if(playerInformations.bot_already_beaten==NULL)
-        {
-            std::cerr << "void BaseWindow::updateConnectingStatus(): waitedData.isEmpty(), playerInformations.bot_already_beaten==NULL" << std::endl;
-            abort();
-        }
         if(Ultimate::ultimate.isUltimate())
             ui->label_ultimate->setVisible(false);
-        mapController->setBotsAlreadyBeaten(playerInformations.bot_already_beaten);
-        mapController->setInformations(&playerInformations.items,&playerInformations.quests,&events,&playerInformations.itemOnMap,&playerInformations.plantOnMap);
         client->unloadSelection();
         load_inventory();
         load_plant_inventory();
@@ -1327,22 +1317,9 @@ void BaseWindow::on_questsList_itemSelectionChanged()
             finalRewards+=stringimplode(reputations,", ")+"<br />";
         }
         {
-            std::vector<ActionAllow> allowRewards=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.allow;
-            std::vector<std::string> allows;
-            unsigned int index=0;
-            while(index<allowRewards.size())
-            {
-                if(vectorcontainsAtLeastOne(allowRewards,ActionAllow_Clan))
-                    allows.push_back(tr("Add permission to create clan").toStdString());
-                index++;
-            }
-            if(allows.size()>16)
-            {
-                while(allows.size()>15)
-                    allows.pop_back();
-                allows.push_back("...");
-            }
-            finalRewards+=stringimplode(allows,", ")+"<br />";
+            const auto &quest=CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId);
+            if(quest.rewards.allowCreateClan)
+                finalRewards+=tr("Add permission to create clan").toStdString()+"<br />";
         }
     }
 

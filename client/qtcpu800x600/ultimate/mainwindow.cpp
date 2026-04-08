@@ -38,7 +38,7 @@
 #include <netinet/tcp.h>
 #endif
 
-#include "../../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
@@ -2122,8 +2122,7 @@ bool MainWindow::sendSettings(CatchChallenger::InternalServer * internalServer,c
     formatedServerSettings.database_common.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
     formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
     formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
-    //formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-    formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_Simple;// to allow open to lan
+    formatedServerSettings.mapVisibility.enable	= true;// to allow open to lan
     formatedServerSettings.datapack_basePath=datapackPathBase.toStdString();
 
     {

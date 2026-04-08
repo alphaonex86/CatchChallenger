@@ -115,7 +115,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             //update the db
-            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
+            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id_db)});
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
             #else
@@ -137,14 +137,14 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
                 errorOutput("You are not a leader to dissolve the clan");
                 return;
             }
+            const Clan clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            if(clan->captureCityInProgress!=ZONE_TYPE_MAX)
+            if(clan.captureCityInProgress!=ZONE_TYPE_MAX)
             {
                 errorOutput("You can't disolv the clan if is in city capture");
                 return;
             }
             #endif
-            const Clan clan=GlobalServerData::serverPrivateVariables.clanList.at(public_and_private_informations.clan);
             const std::vector<PLAYER_INDEX_FOR_CONNECTED> temp_connected_players=clan.connected_players;
             //send the network reply
             removeFromQueryReceived(query_id);
@@ -154,10 +154,19 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             //update the db
-            unsigned int index=0;
-            while(index<copyOf_players.size())
             {
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(copyOf_players.at(index)->getPlayerId())});
+                unsigned int index=0;
+                while(index<temp_connected_players.size())
+                {
+                    if(ClientList::list->empty(temp_connected_players.at(index)))
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(ClientList::list->at(index).getPlayerId())});
+                    index++;
+                }
+            }
+            unsigned int index=0;
+            while(index<temp_connected_players.size())
+            {
+
                 index++;
             }
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
@@ -168,9 +177,9 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             #endif
             #ifndef EPOLLCATCHCHALLENGERSERVER
             {
-                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().size()>clan->capturedCity)
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().size()>clan.capturedCity)
                     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({
-                            CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan->capturedCity)
+                            CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.capturedCity)
                             });
                 else
                     errorOutput("clan->capturedCity not found into CommonDatapackServerSpec::commonDatapackServerSpec.zoneToId");
@@ -179,8 +188,8 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             //update the object
             GlobalServerData::serverPrivateVariables.clanList.erase(public_and_private_informations.clan);
             #ifndef EPOLLCATCHCHALLENGERSERVER
-            GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(clan->clanId);
-            GlobalServerData::serverPrivateVariables.cityStatusList[clan->captureCityInProgress].clan=0;
+            GlobalServerData::serverPrivateVariables.cityStatusListReverse.erase(public_and_private_informations.clan);
+            GlobalServerData::serverPrivateVariables.cityStatusList[clan.captureCityInProgress].clan=0;
             #endif
             {
                 unsigned int index=0;
@@ -287,7 +296,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
 
                         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                         //#error check if same clan too
-                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id)});
+                        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({std::to_string(character_id_db)});
                         #elif CATCHCHALLENGER_DB_BLACKHOLE
                         #elif CATCHCHALLENGER_DB_FILE
                         #else
@@ -556,9 +565,9 @@ void Client::insertIntoAClan(const uint32_t &clanId)
     if(GlobalServerData::serverPrivateVariables.db_common->databaseType()!=DatabaseBase::DatabaseType::PostgreSQL)
     {
         if(public_and_private_informations.clan_leader)
-            clan_leader=StaticText::text_1;
+            clan_leader="1";
         else
-            clan_leader=StaticText::text_0;
+            clan_leader="0";
     }
     else
     #endif
@@ -572,7 +581,7 @@ void Client::insertIntoAClan(const uint32_t &clanId)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_and_leader.asyncWrite({
                 std::to_string(clanId),
                 clan_leader,
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -589,7 +598,7 @@ void Client::ejectToClan()
     dissolvedClan();
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_clan_to_reset.asyncWrite({
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

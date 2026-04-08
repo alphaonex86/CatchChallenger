@@ -3,6 +3,7 @@
 #include "QFakeServer.hpp"
 
 #include <QMutexLocker>
+#include <QDebug>
 
 QFakeSocket::QFakeSocket()
 {

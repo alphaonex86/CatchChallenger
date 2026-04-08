@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QComboBox>
-#include <QTime>
+#include <QElapsedTimer>
 #include "../ImagesStrechMiddle.hpp"
 #include "../ScreenInput.hpp"
 #include "../CustomButton.hpp"
@@ -29,7 +29,7 @@ private:
 
     CCGraphicsTextItem *debugText;
     bool debugIsShow;
-    QTime lastUpdate;
+    QElapsedTimer lastUpdate;
 signals:
     void removeAbove();
 };

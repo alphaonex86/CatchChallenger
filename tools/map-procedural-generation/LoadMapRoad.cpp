@@ -2,13 +2,14 @@
 
 #include "../map-procedural-generation-terrain/LoadMap.h"
 
-#include <libtiled/tileset.h>
-#include <libtiled/tile.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/mapwriter.h>
+#include <tiled/tileset.h>
+#include <tiled/tile.h>
+#include <tiled/objectgroup.h>
+#include <tiled/mapwriter.h>
 
 #include <iostream>
 #include <algorithm>
+#include <random>
 #include <queue>
 #include <unordered_map>
 
@@ -1967,7 +1968,7 @@ void LoadMapAll::generateRoomContent(Tiled::Map &roomMap, const SettingsAll::Set
 
     // Random Furnitures
     {
-        std::random_shuffle ( room.limitations.begin(), room.limitations.end() );
+        std::shuffle(room.limitations.begin(), room.limitations.end(), std::mt19937{std::random_device{}()});
         bool* spots = new bool[roomMap.width()];
         memset(spots, false, roomMap.width());
 

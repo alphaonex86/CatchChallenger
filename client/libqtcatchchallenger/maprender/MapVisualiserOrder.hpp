@@ -17,7 +17,8 @@
 #include "../libqtcatchchallenger/DisplayStructures.hpp"
 #include "../libcatchchallenger/ClientStructures.hpp"
 
-class QMap_client;
+namespace CatchChallenger { class QMap_client; }
+using CatchChallenger::QMap_client;
 
 class MapVisualiserOrder
 {

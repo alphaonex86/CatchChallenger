@@ -218,8 +218,8 @@ void Client::createMemoryClan()
         clan.connected_players.push_back(index_connected_player);
         GlobalServerData::serverPrivateVariables.clanList[public_and_private_informations.clan]=clan;
         #ifndef EPOLLCATCHCHALLENGERSERVER
-        if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(clan->clanId)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
-            clan->capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.at(clan->clanId);
+        if(GlobalServerData::serverPrivateVariables.cityStatusListReverse.find(public_and_private_informations.clan)!=GlobalServerData::serverPrivateVariables.cityStatusListReverse.end())
+            clan.capturedCity=GlobalServerData::serverPrivateVariables.cityStatusListReverse.at(public_and_private_informations.clan);
         #endif
     }
     else
@@ -234,7 +234,7 @@ void Client::addCash(const uint64_t &cash, const bool &forceSave)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -251,7 +251,7 @@ void Client::removeCash(const uint64_t &cash)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_cash.asyncWrite({
                 std::to_string(public_and_private_informations.cash),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -423,7 +423,7 @@ bool Client::triggerDaillyGift(const uint64_t &timeRangeEventTimestamps)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_gift.asyncWrite({
                 std::to_string(timeRangeEventTimestamps),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

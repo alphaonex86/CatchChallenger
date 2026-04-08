@@ -4,7 +4,7 @@
 #ifndef SERVERSSL
 
 #include "../epoll/EpollGenericServer.hpp"
-#include "../base/BaseServerLogin.hpp"
+#include "../base/BaseServer/BaseServerLogin.hpp"
 #include "EpollClientLoginSlave.hpp"
 
 #include <string>

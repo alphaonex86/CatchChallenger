@@ -1,7 +1,7 @@
 #include "MapBasicMove.hpp"
 #include "Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
-#include "../../../general/base/CommonMap.hpp"
+#include "../../../general/base/CommonMap/CommonMap.hpp"
 
 using namespace CatchChallenger;
 

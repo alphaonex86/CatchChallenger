@@ -2,8 +2,9 @@
 
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
-#include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "QMap_client.hpp"
 #include "TemporaryTile.hpp"
 
 #include <iostream>
@@ -12,10 +13,7 @@
 MapVisualiserPlayerWithFight::MapVisualiserPlayerWithFight(const bool &centerOnPlayer,const bool &debugTags,const bool &useCache,const bool &openGL) :
     MapVisualiserPlayer(centerOnPlayer,debugTags,useCache,openGL)
 {
-    this->events=events;
     repel_step=0;
-    items=NULL;
-    quests=NULL;
     fightCollisionBot=NULL;
     botAlreadyBeaten=NULL;
 }
@@ -34,15 +32,17 @@ MapVisualiserPlayerWithFight::~MapVisualiserPlayerWithFight()
     }
 }
 
-void MapVisualiserPlayerWithFight::addBeatenBotFight(const uint16_t &botFightId)
+void MapVisualiserPlayerWithFight::addBeatenBotFight(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId)
 {
+    (void)mapId;
     if(botAlreadyBeaten==NULL)
         abort();
     botAlreadyBeaten[botFightId/8]|=(1<<(7-botFightId%8));
 }
 
-bool MapVisualiserPlayerWithFight::haveBeatBot(const uint16_t &botFightId) const
+bool MapVisualiserPlayerWithFight::haveBeatBot(const CATCHCHALLENGER_TYPE_MAPID &mapId,const CATCHCHALLENGER_TYPE_BOTID &botFightId) const
 {
+    (void)mapId;
     if(botAlreadyBeaten==NULL)
         abort();
     return botAlreadyBeaten[botFightId/8] & (1<<(7-botFightId%8));
@@ -81,16 +81,6 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
         return true;
     }
-    if(items==NULL)
-    {
-        qDebug() << "items is null, can't move";
-        return true;
-    }
-    if(events==NULL)
-    {
-        qDebug() << "events is null, can't move";
-        return true;
-    }
     CatchChallenger::PlayerMonster *fightMonster;
     if(!client->getAbleToFight())
         fightMonster=NULL;
@@ -99,50 +89,45 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     if(fightMonster!=NULL)
     {
         std::pair<uint8_t,uint8_t> pos(getPos());
-        const Map_full * current_map_pointer=all_map.at(current_map);
-        const std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> &botsFightTrigger=current_map_pointer->logicalMap.botsFightTrigger;
+        const QMap_client * current_map_pointer=CatchChallenger::QMap_client::all_map.at(current_map);
+        const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
 
-        if(botsFightTrigger.find(pos)!=botsFightTrigger.cend())
+        if(logicalMap.botsFightTrigger.find(pos)!=logicalMap.botsFightTrigger.cend())
         {
-            std::vector<uint16_t> botFightList=botsFightTrigger.at(pos);
-            std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=
-                    current_map_pointer->logicalMap.botsFightTriggerExtra.at(pos);
-            unsigned int index=0;
-            while(index<botFightList.size())
+            const uint8_t fightId=logicalMap.botsFightTrigger.at(pos);
+            if(!haveBeatBot(current_map,fightId))
             {
-                const uint16_t &fightId=botFightList.at(index);
-                if(!haveBeatBot(fightId))
+                qDebug() <<  "is now in fight with: " << fightId;
+                if(isInMove())
                 {
-                    qDebug() <<  "is now in fight with: " << fightId;
-                    if(isInMove())
-                    {
-                        stopMove();
-                        emit send_player_direction(getDirection());
-                        keyPressed.clear();
-                    }
-                    parseStop();
-                    emit botFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.at(current_map)->logicalMap),
-                                           botFightRemotePointList.at(index).first,botFightRemotePointList.at(index).second);
-                    if(current_map_pointer->logicalMap.botsDisplay.find(botFightRemotePointList.at(index))!=
-                            current_map_pointer->logicalMap.botsDisplay.cend())
-                    {
-                        TemporaryTile *temporaryTile=current_map_pointer->logicalMap.botsDisplay.at(botFightRemotePointList.at(index)).temporaryTile;
-                        //show a temporary flags
-                        {
-                            if(fightCollisionBot==NULL)
-                            {
-                                fightCollisionBot=Tiled::Tileset::create(QStringLiteral("fightCollisionBot"),16,16);
-                                fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/CC/images/fightCollisionBot.png")),QStringLiteral(":/CC/images/fightCollisionBot.png"));
-                            }
-                        }
-                        temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,static_cast<uint8_t>(fightCollisionBot->tileCount()));
-                    }
-                    else
-                        qDebug() <<  "temporaryTile not found";
-                    blocked=true;
-                    return true;
+                    stopMove();
+                    emit send_player_direction(getDirection());
+                    keyPressed.clear();
                 }
-                index++;
+                parseStop();
+                std::pair<uint8_t,uint8_t> remotePoint(0,0);
+                if(current_map_pointer->botsFightTriggerExtra.find(pos)!=current_map_pointer->botsFightTriggerExtra.cend())
+                    remotePoint=current_map_pointer->botsFightTriggerExtra.at(pos);
+                emit botFightCollision(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&logicalMap)),
+                                       remotePoint.first,remotePoint.second);
+                if(current_map_pointer->botsDisplay.find(remotePoint)!=
+                        current_map_pointer->botsDisplay.cend())
+                {
+                    TemporaryTile *temporaryTile=current_map_pointer->botsDisplay.at(remotePoint).temporaryTile;
+                    //show a temporary flags
+                    {
+                        if(fightCollisionBot==NULL)
+                        {
+                            fightCollisionBot=Tiled::Tileset::create(QStringLiteral("fightCollisionBot"),16,16);
+                            fightCollisionBot->loadFromImage(QImage(QStringLiteral(":/CC/images/fightCollisionBot.png")),QStringLiteral(":/CC/images/fightCollisionBot.png"));
+                        }
+                    }
+                    temporaryTile->startAnimation(fightCollisionBot->tileAt(0),150,static_cast<uint8_t>(fightCollisionBot->tileCount()));
+                }
+                else
+                    qDebug() <<  "temporaryTile not found";
+                blocked=true;
+                return true;
             }
         }
         //check if is in fight collision, but only if is move
@@ -150,13 +135,13 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
         {
             if(inMove)
             {
-                if(client->generateWildFightIfCollision(&current_map_pointer->logicalMap,x,y,*items,*events))
+                if(client->generateWildFightIfCollision(logicalMap,x,y,client->get_player_informations().items,client->getEvents()))
                 {
                     inMove=false;
                     emit send_player_direction(direction);
                     keyPressed.clear();
                     parseStop();
-                    emit wildFightCollision(static_cast<CatchChallenger::Map_client *>(&all_map.at(current_map)->logicalMap),x,y);
+                    emit wildFightCollision(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&logicalMap)),x,y);
                     blocked=true;
                     return true;
                 }
@@ -174,32 +159,37 @@ bool MapVisualiserPlayerWithFight::haveStopTileAction()
     return false;
 }
 
-bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y, const bool &checkCollision)
+bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const bool &checkCollision)
 {
-    if(!MapVisualiserPlayer::canGoTo(direction,map,x,y,checkCollision))
+    if(!MapVisualiserPlayer::canGoTo(direction,mapIndex,x,y,checkCollision))
         return false;
     if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight";
         return false;
     }
-    CatchChallenger::CommonMap *new_map=&map;
-    if(!CatchChallenger::MoveOnTheMap::moveWithoutTeleport(direction,&new_map,&x,&y,false))
+    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+    CATCHCHALLENGER_TYPE_MAPID newMapIndex=mapIndex;
+    COORD_TYPE lx=x,ly=y;
+    if(!CatchChallenger::MoveOnTheMap::moveWithoutTeleport(mapList,direction,newMapIndex,lx,ly,false))
     {
         qDebug() << "Strange, can go but move failed";
         return false;
     }
-    if(all_map.find(new_map->map_file)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(newMapIndex)==CatchChallenger::QMap_client::all_map.cend())
         return false;
-    const CatchChallenger::Map_client &map_client=all_map.at(new_map->map_file)->logicalMap;
+    const CatchChallenger::CommonMap &map_client=QtDatapackClientLoader::datapackLoader->getMap(newMapIndex);
+    const QMap_client *map_full=CatchChallenger::QMap_client::all_map.at(newMapIndex);
+    const auto &playerItems=client->get_player_informations().items;
+    const auto &playerQuests=client->get_player_informations().quests;
 
     {
-        int list_size=map_client.teleport_semi.size();
+        int list_size=map_client.teleporters.size();
         int index=0;
         while(index<list_size)
         {
-            const CatchChallenger::Map_semi_teleport &teleporter=map_client.teleport_semi.at(index);
-            if(teleporter.source_x==x && teleporter.source_y==y)
+            const CatchChallenger::Teleporter &teleporter=map_client.teleporters.at(index);
+            if(teleporter.source_x==lx && teleporter.source_y==ly)
             {
                 switch(teleporter.condition.type)
                 {
@@ -207,39 +197,31 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                     case CatchChallenger::MapConditionType_Clan://not do for now
                     break;
                     case CatchChallenger::MapConditionType_FightBot:
-                        if(!haveBeatBot(teleporter.condition.data.fightBot))
-                        {
-                            if(!map_client.teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                        if(!haveBeatBot(newMapIndex,teleporter.condition.data.fightBot))
                             return false;
-                        }
                     break;
-                    case CatchChallenger::MapConditionType_Item:
-                        if(items==NULL)
-                            break;
-                        if(items->find(teleporter.condition.data.item)==items->cend())
+                   case CatchChallenger::MapConditionType_Item:
+                        if(playerItems.find(teleporter.condition.data.item)==playerItems.cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                             return false;
                         }
                     break;
                     case CatchChallenger::MapConditionType_Quest:
-                        if(quests==NULL)
-                            break;
-                        if(quests->find(teleporter.condition.data.quest)==quests->cend())
+                        if(playerQuests.find(teleporter.condition.data.quest)==playerQuests.cend())
                         {
-                            if(!map_client.teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                             return false;
                         }
-                        if(!quests->at(teleporter.condition.data.quest).finish_one_time)
+                        if(!playerQuests.at(teleporter.condition.data.quest).finish_one_time)
                         {
-                            if(!map_client.teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_client.teleport_condition_texts.at(index));
+                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
                             return false;
                         }
-                    break;
+                      break;
                     default:
                     break;
                 }
@@ -249,33 +231,29 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     }
 
     {
-        std::pair<uint8_t,uint8_t> pos(x,y);
+        std::pair<uint8_t,uint8_t> pos(lx,ly);
         if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
         {
-            std::vector<uint16_t> botFightList=map_client.botsFightTrigger.at(pos);
-            unsigned int index=0;
-            while(index<botFightList.size())
+            const uint8_t fightId=map_client.botsFightTrigger.at(pos);
+            if(!haveBeatBot(newMapIndex,fightId))
             {
-                if(!haveBeatBot(botFightList.at(index)))
+                if(!client->getAbleToFight())
                 {
-                    if(!client->getAbleToFight())
-                    {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
-                        return false;
-                    }
+                    emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                    return false;
                 }
-                index++;
             }
         }
     }
-    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*new_map,x,y);
+    const CatchChallenger::CommonMap &commonMap=map_client;
+    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(commonMap,lx,ly);
     if(!monstersCollisionValue.walkOn.empty())
     {
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
-            if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+            if(monstersCollision.item==0 || playerItems.find(monstersCollision.item)!=playerItems.cend())
             {
                 if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                 {
@@ -284,7 +262,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
                         emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
                         return false;
                     }
-                    if(!client->canDoRandomFight(*new_map,x,y))
+                    if(!client->canDoRandomFight(commonMap,lx,ly))
                     {
                         emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
                         return false;

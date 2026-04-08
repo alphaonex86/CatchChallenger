@@ -853,7 +853,7 @@ void DatapackClientLoader::parseMaps()
 #else
     //more simple just load all, yes it's more slow
     std::vector<CatchChallenger::Map_semi> semi_loaded_map;
-    CatchChallenger::Map_loader::loadAllMapsAndLink<CatchChallenger::Map_client>(mapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
+    CatchChallenger::Map_loader::loadAllMapsAndLink(mapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,
     CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
 #endif
@@ -1838,7 +1838,7 @@ std::vector<std::string> DatapackClientLoader::listFolderNotRecursive(const std:
     return returnList;
 }
 
-const CatchChallenger::Map_client &DatapackClientLoader::getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+const CatchChallenger::CommonMap &DatapackClientLoader::getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     if(mapIndex>=mapList.size())
     {
@@ -1846,6 +1846,11 @@ const CatchChallenger::Map_client &DatapackClientLoader::getMap(const CATCHCHALL
         abort();
     }
     return mapList.at(mapIndex);
+}
+
+const std::vector<CatchChallenger::CommonMap> &DatapackClientLoader::get_mapList() const
+{
+    return mapList;
 }
 
 const std::unordered_map<uint8_t,DatapackClientLoader::TypeExtra> &DatapackClientLoader::get_typeExtra() const
@@ -1970,22 +1975,22 @@ const std::unordered_map<uint16_t,DatapackClientLoader::PlantIndexContent> &Data
 
 bool DatapackClientLoader::canGoTo(const CatchChallenger::Direction &direction,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const bool &checkCollision, const bool &allowTeleport)
 {
-    const CatchChallenger::Map_client &map=mapList.at(mapIndex);
-    return CatchChallenger::MoveOnTheMap::canGoTo<CatchChallenger::Map_client>(mapList,direction,map,x,y,checkCollision,allowTeleport);
+    const CatchChallenger::CommonMap &map=mapList.at(mapIndex);
+    return CatchChallenger::MoveOnTheMap::canGoTo<CatchChallenger::CommonMap>(mapList,direction,map,x,y,checkCollision,allowTeleport);
 }
 
 bool DatapackClientLoader::teleport(CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y)
 {
-    return CatchChallenger::MoveOnTheMap::teleport<CatchChallenger::Map_client>(mapList,mapIndex,x,y);
+    return CatchChallenger::MoveOnTheMap::teleport<CatchChallenger::CommonMap>(mapList,mapIndex,x,y);
 }
 
 bool DatapackClientLoader::move(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
-    return CatchChallenger::MoveOnTheMap::move<CatchChallenger::Map_client>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
+    return CatchChallenger::MoveOnTheMap::move<CatchChallenger::CommonMap>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
 }
 
 bool DatapackClientLoader::moveWithoutTeleport(const CatchChallenger::Direction &direction, CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
 {
-    return CatchChallenger::MoveOnTheMap::moveWithoutTeleport<CatchChallenger::Map_client>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
+    return CatchChallenger::MoveOnTheMap::moveWithoutTeleport<CatchChallenger::CommonMap>(mapList,direction,mapIndex,x,y,checkCollision,allowTeleport);
 }
 

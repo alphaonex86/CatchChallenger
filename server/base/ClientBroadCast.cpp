@@ -3,12 +3,12 @@
 #include "GlobalServerData.hpp"
 #include "../../general/base/ProtocolParsing.hpp"
 #include "PreparedDBQuery.hpp"
+#include "GameServerVariables.hpp"
 #ifdef CATCHCHALLENGER_SERVER_DEBUG_COMMAND
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "LinkToMaster.hpp"
 #endif
 #endif
-#include "GameServerVariables.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -483,7 +483,7 @@ void Client::setRights(const Player_type& type)
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_change_right.asyncWrite({
                 std::to_string(newType),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     (void)newType;

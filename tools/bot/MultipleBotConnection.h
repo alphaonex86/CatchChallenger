@@ -91,7 +91,7 @@ protected:
 
     QStringList tempMapList;
 protected:
-    virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    virtual void insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
     virtual void haveCharacter();
     virtual void logged_with_client(CatchChallengerClient *client);
     virtual std::string getNewPseudo();
@@ -111,8 +111,8 @@ protected:
     void newCharacterId_with_client(CatchChallengerClient *client,const quint8 &returnCode, const quint32 &characterId);
     virtual void connectTheExternalSocket(CatchChallengerClient *client);
 
-    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void remove_player(const uint16_t &id) = 0;
+    virtual void insert_player(const uint8_t &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void remove_player(const uint8_t &id) = 0;
     virtual void dropAllPlayerOnTheMap() = 0;
     virtual void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList) = 0;
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId) = 0;

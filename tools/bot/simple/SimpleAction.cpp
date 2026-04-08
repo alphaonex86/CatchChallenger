@@ -16,7 +16,7 @@ SimpleAction::~SimpleAction()
 {
 }
 
-void SimpleAction::insert_player(CatchChallenger::Api_protocol_Qt *api, const CatchChallenger::Player_public_informations &player, const uint32_t &mapId, const uint16_t &x, const uint16_t &y, const CatchChallenger::Direction &direction)
+void SimpleAction::insert_player(CatchChallenger::Api_protocol_Qt *api, const CatchChallenger::Player_public_informations &player, const uint8_t &mapId, const uint8_t &x, const uint8_t &y, const CatchChallenger::Direction &direction)
 {
     Q_UNUSED(player);
     Q_UNUSED(mapId);

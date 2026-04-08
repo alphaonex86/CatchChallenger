@@ -17,12 +17,13 @@
 #include <QPixmapCache>
 
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "QMap_client.hpp"
 
 MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bool &openGL) :
     mScene(new QGraphicsScene(this)),
     mark(NULL)
 {
-    qRegisterMetaType<Map_full *>("Map_full *");
+    qRegisterMetaType<CATCHCHALLENGER_TYPE_MAPID>("CATCHCHALLENGER_TYPE_MAPID");
 
     if(!connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection))
         abort();
@@ -109,10 +110,10 @@ MapVisualiser::~MapVisualiser()
     //delete playerMapObject;
 }
 
-Map_full * MapVisualiser::getMap(const std::string &map) const
+CatchChallenger::QMap_client * MapVisualiser::getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) const
 {
-    if(all_map.find(map)!=all_map.cend())
-        return all_map.at(map);
+    if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
+        return CatchChallenger::QMap_client::all_map.at(mapIndex);
     abort();
     return NULL;
 }
@@ -161,7 +162,7 @@ void MapVisualiser::setTargetFPS(int targetFPS)
     }
 }
 
-void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
+void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE x,COORD_TYPE y)
 {
     if(event==CatchChallenger::MapEvent_SimpleClick)
     {
@@ -182,7 +183,7 @@ void MapVisualiser::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMa
         mapObject->setCell(cell);
         mapObject->setPosition(QPointF(x,y+1));
         mark=new MapMark(mapObject);
-        ObjectGroupItem::objectGroupLink.at(tempMapObject->objectGroup)->addObject(mapObject);
+        ObjectGroupItem::objectGroupLink.at(CatchChallenger::QMap_client::all_map.at(mapIndex)->objectGroup)->addObject(mapObject);
         if(MapObjectItem::objectLink.find(mapObject)!=MapObjectItem::objectLink.cend())
             MapObjectItem::objectLink.at(mapObject)->setZValue(9999);
     }

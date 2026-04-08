@@ -25,8 +25,6 @@ CONFIG += c++11
 TARGET = catchchallenger-gateway
 CONFIG   += console
 
-TEMPLATE = app
-
 SOURCES += \
     ../../general/base/CompressionProtocol.cpp \
     ../../general/sha224/sha224.cpp \
@@ -72,39 +70,39 @@ SOURCES += \
 HEADERS += \
     ../../general/base/CompressionProtocol.hpp \
     ../../general/sha224/sha224.hpp \
-    EpollClientLoginSlave.h \
-    EpollServerLoginSlave.h \
-    LinkToGameServer.h \
-    TimerDdos.h \
-    DatapackDownloaderBase.h \
-    DatapackDownloaderMainSub.h \
-    FacilityLibGateway.h \
-    ../epoll/Epoll.h \
-    ../epoll/EpollGenericSslServer.h \
-    ../epoll/EpollGenericServer.h \
-    ../epoll/EpollClient.h \
-    ../epoll/EpollSocket.h \
-    ../epoll/EpollSslClient.h \
-    ../epoll/EpollClientToServer.h \
-    ../epoll/EpollSslClientToServer.h \
-    ../epoll/EpollTimer.h \
-    ../epoll/BaseClassSwitch.h \
-    ../../general/base/CommonSettingsCommon.h \
-    ../../general/base/CommonSettingsServer.h \
-    ../../general/base/GeneralStructures.h \
-    ../../general/base/FacilityLibGeneral.h \
-    ../../general/base/ProtocolParsing.h \
-    ../../general/base/ProtocolParsingCheck.h \
-    ../../general/base/GeneralVariable.h \
-    ../../client/libcatchchallenger/DatapackChecksum.h \
-    ../../client/libcatchchallenger/TarDecode.h \
-    ../base/TinyXMLSettings.h \
-    ../VariableServer.h
+    EpollClientLoginSlave.hpp \
+    EpollServerLoginSlave.hpp \
+    LinkToGameServer.hpp \
+    TimerDdos.hpp \
+    DatapackDownloaderBase.hpp \
+    DatapackDownloaderMainSub.hpp \
+    FacilityLibGateway.hpp \
+    ../epoll/Epoll.hpp \
+    ../epoll/EpollGenericSslServer.hpp \
+    ../epoll/EpollGenericServer.hpp \
+    ../epoll/EpollClient.hpp \
+    ../epoll/EpollSocket.hpp \
+    ../epoll/EpollSslClient.hpp \
+    ../epoll/EpollClientToServer.hpp \
+    ../epoll/EpollSslClientToServer.hpp \
+    ../epoll/EpollTimer.hpp \
+    ../epoll/BaseClassSwitch.hpp \
+    ../../general/base/CommonSettingsCommon.hpp \
+    ../../general/base/CommonSettingsServer.hpp \
+    ../../general/base/GeneralStructures.hpp \
+    ../../general/base/FacilityLibGeneral.hpp \
+    ../../general/base/ProtocolParsing.hpp \
+    ../../general/base/ProtocolParsingCheck.hpp \
+    ../../general/base/GeneralVariable.hpp \
+    ../../client/libcatchchallenger/DatapackChecksum.hpp \
+    ../../client/libcatchchallenger/TarDecode.hpp \
+    ../base/TinyXMLSettings.hpp \
+    ../base/VariableServer.hpp
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
+HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
     $$PWD/../../general/tinyXML2/tinyxml2c.cpp

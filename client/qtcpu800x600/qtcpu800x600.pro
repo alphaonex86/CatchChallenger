@@ -24,8 +24,8 @@ include(../libcatchchallenger/lib.pri)
 include(../libcatchchallenger/libheader.pri)
 include(../libqtcatchchallenger/libqt.pri)
 include(../libqtcatchchallenger/libqtheader.pri)
-include(../qtmaprender/render.pri)
-include(../qtmaprender/renderheader.pri)
+include(../libqtcatchchallenger/maprender/render.pri)
+include(../libqtcatchchallenger/maprender/renderheader.pri)
 TEMPLATE = app
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"

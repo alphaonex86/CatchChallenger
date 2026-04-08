@@ -362,24 +362,6 @@ void Quests::on_questsList_itemSelectionChanged()
             }
             finalRewards+=stringimplode(reputations,", ")+"<br />";
         }
-        {
-            std::vector<CatchChallenger::ActionAllow> allowRewards=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(questId).rewards.allow;
-            std::vector<std::string> allows;
-            unsigned int index=0;
-            while(index<allowRewards.size())
-            {
-                if(vectorcontainsAtLeastOne(allowRewards,CatchChallenger::ActionAllow_Clan))
-                    allows.push_back(tr("Add permission to create clan").toStdString());
-                index++;
-            }
-            if(allows.size()>16)
-            {
-                while(allows.size()>15)
-                    allows.pop_back();
-                allows.push_back("...");
-            }
-            finalRewards+=stringimplode(allows,", ")+"<br />";
-        }
     }
 
     questDetails->setHtml(QString::fromStdString(stepDescription+stepRequirements+finalRewards));

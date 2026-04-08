@@ -134,17 +134,17 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.warehouse_monsters.push_back(newMonster);
         public_and_private_informations.warehouse_monsters.back().id=monster_id;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        position=static_cast<int>(public_and_private_informations.warehouse_playerMonster.size());
+        position=static_cast<int>(public_and_private_informations.warehouse_monsters.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
-                    std::to_string(character_id),
+                    std::to_string(character_id_db),
                     "2",
                     std::to_string(newMonster.hp),
                     std::to_string(newMonster.monster),
                     std::to_string(newMonster.level),
                     std::to_string(newMonster.catched_with),
                     std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(character_id),
+                    std::to_string(character_id_db),
                     std::to_string(position),
                     binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),
@@ -170,17 +170,17 @@ uint32_t Client::catchAWild(const bool &toStorage, const PlayerMonster &newMonst
         public_and_private_informations.monsters.push_back(newMonster);
         public_and_private_informations.monsters.back().id=monster_id;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        position=static_cast<int>(public_and_private_informations.playerMonster.size());
+        position=static_cast<int>(public_and_private_informations.monsters.size());
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_monster_full.asyncWrite({
                     std::to_string(monster_id),
-                    std::to_string(character_id),
+                    std::to_string(character_id_db),
                     "1",
                     std::to_string(newMonster.hp),
                     std::to_string(newMonster.monster),
                     std::to_string(newMonster.level),
                     std::to_string(newMonster.catched_with),
                     std::to_string((uint8_t)newMonster.gender),
-                    std::to_string(character_id),
+                    std::to_string(character_id_db),
                     std::to_string(position),
                     binarytoHexa(raw_buff,static_cast<uint32_t>(sizeof(raw_buff))),
                     binarytoHexa(raw_skill,static_cast<uint32_t>(sizeof(raw_skill))),

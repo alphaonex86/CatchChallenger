@@ -391,7 +391,7 @@ void Multi::httpFinished()
     std::cout << "Got new server list" << std::endl;
 
     QByteArray content=reply->readAll();
-    QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QString wPath=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     QDir().mkpath(wPath);
     QFile cache(wPath+QStringLiteral("/server_list.xml"));
     if(cache.open(QIODevice::ReadWrite))
@@ -404,8 +404,8 @@ void Multi::httpFinished()
             #ifdef Q_CC_GNU
                 //this function avalaible on unix and mingw
                 utimbuf butime;
-                butime.actime=val.toDateTime().toTime_t();
-                butime.modtime=val.toDateTime().toTime_t();
+                butime.actime=val.toDateTime().toSecsSinceEpoch();
+                butime.modtime=val.toDateTime().toSecsSinceEpoch();
                 int returnVal=utime(cache.fileName().toLocal8Bit().data(),&butime);
                 if(returnVal==0)
                     return;
@@ -489,7 +489,7 @@ void Multi::saveConnexionInfoList()
 
 std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList()
 {
-    QString wPath=QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+    QString wPath=QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
     if(QFileInfo(wPath+"/server_list.xml").isFile())
         return loadXmlConnexionInfoList(wPath+"/server_list.xml");
     return loadXmlConnexionInfoList(QStringLiteral(":/CC/other/default_server_list.xml"));

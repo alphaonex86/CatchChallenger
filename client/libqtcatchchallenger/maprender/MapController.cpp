@@ -1,3 +1,4 @@
+#include "ClientPlantWithTimer.hpp"
 #include "MapController.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../libqtcatchchallenger/Api_client_real.hpp"
@@ -196,7 +197,6 @@ void MapController::connectAllSignals(CatchChallenger::Api_protocol_Qt *client)
 void MapController::resetAll()
 {
     setColor(Qt::transparent);
-    delayedPlantInsert.clear();
     MapControllerMP::resetAll();
 }
 
@@ -210,13 +210,6 @@ void MapController::datapackParsedMainSub()
     if(mHaveTheDatapack)
         return;
     MapControllerMP::datapackParsedMainSub();
-    unsigned int index=0;
-    while(index<delayedPlantInsert.size())
-    {
-        insert_plant(delayedPlantInsert.at(index).mapId,delayedPlantInsert.at(index).x,delayedPlantInsert.at(index).y,delayedPlantInsert.at(index).plant_id,delayedPlantInsert.at(index).seconds_to_mature);
-        index++;
-    }
-    delayedPlantInsert.clear();
 }
 
 bool MapController::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x,const COORD_TYPE &y, const bool &checkCollision)
@@ -368,7 +361,7 @@ void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
     if(maps_convert.size()>=mapIndex)
         return;
 #ifdef BOT_ICON_FEATURES
-    const CatchChallenger::Map_client &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(parsedMap->mapIndex);
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(parsedMap->mapIndex);
     std::pair<uint8_t,uint8_t> Qtpos(x,y);
     std::pair<uint8_t,uint8_t> pos(x,y);
     {

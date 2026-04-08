@@ -1,6 +1,7 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
@@ -42,7 +43,7 @@ void Client::selectCharacter(const uint8_t &query_id, const char * const token)
             if(memcmp(tokenAuth.token,token,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER)==0)
             {
                 delete tokenAuth.token;
-                account_id=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
+                account_id_db=tokenAuth.accountIdRequester;/// \warning need take care of only write if character is selected
                 selectCharacter(query_id,tokenAuth.characterId);
                 tokenAuthList.erase(tokenAuthList.begin()+index);
                 flags|=0x08;
@@ -89,52 +90,53 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
     if(!ok)
     {
         normalOutput("rescue_map_database_id is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     if(rescue_map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput("rescue_map_database_id out of range");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id)==NULL)
     {
         normalOutput("rescue_map_database_id have not reverse (fixed by current map)");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    CommonMap *rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id);
-    if(rescue_map_final==NULL)
+    const CATCHCHALLENGER_TYPE_MAPID &rescue_map_index=DictionaryServer::dictionary_map_database_to_internal.at(rescue_map_database_id);
+    if(rescue_map_index>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
     {
         normalOutput("rescue map not resolved");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
+    const Map_server_MapVisibility_Simple_StoreOnSender &rescue_map_final=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue_map_index);
     const uint8_t &rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(rescue_x,&ok);
     if(!ok)
     {
         normalOutput("rescue x coord is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     const uint8_t &rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(rescue_y,&ok);
     if(!ok)
     {
         normalOutput("rescue y coord is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(rescue_new_x>=rescue_map_final->width)
+    if(rescue_new_x>=rescue_map_final.width)
     {
         normalOutput("rescue x to out of map");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(rescue_new_y>=rescue_map_final->height)
+    if(rescue_new_y>=rescue_map_final.height)
     {
         normalOutput("rescue y to out of map");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     const uint32_t &orientationInt=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(rescue_orientation,&ok);
@@ -163,52 +165,53 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
     if(!ok)
     {
         normalOutput("unvalidated_rescue_map_database_id is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     if(unvalidated_rescue_map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
     {
         normalOutput("unvalidated_rescue_map_database_id out of range");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     if(DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id)==NULL)
     {
         normalOutput("unvalidated_rescue_map_database_id have not reverse (fixed by current map)");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    CommonMap *unvalidated_rescue_map_final=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id);
-    if(unvalidated_rescue_map_final==NULL)
+    const CATCHCHALLENGER_TYPE_MAPID &unvalidated_rescue_map_index=DictionaryServer::dictionary_map_database_to_internal.at(unvalidated_rescue_map_database_id);
+    if(unvalidated_rescue_map_index>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
     {
         normalOutput("unvalidated rescue map not resolved");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
+    const Map_server_MapVisibility_Simple_StoreOnSender &unvalidated_rescue_map_final=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue_map_index);
     const uint8_t &unvalidated_rescue_new_x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(unvalidated_rescue_x,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue x coord is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     const uint8_t &unvalidated_rescue_new_y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(unvalidated_rescue_y,&ok);
     if(!ok)
     {
         normalOutput("unvalidated rescue y coord is not a number");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_x>=unvalidated_rescue_map_final->width)
+    if(unvalidated_rescue_new_x>=unvalidated_rescue_map_final.width)
     {
         normalOutput("unvalidated rescue x to out of map");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
-    if(unvalidated_rescue_new_y>=unvalidated_rescue_map_final->height)
+    if(unvalidated_rescue_new_y>=unvalidated_rescue_map_final.height)
     {
         normalOutput("unvalidated rescue y to out of map");
-        characterIsRight(query_id,characterId,map,x,y,orientation);
+        characterIsRight(query_id,characterId,mapIndex,x,y,orientation);
         return;
     }
     Orientation unvalidated_rescue_new_orientation;
@@ -233,9 +236,9 @@ void Client::characterIsRightWithRescue(const uint8_t &query_id, uint32_t charac
 
 
 
-    characterIsRightWithParsedRescue(query_id,characterId,map,x,y,orientation,
-                                 rescue_map_final,rescue_new_x,rescue_new_y,rescue_new_orientation,
-                                 unvalidated_rescue_map_final,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
+    characterIsRightWithParsedRescue(query_id,characterId,mapIndex,x,y,orientation,
+                                 rescue_map_index,rescue_new_x,rescue_new_y,rescue_new_orientation,
+                                 unvalidated_rescue_map_index,unvalidated_rescue_new_x,unvalidated_rescue_new_y,unvalidated_rescue_new_orientation
             );
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

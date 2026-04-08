@@ -1,7 +1,7 @@
 #include "LinkToMaster.hpp"
 #include "../base/Client.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
-#include "../base/BaseServer.hpp"
+#include "../base/BaseServer/BaseServer.hpp"
 #endif
 #include "../base/GlobalServerData.hpp"
 #include "../base/DictionaryLogin.hpp"
@@ -42,7 +42,7 @@ bool LinkToMaster::parseMessage(const uint8_t &mainCodeType,const char * const d
                 return false;
             }
             const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
-            Client::disconnectClientById(characterId);
+            Client::disconnectClientById_db(characterId);
         }
         return true;
         case 0x4E:
@@ -96,7 +96,7 @@ bool LinkToMaster::parseQuery(const uint8_t &mainCodeType,const uint8_t &queryNu
                 removeFromQueryReceived(queryNumber);
 
                 const uint32_t &characterId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data)));
-                if(Q_LIKELY(!Client::characterConnected(characterId)))
+                if(Q_LIKELY(!Client::characterConnected_db(characterId)))
                 {
                     const uint32_t &accountId=le32toh(*reinterpret_cast<uint32_t *>(const_cast<char *>(data+4)));
                     const char * const token=Client::addAuthGetToken(characterId,accountId);

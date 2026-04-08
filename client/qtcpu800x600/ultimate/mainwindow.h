@@ -26,7 +26,7 @@
 #include "../../../general/base/ConnectedSocket.hpp"
 #include "../../libqtcatchchallenger/FeedNews.hpp"
 #include "../../libqtcatchchallenger/Api_client_real.hpp"
-#include "../../qtmaprender/MapController.hpp"
+#include "../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "../base/interface/BaseWindow.h"
 #include "../base/interface/ListEntryEnvolued.h"
 #if defined(CATCHCHALLENGER_SOLO)

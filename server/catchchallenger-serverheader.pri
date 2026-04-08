@@ -8,9 +8,9 @@ HEADERS += \
     $$PWD/base/PlayerUpdaterBase.hpp \
     $$PWD/base/SqlFunction.hpp \
     $$PWD/base/BaseServer/BaseServer.hpp \
-    $$PWD/base/BaseServerMasterLoadDictionary.hpp \
-    $$PWD/base/BaseServerMasterSendDatapack.hpp \
-    $$PWD/base/LocalClientHandler/LocalClientHandlerWithoutSender.hpp \
+    $$PWD/base/BaseServer/BaseServerMasterLoadDictionary.hpp \
+    $$PWD/base/BaseServer/BaseServerMasterSendDatapack.hpp \
+    $$PWD/base/ClientEvents/LocalClientHandlerWithoutSender.hpp \
     $$PWD/base/ServerStructures.hpp \
     $$PWD/base/Client.hpp \
     $$PWD/base/ClientList.hpp \
@@ -19,17 +19,14 @@ HEADERS += \
     $$PWD/base/MapServer.hpp \
     $$PWD/base/MapManagement/ClientMapManagement.hpp \
     $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_None.hpp \
-    $$PWD/base/MapManagement/MapVisibilityAlgorithm_WithBorder_StoreOnSender.hpp \
     $$PWD/base/MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp \
-    $$PWD/base/MapManagement/Map_server_MapVisibility_WithBorder_StoreOnSender.hpp \
     $$PWD/base/MapManagement/MapBasicMove.hpp \
     $$PWD/base/DictionaryLogin.hpp \
     $$PWD/base/DdosBuffer.hpp \
     $$PWD/base/DictionaryServer.hpp \
     $$PWD/base/PreparedDBQuery.hpp \
     $$PWD/base/DatabaseBase.hpp \
-    $$PWD/base/BaseServerLogin.hpp \
+    $$PWD/base/BaseServer/BaseServerLogin.hpp \
     $$PWD/base/TimeRangeEventScanBase.hpp \
     $$PWD/base/TinyXMLSettings.hpp \
     $$PWD/base/DatabaseFunction.hpp \

@@ -1,10 +1,12 @@
 #include "CCMap.hpp"
+#include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../ConnexionManager.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "../../../general/base/MoveOnTheMap.hpp"
 #include <QPainter>
-#include <QTime>
+#include <QElapsedTimer>
 #include <chrono>
 #include <iostream>
 #include <math.h>
@@ -17,17 +19,17 @@ CCMap::CCMap()
         abort();
     if(!connect(&mapController,&MapController::teleportConditionNotRespected,this,&CCMap::teleportConditionNotRespected))
         abort();
-    if(!connect(&mapController,&MapController::stopped_in_front_of,this,&CCMap::stopped_in_front_of))
+    if(!connect(&mapController,&MapController::stopped_in_front_of,this,&CCMap::onMapControllerStoppedInFrontOf))
         abort();
-    if(!connect(&mapController,&MapController::actionOn,this,&CCMap::actionOn))
+    if(!connect(&mapController,&MapController::actionOn,this,&CCMap::onMapControllerActionOn))
         abort();
     if(!connect(&mapController,&MapController::actionOnNothing,this,&CCMap::actionOnNothing))
         abort();
     if(!connect(&mapController,&MapController::blockedOn,this,&CCMap::blockedOn))
         abort();
-    if(!connect(&mapController,&MapController::wildFightCollision,this,&CCMap::wildFightCollision))
+    if(!connect(&mapController,&MapController::wildFightCollision,this,&CCMap::onMapControllerWildFightCollision))
         abort();
-    if(!connect(&mapController,&MapController::botFightCollision,this,&CCMap::botFightCollision))
+    if(!connect(&mapController,&MapController::botFightCollision,this,&CCMap::onMapControllerBotFightCollision))
         abort();
     if(!connect(&mapController,&MapController::error,this,&CCMap::error))
         abort();
@@ -123,33 +125,31 @@ void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &call
     qreal diffY=(p.y()/scale-y)/16;
     //std::cout << "CCMap clicked: " << p.x() << "," << p.y() << " - " << diffX << "," << diffY << " - " << x << "," << y << " * " << scale << std::endl;
 
-    std::unordered_set<std::string> mapToScan;
-    Map_full * current_map=mapController.currentMapFull();
-    mapToScan.insert(current_map->logicalMap.map_file);
-    if(current_map->logicalMap.border.left.map!=nullptr)
-        mapToScan.insert(current_map->logicalMap.border.left.map->map_file);
-    if(current_map->logicalMap.border.right.map!=nullptr)
-        mapToScan.insert(current_map->logicalMap.border.right.map->map_file);
-    if(current_map->logicalMap.border.top.map!=nullptr)
-        mapToScan.insert(current_map->logicalMap.border.top.map->map_file);
-    if(current_map->logicalMap.border.bottom.map!=nullptr)
-        mapToScan.insert(current_map->logicalMap.border.bottom.map->map_file);
+    std::unordered_set<CATCHCHALLENGER_TYPE_MAPID> mapToScan;
+    CATCHCHALLENGER_TYPE_MAPID currentMapId=mapController.currentMap();
+    const CatchChallenger::CommonMap &currentLogicalMap=QtDatapackClientLoader::datapackLoader->getMap(currentMapId);
+    mapToScan.insert(currentMapId);
+    if(currentLogicalMap.border.left.mapIndex!=65535)
+        mapToScan.insert(currentLogicalMap.border.left.mapIndex);
+    if(currentLogicalMap.border.right.mapIndex!=65535)
+        mapToScan.insert(currentLogicalMap.border.right.mapIndex);
+    if(currentLogicalMap.border.top.mapIndex!=65535)
+        mapToScan.insert(currentLogicalMap.border.top.mapIndex);
+    if(currentLogicalMap.border.bottom.mapIndex!=65535)
+        mapToScan.insert(currentLogicalMap.border.bottom.mapIndex);
 
-    std::unordered_map<std::string,Map_full *> all_map=mapController.all_map;
     //locate the right map
-    for( const auto& n : all_map ) {
-        Map_full *map=n.second;
-        if(mapToScan.find(map->logicalMap.map_file)!=mapToScan.cend())
+    for( const auto& n : CatchChallenger::QMap_client::all_map ) {
+        CATCHCHALLENGER_TYPE_MAPID mapId=n.first;
+        CatchChallenger::QMap_client *map=n.second;
+        if(mapToScan.find(mapId)!=mapToScan.cend())
         {
-            /*std::cout << map->logicalMap.map_file << ": "
-                      << std::to_string(map->relative_x) << "," << std::to_string(map->relative_y) << ","
-                      << std::to_string(map->logicalMap.width) << "," << std::to_string(map->logicalMap.height)
-                      << std::endl;*/
-            if(diffX>=map->relative_x && diffX<=(map->relative_x+map->logicalMap.width))
-                if(diffY>=map->relative_y && diffY<=(map->relative_y+map->logicalMap.height))
+            const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(mapId);
+            if(diffX>=map->relative_x && diffX<=(map->relative_x+logicalMap.width))
+                if(diffY>=map->relative_y && diffY<=(map->relative_y+logicalMap.height))
                 {
-                    std::cout << "click on " << map->logicalMap.map_file << " " << diffX << "," << diffY << std::endl;
-                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,map,(int)floor(diffX)-map->relative_x,(int)floor(diffY)-map->relative_y);
+                    std::cout << "click on map " << mapId << " " << diffX << "," << diffY << std::endl;
+                    mapController.eventOnMap(CatchChallenger::MapEvent_SimpleClick,mapId,(int)floor(diffX)-map->relative_x,(int)floor(diffY)-map->relative_y);
                     return;
                 }
         }
@@ -172,5 +172,25 @@ void CCMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
 {
     mapController.keyReleaseEvent(event);
     eventTriggerGeneral=false;
+}
+
+void CCMap::onMapControllerStoppedInFrontOf(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    emit stopped_in_front_of(map->id,x,y);
+}
+
+void CCMap::onMapControllerActionOn(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    emit actionOn(map->id,x,y);
+}
+
+void CCMap::onMapControllerWildFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    emit wildFightCollision(map->id,x,y);
+}
+
+void CCMap::onMapControllerBotFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    emit botFightCollision(map->id,x,y);
 }
 

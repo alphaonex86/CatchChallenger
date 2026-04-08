@@ -1,11 +1,11 @@
 #include "PartialMap.h"
 
-#include <libtiled/mapwriter.h>
-#include <libtiled/mapreader.h>
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/tileset.h>
-#include <libtiled/tile.h>
+#include <tiled/mapwriter.h>
+#include <tiled/mapreader.h>
+#include <tiled/mapobject.h>
+#include <tiled/objectgroup.h>
+#include <tiled/tileset.h>
+#include <tiled/tile.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include <QDir>
@@ -81,7 +81,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         const Tiled::Layer * const layer=world.layerAt(indexLayer);
         if(layer->isTileLayer())
         {
-            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
+            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer *>(layer);
             //add zone of layer
             Tiled::TileLayer * tileLayer=new Tiled::TileLayer(castedLayer->name(),0,0,mapWidth,mapHeight);
             bool haveContent=false;
@@ -117,7 +117,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
         }
         else if(layer->isObjectGroup())
         {
-            const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+            const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup *>(layer);
             const QList<Tiled::MapObject*> &objects=castedLayer->objects();
             Tiled::ObjectGroup * objectGroup=new Tiled::ObjectGroup(castedLayer->name(),0,0); // ObjectGroup no longer accepts mapWidth,mapHeight
             bool haveContent=false;

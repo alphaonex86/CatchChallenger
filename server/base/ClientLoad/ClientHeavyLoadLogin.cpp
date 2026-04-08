@@ -370,10 +370,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                 //delete askLoginParam;
                 server_list_return(askLoginParam->query_id,askLoginParam->characterOutputData,askLoginParam->characterOutputDataSize);
                 #else
-                account_id=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
+                account_id_db=GlobalServerData::serverPrivateVariables.db_login->stringtouint32(GlobalServerData::serverPrivateVariables.db_login->value(0),&ok);
                 if(!ok)
                 {
-                    account_id=0;
+                    account_id_db=0;
                     loginIsWrong(askLoginParam->query_id,0x03,"Account id is not a number");
                     delete askLoginParam;
                     return;
@@ -392,10 +392,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #endif
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.asyncRead(this,&Client::character_list_static,{std::to_string(account_id_db)});
     if(callback==NULL)
     {
-        account_id=0;
+        account_id_db=0;
         loginIsWrong(askLoginParam->query_id,0x04,"Sql error for: "+GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_characters.queryText()+", error: "+GlobalServerData::serverPrivateVariables.db_common->errorMessage());
         delete askLoginParam;
         return;
@@ -556,7 +556,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         account_id_db=GlobalServerData::serverPrivateVariables.maxAccountId;
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         PreparedDBQueryLogin::db_query_insert_login.asyncWrite({
-                    std::to_string(account_id),
+                    std::to_string(account_id_db),
                     binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE),
                     binarytoHexa(askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE),
                     std::to_string(sFrom1970())
@@ -759,19 +759,19 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                 uint32_t time_to_delete=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
                 if(!ok)
                 {
-                    normalOutput("time_to_delete is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(3)+" for "+std::to_string(account_id)+" fixed by 0");
+                    normalOutput("time_to_delete is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(3)+" for "+std::to_string(account_id_db)+" fixed by 0");
                     time_to_delete=0;
                 }
                 characterEntry.played_time=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(4),&ok);
                 if(!ok)
                 {
-                    normalOutput("played_time is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(4)+" for "+std::to_string(account_id)+" fixed by 0");
+                    normalOutput("played_time is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(4)+" for "+std::to_string(account_id_db)+" fixed by 0");
                     characterEntry.played_time=0;
                 }
                 characterEntry.last_connect=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(5),&ok);
                 if(!ok)
                 {
-                    normalOutput("last_connect is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id)+" fixed by 0");
+                    normalOutput("last_connect is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id_db)+" fixed by 0");
                     characterEntry.last_connect=current_time;
                 }
                 if(current_time>=time_to_delete && time_to_delete!=0)
@@ -792,7 +792,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                     const uint32_t &skinIdTemp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(2),&ok);
                     if(!ok)
                     {
-                        normalOutput("character return skin is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id)+" fixed by 0");
+                        normalOutput("character return skin is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(5)+" for "+std::to_string(account_id_db)+" fixed by 0");
                         characterEntry.skinId=0;
                         ok=true;
                     }
@@ -803,7 +803,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                             normalOutput("character return skin out of range: "+
                                          GlobalServerData::serverPrivateVariables.db_common->value(5)+
                                          " for "+
-                                         std::to_string(account_id)+
+                                         std::to_string(account_id_db)+
                                          "fixed by 0");
                             characterEntry.skinId=0;
                             ok=true;
@@ -816,7 +816,7 @@ uint32_t Client::character_list_return(char * data,const uint8_t &query_id)
                 }
             }
             else
-                normalOutput("Character id is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" for "+std::to_string(account_id));
+                normalOutput("Character id is not number: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" for "+std::to_string(account_id_db));
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE

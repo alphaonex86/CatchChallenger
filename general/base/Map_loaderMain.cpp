@@ -903,6 +903,10 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
         }
     }
 
+    // merge TMX data into this->map_to_send so loadExtraXml and loadAllMapsAndLink can access it
+    this->map_to_send = map_to_send_temp;
+    this->map_to_send.flat_simplified_map = simplifiedMap;
+
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
     loadExtraXml(mapFinal,xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
@@ -956,6 +960,9 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
             }
         }
     }
+
+    // save final simplified map (with zone IDs) back to this->map_to_send
+    this->map_to_send.flat_simplified_map = std::move(simplifiedMap);
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     delete domDocument;

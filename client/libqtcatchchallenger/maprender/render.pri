@@ -20,4 +20,5 @@ SOURCES += \
     $$PWD/TriggerAnimation.cpp \
     $$PWD/QMap_client.cpp \
     $$PWD/MapVisualiserPlayerWithFight.cpp \
+    $$PWD/ClientPlantWithTimer.cpp \
     $$PWD/MapControllerCrafting.cpp

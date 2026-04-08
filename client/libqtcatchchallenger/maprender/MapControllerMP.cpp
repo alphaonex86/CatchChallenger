@@ -22,8 +22,7 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     qRegisterMetaType<CatchChallenger::Player_public_informations>("CatchChallenger::Player_public_informations");
     qRegisterMetaType<CatchChallenger::Player_private_and_public_informations>("CatchChallenger::Player_private_and_public_informations");
     qRegisterMetaType<std::vector<std::pair<uint8_t,CatchChallenger::Direction> > >("std::vector<std::pair<uint8_t,CatchChallenger::Direction> >");
-    qRegisterMetaType<std::vector<CatchChallenger::QMap_client> >("std::vector<CatchChallenger::QMap_client>");
-    qRegisterMetaType<CatchChallenger::QMap_client>("CatchChallenger::QMap_client");
+    qRegisterMetaType<CatchChallenger::QMap_client*>("CatchChallenger::QMap_client*");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Direction,uint8_t> > >("std::vector<std::pair<CatchChallenger::Direction,uint8_t> >");
     qRegisterMetaType<std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > >("std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >");
     if(!connect(&pathFinding,&PathFinding::result,this,&MapControllerMP::pathFindingResult))
@@ -752,7 +751,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
                 return;
             }
             {
-                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,otherPlayer.monster_x,otherPlayer.monster_y);
+                const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.current_monster_map),otherPlayer.monster_x,otherPlayer.monster_y);
                 otherPlayer.monsterMapObject->setVisible(false);
                 unsigned int index=0;
                 while(index<monstersCollisionValue.walkOn.size())
@@ -776,7 +775,7 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
             }
         }
         //locate the right layer
-        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,otherPlayer.presumed_x,otherPlayer.presumed_y);
+        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.presumed_map),otherPlayer.presumed_x,otherPlayer.presumed_y);
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
@@ -844,12 +843,12 @@ void MapControllerMP::finalOtherPlayerStep(OtherPlayer &otherPlayer)
 void MapControllerMP::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //remove the other player
-    std::unordered_map<uint16_t,OtherPlayer> otherPlayerList2=otherPlayerList;
+    std::unordered_map<SIMPLIFIED_PLAYER_ID_FOR_MAP,OtherPlayer> otherPlayerList2=otherPlayerList;
     for (const auto &n : otherPlayerList2) {
-        if(n.second.presumed_map==map)
+        if(n.second.presumed_map==mapIndex)
             remove_player_final(n.first,true);
     }
-    MapVisualiser::destroyMap(map);
+    MapVisualiser::destroyMap(mapIndex);
 }
 
 CatchChallenger::Direction MapControllerMP::moveFromPath()
@@ -967,7 +966,7 @@ CatchChallenger::Direction MapControllerMP::moveFromPath()
     return CatchChallenger::Direction_look_at_bottom;
 }
 
-void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y)
+void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, COORD_TYPE x, COORD_TYPE y)
 {
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &thisx=pos.first;
@@ -976,8 +975,8 @@ void MapControllerMP::eventOnMap(CatchChallenger::MapEvent event,Map_full * temp
     {
         if(keyAccepted.empty() || (keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend() && keyAccepted.size()))
         {
-            MapVisualiser::eventOnMap(event,tempMapObject,x,y);
-            pathFinding.searchPath(CatchChallenger::QMap_client::all_map,tempMapObject->logicalMap.map_file,x,y,current_map,thisx,thisy,*items);
+            MapVisualiser::eventOnMap(event,mapIndex,x,y);
+            pathFinding.searchPath(QtDatapackClientLoader::datapackLoader->get_mapList(),mapIndex,x,y,current_map,thisx,thisy,std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY>());
             if(pathList.empty())
             {
                 while(pathList.size()>1)

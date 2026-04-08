@@ -779,13 +779,11 @@ void Battle::setVar(ConnexionManager *connexionManager)
     this->connexionManager=connexionManager;
 }
 
-void Battle::init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y)
+void Battle::init_environement_display(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
-    Q_UNUSED(x);
-    Q_UNUSED(y);
     //map not located
-    if(map==NULL)
+    if(mapIndex>=QtDatapackClientLoader::datapackLoader->get_mapList().size())
     {
         labelFightBackgroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/background.png"));
         labelFightForegroundPix=QPixmap(QStringLiteral(":/CC/images/interface/fight/foreground.png"));
@@ -798,7 +796,8 @@ void Battle::init_environement_display(CatchChallenger::Map_client *map, const u
         labelFightPlateformBottom->setPixmap(QPixmap(QStringLiteral(":/CC/images/interface/fight/plateform-background.png")).scaled(230,90));
         return;
     }
-    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(*map,x,y);
+    const CatchChallenger::CommonMap &map=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=CatchChallenger::MoveOnTheMap::getZoneCollision(map,x,y);
     unsigned int index=0;
     while(index<monstersCollisionValue.walkOn.size())
     {
