@@ -16,4 +16,5 @@ HEADERS  += \
     $$PWD/TileLayerItem.hpp \
     $$PWD/TriggerAnimation.hpp \
     $$PWD/MapVisualiserPlayerWithFight.hpp \
+    $$PWD/ClientPlantWithTimer.hpp \
     $$PWD/QMap_client.hpp

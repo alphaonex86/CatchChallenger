@@ -2,7 +2,6 @@
 #define Battle_H
 
 #include "../ScreenInput.hpp"
-#include "../../qtmaprender/Map_client.hpp"
 #include "../ConnexionManager.hpp"
 #include <QObject>
 class CCprogressbar;
@@ -28,7 +27,7 @@ public:
 
     void on_monsterList_itemActivated(uint8_t monsterPosition);
     bool check_monsters();
-    void init_environement_display(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void init_environement_display(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void setVar(ConnexionManager *connexionManager);
     void init_current_monster_display(CatchChallenger::PlayerMonster *fightMonster);
 public slots:

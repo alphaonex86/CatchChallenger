@@ -29,7 +29,7 @@
 
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libcatchchallenger/Api_protocol.hpp"
-#include "../../../qtmaprender/MapController.hpp"
+#include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "Chat.h"
 #include "NewProfile.h"
 
@@ -41,6 +41,7 @@ namespace Ui {
 }
 
 namespace CatchChallenger {
+
 class BaseWindow : public QWidget
 {
     Q_OBJECT
@@ -52,7 +53,7 @@ public:
     void serverIsLoading();
     void serverIsReady();
     std::string lastLocation() const;
-    std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> getQuests() const;
+    std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> getQuests() const;
     uint16_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
     bool haveStartQuestRequirement(const Quest &quest) const;
@@ -171,7 +172,7 @@ private slots:
     void haveCharacter();
     void sendDatapackContentMainSub();
     void have_main_and_sub_datapack_loaded();
-    void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
+    void have_inventory(const std::unordered_map<uint16_t, uint32_t> &items);
     void add_to_inventory(const uint16_t &item, const uint32_t &quantity=1, const bool &showGain=true);
     void add_to_inventory(const std::vector<std::pair<uint16_t,uint32_t> > &items,const bool &showGain=true);
     void add_to_inventory(const std::unordered_map<uint16_t, uint32_t> &items, const bool &showGain=true);
@@ -201,7 +202,7 @@ private slots:
     //render
     void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
-    int32_t havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const;//return -1 if not found, else the index
+    int32_t havePlant(const CatchChallenger::CommonMap *map, uint8_t x, uint8_t y) const;//return -1 if not found, else the index
     void actionOnNothing();
     void actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
@@ -213,7 +214,7 @@ private slots:
     void updateFactoryStatProduction(const IndustryStatus &industryStatus,const Industry &industry);
     void factoryToProductItem(QListWidgetItem *item);
     void factoryToResourceItem(QListWidgetItem *item);
-    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void insert_player(const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
     void animationFinished();
     void evolutionCanceled();
     void teleportConditionNotRespected(const std::string &text);

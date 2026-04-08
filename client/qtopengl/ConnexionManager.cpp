@@ -192,7 +192,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
             abort();
         if(!connect(realSslSocket,&QSslSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::QueuedConnection))
             abort();
-        if(!connect(realSslSocket,static_cast<void(QSslSocket::*)(QAbstractSocket::SocketError)>(&QSslSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
+        if(!connect(realSslSocket,&QSslSocket::errorOccurred,           this,&ConnexionManager::error,Qt::QueuedConnection))
             abort();
 
         socket->connectToHost(connexionInfo.host,connexionInfo.port);
@@ -205,7 +205,7 @@ void ConnexionManager::connectToServer(ConnexionInfo connexionInfo,QString login
         std::cout << "try connect WebSocket on: " << connexionInfo.host.toStdString() << ": " << connexionInfo.port << std::endl;
         if(!connect(realWebSocket,&QWebSocket::stateChanged,    this,&ConnexionManager::stateChanged,Qt::DirectConnection))
             abort();
-        if(!connect(realWebSocket,static_cast<void(QWebSocket::*)(QAbstractSocket::SocketError)>(&QWebSocket::error),           this,&ConnexionManager::error,Qt::QueuedConnection))
+        if(!connect(realWebSocket,&QWebSocket::errorOccurred,           this,&ConnexionManager::error,Qt::QueuedConnection))
             abort();
 
         QUrl url{QString(connexionInfo.ws)};
@@ -329,12 +329,12 @@ QString ConnexionManager::serverToDatapachPath(ConnexionInfo connexionInfo) cons
     QDir datapack;
     if(connexionInfo.isCustom)
         datapack=QDir(QStringLiteral("%1/datapack/Custom-%2/")
-                      .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
                       .arg(connexionInfo.unique_code)
                       );
     else
         datapack=QDir(QStringLiteral("%1/datapack/Xml-%2")
-                      .arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation))
+                      .arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation))
                       .arg(connexionInfo.unique_code)
                       );
     return datapack.absolutePath();
@@ -346,12 +346,12 @@ QString ConnexionManager::serverToDatapachPath(ConnexionInfo connexionInfo) cons
     if(customServerConnexion.contains(selectedServer))
     {
         if(!serverConnexion.value(selectedServer)->name.isEmpty())
-             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->name));
+             datapack=QDir(QStringLiteral("%1/datapack/%2/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->name));
         else
-             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
+             datapack=QDir(QStringLiteral("%1/datapack/%2-%3/").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->host).arg(serverConnexion.value(selectedServer)->port));
     }
     else
-        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::DataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
+        datapack=QDir(QStringLiteral("%1/datapack/Xml-%2").arg(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation)).arg(serverConnexion.value(selectedServer)->unique_code));
     return datapack.absolutePath();
 }*/
 

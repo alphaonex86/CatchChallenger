@@ -1,7 +1,7 @@
 #include "LoadMapAll.h"
 
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
+#include <tiled/mapobject.h>
+#include <tiled/objectgroup.h>
 #include "../../general/base/cpp11addition.hpp"
 
 #include "../map-procedural-generation-terrain/LoadMap.h"

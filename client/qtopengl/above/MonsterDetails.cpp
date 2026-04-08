@@ -300,8 +300,6 @@ void MonsterDetails::setVar(const CatchChallenger::PlayerMonster &monster)
     detailsString+=tr("Defense: %1").arg(stat.defense)+"<br />";
     detailsString+=tr("SP attack: %1").arg(stat.special_attack)+"<br />";
     detailsString+=tr("SP defense: %1").arg(stat.special_defense)+"<br />";
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-        detailsString+=tr("Skill point: %1").arg(monster.sp)+"<br />";
     if(!typeString.isEmpty())
         detailsString+="<br />"+typeString;
     details->setHtml(detailsString);

@@ -1,12 +1,12 @@
 #include <QApplication>
 #include <QSettings>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QFile>
 #include <iostream>
 
-#include <libtiled/mapwriter.h>
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
+#include <tiled/mapwriter.h>
+#include <tiled/mapobject.h>
+#include <tiled/objectgroup.h>
 
 #include "znoise/headers/Simplex.hpp"
 #include "VoronioForTiledMapTmx.h"
@@ -15,6 +15,14 @@
 #include "Settings.h"
 #include "MapPlants.h"
 #include "MiniMap.h"
+
+#include <tiled/tileset.h>
+#include <tiled/map.h>
+#include <memory>
+
+std::vector<Tiled::SharedTileset> LoadMap_tilesets_hack;
+std::vector<std::unique_ptr<Tiled::Map>> LoadMap_map_hack;
+std::vector<Tiled::SharedTileset> MapBrush_tilesets_hack;
 
 /*To do: Tree/Grass, Rivers
 http://www-cs-students.stanford.edu/~amitp/game-programming/polygon-map-generation/*/
@@ -29,7 +37,7 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication a(argc, argv);
-    QTime t;
+    QElapsedTimer t;
 
     a.setOrganizationDomain(QStringLiteral("catchchallenger"));
     a.setApplicationName(QStringLiteral("map-procedural-generation-terrain"));
@@ -48,7 +56,7 @@ int main(int argc, char *argv[])
         const unsigned int totalHeight=config.mapHeight*config.mapYCount;
         t.start();
         const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
-        qDebug("generateGrid took %d ms", t.elapsed());
+        qDebug("generateGrid took %lld ms", t.elapsed());
 
         const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);
         const float noiseMapScaleMap=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMap*((config.mapXCount+config.mapYCount)/2);
@@ -60,7 +68,7 @@ int main(int argc, char *argv[])
         VoronioForTiledMapTmx::voronoiMap1px=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,1);
         if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
-        qDebug("computeVoronoi took %d ms", t.elapsed());
+        qDebug("computeVoronoi took %lld ms", t.elapsed());
 
         {
             Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
@@ -80,18 +88,18 @@ int main(int argc, char *argv[])
                 t.start();
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height());
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),0,0,false);
-                qDebug("Add terrain took %d ms", t.elapsed());
+                qDebug("Add terrain took %lld ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 if(config.dotransition)
                 {
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
                     TransitionTerrain::addTransitionOnMap(tiledMap);
-                    qDebug("Transitions took %d ms", t.elapsed());
+                    qDebug("Transitions took %lld ms", t.elapsed());
                 }
                 t.start();
                 TransitionTerrain::mergeDown(tiledMap);
-                qDebug("mergeDown took %d ms", t.elapsed());
+                qDebug("mergeDown took %lld ms", t.elapsed());
                 TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(config.dominimap)
@@ -100,14 +108,14 @@ int main(int argc, char *argv[])
                 MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),config.miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMap::makeMapTiled(tiledMap.width(),tiledMap.height()).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
                 MiniMap::makeMapTerrainOverview();
-                qDebug("dominimap %d ms", t.elapsed());
+                qDebug("dominimap %lld ms", t.elapsed());
             }
 
             if(config.dovegetation)
             {
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
-                qDebug("Vegetation took %d ms", t.elapsed());
+                qDebug("Vegetation took %lld ms", t.elapsed());
             }
             {
                 Tiled::ObjectGroup *layerZoneChunk=new Tiled::ObjectGroup("Chunk",0,0);

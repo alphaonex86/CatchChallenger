@@ -128,128 +128,18 @@ void OverMapLogic::on_factoryResources_itemActivated(QListWidgetItem *item)
 
 void OverMapLogic::haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice)
 {
-    const CatchChallenger::ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.front();
-    std::unordered_map<uint16_t,uint32_t> items;
-    switch(stat)
-    {
-        case CatchChallenger::BuyStat_Done:
-            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
-            if(industryStatus.products.find(itemToSellOrBuy.object)!=industryStatus.products.cend())
-            {
-                industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
-                if(industryStatus.products.at(itemToSellOrBuy.object)==0)
-                    industryStatus.products.erase(itemToSellOrBuy.object);
-            }
-            add_to_inventory(items);
-        break;
-        case CatchChallenger::BuyStat_BetterPrice:
-            if(newPrice==0)
-            {
-                qDebug() << "haveBuyFactoryObject() Can't buy at 0$!";
-                return;
-            }
-            addCash(itemToSellOrBuy.price);
-            removeCash(newPrice*itemToSellOrBuy.quantity);
-            items[itemToSellOrBuy.object]=itemToSellOrBuy.quantity;
-            if(industryStatus.products.find(itemToSellOrBuy.object)!=industryStatus.products.cend())
-            {
-                industryStatus.products[itemToSellOrBuy.object]-=itemToSellOrBuy.quantity;
-                if(industryStatus.products.at(itemToSellOrBuy.object)==0)
-                    industryStatus.products.erase(itemToSellOrBuy.object);
-            }
-            add_to_inventory(items);
-        break;
-        case CatchChallenger::BuyStat_HaveNotQuantity:
-            addCash(itemToSellOrBuy.object);
-            showTip(tr("Sorry but have not the quantity of this item").toStdString());
-        break;
-        case CatchChallenger::BuyStat_PriceHaveChanged:
-            addCash(itemToSellOrBuy.object);
-            showTip(tr("Sorry but now the price is worse").toStdString());
-        break;
-        default:
-            qDebug() << "haveBuyFactoryObject(stat) have unknow value";
-        break;
-    }
-    switch(stat)
-    {
-        case CatchChallenger::BuyStat_Done:
-        case CatchChallenger::BuyStat_BetterPrice:
-        {
-            if(factoryInProduction)
-                break;
-            const CatchChallenger::Industry &industry=CatchChallenger::CommonDatapack::commonDatapack.get_industries().at(
-                        CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
-            industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
-            updateFactoryStatProduction(industryStatus,industry);
-        }
-        break;
-        default:
-        break;
-    }
-    itemsToBuy.erase(itemsToBuy.cbegin());
+    Q_UNUSED(stat);
+    Q_UNUSED(newPrice);
+    //factory UI not implemented yet
+    abort();
 }
 
 void OverMapLogic::haveSellFactoryObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice)
 {
-    waitToSell=false;
-    switch(stat)
-    {
-        case CatchChallenger::SoldStat_Done:
-            if(industryStatus.resources.find(itemsToSell.front().object)==industryStatus.resources.cend())
-                industryStatus.resources[itemsToSell.front().object]=0;
-            industryStatus.resources[itemsToSell.front().object]+=itemsToSell.front().quantity;
-            addCash(itemsToSell.front().price*itemsToSell.front().quantity);
-            showTip(tr("Item sold").toStdString());
-        break;
-        case CatchChallenger::SoldStat_BetterPrice:
-            if(newPrice==0)
-            {
-                qDebug() << "haveSellFactoryObject() the price 0$ can't be better price!";
-                showTip(tr("Bug into returned price").toStdString());
-                return;
-            }
-            if(industryStatus.resources.find(itemsToSell.front().object)==industryStatus.resources.cend())
-                industryStatus.resources[itemsToSell.front().object]=0;
-            industryStatus.resources[itemsToSell.front().object]+=itemsToSell.front().quantity;
-            addCash(newPrice*itemsToSell.front().quantity);
-            showTip(tr("Item sold at better price").toStdString());
-        break;
-        case CatchChallenger::SoldStat_WrongQuantity:
-            add_to_inventory(itemsToSell.front().object,itemsToSell.front().quantity,false);
-            showTip(tr("Sorry but have not the quantity of this item").toStdString());
-            /*load_inventory();
-            load_plant_inventory();*/
-            abort();
-        break;
-        case CatchChallenger::SoldStat_PriceHaveChanged:
-            add_to_inventory(itemsToSell.front().object,itemsToSell.front().quantity,false);
-            showTip(tr("Sorry but now the price is worse").toStdString());
-            /*            load_inventory();
-            load_plant_inventory();*/
-            abort();
-        break;
-        default:
-            qDebug() << "haveSellFactoryObject(stat) have unknow value";
-        break;
-    }
-    itemsToSell.erase(itemsToSell.cbegin());
-    switch(stat)
-    {
-        case CatchChallenger::SoldStat_Done:
-        case CatchChallenger::SoldStat_BetterPrice:
-        {
-            if(factoryInProduction)
-                break;
-            const CatchChallenger::IndustryLink &industryLink=CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().at(factoryId);
-            const CatchChallenger::Industry &industry=CatchChallenger::CommonDatapack::commonDatapack.get_industries().at(industryLink.industry);
-            industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
-            updateFactoryStatProduction(industryStatus,industry);
-        }
-        break;
-        default:
-        break;
-    }
+    Q_UNUSED(stat);
+    Q_UNUSED(newPrice);
+    //factory UI not implemented yet
+    abort();
 }
 
 void OverMapLogic::haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<CatchChallenger::ItemToSellOrBuy> &resources,const std::vector<CatchChallenger::ItemToSellOrBuy> &products)

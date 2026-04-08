@@ -4,6 +4,7 @@
 #include "../DictionaryServer.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -113,7 +114,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
-    market_cash(12),botfight_id(13),itemonmap(14),quest(15),blob_version(16),date(17),plants(18)*/
+    market_cash(12),quest(13),date(14)*/
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     const auto &characterIdString=std::to_string(characterId);
@@ -173,7 +174,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     else
     {
         bool ok;
-        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(16),&ok);
+        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
         if(!ok || server_date<characterCreationDateList.at(characterId))
         {
             //drop before re-add
@@ -199,17 +200,17 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
             characterIsRightWithParsedRescue(query_id,
                 characterId,
-                serverProfileInternal.map,
+                serverProfileInternal.mapIndex,
                 serverProfileInternal.x,
                 serverProfileInternal.y,
                 serverProfileInternal.orientation,
                 //rescue
-                serverProfileInternal.map,
+                serverProfileInternal.mapIndex,
                 serverProfileInternal.x,
                 serverProfileInternal.y,
                 serverProfileInternal.orientation,
                 //last unvalidated
-                serverProfileInternal.map,
+                serverProfileInternal.mapIndex,
                 serverProfileInternal.x,
                 serverProfileInternal.y,
                 serverProfileInternal.orientation
@@ -221,226 +222,23 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     characterCreationDateList.erase(characterId);
 
     bool ok;
-    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        default:
-        case MapVisibilityAlgorithmSelection_Simple:
-        case MapVisibilityAlgorithmSelection_WithBorder:
-        if(simplifiedIdList.size()<=0)
-        {
-            characterSelectionIsWrong(query_id,0x04,"Not free id to login");
-            return;
-        }
-        break;
-        case MapVisibilityAlgorithmSelection_None:
-        break;
-    }
 
-    const uint8_t &blob_version=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(15),&ok);
-    if(!ok)
-    {
-        characterSelectionIsWrong(query_id,0x04,"Blob version not a number");
-        return;
-    }
-    if(blob_version!=GlobalServerData::serverPrivateVariables.server_blobversion_datapack)
-    {
-        characterSelectionIsWrong(query_id,0x04,"Blob version incorrect");
-        return;
-    }
-
-    //botfight_id
-    {
-        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
-        if(!ok)
-        {
-            characterSelectionIsWrong(query_id,0x04,"botfight_id not in hexa");
-            return;
-        }
-        const char * const data_raw=data.data();
-        if(public_and_private_informations.bot_already_beaten!=NULL)
-        {
-            delete public_and_private_informations.bot_already_beaten;
-            public_and_private_informations.bot_already_beaten=NULL;
-        }
-        public_and_private_informations.bot_already_beaten=(char *)malloc(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-        memset(public_and_private_informations.bot_already_beaten,0x00,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-        if(data.size()>(uint16_t)(CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1))
-            memcpy(public_and_private_informations.bot_already_beaten,data_raw,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1);
-        else
-            memcpy(public_and_private_informations.bot_already_beaten,data_raw,data.size());
-    }
-    //itemonmap
-    {
-        const std::vector<char> &itemonmap=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
-        const char * const raw_itemonmap=itemonmap.data();
-        #endif
-        if(!ok)
-        {
-            characterSelectionIsWrong(query_id,0x04,"itemonmap: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
-            return;
-        }
-        else
-        {
-            if(itemonmap.size()%(2)!=0)
-            {
-                characterSelectionIsWrong(query_id,0x04,"item on map missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(13));
-                return;
-            }
-            else
-            {
-                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                public_and_private_informations.itemOnMap.reserve(itemonmap.size());
-                #endif
-                uint32_t lastItemonmapId=0;
-                uint32_t pos=0;
-                while(pos<itemonmap.size())
-                {
-                    uint32_t pointOnMapDatabaseId=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
-                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                        itemonmap.data()
-                                        #else
-                                        raw_itemonmap
-                                        #endif
-                                        +pos))+lastItemonmapId;
-                    if(pointOnMapDatabaseId>65535)
-                        pointOnMapDatabaseId-=65536;
-                    lastItemonmapId=static_cast<uint16_t>(pointOnMapDatabaseId);
-                    if(!ok)
-                    {
-                        normalOutput("wrong value type for item on map, skip: "+std::to_string(pointOnMapDatabaseId));
-                        pos+=2;
-                        continue;
-                    }
-                    if(pointOnMapDatabaseId>=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.size())
-                    {
-                        normalOutput("item on map is not into the map list (1), skip: "+std::to_string(pointOnMapDatabaseId));
-                        pos+=2;
-                        continue;
-                    }
-                    const DictionaryServer::MapAndPointItem &resolvedEntry=DictionaryServer::dictionary_pointOnMap_item_database_to_internal.at(pointOnMapDatabaseId);
-                    if(resolvedEntry.map==NULL)
-                    {
-                        normalOutput("item on map is not into the map list (2), skip: "+std::to_string(pointOnMapDatabaseId));
-                        pos+=2;
-                        continue;
-                    }
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(public_and_private_informations.itemOnMap.find(static_cast<uint16_t>(pointOnMapDatabaseId))!=public_and_private_informations.itemOnMap.cend())
-                    {
-                        normalOutput("item on map duplicate, skip: "+std::to_string(pointOnMapDatabaseId));
-                        pos+=2;
-                        continue;
-                    }
-                    #endif
-                    public_and_private_informations.itemOnMap.insert(static_cast<uint16_t>(pointOnMapDatabaseId));
-                    pos+=2;
-                }
-            }
-        }
-    }
-    {
-        const std::vector<char> &plants=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(17),&ok);
-        const char * const raw_plants=plants.data();
-        if(!ok)
-        {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(16)+" is not a hexa");
-            return;
-        }
-        else
-        {
-            if(plants.size()%(2/*pointOnMap*/+1/*plant*/+8/*timestamps*/)!=0)
-            {
-                characterSelectionIsWrong(query_id,0x04,"plants missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(16));
-                return;
-            }
-            else
-            {
-                #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-                public_and_private_informations.plantOnMap.reserve(plants.size()/(1+1+8));
-                #endif
-                PlayerPlant plant;
-                uint32_t lastPlantId=0;
-                uint32_t pos=0;
-                while(pos<plants.size())
-                {
-                    uint32_t pointOnMap=(uint32_t)le16toh(*reinterpret_cast<const uint16_t *>(
-                                        #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                        plants.data()
-                                        #else
-                                        raw_plants
-                                        #endif
-                                        +pos))+lastPlantId;
-                    if(pointOnMap>65535)
-                        pointOnMap-=65536;
-                    lastPlantId=static_cast<uint16_t>(pointOnMap);
-                    pos+=2;
-
-                    if(pointOnMap>=DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.size())
-                    {
-                        normalOutput("dirt on map is not into the map list (1), skip: "+std::to_string(pointOnMap));
-                        pos+=1+8;
-                        continue;
-                    }
-                    if(DictionaryServer::dictionary_pointOnMap_plant_database_to_internal.at(pointOnMap).map==NULL)
-                    {
-                        normalOutput("dirt on map is not into the map list (2), skip: "+std::to_string(pointOnMap));
-                        pos+=1+8;
-                        continue;
-                    }
-
-                    plant.plant=
-                            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                            plants
-                            #else
-                            raw_plants
-                            #endif
-                            [pos];
-                    ++pos;
-
-                    if(CommonDatapack::commonDatapack.get_plants().find(plant.plant)==CommonDatapack::commonDatapack.get_plants().cend())
-                    {
-                        normalOutput("wrong value type for plant dirt on map, skip: "+std::to_string(plant.plant));
-                        pos+=8;
-                        continue;
-                    }
-
-                    uint64_t mature_at;
-                    memcpy(&mature_at,
-                            raw_plants
-                            +pos,sizeof(uint64_t));
-                    plant.mature_at=le64toh(mature_at)+CommonDatapack::commonDatapack.get_plants().at(plant.plant).fruits_seconds;
-                    pos+=8;
-
-                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(public_and_private_informations.plantOnMap.find(static_cast<uint16_t>(pointOnMap))!=public_and_private_informations.plantOnMap.cend())
-                    {
-                        normalOutput("duplicate for plant dirt on map, skip: "+std::to_string(plant.plant));
-                        pos+=8;
-                        continue;
-                    }
-                    #endif
-                    public_and_private_informations.plantOnMap[static_cast<uint16_t>(pointOnMap)]=plant;
-                }
-            }
-        }
-    }
     //quest
     {
-        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
+        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
         const char * const raw_quests=quests.data();
         #endif
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"plants: "+GlobalServerData::serverPrivateVariables.db_server->value(14)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"quest: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
             return;
         }
         else
         {
             if(quests.size()%(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(14));
+                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(13));
                 return;
             }
             else
@@ -518,7 +316,6 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         }
     }
 
-    public_and_private_informations.public_informations.speed=CATCHCHALLENGER_SERVER_NORMAL_SPEED;
     Orientation orientation;
     const uint32_t &orientationInt=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
     if(ok)
@@ -536,7 +333,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
         orientation=Orientation_bottom;
         normalOutput("Wrong orientation (not number) corrected with bottom: "+GlobalServerData::serverPrivateVariables.db_server->value(3));
     }
-    CommonMap * map=NULL;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex=0;
     uint8_t x,y;
     //all is rights
     if(!GlobalServerData::serverSettings.teleportIfMapNotFoundOrOutOfMap || profileIndex>=CommonDatapack::commonDatapack.get_profileList().size())
@@ -552,12 +349,13 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             characterSelectionIsWrong(query_id,0x04,"map_database_id out of range");
             return;
         }
-        map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
-        if(map==NULL)
+        mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
+        if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
         {
             characterSelectionIsWrong(query_id,0x04,"map_database_id have not reverse: "+std::to_string(map_database_id)+", mostly due to start previously start with another mainDatapackCode");
             return;
         }
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
         x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
         if(!ok)
         {
@@ -570,14 +368,14 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
             characterSelectionIsWrong(query_id,0x04,"y coord is not a number");
             return;
         }
-        if(x>=map->width)
+        if(x>=map.width)
         {
-            characterSelectionIsWrong(query_id,0x04,"x to out of map: "+std::to_string(x)+" >= "+std::to_string(map->width)+" ("+map->map_file+")");
+            characterSelectionIsWrong(query_id,0x04,"x to out of map: "+std::to_string(x)+" >= "+std::to_string(map.width));
             return;
         }
-        if(y>=map->height)
+        if(y>=map.height)
         {
-            characterSelectionIsWrong(query_id,0x04,"y to out of map: "+std::to_string(y)+" >= "+std::to_string(map->height)+" ("+map->map_file+")");
+            characterSelectionIsWrong(query_id,0x04,"y to out of map: "+std::to_string(y)+" >= "+std::to_string(map.height));
             return;
         }
     }
@@ -593,37 +391,38 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
                 goToFinal=true;
         if(!goToFinal)
         {
-            map=static_cast<CommonMap *>(DictionaryServer::dictionary_map_database_to_internal.at(map_database_id));
-            if(map==NULL)
+            mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
+            if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
                 goToFinal=true;
             if(!goToFinal)
             {
+                const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
                 x=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
                 if(!ok)
                     goToFinal=true;
                 y=GlobalServerData::serverPrivateVariables.db_server->stringtouint8(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
                 if(!ok)
                     goToFinal=true;
-                if(x>=map->width)
+                if(x>=map.width)
                     goToFinal=true;
-                if(y>=map->height)
+                if(y>=map.height)
                     goToFinal=true;
                 if(ok)
-                    if(!MoveOnTheMap::isWalkable(*map,x,y))
+                    if(!MoveOnTheMap::isWalkable(map,x,y))
                         goToFinal=true;
             }
         }
         if(goToFinal)
         {
             normalOutput("Problem with map spawn, fixed by rescue");
-            map=serverProfileInternal.map;
+            mapIndex=serverProfileInternal.mapIndex;
             x=serverProfileInternal.x;
             y=serverProfileInternal.y;
         }
     }
     characterIsRightWithRescue(query_id,
         characterId,
-        map,
+        mapIndex,
         x,
         y,
         orientation,
@@ -641,4 +440,175 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     #else
     #error Define what do here
     #endif
+}
+
+void Client::loadCharacterByMap()
+{
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_select_character_bymap.asyncRead(this,&Client::loadCharacterByMap_static,{std::to_string(character_id_db)});
+    if(callback==NULL)
+    {
+        std::cerr << "Sql error for: " << GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_select_character_bymap.queryText() << ", error: " << GlobalServerData::serverPrivateVariables.db_server->errorMessage() << std::endl;
+        characterIsRightSendData();
+        return;
+    }
+    else
+        callbackRegistred.push(callback);
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    loadCharacterByMap_return();
+    #elif CATCHCHALLENGER_DB_FILE
+    loadCharacterByMap_return();
+    #else
+    #error Define what do here
+    #endif
+}
+
+void Client::loadCharacterByMap_static(void *object)
+{
+    if(object!=NULL)
+        static_cast<Client *>(object)->loadCharacterByMap_return();
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    GlobalServerData::serverPrivateVariables.db_server->clear();
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    #else
+    #error Define what do here
+    #endif
+}
+
+void Client::loadCharacterByMap_return()
+{
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    callbackRegistred.pop();
+    bool ok;
+    while(GlobalServerData::serverPrivateVariables.db_server->next())
+    {
+        const uint32_t &map_database_id=GlobalServerData::serverPrivateVariables.db_server->stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
+        if(!ok)
+        {
+            normalOutput("character_bymap: map is not a number, skip row");
+            continue;
+        }
+        if(map_database_id>=(uint32_t)DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            normalOutput("character_bymap: map_database_id out of range: "+std::to_string(map_database_id));
+            continue;
+        }
+        const CATCHCHALLENGER_TYPE_MAPID &mapIndex=DictionaryServer::dictionary_map_database_to_internal.at(map_database_id);
+        if(mapIndex>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        {
+            normalOutput("character_bymap: mapIndex out of range: "+std::to_string(mapIndex));
+            continue;
+        }
+        const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
+        Player_private_and_public_informations_Map &playerMapData=public_and_private_informations.mapData[mapIndex];
+
+        //items blob: [x(1B), y(1B)] pairs
+        {
+            const std::vector<char> &items_data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(2),&ok);
+            if(!ok)
+                normalOutput("character_bymap: items is not hexa for map: "+std::to_string(map_database_id));
+            else
+            {
+                if(items_data.size()%2!=0)
+                    normalOutput("character_bymap: items blob has wrong size for map: "+std::to_string(map_database_id));
+                else
+                {
+                    const char * const raw=items_data.data();
+                    uint32_t pos=0;
+                    while(pos<items_data.size())
+                    {
+                        const uint8_t ix=static_cast<uint8_t>(raw[pos]);
+                        pos+=1;
+                        const uint8_t iy=static_cast<uint8_t>(raw[pos]);
+                        pos+=1;
+                        if(ix>=map.width || iy>=map.height)
+                        {
+                            normalOutput("character_bymap: item coords out of range on map: "+std::to_string(map_database_id));
+                            continue;
+                        }
+                        if(map.items.find(std::make_pair(ix,iy))==map.items.cend())
+                        {
+                            normalOutput("character_bymap: no item at position on map: "+std::to_string(map_database_id));
+                            continue;
+                        }
+                        playerMapData.items.insert(std::make_pair(ix,iy));
+                    }
+                }
+            }
+        }
+
+        //plants blob: [x(1B), y(1B), plant_id(1B), mature_at(8B LE)] entries
+        {
+            const std::vector<char> &plants_data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(1),&ok);
+            if(!ok)
+                normalOutput("character_bymap: plants is not hexa for map: "+std::to_string(map_database_id));
+            else
+            {
+                if(plants_data.size()%(1+1+1+8)!=0)
+                    normalOutput("character_bymap: plants blob has wrong size for map: "+std::to_string(map_database_id));
+                else
+                {
+                    const char * const raw=plants_data.data();
+                    uint32_t pos=0;
+                    while(pos<plants_data.size())
+                    {
+                        const uint8_t px=static_cast<uint8_t>(raw[pos]);
+                        pos+=1;
+                        const uint8_t py=static_cast<uint8_t>(raw[pos]);
+                        pos+=1;
+                        const uint8_t plant_id=static_cast<uint8_t>(raw[pos]);
+                        pos+=1;
+                        uint64_t mature_at;
+                        memcpy(&mature_at,raw+pos,sizeof(uint64_t));
+                        mature_at=le64toh(mature_at);
+                        pos+=8;
+                        if(px>=map.width || py>=map.height)
+                        {
+                            normalOutput("character_bymap: plant coords out of range on map: "+std::to_string(map_database_id));
+                            continue;
+                        }
+                        if(CommonDatapack::commonDatapack.get_plants().find(plant_id)==CommonDatapack::commonDatapack.get_plants().cend())
+                        {
+                            normalOutput("character_bymap: unknown plant_id: "+std::to_string(plant_id)+" on map: "+std::to_string(map_database_id));
+                            continue;
+                        }
+                        PlayerPlant playerPlant;
+                        playerPlant.plant=plant_id;
+                        playerPlant.mature_at=mature_at;
+                        playerMapData.plants[std::make_pair(px,py)]=playerPlant;
+                    }
+                }
+            }
+        }
+
+        //fights blob: [bot_id(1B)] entries
+        {
+            const std::vector<char> &fights_data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(3),&ok);
+            if(!ok)
+                normalOutput("character_bymap: fights is not hexa for map: "+std::to_string(map_database_id));
+            else
+            {
+                const char * const raw=fights_data.data();
+                uint32_t pos=0;
+                while(pos<fights_data.size())
+                {
+                    const uint8_t bot_id=static_cast<uint8_t>(raw[pos]);
+                    pos+=1;
+                    if(map.botFights.find(bot_id)==map.botFights.cend())
+                    {
+                        normalOutput("character_bymap: unknown bot_id: "+std::to_string(bot_id)+" on map: "+std::to_string(map_database_id));
+                        continue;
+                    }
+                    playerMapData.bots_beaten.insert(bot_id);
+                }
+            }
+        }
+    }
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    #elif CATCHCHALLENGER_DB_FILE
+    #else
+    #error Define what do here
+    #endif
+    characterIsRightSendData();
 }

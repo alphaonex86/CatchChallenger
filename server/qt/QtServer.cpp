@@ -4,12 +4,13 @@
 #include "timer/QtPlayerUpdater.hpp"
 #include "timer/QtTimeRangeEventScanBase.hpp"
 #include "db/QtDatabaseSQLite.hpp"
-#include "QtClientMapManagement.hpp"
+#include "QtClientWithMap.hpp"
+#include "QtClientList.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/BroadCastWithoutSender.hpp"
-#include "../base/LocalClientHandlerWithoutSender.hpp"
+#include "../base/ClientEvents/LocalClientHandlerWithoutSender.hpp"
 #include "../base/ClientNetworkReadWithoutSender.hpp"
-#include "../base/ClientMapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
+#include "../base/MapManagement/MapVisibilityAlgorithm_WithoutSender.hpp"
 #ifdef CATCHCHALLENGER_SOLO
 #include "QFakeServer.hpp"
 #endif
@@ -25,8 +26,8 @@ QtServerPrivateVariables *QtServer::qtServerPrivateVariables=nullptr;//point to 
 
 QtServer::QtServer()
 {
-    if(ClientList::list==nullptr)
-        ClientList::list=new QtClientList();
+    if(CatchChallenger::ClientList::list==nullptr)
+        CatchChallenger::ClientList::list=new CatchChallenger::QtClientList();
     
     if(QtServer::qtServerPrivateVariables==nullptr)
         QtServer::qtServerPrivateVariables=new QtServerPrivateVariables();
@@ -227,42 +228,13 @@ void QtServer::removeOneClient()
     }
     for(CatchChallenger::Client * client : client_list)
     {
-        switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
+        QtClientWithMap *c=static_cast<QtClientWithMap *>(client);
+        if(c->socket==socket)
         {
-            case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-            {
-                QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(client);
-                if(c->socket==socket)
-                {
-                    delete c;
-                    client_list.erase(c);
-                    break;
-                }
-            }
-            break;
-            case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-            {
-                QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(client);
-                if(c->socket==socket)
-                {
-                    delete c;
-                    client_list.erase(c);
-                    break;
-                }
-            }
-            break;
-            default:
-            case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-            {
-                QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(client);
-                if(c->socket==socket)
-                {
-                    delete c;
-                    client_list.erase(c);
-                    break;
-                }
-            }
-            break;
+            CatchChallenger::ClientList::list->remove(*c);
+            client_list.erase(client);
+            delete c;
+            return;
         }
     }
 }
@@ -272,26 +244,16 @@ void QtServer::removeOneClient()
 void QtServer::newConnection()
 {
     #if ! defined(EPOLLCATCHCHALLENGERSERVER) && ! defined (ONLYMAPRENDER) && defined(CATCHCHALLENGER_SOLO)
+    CatchChallenger::QtClientList *qtClientList=static_cast<CatchChallenger::QtClientList *>(CatchChallenger::ClientList::list);
     while(QFakeServer::server.hasPendingConnections())
     {
         QFakeSocket *socket = QFakeServer::server.nextPendingConnection();
         if(socket!=NULL)
         {
             qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by fake socket");
-            CatchChallenger::Client *client=nullptr;
-            switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-            {
-                case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
-                break;
-                case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
-                break;
-                default:
-                case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-                    client=new QtMapVisibilityAlgorithm_None(socket);
-                break;
-            }
+            const PLAYER_INDEX_FOR_CONNECTED index=qtClientList->insert(nullptr);
+            QtClientWithMap *client=new QtClientWithMap(socket,index);
+            CatchChallenger::QtClientList::clients[index]=client;
             connect_the_last_client(client,socket);
 
             QByteArray data;
@@ -309,20 +271,9 @@ void QtServer::newConnection()
         if(socket!=NULL)
         {
             qDebug() << ("newConnection(): new CatchChallenger::QtClient connected by TCP socket");
-            CatchChallenger::Client *client=nullptr;
-            switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-            {
-                case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-                    client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
-                break;
-                case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-                    client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
-                break;
-                default:
-                case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-                    client=new QtMapVisibilityAlgorithm_None(socket);
-                break;
-            }
+            const PLAYER_INDEX_FOR_CONNECTED index=qtClientList->insert(nullptr);
+            QtClientWithMap *client=new QtClientWithMap(socket,index);
+            CatchChallenger::QtClientList::clients[index]=client;
             connect_the_last_client(client,socket);
 
             QByteArray data;
@@ -339,31 +290,9 @@ void QtServer::newConnection()
 
 void QtServer::connect_the_last_client(CatchChallenger::Client *client, QIODevice *socket)
 {
-    switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-    {
-        case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-        {
-            QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(client);
-            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_Simple_StoreOnSender::parseIncommingData,Qt::QueuedConnection))
-                abort();
-        }
-        break;
-        case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-        {
-            QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(client);
-            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_WithBorder_StoreOnSender::parseIncommingData,Qt::QueuedConnection))
-                abort();
-        }
-        break;
-        default:
-        case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-        {
-            QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(client);
-            if(!connect(socket,&QIODevice::readyRead,c,&QtMapVisibilityAlgorithm_None::parseIncommingData,Qt::QueuedConnection))
-                abort();
-        }
-        break;
-    }
+    QtClientWithMap *c=static_cast<QtClientWithMap *>(client);
+    if(!connect(socket,&QIODevice::readyRead,c,&QtClientWithMap::parseIncommingData,Qt::QueuedConnection))
+        abort();
     if(!connect(socket,&QObject::destroyed,this,&QtServer::removeOneClient,Qt::DirectConnection))
         abort();
     client_list.insert(client);
@@ -481,41 +410,15 @@ void QtServer::stop_internal_server()
 void QtServer::stop_internal_server_slot()
 {
     std::cerr << "QtServer::stop_internal_server_slot()" << std::endl;
-    //#ifndef CATCHCHALLENGER_SOLO
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
-        switch(CatchChallenger::GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-        {
-            case CatchChallenger::MapVisibilityAlgorithmSelection_Simple:
-            {
-                QtMapVisibilityAlgorithm_Simple_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_Simple_StoreOnSender *>(*i);
-                (*i)->disconnectClient();
-                delete c;
-                break;
-            }
-            break;
-            case CatchChallenger::MapVisibilityAlgorithmSelection_WithBorder:
-            {
-                QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *c=static_cast<QtMapVisibilityAlgorithm_WithBorder_StoreOnSender *>(*i);
-                (*i)->disconnectClient();
-                delete c;
-                break;
-            }
-            break;
-            default:
-            case CatchChallenger::MapVisibilityAlgorithmSelection_None:
-            {
-                QtMapVisibilityAlgorithm_None *c=static_cast<QtMapVisibilityAlgorithm_None *>(*i);
-                (*i)->disconnectClient();
-                delete c;
-                break;
-            }
-            break;
-        }
+        QtClientWithMap *c=static_cast<QtClientWithMap *>(*i);
+        static_cast<CatchChallenger::Client *>(c)->disconnectClient();
+        CatchChallenger::ClientList::list->remove(*c);
+        delete c;
         ++i;
     }
-    //#endif
     client_list.clear();
     #ifdef CATCHCHALLENGER_SOLO
     QFakeServer::server.disconnectedSocket();

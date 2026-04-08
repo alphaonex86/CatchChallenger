@@ -3,7 +3,7 @@
 #include <QDirIterator>
 #include <QCoreApplication>
 #include <iostream>
-#include <QTime>
+#include <QElapsedTimer>
 
 GameLoader *GameLoader::gameLoader=nullptr;
 
@@ -96,7 +96,7 @@ void GameLoader::threadFinished()
         return;
     }
     //QImage to QPixmap
-    QTime myTimer;
+    QElapsedTimer myTimer;
     myTimer.start();
     {
         QHashIterator<QString,QImage *> i(thread->images);
@@ -108,7 +108,7 @@ void GameLoader::threadFinished()
         }
     }
     int myTimerElapsed=myTimer.elapsed();
-    QTime myTimer2;
+    QElapsedTimer myTimer2;
     myTimer2.start();
     #ifndef NOAUDIO
     //merge the music

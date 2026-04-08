@@ -86,16 +86,7 @@ void Client::saveMonsterStat(const PlayerMonster &monster)
     //save into the db
     {
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        if(CommonSettingsServer::commonSettingsServer.useSP)
-            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
-                        std::to_string(monster.hp),
-                        std::to_string(monster.remaining_xp),
-                        std::to_string(monster.level),
-                        std::to_string(monster.sp),
-                        std::to_string(monster.id)
-                        });
-        else
-            GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
+        GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_xp_hp_level.asyncWrite({
                         std::to_string(monster.hp),
                         std::to_string(monster.remaining_xp),
                         std::to_string(monster.level),
@@ -190,8 +181,8 @@ void Client::healAllMonsters()
                 public_and_private_informations.monsters[index].hp=stat.hp;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
                 GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_monster_hp_only.asyncWrite({
-                            std::to_string(public_and_private_informations.playerMonster.at(index).hp),
-                            std::to_string(public_and_private_informations.playerMonster.at(index).id)
+                            std::to_string(public_and_private_informations.monsters.at(index).hp),
+                            std::to_string(public_and_private_informations.monsters.at(index).id)
                             });
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
                 #elif CATCHCHALLENGER_DB_FILE
@@ -202,7 +193,7 @@ void Client::healAllMonsters()
             if(!public_and_private_informations.monsters.at(index).buffs.empty())
             {
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.playerMonster.at(index).id)});
+                GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_monster_buff.asyncWrite({std::to_string(public_and_private_informations.monsters.at(index).id)});
                 #elif CATCHCHALLENGER_DB_BLACKHOLE
                 #elif CATCHCHALLENGER_DB_FILE
                 #else
@@ -224,8 +215,8 @@ void Client::healAllMonsters()
 
                                 );
                     stringreplaceOne(queryText,"%1",std::to_string(endurance));
-                    stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.playerMonster.at(index).id));
-                    stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.playerMonster.at(index).skills.at(sub_index).skill));
+                    stringreplaceOne(queryText,"%2",std::to_string(public_and_private_informations.monsters.at(index).id));
+                    stringreplaceOne(queryText,"%3",std::to_string(public_and_private_informations.monsters.at(index).skills.at(sub_index).skill));
                     dbQueryWriteCommon(queryText);*/
                     public_and_private_informations.monsters[index].skills[sub_index].endurance=endurance;
                     endurance_have_change=true;

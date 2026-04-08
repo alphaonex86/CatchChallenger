@@ -1,5 +1,7 @@
 #include "MapVisualiserThread.hpp"
+#include "QMap_client.hpp"
 #include "MapItem.hpp"
+#include <QElapsedTimer>
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/Map_loader.hpp"
@@ -47,10 +49,10 @@ MapVisualiserThread::~MapVisualiserThread()
     #endif
 }
 
-void MapVisualiserThread::loadOtherMapAsync(const std::string &fileName)
+void MapVisualiserThread::loadOtherMapAsync(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
-    Map_full *tempMapObject=loadOtherMap(fileName);
-    emit asyncMapLoaded(fileName,tempMapObject);
+    QMap_client *tempMapObject=loadOtherMap(mapIndex);
+    emit asyncMapLoaded(mapIndex,tempMapObject);
 }
 
 std::string MapVisualiserThread::error()
@@ -59,11 +61,17 @@ std::string MapVisualiserThread::error()
 }
 
 //open the file, and load it into the variables
-Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
+QMap_client *MapVisualiserThread::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     if(stopIt)
         return NULL;
-    Map_full *tempMapObject=new Map_full();
+    if(mapIndex>=(CATCHCHALLENGER_TYPE_MAPID)QtDatapackClientLoader::datapackLoader->get_maps().size())
+        return NULL;
+    const std::string resolvedFileName=QFileInfo(QString::fromStdString(
+        QtDatapackClientLoader::datapackLoader->getDatapackPath()+
+        QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
+        QtDatapackClientLoader::datapackLoader->get_maps().at(mapIndex))).absoluteFilePath().toStdString();
+    QMap_client *tempMapObject=new QMap_client();
 
     tileToTriggerAnimationContent.clear();
 
@@ -101,7 +109,8 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         return NULL;
     }
     CatchChallenger::Map_loader map_loader;
-    if(!map_loader.tryLoadMap(resolvedFileName))
+    CatchChallenger::CommonMap tempLogicalMap;
+    if(!map_loader.tryLoadMap(resolvedFileName,tempLogicalMap,true))
     {
         mLastError=map_loader.errorString();
         qDebug() << QStringLiteral("(2) Unable to load the map: %1, error: %2")
@@ -125,67 +134,18 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         return NULL;
     }
 
-    //copy the variables
-    tempMapObject->logicalMap.xmlRoot                               = map_loader.map_to_send.xmlRoot;
-    tempMapObject->logicalMap.width                                 = static_cast<uint8_t>(map_loader.map_to_send.width);
-    tempMapObject->logicalMap.height                                = static_cast<uint8_t>(map_loader.map_to_send.height);
-    tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
-    tempMapObject->logicalMap.map_file                              = resolvedFileName;
-    tempMapObject->logicalMap.border.bottom.map                     = NULL;
-    tempMapObject->logicalMap.border.top.map                        = NULL;
-    tempMapObject->logicalMap.border.right.map                      = NULL;
-    tempMapObject->logicalMap.border.left.map                       = NULL;
-    //load the item
-    {
-        unsigned int index=0;
-        while(index<map_loader.map_to_send.items.size())
-        {
-            const CatchChallenger::Map_to_send::ItemOnMap_Semi &item=map_loader.map_to_send.items.at(index);
-            CatchChallenger::Map_client::ItemOnMapForClient newItem;
-            newItem.infinite=item.infinite;
-            newItem.item=item.item;
-            newItem.tileObject=NULL;
-            newItem.indexOfItemOnMap=0;
-            if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(resolvedFileName)!=
-                    QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend())
-            {
-                if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).find(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y))!=
-                        QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName).cend())
-                    newItem.indexOfItemOnMap=QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(resolvedFileName)
-                            .at(std::pair<uint8_t,uint8_t>(item.point.x,item.point.y));
-                else
-                    qDebug() << QStringLiteral("Map itemOnMap %1,%2 not found").arg(item.point.x).arg(item.point.y);
-            }
-            else
-            {
-                QStringList keys;
-                for(auto kv : QtDatapackClientLoader::datapackLoader->get_itemOnMap())
-                    keys.push_back(QString::fromStdString(kv.first));
-                qDebug() << QStringLiteral("Map itemOnMap %1 not found into: %2")
-                            .arg(QString::fromStdString(resolvedFileName))
-                            .arg(keys.join(";"));
-            }
-            tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(item.point.x,item.point.y)]=newItem;
-            index++;
-        }
-    }
+    //logical map data now comes from DatapackClientLoader::getMap(mapIndex)
+    //items now loaded via DatapackClientLoader
     #if defined(CATCHCHALLENGER_EXTRA_CHECK) && ! defined(MAPVISUALISER)
-    if(QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().find(resolvedFileName)==
-            QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().cend())
+    if(mapIndex>=QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
-        mLastError="Map id unresolved "+resolvedFileName;
-        QStringList keys;
-        for(auto kv : QtDatapackClientLoader::datapackLoader->get_fullMapPathToId())
-            keys.push_back(QString::fromStdString(kv.first));
-        qDebug() << "Map id unresolved "+QString::fromStdString(resolvedFileName)+" into "+keys.join(";");
-        delete tempMapObject->tiledMap;
+        mLastError="Map id out of range: "+std::to_string(mapIndex);
+        qDebug() << QString::fromStdString(mLastError);
         delete tempMapObject;
         return NULL;
     }
     #endif
-    /* this id need be set, is used into plants (colect+seed), and other map interaction
-     * NEVER use default value, disable full var via define */
-    tempMapObject->logicalMap.id                                    = QtDatapackClientLoader::datapackLoader->get_fullMapPathToId().at(resolvedFileName);
+    //map id now comes from DatapackClientLoader::getMap(mapIndex)
 
     if(tempMapObject->tiledMap->tileHeight()!=CLIENT_BASE_TILE_SIZE || tempMapObject->tiledMap->tileWidth()!=CLIENT_BASE_TILE_SIZE)
     {
@@ -198,72 +158,9 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         return NULL;
     }
 
-    //load the string
-    tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
-    if(!map_loader.map_to_send.border.bottom.fileName.empty())
-        tempMapObject->logicalMap.border_semi.bottom.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
-              QString::fromStdString(tempMapObject->logicalMap.border_semi.bottom.fileName)).absoluteFilePath().toStdString();
-    if(!map_loader.map_to_send.border.top.fileName.empty())
-        tempMapObject->logicalMap.border_semi.top.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
-              QString::fromStdString(tempMapObject->logicalMap.border_semi.top.fileName)).absoluteFilePath().toStdString();
-    if(!map_loader.map_to_send.border.right.fileName.empty())
-        tempMapObject->logicalMap.border_semi.right.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
-              QString::fromStdString(tempMapObject->logicalMap.border_semi.right.fileName)).absoluteFilePath().toStdString();
-    if(!map_loader.map_to_send.border.left.fileName.empty())
-        tempMapObject->logicalMap.border_semi.left.fileName=QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+"/"+
-              QString::fromStdString(tempMapObject->logicalMap.border_semi.left.fileName)).absoluteFilePath().toStdString();
+    //borders now resolved via DatapackClientLoader::getMap(mapIndex)
 
-    //load the string
-    tempMapObject->logicalMap.teleport_semi.clear();
-    {
-        unsigned int index=0;
-        while(index<map_loader.map_to_send.teleport.size())
-        {
-            const CatchChallenger::Map_semi_teleport &teleport=map_loader.map_to_send.teleport.at(index);
-            tempMapObject->logicalMap.teleport_semi.push_back(teleport);
-            tempMapObject->logicalMap.teleport_semi[index].map     = QFileInfo(QFileInfo(QString::fromStdString(resolvedFileName)).absolutePath()+
-                "/"+QString::fromStdString(tempMapObject->logicalMap.teleport_semi.at(index).map))
-                    .absoluteFilePath().toStdString();
-            const tinyxml2::XMLElement * item=teleport.conditionUnparsed;
-            std::string conditionText;
-            {
-                if(item!=NULL)
-                {
-                    bool text_found=false;
-                    const tinyxml2::XMLElement * blockedtext = item->FirstChildElement("blockedtext");
-                    if(!language.empty() && language!="en")
-                        while(blockedtext!=NULL)
-                        {
-                            if(blockedtext->Attribute("lang")!=NULL && blockedtext->Attribute("lang")==language && blockedtext->GetText()!=NULL)
-                            {
-                                conditionText=blockedtext->GetText();
-                                text_found=true;
-                                break;
-                            }
-                            blockedtext = blockedtext->NextSiblingElement("blockedtext");
-                        }
-                    if(!text_found)
-                    {
-                        blockedtext = item->FirstChildElement("blockedtext");
-                        while(blockedtext!=NULL)
-                        {
-                            if(blockedtext->Attribute("lang")==NULL || strcmp(blockedtext->Attribute("lang"),"en")==0)
-                                if(blockedtext->GetText()!=NULL)
-                                {
-                                    conditionText=blockedtext->GetText();
-                                    break;
-                                }
-                            blockedtext = blockedtext->NextSiblingElement("blockedtext");
-                        }
-                    }
-                }
-            }
-            tempMapObject->logicalMap.teleport_condition_texts.push_back(conditionText);
-            index++;
-        }
-    }
-
-    tempMapObject->logicalMap.rescue_points  = map_loader.map_to_send.rescue_points;
+    //teleporters and rescue points now in DatapackClientLoader::getMap(mapIndex)
 
     //load the render
     switch (tempMapObject->tiledMap->orientation()) {
@@ -287,7 +184,7 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
         Tiled::Cell cell=tagMapObject->cell();
         cell.setTile(tagTileset->tileAt(tagTilesetIndex));
         tagMapObject->setCell(cell);
-        tagMapObject->setPosition(QPoint(tempMapObject->logicalMap.width/2,tempMapObject->logicalMap.height/2+1));
+        tagMapObject->setPosition(QPoint(QtDatapackClientLoader::datapackLoader->getMap(mapIndex).width/2,QtDatapackClientLoader::datapackLoader->getMap(mapIndex).height/2+1));
         tempMapObject->objectGroup->addObject(tagMapObject);
         tagTilesetIndex++;
         if(tagTilesetIndex>=tagTileset->tileCount())
@@ -571,11 +468,16 @@ Map_full *MapVisualiserThread::loadOtherMap(const std::string &resolvedFileName)
 }
 
 //drop and remplace by Map_loader info
-bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
+bool MapVisualiserThread::loadOtherMapClientPart(QMap_client *parsedMap)
 {
+    (void)parsedMap;
+    //client part data (bots, shops, etc.) now loaded via DatapackClientLoader
+    return true;
+}
+#if 0 //disabled: logicalMap no longer in QMap_client
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    const std::string &fileName=parsedMap->logicalMap.map_file;
+    const std::string &fileName=std::string();
     if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
             CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
         domDocument=&CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().at(fileName);
@@ -813,11 +715,18 @@ bool MapVisualiserThread::loadOtherMapClientPart(Map_full *parsedMap)
     return true;
 }
 
-bool MapVisualiserThread::loadOtherMapMetaData(Map_full *parsedMap)
+#endif //disabled loadOtherMapClientPart
+
+bool MapVisualiserThread::loadOtherMapMetaData(QMap_client *parsedMap)
 {
+    (void)parsedMap;
+    //metadata now loaded via DatapackClientLoader
+    return true;
+}
+#if 0 //disabled: logicalMap no longer in QMap_client
     tinyxml2::XMLDocument *domDocument;
     //open and quick check the file
-    std::string fileName=parsedMap->logicalMap.map_file;
+    std::string fileName;
     stringreplaceAll(fileName,".tmx",".xml");
     if(CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().find(fileName)!=
             CatchChallenger::CommonDatapack::commonDatapack.get_xmlLoadedFile().cend())
@@ -878,8 +787,16 @@ bool MapVisualiserThread::loadOtherMapMetaData(Map_full *parsedMap)
     return true;
 }
 
-void MapVisualiserThread::loadBotFile(const std::string &file)
+#endif //disabled loadOtherMapMetaData
+
+void MapVisualiserThread::loadBotFile()
 {
+    //bot files now loaded via DatapackClientLoader
+    return;
+}
+#if 0 //disabled: logicalMap no longer in QMap_client
+    const std::string file;
+    {
     if(botFiles.find(file)!=botFiles.cend())
         return;
     botFiles[file];//create the entry
@@ -984,6 +901,8 @@ void MapVisualiserThread::loadBotFile(const std::string &file)
         child = child->NextSiblingElement("bot");
     }
 }
+
+#endif //disabled loadBotFile
 
 void MapVisualiserThread::resetAll()
 {

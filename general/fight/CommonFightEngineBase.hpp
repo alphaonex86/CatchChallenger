@@ -5,7 +5,7 @@
 
 #include "../base/GeneralStructures.hpp"
 #include "../base/ClientBase.hpp"
-#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../base/lib.h"
 
 namespace CatchChallenger {

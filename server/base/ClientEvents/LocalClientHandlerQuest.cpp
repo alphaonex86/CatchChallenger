@@ -244,7 +244,7 @@ void Client::syncDatabaseQuest()
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(quest_raw,pos),
-                    std::to_string(character_id)
+                    std::to_string(character_id_db)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
@@ -292,7 +292,7 @@ void Client::syncDatabaseQuest()
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_quests.asyncWrite({
                     binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,pos),
-                    std::to_string(character_id)
+                    std::to_string(character_id_db)
                     });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE

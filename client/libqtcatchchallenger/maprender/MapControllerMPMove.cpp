@@ -1,4 +1,5 @@
 #include "MapController.hpp"
+#include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
 #include <QtMath>
 #include <iostream>
@@ -46,7 +47,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
     if(!otherPlayer.animationDisplayed)
     {
         otherPlayer.animationDisplayed=true;
-        CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
+        CATCHCHALLENGER_TYPE_MAPID mapIndex=otherPlayer.presumed_map;
         uint8_t x=otherPlayer.presumed_x;
         uint8_t y=otherPlayer.presumed_y;
         //set the final value (direction, position, ...)
@@ -56,18 +57,18 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
-                CatchChallenger::MoveOnTheMap::move(otherPlayer.presumed_direction,&map,&x,&y);
+                CatchChallenger::MoveOnTheMap::move(QtDatapackClientLoader::datapackLoader->get_mapList(),otherPlayer.presumed_direction,mapIndex,x,y,false);
             break;
             default:
             break;
         }
-        if(all_map.find(map->map_file)!=all_map.cend())
-            if(all_map.at(map->map_file)->doors.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                    all_map.at(map->map_file)->doors.cend())
+        if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
+            if(CatchChallenger::QMap_client::all_map.at(mapIndex)->doors.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
+                    CatchChallenger::QMap_client::all_map.at(mapIndex)->doors.cend())
             {
                 if(otherPlayerListByAnimationTimer.find(otherPlayer.moveAnimationTimer)!=otherPlayerListByAnimationTimer.cend())
                 {
-                    MapDoor* door=all_map.at(map->map_file)->doors.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
+                    MapDoor* door=CatchChallenger::QMap_client::all_map.at(mapIndex)->doors.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
                     door->startOpen(static_cast<uint16_t>(otherPlayer.playerSpeed));
                     otherPlayer.moveAnimationTimer->start(door->timeToOpen());
                 }
@@ -314,8 +315,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             const CatchChallenger::Direction direction=otherPlayer.pendingMonsterMoves.front();
             otherPlayer.pendingMonsterMoves.erase(otherPlayer.pendingMonsterMoves.cbegin());
 
-            CatchChallenger::CommonMap * map=&all_map.at(otherPlayer.current_monster_map)->logicalMap;
-            const CatchChallenger::CommonMap * old_map=map;
+            CATCHCHALLENGER_TYPE_MAPID monsterMapIndex=otherPlayer.current_monster_map;
+            const CATCHCHALLENGER_TYPE_MAPID oldMonsterMapIndex=monsterMapIndex;
             //set the final value (direction, position, ...)
             switch(direction)
             {
@@ -323,10 +324,10 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 case CatchChallenger::Direction_move_at_right:
                 case CatchChallenger::Direction_move_at_top:
                 case CatchChallenger::Direction_move_at_bottom:
-                    if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&otherPlayer.monster_x,&otherPlayer.monster_y))
+                    if(!CatchChallenger::MoveOnTheMap::move(QtDatapackClientLoader::datapackLoader->get_mapList(),direction,monsterMapIndex,otherPlayer.monster_x,otherPlayer.monster_y,false))
                     {
                         std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
-                                  << " from " << map->map_file << " (" << std::to_string(otherPlayer.monster_x) << "," << std::to_string(otherPlayer.monster_y) << ")"
+                                  << " from " << std::to_string(monsterMapIndex) << " (" << std::to_string(otherPlayer.monster_x) << "," << std::to_string(otherPlayer.monster_y) << ")"
                                   << std::endl;
                         resetMonsterTile();
                     }
@@ -336,13 +337,15 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 return;
             }
             //if the map have changed
-            if(old_map!=map)
+            if(oldMonsterMapIndex!=monsterMapIndex)
             {
                 unloadOtherMonsterFromCurrentMap(otherPlayer);
-                otherPlayer.current_monster_map=map->map_file;
-                if(old_all_map.find(otherPlayer.current_monster_map)==old_all_map.cend())
+                otherPlayer.current_monster_map=monsterMapIndex;
+                if(CatchChallenger::QMap_client::old_all_map.find(otherPlayer.current_monster_map)==CatchChallenger::QMap_client::old_all_map.cend())
                     std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-                if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
+                const CatchChallenger::CommonMap &oldMonsterMap=QtDatapackClientLoader::datapackLoader->getMap(oldMonsterMapIndex);
+                if(oldMonsterMap.border.top.mapIndex!=monsterMapIndex && oldMonsterMap.border.bottom.mapIndex!=monsterMapIndex &&
+                   oldMonsterMap.border.left.mapIndex!=monsterMapIndex && oldMonsterMap.border.right.mapIndex!=monsterMapIndex)
                     resetOtherMonsterTile(otherPlayer);
                 loadOtherMonsterFromCurrentMap(otherPlayer);
             }
@@ -356,8 +359,8 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
                 otherPlayer.pendingMonsterMoves.clear();
         }
         otherPlayer.animationDisplayed=false;
-        CatchChallenger::CommonMap * old_map=&otherPlayer.presumed_map->logicalMap;
-        CatchChallenger::CommonMap * map=&otherPlayer.presumed_map->logicalMap;
+        const CATCHCHALLENGER_TYPE_MAPID old_presumed_map=otherPlayer.presumed_map;
+        CATCHCHALLENGER_TYPE_MAPID new_presumed_map=otherPlayer.presumed_map;
         uint8_t x=otherPlayer.presumed_x;
         uint8_t y=otherPlayer.presumed_y;
         //set the final value (direction, position, ...)
@@ -367,7 +370,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
-                CatchChallenger::MoveOnTheMap::move(otherPlayer.presumed_direction,&map,&x,&y);
+                CatchChallenger::MoveOnTheMap::move(QtDatapackClientLoader::datapackLoader->get_mapList(),otherPlayer.presumed_direction,new_presumed_map,x,y,false);
             break;
             default:
             qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction when moveStep>2").arg(otherPlayer.moveStep);
@@ -376,17 +379,19 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         otherPlayer.presumed_x=x;
         otherPlayer.presumed_y=y;
         //if the map have changed
-        if(old_map!=map)
+        if(old_presumed_map!=new_presumed_map)
         {
-            loadOtherMap(map->map_file);
-            if(all_map.find(map->map_file)==all_map.cend())
-                qDebug() << QStringLiteral("map changed not located: %1").arg(QString::fromStdString(map->map_file));
+            loadOtherMap(new_presumed_map);
+            if(CatchChallenger::QMap_client::all_map.find(new_presumed_map)==CatchChallenger::QMap_client::all_map.cend())
+                qDebug() << QStringLiteral("map changed not located: %1").arg(new_presumed_map);
             else
             {
                 unloadOtherPlayerFromMap(otherPlayer);
-                otherPlayer.presumed_map=all_map.at(map->map_file);
+                otherPlayer.presumed_map=new_presumed_map;
                 loadOtherPlayerFromMap(otherPlayer);
-                if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
+                const CatchChallenger::CommonMap &oldMap=QtDatapackClientLoader::datapackLoader->getMap(old_presumed_map);
+                if(oldMap.border.top.mapIndex!=new_presumed_map && oldMap.border.bottom.mapIndex!=new_presumed_map &&
+                   oldMap.border.left.mapIndex!=new_presumed_map && oldMap.border.right.mapIndex!=new_presumed_map)
                     resetOtherMonsterTile(otherPlayer);
             }
         }
@@ -402,7 +407,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_left)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,otherPlayer.presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(QtDatapackClientLoader::datapackLoader->get_mapList(),CatchChallenger::Direction_move_at_left,QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.presumed_map),x,y,true))
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_left;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
@@ -429,7 +434,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_right)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,otherPlayer.presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(QtDatapackClientLoader::datapackLoader->get_mapList(),CatchChallenger::Direction_move_at_right,QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.presumed_map),x,y,true))
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_right;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();
@@ -456,7 +461,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_top)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,otherPlayer.presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(QtDatapackClientLoader::datapackLoader->get_mapList(),CatchChallenger::Direction_move_at_top,QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.presumed_map),x,y,true))
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_top;
 
@@ -484,7 +489,7 @@ void MapControllerMP::moveOtherPlayerStepSlotWithPlayer(OtherPlayer &otherPlayer
         else if(otherPlayer.presumed_direction==CatchChallenger::Direction_move_at_bottom)
         {
             //can't go into this direction, then just look into this direction
-            if(!CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,otherPlayer.presumed_map->logicalMap,x,y,true))
+            if(!CatchChallenger::MoveOnTheMap::canGoTo(QtDatapackClientLoader::datapackLoader->get_mapList(),CatchChallenger::Direction_move_at_bottom,QtDatapackClientLoader::datapackLoader->getMap(otherPlayer.presumed_map),x,y,true))
             {
                 otherPlayer.presumed_direction=CatchChallenger::Direction_look_at_bottom;
                 Tiled::Cell cell=otherPlayer.playerMapObject->cell();

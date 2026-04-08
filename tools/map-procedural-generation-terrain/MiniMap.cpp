@@ -3,7 +3,7 @@
 #include <QCoreApplication>
 #include <iostream>
 #include "LoadMap.h"
-#include <libtiled/tile.h>
+#include <tiled/tile.h>
 #include <QPainter>
 
 #include "VoronioForTiledMapTmx.h"

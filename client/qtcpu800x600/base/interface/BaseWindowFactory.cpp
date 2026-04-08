@@ -29,7 +29,7 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No cash"),tr("No bash to buy this item"));
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
         return;
@@ -50,14 +50,14 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
+        const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
         unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Product &product=industry.products.at(index);
             if(product.item==id)
             {
-                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry)));
+                item->setData(98,FacilityLib::getFactoryProductPrice(quantity,product,QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId)));
                 break;
             }
             index++;
@@ -70,8 +70,8 @@ void BaseWindow::on_factoryProducts_itemActivated(QListWidgetItem *item)
     itemToSellOrBuy.price=quantityToBuy*price;
     itemsToBuy.push_back(itemToSellOrBuy);
     removeCash(itemToSellOrBuy.object);
-    client->buyFactoryProduct(factoryId,id,quantityToBuy,price);
-    appendReputationRewards(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).rewards.reputation);
+    client->buyFactoryProduct(id,quantityToBuy,price);
+    appendReputationRewards(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).rewards);
 }
 
 void BaseWindow::on_factorySell_clicked()
@@ -93,7 +93,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         QMessageBox::warning(this,tr("No item"),tr("You have not the item to sell"));
         return;
     }
-    if(!haveReputationRequirements(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).requirements.reputation))
+    if(!haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         QMessageBox::warning(this,tr("No requirements"),tr("You don't meet the requirements"));
         return;
@@ -117,14 +117,14 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
         delete item;
     else
     {
-        const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
+        const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
         unsigned int index=0;
         while(index<industry.resources.size())
         {
             const Industry::Resource &resource=industry.resources.at(index);
             if(resource.item==itemid)
             {
-                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry)));
+                item->setData(98,FacilityLib::getFactoryResourcePrice(resource.quantity*industry.cycletobefull-quantity,resource,QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId)));
                 break;
             }
             index++;
@@ -137,8 +137,8 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
     tempItem.price=price;
     itemsToSell.push_back(tempItem);
     remove_to_inventory(itemid,i);
-    client->sellFactoryResource(factoryId,itemid,i,price);
-    appendReputationRewards(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).rewards.reputation);
+    client->sellFactoryResource(itemid,i,price);
+    appendReputationRewards(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).rewards);
 }
 
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice)
@@ -193,7 +193,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPri
         {
             if(factoryInProduction)
                 break;
-            const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
+            const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -253,8 +253,7 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
         {
             if(factoryInProduction)
                 break;
-            const IndustryLink &industryLink=CommonDatapack::commonDatapack.get_industriesLink().at(factoryId);
-            const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(industryLink.industry);
+            const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
             industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000;
             updateFactoryStatProduction(industryStatus,industry);
         }
@@ -268,7 +267,7 @@ void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const s
 {
     industryStatus.products.clear();
     industryStatus.resources.clear();
-    const Industry &industry=CommonDatapack::commonDatapack.get_industries().at(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).industry);
+    const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
     industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";
@@ -393,7 +392,7 @@ void BaseWindow::factoryToResourceItem(QListWidgetItem *item)
         else
             item->setToolTip(tr("Item %1 at %2$\nQuantity: %3").arg(itemId).arg(item->data(98).toUInt()).arg(item->data(97).toUInt()));
     }
-    if(playerInformations.items.find(static_cast<uint16_t>(item->data(99).toUInt()))==playerInformations.items.cend() || !haveReputationRequirements(CommonDatapack::commonDatapack.get_industriesLink().at(factoryId).requirements.reputation))
+    if(playerInformations.items.find(static_cast<uint16_t>(item->data(99).toUInt()))==playerInformations.items.cend() || !haveReputationRequirements(QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId).requirements))
     {
         item->setFont(MissingQuantity);
         item->setForeground(QBrush(QColor(200,20,20)));

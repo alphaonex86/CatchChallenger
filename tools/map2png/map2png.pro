@@ -2,12 +2,12 @@ TEMPLATE = app
 TARGET = map2png
 DEFINES += MAXIMIZEPERFORMANCEOVERDATABASESIZE
 
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
+QMAKE_CXXFLAGS+="-fstack-protector-all -g"
 
 QT += xml network opengl
 
 LIBS += -ltiled
-INCLUDEPATH += /usr/include/libtiled/
+INCLUDEPATH += /usr/include/tiled/
 
 DEFINES += ONLYMAPRENDER NOWEBSOCKET
 

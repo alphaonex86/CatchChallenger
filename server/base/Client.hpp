@@ -694,6 +694,10 @@ private:
     static void loadMonsters_static(void *object);
     void loadMonsters_return();
 
+    void loadCharacterByMap();
+    static void loadCharacterByMap_static(void *object);
+    void loadCharacterByMap_return();
+
     static PlayerMonster loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok);
     static bool loadBuffBlock(const std::string &dataHexa,PlayerMonster &playerMonster);
     static bool loadSkillBlock(const std::string &dataHexa,PlayerMonster &playerMonster);

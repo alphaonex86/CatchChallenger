@@ -35,7 +35,7 @@ void BaseWindow::on_shopItemList_itemActivated(QListWidgetItem *item)
         if(!ok)
             return;
         itemToSellOrBuy.object=shop_items_graphical.at(item);
-        client->buyObject(shopId,itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop.at(itemToSellOrBuy.object).price);
+        client->buyObject(itemToSellOrBuy.object,itemToSellOrBuy.quantity,itemsIntoTheShop.at(itemToSellOrBuy.object).price);
         itemToSellOrBuy.price=itemsIntoTheShop.at(itemToSellOrBuy.object).price*itemToSellOrBuy.quantity;
         itemsToBuy.push_back(itemToSellOrBuy);
         removeCash(itemToSellOrBuy.price);

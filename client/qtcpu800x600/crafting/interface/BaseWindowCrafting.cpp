@@ -29,7 +29,7 @@ void BaseWindow::insert_plant(const uint32_t &mapId, const uint8_t &x, const uin
         qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
         return;
     }
-    cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
+    cancelAllPlantQuery(QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),x,y);
 }
 
 void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y)
@@ -39,7 +39,7 @@ void BaseWindow::remove_plant(const uint32_t &mapId,const uint8_t &x,const uint8
         qDebug() << "MapController::insert_plant() mapId greater than QtDatapackClientLoader::datapackLoader->maps.size()";
         return;
     }
-    cancelAllPlantQuery(mapController->mapIdToString(mapId),x,y);
+    cancelAllPlantQuery(QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),x,y);
 }
 
 void BaseWindow::cancelAllPlantQuery(const std::string map,const uint8_t x,const uint8_t y)
@@ -96,7 +96,11 @@ void BaseWindow::seed_planted(const bool &ok)
     {
         if(!seed_in_waiting.front().map.empty())
         {
-            mapController->remove_plant_full(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
+            {
+                const auto &mapToId=QtDatapackClientLoader::datapackLoader->get_mapToId();
+                if(mapToId.find(seed_in_waiting.front().map)!=mapToId.cend())
+                    mapController->remove_plant_full(mapToId.at(seed_in_waiting.front().map),seed_in_waiting.front().x,seed_in_waiting.front().y);
+            }
             cancelAllPlantQuery(seed_in_waiting.front().map,seed_in_waiting.front().x,seed_in_waiting.front().y);
         }
         add_to_inventory(seed_in_waiting.front().seedItemId,1,false);

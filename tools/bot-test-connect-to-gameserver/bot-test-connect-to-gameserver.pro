@@ -3,10 +3,10 @@ DEFINES += CATCHCHALLENGER_NOAUDIO
 include(../../general/general.pri)
 include(../bot/simple/Simple.pri)
 
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g"
+QMAKE_CXXFLAGS+="-fstack-protector-all -g"
 
 QT       += core network
-QT -= gui widgets script opengl qml quick sql
+QT -= gui widgets opengl qml quick sql
 DEFINES += BOTTESTCONNECT CATCHCHALLENGER_BOT NOWEBSOCKET
 
 TARGET = bot-test-connect-to-gameserver
@@ -35,7 +35,8 @@ SOURCES += main.cpp\
     ../../client/libqtcatchchallenger/Api_protocol_Qt.cpp \
     ../../client/libqtcatchchallenger/ConnectedSocket.cpp \
     ../../client/libcatchchallenger/DatapackChecksum.cpp \
-    ../../client/libcatchchallenger/DatapackClientLoader.cpp
+    ../../client/libcatchchallenger/DatapackClientLoader.cpp \
+    ../../client/libcatchchallenger/ClientStructures.cpp
 HEADERS  += \
     ../bot/MultipleBotConnection.h \
     ../bot/MultipleBotConnectionImplForGui.h \

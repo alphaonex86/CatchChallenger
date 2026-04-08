@@ -2,6 +2,7 @@
 #include "ui_BaseWindow.h"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
+#include "../../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../../libqtcatchchallenger/Audio.hpp"
 #endif
@@ -14,20 +15,6 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
-        unsigned int index=0;
-        while(index<map->plantList.size())
-        {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-            {
-                uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-                if(map->plantList.at(index)->mature_at<=current_time)
-                    showTip(tr("To recolt the plant press <i>Enter</i>").toStdString());
-                else
-                    showTip(tr("This plant is growing and can't be collected").toStdString());
-                return;
-            }
-            index++;
-        }
         showTip(tr("To plant a seed press <i>Enter</i>").toStdString());
         return;
     }
@@ -36,27 +23,27 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
         if(!CatchChallenger::MoveOnTheMap::isWalkable(*map,x,y))
         {
             //check bot with border
-            CatchChallenger::CommonMap * current_map=map;
+            CATCHCHALLENGER_TYPE_MAPID mapIndex=map->id;
             switch(mapController->getDirection())
             {
                 case CatchChallenger::Direction_look_at_left:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
+                if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_left,map->id,x,y,false))
+                    if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_left,mapIndex,x,y,false))
                         stopped_in_front_of_check_bot(map,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_right:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
+                if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_right,map->id,x,y,false))
+                    if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_right,mapIndex,x,y,false))
                         stopped_in_front_of_check_bot(map,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_top:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
+                if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_top,map->id,x,y,false))
+                    if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_top,mapIndex,x,y,false))
                         stopped_in_front_of_check_bot(map,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_bottom:
-                if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
-                    if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
+                if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_bottom,map->id,x,y,false))
+                    if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_bottom,mapIndex,x,y,false))
                         stopped_in_front_of_check_bot(map,x,y);
                 break;
                 default:
@@ -68,43 +55,21 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x
 
 bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
-        return false;
-    showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());
-    return true;
+    (void)map;
+    (void)x;
+    (void)y;
+    // Bot data is no longer stored in Map_client; detection is handled by the maprender layer
+    return false;
 }
 
 //return -1 if not found, else the index
-int32_t BaseWindow::havePlant(CatchChallenger::Map_client *map, uint8_t x, uint8_t y) const
+int32_t BaseWindow::havePlant(const CatchChallenger::CommonMap *map, uint8_t x, uint8_t y) const
 {
-    /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-    {
-        unsigned int index=0;
-        while(index<map->plantList.size())
-        {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-                return index;
-            index++;
-        }
-        return -1;
-    }
-    else*/
-    {
-        if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file)==
-                QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-            return -1;
-        const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
-        if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-            return -1;
-        unsigned int index=0;
-        while(index<map->plantList.size())
-        {
-            if(map->plantList.at(index)->x==x && map->plantList.at(index)->y==y)
-                return index;
-            index++;
-        }
-        return -1;
-    }
+    (void)map;
+    (void)x;
+    (void)y;
+    // Plant globally visible feature was dropped
+    return -1;
 }
 
 void BaseWindow::actionOnNothing()
@@ -120,90 +85,46 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
-        /* -1 == not found */
-        int index=havePlant(map,x,y);
-        if(index>=0)
-        {
-            uint64_t current_time=QDateTime::currentMSecsSinceEpoch()/1000;
-            if(map->plantList.at(index)->mature_at<=current_time)
-            {
-                /*if(CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==false)
-                {
-                    ClientPlantInCollecting clientPlantInCollecting;
-                    clientPlantInCollecting.map=map->map_file;
-                    clientPlantInCollecting.plant_id=map->plantList.at(index)->plant_id;
-                    clientPlantInCollecting.seconds_to_mature=0;
-                    clientPlantInCollecting.x=x;
-                    clientPlantInCollecting.y=y;
-                    plant_collect_in_waiting.push_back(clientPlantInCollecting);
-                    addQuery(QueryType_CollectPlant);
-                    emit collectMaturePlant();
-                }
-                else*/
-                {
-                    if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(map->map_file)==
-                            QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-                        return;
-                    const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &plant=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(map->map_file);
-                    if(plant.find(std::pair<uint8_t,uint8_t>(x,y))==plant.cend())
-                        return;
-                    emit collectMaturePlant();
+        // Plant globally visible feature was dropped; just offer seed planting
+        SeedInWaiting seedInWaiting;
+        seedInWaiting.map=std::string();
+        seedInWaiting.x=x;
+        seedInWaiting.y=y;
+        seed_in_waiting.push_back(seedInWaiting);
 
-                    client->remove_plant(mapController->getMap(map->map_file)->logicalMap.id,x,y);
-                    client->plant_collected(Plant_collect::Plant_collect_correctly_collected);
-                }
-            }
-            else
-                showTip(tr("This plant is growing and can't be collected").toStdString());
-        }
-        else
-        {
-            SeedInWaiting seedInWaiting;
-            seedInWaiting.map=map->map_file;
-            seedInWaiting.x=x;
-            seedInWaiting.y=y;
-            seed_in_waiting.push_back(seedInWaiting);
-
-            selectObject(ObjectType_Seed);
-        }
+        selectObject(ObjectType_Seed);
         return;
     }
-    else if(map->itemsOnMap.find(std::pair<uint8_t,uint8_t>(x,y))!=map->itemsOnMap.cend())
+    else if(map->items.find(std::pair<uint8_t,uint8_t>(x,y))!=map->items.cend())
     {
-        Player_private_and_public_informations &informations=client->get_player_informations();
-        const Map_client::ItemOnMapForClient &item=map->itemsOnMap.at(std::pair<uint8_t,uint8_t>(x,y));
-        if(informations.itemOnMap.find(item.indexOfItemOnMap)==informations.itemOnMap.cend())
-        {
-            if(!item.infinite)
-                informations.itemOnMap.insert(item.indexOfItemOnMap);
-            add_to_inventory(item.item);
-            client->takeAnObjectOnMap();
-        }
+        const ItemOnMap &item=map->items.at(std::pair<uint8_t,uint8_t>(x,y));
+        add_to_inventory(item.item);
+        client->takeAnObjectOnMap();
     }
     else
     {
         //check bot with border
-        CatchChallenger::CommonMap * current_map=map;
+        CATCHCHALLENGER_TYPE_MAPID mapIndex=map->id;
         switch(mapController->getDirection())
         {
             case CatchChallenger::Direction_look_at_left:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&current_map,&x,&y,false))
+            if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_left,map->id,x,y,false))
+                if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_left,mapIndex,x,y,false))
                     actionOnCheckBot(map,x,y);
             break;
             case CatchChallenger::Direction_look_at_right:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&current_map,&x,&y,false))
+            if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_right,map->id,x,y,false))
+                if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_right,mapIndex,x,y,false))
                     actionOnCheckBot(map,x,y);
             break;
             case CatchChallenger::Direction_look_at_top:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&current_map,&x,&y,false))
+            if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_top,map->id,x,y,false))
+                if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_top,mapIndex,x,y,false))
                     actionOnCheckBot(map,x,y);
             break;
             case CatchChallenger::Direction_look_at_bottom:
-            if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
-                if(CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&current_map,&x,&y,false))
+            if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_bottom,map->id,x,y,false))
+                if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_bottom,mapIndex,x,y,false))
                     actionOnCheckBot(map,x,y);
             break;
             default:
@@ -214,54 +135,29 @@ void BaseWindow::actionOn(Map_client *map, uint8_t x, uint8_t y)
 
 bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
-        return false;
-    actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));
-    isInQuest=false;
-    goToBotStep(1);
-    return true;
+    (void)map;
+    (void)x;
+    (void)y;
+    // Bot data is no longer stored in Map_client; detection is handled by the maprender layer
+    return false;
 }
 
 void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
 {
-    if(map->bots.find(std::pair<uint8_t,uint8_t>(x,y))==map->bots.cend())
+    // Bot data is now in BaseMap::botsFightTrigger and BaseMap::botFights
+    if(map->botsFightTrigger.find(std::pair<uint8_t,uint8_t>(x,y))==map->botsFightTrigger.cend())
     {
         newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no bot at this place");
         return;
     }
-    uint8_t step=1;
-    actualBot=map->bots.at(std::pair<uint8_t,uint8_t>(x,y));
-    isInQuest=false;
-    if(actualBot.step.find(step)==actualBot.step.cend())
+    const uint8_t botNpcId=map->botsFightTrigger.at(std::pair<uint8_t,uint8_t>(x,y));
+    if(map->botFights.find(botNpcId)==map->botFights.cend())
     {
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no step found");
+        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but no bot fight found for npc id");
         return;
     }
-    const tinyxml2::XMLElement * stepXml=actualBot.step.at(step);
-    if(stepXml->Attribute("type")==NULL)
-        return;
-    if(strcmp(stepXml->Attribute("type"),"fight")==0)
-    {
-        if(stepXml->Attribute("fightid")==NULL)
-        {
-            showTip(tr("Bot step missing data error, repport this error please").toStdString());
-            return;
-        }
-        bool ok;
-        const uint16_t fightId=stringtouint16(stepXml->Attribute("fightid"),&ok);
-        if(!ok)
-        {
-            showTip(tr("Bot step wrong data type error, repport this error please").toStdString());
-            return;
-        }
-        botFight(fightId);
-        return;
-    }
-    else
-    {
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Bot trigged but not found");
-        return;
-    }
+    (void)map->botFights.at(botNpcId); // validate the fight exists
+    botFight(static_cast<uint16_t>(botNpcId));
 }
 
 void BaseWindow::blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar)
@@ -302,11 +198,11 @@ void BaseWindow::pathFindingInternalError()
 
 void BaseWindow::currentMapLoaded()
 {
-    qDebug() << "BaseWindow::currentMapLoaded(): map: " << QString::fromStdString(mapController->currentMap())
+    qDebug() << "BaseWindow::currentMapLoaded(): map: " << mapController->currentMap()
              << " with type: " << QString::fromStdString(mapController->currentMapType());
     //name
     {
-        Map_full *mapFull=mapController->currentMapFull();
+        QMap_client *mapFull=mapController->currentMapFull();
         std::string visualName;
         if(!mapFull->zone.empty())
             if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=
@@ -335,7 +231,7 @@ void BaseWindow::currentMapLoaded()
         if(!backgroundsound.empty() && !vectorcontainsAtLeastOne(soundList,backgroundsound))
             soundList.push_back(backgroundsound);
         //zone sound
-        Map_full *mapFull=mapController->currentMapFull();
+        QMap_client *mapFull=mapController->currentMapFull();
         if(!mapFull->zone.empty())
             if(QtDatapackClientLoader::datapackLoader->get_zonesExtra().find(mapFull->zone)!=QtDatapackClientLoader::datapackLoader->get_zonesExtra().cend())
             {

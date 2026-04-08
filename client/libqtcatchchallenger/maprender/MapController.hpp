@@ -21,27 +21,11 @@ public:
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
     virtual void resetAll();
     //std::string mapIdToString(const CATCHCHALLENGER_TYPE_MAPID &mapId) const;
-    void remove_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
-    void insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    bool remove_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y);
+    bool insert_plant_full(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
     void setColor(const QColor &color, const uint32_t &timeInMS=0);
     virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
 private:
-    //the delayed action
-    struct DelayedPlantInsert
-    {
-        CATCHCHALLENGER_TYPE_MAPID mapId;
-        COORD_TYPE x,y;
-        uint8_t plant_id;
-        uint16_t seconds_to_mature;
-    };
-    std::vector<DelayedPlantInsert> delayedPlantInsert;
-    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<DelayedPlantInsert> > delayedPlantInsertOnMap;
-    struct PlantTimer
-    {
-        Tiled::MapObject * mapObject;
-        uint8_t plant_id;
-        uint16_t seconds_to_mature;
-    };
     Tiled::SharedTileset botFlags;
     QGraphicsPixmapItem *imageOver;
     bool imageOverAdded;
@@ -53,8 +37,8 @@ protected slots:
     //plant
     void getPlantTimerEvent();
     bool updatePlantGrowing(CatchChallenger::ClientPlantWithTimer *plant);//return true if is growing
-    void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y);
+    //void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    //void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y);
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);
     virtual bool canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x,const COORD_TYPE &y, const bool &checkCollision);

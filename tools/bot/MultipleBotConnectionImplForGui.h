@@ -40,9 +40,9 @@ private:
     QString host();
     quint16 port();
 private:
-    virtual void insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,
+    virtual void insert_player(const uint8_t &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,
                                const CatchChallenger::Direction &direction);
-    virtual void remove_player(const uint16_t &id);
+    virtual void remove_player(const uint8_t &id);
     virtual void dropAllPlayerOnTheMap();
     virtual void logged(const std::vector<std::vector<CatchChallenger::CharacterEntry> > &characterEntryList);
     virtual void newCharacterId(const quint8 &returnCode, const quint32 &characterId);

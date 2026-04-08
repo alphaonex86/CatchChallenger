@@ -51,7 +51,6 @@ void BaseServer::preload_18_sync_profile()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     const DatabaseBase::DatabaseType &databaseType=GlobalServerData::serverPrivateVariables.db_common->databaseType();
     CatchChallenger::DatabaseBase * const database=GlobalServerData::serverPrivateVariables.db_common;
-    const uint8_t &common_blobversion_datapack=GlobalServerData::serverPrivateVariables.common_blobversion_datapack;
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     #else
@@ -330,7 +329,7 @@ void BaseServer::preload_18_sync_profile()
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO `character`("
                                 "`id`,`account`,`pseudo`,`skin`,`type`,`clan`,`cash`,`date`,`warehouse_cash`,`clan_leader`,"
                                 "`time_to_delete`,`played_time`,`last_connect`,`starter`,`item`,`reputations`,`encyclopedia_monster`,`encyclopedia_item`"
-                                ",`blob_version`) VALUES(%1,%2,"+
+                                ") VALUES(%1,%2,"+
                                                                                         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                                                                                         std::string("%3")+
                                                                                         #else
@@ -339,9 +338,9 @@ void BaseServer::preload_18_sync_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,0,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(profileIndex)/*starter*/)+
                                 ",UNHEX('"+item+"'),UNHEX('"+reputations+"'),UNHEX('"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
-                                "'),UNHEX('"+encyclopedia_item+"'),"+std::to_string(common_blobversion_datapack)+");"),database);
+                                "'),UNHEX('"+encyclopedia_item+"'));"),database);
                     break;
                     #endif
                     #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
@@ -349,7 +348,7 @@ void BaseServer::preload_18_sync_profile()
                         preparedStatementForCreationMonsterGroup.character_insert=PreparedStatementUnit(std::string("INSERT INTO character("
                                 "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                                 "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                                ",blob_version) VALUES(%1,%2,"+
+                                ") VALUES(%1,%2,"+
                                                                                         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                                                                                         std::string("%3")+
                                                                                         #else
@@ -358,9 +357,8 @@ void BaseServer::preload_18_sync_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,0,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+",'"+item+
-                                "','"+reputations+"','"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+"','"+encyclopedia_item+"',"+
-                                std::to_string(common_blobversion_datapack)+");"),database);
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(profileIndex)/*starter*/)+",'"+item+
+                                "','"+reputations+"','"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+"','"+encyclopedia_item+"');"),database);
                     break;
                     #endif
                     #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
@@ -369,7 +367,7 @@ void BaseServer::preload_18_sync_profile()
                                     std::string("INSERT INTO character("
                                 "id,account,pseudo,skin,type,clan,cash,date,warehouse_cash,clan_leader,"
                                 "time_to_delete,played_time,last_connect,starter,item,reputations,encyclopedia_monster,encyclopedia_item"
-                                ",blob_version) VALUES(%1,%2,"+
+                                ") VALUES(%1,%2,"+
                                                                                         #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                                                                                         std::string("%3")+
                                                                                         #else
@@ -378,9 +376,9 @@ void BaseServer::preload_18_sync_profile()
                                                                                         ",%4,0,0,"+
                                 std::to_string(profile.cash)+",%5,0,FALSE,"
                                 "0,0,0,"+
-                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(index)/*starter*/)+
+                                std::to_string(DictionaryLogin::dictionary_starter_internal_to_database.at(profileIndex)/*starter*/)+
                                 ",'\\x"+item+"','\\x"+reputations+"','\\x"+binarytoHexa(bitlist,static_cast<uint32_t>(sizeof(bitlist)))+
-                                "','\\x"+encyclopedia_item+"',"+std::to_string(common_blobversion_datapack)+");")
+                                "','\\x"+encyclopedia_item+"');")
                                                                                                         ,database);
                     break;
                     #endif
@@ -399,7 +397,7 @@ void BaseServer::preload_18_sync_profile()
         }
         #endif
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-        const std::string &mapQuery=std::to_string(serverProfileInternal.map->reverse_db_id)+
+        const std::string &mapQuery=std::to_string(serverProfileInternal.mapIndex)+
                 ","+
                 std::to_string(serverProfileInternal.x)+
                 ","+
@@ -411,16 +409,16 @@ void BaseServer::preload_18_sync_profile()
         {
             default:
             case DatabaseBase::DatabaseType::Mysql:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,plants`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,plants`,`quest`) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''),UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::SQLite:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','','');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             case DatabaseBase::DatabaseType::PostgreSQL:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','\\x',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,plants,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','\\x','\\x');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
         }
         #else
@@ -431,20 +429,20 @@ void BaseServer::preload_18_sync_profile()
             break;
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::Mysql:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`blob_version`,`quest`) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO `character_forserver`(`character`,`map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`date`,`market_cash`,`botfight_id`,`itemonmap`,`quest`) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,UNHEX(''),UNHEX(''),UNHEX(''));"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             #endif
             #if defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::SQLite:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'');"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             #endif
             #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
             case DatabaseBase::DatabaseType::PostgreSQL:
-                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,blob_version,quest) VALUES("
-                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','',"+std::to_string(GlobalServerData::serverPrivateVariables.server_blobversion_datapack)+",'\\x');"),GlobalServerData::serverPrivateVariables.db_server);
+                serverProfileInternal.preparedQueryAddCharacterForServer=PreparedStatementUnit(std::string("INSERT INTO character_forserver(character,map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,date,market_cash,botfight_id,itemonmap,quest) VALUES("
+                "%1,"+mapQuery+","+mapQuery+","+mapQuery+",%2,0,'','','\\x');"),GlobalServerData::serverPrivateVariables.db_server);
             break;
             #endif
         }

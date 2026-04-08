@@ -27,7 +27,7 @@
  */
 
 #include "../../general/base/GeneralStructures.hpp"
-#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/Map_loader.hpp"
 
 #include <mapobject.h>

@@ -24,9 +24,11 @@
 #include <QHash>
 #include <QTime>
 #include <QDateTime>
+#include <QElapsedTimer>
 //#include <QGLWidget>
 
 #include "MapVisualiserThread.hpp"
+#include "QMap_client.hpp"
 
 class DLL_PUBLIC MapVisualiser : public QGraphicsView
 {
@@ -39,7 +41,7 @@ public:
     void setTargetFPS(int targetFPS);
     virtual void eventOnMap(CatchChallenger::MapEvent event,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE x,COORD_TYPE y);
 
-    QMap_client * getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) const;
+    CatchChallenger::QMap_client * getMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) const;
 
     CATCHCHALLENGER_TYPE_MAPID current_map;
     //put to protected again:
@@ -56,10 +58,10 @@ protected:
 
     uint8_t waitRenderTime;
     QTimer timerRender;
-    QBasicTimer timeRender;
+    QElapsedTimer timeRender;
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
-    QBasicTimer timeUpdateFPS;
+    QElapsedTimer timeUpdateFPS;
 
     Tiled::Layer *grass;
     Tiled::Layer *grassOver;

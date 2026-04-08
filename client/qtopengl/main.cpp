@@ -1,8 +1,9 @@
 #include <QApplication>
 #include "LanguagesSelect.hpp"
 #include "ScreenTransition.hpp"
-#include "../qtmaprender/MapVisualiserOrder.hpp"
-#include "../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../libqtcatchchallenger/maprender/MapVisualiserOrder.hpp"
+#include "../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
+#include "../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../libqtcatchchallenger/LocalListener.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
@@ -118,7 +119,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<uint16_t>("uint16_t");
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
-    qRegisterMetaType<std::vector<Map_full> >("std::vector<Map_full>");
+    qRegisterMetaType<std::vector<CatchChallenger::QMap_client> >("std::vector<QMap_client>");
 
     qRegisterMetaType<CatchChallenger::Chat_type>("CatchChallenger::Chat_type");
     qRegisterMetaType<CatchChallenger::Player_type>("CatchChallenger::Player_type");
@@ -136,7 +137,6 @@ int main(int argc, char *argv[])
     qRegisterMetaType<std::vector<std::pair<uint8_t,uint8_t> > >("std::vector<std::pair<uint8_t,uint8_t> >");
     qRegisterMetaType<CatchChallenger::Skill::AttackReturn>("Skill::AttackReturn");
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
-    qRegisterMetaType<std::vector<CatchChallenger::MarketMonster> >("std::vector<MarketMonster>");
 
     qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");

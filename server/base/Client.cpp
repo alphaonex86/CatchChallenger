@@ -325,10 +325,10 @@ bool Client::disconnectClient()
         GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
         //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        if(character_id==0)
-            std::cerr << "character_id==0, set it before to correctly unload to master" << std::endl;
+        if(character_id_db==0)
+            std::cerr << "character_id_db==0, set it before to correctly unload to master" << std::endl;
         else
-            LinkToMaster::linkToMaster->characterDisconnected(character_id);
+            LinkToMaster::linkToMaster->characterDisconnected(character_id_db);
         #endif
     }
     else if(stat==ClientStat::CharacterSelected)
@@ -347,7 +347,7 @@ bool Client::disconnectClient()
         //simplifiedIdList.push_back(public_and_private_informations.public_informations.simplifiedId);
         GlobalServerData::serverPrivateVariables.playerById_db.erase(character_id_db);
         #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
-        LinkToMaster::linkToMaster->characterDisconnected(character_id);
+        LinkToMaster::linkToMaster->characterDisconnected(character_id_db);
         #endif
         //playerByPseudo.erase(public_and_private_informations.public_informations.pseudo); done by ClientList::remove(const Client &client)
         clanChangeWithoutDb(0);
@@ -364,13 +364,13 @@ bool Client::disconnectClient()
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_played_time.asyncWrite({
                         std::to_string(addTime),
-                        character_id_string
+                        std::to_string(character_id_db)
                         });
             #ifdef CATCHCHALLENGER_CLASS_ALLINONESERVER
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_server_time_played_time.asyncWrite({
                         std::to_string(addTime),
                         std::to_string(0),
-                        character_id_string
+                        std::to_string(character_id_db)
                         });
             #endif
             #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -563,7 +563,7 @@ uint32_t Client::getMonsterId(bool * const ok)
 }
 #endif
 
-uint32_t Client::getClanId(bool * const ok)
+uint32_t Client::getMaxClanId(bool * const ok)
 {
     if(GlobalServerData::serverPrivateVariables.maxClanId.size()==0)
     {

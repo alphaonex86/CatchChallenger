@@ -2,6 +2,7 @@
 #include "../PreparedDBQuery.hpp"
 #include "../GlobalServerData.hpp"
 #include "../MapServer.hpp"
+#include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 
@@ -14,7 +15,7 @@ void Client::updateObjectInDatabase()
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item.asyncWrite({
             std::string(),
-            std::to_string(character_id)
+            std::to_string(character_id_db)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
@@ -58,7 +59,7 @@ void Client::updateObjectInDatabase()
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_item.asyncWrite({
             binarytoHexa(item_raw,static_cast<uint32_t>(sizeof(item_raw))),
-            std::to_string(character_id)
+            std::to_string(character_id_db)
             });
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
@@ -75,7 +76,7 @@ void Client::updateObjectInDatabase()
         dbQueryWriteCommon(
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster.compose(
                         std::string(),
-                    std::to_string(character_id)
+                    std::to_string(character_id_db)
                         )
                     );
     }
@@ -95,7 +96,7 @@ void Client::updateObjectInDatabase()
         dbQueryWriteCommon(
                     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster.compose(
                         binarytoHexa(monster_raw,sizeof(monster_raw)),
-                    std::to_string(character_id)
+                    std::to_string(character_id_db)
                         )
                     );
     }
@@ -144,7 +145,7 @@ void Client::updateObjectInDatabaseAndEncyclopedia()
         item,
         binarytoHexa(public_and_private_informations.encyclopedia_item,
         static_cast<uint32_t>(CommonDatapack::commonDatapack.get_items().item.size())/8+1),
-        std::to_string(character_id)
+        std::to_string(character_id_db)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -159,7 +160,7 @@ void Client::updateMonsterInDatabaseEncyclopedia()
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_monster_encyclopedia.asyncWrite({
         binarytoHexa(public_and_private_informations.encyclopedia_monster,
         static_cast<uint32_t>(CommonDatapack::commonDatapack.get_monsters().size())/8+1),
-        std::to_string(character_id)
+        std::to_string(character_id_db)
         });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -243,7 +244,7 @@ void Client::syncDatabaseReputation()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_reputations.asyncWrite({
                 binarytoHexa(buffer,posOutput),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
@@ -258,10 +259,10 @@ void Client::syncDatabaseReputation()
 void Client::syncBotAlreadyBeaten()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
+    /*GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
                 binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1),
-                std::to_string(character_id)
-                });
+                std::to_string(character_id_db)
+                }); todo remake*/
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     #else
@@ -285,9 +286,12 @@ void Client::savePosition()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */
-    const uint32_t &map_file_database_id=static_cast<MapServer *>(map)->reverse_db_id;
-    const uint32_t &rescue_map_file_database_id=static_cast<MapServer *>(rescue.map)->reverse_db_id;
-    const uint32_t &unvalidated_rescue_map_file_database_id=static_cast<MapServer *>(unvalidated_rescue.map)->reverse_db_id;
+    const Map_server_MapVisibility_Simple_StoreOnSender &tmap=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(getMapId());
+    const Map_server_MapVisibility_Simple_StoreOnSender &trescue_map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(rescue.mapIndex);
+    const Map_server_MapVisibility_Simple_StoreOnSender &tunvalidated_rescue_map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(unvalidated_rescue.mapIndex);
+    const uint32_t &map_file_database_id=tmap.id_db;
+    const uint32_t &rescue_map_file_database_id=trescue_map.id_db;
+    const uint32_t &unvalidated_rescue_map_file_database_id=tunvalidated_rescue_map.id_db;
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_forserver_map.asyncWrite({
                 std::to_string(map_file_database_id),
                 std::to_string(x),
@@ -302,7 +306,7 @@ void Client::savePosition()
                 std::to_string(unvalidated_rescue.x),
                 std::to_string(unvalidated_rescue.y),
                 std::to_string((uint8_t)unvalidated_rescue.orientation),
-                std::to_string(character_id)
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

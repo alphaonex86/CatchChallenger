@@ -1,5 +1,5 @@
 #include "MoveOnTheMap.hpp"
-#include "CommonMap.hpp"
+#include "CommonMap/CommonMap.hpp"
 #include "GeneralVariable.hpp"
 #include <iostream>
 

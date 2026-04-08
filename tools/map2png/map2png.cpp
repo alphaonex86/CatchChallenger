@@ -39,17 +39,14 @@ MapVisualiserOrder::~MapVisualiserOrder()
 
 Map_full::Map_full()
 {
-    logicalMap.xmlRoot=NULL;
-    logicalMap.border.bottom.map=NULL;
+    logicalMap.border.bottom.mapIndex=65535;
     logicalMap.border.bottom.x_offset=0;
-    logicalMap.border.top.map=NULL;
+    logicalMap.border.top.mapIndex=65535;
     logicalMap.border.top.x_offset=0;
-    logicalMap.border.right.map=NULL;
+    logicalMap.border.right.mapIndex=65535;
     logicalMap.border.right.y_offset=0;
-    logicalMap.border.left.map=NULL;
+    logicalMap.border.left.mapIndex=65535;
     logicalMap.border.left.y_offset=0;
-    logicalMap.teleporter=NULL;
-    logicalMap.teleporter_list_size=0;
     logicalMap.width=0;
     logicalMap.height=0;
     logicalMap.group=0;
@@ -231,7 +228,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(Map_full *tempMapObject,b
             }
             if(index<0)
             {
-                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
+                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->name));
                 tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
             }
         }
@@ -285,8 +282,11 @@ public:
     void paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *)
     {
         const QColor &color = mMapObject->objectGroup()->color();
-        mRenderer->drawMapObject(p, mMapObject,
-                                 color.isValid() ? color : Qt::darkGray);
+        const QColor &c = color.isValid() ? color : Qt::darkGray;
+        Tiled::MapObjectColors colors;
+        colors.main = c;
+        colors.fill = c;
+        mRenderer->drawMapObject(p, mMapObject, colors);
     }
 
 private:
@@ -650,7 +650,7 @@ void Map2Png::layerChangeLevelAndTagsChange(Map_full *tempMapObject,bool hideThe
             }
             if(index<0)
             {
-                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
+                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->name));
                 tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
             }
         }
@@ -688,9 +688,6 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     tempMapObject->logicalMap.height=0;
     tempMapObject->logicalMap.id=0;
     tempMapObject->logicalMap.width=0;
-    tempMapObject->logicalMap.teleporter=nullptr;
-    tempMapObject->logicalMap.teleporter_list_size=0;
-    tempMapObject->logicalMap.xmlRoot=nullptr;
     tempMapObject->objectGroup=nullptr;
     tempMapObject->tiledMap=nullptr;
     tempMapObject->tiledRender=nullptr;
@@ -714,6 +711,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     {
         Map_full *tempMapObjectFull=new Map_full();
         tempMapObjectFull->tiledMap=tempMapObject->tiledMap;
+        tempMapObjectFull->name=resolvedFileName.toStdString();
 
         //do the object group to move the player on it
         tempMapObjectFull->objectGroup = new Tiled::ObjectGroup("text_Dyna_management",0,0);//,tempMapObjectFull->tiledMap->width(),tempMapObjectFull->tiledMap->height()
@@ -828,7 +826,7 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         index++;
     }
     CatchChallenger::Map_loader map_loader;
-    if(!map_loader.tryLoadMap(resolvedFileName.toStdString()))
+    if(!map_loader.tryLoadMap(resolvedFileName.toStdString(), tempMapObject->logicalMap, false))
     {
         mLastError=QString::fromStdString(map_loader.errorString());
         qDebug() << QStringLiteral("Unable to load the map: %1, error: %2").arg(resolvedFileName).arg(QString::fromStdString(map_loader.errorString()));
@@ -836,15 +834,11 @@ QString Map2Png::loadOtherMap(const QString &fileName)
         return QString();
     }
 
-    //copy the variables
-    tempMapObject->logicalMap.width                                 = map_loader.map_to_send.width;
-    tempMapObject->logicalMap.height                                = map_loader.map_to_send.height;
-    tempMapObject->logicalMap.parsed_layer                          = map_loader.map_to_send.parsed_layer;
-    tempMapObject->logicalMap.map_file                              = resolvedFileName.toStdString();
-    tempMapObject->logicalMap.border.bottom.map                     = NULL;
-    tempMapObject->logicalMap.border.top.map                        = NULL;
-    tempMapObject->logicalMap.border.right.map                      = NULL;
-    tempMapObject->logicalMap.border.left.map                       = NULL;
+    //border mapIndex not resolved for map2png (no global map list)
+    tempMapObject->logicalMap.border.bottom.mapIndex                = 65535;
+    tempMapObject->logicalMap.border.top.mapIndex                   = 65535;
+    tempMapObject->logicalMap.border.right.mapIndex                 = 65535;
+    tempMapObject->logicalMap.border.left.mapIndex                  = 65535;
 
     //load the string
     tempMapObject->logicalMap.border_semi                = map_loader.map_to_send.border;
@@ -908,7 +902,6 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                     //if both border match
                     if(fileName.toStdString()==other_map.value(mapIndex)->logicalMap.border_semi.top.fileName && tempMapObject->logicalMap.border_semi.bottom.fileName==mapIndex.toStdString())
                     {
-                        tempMapObject->logicalMap.border.bottom.map=&other_map[mapIndex]->logicalMap;
                         int offset=tempMapObject->logicalMap.border_semi.bottom.x_offset-other_map.value(mapIndex)->logicalMap.border_semi.top.x_offset;
                         tempMapObject->logicalMap.border.bottom.x_offset=offset;
                         other_map[mapIndex]->logicalMap.border.top.x_offset=-offset;
@@ -932,7 +925,6 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                     //if both border match
                     if(fileName.toStdString()==other_map.value(mapIndex)->logicalMap.border_semi.bottom.fileName && tempMapObject->logicalMap.border_semi.top.fileName==mapIndex.toStdString())
                     {
-                        tempMapObject->logicalMap.border.top.map=&other_map[mapIndex]->logicalMap;
                         int offset=tempMapObject->logicalMap.border_semi.top.x_offset-other_map.value(mapIndex)->logicalMap.border_semi.bottom.x_offset;
                         tempMapObject->logicalMap.border.top.x_offset=offset;
                         other_map[mapIndex]->logicalMap.border.bottom.x_offset=-offset;
@@ -956,7 +948,6 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                     //if both border match
                     if(fileName.toStdString()==other_map.value(mapIndex)->logicalMap.border_semi.right.fileName && tempMapObject->logicalMap.border_semi.left.fileName==mapIndex.toStdString())
                     {
-                        tempMapObject->logicalMap.border.left.map=&other_map[mapIndex]->logicalMap;
                         int offset=tempMapObject->logicalMap.border_semi.left.y_offset-other_map.value(mapIndex)->logicalMap.border_semi.right.y_offset;
                         tempMapObject->logicalMap.border.left.y_offset=offset;
                         other_map[mapIndex]->logicalMap.border.right.y_offset=-offset;
@@ -980,7 +971,6 @@ void Map2Png::loadCurrentMap(const QString &fileName, qint32 x, qint32 y)
                     //if both border match
                     if(fileName.toStdString()==other_map.value(mapIndex)->logicalMap.border_semi.left.fileName && tempMapObject->logicalMap.border_semi.right.fileName==mapIndex.toStdString())
                     {
-                        tempMapObject->logicalMap.border.right.map=&other_map[mapIndex]->logicalMap;
                         int offset=tempMapObject->logicalMap.border_semi.right.y_offset-other_map.value(mapIndex)->logicalMap.border_semi.left.y_offset;
                         tempMapObject->logicalMap.border.right.y_offset=offset;
                         other_map[mapIndex]->logicalMap.border.left.y_offset=-offset;

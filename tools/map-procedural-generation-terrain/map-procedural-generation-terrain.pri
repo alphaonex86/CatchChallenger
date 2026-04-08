@@ -7,7 +7,7 @@ QMAKE_CXXFLAGS += -fno-omit-frame-pointer -g
 CONFIG -= c++17
 
 DEFINES += TILED_ZLIB
-LIBS += -lz
+LIBS += -lz -ltiled
 
 QT += xml
 
@@ -58,12 +58,11 @@ HEADERS += \
     $$PWD/MiniMap.h \
     $$PWD/MapBrush.h
 
-LIBS += -lboost_system
 
 #choose one of:
 DEFINES += CATCHCHALLENGER_XLMPARSER_TINYXML2
 
-HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.h
+HEADERS += $$PWD/../../general/tinyXML2/tinyxml2.hpp
 SOURCES += $$PWD/../../general/tinyXML2/tinyxml2.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2b.cpp \
 $$PWD/../../general/tinyXML2/tinyxml2c.cpp

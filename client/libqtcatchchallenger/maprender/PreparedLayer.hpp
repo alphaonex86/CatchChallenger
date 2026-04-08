@@ -5,17 +5,18 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSceneMouseEvent>
 #include <QPointF>
-#include <QTime>
+#include <QElapsedTimer>
 
 #include "MapVisualiserThread.hpp"
 #include "../libcatchchallenger/ClientStructures.hpp"
+#include "QMap_client.hpp"
 
 class PreparedLayer : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
 public:
-    explicit PreparedLayer(Map_full * tempMapObject,QGraphicsItem *parent = 0);
-    explicit PreparedLayer(Map_full * tempMapObject,const QPixmap &pixmap, QGraphicsItem *parent = 0);
+    explicit PreparedLayer(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QGraphicsItem *parent = 0);
+    explicit PreparedLayer(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const QPixmap &pixmap, QGraphicsItem *parent = 0);
     void hoverMoveEvent(QGraphicsSceneHoverEvent * event);
     void hoverEnterEvent(QGraphicsSceneHoverEvent * event);
     void hoverLeaveEvent(QGraphicsSceneHoverEvent * event);
@@ -23,10 +24,10 @@ public:
     void mousePressEvent(QGraphicsSceneMouseEvent * event);
     void mouseReleaseEvent(QGraphicsSceneMouseEvent * event);
 private:
-    Map_full * tempMapObject;
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     QElapsedTimer clickDuration;
 signals:
-    void eventOnMap(CatchChallenger::MapEvent event,Map_full * tempMapObject,uint8_t x,uint8_t y);
+    void eventOnMap(CatchChallenger::MapEvent event,const CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE x,COORD_TYPE y);
 };
 
 #endif // PREPAREDLAYER_H

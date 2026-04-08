@@ -1,7 +1,9 @@
 #include "OverMapLogic.hpp"
 #include "../ConnexionManager.hpp"
+#include "../background/CCMap.hpp"
 #include "../../libqtcatchchallenger/Language.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
+#include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include <iostream>
@@ -11,13 +13,20 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();
     //do the not started quest here
-    if(QtDatapackClientLoader::datapackLoader->get_botToQuestStart().find(botId)==
-            QtDatapackClientLoader::datapackLoader->get_botToQuestStart().cend())
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> *botQuestsPtr=nullptr;
+    for(const auto &mapEntry : QtDatapackClientLoader::datapackLoader->get_botToQuestStart()) {
+        auto botIt=mapEntry.second.find(static_cast<CATCHCHALLENGER_TYPE_BOTID>(botId));
+        if(botIt!=mapEntry.second.cend()) {
+            botQuestsPtr=&botIt->second;
+            break;
+        }
+    }
+    if(botQuestsPtr==nullptr)
     {
         std::cerr << "OverMapLogic::botHaveQuest(), botId not found: " << std::to_string(botId) << std::endl;
         return false;
     }
-    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=*botQuestsPtr;
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -58,8 +67,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
                 }
                 else
                 {
-                    const std::vector<uint16_t> &bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
-                    if(vectorcontainsAtLeastOne(bots,botId))
+                    if(currentQuest.steps.at(playerInformations.quests.at(questId).step-1).botToTalkBotId==botId)
                         return true;//in progress
                     else
                         {}//Need got to another bot to progress, this it's just the starting bot
@@ -75,8 +83,7 @@ bool OverMapLogic::botHaveQuest(const uint16_t &botId) const
         if(!vectorcontainsAtLeastOne(botQuests,i->first) && i->second.step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(i->first);
-            auto bots=currentQuest.steps.at(i->second.step-1).bots;
-            if(vectorcontainsAtLeastOne(bots,botId))
+            if(currentQuest.steps.at(i->second.step-1).botToTalkBotId==botId)
                 return true;//in progress, but not the starting bot
             else
                 {}//it's another bot
@@ -148,12 +155,8 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             showTip(tr("Shop called but wrong id").toStdString());
             return;
         }
-        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shopId)==
-                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().cend())
-        {
-            showTip(tr("Shop not found").toStdString());
-            return;
-        }
+        //shops are now per-map in BaseMap, validated on server side
+        Q_UNUSED(shopId);
 /*        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {
             QPixmap skin(QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin"))));
@@ -285,7 +288,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
         std::string textToShow;
         if(playerInformations.clan==0)
         {
-            if(playerInformations.allow.find(CatchChallenger::ActionAllow_Clan)!=playerInformations.allow.cend())
+            if(playerInformations.allowCreateClan)
                 textToShow=QStringLiteral("<center><a href=\"clan_create\">%1</a></center>").arg(tr("Clan create")).toStdString();
             else
                 textToShow=QStringLiteral("<center>You can't create your clan</center>").toStdString();
@@ -347,10 +350,15 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             showTip(tr("Industry called but wrong id").toStdString());
             return;
         }
-        if(CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().find(factoryId)==CatchChallenger::CommonDatapack::commonDatapack.get_industriesLink().cend())
+        //industries are now per-map in BaseMap
         {
-            showTip(tr("The factory is not found").toStdString());
-            return;
+            CATCHCHALLENGER_TYPE_MAPID currentMapId=ccmap->mapController.currentMap();
+            const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(currentMapId);
+            if(factoryId>=logicalMap.industries.size())
+            {
+                showTip(tr("The factory is not found").toStdString());
+                return;
+            }
         }
         /*ui->factoryResources->clear();
         ui->factoryProducts->clear();
@@ -425,13 +433,15 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             showTip(tr("Bot step wrong data type error, repport this error please").toStdString());
             return;
         }
-        if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightId)==
-                CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
+        //botFights are now per-map in BaseMap
+        CATCHCHALLENGER_TYPE_MAPID fightMapId=ccmap->mapController.currentMap();
+        const CatchChallenger::CommonMap &fightLogicalMap=QtDatapackClientLoader::datapackLoader->getMap(fightMapId);
+        if(fightLogicalMap.botFights.find(fightId)==fightLogicalMap.botFights.cend())
         {
             showTip(tr("Bot fight not found").toStdString());
             return;
         }
-        if(connexionManager->client->haveBeatBot(fightId))
+        if(connexionManager->client->haveBeatBot(fightMapId,fightId))
         {
             if(actualBot.step.find(step+1)!=actualBot.step.cend())
                 goToBotStep(step+1);
@@ -439,7 +449,7 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 showTip(tr("Already beaten!").toStdString());
             return;
         }
-        connexionManager->client->requestFight(fightId);
+        connexionManager->client->requestFight();
         botFight(fightId);
         return;
     }
@@ -466,7 +476,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
     if(playerInformations.quests.find(questId)==playerInformations.quests.cend())
     {
         //start for the first time the quest
-        if(vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
+        if(quest.steps.at(0).botToTalkBotId==botId
                 && haveStartQuestRequirement(quest))
         {
             connexionManager->client->startQuest(questId);
@@ -485,7 +495,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
     {
         //start again the quest if can be repeated
         if(quest.repeatable &&
-                vectorcontainsAtLeastOne(quest.steps.at(0).bots,botId)
+                quest.steps.at(0).botToTalkBotId==botId
                 && haveStartQuestRequirement(quest))
         {
             connexionManager->client->startQuest(questId);
@@ -518,7 +528,7 @@ bool OverMapLogic::tryValidateQuestStep(const uint16_t &questId, const uint16_t 
         updateDisplayedQuests();
         return true;
     }
-    if(vectorcontainsAtLeastOne(quest.steps.at(playerInformations.quests.at(questId).step).bots,botId))
+    if(quest.steps.at(playerInformations.quests.at(questId).step).botToTalkBotId!=botId)
     {
         if(!silent)
             showTip(tr("You need talk to another bot").toStdString());
@@ -624,13 +634,15 @@ bool OverMapLogic::haveNextStepQuestRequirements(const CatchChallenger::Quest &q
         }
         index++;
     }
-    index=0;
-    while(index<requirements.fightId.size())
+    //fights is now map<mapId, set<botId>>
+    for(const auto &fightEntry : requirements.fights)
     {
-        const uint16_t &fightId=requirements.fightId.at(index);
-        if(!connexionManager->client->haveBeatBot(fightId))
-            return false;
-        index++;
+        const CATCHCHALLENGER_TYPE_MAPID &fightMapId=fightEntry.first;
+        for(const auto &botFightId : fightEntry.second)
+        {
+            if(!connexionManager->client->haveBeatBot(fightMapId,botFightId))
+                return false;
+        }
     }
     return true;
 }
@@ -804,7 +816,17 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
     std::vector<std::pair<uint16_t,std::string> > entryList;
     std::pair<uint16_t,std::string> oneEntry;
     //do the not started quest here
-    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=QtDatapackClientLoader::datapackLoader->get_botToQuestStart().at(botId);
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> *botQuestsPtr=nullptr;
+    for(const auto &mapEntry : QtDatapackClientLoader::datapackLoader->get_botToQuestStart()) {
+        auto botIt=mapEntry.second.find(static_cast<CATCHCHALLENGER_TYPE_BOTID>(botId));
+        if(botIt!=mapEntry.second.cend()) {
+            botQuestsPtr=&botIt->second;
+            break;
+        }
+    }
+    if(botQuestsPtr==nullptr)
+        return entryList;
+    const std::vector<CATCHCHALLENGER_TYPE_QUEST> &botQuests=*botQuestsPtr;
     unsigned int index=0;
     while(index<botQuests.size())
     {
@@ -871,8 +893,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
                 }
                 else
                 {
-                    auto bots=currentQuest.steps.at(playerInformations.quests.at(questId).step-1).bots;
-                    if(vectorcontainsAtLeastOne(bots,botId))
+                    if(currentQuest.steps.at(playerInformations.quests.at(questId).step-1).botToTalkBotId==botId)
                     {
                         oneEntry.first=questId;
                         if(QtDatapackClientLoader::datapackLoader->get_questsExtra().find(questId)!=
@@ -901,8 +922,7 @@ std::vector<std::pair<uint16_t,std::string> > OverMapLogic::getQuestList(const u
                 i->second.step>0)
         {
             CatchChallenger::Quest currentQuest=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_quests().at(i->first);
-            auto bots=currentQuest.steps.at(i->second.step-1).bots;
-            if(vectorcontainsAtLeastOne(bots,botId))
+            if(currentQuest.steps.at(i->second.step-1).botToTalkBotId==botId)
             {
                 //in progress, but not the starting bot
                 oneEntry.first=i->first;
@@ -982,12 +1002,8 @@ bool OverMapLogic::nextStepQuest(const CatchChallenger::Quest &quest)
             index++;
         }
         //show_reputation();
-        index=0;
-        while(index<quest.rewards.allow.size())
-        {
-            playerInformations.allow.insert(quest.rewards.allow.at(index));
-            index++;
-        }
+        if(quest.rewards.allowCreateClan)
+            playerInformations.allowCreateClan=true;
     }
     return true;
 }

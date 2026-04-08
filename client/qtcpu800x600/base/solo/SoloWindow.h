@@ -14,7 +14,7 @@
 #include "../../../../general/base/GeneralStructures.hpp"
 #include "../../../libqtcatchchallenger/Api_client_real.hpp"
 #include "../../../libqtcatchchallenger/Api_client_virtual.hpp"
-#include "../../../qtmaprender/MapController.hpp"
+#include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "../interface/BaseWindow.h"
 #include "../interface/ListEntryEnvolued.h"
 

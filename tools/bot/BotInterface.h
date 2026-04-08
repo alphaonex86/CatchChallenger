@@ -24,9 +24,9 @@ public:
     virtual void removeClient(CatchChallenger::Api_protocol_Qt *api) = 0;
     virtual QString name() = 0;
     virtual QString version() = 0;
-    virtual void insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction) = 0;
-    virtual void insert_player_all(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    virtual void remove_player(CatchChallenger::Api_protocol_Qt *api,const uint16_t &id);
+    virtual void insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction) = 0;
+    virtual void insert_player_all(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    virtual void remove_player(CatchChallenger::Api_protocol_Qt *api,const uint8_t &id);
     virtual void dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt *api);
 };
 

@@ -11,7 +11,7 @@
 #include <QUdpSocket>
 #include <QTimer>
 #endif
-#include "../base/BaseServer.hpp"
+#include "../base/BaseServer/BaseServer.hpp"
 #include "../../general/base/lib.h"
 #include "QtServerStructures.hpp"
 #include "QtClient.hpp"

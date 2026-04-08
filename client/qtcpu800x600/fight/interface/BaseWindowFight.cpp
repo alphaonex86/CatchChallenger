@@ -137,13 +137,7 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     ui->monsterDetailsStatXpBar->repaint();
     ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
     ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-    {
-        ui->monsterDetailsStatSp->setVisible(true);
-        ui->monsterDetailsStatSp->setText(tr("Skill point: %1").arg(monster.sp));
-    }
-    else
-        ui->monsterDetailsStatSp->setVisible(false);
+    ui->monsterDetailsStatSp->setVisible(false);
     //skill
     ui->monsterDetailsSkills->clear();
     {
@@ -219,9 +213,10 @@ bool BaseWindow::check_monsters()
     unsigned int index=0;
     unsigned int sub_size;
     unsigned int sub_index;
-    while(index<client->player_informations.playerMonster.size())
+    const std::vector<PlayerMonster> &checkPlayerMonsters=client->getPlayerMonster();
+    while(index<checkPlayerMonsters.size())
     {
-        const PlayerMonster &monster=client->player_informations.playerMonster.at(index);
+        const PlayerMonster &monster=checkPlayerMonsters.at(index);
         if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)==CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
         {
             error(QStringLiteral("the monster %1 is not into monster list").arg(monster.monster).toStdString());
@@ -489,7 +484,9 @@ void BaseWindow::prepareFight()
 
 void BaseWindow::botFight(const uint16_t &fightId)
 {
-    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
+    const CATCHCHALLENGER_TYPE_MAPID mapId=mapController->currentMap();
+    const CatchChallenger::CommonMap &mapData=QtDatapackClientLoader::datapackLoader->getMap(mapId);
+    if(mapData.botFights.find(static_cast<uint8_t>(fightId))==mapData.botFights.cend())
     {
         emit error("fight id not found at collision");
         return;
@@ -511,10 +508,14 @@ void BaseWindow::botFightFullDiffered()
     prepareFight();
     ui->frameFightTop->setVisible(false);
     ui->stackedWidgetFightBottomBar->setCurrentWidget(ui->stackedWidgetFightBottomBarPageEnter);
-    ui->labelFightEnter->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_botFightsExtra().at(fightId).start));
+    // Bot fight extra text (start/win messages) is no longer available
+    ui->labelFightEnter->setText(tr("A bot is challenging you!"));
     ui->pushButtonFightEnterNext->setVisible(false);
+    const CATCHCHALLENGER_TYPE_MAPID mapId=mapController->currentMap();
+    const CatchChallenger::CommonMap &mapData=QtDatapackClientLoader::datapackLoader->getMap(mapId);
+    const BotFight &currentBotFight=mapData.botFights.at(static_cast<uint8_t>(fightId));
     std::vector<PlayerMonster> botFightMonstersTransformed;
-    const std::vector<BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).monsters;
+    const std::vector<BotFight::BotFightMonster> &monsters=currentBotFight.monsters;
     unsigned int index=0;
     while(index<monsters.size())
     {
@@ -528,7 +529,10 @@ void BaseWindow::botFightFullDiffered()
                                            ));
         index++;
     }
-    client->setBotMonster(botFightMonstersTransformed,fightId);
+    Api_protocol_Qt::FightInProgressType fightInProgress;
+    fightInProgress.mapId=mapId;
+    fightInProgress.botId=static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId);
+    client->setBotMonster(botFightMonstersTransformed,fightInProgress);
     init_environement_display(mapController->getMapObject(),mapController->getX(),mapController->getY());
     ui->labelFightMonsterBottom->setPixmap(playerBackImage.scaled(160,160));
     init_current_monster_display();
@@ -1501,13 +1505,15 @@ void BaseWindow::win()
         case BattleType_Bot:
             if(!zonecatch)
             {
-                if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightId)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().cend())
+                const CATCHCHALLENGER_TYPE_MAPID winMapId=mapController->currentMap();
+                const CatchChallenger::CommonMap &winMapData=QtDatapackClientLoader::datapackLoader->getMap(winMapId);
+                if(winMapData.botFights.find(static_cast<uint8_t>(fightId))==winMapData.botFights.cend())
                 {
                     emit error("fight id not found at collision");
                     return;
                 }
-                addCash(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).cash);
-                mapController->addBeatenBotFight(fightId);
+                addCash(winMapData.botFights.at(static_cast<uint8_t>(fightId)).cash);
+                mapController->addBeatenBotFight(winMapId, static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId));
             }
             if(botFightList.empty())
             {
@@ -2023,13 +2029,7 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
     unsigned int index=monsterPosition;
     PlayerMonster monster=playerMonster.at(index);
     ui->learnMonster->setPixmap(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front.scaled(160,160));
-    if(CommonSettingsServer::commonSettingsServer.useSP)
-    {
-        ui->learnSP->setVisible(true);
-        ui->learnSP->setText(tr("SP: %1").arg(monster.sp));
-    }
-    else
-        ui->learnSP->setVisible(false);
+    ui->learnSP->setVisible(false);
     #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
     ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
                                QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
@@ -2073,36 +2073,13 @@ bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
         i.next();
         QListWidgetItem *item=new QListWidgetItem();
         const uint32_t &level=i.value();
-        if(CommonSettingsServer::commonSettingsServer.useSP)
-        {
-            if(level<=1)
-                item->setText(tr("%1\nSP cost: %2")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name))
-                            .arg(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(i.key()).level.at(i.value()-1).sp_to_learn)
-                        );
-            else
-                item->setText(tr("%1 level %2\nSP cost: %3")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name))
-                            .arg(level)
-                            .arg(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(i.key()).level.at(i.value()-1).sp_to_learn)
-                        );
-        }
+        if(level<=1)
+            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name));
         else
-        {
-            if(level<=1)
-                item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name));
-            else
-                item->setText(tr("%1 level %2")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name)
-                            .arg(level)
-                        ));
-        }
-        if(CommonSettingsServer::commonSettingsServer.useSP && CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(i.key()).level.at(i.value()-1).sp_to_learn>monster.sp)
-        {
-            item->setFont(MissingQuantity);
-            item->setForeground(QBrush(QColor(200,20,20)));
-            item->setToolTip(tr("You need more sp"));
-        }
+            item->setText(tr("%1 level %2")
+                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name))
+                        .arg(level)
+                    );
         attack_to_learn_graphical[item]=i.key();
         ui->learnAttackList->addItem(item);
     }
@@ -2189,7 +2166,7 @@ void BaseWindow::monsterCatch(const bool &success)
         if(client->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
             Player_private_and_public_informations &playerInformations=client->get_player_informations();
-            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            if(playerInformations.warehouse_monsters.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 QMessageBox::warning(this,tr("Error"),tr("You have already the maximum number of monster into you warehouse"));
                 return;
@@ -2197,7 +2174,7 @@ void BaseWindow::monsterCatch(const bool &success)
             if(client->playerMonster_catchInProgress.empty())
                 abort();
             const PlayerMonster &p=client->playerMonster_catchInProgress.front();
-            playerInformations.warehouse_playerMonster.push_back(p);
+            playerInformations.warehouse_monsters.push_back(p);
         }
         else
         {

@@ -19,7 +19,7 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
     cache=useCache;
 }
 
-void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
+void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
     if(displayed_layer.find(map)!=displayed_layer.cend())
     {
@@ -84,7 +84,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
                     temp->setPixmap(tempPixmap);
                     temp->show();
                     #endif
-                    graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
+                    graphicsItem=new PreparedLayer(mapIndex,tempPixmap,this);
                     if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
                         abort();
                     graphicsItem->setZValue(index-1);
@@ -117,7 +117,7 @@ void MapItem::addMap(Map_full * tempMapObject,Tiled::Map *map, Tiled::MapRendere
             temp->setPixmap(tempPixmap);
             temp->show();
             #endif
-            graphicsItem=new PreparedLayer(tempMapObject,tempPixmap,this);
+            graphicsItem=new PreparedLayer(mapIndex,tempPixmap,this);
             if(!connect(static_cast<PreparedLayer *>(graphicsItem),&PreparedLayer::eventOnMap,this,&MapItem::eventOnMap))
                 abort();
             graphicsItem->setZValue(index);

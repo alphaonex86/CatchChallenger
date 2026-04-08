@@ -4,7 +4,7 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
-#include "CommonMap.hpp"
+#include "CommonMap/CommonMap.hpp"
 #include "lib.h"
 
 //to group the step by step move into line move

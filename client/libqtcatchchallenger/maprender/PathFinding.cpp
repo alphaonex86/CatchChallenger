@@ -1,6 +1,7 @@
 #include "PathFinding.hpp"
 #include <QMutexLocker>
 #include <QTime>
+#include <QElapsedTimer>
 #include <iostream>
 
 PathFinding::PathFinding() :
@@ -28,85 +29,74 @@ PathFinding::~PathFinding()
     #endif
 }
 
-void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &all_map,
-                             const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,
-                             const std::string &current_map,const uint8_t &x,const uint8_t &y,const std::unordered_map<uint16_t,uint32_t> &items)
+void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapList,
+                             const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,
+                             const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items)
 {
-    //path finding buggy
-    /*{
-        std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
-        emit result(path);
-        return;
-    }*/
-    if(all_map.find(current_map)==all_map.cend())
+    if(current_map_index>=mapList.size())
     {
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > path;
-        emit result(std::string(),0,0,path,PathFinding_status_InternalError);
-        std::cerr << "searchPath(): all_map.find(current_map)==all_map.cend()" << std::endl;
+        emit result(0,0,0,path,PathFinding_status_InternalError);
+        std::cerr << "searchPath(): current_map_index out of range" << std::endl;
         return;
     }
     tryCancel=false;
-    std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> simplifiedMapList;
     //load the data
-    for ( const auto &n : all_map ) {
-        const Map_full * const map=n.second;
-        if(map->displayed)
+    for (const auto &map : mapList) {
+        if(!map.flat_simplified_map.empty())
         {
             SimplifiedMapForPathFinding simplifiedMap;
-            simplifiedMap.width=map->logicalMap.width;
-            simplifiedMap.height=map->logicalMap.height;
-            if(map->logicalMap.parsed_layer.simplifiedMap==NULL)
-                simplifiedMap.simplifiedMap=NULL;
-            else
-            {
-                simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
-                memcpy(simplifiedMap.simplifiedMap,map->logicalMap.parsed_layer.simplifiedMap,simplifiedMap.width*simplifiedMap.height);
-            }
-            simplifiedMapList[n.first]=simplifiedMap;
+            simplifiedMap.width=map.width;
+            simplifiedMap.height=map.height;
+            simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
+            memcpy(simplifiedMap.simplifiedMap,map.flat_simplified_map.data(),simplifiedMap.width*simplifiedMap.height);
+            simplifiedMapList[map.id]=simplifiedMap;
         }
     }
     //resolv the border
-    for ( const auto &n : simplifiedMapList ) {
-        const std::string &mapString=n.first;
-        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.bottom.fileName)!=all_map.cend())
+    for (const auto &n : simplifiedMapList) {
+        const CATCHCHALLENGER_TYPE_MAPID &mapId=n.first;
+        const CatchChallenger::CommonMap &map=mapList.at(mapId);
+        if(map.border.bottom.mapIndex!=65535 && simplifiedMapList.find(map.border.bottom.mapIndex)!=simplifiedMapList.cend())
         {
-            simplifiedMapList[mapString].border.bottom.map=all_map.at(mapString)->logicalMap.border_semi.bottom.fileName;
-            simplifiedMapList[mapString].border.bottom.x_offset=all_map.at(mapString)->logicalMap.border_semi.bottom.x_offset;
+            simplifiedMapList[mapId].border.bottom.map=map.border.bottom.mapIndex;
+            simplifiedMapList[mapId].border.bottom.x_offset=map.border.bottom.x_offset;
         }
         else
         {
-            //simplifiedMapList[mapString].border.bottom.map=NULL;
-            simplifiedMapList[mapString].border.bottom.x_offset=0;
+            simplifiedMapList[mapId].border.bottom.map=65535;
+            simplifiedMapList[mapId].border.bottom.x_offset=0;
         }
-        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.left.fileName)!=all_map.cend())
+        if(map.border.left.mapIndex!=65535 && simplifiedMapList.find(map.border.left.mapIndex)!=simplifiedMapList.cend())
         {
-            simplifiedMapList[mapString].border.left.map=all_map.at(mapString)->logicalMap.border_semi.left.fileName;
-            simplifiedMapList[mapString].border.left.y_offset=all_map.at(mapString)->logicalMap.border_semi.left.y_offset;
-        }
-        else
-        {
-            //simplifiedMapList[mapString].border.left.map=NULL;
-            simplifiedMapList[mapString].border.left.y_offset=0;
-        }
-        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.right.fileName)!=all_map.cend())
-        {
-            simplifiedMapList[mapString].border.right.map=all_map.at(mapString)->logicalMap.border_semi.right.fileName;
-            simplifiedMapList[mapString].border.right.y_offset=all_map.at(mapString)->logicalMap.border_semi.right.y_offset;
+            simplifiedMapList[mapId].border.left.map=map.border.left.mapIndex;
+            simplifiedMapList[mapId].border.left.y_offset=map.border.left.y_offset;
         }
         else
         {
-            //simplifiedMapList[mapString].border.right.map=NULL;
-            simplifiedMapList[mapString].border.right.y_offset=0;
+            simplifiedMapList[mapId].border.left.map=65535;
+            simplifiedMapList[mapId].border.left.y_offset=0;
         }
-        if(all_map.find(all_map.at(mapString)->logicalMap.border_semi.top.fileName)!=all_map.cend())
+        if(map.border.right.mapIndex!=65535 && simplifiedMapList.find(map.border.right.mapIndex)!=simplifiedMapList.cend())
         {
-            simplifiedMapList[mapString].border.top.map=all_map.at(mapString)->logicalMap.border_semi.top.fileName;
-            simplifiedMapList[mapString].border.top.x_offset=all_map.at(mapString)->logicalMap.border_semi.top.x_offset;
+            simplifiedMapList[mapId].border.right.map=map.border.right.mapIndex;
+            simplifiedMapList[mapId].border.right.y_offset=map.border.right.y_offset;
         }
         else
         {
-            //simplifiedMapList[mapString].border.top.map=NULL;
-            simplifiedMapList[mapString].border.top.x_offset=0;
+            simplifiedMapList[mapId].border.right.map=65535;
+            simplifiedMapList[mapId].border.right.y_offset=0;
+        }
+        if(map.border.top.mapIndex!=65535 && simplifiedMapList.find(map.border.top.mapIndex)!=simplifiedMapList.cend())
+        {
+            simplifiedMapList[mapId].border.top.map=map.border.top.mapIndex;
+            simplifiedMapList[mapId].border.top.x_offset=map.border.top.x_offset;
+        }
+        else
+        {
+            simplifiedMapList[mapId].border.top.map=65535;
+            simplifiedMapList[mapId].border.top.x_offset=0;
         }
     }
     //load for thread and unload if needed
@@ -114,7 +104,7 @@ void PathFinding::searchPath(const std::unordered_map<std::string, Map_full *> &
         QMutexLocker locker(&mutex);
         this->simplifiedMapList=simplifiedMapList;
     }
-    emit emitSearchPath(destination_map,destination_x,destination_y,current_map,x,y,items);
+    emit emitSearchPath(destination_map_index,destination_x,destination_y,current_map_index,x,y,items);
 }
 
 bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const uint8_t &x, const uint8_t &y)
@@ -133,9 +123,9 @@ bool PathFinding::canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPat
     return var==255 || var<200;
 }
 
-bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::string &current_map,uint8_t &x,uint8_t &y,const std::unordered_map<std::string,SimplifiedMapForPathFinding> &simplifiedMapList)
+bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,CATCHCHALLENGER_TYPE_MAPID &current_map_index,COORD_TYPE &x,COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> &simplifiedMapList)
 {
-    const SimplifiedMapForPathFinding &mapObject=simplifiedMapList.at(current_map);
+    const SimplifiedMapForPathFinding &mapObject=simplifiedMapList.at(current_map_index);
     switch(orientation)
     {
     case CatchChallenger::Orientation_left:
@@ -151,7 +141,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.left.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.left.map)!=simplifiedMapList.cend())
+            if(mapObject.border.left.map!=65535 && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.left.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.left.map;
@@ -159,7 +149,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
                 newPoint.x=d.width-1;
                 newPoint.y=(int)y-(int)mapObject.border.left.y_offset+(int)d.border.right.y_offset;
 
-                current_map=newPoint.map;
+                current_map_index=newPoint.map;
                 x=newPoint.x;
                 y=newPoint.y;
                 return true;
@@ -181,7 +171,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.right.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.right.map)!=simplifiedMapList.cend())
+            if(mapObject.border.right.map!=65535 && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.right.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.right.map;
@@ -189,7 +179,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
                 newPoint.x=0;
                 newPoint.y=(int)y-(int)mapObject.border.right.y_offset+(int)d.border.left.y_offset;
 
-                current_map=newPoint.map;
+                current_map_index=newPoint.map;
                 x=newPoint.x;
                 y=newPoint.y;
                 return true;
@@ -211,7 +201,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.top.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.top.map)!=simplifiedMapList.cend())
+            if(mapObject.border.top.map!=65535 && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.top.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.top.map;
@@ -219,7 +209,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
                 newPoint.x=(int)x-(int)mapObject.border.top.x_offset+(int)d.border.bottom.x_offset;
                 newPoint.y=d.height-1;
 
-                current_map=newPoint.map;
+                current_map_index=newPoint.map;
                 x=newPoint.x;
                 y=newPoint.y;
                 return true;
@@ -241,7 +231,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
         }
         else
         {
-            if(!mapObject.border.bottom.map.empty() && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.bottom.map)!=simplifiedMapList.cend())
+            if(mapObject.border.bottom.map!=65535 && /*to prevent crash when click on colision point*/ simplifiedMapList.find(mapObject.border.bottom.map)!=simplifiedMapList.cend())
             {
                 MapPointToParse newPoint;
                 newPoint.map=mapObject.border.bottom.map;
@@ -249,7 +239,7 @@ bool PathFinding::canMove(const CatchChallenger::Orientation &orientation,std::s
                 newPoint.x=(int)x-(int)mapObject.border.bottom.x_offset+(int)d.border.top.x_offset;
                 newPoint.y=0;
 
-                current_map=newPoint.map;
+                current_map_index=newPoint.map;
                 x=newPoint.x;
                 y=newPoint.y;
                 return true;
@@ -323,31 +313,31 @@ void PathFinding::extraControlOnData(const std::vector<std::pair<CatchChallenger
 }
 #endif
 
-void PathFinding::internalSearchPath(const std::string &destination_map,const uint8_t &destination_x,const uint8_t &destination_y,
-                                     const std::string &source_map,const uint8_t &source_x,const uint8_t &source_y,const std::unordered_map<uint16_t,uint32_t> &items)
+void PathFinding::internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,
+                                     const CATCHCHALLENGER_TYPE_MAPID &source_map_index,const COORD_TYPE &source_x,const COORD_TYPE &source_y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items)
 {
     Q_UNUSED(items);
-    std::cout << "start PathFinding::internalSearchPath(): " << source_map << " (" << std::to_string(source_x) << "," << std::to_string(source_y) << ") -> " << destination_map << " (" << std::to_string(destination_x) << "," << std::to_string(destination_y) << "), simplifiedMapList.size(): " << this->simplifiedMapList.size() << std::endl;
+    std::cout << "start PathFinding::internalSearchPath(): " << std::to_string(source_map_index) << " (" << std::to_string(source_x) << "," << std::to_string(source_y) << ") -> " << std::to_string(destination_map_index) << " (" << std::to_string(destination_x) << "," << std::to_string(destination_y) << "), simplifiedMapList.size(): " << this->simplifiedMapList.size() << std::endl;
 
     QElapsedTimer time;
     time.restart();
 
-    std::unordered_map<std::string,SimplifiedMapForPathFinding> simplifiedMapList;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> simplifiedMapList;
     //transfer from object to local variable
     {
         QMutexLocker locker(&mutex);
         simplifiedMapList=this->simplifiedMapList;
         this->simplifiedMapList.clear();
     }
-    if(simplifiedMapList.find(source_map)==simplifiedMapList.cend())
+    if(simplifiedMapList.find(source_map_index)==simplifiedMapList.cend())
     {
         tryCancel=false;
-        emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_InternalError);
-        std::cerr << "bug: simplifiedMapList.find(current_map)==simplifiedMapList.cend()" << std::endl;
+        emit result(0,0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_InternalError);
+        std::cerr << "bug: simplifiedMapList.find(source_map_index)==simplifiedMapList.cend()" << std::endl;
         return;
     }
-    if(simplifiedMapList.at(source_map).simplifiedMap==nullptr)
-        std::cout << "PathFinding::canGoOn() walkable is NULL for " << source_map << std::endl;
+    if(simplifiedMapList.at(source_map_index).simplifiedMap==nullptr)
+        std::cout << "PathFinding::canGoOn() walkable is NULL for " << std::to_string(source_map_index) << std::endl;
     //resolv the path
     if(!tryCancel)
     {
@@ -356,13 +346,13 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         //init the first case
         {
             MapPointToParse tempPoint;
-            tempPoint.map=source_map;
+            tempPoint.map=source_map_index;
             tempPoint.x=source_x;
             tempPoint.y=source_y;
             mapPointToParseList.push_back(tempPoint);
 
             std::pair<uint8_t,uint8_t> coord(tempPoint.x,tempPoint.y);
-            SimplifiedMapForPathFinding &tempMap=simplifiedMapList[source_map];
+            SimplifiedMapForPathFinding &tempMap=simplifiedMapList[source_map_index];
             tempMap.pathToGo[coord].left.push_back(
                     std::pair<CatchChallenger::Orientation,uint8_t/*step number*/>(CatchChallenger::Orientation_left,1));
             tempMap.pathToGo[coord].right.push_back(
@@ -380,7 +370,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
             {
                 if(time.elapsed()>3000)
                 {
-                    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
+                    emit result(0,0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
                     std::cerr << "Path timeout into " << time.elapsed() << "ms" << std::endl;
                     return;
                 }
@@ -392,9 +382,9 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 abort();
             if(simplifiedMapList.at(tempPoint.map).height<=tempPoint.y)
                 abort();
-            const std::string &local_current_map=tempPoint.map;
+            const CATCHCHALLENGER_TYPE_MAPID local_current_map=tempPoint.map;
             mapPointToParseList.erase(mapPointToParseList.cbegin());
-            if(destination_map==local_current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+            if(destination_map_index==local_current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
                 std::cerr << "final dest" << std::endl;
             //resolv the own point, this data set to empy, and initialised with real data based of near tile, see 1)
             SimplifiedMapForPathFinding::PathToGo pathToGo;
@@ -411,7 +401,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 {
                     //if the right case have been parsed
                     {
-                        std::string newMap=local_current_map;
+                        CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_right,newMap,newX,newY,simplifiedMapList))
                         {
@@ -446,7 +436,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         }
                     }
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
+                    if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
@@ -476,7 +466,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #endif
                     //if the left case have been parsed
                     {
-                        std::string newMap=local_current_map;
+                        CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_left,newMap,newX,newY,simplifiedMapList))
                         {
@@ -511,7 +501,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         }
                     }
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
+                    if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
@@ -541,7 +531,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #endif
                     //if the top case have been parsed
                     {
-                        std::string newMap=local_current_map;
+                        CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_bottom,newMap,newX,newY,simplifiedMapList))
                         {
@@ -576,7 +566,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         }
                     }
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
+                    if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
@@ -606,7 +596,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     #endif
                     //if the bottom case have been parsed
                     {
-                        std::string newMap=local_current_map;
+                        CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                         uint8_t newX=tempPoint.x,newY=tempPoint.y;
                         if(canMove(CatchChallenger::Orientation_top,newMap,newX,newY,simplifiedMapList))
                         {
@@ -641,7 +631,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         }
                     }
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
+                    if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
@@ -679,7 +669,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 if(currentMapObject.pathToGo.find(coord)==currentMapObject.pathToGo.cend())
                 {
                     #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                    if(local_current_map!=source_map || tempPoint.x!=source_x || tempPoint.y!=source_y)
+                    if(local_current_map!=source_map_index || tempPoint.x!=source_x || tempPoint.y!=source_y)
                     {
                         if(!pathToGo.bottom.empty() && pathToGo.bottom.back().second<1)
                         {
@@ -711,7 +701,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 }
             }
             // 3) if final dest, quit
-            if(destination_map==local_current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
+            if(destination_map_index==local_current_map && tempPoint.x==destination_x && tempPoint.y==destination_y)
             {
                 if(pathToGo.bottom.empty() && pathToGo.top.empty() && pathToGo.right.empty() && pathToGo.left.empty())
                 {
@@ -743,7 +733,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                     {
                         std::cout << "Path result into " << time.elapsed() << "ms" << std::endl;
                         returnedVar.back().second--;
-                        emit result(source_map,source_x,source_y,returnedVar,PathFinding_status_OK);
+                        emit result(source_map_index,source_x,source_y,returnedVar,PathFinding_status_OK);
                         return;
                     }
                 }
@@ -758,7 +748,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
             {
                 //if the right case have to be parsed
                 {
-                    std::string newMap=local_current_map;
+                    CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_right,newMap,newX,newY,simplifiedMapList))
                     {
@@ -773,7 +763,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         std::pair<uint8_t,uint8_t> coord(newX,newY);
                         if(newMapObject.pathToGo.find(coord)==newMapObject.pathToGo.cend())//this tile was never parsed
                         {
-                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map==newMap && newX==destination_x && newY==destination_y))
+                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map_index==newMap && newX==destination_x && newY==destination_y))
                             {
                                 std::pair<uint8_t,uint8_t> point(newX,newY);
                                 if(newMapObject.pointQueued.find(point)==newMapObject.pointQueued.cend())
@@ -791,7 +781,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 }
                 //if the left case have to be parsed
                 {
-                    std::string newMap=local_current_map;
+                    CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_left,newMap,newX,newY,simplifiedMapList))
                     {
@@ -806,7 +796,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         std::pair<uint8_t,uint8_t> coord(newX,newY);
                         if(newMapObject.pathToGo.find(coord)==newMapObject.pathToGo.cend())//this tile was never parsed
                         {
-                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map==newMap && newX==destination_x && newY==destination_y))
+                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map_index==newMap && newX==destination_x && newY==destination_y))
                             {
                                 std::pair<uint8_t,uint8_t> point(newX,newY);
                                 if(newMapObject.pointQueued.find(point)==newMapObject.pointQueued.cend())
@@ -824,7 +814,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 }
                 //if the bottom case have to be parsed
                 {
-                    std::string newMap=local_current_map;
+                    CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_bottom,newMap,newX,newY,simplifiedMapList))
                     {
@@ -839,7 +829,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         std::pair<uint8_t,uint8_t> coord(newX,newY);
                         if(newMapObject.pathToGo.find(coord)==newMapObject.pathToGo.cend())//this tile was never parsed
                         {
-                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map==newMap && newX==destination_x && newY==destination_y))
+                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map_index==newMap && newX==destination_x && newY==destination_y))
                             {
                                 std::pair<uint8_t,uint8_t> point(newX,newY);
                                 if(newMapObject.pointQueued.find(point)==newMapObject.pointQueued.cend())
@@ -857,7 +847,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                 }
                 //if the top case have to be parsed
                 {
-                    std::string newMap=local_current_map;
+                    CATCHCHALLENGER_TYPE_MAPID newMap=local_current_map;
                     uint8_t newX=tempPoint.x,newY=tempPoint.y;
                     if(canMove(CatchChallenger::Orientation_top,newMap,newX,newY,simplifiedMapList))
                     {
@@ -872,7 +862,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
                         std::pair<uint8_t,uint8_t> coord(newX,newY);
                         if(newMapObject.pathToGo.find(coord)==newMapObject.pathToGo.cend())//this tile was never parsed
                         {
-                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map==newMap && newX==destination_x && newY==destination_y))
+                            if(PathFinding::canGoOn(newMapObject,newX,newY) || (destination_map_index==newMap && newX==destination_x && newY==destination_y))
                             {
                                 std::pair<uint8_t,uint8_t> point(newX,newY);
                                 if(newMapObject.pointQueued.find(point)==newMapObject.pointQueued.cend())
@@ -907,7 +897,7 @@ void PathFinding::internalSearchPath(const std::string &destination_map,const ui
         }
     }
     tryCancel=false;
-    emit result(std::string(),0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
+    emit result(0,0,0,std::vector<std::pair<CatchChallenger::Orientation,uint8_t> >(),PathFinding_status_PathNotFound);
     std::cerr << "Path not found into " << time.elapsed() << "ms" << std::endl;
 }
 

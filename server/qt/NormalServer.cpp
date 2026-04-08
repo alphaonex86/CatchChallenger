@@ -5,7 +5,8 @@
 #include <QTcpSocket>
 #include <QNetworkProxy>
 #include <QProcess>
-#include "QtClientMapManagement.hpp"
+#include "QtClientWithMap.hpp"
+#include "QtClientList.hpp"
 
 #ifdef CATCHCHALLENGER_SOLO
 #include "QFakeServer.hpp"
@@ -102,7 +103,6 @@ void NormalServer::initAll()
 
 void NormalServer::load_settings()
 {
-    GlobalServerData::serverPrivateVariables.connected_players	= 0;
     GlobalServerData::serverPrivateVariables.number_of_bots_logged= 0;
 }
 
@@ -351,6 +351,7 @@ std::string NormalServer::listenIpAndPort(std::string server_ip,uint16_t server_
 
 void NormalServer::newConnection()
 {
+    CatchChallenger::QtClientList *qtClientList=static_cast<CatchChallenger::QtClientList *>(CatchChallenger::ClientList::list);
     #ifdef CATCHCHALLENGER_SOLO
     while(QFakeServer::server.hasPendingConnections())
     {
@@ -358,28 +359,10 @@ void NormalServer::newConnection()
         if(socket!=NULL)
         {
             std::cout << "new client connected on internal socket" << std::endl;
-            switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-            {
-                case MapVisibilityAlgorithmSelection_Simple:
-                {
-                    QtMapVisibilityAlgorithm_Simple_StoreOnSender *client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
-                    connect_the_last_client(client,socket);
-                }
-                break;
-                case MapVisibilityAlgorithmSelection_WithBorder:
-                {
-                    QtMapVisibilityAlgorithm_WithBorder_StoreOnSender* client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
-                    connect_the_last_client(client,socket);
-                }
-                break;
-                default:
-                case MapVisibilityAlgorithmSelection_None:
-                {
-                    QtMapVisibilityAlgorithm_None* client=new QtMapVisibilityAlgorithm_None(socket);
-                    connect_the_last_client(client,socket);
-                }
-                break;
-            }
+            const PLAYER_INDEX_FOR_CONNECTED index=qtClientList->insert(nullptr);
+            QtClientWithMap *client=new QtClientWithMap(socket,index);
+            CatchChallenger::QtClientList::clients[index]=client;
+            connect_the_last_client(client,socket);
         }
         else
             std::cout << "NULL client with fake socket" << std::endl;
@@ -402,23 +385,10 @@ void NormalServer::newConnection()
                 connect(socket,static_cast<void(QSslSocket::*)(const QList<QSslError> &errors)>(&QSslSocket::sslErrors),      this,&NormalServer::sslErrors);
                 if(socket!=NULL)
                 {
-                    //DebugClass::debugConsole(std::stringLiteral("new client connected by tcp socket"));-> prevent DDOS logs
-                    Client *client=nullptr;
-                    switch(GlobalServerData::serverSettings.mapVisibility.mapVisibilityAlgorithm)
-                    {
-                        case MapVisibilityAlgorithmSelection_Simple:
-                            client=new QtMapVisibilityAlgorithm_Simple_StoreOnSender(socket);
-                        break;
-                        case MapVisibilityAlgorithmSelection_WithBorder:
-                            client=new QtMapVisibilityAlgorithm_WithBorder_StoreOnSender(socket);
-                        break;
-                        default:
-                        case MapVisibilityAlgorithmSelection_None:
-                            client=new QtMapVisibilityAlgorithm_None(socket);
-                        break;
-                    }
+                    const PLAYER_INDEX_FOR_CONNECTED index=qtClientList->insert(nullptr);
+                    QtClientWithMap *client=new QtClientWithMap(socket,index);
+                    CatchChallenger::QtClientList::clients[index]=client;
                     connect_the_last_client(client,socket);
-                    //connect(client,&Client::kicked,this,&NormalServer::kicked,Qt::QueuedConnection);
                 }
                 else
                     std::cerr << "NULL client: " << socket->peerAddress().toString().toStdString() << std::endl;
@@ -480,7 +450,9 @@ bool NormalServer::isStopped()
 
 uint16_t NormalServer::player_current()
 {
-    return GlobalServerData::serverPrivateVariables.connected_players;
+    if(ClientList::list==nullptr)
+        return 0;
+    return ClientList::list->connected_size();
 }
 
 uint16_t NormalServer::player_max()

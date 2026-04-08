@@ -1,6 +1,6 @@
 #include "CCBackground.hpp"
 #include <QPainter>
-#include <QTime>
+#include <QElapsedTimer>
 #include <chrono>
 #include <iostream>
 
@@ -111,8 +111,8 @@ unsigned int CCBackground::getTargetZoom(QWidget *widget)
 
 void CCBackground::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *widget)
 {
-    QTime time;
-    time.restart();
+    QElapsedTimer time;
+    time.start();
     unsigned int targetZoom=getTargetZoom(widget);
     if(zoom!=targetZoom)
     {

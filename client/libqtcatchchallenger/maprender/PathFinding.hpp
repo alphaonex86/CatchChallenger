@@ -12,6 +12,7 @@
 #include <string>
 #include "../../general/base/GeneralStructures.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 
 class PathFinding
         #ifndef NOTHREADS
@@ -38,7 +39,7 @@ signals:
     void emitSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,const uint8_t &destination_x,const uint8_t &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
 public slots:
     //,const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, QMap_client *> &all_map
-    void searchPath(const std::vector<CatchChallenger::Map_client> &mapList,const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,
+    void searchPath(const std::vector<CatchChallenger::CommonMap> &mapList,const CATCHCHALLENGER_TYPE_MAPID &destination_map_index,
                     const COORD_TYPE &destination_x,const COORD_TYPE &destination_y,const CATCHCHALLENGER_TYPE_MAPID &current_map_index,const COORD_TYPE &x,const COORD_TYPE &y,
                     const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
     void internalSearchPath(const CATCHCHALLENGER_TYPE_MAPID &destination_map_index, const COORD_TYPE &destination_x, const COORD_TYPE &destination_y, const CATCHCHALLENGER_TYPE_MAPID &source_map_index, const COORD_TYPE &source_x, const COORD_TYPE &source_y, const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM,CATCHCHALLENGER_TYPE_ITEM_QUANTITY> &items);
@@ -100,7 +101,7 @@ private:
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> simplifiedMapList;
     bool tryCancel;
     //std::vector<QMap_client> qmapList;
-    std::vector<CatchChallenger::Map_client> mapList;
+    std::vector<CatchChallenger::CommonMap> mapList;
 public:
     static bool canGoOn(const SimplifiedMapForPathFinding &simplifiedMapForPathFinding,const COORD_TYPE &x, const COORD_TYPE &y);
     static bool canMove(const CatchChallenger::Orientation &orientation, CATCHCHALLENGER_TYPE_MAPID &current_map_index, COORD_TYPE &x, COORD_TYPE &y, const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, SimplifiedMapForPathFinding> &simplifiedMapList);

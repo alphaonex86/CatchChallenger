@@ -1,4 +1,4 @@
-QT       += gui network core widgets opengl xml
+QT       += gui network core widgets opengl openglwidgets xml
 
 DEFINES += CATCHCHALLENGER_CLIENT
 

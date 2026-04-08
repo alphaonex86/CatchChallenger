@@ -4,16 +4,10 @@
 #include <QCoreApplication>
 #include <iostream>
 
-#include <libtiled/mapreader.h>
-#include <libtiled/tileset.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/mapobject.h>
-/**
-#include <libtiled/mapreader.h>
-#include <libtiled/tileset.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/mapobject.h>
-**/
+#include <tiled/mapreader.h>
+#include <tiled/tileset.h>
+#include <tiled/objectgroup.h>
+#include <tiled/mapobject.h>
 
 #include "../../general/base/cpp11addition.hpp"
 

@@ -7,9 +7,13 @@ include(../../client/libcatchchallenger/lib.pri)
 include(../../client/libcatchchallenger/libheader.pri)
 include(../../client/libqtcatchchallenger/libqt.pri)
 include(../../client/libqtcatchchallenger/libqtheader.pri)
-include(../../client/qtmaprender/render.pri)
-include(../../client/qtmaprender/renderheader.pri)
+include(../../client/libqtcatchchallenger/maprender/render.pri)
+include(../../client/libqtcatchchallenger/maprender/renderheader.pri)
 include(../bot/simple/Simple.pri)
+
+# maprender headers use ../libqtcatchchallenger/ and ../libcatchchallenger/ relative includes
+# that need a base directory at the same level under client/
+INCLUDEPATH += ../../client/libcatchchallenger
 
 QT       += core gui xml network sql opengl websockets
 QT += widgets

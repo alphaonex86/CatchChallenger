@@ -2,13 +2,13 @@
 #define CATCHCHALLENGER_QTCLIENTMAPMANAGEMENT_H
 
 #include "QtClient.hpp"
-#include "../base/ClientMapManagement/ClientWithMap.hpp"
+#include "../base/MapManagement/ClientWithMap.hpp"
 
 class QtClientWithMap : public QObject, public CatchChallenger::QtClient, public CatchChallenger::ClientWithMap
 {
     Q_OBJECT
 public:
-    QtMapVisibilityAlgorithm_Simple_StoreOnSender(QIODevice *qtSocket);
+    QtClientWithMap(QIODevice *qtSocket, const PLAYER_INDEX_FOR_CONNECTED &index_connected_player);
     void closeSocket() override;
     bool isValid() override;
     ssize_t readFromSocket(char * data, const size_t &size) override;

@@ -10,6 +10,7 @@
 #include <QString>
 #include <QTimer>
 #include <QTime>
+#include <QElapsedTimer>
 
 class DLL_PUBLIC MapVisualiserPlayer : public MapVisualiser
 {
@@ -113,7 +114,7 @@ protected:
     QTimer lookToMove;
     QTimer moveAnimationTimer;
     //QTime
-    QBasicTimer lastAction;//to prevent flood
+    QElapsedTimer lastAction;//to prevent flood
 
     //control
     std::unordered_set<int> keyPressed;

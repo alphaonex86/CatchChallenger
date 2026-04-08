@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>test.tar</file>
-        <file>test-posix.tar</file>
-    </qresource>
-</RCC>

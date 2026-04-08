@@ -687,7 +687,7 @@ void DatapackDownloaderBase::decodedIsFinishBase(const std::vector<char> &rawDat
     std::string mErrorString;
     {
         std::vector<char> dataToDecoded;
-        unsigned long long const rSize = ZSTD_getDecompressedSize(mDataToDecode.data(), mDataToDecode.size());
+        unsigned long long const rSize = ZSTD_getFrameContentSize(mDataToDecode.data(), mDataToDecode.size());
         if (rSize==ZSTD_CONTENTSIZE_ERROR) {
             mErrorString="it was not compressed by zstd";
         } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {

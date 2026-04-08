@@ -198,7 +198,7 @@ void OverMap::have_current_player_info(const CatchChallenger::Player_private_and
     foreach (MapMonsterPreview *m, monsters)
         delete m;
     monsters.clear();
-    for(CatchChallenger::PlayerMonster m : informations.playerMonster)
+    for(const CatchChallenger::PlayerMonster &m : informations.monsters)
     {
         MapMonsterPreview *t=new MapMonsterPreview(m,this);
         if(!connect(t,&MapMonsterPreview::clicked,this,&OverMap::openMonster))

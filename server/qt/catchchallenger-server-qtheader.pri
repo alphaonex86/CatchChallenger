@@ -10,7 +10,7 @@ HEADERS += \
     $$PWD/QSslServer.hpp \
     $$PWD/QtClient.hpp \
     $$PWD/QtClientList.hpp \
-    $$PWD/QtClientMapManagement.hpp \
+    $$PWD/QtClientWithMap.hpp \
     $$PWD/timer/QtPlayerUpdater.hpp \
     $$PWD/QtServerStructures.hpp \
     $$PWD/timer/QtTimeRangeEventScanBase.hpp \

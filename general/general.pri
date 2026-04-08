@@ -42,7 +42,11 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/fight/FightLoaderBuff.cpp \
     $$PWD/fight/FightLoaderMonster.cpp \
     $$PWD/fight/FightLoaderSkill.cpp \
-    $$PWD/base/CommonMap.cpp \
+    $$PWD/base/CommonMap/BaseMap.cpp \
+    $$PWD/base/CommonMap/CommonMap.cpp \
+    $$PWD/base/CommonMap/ItemOnMap.cpp \
+    $$PWD/base/CommonMap/Map_Border.cpp \
+    $$PWD/base/CommonMap/Teleporter.cpp \
     $$PWD/base/CommonDatapack.cpp \
     $$PWD/base/CommonDatapackServerSpec.cpp \
     $$PWD/base/CommonSettingsCommon.cpp \
@@ -64,7 +68,11 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/base/ProtocolParsingCheck.hpp \
     $$PWD/base/MoveOnTheMap.hpp \
     $$PWD/base/Map_loader.hpp \
-    $$PWD/base/CommonMap.hpp \
+    $$PWD/base/CommonMap/BaseMap.hpp \
+    $$PWD/base/CommonMap/CommonMap.hpp \
+    $$PWD/base/CommonMap/ItemOnMap.hpp \
+    $$PWD/base/CommonMap/Map_Border.hpp \
+    $$PWD/base/CommonMap/Teleporter.hpp \
     $$PWD/base/GeneralVariable.hpp \
     $$PWD/base/FacilityLib.hpp \
     $$PWD/base/FacilityLibGeneral.hpp \

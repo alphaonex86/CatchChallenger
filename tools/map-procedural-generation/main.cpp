@@ -1,13 +1,13 @@
 #include <QApplication>
 #include <QSettings>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QDir>
 #include <iostream>
 
-#include <libtiled/mapwriter.h>
-#include <libtiled/mapobject.h>
-#include <libtiled/objectgroup.h>
+#include <tiled/mapwriter.h>
+#include <tiled/mapobject.h>
+#include <tiled/objectgroup.h>
 
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
@@ -40,8 +40,8 @@ int main(int argc, char *argv[])
     QApplication::setGraphicsSystem(QStringLiteral("raster"));//now use: -platform offscreen
 #endif
     QApplication a(argc, argv);
-    QTime t;
-    QTime total;
+    QElapsedTimer t;
+    QElapsedTimer total;
     total.start();
 
     a.setOrganizationDomain(QStringLiteral("catchchallenger"));
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
         t.start();
         const Grid &grid = VoronioForTiledMapTmx::generateGrid(totalWidth,totalHeight,config.seed,30*config.mapXCount*config.mapYCount*config.scale_Zone,VoronioForTiledMapTmx::SCALE);
         const Grid &gridCity = VoronioForTiledMapTmx::generateGrid(config.mapXCount-1,config.mapYCount-1,config.seed,0.1*config.mapXCount*config.mapYCount*config.scale_City,1);
-        qDebug("generateGrid took %d ms", t.elapsed());
+        qDebug("generateGrid took %lld ms", t.elapsed());
 
         const float noiseMapScaleMoisure=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMoisure*((config.mapXCount+config.mapYCount)/2);
         const float noiseMapScaleMap=0.005f/((config.mapXCount+config.mapYCount)/2)*config.scale_TerrainMap*((config.mapXCount+config.mapYCount)/2);
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
         VoronioForTiledMapTmx::voronoiMap1px=VoronioForTiledMapTmx::computeVoronoi(grid,totalWidth,totalHeight,1);
         if(VoronioForTiledMapTmx::voronoiMap.zones.size()!=grid.size())
             abort();
-        qDebug("computeVoronoi took %d ms", t.elapsed());
+        qDebug("computeVoronoi took %lld ms", t.elapsed());
 
         Tiled::Map tiledMap(Tiled::Map::Orientation::Orthogonal,totalWidth,totalHeight,16,16);
         {
@@ -149,39 +149,39 @@ int main(int argc, char *argv[])
                                     tiledMap.width(),tiledMap.height());
                 LoadMap::addTerrain(grid,VoronioForTiledMapTmx::voronoiMap1px,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,
                                     tiledMap.width(),tiledMap.height(),0,0,false);
-                qDebug("Add terrain took %d ms", t.elapsed());
+                qDebug("Add terrain took %lld ms", t.elapsed());
                 MapBrush::initialiseMapMask(tiledMap);
                 t.start();
                 LoadMapAll::addCity(tiledMap,gridCity,config.citiesNames,config.mapXCount,config.mapYCount,config.maxCityLinks,config.cityRadius,
                                     levelmap,config.levelmapscale,config.levelmapmin,config.levelmapmax,heightmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap);
                 //LoadMapAll::addCityContent(tiledMap,config.mapXCount,config.mapYCount,false);
-                qDebug("place cities took %d ms", t.elapsed());
+                qDebug("place cities took %lld ms", t.elapsed());
                 if(config.dotransition)
                 {
 
                     t.start();
                     TransitionTerrain::addTransitionGroupOnMap(tiledMap);
-                    qDebug("Transitions group took %d ms", t.elapsed());
+                    qDebug("Transitions group took %lld ms", t.elapsed());
                 }
                 t.start();
                 LoadMapAll::generateRoadContent(tiledMap, config);
-                qDebug("generate road content took %d ms", t.elapsed());
+                qDebug("generate road content took %lld ms", t.elapsed());
                 if(config.dotransition)
                 {
                     t.start();
                     TransitionTerrain::addTransitionOnMap(tiledMap);
-                    qDebug("Transitions took %d ms", t.elapsed());
+                    qDebug("Transitions took %lld ms", t.elapsed());
                 }
                 t.start();
                 TransitionTerrain::mergeDown(tiledMap);
-                qDebug("mergeDown took %d ms", t.elapsed());
+                qDebug("mergeDown took %lld ms", t.elapsed());
                 t.start();
                 //LoadMapAll::addCityContent(tiledMap, config.mapXCount, config.mapYCount,true);
                 LoadMapAll::addMapChange(tiledMap,config.mapXCount,config.mapYCount);
-                qDebug("add city content took %d ms", t.elapsed());
+                qDebug("add city content took %lld ms", t.elapsed());
                 t.start();
                 LoadMapAll::addRoadContent(tiledMap, config);
-                qDebug("add road content took %d ms", t.elapsed());
+                qDebug("add road content took %lld ms", t.elapsed());
                 //TransitionTerrain::changeTileLayerOrder(tiledMap);
             }
             if(config.displaycity)
@@ -191,13 +191,13 @@ int main(int argc, char *argv[])
                 t.start();
                 //MiniMap::makeMap(heighmap,moisuremap,noiseMapScaleMoisure,noiseMapScaleMap,tiledMap.width(),tiledMap.height(),miniMapDivisor).save(QCoreApplication::applicationDirPath()+"/miniMapLinear.png","PNG");
                 MiniMapAll::makeMapTiled(tiledMap.width(),tiledMap.height(),config.mapWidth,config.mapHeight).save(QCoreApplication::applicationDirPath()+"/miniMapPixel.png","PNG");
-                qDebug("dominimap %d ms", t.elapsed());
+                qDebug("dominimap %lld ms", t.elapsed());
             }
             if(config.dovegetation)
             {
                 t.start();
                 MapPlants::addVegetation(tiledMap,VoronioForTiledMapTmx::voronoiMap);
-                qDebug("Vegetation took %d ms", t.elapsed());
+                qDebug("Vegetation took %lld ms", t.elapsed());
             }
             t.start();
             {
@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
                     std::cerr << "Unable to write " << QCoreApplication::applicationDirPath().toStdString() << "/dest/map/main/official/all.tmx" << std::endl;
                     abort();
                 }
-                qDebug("Write all.tmx %d ms", t.elapsed());
+                qDebug("Write all.tmx %lld ms", t.elapsed());
             }
         }
         //do tmx split
@@ -410,10 +410,10 @@ int main(int argc, char *argv[])
                 indexIntRoad++;
             }
         }
-        qDebug("Write chunk tmx %d ms", t.elapsed());
+        qDebug("Write chunk tmx %lld ms", t.elapsed());
         t.start();
         LoadMapAll::writeRoadContent(tiledMap, config.mapXCount, config.mapYCount);
-        qDebug("Write bots xml %d ms", t.elapsed());
+        qDebug("Write bots xml %lld ms", t.elapsed());
         //do the start point
         QFile start(QCoreApplication::applicationDirPath()+"/dest/map/main/official/start.xml");
         if(start.open(QFile::WriteOnly))
@@ -443,7 +443,7 @@ int main(int argc, char *argv[])
             abort();
         }
     }
-    qDebug("Total time %d ms", total.elapsed());
+    qDebug("Total time %lld ms", total.elapsed());
 
     return 0;
 }

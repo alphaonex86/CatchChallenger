@@ -23,7 +23,7 @@
 #include "AudioGL.hpp"
 #endif
 #include <iostream>
-#include <QGLWidget>
+#include <QOpenGLWidget>
 #include <QComboBox>
 #ifdef Q_OS_ANDROID
 #include <QtAndroidExtras>
@@ -56,17 +56,11 @@ ScreenTransition::ScreenTransition() :
     mScene(new QGraphicsScene(this))
 {
     {
-        QGLWidget *context=new QGLWidget(QGLFormat(QGL::SampleBuffers));
-        //if OpenGL is present, use it
-        if(context->isValid())
-        {
-            setViewport(context);
-            setRenderHint(QPainter::Antialiasing,true);
-            setRenderHint(QPainter::TextAntialiasing,true);
-            setRenderHint(QPainter::HighQualityAntialiasing,true);
-            setRenderHint(QPainter::SmoothPixmapTransform,false);
-            setRenderHint(QPainter::NonCosmeticDefaultPen,true);
-        }
+        QOpenGLWidget *context=new QOpenGLWidget();
+        setViewport(context);
+        setRenderHint(QPainter::Antialiasing,true);
+        setRenderHint(QPainter::TextAntialiasing,true);
+        setRenderHint(QPainter::SmoothPixmapTransform,false);
         //else use the CPU only
     }
     multiplaySelected=false;
@@ -436,7 +430,7 @@ void ScreenTransition::openSolo()
     multiplaySelected=false;
     CommonSettingsServer::commonSettingsServer.mainDatapackCode="[main]";
     CommonSettingsServer::commonSettingsServer.subDatapackCode="[sub]";
-    QStringList l=QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+    QStringList l=QStandardPaths::standardLocations(QStandardPaths::AppLocalDataLocation);
     if(l.empty())
     {
         errorString(tr("No writable path").toStdString());
@@ -560,7 +554,7 @@ void ScreenTransition::openSolo()
         formatedServerSettings.database_server.tryOpenType=CatchChallenger::DatabaseBase::DatabaseType::SQLite;
         formatedServerSettings.database_server.file=(savegamesPath+QStringLiteral("catchchallenger.db.sqlite")).toStdString();
         //formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_None;
-        formatedServerSettings.mapVisibility.mapVisibilityAlgorithm	= CatchChallenger::MapVisibilityAlgorithmSelection_Simple;// to allow open to lan
+        formatedServerSettings.mapVisibility.enable=true;// to allow open to lan
         formatedServerSettings.datapack_basePath=datapackPathBase;
 
         {

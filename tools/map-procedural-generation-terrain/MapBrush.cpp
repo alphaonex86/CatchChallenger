@@ -1,9 +1,9 @@
 #include "MapBrush.h"
-#include <libtiled/tileset.h>
-#include <libtiled/tilelayer.h>
-#include <libtiled/objectgroup.h>
-#include <libtiled/mapobject.h>
-#include <libtiled/tile.h>
+#include <tiled/tileset.h>
+#include <tiled/tilelayer.h>
+#include <tiled/objectgroup.h>
+#include <tiled/mapobject.h>
+#include <tiled/tile.h>
 #include "LoadMap.h"
 
 #include <unordered_set>
@@ -126,7 +126,7 @@ MapBrush::MapTemplate MapBrush::tiledMapToMapTemplate(Tiled::Map *templateMap,Ti
             }
             else if(layer->isObjectGroup())
             {
-                const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+                const Tiled::ObjectGroup *castedLayer=static_cast<const Tiled::ObjectGroup *>(layer);
                 //search into the world map
                 uint8_t worldLayerIndex=0;
                 while(worldLayerIndex<worldMap.layerCount())
@@ -206,7 +206,7 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
         const Tiled::Layer * const layer=brush->layerAt(layerIndex);
         if(layer->isTileLayer())
         {
-            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
+            const Tiled::TileLayer *castedLayer=static_cast<const Tiled::TileLayer *>(layer);
             Tiled::TileLayer * const worldLayer=static_cast<Tiled::TileLayer *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
             int index_y=0;
             while(index_y<brush->height())
@@ -250,7 +250,7 @@ void MapBrush::brushTheMap(Tiled::Map &worldMap, const MapTemplate &selectedTemp
         }
         else if(layer->isObjectGroup())
         {
-            const Tiled::ObjectGroup * const castedLayer=static_cast<const Tiled::ObjectGroup * const>(layer);
+            const Tiled::ObjectGroup *castedLayer=static_cast<const Tiled::ObjectGroup *>(layer);
             Tiled::ObjectGroup * const worldLayer=static_cast<Tiled::ObjectGroup *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
             const QList<Tiled::MapObject*> objects=castedLayer->objects();
             unsigned int index=0;
@@ -302,7 +302,7 @@ bool MapBrush::brushHaveCollision(Tiled::Map &worldMap,const MapTemplate &select
         const Tiled::Layer * const layer=brush->layerAt(layerIndex);
         if(layer->isTileLayer())
         {
-            const Tiled::TileLayer * const castedLayer=static_cast<const Tiled::TileLayer * const>(layer);
+            const Tiled::TileLayer *castedLayer=static_cast<const Tiled::TileLayer *>(layer);
             Tiled::TileLayer * const worldLayer=static_cast<Tiled::TileLayer *>(worldMap.layerAt(selectedTemplate.templateLayerNumberToMapLayerNumber.at(layerIndex)));
             int index_y=0;
             while(index_y<brush->height())

@@ -8,7 +8,7 @@
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include "../../../qtmaprender/MapController.hpp"
+#include "../../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "Chat.h"
 #include "WithAnotherPlayer.h"
 #include "../LanguagesSelect.h"
@@ -73,7 +73,7 @@ BaseWindow::BaseWindow() :
     qRegisterMetaType<Skill::AttackReturn>("Skill::AttackReturn");
     qRegisterMetaType<std::vector<uint32_t> >("std::vector<uint32_t>");
     qRegisterMetaType<std::vector<std::vector<CharacterEntry> > >("std::vector<std::vector<CharacterEntry> >");
-    qRegisterMetaType<std::vector<MarketMonster> >("std::vector<MarketMonster>");
+    //Market dropped
 
     qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
@@ -514,14 +514,7 @@ void BaseWindow::connectAllSignals()
         abort();
     if(!connect(this,&BaseWindow::collectMaturePlant,   client,&CatchChallenger::Api_client_real::collectMaturePlant))
         abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_plant,   this,&BaseWindow::insert_plant))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtremove_plant,   this,&BaseWindow::remove_plant))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtseed_planted,   this,&BaseWindow::seed_planted))
-        abort();
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtplant_collected,this,&BaseWindow::plant_collected))
-        abort();
+    //plant signals are now on MapController, connected via mapController->connectAllSignals()
     //crafting
     if(!connect(client,&CatchChallenger::Api_client_real::QtrecipeUsed,     this,&BaseWindow::recipeUsed))
         abort();
@@ -595,7 +588,11 @@ void BaseWindow::connectAllSignals()
     if(!connect(client,&CatchChallenger::Api_client_real::Qtnumber_of_player,this,&BaseWindow::number_of_player))
        abort();
 
-    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_player,              this,&BaseWindow::insert_player,Qt::QueuedConnection))
+    if(!connect(client,&CatchChallenger::Api_client_real::Qtinsert_player, this,
+        [this](const SIMPLIFIED_PLAYER_ID_FOR_MAP &/*simplifiedIndex*/, const CatchChallenger::Player_public_informations &player,
+               const CATCHCHALLENGER_TYPE_MAPID &mapId, const COORD_TYPE &x, const COORD_TYPE &y, const CatchChallenger::Direction &direction){
+            insert_player(player,mapId,x,y,direction);
+        },Qt::QueuedConnection))
        abort();
 }
 
@@ -641,10 +638,14 @@ void BaseWindow::battleRequested(const std::string &pseudo, const uint8_t &skinI
 
 std::string BaseWindow::lastLocation() const
 {
-    return mapController->lastLocation();
+    const CATCHCHALLENGER_TYPE_MAPID mapId=mapController->currentMap();
+    const std::vector<std::string> &maps=QtDatapackClientLoader::datapackLoader->get_maps();
+    if(mapId<maps.size())
+        return maps.at(mapId);
+    return std::string();
 }
 
-std::unordered_map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> BaseWindow::getQuests() const
+std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> BaseWindow::getQuests() const
 {
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
     return playerInformations.quests;
@@ -1292,12 +1293,8 @@ bool BaseWindow::nextStepQuest(const Quest &quest)
             index++;
         }
         show_reputation();
-        index=0;
-        while(index<quest.rewards.allow.size())
-        {
-            playerInformations.allow.insert(quest.rewards.allow.at(index));
-            index++;
-        }
+        if(quest.rewards.allowCreateClan)
+            playerInformations.allowCreateClan=true;
     }
     return true;
 }
@@ -1953,7 +1950,7 @@ void CatchChallenger::BaseWindow::on_toolButtonAdmin_clicked()
     }
     if(multiplayer)
     {
-        const std::unordered_map<uint16_t,MapControllerMP::OtherPlayer> &playerList=mapController->getOtherPlayerList();
+        const std::unordered_map<uint8_t,MapControllerMP::OtherPlayer> &playerList=mapController->getOtherPlayerList();
 
         for( const auto& n : playerList ) {
                 const MapControllerMP::OtherPlayer &player = n.second;

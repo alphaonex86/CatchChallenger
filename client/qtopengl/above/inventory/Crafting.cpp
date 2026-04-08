@@ -3,7 +3,6 @@
 #include "../../ConnexionManager.hpp"
 #include "../../FacilityLibClient.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
-#include <libtiled/tile.h>
 #include "../../../../general/base/CommonDatapack.hpp"
 #include <QPainter>
 #include <QImage>

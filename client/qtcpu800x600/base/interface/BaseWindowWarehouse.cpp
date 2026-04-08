@@ -11,66 +11,26 @@ using namespace CatchChallenger;
 
 void BaseWindow::on_warehouseWithdrawCash_clicked()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    bool ok=true;
-    int i;
-    if((playerInformations.warehouse_cash-temp_warehouse_cash)==1)
-        i = 1;
-    else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount cash to withdraw:"), 0, 0,
-                                 static_cast<uint32_t>(playerInformations.warehouse_cash-temp_warehouse_cash), 1, &ok);
-    if(!ok || i<=0)
-        return;
-    temp_warehouse_cash+=i;
-    updateTheWareHouseContent();
+    // warehouse cash feature removed
+    return;
 }
 
 void BaseWindow::on_warehouseDepositCash_clicked()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    bool ok=true;
-    int i;
-    if((playerInformations.cash+temp_warehouse_cash)==1)
-        i = 1;
-    else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount cash to deposite:"), 0, 0,
-                                 static_cast<uint32_t>(playerInformations.cash+temp_warehouse_cash), 1, &ok);
-    if(!ok || i<=0)
-        return;
-    temp_warehouse_cash-=i;
-    updateTheWareHouseContent();
+    // warehouse cash feature removed
+    return;
 }
 
 void BaseWindow::on_warehouseWithdrawItem_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredInventory->selectedItems();
-    if(itemList.size()!=1)
-    {
-        if(ui->warehousePlayerStoredInventory->count()==1)
-        {
-            on_warehousePlayerStoredInventory_itemActivated(ui->warehousePlayerStoredInventory->item(0));
-            return;
-        }
-        QMessageBox::warning(this,tr("Error"),tr("Select an item to transfer!"));
-        return;
-    }
-    on_warehousePlayerStoredInventory_itemActivated(itemList.first());
+    // warehouse item transfer feature removed
+    return;
 }
 
 void BaseWindow::on_warehouseDepositItem_clicked()
 {
-    QList<QListWidgetItem *> itemList=ui->warehousePlayerInventory->selectedItems();
-    if(itemList.size()!=1)
-    {
-        if(ui->warehousePlayerInventory->count()==1)
-        {
-            on_warehousePlayerInventory_itemActivated(ui->warehousePlayerInventory->item(0));
-            return;
-        }
-        QMessageBox::warning(this,tr("Error"),tr("Select an item to transfer!"));
-        return;
-    }
-    on_warehousePlayerInventory_itemActivated(itemList.first());
+    // warehouse item transfer feature removed
+    return;
 }
 
 void BaseWindow::on_warehouseWithdrawMonster_clicked()
@@ -107,68 +67,16 @@ void BaseWindow::on_warehouseDepositMonster_clicked()
 
 void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    uint32_t quantity=0;
-    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(playerInformations.items.find(itemId)!=playerInformations.items.cend())
-        quantity+=playerInformations.items.at(itemId);
-    if(change_warehouse_items.find(itemId)!=change_warehouse_items.cend())
-        quantity+=change_warehouse_items.at(itemId);
-    if(quantity==0)
-    {
-        error("Error with item quantity into warehousePlayerInventory");
-        return;
-    }
-    bool ok=true;
-    int i;
-    if(quantity==1)
-        i = 1;
-    else
-        i = QInputDialog::getInt(this, tr("Deposite"),tr("Amount %1 to deposite:")
-              .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)),
-                                 0, 0, quantity, 1, &ok);
-    if(!ok || i<=0)
-        return;
-    if(change_warehouse_items.find(itemId)!=change_warehouse_items.cend())
-        change_warehouse_items[itemId]-=i;
-    else
-        change_warehouse_items[itemId]=-i;
-    if(change_warehouse_items.at(itemId)==0)
-        change_warehouse_items.erase(itemId);
-    updateTheWareHouseContent();
+    Q_UNUSED(item);
+    // warehouse item transfer feature removed
+    return;
 }
 
 void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
-    uint32_t quantity=0;
-    const uint16_t &itemId=static_cast<uint16_t>(item->data(99).toUInt());
-    if(playerInformations.warehouse_items.find(itemId)!=playerInformations.warehouse_items.cend())
-        quantity+=playerInformations.warehouse_items.at(itemId);
-    if(change_warehouse_items.find(itemId)!=change_warehouse_items.cend())
-        quantity-=change_warehouse_items.at(itemId);
-    if(quantity==0)
-    {
-        error("Error with item quantity into warehousePlayerStoredInventory");
-        return;
-    }
-    bool ok=true;
-    int i;
-    if(quantity==1)
-        i = 1;
-    else
-        i = QInputDialog::getInt(this, tr("Withdraw"),tr("Amount %1 to withdraw:")
-                                 .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemId).name)),
-                                 0, 0, quantity, 1, &ok);
-    if(!ok || i<=0)
-        return;
-    if(change_warehouse_items.find(itemId)!=change_warehouse_items.cend())
-        change_warehouse_items[itemId]+=i;
-    else
-        change_warehouse_items[itemId]=i;
-    if(change_warehouse_items.at(itemId)==0)
-        change_warehouse_items.erase(itemId);
-    updateTheWareHouseContent();
+    Q_UNUSED(item);
+    // warehouse item transfer feature removed
+    return;
 }
 
 void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
@@ -211,9 +119,9 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
     }
     {
         unsigned int index=0;
-        while(index<playerInformations.warehouse_playerMonster.size())
+        while(index<playerInformations.warehouse_monsters.size())
         {
-            const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
+            const PlayerMonster &monster=playerInformations.warehouse_monsters.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=
                     CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
                 warehouseMonsterOnPlayerList.push_back(monster);
@@ -251,86 +159,44 @@ void BaseWindow::on_warehouseValidate_clicked()
 
     Player_private_and_public_informations &playerInformations=client->get_player_informations();
     {
-        std::vector<std::pair<uint16_t,uint32_t> > withdrawItems;
-        std::vector<std::pair<uint16_t,uint32_t> > depositeItems;
-        for (const auto &n : change_warehouse_items)
-            if(n.second>0)
-                withdrawItems.push_back(std::pair<uint16_t,int32_t>(n.first,n.second));
-            else if(n.second<0)
-                depositeItems.push_back(std::pair<uint16_t,int32_t>(n.first,-n.second));
-        uint64_t withdrawCash=0;
-        uint64_t depositeCash=0;
-        if(temp_warehouse_cash>0)
-            withdrawCash=temp_warehouse_cash;
-        else
-            depositeCash=-temp_warehouse_cash;
-        if(!client->wareHouseStore(withdrawCash,depositeCash,withdrawItems,depositeItems,withdrawMonsters,depositeMonsters))
+        if(!client->wareHouseStore(withdrawMonsters,depositeMonsters))
         {
             emit error("Bug on warehouse API call");
             return;
         }
     }
-    //validate the change here
-    if(temp_warehouse_cash>0)
-        addCash(static_cast<uint32_t>(temp_warehouse_cash));
-    else
-        removeCash(static_cast<uint32_t>(-temp_warehouse_cash));
-    playerInformations.warehouse_cash-=temp_warehouse_cash;
+    //validate the monster changes
     {
-        for (const auto &n : change_warehouse_items) {
-            if(n.second>0)
-            {
-                if(playerInformations.items.find(n.first)!=playerInformations.items.cend())
-                    playerInformations.items[n.first]+=n.second;
-                else
-                    playerInformations.items[n.first]=n.second;
-                playerInformations.warehouse_items[n.first]-=n.second;
-                if(playerInformations.warehouse_items.at(n.first)==0)
-                    playerInformations.warehouse_items.erase(n.first);
-            }
-            if(n.second<0)
-            {
-                playerInformations.items[n.first]+=n.second;
-                if(playerInformations.items.at(n.first)==0)
-                    playerInformations.items.erase(n.first);
-                if(playerInformations.warehouse_items.find(n.first)!=playerInformations.warehouse_items.cend())
-                    playerInformations.warehouse_items[n.first]-=n.second;
-                else
-                    playerInformations.warehouse_items[n.first]=-n.second;
-            }
-        }
-        load_inventory();
-        load_plant_inventory();
-    }
-    {
+        const std::vector<PlayerMonster> &currentPlayerMonsters=client->getPlayerMonster();
         unsigned int index=0;
         while(index<withdrawMonsters.size())
         {
-            if(withdrawMonsters.at(index)>=playerInformations.warehouse_playerMonster.size())
+            if(withdrawMonsters.at(index)>=playerInformations.warehouse_monsters.size())
             {
                 emit error("out of bound store list");
                 return;
             }
-            client->addPlayerMonster(playerInformations.warehouse_playerMonster.at(withdrawMonsters.at(index)));
+            client->addPlayerMonster(playerInformations.warehouse_monsters.at(withdrawMonsters.at(index)));
             index++;
         }
         index=0;
         while(index<depositeMonsters.size())
         {
-            if(depositeMonsters.at(index)>=playerInformations.playerMonster.size())
+            if(depositeMonsters.at(index)>=currentPlayerMonsters.size())
             {
                 emit error("out of bound store list");
                 return;
             }
-            client->addPlayerMonsterWarehouse(playerInformations.playerMonster.at(depositeMonsters.at(index)));
+            client->addPlayerMonsterWarehouse(currentPlayerMonsters.at(depositeMonsters.at(index)));
             index++;
         }
     }
     {
+        const std::vector<PlayerMonster> &currentPlayerMonsters=client->getPlayerMonster();
         unsigned int index=0;
         while(index<depositeMonsters.size())
         {
-            if(depositeMonsters.at(index)>=playerInformations.playerMonster.size())
+            if(depositeMonsters.at(index)>=currentPlayerMonsters.size())
             {
                 emit error("out of bound store list");
                 return;
@@ -341,7 +207,7 @@ void BaseWindow::on_warehouseValidate_clicked()
         index=0;
         while(index<withdrawMonsters.size())
         {
-            if(withdrawMonsters.at(index)>=playerInformations.warehouse_playerMonster.size())
+            if(withdrawMonsters.at(index)>=playerInformations.warehouse_monsters.size())
             {
                 emit error("out of bound store list");
                 return;
@@ -362,49 +228,27 @@ void BaseWindow::updateTheWareHouseContent()
         return;
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
 
-    //inventory
+    //inventory display (read-only, no warehouse item transfers)
     {
         ui->warehousePlayerInventory->clear();
         auto i=playerInformations.items.begin();
         while(i!=playerInformations.items.cend())
         {
             int32_t quantity=i->second;
-            if(change_warehouse_items.find(i->first)!=change_warehouse_items.cend())
-                quantity+=change_warehouse_items.at(i->first);
             if(quantity>0)
                 ui->warehousePlayerInventory->addItem(itemToGraphic(i->first,quantity));
             ++i;
-        }
-        for (const auto &j : change_warehouse_items) {
-            if(playerInformations.items.find(j.first)==playerInformations.items.cend() && j.second>0)
-                ui->warehousePlayerInventory->addItem(itemToGraphic(j.first,j.second));
         }
     }
 
     qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size: %1x%2").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
 
-    //inventory warehouse
-    {
-        ui->warehousePlayerStoredInventory->clear();
-        auto i=playerInformations.warehouse_items.begin();
-        while(i!=playerInformations.warehouse_items.cend())
-        {
-            int32_t quantity=i->second;
-            if(change_warehouse_items.find(i->first)!=change_warehouse_items.cend())
-                quantity-=change_warehouse_items.at(i->first);
-            if(quantity>0)
-                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(i->first,quantity));
-            ++i;
-        }
-        for (const auto &j : change_warehouse_items) {
-            if(playerInformations.warehouse_items.find(j.first)==playerInformations.warehouse_items.cend() && j.second<0)
-                ui->warehousePlayerStoredInventory->addItem(itemToGraphic(j.first,-j.second));
-        }
-    }
+    //warehouse inventory removed - clear only
+    ui->warehousePlayerStoredInventory->clear();
 
-    //cash
-    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(playerInformations.cash+temp_warehouse_cash));
-    ui->warehousePlayerStoredCash->setText(tr("Cash: %1").arg(playerInformations.warehouse_cash-temp_warehouse_cash));
+    //cash display (warehouse cash removed)
+    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(playerInformations.cash));
+    ui->warehousePlayerStoredCash->setText(tr("Cash: N/A"));
 
     //do before because the dispatch put into random of it
     ui->warehousePlayerStoredMonster->clear();
@@ -437,9 +281,9 @@ void BaseWindow::updateTheWareHouseContent()
     //monster warehouse
     {
         unsigned int index=0;
-        while(index<playerInformations.warehouse_playerMonster.size())
+        while(index<playerInformations.warehouse_monsters.size())
         {
-            const PlayerMonster &monster=playerInformations.warehouse_playerMonster.at(index);
+            const PlayerMonster &monster=playerInformations.warehouse_monsters.at(index);
             if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().find(monster.monster)!=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().cend())
             {
                 QListWidgetItem *item=new QListWidgetItem();
@@ -457,11 +301,11 @@ void BaseWindow::updateTheWareHouseContent()
         }
     }
 
-    //set the button enabled
-    ui->warehouseWithdrawCash->setEnabled((playerInformations.warehouse_cash-temp_warehouse_cash)>0);
-    ui->warehouseDepositCash->setEnabled((playerInformations.cash+temp_warehouse_cash)>0);
-    ui->warehouseDepositItem->setEnabled(ui->warehousePlayerInventory->count()>0);
-    ui->warehouseWithdrawItem->setEnabled(ui->warehousePlayerStoredInventory->count()>0);
+    //set the button enabled - cash and item buttons disabled (features removed)
+    ui->warehouseWithdrawCash->setEnabled(false);
+    ui->warehouseDepositCash->setEnabled(false);
+    ui->warehouseDepositItem->setEnabled(false);
+    ui->warehouseWithdrawItem->setEnabled(false);
     ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
     ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
 }

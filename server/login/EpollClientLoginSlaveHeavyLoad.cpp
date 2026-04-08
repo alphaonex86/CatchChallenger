@@ -2,7 +2,7 @@
 #include "CharactersGroupForLogin.hpp"
 #include "LinkToMaster.hpp"
 #include "../base/PreparedDBQuery.hpp"
-#include "../base/BaseServerLogin.hpp"
+#include "../base/BaseServer/BaseServerLogin.hpp"
 #include <iostream>
 #include <chrono>
 #include <string.h>

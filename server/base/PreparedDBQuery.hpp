@@ -43,7 +43,7 @@ class PreparedDBQueryCommon
 {
 public:
     void initDatabaseQueryCommonWithoutSP(const DatabaseBase::DatabaseType &type,CatchChallenger::DatabaseBase * const database);
-    void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,const bool &useSP,CatchChallenger::DatabaseBase * const database);
+    void initDatabaseQueryCommonWithSP(const DatabaseBase::DatabaseType &type,CatchChallenger::DatabaseBase * const database);
 public:
     //login and gameserver alone
     PreparedStatementUnit db_query_delete_monster_by_id;
@@ -69,7 +69,6 @@ public:
     PreparedStatementUnit db_query_delete_clan;
     PreparedStatementUnit db_query_update_monster_xp_hp_level;
     PreparedStatementUnit db_query_update_monster_hp_only;
-    PreparedStatementUnit db_query_update_monster_sp_only;
     PreparedStatementUnit db_query_update_monster_xp;
     PreparedStatementUnit db_query_insert_clan;
     PreparedStatementUnit db_query_played_time;
@@ -98,48 +97,6 @@ public:
     PreparedStatementUnit db_query_update_server_time_played_time;
     PreparedStatementUnit db_query_update_server_time_last_connect;
     #endif
-    //query
-    /*PreparedStatementUnit db_query_select_allow;
-
-    PreparedStatementUnit db_query_select_monstersBuff_by_id;
-    PreparedStatementUnit db_query_monster_by_character_id;
-    PreparedStatementUnit db_query_delete_monster_specific_buff;
-    PreparedStatementUnit db_query_delete_monster_skill;
-    PreparedStatementUnit db_query_delete_all_item;
-    PreparedStatementUnit db_query_delete_all_item_warehouse;
-    PreparedStatementUnit db_query_delete_monster_by_character;
-    PreparedStatementUnit db_query_delete_monster_warehouse_by_id;
-    PreparedStatementUnit db_query_delete_recipes;
-    PreparedStatementUnit db_query_delete_reputation;
-    PreparedStatementUnit db_query_delete_allow;
-    PreparedStatementUnit db_query_update_monster_buff_level;
-
-    PreparedStatementUnit db_query_update_monster_move_to_player;
-    PreparedStatementUnit db_query_update_monster_move_to_warehouse;
-    PreparedStatementUnit db_query_insert_monster_full;
-    PreparedStatementUnit db_query_insert_warehouse_monster_full;
-    PreparedStatementUnit db_query_insert_monster_skill;
-    PreparedStatementUnit db_query_insert_reputation;
-    PreparedStatementUnit db_query_select_reputation_by_id;
-    PreparedStatementUnit db_query_select_recipes_by_player_id;
-    PreparedStatementUnit db_query_select_items_by_player_id;
-    PreparedStatementUnit db_query_select_items_warehouse_by_player_id;
-    PreparedStatementUnit db_query_select_monsters_warehouse_by_player_id;
-    PreparedStatementUnit db_query_select_monstersSkill_by_id;
-    PreparedStatementUnit db_query_insert_item;
-    PreparedStatementUnit db_query_insert_item_warehouse;
-    PreparedStatementUnit db_query_update_item;
-    PreparedStatementUnit db_query_update_item_warehouse;
-    PreparedStatementUnit db_query_delete_item;
-    PreparedStatementUnit db_query_delete_item_warehouse;
-    PreparedStatementUnit db_query_insert_recipe;
-
-    PreparedStatementUnit db_query_delete_character_allow;
-    PreparedStatementUnit db_query_update_reputation;
-
-    PreparedStatementUnit db_query_update_monster_skill_level;
-    PreparedStatementUnit db_query_insert_monster_buff;
-    PreparedStatementUnit db_query_delete_monster_specific_skill;*/
     #endif
 };
 #endif
@@ -159,6 +116,7 @@ public:
     PreparedStatementUnit db_query_update_character_quests;
     PreparedStatementUnit db_query_character_server_by_id;
     PreparedStatementUnit db_query_delete_character_server_by_id;
+    PreparedStatementUnit db_query_select_character_bymap;
     PreparedStatementUnit db_query_update_plant;
     PreparedStatementUnit db_query_update_itemonmap;
     PreparedStatementUnit db_query_update_character_bot_already_beaten;

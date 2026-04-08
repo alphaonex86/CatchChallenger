@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QGraphicsView>
+#include <QElapsedTimer>
 #include "background/CCBackground.hpp"
 #include "foreground/LoadingScreen.hpp"
 #include "ScreenInput.hpp"
@@ -103,10 +104,10 @@ private:
 
     uint8_t waitRenderTime;
     QTimer timerRender;
-    QTime timeRender;
+    QElapsedTimer timeRender;
     uint16_t frameCounter;
     QTimer timerUpdateFPS;
-    QTime timeUpdateFPS;
+    QElapsedTimer timeUpdateFPS;
 
     bool multiplaySelected;
     bool inGame;

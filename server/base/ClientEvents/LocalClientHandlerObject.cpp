@@ -237,7 +237,7 @@ void Client::useObject(const uint8_t &query_id,const uint16_t &itemId)
         {
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_recipe.asyncWrite({
                         binarytoHexa(public_and_private_informations.recipes,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1),
-                        std::to_string(character_id)
+                        std::to_string(character_id_db)
                         });
         }
         #elif CATCHCHALLENGER_DB_BLACKHOLE

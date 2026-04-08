@@ -15,9 +15,9 @@ public:
     struct Player
     {
         CatchChallenger::Player_public_informations player;
-        quint32 mapId;
-        quint16 x;
-        quint16 y;
+        uint8_t mapId;
+        uint8_t x;
+        uint8_t y;
         CatchChallenger::Direction direction;
     };
 
@@ -29,7 +29,7 @@ public:
     virtual void removeClient(CatchChallenger::Api_protocol_Qt *api);
     QString name();
     QString version();
-    virtual void insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    virtual void insert_player(CatchChallenger::Api_protocol_Qt *api,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
 protected:
     bool move;
     bool randomText;

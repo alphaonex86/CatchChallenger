@@ -1,5 +1,7 @@
 #include "MultipleBotConnectionImplForGui.h"
+#ifdef BOTACTIONS
 #include "../bot/actions/ActionsAction.h"
+#endif
 
 #include <iostream>
 #ifdef QT_GUI_LIB
@@ -187,8 +189,9 @@ void MultipleBotConnectionImplForGui::serverSelect(const uint8_t &charactersGrou
     }
 }
 
-void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void MultipleBotConnectionImplForGui::insert_player(const uint8_t &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
+    (void)simplifiedIndex;
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
     if(senderObject==NULL)
         return;
@@ -208,13 +211,13 @@ void MultipleBotConnectionImplForGui::insert_player(const CatchChallenger::Playe
         if(botInterface!=NULL)
         {
             botInterface->insert_player_all(catchChallengerClient->api,player,mapId,x,y,direction);
-            if(player.simplifiedId==catchChallengerClient->api->getId())
+            if(player.pseudo==catchChallengerClient->api->player_informations.public_informations.pseudo)
                 botInterface->insert_player(catchChallengerClient->api,player,mapId,x,y,direction);
         }
     }
 }
 
-void MultipleBotConnectionImplForGui::remove_player(const uint16_t &id)
+void MultipleBotConnectionImplForGui::remove_player(const uint8_t &id)
 {
     CatchChallenger::Api_client_real *senderObject = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
     if(senderObject==NULL)

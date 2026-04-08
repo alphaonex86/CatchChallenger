@@ -22,7 +22,7 @@ using namespace CatchChallenger;
 bool Client::server_list()
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&Client::server_list_static,{std::to_string(account_id)});
+    CatchChallenger::DatabaseBaseCallBack *callback=GlobalServerData::serverPrivateVariables.preparedDBQueryCommonForLogin.db_query_select_server_time.asyncRead(this,&Client::server_list_static,{std::to_string(account_id_db)});
     if(callback==NULL)
     {
         std::cerr << "Sql error, error: " << GlobalServerData::serverPrivateVariables.db_common->errorMessage() << std::endl;
@@ -158,14 +158,14 @@ void Client::server_list_return(const uint8_t &query_id, const char * const char
         if(validServerCount==0)
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_insert_server_time.asyncWrite({
                         "0",
-                        std::to_string(account_id),
+                        std::to_string(account_id_db),
                         std::to_string(sFrom1970())
                         });
         else
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_server_time_last_connect.asyncWrite({
                         std::to_string(sFrom1970()),
                         "0",
-                        std::to_string(account_id)
+                        std::to_string(account_id_db)
                         });
         #endif
     #elif CATCHCHALLENGER_DB_BLACKHOLE
@@ -583,9 +583,9 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
                 if(monsterDatapack.ratio_gender!=-1)
                 {
                     if(rand()%101<monsterDatapack.ratio_gender)
-                        monsterQuery.asyncWrite({monster_id_string,characterIdString,StaticText::text_2,characterIdString});
+                        monsterQuery.asyncWrite({monster_id_string,characterIdString,"2",characterIdString});
                     else
-                        monsterQuery.asyncWrite({monster_id_string,characterIdString,StaticText::text_1,characterIdString});
+                        monsterQuery.asyncWrite({monster_id_string,characterIdString,"1",characterIdString});
                 }
                 else
                     monsterQuery.asyncWrite({monster_id_string,characterIdString,characterIdString});
@@ -606,7 +606,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
 
     if(!character_insert.asyncWrite({
                 characterIdString,
-                std::to_string(account_id),
+                std::to_string(account_id_db),
                 #if defined(CATCHCHALLENGER_DB_PREPAREDSTATEMENT)
                 pseudo,
                 #else
@@ -1018,7 +1018,7 @@ void Client::removeCharacterLater_return(const uint8_t &query_id,const uint32_t 
         characterSelectionIsWrong(query_id,0x02,"Account for character: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not an id");
         return;
     }
-    if(this->account_id!=account_id)
+    if(this->account_id_db!=account_id)
     {
         characterSelectionIsWrong(query_id,0x02,"Character: "+std::to_string(characterId)+" is not owned by the account: "+std::to_string(account_id)+"");
         return;

@@ -6,7 +6,7 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-#include "../../../qtmaprender/MapVisualiserPlayer.hpp"
+#include "../../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../../general/base/SavegameVersion.hpp"

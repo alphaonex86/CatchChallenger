@@ -165,7 +165,7 @@ void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject
     bool fullView=true;
     if(serverOrdenedList.size()>10)
         fullView=false;
-    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current__date=QDateTime::currentDateTime().toSecsSinceEpoch();
 
     addToServerList(logicialGroup,ui->serverList->invisibleRootItem(),current__date,fullView);
     ui->serverList->expandAll();
@@ -373,7 +373,7 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
         std::vector<std::string> keys;
         for (const auto &n : logicialGroup.logicialGroupList)
             keys.push_back(n.first);
-        qSort(keys);
+        std::sort(keys.begin(), keys.end());
         //list the group
         unsigned int index=0;
         while(index<keys.size())
@@ -385,7 +385,7 @@ void MainWindow::addToServerList(CatchChallenger::LogicialGroup &logicialGroup, 
         }
     }
     {
-        qSort(logicialGroup.servers);
+        std::sort(logicialGroup.servers.begin(), logicialGroup.servers.end());
         //list the server
         unsigned int index=0;
         while(index<logicialGroup.servers.size())

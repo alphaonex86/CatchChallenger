@@ -9,6 +9,7 @@
 #include <QGraphicsProxyWidget>
 #include <QTextDocument>
 #include <QDesktopServices>
+#include <QFile>
 
 NewGame::NewGame() :
     wdialog(new ImagesStrechMiddle(46,":/CC/images/interface/message.png",this)),

@@ -184,8 +184,7 @@ void MultipleBotConnection::protocol_is_good_with_client(CatchChallengerClient *
     client->api->tryLogin(client->login.toStdString(),client->pass.toStdString());
 }
 
-//quint32,QString,quint16,quint16,quint8,quint16
-void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void MultipleBotConnection::insert_player_with_client(CatchChallengerClient *client,const CatchChallenger::Player_public_informations &player,const uint8_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
     client->stat=Status_OnMap;
     updateClientListStatus();
@@ -448,7 +447,6 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
     {
         const QString &datapackPath=QCoreApplication::applicationDirPath()+"/datapack/";
         CatchChallenger::CommonDatapack::commonDatapack.parseDatapack(datapackPath.toStdString());
-        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapack(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode);
 
         const std::vector<std::string> &returnList=
                     CatchChallenger::FacilityLibGeneral::listFolder(
@@ -460,19 +458,20 @@ void MultipleBotConnection::haveTheDatapackMainSub_with_client(CatchChallengerCl
         int index=0;
         QRegularExpression mapFilter(QStringLiteral("\\.tmx$"));
         QRegularExpression mapExclude(QStringLiteral("[\"']"));
-        QHash<QString,QString> sortToFull;
+        std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> mapPathToId;
         while(index<size)
         {
             const QString &fileName=QString::fromStdString(returnList.at(index));
-            QString sortFileName=fileName;
             if(fileName.contains(mapFilter) && !fileName.contains(mapExclude))
             {
+                QString sortFileName=fileName;
                 sortFileName.remove(mapFilter);
-                sortToFull[sortFileName]=fileName;
+                mapPathToId[sortFileName.toStdString()]=(CATCHCHALLENGER_TYPE_MAPID)tempMapList.size();
                 tempMapList << sortFileName;
             }
             index++;
         }
+        CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(datapackPath.toStdString(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
     }
     if(!client->api->setMapNumber(tempMapList.size()))
         abort();

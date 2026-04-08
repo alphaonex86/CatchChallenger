@@ -3,6 +3,7 @@
 #include "../../general/sha224/sha224.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/Client.hpp"
+#include "../base/ClientList.hpp"
 #include "../epoll/Epoll.hpp"
 #include "../epoll/EpollSocket.hpp"
 #include "../epoll/EpollServer.hpp"
@@ -511,14 +512,14 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
     //current player number and max player
     if(GlobalServerData::serverSettings.sendPlayerNumber)
     {
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverPrivateVariables.connected_players);
+        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(ClientList::list->connected_size());
         posOutput+=2;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(GlobalServerData::serverSettings.max_players);
         posOutput+=2;
     }
     else
     {
-        if(GlobalServerData::serverPrivateVariables.connected_players<=255)
+        if(ClientList::list->connected_size()<=255)
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
         else
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(0);
@@ -535,18 +536,19 @@ bool LinkToMaster::registerGameServer(const std::string &exportedXml, const char
         uint32_t character_count=0;
         unsigned int sizePos=posOutput;
         posOutput+=2;
-        unsigned short int index=0;
-        while(index<Client::clientBroadCastList.size())
+        PLAYER_INDEX_FOR_CONNECTED index=0;
+        while(index<ClientList::list->size())
         {
-            const uint32_t &character_id=Client::clientBroadCastList.at(index)->getPlayerId();
-            if(character_id!=0)
+            if(!ClientList::list->empty(index))
             {
-                *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(character_id);
-                posOutput+=4;
-                character_count++;
+                const uint32_t &character_id=ClientList::list->at(index).getPlayerId();
+                if(character_id!=0)
+                {
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(character_id);
+                    posOutput+=4;
+                    character_count++;
+                }
             }
-            if(index==65535)
-                break;
             index++;
         }
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+sizePos)=htole16(character_count);

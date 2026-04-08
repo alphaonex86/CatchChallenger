@@ -2,9 +2,10 @@
 #define CATCHCHALLENGER_QTCLIENTLIST_H
 
 #include "QtClientWithMap.hpp"
+#include "../base/ClientList.hpp"
 
 namespace CatchChallenger {
-class EpollClientList : public ClientList
+class QtClientList : public ClientList
 {
 public:
      /* list start at (max player*map id)
@@ -52,20 +53,24 @@ public:
      * store CHOOSEN index connected player imply read each player attribute
      * store id_db imply read each player attribute only for insert + store resolution id_db to Object
      */
+    QtClientList();
     #if CATCHCHALLENGER_DYNAMIC_MAP_LIST
-    static std::vector<QtClientWithMap> clients;//65535 = empty slot
+    static std::vector<QtClientWithMap *> clients;//65535 = empty slot, nullptr = free
     #else
     #error todo the static part
     #endif
-protected:
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED insert();
+public:
+    PLAYER_INDEX_FOR_CONNECTED insert(QtClientWithMap *client);
 public:
     void remove(const Client &client);
     
-    SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED size() const;
-    bool empty(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;
-    const Client &at(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
-    Client &rw(const SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    PLAYER_INDEX_FOR_CONNECTED size() const;
+    bool empty(const PLAYER_INDEX_FOR_CONNECTED &index) const;
+    const Client &at(const PLAYER_INDEX_FOR_CONNECTED &index) const;//abort if index is not valid
+    Client &rw(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    PLAYER_INDEX_FOR_CONNECTED connected_size() const;
+    ClientWithMap &rwWithMap(const PLAYER_INDEX_FOR_CONNECTED &index);//abort if index is not valid
+    QtClientWithMap &getByReference();
 };
 }
 

@@ -7,6 +7,7 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#include "QMap_client.hpp"
 
 #include <qmath.h>
 #include <QFileInfo>
@@ -29,11 +30,6 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     teleportedOnPush=false;
     x=0;
     y=0;
-    events=NULL;
-    items=NULL;
-    quests=NULL;
-    itemOnMap=NULL;
-    plantOnMap=NULL;
     animationDisplayed=false;
     monsterTileset=nullptr;
     monsterMapObject=nullptr;
@@ -54,12 +50,11 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     if(!connect(this,&MapVisualiserPlayer::mapDisplayed,this,&MapVisualiserPlayer::mapDisplayedSlot))
         abort();
 
-    currentPlayerSpeed=250;
-    moveTimer.setInterval(currentPlayerSpeed/5);
+    moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
     if(!connect(&moveTimer,&QTimer::timeout,this,&MapVisualiserPlayer::moveStepSlot))
         abort();
-    moveAnimationTimer.setInterval(currentPlayerSpeed/5);
+    moveAnimationTimer.setInterval(250/5);
     moveAnimationTimer.setSingleShot(true);
     if(!connect(&moveAnimationTimer,&QTimer::timeout,this,&MapVisualiserPlayer::doMoveAnimation))
         abort();
@@ -88,7 +83,7 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
 
-    lastAction.restart();
+    lastAction.start();
 }
 
 MapVisualiserPlayer::~MapVisualiserPlayer()
@@ -106,34 +101,17 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
         //delete monsterMapObject;-> do a clean fix
         monsterMapObject=nullptr;
     }
-    //delete playerTileset;
-    /*std::unordered_set<Tiled::SharedTileset> deletedTileset;
-    for(auto i : playerTilesetCache) {
-            Tiled::SharedTileset cur = i.second;
-            if(deletedTileset.find(cur)==deletedTileset.cend())
-            {
-                deletedTileset.insert(cur);
-                delete cur;
-            }
-        }
-    for(auto i : monsterTilesetCache) {
-            Tiled::SharedTileset cur = i.second;
-            if(deletedTileset.find(cur)==deletedTileset.cend())
-            {
-                deletedTileset.insert(cur);
-                delete cur;
-            }
-        }*/
 }
 
-bool MapVisualiserPlayer::haveMapInMemory(const std::string &mapPath)
+bool MapVisualiserPlayer::haveMapInMemory(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
-    return all_map.find(mapPath)!=all_map.cend() || old_all_map.find(mapPath)!=old_all_map.cend();
+    return CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend() ||
+           CatchChallenger::QMap_client::old_all_map.find(mapIndex)!=CatchChallenger::QMap_client::old_all_map.cend();
 }
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
-    if(current_map.empty() || all_map.find(current_map)==all_map.cend())
+    if(current_map==0 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
         return;
 
     //ignore the no arrow key
@@ -182,7 +160,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_left)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_left,all_map.at(current_map)->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map,x,y,true))
                 return;//Can't do at the left!
             //the first step
             direction=CatchChallenger::Direction_move_at_left;
@@ -190,7 +168,6 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -209,7 +186,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_right)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_right,all_map.at(current_map)->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map,x,y,true))
                 return;//Can't do at the right!
             //the first step
             direction=CatchChallenger::Direction_move_at_right;
@@ -217,7 +194,6 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -236,7 +212,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_top)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_top,all_map.at(current_map)->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map,x,y,true))
                 return;//Can't do at the top!
             //the first step
             direction=CatchChallenger::Direction_move_at_top;
@@ -244,7 +220,6 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -263,7 +238,7 @@ void MapVisualiserPlayer::keyPressParse()
         //already turned on this direction, then try move into this direction
         if(direction==CatchChallenger::Direction_look_at_bottom)
         {
-            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.at(current_map)->logicalMap,x,y,true))
+            if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map,x,y,true))
                 return;//Can't do at the bottom!
             //the first step
             direction=CatchChallenger::Direction_move_at_bottom;
@@ -271,7 +246,6 @@ void MapVisualiserPlayer::keyPressParse()
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         //look in this direction
         else
@@ -294,7 +268,7 @@ void MapVisualiserPlayer::doMoveAnimation()
 
 void MapVisualiserPlayer::moveStepSlot()
 {
-    Map_full * map_full=all_map.at(current_map);
+    QMap_client * map_full=CatchChallenger::QMap_client::all_map.at(current_map);
     if(!animationDisplayed)
     {
         //leave
@@ -305,9 +279,10 @@ void MapVisualiserPlayer::moveStepSlot()
         }
         animationDisplayed=true;
         //tiger the next tile
-        CatchChallenger::CommonMap * map=&map_full->logicalMap;
-        uint8_t x=this->x;
-        uint8_t y=this->y;
+        const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+        CATCHCHALLENGER_TYPE_MAPID tempMapIndex=current_map;
+        uint8_t nx=this->x;
+        uint8_t ny=this->y;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -315,22 +290,22 @@ void MapVisualiserPlayer::moveStepSlot()
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
             case CatchChallenger::Direction_move_at_left:
-                CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y);
+                CatchChallenger::MoveOnTheMap::move(mapList,direction,tempMapIndex,nx,ny,true);
             break;
             default:
             break;
         }
         //enter
-        if(map_full->triggerAnimations.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->triggerAnimations.cend())
+        if(map_full->triggerAnimations.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(nx),static_cast<uint8_t>(ny)))!=map_full->triggerAnimations.cend())
         {
-            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
+            TriggerAnimation* triggerAnimation=map_full->triggerAnimations.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(nx),static_cast<uint8_t>(ny)));
             triggerAnimation->startEnter();
         }
         //door
-        if(map_full->doors.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->doors.cend())
+        if(map_full->doors.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(nx),static_cast<uint8_t>(ny)))!=map_full->doors.cend())
         {
-            MapDoor* door=map_full->doors.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-            door->startOpen(currentPlayerSpeed);
+            MapDoor* door=map_full->doors.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(nx),static_cast<uint8_t>(ny)));
+            door->startOpen(250);
             moveAnimationTimer.start(door->timeToOpen());
 
             //block but set good look direction
@@ -388,7 +363,6 @@ void MapVisualiserPlayer::moveStepSlot()
         if(pendingMonsterMoves.size()>1)
         {
             //start move
-            //moveTimer.stop();
             int baseTile=1;
             //move the player for intermediate step and define the base tile (define the stopped step with direction)
             switch(pendingMonsterMoves.front())
@@ -588,8 +562,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 const CatchChallenger::Direction direction=pendingMonsterMoves.front();
                 pendingMonsterMoves.erase(pendingMonsterMoves.cbegin());
 
-                CatchChallenger::CommonMap * map=&all_map.at(current_monster_map)->logicalMap;
-                const CatchChallenger::CommonMap * old_map=map;
+                const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+                CATCHCHALLENGER_TYPE_MAPID old_monster_map=current_monster_map;
                 //set the final value (direction, position, ...)
                 switch(direction)
                 {
@@ -597,10 +571,10 @@ void MapVisualiserPlayer::moveStepSlot()
                     case CatchChallenger::Direction_move_at_right:
                     case CatchChallenger::Direction_move_at_top:
                     case CatchChallenger::Direction_move_at_bottom:
-                        if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&monster_x,&monster_y))
+                        if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,current_monster_map,monster_x,monster_y,true))
                         {
                             std::cerr << "Bug at move for pendingMonsterMoves, unknown move: " << std::to_string(direction)
-                                      << " from " << map->map_file << " (" << std::to_string(monster_x) << "," << std::to_string(monster_y) << ")"
+                                      << " from map " << std::to_string(current_monster_map) << " (" << std::to_string(monster_x) << "," << std::to_string(monster_y) << ")"
                                       << std::endl;
                             resetMonsterTile();
                         }
@@ -610,14 +584,11 @@ void MapVisualiserPlayer::moveStepSlot()
                     return;
                 }
                 //if the map have changed
-                if(old_map!=map)
+                if(old_monster_map!=current_monster_map)
                 {
                     unloadMonsterFromCurrentMap();
-                    current_monster_map=map->map_file;
-                    if(old_all_map.find(current_monster_map)==old_all_map.cend())
-                        std::cerr << "old_all_map.find(current_map)==old_all_map.cend() in monster follow" << std::endl;
-                    if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
-                        resetMonsterTile();
+                    if(CatchChallenger::QMap_client::old_all_map.find(current_monster_map)==CatchChallenger::QMap_client::old_all_map.cend())
+                        std::cerr << "old_all_map.find(current_monster_map)==old_all_map.cend() in monster follow" << std::endl;
                     loadMonsterFromCurrentMap();
                 }
 
@@ -625,8 +596,8 @@ void MapVisualiserPlayer::moveStepSlot()
                 MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
             }
         animationDisplayed=false;
-        CatchChallenger::CommonMap * map=&all_map.at(current_map)->logicalMap;
-        const CatchChallenger::CommonMap * old_map=map;
+        const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+        CATCHCHALLENGER_TYPE_MAPID old_map_index=current_map;
         //set the final value (direction, position, ...)
         switch(direction)
         {
@@ -634,10 +605,10 @@ void MapVisualiserPlayer::moveStepSlot()
             case CatchChallenger::Direction_move_at_right:
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
-                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&x,&y))
+                if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,current_map,x,y,true))
                 {
                     std::cerr << "Bug at move, unknown move: " << std::to_string(direction)
-                              << " from " << map->map_file << " (" << std::to_string(x) << "," << std::to_string(y) << ")"
+                              << " from map " << std::to_string(current_map) << " (" << std::to_string(x) << "," << std::to_string(y) << ")"
                               << std::endl;
                     return;
                 }
@@ -648,17 +619,14 @@ void MapVisualiserPlayer::moveStepSlot()
             return;
         }
         //if the map have changed
-        if(old_map!=map)
+        if(old_map_index!=current_map)
         {
             unloadPlayerFromCurrentMap();
             passMapIntoOld();
-            current_map=map->map_file;
-            if(old_all_map.find(current_map)==old_all_map.cend())
+            if(CatchChallenger::QMap_client::old_all_map.find(current_map)==CatchChallenger::QMap_client::old_all_map.cend())
                 emit inWaitingOfMap();
             loadOtherMap(current_map);
             hideNotloadedMap();
-            if(!vectorcontainsAtLeastOne(static_cast<const CatchChallenger::Map_client *>(old_map)->near_map,map))
-                resetMonsterTile();
             return;
         }
         else
@@ -673,117 +641,15 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
-    if(itemOnMap==nullptr)
-    {
-        std::cerr << "MapVisualiserPlayer::asyncMapLoaded() itemOnMap==nullptr, not called MapVisualiserPlayer::setInformations()?, this is wrong (abort)" << std::endl;
-        abort();
-    }
-    if(current_map.empty())
+    if(current_map==0)
         return false;
-    if(MapVisualiser::asyncMapLoaded(fileName,tempMapObject))
+    if(MapVisualiser::asyncMapLoaded(mapIndex,tempMapObject))
     {
         if(tempMapObject!=NULL)
         {
-            int index=0;
-            while(index<tempMapObject->tiledMap->layerCount())
-            {
-                if(Tiled::ObjectGroup *objectGroup = tempMapObject->tiledMap->layerAt(index)->asObjectGroup())
-                {
-                    if(objectGroup->name()=="Object")
-                    {
-                        QList<Tiled::MapObject*> objects=objectGroup->objects();
-                        int index2=0;
-                        while(index2<objects.size())
-                        {
-                            Tiled::MapObject* object=objects.at(index2);
-                            const uint32_t &x=object->x();
-                            const uint32_t &y=object->y()-1;
+            //item on map display logic removed - now handled via client/DatapackClientLoader
 
-                            if(object->type()=="object")
-                            {
-                                //found into the logical map
-                                if(tempMapObject->logicalMap.itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                                        tempMapObject->logicalMap.itemsOnMap.cend())
-                                {
-                                    if(object->property("visible")=="false")
-                                    {
-                                        //The tiled object not exist on this layer
-                                        if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-                                        {
-                                            ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
-                                            tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
-                                        }
-                                        else
-                                            std::cerr << "Try removeObject(object) on not existant ObjectGroupItem::objectGroupLink.at(objectGroup)" << std::endl;
-                                        objects.removeAt(index2);
-                                    }
-                                    else
-                                    {
-                                        const std::string tempMap=tempMapObject->logicalMap.map_file;
-                                        if(QtDatapackClientLoader::datapackLoader->get_itemOnMap().find(tempMap)!=
-                                                QtDatapackClientLoader::datapackLoader->get_itemOnMap().cend())
-                                        {
-                                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &tempIndexItem=
-                                                    QtDatapackClientLoader::datapackLoader->get_itemOnMap().at(tempMap);
-                                            if(tempIndexItem.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                                                    tempIndexItem.cend())
-                                            {
-                                                const uint16_t &itemIndex=tempIndexItem.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                                                if(itemOnMap->find(itemIndex)!=itemOnMap->cend())
-                                                {
-                                                    if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-                                                    {
-                                                        ObjectGroupItem * objectGroupItem=ObjectGroupItem::objectGroupLink.at(objectGroup);
-                                                        objectGroupItem->removeObject(object);
-                                                        objects.removeAt(index2);
-                                                    }
-                                                    else
-                                                    {
-                                                        std::cerr << "ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend(), map mixed?" << std::endl;
-                                                        index2++;
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=object;
-                                                    index2++;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=object;
-                                                index2++;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=object;
-                                            index2++;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    //The tiled object not exist on this layer
-                                    if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-                                    {
-                                        ObjectGroupItem::objectGroupLink.at(objectGroup)->removeObject(object);
-                                        tempMapObject->logicalMap.itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
-                                    }
-                                    else
-                                        std::cerr << "Try removeObject(object) on not existant ObjectGroupItem::objectGroupLink.at(objectGroup)" << std::endl;
-                                    objects.removeAt(index2);
-                                }
-                            }
-                            else
-                                index2++;
-                        }
-                    }
-                }
-                index++;
-            }
-
-            if(fileName==current_map)
+            if(mapIndex==current_map)
             {
                 if(tempMapObject!=NULL)
                     finalPlayerStep();
@@ -809,12 +675,12 @@ void MapVisualiserPlayer::unblock()
 
 bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return false;
     }
-    const Map_full * current_map_pointer=all_map.at(current_map);
+    const QMap_client * current_map_pointer=CatchChallenger::QMap_client::all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
@@ -822,11 +688,12 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
     }
     if(!isTeleported)
     {
+        const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
         int index=0;
-        const int size=current_map_pointer->logicalMap.teleport_semi.size();
+        const int size=logicalMap.teleporters.size();
         while(index<size)
         {
-            const CatchChallenger::Map_semi_teleport &current_teleport=current_map_pointer->logicalMap.teleport_semi.at(index);
+            const CatchChallenger::Teleporter &current_teleport=logicalMap.teleporters.at(index);
             //if need be teleported
             if(current_teleport.source_x==x && current_teleport.source_y==y)
             {
@@ -834,11 +701,11 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
                 unloadPlayerFromCurrentMap();
                 passMapIntoOld();
                 //player coord
-                current_map=current_teleport.map;
+                current_map=current_teleport.mapIndex;
                 x=current_teleport.destination_x;
                 y=current_teleport.destination_y;
                 //monster coord
-                current_monster_map=current_teleport.map;
+                current_monster_map=current_teleport.mapIndex;
                 monster_x=current_teleport.destination_x;
                 monster_y=current_teleport.destination_y;
 
@@ -860,34 +727,36 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
 void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
 {
     std::cout << "MapVisualiserPlayer::finalPlayerStep()" << std::endl;
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
         qDebug() << "current map not loaded, unable to do finalPlayerStep()";
         return;
     }
-    const Map_full * current_map_pointer=all_map.at(current_map);
+    const QMap_client * current_map_pointer=CatchChallenger::QMap_client::all_map.at(current_map);
     if(current_map_pointer==NULL)
     {
         qDebug() << "current map not loaded null pointer, unable to do finalPlayerStep()";
         return;
     }
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
 
-    /// \see into haveStopTileAction(), to NPC fight: std::vector<std::pair<uint8_t,uint8_t> > botFightRemotePointList=all_map.value(current_map)->logicalMap.botsFightTriggerExtra.values(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
+    /// \see into haveStopTileAction(), to NPC fight
     if(!CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().empty())
     {
         //locate the right layer for monster
         if(monsterMapObject!=NULL)
         {
-            const Map_full * current_monster_map_pointer=all_map.at(current_monster_map);
+            const QMap_client * current_monster_map_pointer=CatchChallenger::QMap_client::all_map.at(current_monster_map);
             if(current_monster_map_pointer==NULL)
             {
                 qDebug() << "current_monster_map_pointer not loaded null pointer, unable to do finalPlayerStep()";
                 return;
             }
+            const CatchChallenger::CommonMap &monsterLogicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_monster_map);
             {
                 const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
-                        CatchChallenger::MoveOnTheMap::getZoneCollision(current_monster_map_pointer->logicalMap,monster_x,monster_y);
-                const CatchChallenger::ParsedLayerLedges &ledge=CatchChallenger::MoveOnTheMap::getLedge(current_monster_map_pointer->logicalMap,monster_x,monster_y);
+                        CatchChallenger::MoveOnTheMap::getZoneCollision(monsterLogicalMap,monster_x,monster_y);
+                const CatchChallenger::ParsedLayerLedges &ledge=CatchChallenger::MoveOnTheMap::getLedge(monsterLogicalMap,monster_x,monster_y);
                 if(ledge!=CatchChallenger::ParsedLayerLedges_NoLedges)
                     monsterMapObject->setVisible(true);
                 else
@@ -907,7 +776,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                                         CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(newIndex);
                                 const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                                         CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
-                                if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                                if(monstersCollision.item==0)
                                 {
                                     visible=(monstersCollisionTemp.tile.empty() && pendingMonsterMoves.size()>=1) ||
                                                                  (pendingMonsterMoves.size()==1 && !inMove)
@@ -923,7 +792,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
         }
         //locate the right layer
         const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=
-                CatchChallenger::MoveOnTheMap::getZoneCollision(current_map_pointer->logicalMap,x,y);
+                CatchChallenger::MoveOnTheMap::getZoneCollision(logicalMap,x,y);
         unsigned int index=0;
         while(index<monstersCollisionValue.walkOn.size())
         {
@@ -934,7 +803,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
                         CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(newIndex);
                 const CatchChallenger::MonstersCollisionTemp &monstersCollisionTemp=
                         CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollisionTemp().at(newIndex);
-                if(monstersCollision.item==0 || items->find(monstersCollision.item)!=items->cend())
+                if(monstersCollision.item==0)
                 {
                     //change tile if needed (water to walk transition)
                     if(monstersCollisionTemp.tile!=lastTileset)
@@ -1005,12 +874,11 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
     if(centerOnPlayer)
         centerOn(MapObjectItem::objectLink.at(playerMapObject));
-    //stopGrassAnimation();
 
     if(haveStopTileAction())
         return;
 
-    if(CatchChallenger::MoveOnTheMap::getLedge(current_map_pointer->logicalMap,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
+    if(CatchChallenger::MoveOnTheMap::getLedge(logicalMap,x,y)!=CatchChallenger::ParsedLayerLedges_NoLedges)
     {
         switch(direction)
         {
@@ -1032,7 +900,6 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
         }
         moveStep=0;
         moveTimer.start();
-        //startGrassAnimation(direction);
         return;
     }
 
@@ -1042,7 +909,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
     if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend())
     {
         //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map_pointer->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_left,current_map,x,y,true))
         {
             keyPressed.erase(Qt::Key_Left);
             direction=CatchChallenger::Direction_look_at_left;
@@ -1050,7 +917,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             cell.setTile(playerTileset->tileAt(10));
             playerMapObject->setCell(cell);
             inMove=false;
-            emit send_player_direction(direction);//see the top note
+            emit send_player_direction(direction);
             parseStop();
         }
         //if can go, then do the move
@@ -1062,13 +929,11 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==0)
                 emit send_player_direction(CatchChallenger::Direction_look_at_left);
-            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.find(Qt::Key_Right)!=keyPressed.cend())
     {
-        //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map_pointer->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_right,current_map,x,y,true))
         {
             keyPressed.erase(Qt::Key_Right);
             direction=CatchChallenger::Direction_look_at_right;
@@ -1076,25 +941,22 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             cell.setTile(playerTileset->tileAt(4));
             playerMapObject->setCell(cell);
             inMove=false;
-            emit send_player_direction(direction);//see the top note
+            emit send_player_direction(direction);
             parseStop();
         }
-        //if can go, then do the move
         else
         {
             direction=CatchChallenger::Direction_move_at_right;
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==(current_map_pointer->logicalMap.width-1))
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && x==(logicalMap.width-1))
                 emit send_player_direction(CatchChallenger::Direction_look_at_right);
-            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend())
     {
-        //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map_pointer->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_top,current_map,x,y,true))
         {
             keyPressed.erase(Qt::Key_Up);
             direction=CatchChallenger::Direction_look_at_top;
@@ -1102,10 +964,9 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             cell.setTile(playerTileset->tileAt(1));
             playerMapObject->setCell(cell);
             inMove=false;
-            emit send_player_direction(direction);//see the top note
+            emit send_player_direction(direction);
             parseStop();
         }
-        //if can go, then do the move
         else
         {
             direction=CatchChallenger::Direction_move_at_top;
@@ -1114,13 +975,11 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             emit send_player_direction(direction);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==0)
                 emit send_player_direction(CatchChallenger::Direction_look_at_top);
-            //startGrassAnimation(direction);
         }
     }
     else if(keyPressed.find(Qt::Key_Down)!=keyPressed.cend())
     {
-        //can't go into this direction, then just look into this direction
-        if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map_pointer->logicalMap,x,y,true))
+        if(!canGoTo(CatchChallenger::Direction_move_at_bottom,current_map,x,y,true))
         {
             keyPressed.erase(Qt::Key_Down);
             direction=CatchChallenger::Direction_look_at_bottom;
@@ -1128,19 +987,17 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
             cell.setTile(playerTileset->tileAt(7));
             playerMapObject->setCell(cell);
             inMove=false;
-            emit send_player_direction(direction);//see the top note
+            emit send_player_direction(direction);
             parseStop();
         }
-        //if can go, then do the move
         else
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             moveStep=0;
             moveStepSlot();
             emit send_player_direction(direction);
-            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==(current_map_pointer->logicalMap.height-1))
+            if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange && y==(logicalMap.height-1))
                 emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
-            //startGrassAnimation(direction);
         }
     }
     //now stop walking, no more arrow key is pressed
@@ -1170,45 +1027,62 @@ bool MapVisualiserPlayer::haveStopTileAction()
 
 void MapVisualiserPlayer::parseStop()
 {
-    CatchChallenger::CommonMap * map=&all_map.at(current_map)->logicalMap;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
+    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    CATCHCHALLENGER_TYPE_MAPID tempMapIndex=current_map;
+    uint8_t lx=this->x;
+    uint8_t ly=this->y;
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_left,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_left,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
-                emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_right,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_right,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
-                emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_top,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_top,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
-                emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+            }
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_bottom,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_bottom,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
-                emit stopped_in_front_of(static_cast<CatchChallenger::Map_client *>(map),x,y);
+            {
+                const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+            }
         }
         break;
         default:
@@ -1240,132 +1114,112 @@ void MapVisualiserPlayer::parseAction()
             return;
         lastAction.restart();
     }
-    CatchChallenger::CommonMap * map=&all_map.at(current_map)->logicalMap;
-    uint8_t x=this->x;
-    uint8_t y=this->y;
+    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
+    CATCHCHALLENGER_TYPE_MAPID tempMapIndex=current_map;
+    uint8_t lx=this->x;
+    uint8_t ly=this->y;
     switch(direction)
     {
         case CatchChallenger::Direction_look_at_left:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_left,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_left,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_left,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_left,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at left at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
             {
-                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->botsDisplay.cend())
+                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
+                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[
-                            std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))
-                            ];
-                    Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.setTile(botDisplay->tileset->tileAt(4));
-                    botDisplay->mapObject->setCell(cell);
-                }
-                else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->itemsOnMap.cend())
-                {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                    if(item.tileObject!=NULL && !item.infinite)
+                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
+                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
+                            destMapFull->botsDisplay.cend())
                     {
-                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[
+                                std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))
+                                ];
+                        Tiled::Cell cell=botDisplay->mapObject->cell();
+                        cell.setTile(botDisplay->tileset->tileAt(4));
+                        botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(map_client,x,y);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
             }
         }
         break;
         case CatchChallenger::Direction_look_at_right:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_right,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_right,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_right,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_right,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at right at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
             {
-                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->botsDisplay.cend())
+                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
+                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                    Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.setTile(botDisplay->tileset->tileAt(10));
-                    botDisplay->mapObject->setCell(cell);
-                }
-                else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->itemsOnMap.cend())
-                {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                    if(item.tileObject!=NULL && !item.infinite)
+                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
+                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
+                            destMapFull->botsDisplay.cend())
                     {
-                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
+                        Tiled::Cell cell=botDisplay->mapObject->cell();
+                        cell.setTile(botDisplay->tileset->tileAt(10));
+                        botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(map_client,x,y);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
             }
         }
         break;
         case CatchChallenger::Direction_look_at_top:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_top,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_top,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_top,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_top,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
             {
-                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->botsDisplay.cend())
+                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
+                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[
-                            std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                    Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.setTile(botDisplay->tileset->tileAt(7));
-                    botDisplay->mapObject->setCell(cell);
-                }
-                else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->itemsOnMap.cend())
-                {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.at(
-                                std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                    if(item.tileObject!=NULL && !item.infinite)
+                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
+                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
+                            destMapFull->botsDisplay.cend())
                     {
-                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[
+                                std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
+                        Tiled::Cell cell=botDisplay->mapObject->cell();
+                        cell.setTile(botDisplay->tileset->tileAt(7));
+                        botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(map_client,x,y);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
             }
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
-        if(CatchChallenger::MoveOnTheMap::canGoTo(CatchChallenger::Direction_move_at_bottom,*map,x,y,false))
+        if(CatchChallenger::MoveOnTheMap::canGoTo(mapList,CatchChallenger::Direction_move_at_bottom,logicalMap,lx,ly,false))
         {
-            if(!CatchChallenger::MoveOnTheMap::move(CatchChallenger::Direction_move_at_bottom,&map,&x,&y,false))
-                qDebug() << QStringLiteral("can't go at top at map %1 (%2,%3) when move have been checked").arg(QString::fromStdString(map->map_file)).arg(x).arg(y);
+            tempMapIndex=current_map; lx=this->x; ly=this->y;
+            if(!CatchChallenger::MoveOnTheMap::move(mapList,CatchChallenger::Direction_move_at_bottom,tempMapIndex,lx,ly,false))
+                qDebug() << QStringLiteral("can't go at bottom at map %1 (%2,%3) when move have been checked").arg(current_map).arg(lx).arg(ly);
             else
             {
-                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(map);
-                if(map_client->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->botsDisplay.cend())
+                CatchChallenger::CommonMap &destMap=const_cast<CatchChallenger::CommonMap &>(QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex));
+                if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)!=CatchChallenger::QMap_client::all_map.cend())
                 {
-                    CatchChallenger::BotDisplay *botDisplay=&map_client->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))];
-                    Tiled::Cell cell=botDisplay->mapObject->cell();
-                    cell.setTile(botDisplay->tileset->tileAt(1));
-                    botDisplay->mapObject->setCell(cell);
-                }
-                else if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                        map_client->itemsOnMap.cend())
-                {
-                    const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-                    if(item.tileObject!=NULL && !item.infinite)
+                    QMap_client *destMapFull=CatchChallenger::QMap_client::all_map.at(tempMapIndex);
+                    if(destMapFull->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly)))!=
+                            destMapFull->botsDisplay.cend())
                     {
-                        ObjectGroupItem::objectGroupLink[item.tileObject->objectGroup()]->removeObject(item.tileObject);
-                        map_client->itemsOnMap[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y))].tileObject=NULL;
+                        CatchChallenger::BotDisplay *botDisplay=&destMapFull->botsDisplay[std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly))];
+                        Tiled::Cell cell=botDisplay->mapObject->cell();
+                        cell.setTile(botDisplay->tileset->tileAt(1));
+                        botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(map_client,x,y);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
             }
         }
         break;
@@ -1385,50 +1239,46 @@ void MapVisualiserPlayer::transformLookToMove()
     {
         case CatchChallenger::Direction_look_at_left:
         if(keyPressed.find(Qt::Key_Left)!=keyPressed.cend() &&
-                canGoTo(CatchChallenger::Direction_move_at_left,all_map.at(current_map)->logicalMap,x,y,true))
+                canGoTo(CatchChallenger::Direction_move_at_left,current_map,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_left;
             inMove=true;
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_right:
         if(keyPressed.find(Qt::Key_Right)!=keyPressed.cend() &&
-                canGoTo(CatchChallenger::Direction_move_at_right,all_map.at(current_map)->logicalMap,x,y,true))
+                canGoTo(CatchChallenger::Direction_move_at_right,current_map,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_right;
             inMove=true;
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_top:
         if(keyPressed.find(Qt::Key_Up)!=keyPressed.cend() &&
-                canGoTo(CatchChallenger::Direction_move_at_top,all_map.at(current_map)->logicalMap,x,y,true))
+                canGoTo(CatchChallenger::Direction_move_at_top,current_map,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_top;
             inMove=true;
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         break;
         case CatchChallenger::Direction_look_at_bottom:
         if(keyPressed.find(Qt::Key_Down)!=keyPressed.cend() &&
-                canGoTo(CatchChallenger::Direction_move_at_bottom,all_map.at(current_map)->logicalMap,x,y,true))
+                canGoTo(CatchChallenger::Direction_move_at_bottom,current_map,x,y,true))
         {
             direction=CatchChallenger::Direction_move_at_bottom;
             inMove=true;
             moveStep=1;
             moveStepSlot();
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
         }
         break;
         default:
@@ -1439,7 +1289,7 @@ void MapVisualiserPlayer::transformLookToMove()
 
 void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 {
-    if(current_map.empty() || all_map.find(current_map)==all_map.cend())
+    if(current_map==0 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
         return;
 
     //ignore the no arrow key
@@ -1460,75 +1310,61 @@ void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
         keyPressParse();
 }
 
-/*std::string MapVisualiserPlayer::lastLocation() const
-{
-    return mLastLocation;
-}*/
-
-std::string MapVisualiserPlayer::currentMap() const
+CATCHCHALLENGER_TYPE_MAPID MapVisualiserPlayer::currentMap() const
 {
     return current_map;
 }
 
-Map_full * MapVisualiserPlayer::currentMapFull() const
+QMap_client * MapVisualiserPlayer::currentMapFull() const
 {
-    return all_map.at(current_map);
+    return CatchChallenger::QMap_client::all_map.at(current_map);
 }
 
 bool MapVisualiserPlayer::currentMapIsLoaded() const
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
         return false;
     return true;
 }
 
 std::string MapVisualiserPlayer::currentMapType() const
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
         return std::string();
-    const Map_full * const mapFull=all_map.at(current_map);
+    const QMap_client * const mapFull=CatchChallenger::QMap_client::all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("type")!=properties.cend())
         if(!properties.value("type").toString().isEmpty())
             return properties.value("type").toString().toStdString();
-    if(mapFull->logicalMap.xmlRoot==NULL)
-        return std::string();
-    if(mapFull->logicalMap.xmlRoot->Attribute("type")!=NULL)
-        //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("type")->empty()) if empty return empty or empty?
-            return mapFull->logicalMap.xmlRoot->Attribute("type");
+    if(!mapFull->visualType.empty())
+        return mapFull->visualType;
     return std::string();
 }
 
 std::string MapVisualiserPlayer::currentZone() const
 {
-    const Map_full * const mapFull=all_map.at(current_map);
+    const QMap_client * const mapFull=CatchChallenger::QMap_client::all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("zone")!=properties.cend())
         if(!properties.value("zone").toString().isEmpty())
             return properties.value("zone").toString().toStdString();
-    if(mapFull->logicalMap.xmlRoot==NULL)
-        return std::string();
-    if(mapFull->logicalMap.xmlRoot->Attribute("zone")!=NULL)
-        //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("zone")->empty()) if empty return empty or empty?
-            return mapFull->logicalMap.xmlRoot->Attribute("zone");
+    if(!mapFull->zone.empty())
+        return mapFull->zone;
     return std::string();
 }
 
 std::string MapVisualiserPlayer::currentBackgroundsound() const
 {
-    const Map_full * const mapFull=all_map.at(current_map);
+    const QMap_client * const mapFull=CatchChallenger::QMap_client::all_map.at(current_map);
     const Tiled::Map * const tiledMap=mapFull->tiledMap.get();
     const Tiled::Properties &properties=tiledMap->properties();
     if(properties.find("backgroundsound")!=properties.cend())
         if(!properties.value("backgroundsound").toString().isEmpty())
             return properties.value("backgroundsound").toString().toStdString();
-    if(mapFull->logicalMap.xmlRoot==NULL)
-        return std::string();
-    if(mapFull->logicalMap.xmlRoot->Attribute("backgroundsound")!=NULL)
-        //if(!std::string(all_map.value(current_map)->logicalMap.xmlRoot->Attribute("backgroundsound")->empty()) if empty return empty or empty?
-            return mapFull->logicalMap.xmlRoot->Attribute("backgroundsound");
+    if(!mapFull->backgroundsound.empty())
+        return mapFull->backgroundsound;
     return std::string();
 }
 
@@ -1537,15 +1373,14 @@ CatchChallenger::Direction MapVisualiserPlayer::getDirection()
     return direction;
 }
 
-bool MapVisualiserPlayer::loadPlayerMap(const std::string &fileName,const uint8_t &x,const uint8_t &y)
+bool MapVisualiserPlayer::loadPlayerMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const uint8_t &x,const uint8_t &y)
 {
     this->x=x;
     this->y=y;
     this->monster_x=x;
     this->monster_y=y;
-    QFileInfo fileInformations(QString::fromStdString(fileName));
-    current_map=fileInformations.absoluteFilePath().toStdString();
-    current_monster_map=fileInformations.absoluteFilePath().toStdString();
+    current_map=mapIndex;
+    current_monster_map=mapIndex;
     return true;
 }
 
@@ -1566,15 +1401,11 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
                    std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
         return true;
     }
-    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("insert_player(%1->%2,%3,%4,%5,%6)").arg(player.pseudo).arg(player.simplifiedId).arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    #endif
-    //current player
-    if(player.simplifiedId==player_informations.public_informations.simplifiedId)
+    //current player - use monsterId to identify (simplifiedId removed)
     {
-        std::cout << "MapVisualiserPlayer::insert_player_internal() player.simplifiedId==player_informations.public_informations.simplifiedId" << std::endl;
+        std::cout << "MapVisualiserPlayer::insert_player_internal() loading player" << std::endl;
         //ignore to improve the performance server because can reinsert all player of map using the overall client list
-        if(!current_map.empty())
+        if(current_map!=0)
         {
             qDebug() << "Current player already loaded on the map";
             return true;
@@ -1691,18 +1522,15 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
         //monster
         updatePlayerMonsterTile(player.monsterId);
 
-        current_map=QtDatapackClientLoader::datapackLoader->get_maps().at(mapId);
+        current_map=static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapId);
         if(datapackMapPathSpec.empty())
         {
             std::cout << "datapackMapPathSpec can't be empty at this point " << __FILE__ << ":" << __LINE__ << " MapVisualiserPlayer::setDatapackPath() was not called (abort)" << std::endl;
             abort();
         }
-        loadPlayerMap(datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId),
+        loadPlayerMap(static_cast<CATCHCHALLENGER_TYPE_MAPID>(mapId),
                       static_cast<uint8_t>(x),static_cast<uint8_t>(y));
-        setSpeed(player.speed);
     }
-    else
-        std::cout << "MapVisualiserPlayer::insert_player_internal() other player" << std::endl;
     return true;
 }
 
@@ -1710,13 +1538,11 @@ void MapVisualiserPlayer::resetAll()
 {
     if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png")))
         qDebug() << "Unable the load the default player tileset";
-    current_monster_map.clear();
-    //stopGrassAnimation();
+    current_monster_map=0;
     unloadPlayerFromCurrentMap();
-    currentPlayerSpeed=250;
-    moveTimer.setInterval(currentPlayerSpeed/5);
+    moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
-    moveAnimationTimer.setInterval(currentPlayerSpeed/5);
+    moveAnimationTimer.setInterval(250/5);
     moveAnimationTimer.setSingleShot(true);
     timer.stop();
     moveTimer.stop();
@@ -1734,46 +1560,34 @@ void MapVisualiserPlayer::resetAll()
     mapVisualiserThread.start(QThread::IdlePriority);
     #endif
 
-    //delete playerTileset;
-    /*{
-        std::unordered_set<Tiled::SharedTileset> deletedTileset;
-        for(auto iter = playerTilesetCache.begin(); iter != playerTilesetCache.end(); ++iter){
-                if(deletedTileset.find(iter->second)==deletedTileset.cend())
-                {
-                    deletedTileset.insert(iter->second);
-                    delete iter->second;
-                }
-            }
-        playerTilesetCache.clear();
-    }*/
     lastTileset=defaultTileset;
     playerTileset=Tiled::Tileset::create(QStringLiteral("player"),16,24);
     playerTilesetCache[lastTileset]=playerTileset;
     playerMapObject = new Tiled::MapObject();
 }
 
-bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y, const bool &checkCollision)
+bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y, const bool &checkCollision)
 {
-    CatchChallenger::CommonMap *mapPointer=&mapIndex;
+    const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
+    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
+    CATCHCHALLENGER_TYPE_MAPID tempMapIndex=mapIndex;
+    COORD_TYPE lx=x,ly=y;
     CatchChallenger::ParsedLayerLedges ledge;
     do
     {
-        DatapackClientLoader::canGoTo(
-        if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*mapPointer,x,y,checkCollision && !clip))
+        if(!CatchChallenger::MoveOnTheMap::canGoTo(mapList,direction,logicalMap,lx,ly,checkCollision && !clip))
             return false;
-                DatapackClientLoader::canGoTo(
-        if(!CatchChallenger::MoveOnTheMap::move(direction,&mapPointer,&x,&y,checkCollision && !clip))
+        if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,tempMapIndex,lx,ly,checkCollision && !clip))
             return false;
-                CatchChallenger::Map_client * map_client=static_cast<CatchChallenger::Map_client *>(&all_map.at(mapIndex.map_file)->logicalMap);
-        if(map_client->itemsOnMap.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=
-                map_client->itemsOnMap.cend())
+        if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)==CatchChallenger::QMap_client::all_map.cend())
+            return false;
+        const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
         {
-            const CatchChallenger::Map_client::ItemOnMapForClient &item=map_client->itemsOnMap.at(
-                        std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)));
-            if(item.tileObject!=NULL)
+            const std::pair<uint8_t,uint8_t> pos(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly));
+            if(destMap.items.find(pos)!=destMap.items.cend())
                 return false;
         }
-        ledge=CatchChallenger::MoveOnTheMap::getLedge(mapIndex,x,y);
+        ledge=CatchChallenger::MoveOnTheMap::getLedge(destMap,lx,ly);
         if(ledge==CatchChallenger::ParsedLayerLedges_NoLedges)
             return true;
         switch(direction)
@@ -1804,9 +1618,9 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
-    if(all_map.find(current_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
-        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::fromStdString(current_map));
+        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(current_map);
         return;
     }
     {
@@ -1815,16 +1629,14 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         {
             if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(playerMapObject);
-            //currentGroup->removeObject(playerMapObject);
-            if(currentGroup!=all_map.at(current_map)->objectGroup)
+            if(currentGroup!=CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)
                 qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the playerMapObject group is wrong: %1").arg(currentGroup->name());
         }
-        Tiled::ObjectGroup * objectGroup=all_map.at(current_map)->objectGroup;
+        Tiled::ObjectGroup * objectGroup=CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup;
         if(ObjectGroupItem::objectGroupLink.find(objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
             ObjectGroupItem::objectGroupLink.at(objectGroup)->addObject(playerMapObject);
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
-        mLastLocation=all_map.at(current_map)->logicalMap.map_file;
 
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(x,y+1));
@@ -1841,9 +1653,9 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
     if(monsterMapObject==nullptr)
         return;
     //monster
-    if(all_map.find(current_monster_map)==all_map.cend())
+    if(CatchChallenger::QMap_client::all_map.find(current_monster_map)==CatchChallenger::QMap_client::all_map.cend())
     {
-        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(QString::fromStdString(current_monster_map));
+        qDebug() << QStringLiteral("all_map have not the current monster map: %1").arg(current_monster_map);
         return;
     }
     {
@@ -1852,12 +1664,11 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
         {
             if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(monsterMapObject);
-            //currentGroup->removeObject(monsterMapObject);
-            if(currentGroup!=all_map.at(current_map)->objectGroup)
+            if(currentGroup!=CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)
                 qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the monsterMapObject group is wrong: %1").arg(currentGroup->name());
         }
-        if(ObjectGroupItem::objectGroupLink.find(all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-            ObjectGroupItem::objectGroupLink.at(all_map.at(current_map)->objectGroup)->addObject(monsterMapObject);
+        if(ObjectGroupItem::objectGroupLink.find(CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)->addObject(monsterMapObject);
         else
             qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
@@ -1899,72 +1710,6 @@ void MapVisualiserPlayer::unloadMonsterFromCurrentMap()
             qDebug() << QStringLiteral("unloadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains monsterMapObject->objectGroup()");
     }
 }
-
-/*void MapVisualiserPlayer::startGrassAnimation(const CatchChallenger::Direction &direction)
-{
-    switch(direction)
-    {
-        case CatchChallenger::Direction_move_at_left:
-        case CatchChallenger::Direction_move_at_right:
-        case CatchChallenger::Direction_move_at_top:
-        case CatchChallenger::Direction_move_at_bottom:
-        break;
-        default:
-        return;
-    }
-
-    if(!haveGrassCurrentObject)
-    {
-        haveGrassCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(all_map.value(current_map)->logicalMap,x,y);
-        if(haveGrassCurrentObject)
-        {
-            ObjectGroupItem::objectGroupLink.value(all_map.value(current_map)->objectGroup)->addObject(grassCurrentObject);
-            grassCurrentObject->setPosition(QPoint(x,y+1));
-            MapObjectItem::objectLink.value(playerMapObject)->setZValue(y);
-            Tiled::Cell cell=grassCurrentObject->cell();
-            cell.tile=animationTileset->tileAt(2);
-            grassCurrentObject->setCell(cell);
-        }
-    }
-    else
-        qDebug() << "haveGrassCurrentObject true here, it's wrong!";
-
-    if(!haveNextCurrentObject)
-    {
-        haveNextCurrentObject=false;
-        CatchChallenger::Map * map_destination=&all_map.value(current_map)->logicalMap;
-        COORD_TYPE x_destination=x;
-        COORD_TYPE y_destination=y;
-        if(CatchChallenger::MoveOnTheMap::move(direction,&map_destination,&x_destination,&y_destination))
-            if(all_map.contains(map_destination->map_file))
-                haveNextCurrentObject=CatchChallenger::MoveOnTheMap::haveGrass(*map_destination,x_destination,y_destination);
-        if(haveNextCurrentObject)
-        {
-            ObjectGroupItem::objectGroupLink.value(all_map.value(map_destination->map_file)->objectGroup)->addObject(nextCurrentObject);
-            nextCurrentObject->setPosition(QPoint(x_destination,y_destination+1));
-            MapObjectItem::objectLink.value(playerMapObject)->setZValue(y_destination);
-            Tiled::Cell cell=nextCurrentObject->cell();
-            cell.tile=animationTileset->tileAt(1);
-            nextCurrentObject->setCell(cell);
-        }
-    }
-    else
-        qDebug() << "haveNextCurrentObject true here, it's wrong!";
-}
-
-void MapVisualiserPlayer::stopGrassAnimation()
-{
-    if(haveGrassCurrentObject)
-    {
-        ObjectGroupItem::objectGroupLink.value(grassCurrentObject->objectGroup())->removeObject(grassCurrentObject);
-        haveGrassCurrentObject=false;
-    }
-    if(haveNextCurrentObject)
-    {
-        ObjectGroupItem::objectGroupLink.value(nextCurrentObject->objectGroup())->removeObject(nextCurrentObject);
-        haveNextCurrentObject=false;
-    }
-}*/
 
 void MapVisualiserPlayer::loadGrassTile()
 {
@@ -2023,8 +1768,8 @@ uint8_t MapVisualiserPlayer::getY()
 
 CatchChallenger::Map_client * MapVisualiserPlayer::getMapObject()
 {
-    if(all_map.find(current_map)!=all_map.cend())
-        return &all_map.at(current_map)->logicalMap;
+    if(CatchChallenger::QMap_client::all_map.find(current_map)!=CatchChallenger::QMap_client::all_map.cend())
+        return const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&QtDatapackClientLoader::datapackLoader->getMap(current_map)));
     else
         return NULL;
 }
@@ -2057,7 +1802,6 @@ void MapVisualiserPlayer::setDatapackPath(const std::string &path,const std::str
     datapackMapPathSpec=QFileInfo(QString::fromStdString(datapackPath)+DATAPACK_BASE_PATH_MAPMAIN+QString::fromStdString(mainDatapackCode)+"/").absoluteFilePath().toStdString();
     if(!stringEndsWith(datapackMapPathSpec,'/') && !stringEndsWith(datapackMapPathSpec,'\\'))
         datapackMapPathSpec+="/";
-    mLastLocation.clear();
 }
 
 void MapVisualiserPlayer::datapackParsed()
@@ -2091,12 +1835,11 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
     if(monsterMapObject!=NULL)
     {
         unloadMonsterFromCurrentMap();
-        //delete monsterMapObject;
         monsterMapObject=NULL;
         resetMonster=true;
     }
     monsterTileset=NULL;
-    player_informations.public_informations.monsterId=monster;
+    //player_informations removed - monsterId tracked via client
     const std::string &imagePath=datapackPath+DATAPACK_BASE_PATH_MONSTERS+std::to_string(monster)+"/overworld.png";
     if(monsterTilesetCache.find(imagePath)!=monsterTilesetCache.cend())
         monsterTileset=monsterTilesetCache.at(imagePath);
@@ -2177,23 +1920,17 @@ void MapVisualiserPlayer::stopMove()
     inMove=false;
 }
 
-bool MapVisualiserPlayer::teleportTo(const uint32_t &mapId,const uint16_t &x,const uint16_t &y,const CatchChallenger::Direction &direction)
+bool MapVisualiserPlayer::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     std::cout << "MapVisualiserPlayer::teleportTo()" << std::endl;
-    if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
+    if(mapId>=(CATCHCHALLENGER_TYPE_MAPID)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
                    std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
         return false;
     }
-    #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-    qDebug() << QStringLiteral("teleportTo(%1,%2,%3,%4)").arg(QtDatapackClientLoader::datapackLoader->maps.value(mapId)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-    qDebug() << QStringLiteral("currently on: %1 (%2,%3)").arg(current_map).arg(this->x).arg(this->y);
-    #endif
 
-    current_map=QFileInfo(QString::fromStdString(
-                    datapackMapPathSpec+QtDatapackClientLoader::datapackLoader->get_maps().at(mapId)))
-            .absoluteFilePath().toStdString();
+    current_map=mapId;
     this->x=x;
     this->y=y;
 
@@ -2258,23 +1995,23 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
     const std::pair<uint8_t,uint8_t> pos(getPos());
     const uint8_t &x=pos.first;
     const uint8_t &y=pos.second;
-    //if(!pathList.empty()) -> wrong, to get direction, get from direction
     {
         if(!inMove)
         {
             std::cerr << "inMove=false into MapControllerMP::nextPathStep(), fixed" << std::endl;
             inMove=true;
         }
-        if(canGoTo(direction,all_map.at(current_map)->logicalMap,x,y,true))
+        if(canGoTo(direction,current_map,x,y,true))
         {
             this->direction=direction;
             moveStep=0;
             moveStepSlot();
+            const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
             if(CommonSettingsServer::commonSettingsServer.forceClientToSendAtMapChange)
             {
                 if(direction==CatchChallenger::Direction_move_at_bottom)
                 {
-                    if(y==(all_map.at(current_map)->logicalMap.height-1))
+                    if(y==(logicalMap.height-1))
                         emit send_player_direction(CatchChallenger::Direction_look_at_bottom);
                 }
                 else if(direction==CatchChallenger::Direction_move_at_top)
@@ -2284,7 +2021,7 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
                 }
                 else if(direction==CatchChallenger::Direction_move_at_right)
                 {
-                    if(x==(all_map.at(current_map)->logicalMap.width-1))
+                    if(x==(logicalMap.width-1))
                         emit send_player_direction(CatchChallenger::Direction_look_at_right);
                 }
                 else if(direction==CatchChallenger::Direction_move_at_left)
@@ -2294,7 +2031,6 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
                 }
             }
             emit send_player_direction(direction);
-            //startGrassAnimation(direction);
             return true;
         }
         else
@@ -2307,7 +2043,6 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
                 this->direction=CatchChallenger::Direction_look_at_right;
             else if(direction==CatchChallenger::Direction_move_at_left)
                 this->direction=CatchChallenger::Direction_look_at_left;
-            //emit send_player_direction(this->direction);
 
             moveStep=0;
             uint8_t baseTile;
@@ -2342,7 +2077,7 @@ bool MapVisualiserPlayer::nextPathStepInternal(std::vector<PathResolved> &pathLi
     return false;
 }
 
-void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &pathList, const std::string &current_map, const uint8_t &x, const uint8_t &y,
+void MapVisualiserPlayer::pathFindingResultInternal(std::vector<PathResolved> &pathList, const CATCHCHALLENGER_TYPE_MAPID &current_map, const uint8_t &x, const uint8_t &y,
                                                     const std::vector<std::pair<CatchChallenger::Orientation,uint8_t> > &path)
 {
     if(keyAccepted.empty() || keyAccepted.find(Qt::Key_Return)!=keyAccepted.cend())

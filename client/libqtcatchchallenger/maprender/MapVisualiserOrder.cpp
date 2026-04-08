@@ -1,4 +1,5 @@
 #include "MapVisualiserOrder.hpp"
+#include "QMap_client.hpp"
 #include <QDebug>
 #include <cmath>
 
@@ -15,33 +16,7 @@ MapVisualiserOrder::~MapVisualiserOrder()
 {
 }
 
-Map_full::Map_full()
-{
-    logicalMap.xmlRoot=NULL;
-    logicalMap.border.bottom.map=NULL;
-    logicalMap.border.bottom.x_offset=0;
-    logicalMap.border.top.map=NULL;
-    logicalMap.border.top.x_offset=0;
-    logicalMap.border.right.map=NULL;
-    logicalMap.border.right.y_offset=0;
-    logicalMap.border.left.map=NULL;
-    logicalMap.border.left.y_offset=0;
-    logicalMap.teleporter=NULL;
-    logicalMap.teleporter_list_size=0;
-    logicalMap.width=0;
-    logicalMap.height=0;
-    logicalMap.group=0;
-    logicalMap.id=0;
-    tiledMap=NULL;
-    tiledRender=NULL;
-    objectGroup=NULL;
-    objectGroupIndex=0;
-    relative_x=0;
-    relative_y=0;
-    relative_x_pixel=0;
-    relative_y_pixel=0;
-    displayed=0;
-}
+/* QMap_client constructor is now in QMap_client.cpp */
 
 void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObject, bool hideTheDoors)
 {
@@ -216,7 +191,7 @@ void MapVisualiserOrder::layerChangeLevelAndTagsChange(QMap_client *tempMapObjec
             }
             if(index<0)
             {
-                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map: %1").arg(QString::fromStdString(tempMapObject->logicalMap.map_file));
+                qDebug() << QStringLiteral("Unable to locate the \"Collisions\" layer on the map");
                 tempMapObject->tiledMap->addLayer(tempMapObject->objectGroup);
             }
         }

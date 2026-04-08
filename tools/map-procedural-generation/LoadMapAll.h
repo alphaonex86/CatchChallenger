@@ -2,8 +2,8 @@
 #define LOADMAPALL_H
 
 #include "../map-procedural-generation-terrain/VoronioForTiledMapTmx.h"
-#include <libtiled/map.h>
-#include <libtiled/mapobject.h>
+#include <tiled/map.h>
+#include <tiled/mapobject.h>
 #include "../../general/base/cpp11addition.hpp"
 #include "../map-procedural-generation-terrain/MapBrush.h"
 #include "../map-procedural-generation-terrain/znoise/headers/Simplex.hpp"

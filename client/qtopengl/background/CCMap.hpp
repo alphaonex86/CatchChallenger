@@ -1,7 +1,7 @@
 #ifndef CCMap_H
 #define CCMap_H
 
-#include "../../qtmaprender/MapController.hpp"
+#include "../../libqtcatchchallenger/maprender/MapController.hpp"
 #include "../ScreenInput.hpp"
 
 class ConnexionManager;
@@ -29,17 +29,22 @@ private:
     qreal scale;
     qreal x;
     qreal y;
+private slots:
+    void onMapControllerStoppedInFrontOf(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void onMapControllerActionOn(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void onMapControllerWildFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void onMapControllerBotFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
 signals:
     void pathFindingNotFound();
     void repelEffectIsOver() const;
     void teleportConditionNotRespected(const std::string &text) const;
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void stopped_in_front_of(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
-    void actionOn(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void stopped_in_front_of(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void actionOn(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
-    void wildFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
-    void botFightCollision(CatchChallenger::Map_client *map, const uint8_t &x, const uint8_t &y);
+    void wildFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void error(const std::string &error);
     void errorWithTheCurrentMap();
     void currentMapLoaded();

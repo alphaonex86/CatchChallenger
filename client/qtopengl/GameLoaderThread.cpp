@@ -6,7 +6,7 @@
 #endif
 #include <QDirIterator>
 #include <iostream>
-#include <QTime>
+#include <QElapsedTimer>
 #include "../../general/base/ProtocolParsing.hpp"
 
 uint32_t GameLoaderThread::audio=0;
@@ -24,7 +24,7 @@ void GameLoaderThread::run()
     unsigned int index=0;
     while(index<toLoad.size())
     {
-        QTime myTimer;
+        QElapsedTimer myTimer;
         myTimer.start();
         const QString &file=toLoad.at(index);
         if(file.endsWith(QStringLiteral(".opus"))) {
