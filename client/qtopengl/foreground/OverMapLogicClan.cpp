@@ -73,8 +73,6 @@ void OverMapLogic::clanDissolved()
 
 void OverMapLogic::updateClanDisplay()
 {
-    const CatchChallenger::Player_private_and_public_informations &playerInformations=connexionManager->client->get_player_informations_ro();//do a crash due to reference
-    //const CatchChallenger::Player_private_and_public_informations playerInformations=client->get_player_informations_ro();
     //nothing to do
 }
 
@@ -85,7 +83,7 @@ void OverMapLogic::clanInformations(const std::string &name)
     updateClanDisplay();
 }
 
-void OverMapLogic::clanInvite(const uint32_t &clanId,const std::string &name)
+void OverMapLogic::clanInvite(const uint32_t &/*clanId*/,const std::string &/*name*/)
 {
     /*todoQMessageBox::StandardButton button=QMessageBox::question(this,tr("Invite"),tr("The clan %1 invite you to become a member. Do you accept?")
                                                              .arg(QStringLiteral("<b>%1</b>").arg(QString::fromStdString(name))));

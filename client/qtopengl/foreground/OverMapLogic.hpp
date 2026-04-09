@@ -61,10 +61,8 @@ public:
         ObjectType_All,
         ObjectType_Seed,
         ObjectType_Sell,
-        ObjectType_SellToMarket,
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
-        ObjectType_MonsterToTradeToMarket,
         ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
@@ -169,8 +167,8 @@ public slots:
     void haveSellFactoryObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice);
     void haveFactoryList(const uint32_t &remainingProductionTime, const std::vector<CatchChallenger::ItemToSellOrBuy> &resources, const std::vector<CatchChallenger::ItemToSellOrBuy> &products);
     //plant
-    void insert_plant(const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
-    void remove_plant(const uint32_t &mapId, const uint8_t &x, const uint8_t &y);
+    void insert_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId,const uint8_t &x,const uint8_t &y,const uint8_t &plant_id,const uint16_t &seconds_to_mature);
+    void remove_plant(const CATCHCHALLENGER_TYPE_MAPID &mapId, const uint8_t &x, const uint8_t &y);
     void cancelAllPlantQuery(const CATCHCHALLENGER_TYPE_MAPID map, const uint8_t x, const uint8_t y);//without ref because after reset them self will failed all reset
     void seed_planted(const bool &ok);
     void plant_collected(const CatchChallenger::Plant_collect &stat);

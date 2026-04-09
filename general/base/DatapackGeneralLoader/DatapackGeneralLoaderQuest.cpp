@@ -1,8 +1,8 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../CommonDatapack.hpp"
+#include "../cpp11addition.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -239,7 +239,17 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                 if(rewardsItem->Attribute("id")!=NULL)
                 {
                     CatchChallenger::Quest::Item item;
-                    item.item=stringtouint16(rewardsItem->Attribute("id"),&ok);
+                    {
+                        std::string itemLower=str_tolower(rewardsItem->Attribute("id"));
+                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                        {
+                            item.item=tempNameToItemId.at(itemLower);
+                            ok=true;
+                        }
+                        else
+                            item.item=stringtouint16(rewardsItem->Attribute("id"),&ok);
+                    }
                     item.quantity=1;
                     if(ok)
                     {
@@ -335,7 +345,17 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                     if(stepItem->Attribute("id")!=NULL)
                     {
                         CatchChallenger::Quest::Item item;
-                        item.item=stringtouint16(stepItem->Attribute("id"),&ok);
+                        {
+                            std::string itemLower=str_tolower(stepItem->Attribute("id"));
+                            const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                            if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                            {
+                                item.item=tempNameToItemId.at(itemLower);
+                                ok=true;
+                            }
+                            else
+                                item.item=stringtouint16(stepItem->Attribute("id"),&ok);
+                        }
                         item.quantity=1;
                         if(ok)
                         {
@@ -361,9 +381,16 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
                                 unsigned int index=0;
                                 while(index<tempStringList.size())
                                 {
-                                    const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
-                                    if(ok)
-                                        itemMonster.monsters.push_back(tempInt);
+                                    std::string monsterLower=str_tolower(tempStringList.at(index));
+                                    const auto &tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
+                                    if(tempNameToMonsterId.find(monsterLower)!=tempNameToMonsterId.cend())
+                                        itemMonster.monsters.push_back(tempNameToMonsterId.at(monsterLower));
+                                    else
+                                    {
+                                        const uint16_t &tempInt=stringtouint16(tempStringList.at(index),&ok);
+                                        if(ok)
+                                            itemMonster.monsters.push_back(tempInt);
+                                    }
                                     index++;
                                 }
 

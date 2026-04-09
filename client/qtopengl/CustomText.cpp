@@ -66,7 +66,7 @@ void CustomText::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
     const unsigned int h=m_boundingRect.height();
     const unsigned int w=m_boundingRect.width();
 
-    if(cache!=nullptr && !cache->isNull() && cache->width()==w && cache->height()==h)
+    if(cache!=nullptr && !cache->isNull() && (unsigned int)cache->width()==w && (unsigned int)cache->height()==h)
     {
         painter->drawPixmap(m_boundingRect.x(),m_boundingRect.y()+h*0.1,w,h,*cache);
         return;
@@ -83,7 +83,7 @@ void CustomText::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWid
     if(image.isNull())
         abort();
     paint.begin(&image);
-    if(lastwidth!=w || lastheight!=h)
+    if((unsigned int)lastwidth!=w || (unsigned int)lastheight!=h)
     {
         updateTextPath();
         lastwidth=w;

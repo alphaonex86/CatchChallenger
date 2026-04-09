@@ -16,7 +16,7 @@ QRectF CCSliderH::boundingRect() const
     return QRectF(0,0,width(),26);
 }
 
-void CCSliderH::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+void CCSliderH::paint(QPainter *painter, const QStyleOptionGraphicsItem *, QWidget *)
 {
     if(l.isNull())
     {
@@ -103,7 +103,7 @@ void CCSliderH::mousePressEventXY(const QPointF &p,bool &pressValidated)
     }
 }
 
-void CCSliderH::mouseReleaseEventXY(const QPointF &p, bool &previousPressValidated)
+void CCSliderH::mouseReleaseEventXY(const QPointF &, bool &previousPressValidated)
 {
     if(!this->m_pressed)
         return;

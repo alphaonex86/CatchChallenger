@@ -1,8 +1,8 @@
 #include "FightLoader.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "../../general/base/CommonDatapack.hpp"
+#include "../base/CommonDatapack.hpp"
 #endif
-#include "../../general/base/cpp11addition.hpp"
+#include "../base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -145,9 +145,9 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > FightLoader::loadMonsterEvolutionItems(const std::unordered_map<uint16_t,Monster> &monsters)
+std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterEvolutionItems(const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters)
 {
-    std::unordered_map<uint16_t, std::unordered_map<uint16_t,uint16_t> > evolutionItem;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<uint16_t,uint16_t> > evolutionItem;
     auto i=monsters.begin();
     while(i!=monsters.cend())
     {
@@ -165,9 +165,9 @@ std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > FightLoader::loadMonsterItemToLearn(const std::unordered_map<uint16_t,Monster> &monsters,const std::unordered_map<uint16_t/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > &evolutionItem)
+std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER> > FightLoader::loadMonsterItemToEvolution(const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters,const std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,CATCHCHALLENGER_TYPE_MONSTER> > &evolutionItem)
 {
-    std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > learnItem;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER> > learnItem;
     auto i=monsters.cbegin();
     while(i!=monsters.cend())
     {
@@ -186,7 +186,7 @@ std::unordered_map<uint16_t/*item*/, std::unordered_set<uint16_t/*monster*/> > F
 }
 #endif
 
-std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const uint16_t &monsterId,const uint8_t &level, const std::unordered_map<uint16_t,Monster> &monsters, const std::unordered_map<uint16_t, Skill> &monsterSkills)
+std::vector<PlayerMonster::PlayerSkill> FightLoader::loadDefaultAttack(const CATCHCHALLENGER_TYPE_MONSTER &monsterId,const uint8_t &level, const std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> &monsters, const std::unordered_map<CATCHCHALLENGER_TYPE_SKILL, Skill> &monsterSkills)
 {
     std::vector<CatchChallenger::PlayerMonster::PlayerSkill> skills;
     std::vector<CatchChallenger::Monster::AttackToLearn> attack=monsters.at(monsterId).learn;

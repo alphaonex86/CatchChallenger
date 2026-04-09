@@ -652,7 +652,7 @@ std::vector<ConnexionInfo> Multi::loadXmlConnexionInfoList(const QByteArray &xml
 
             //name
             Settings::settings->endGroup();
-            if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+            if(connexionInfo.lastConnexion>static_cast<uint64_t>(QDateTime::currentMSecsSinceEpoch()/1000))
                 connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
             returnedVar.push_back(connexionInfo);
         }
@@ -768,7 +768,7 @@ std::vector<ConnexionInfo> Multi::loadConfigConnexionInfoList()
                     qDebug() << "ignored bug for connexion : lastConnexion";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
                 }
-                if(connexionInfo.lastConnexion>(QDateTime::currentMSecsSinceEpoch()/1000))
+                if(connexionInfo.lastConnexion>static_cast<uint64_t>(QDateTime::currentMSecsSinceEpoch()/1000))
                 {
                     qDebug() << "ignored bug for connexion : lastConnexion<time()";
                     connexionInfo.lastConnexion=static_cast<uint32_t>(QDateTime::currentMSecsSinceEpoch()/1000);
@@ -1014,7 +1014,7 @@ void Multi::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
     }
 }
 
-void Multi::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &callParentClass)
+void Multi::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &/*callParentClass*/)
 {
     server_add->mousePressEventXY(p,pressValidated);
     server_remove->mousePressEventXY(p,pressValidated);
@@ -1026,7 +1026,7 @@ void Multi::mousePressEventXY(const QPointF &p, bool &pressValidated, bool &call
         item->mousePressEventXY(p,pressValidated);
 }
 
-void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
+void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &/*callParentClass*/)
 {
     server_add->mouseReleaseEventXY(p,pressValidated);
     server_remove->mouseReleaseEventXY(p,pressValidated);
@@ -1051,7 +1051,9 @@ void Multi::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &cal
     }
     server_select->setEnabled(!selectedServer.unique_code.isEmpty());
     if(newSelectedItem!=nullptr)
+    {
         foreach(MultiItem *item, serverConnexion)
             if(newSelectedItem!=item)
                 item->setSelected(false);
+    }
 }

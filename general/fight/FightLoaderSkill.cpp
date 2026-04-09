@@ -1,21 +1,21 @@
 #include "FightLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/cpp11addition.hpp"
+#include "../base/FacilityLibGeneral.hpp"
+#include "../base/cpp11addition.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "../../general/base/CommonDatapack.hpp"
+#include "../base/CommonDatapack.hpp"
 #endif
 #include <iostream>
 
 using namespace CatchChallenger;
 
-std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> &tempNameToSkillId,const std::string &folder
+std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::loadMonsterSkill(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> &tempNameToSkillId,const std::string &folder
                                                    #ifndef CATCHCHALLENGER_CLASS_MASTER
-                                                   , const std::unordered_map<uint8_t, Buff> &monsterBuffs
+                                                   , const std::unordered_map<CATCHCHALLENGER_TYPE_BUFF, Buff> &monsterBuffs
                                                    , const std::vector<Type> &types
                                                    #endif
                                                    )
 {
-    std::unordered_map<uint16_t,Skill> monsterSkills;
+    std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> monsterSkills;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=
             CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
@@ -88,7 +88,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(std::unordered_
         {
             if(item->Attribute("id")!=NULL)
             {
-                uint16_t id=stringtouint16(item->Attribute("id"),&ok);
+                CATCHCHALLENGER_TYPE_SKILL id=stringtouint16(item->Attribute("id"),&ok);
                 if(ok && monsterSkills.find(id)!=monsterSkills.cend())
                     std::cerr << "Unable to open the xml file: " << file << ", id already found: child->Name(): " << item->Name() << std::endl;
                 else if(ok)
@@ -98,7 +98,7 @@ std::unordered_map<uint16_t,Skill> FightLoader::loadMonsterSkill(std::unordered_
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                         {
-                            tempNameToSkillId[name->GetText()]=id;
+                            tempNameToSkillId[str_tolower(name->GetText())]=id;
                             break;
                         }
                         name = name->NextSiblingElement("name");

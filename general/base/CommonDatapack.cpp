@@ -186,7 +186,7 @@ void CommonDatapack::parseMonstersEvolutionItems()
 void CommonDatapack::parseMonstersItemToLearn()
 {
     #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-    items.itemToLearn=FightLoader::loadMonsterItemToLearn(monsters,items.evolutionItem);
+    items.itemToLearn=FightLoader::loadMonsterItemToEvolution(monsters,items.evolutionItem);
     std::cout << items.itemToLearn.size() << " monster items(s) to learn loaded" << std::endl;
     #endif
 }

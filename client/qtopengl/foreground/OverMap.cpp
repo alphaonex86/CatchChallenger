@@ -157,7 +157,7 @@ void OverMap::resetAll()
     monsters.clear();
 }
 
-void OverMap::setVar(CCMap *ccmap,ConnexionManager *connexionManager)
+void OverMap::setVar(CCMap */*ccmap*/,ConnexionManager *connexionManager)
 {
     lastMessageSend.clear();
     this->connexionManager=connexionManager;
@@ -603,7 +603,7 @@ void OverMap::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &c
     m_startPress=QPointF(0.0,0.0);
 }
 
-void OverMap::mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass)
+void OverMap::mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &/*callParentClass*/)
 {
     qreal xDiff=p.x()-m_startPress.x();
     qreal yDiff=p.y()-m_startPress.y();
@@ -782,7 +782,7 @@ void OverMap::comboBox_chat_type_currentIndexChanged(int index)
     updateChat();
 }
 
-void OverMap::new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text)
+void OverMap::new_system_text(const CatchChallenger::Chat_type &/*chat_type*/,const std::string &/*text*/)
 {
     //argument not used, see Api_protocol::add_system_text()
     updateChat();
@@ -790,7 +790,7 @@ void OverMap::new_system_text(const CatchChallenger::Chat_type &chat_type,const 
         chat->setImage(":/CC/images/interface/chatnew.png");
 }
 
-void OverMap::new_chat_text(CatchChallenger::Chat_type chat_type,std::string text,std::string pseudo,CatchChallenger::Player_type player_type)
+void OverMap::new_chat_text(CatchChallenger::Chat_type /*chat_type*/,std::string /*text*/,std::string /*pseudo*/,CatchChallenger::Player_type /*player_type*/)
 {
     //argument not used, see Api_protocol::add_system_text()
     updateChat();

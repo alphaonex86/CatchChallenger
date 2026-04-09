@@ -3,8 +3,9 @@
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../../general/base/CommonDatapack.hpp"
 #endif
-#include "../../general/tinyXML2/customtinyxml2.hpp"
-#include "../../general/base/cpp11addition.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
+#include "../cpp11addition.hpp"
+#include "../CommonDatapack.cpp"
 
 using namespace CatchChallenger;
 
@@ -106,10 +107,17 @@ std::vector<MonstersCollisionTemp> DatapackGeneralLoader::loadMonstersCollision(
                     monstersCollision.item=0;
                     if(monstersCollisionItem->Attribute("item")!=NULL)
                     {
-                        monstersCollision.item=stringtouint16(monstersCollisionItem->Attribute("item"),&ok);
-                        if(!ok)
-                            std::cerr << "item attribute is not a number, into file: " << file << std::endl;
-                        else if(items.find(monstersCollision.item)==items.cend())
+                        std::string itemLower=str_tolower(monstersCollisionItem->Attribute("item"));
+                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                            monstersCollision.item=tempNameToItemId.at(itemLower);
+                        else
+                        {
+                            monstersCollision.item=stringtouint16(monstersCollisionItem->Attribute("item"),&ok);
+                            if(!ok)
+                                std::cerr << "item attribute is not a number, into file: " << file << std::endl;
+                        }
+                        if(ok && items.find(monstersCollision.item)==items.cend())
                         {
                             ok=false;
                             std::cerr << "item is not into item list, into file: " << file << std::endl;

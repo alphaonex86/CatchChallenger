@@ -1,17 +1,17 @@
 #include "FightLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
+#include "../base/FacilityLibGeneral.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "../../general/base/CommonDatapack.hpp"
+#include "../base/CommonDatapack.hpp"
 #endif
-#include "../../general/base/cpp11addition.hpp"
+#include "../base/cpp11addition.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER
-std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
+std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,Buff> FightLoader::loadMonsterBuff(std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> &tempNameToBuffId,const std::string &folder)
 {
-    std::unordered_map<uint8_t,Buff> monsterBuffs;
+    std::unordered_map<CATCHCHALLENGER_TYPE_BUFF,Buff> monsterBuffs;
     const std::vector<FacilityLibGeneral::InodeDescriptor> &fileList=CatchChallenger::FacilityLibGeneral::listFolderNotRecursive(folder,CatchChallenger::FacilityLibGeneral::ListFolder::Files);
     unsigned int file_index=0;
     while(file_index<fileList.size())
@@ -69,7 +69,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(std::unordered_map
         {
             if(item->Attribute("id")!=NULL)
             {
-                uint8_t id=stringtouint8(item->Attribute("id"),&ok);
+                CATCHCHALLENGER_TYPE_BUFF id=stringtouint8(item->Attribute("id"),&ok);
                 if(ok && monsterBuffs.find(id)!=monsterBuffs.cend())
                     std::cerr << "Unable to open the xml file: " << file << ", id already found: child->Name(): " << item->Name() << std::endl;
                 else if(ok)
@@ -79,7 +79,7 @@ std::unordered_map<uint8_t,Buff> FightLoader::loadMonsterBuff(std::unordered_map
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                         {
-                            tempNameToBuffId[name->GetText()]=id;
+                            tempNameToBuffId[str_tolower(name->GetText())]=id;
                             break;
                         }
                         name = name->NextSiblingElement("name");

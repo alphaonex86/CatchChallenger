@@ -8,6 +8,7 @@
 class CCSliderH : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
     CCSliderH(QGraphicsItem *parent = nullptr);
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;

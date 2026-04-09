@@ -271,7 +271,6 @@ void Crafting::inventoryUse_slot()
     QList<QListWidgetItem *> displayedItems=listCraftingList->selectedItems();
     if(displayedItems.size()!=1)
         return;
-    QListWidgetItem *selectedItem=displayedItems.first();
     const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(items.first()->data(99).toInt());
 
     QStringList mIngredients;
@@ -361,8 +360,7 @@ void Crafting::on_listCraftingList_itemSelectionChanged()
         inventory_description->setHtml(tr("Select a recipe"));
         return;
     }
-    QListWidgetItem *itemMaterials=displayedItems.first();
-    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(items.first()->data(99).toInt());
+    const CatchChallenger::CraftingRecipe &content=CatchChallenger::CommonDatapack::commonDatapack.get_craftingRecipes().at(displayedItems.first()->data(99).toInt());
 
     qDebug() << "on_listCraftingList_itemSelectionChanged() load the name";
     //load the name

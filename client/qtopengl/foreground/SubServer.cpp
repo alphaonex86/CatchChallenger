@@ -66,21 +66,15 @@ QRectF SubServer::boundingRect() const
 void SubServer::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 {
     unsigned int space=10;
-    unsigned int fontSize=20;
-    unsigned int multiItemH=100;
-    if(w->height()>300)
-        fontSize=w->height()/6;
     if(w->width()<600 || w->height()<600)
     {
         server_select->setSize(56,62);
         back->setSize(56,62);
-        multiItemH=50;
     }
     else if(w->width()<900 || w->height()<600)
     {
         server_select->setSize(84,93);
         back->setSize(84,93);
-        multiItemH=75;
     }
     else {
         space=30;

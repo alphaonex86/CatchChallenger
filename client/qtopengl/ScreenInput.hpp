@@ -8,7 +8,10 @@
 class ScreenInput : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
+    using QGraphicsItem::keyPressEvent;
+    using QGraphicsItem::keyReleaseEvent;
     virtual void mousePressEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);
     virtual void mouseReleaseEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);
     virtual void mouseMoveEventXY(const QPointF &p,bool &pressValidated/*if true then don't do action*/,bool &callParentClass);

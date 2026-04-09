@@ -1,9 +1,9 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/base/CommonSettingsServer.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../cpp11addition.hpp"
+#include "../CommonSettingsServer.hpp"
+#include "../CommonDatapack.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -168,9 +168,16 @@ std::unordered_map<uint16_t,std::vector<MonsterDrops> > DatapackGeneralLoader::l
                                 {
                                     if(drop->Attribute("item")!=NULL)
                                     {
-                                        dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
-                                        if(!ok)
-                                            std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->Name() << std::endl;
+                                        std::string itemLower=str_tolower(drop->Attribute("item"));
+                                        const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                                        if(tempNameToItemId.find(itemLower)!=tempNameToItemId.cend())
+                                            dropVar.item=tempNameToItemId.at(itemLower);
+                                        else
+                                        {
+                                            dropVar.item=stringtouint16(drop->Attribute("item"),&ok);
+                                            if(!ok)
+                                                std::cerr << "Unable to open the xml file: " << file << ", item is not a number: child.tagName(): " << drop->Name() << std::endl;
+                                        }
                                     }
                                     else
                                         dropVar.luck=100;

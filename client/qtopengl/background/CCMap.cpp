@@ -103,7 +103,7 @@ void CCMap::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWi
     paintChildItems(mapController.mapItem->childItems(),x,y,painter,option,widget);
 }
 
-void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
+void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &/*callParentClass*/)
 {
     if(clicked)
         return;
@@ -112,7 +112,7 @@ void CCMap::mousePressEventXY(const QPointF &p, bool &pressValidated,bool &callP
     pressValidated=true;
 }
 
-void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
+void CCMap::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &/*callParentClass*/)
 {
     if(!clicked)
         return;
