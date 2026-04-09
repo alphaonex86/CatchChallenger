@@ -213,24 +213,22 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("dropGlobalChatMessagePrivate",20);
     settings->endGroup();
 
-    settings->beginGroup("MapVisibilityAlgorithm-Simple");
+    settings->beginGroup("mapVisibility");
+    if(!settings->contains("enable"))
+        settings->setValue("enable",true);
     if(!settings->contains("Max"))
         settings->setValue("Max",50);
     if(!settings->contains("Reshow"))
         settings->setValue("Reshow",30);
-    if(!settings->contains("Reemit"))
-        settings->setValue("Reemit",false);
+    if(!settings->contains("minimize"))
+        settings->setValue("minimize","network");//cpu or network
     settings->endGroup();
 
-    settings->beginGroup("MapVisibilityAlgorithm-WithBorder");
-    if(!settings->contains("MaxWithBorder"))
-        settings->setValue("MaxWithBorder",20);
-    if(!settings->contains("ReshowWithBorder"))
-        settings->setValue("ReshowWithBorder",10);
-    if(!settings->contains("Max"))
-        settings->setValue("Max",50);
-    if(!settings->contains("Reshow"))
-        settings->setValue("Reshow",30);
+    settings->beginGroup("db");
+    if(!settings->contains("positionTeleportSync"))
+        settings->setValue("positionTeleportSync",false);
+    if(!settings->contains("secondToPositionSync"))
+        settings->setValue("secondToPositionSync",0);
     settings->endGroup();
 
     settings->beginGroup("rates");

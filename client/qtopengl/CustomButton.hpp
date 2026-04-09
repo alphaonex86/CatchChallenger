@@ -7,6 +7,7 @@
 class CustomButton : public QObject, public QGraphicsItem
 {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
     CustomButton(QString pix, QGraphicsItem *parent = nullptr);
     ~CustomButton();

@@ -123,13 +123,11 @@ void AddCharacter::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget 
     }
     description->setFont(font);
 
-    unsigned int nameBackgroundNewHeight=50;
     unsigned int space=30;
     if(widget->width()<600 || widget->height()<480)
     {
         font.setPixelSize(30*0.75/2);
         space=10;
-        nameBackgroundNewHeight=50/2;
         comboBox->setFixedWidth(200);
     }
     else

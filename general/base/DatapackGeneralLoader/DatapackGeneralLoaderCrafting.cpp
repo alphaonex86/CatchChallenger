@@ -1,7 +1,7 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../CommonDatapack.hpp"
+#include "../cpp11addition.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -94,8 +94,30 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
             }
 
             const uint16_t &id=stringtouint16(recipeItem->Attribute("id"),&ok);
-            const uint16_t &itemToLearn=stringtouint16(recipeItem->Attribute("itemToLearn"),&ok2);
-            const uint16_t &doItemId=stringtouint16(recipeItem->Attribute("doItemId"),&ok3);
+            uint16_t itemToLearn=0;
+            {
+                std::string itemToLearnLower=str_tolower(recipeItem->Attribute("itemToLearn"));
+                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                if(tempNameToItemId.find(itemToLearnLower)!=tempNameToItemId.cend())
+                {
+                    itemToLearn=tempNameToItemId.at(itemToLearnLower);
+                    ok2=true;
+                }
+                else
+                    itemToLearn=stringtouint16(recipeItem->Attribute("itemToLearn"),&ok2);
+            }
+            uint16_t doItemId=0;
+            {
+                std::string doItemIdLower=str_tolower(recipeItem->Attribute("doItemId"));
+                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                if(tempNameToItemId.find(doItemIdLower)!=tempNameToItemId.cend())
+                {
+                    doItemId=tempNameToItemId.at(doItemIdLower);
+                    ok3=true;
+                }
+                else
+                    doItemId=stringtouint16(recipeItem->Attribute("doItemId"),&ok3);
+            }
             if(ok && ok2 && ok3)
             {
                 if(crafingRecipes.find(id)==crafingRecipes.cend())
@@ -169,7 +191,18 @@ std::pair<std::unordered_map<uint16_t,CraftingRecipe>,std::unordered_map<uint16_
                     {
                         if(material->Attribute("itemId")!=NULL)
                         {
-                            const uint16_t &itemId=stringtouint16(material->Attribute("itemId"),&ok2);
+                            uint16_t itemId=0;
+                            {
+                                std::string itemIdLower=str_tolower(material->Attribute("itemId"));
+                                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                                if(tempNameToItemId.find(itemIdLower)!=tempNameToItemId.cend())
+                                {
+                                    itemId=tempNameToItemId.at(itemIdLower);
+                                    ok2=true;
+                                }
+                                else
+                                    itemId=stringtouint16(material->Attribute("itemId"),&ok2);
+                            }
                             if(!ok2)
                             {
                                 ok=false;

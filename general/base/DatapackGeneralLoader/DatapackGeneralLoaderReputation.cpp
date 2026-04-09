@@ -1,9 +1,9 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/cpp11addition.hpp"
+#include "../cpp11addition.hpp"
 #ifndef EPOLLCATCHCHALLENGERSERVER
-#include "../../general/base/CommonDatapack.hpp"
+#include "../CommonDatapack.hpp"
 #endif
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 #include <regex>
 

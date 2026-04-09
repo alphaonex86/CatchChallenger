@@ -314,7 +314,7 @@ QRectF MainScreen::boundingRect() const
     return QRectF();
 }
 
-void MainScreen::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
+void MainScreen::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &/*callParentClass*/)
 {
     solo->mousePressEventXY(p,pressValidated);
     multi->mousePressEventXY(p,pressValidated);
@@ -325,7 +325,7 @@ void MainScreen::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &c
     newsUpdate->mousePressEventXY(p,pressValidated);
 }
 
-void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
+void MainScreen::mouseReleaseEventXY(const QPointF &p,bool &pressValidated,bool &/*callParentClass*/)
 {
     solo->mouseReleaseEventXY(p,pressValidated);
     multi->mouseReleaseEventXY(p,pressValidated);

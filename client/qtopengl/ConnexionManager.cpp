@@ -581,7 +581,7 @@ void ConnexionManager::connectedOnGameServer()
     l->setText(tr("Connected on game server"));
 }
 
-void ConnexionManager::gatewayCacheUpdate(const uint8_t gateway,const uint8_t progression)
+void ConnexionManager::gatewayCacheUpdate(const uint8_t /*gateway*/,const uint8_t progression)
 {
     l->setText(tr("Gateway cache update..."));
     l->progression(progression,100+1);

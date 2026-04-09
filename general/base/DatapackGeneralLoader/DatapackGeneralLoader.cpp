@@ -1,9 +1,9 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../CommonDatapack.hpp"
+#include "../GeneralVariable.hpp"
+#include "../cpp11addition.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 
 #include <iostream>
 

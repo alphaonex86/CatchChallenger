@@ -1,8 +1,8 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/base/GeneralVariable.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../CommonDatapack.hpp"
+#include "../cpp11addition.hpp"
+#include "../GeneralVariable.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -65,7 +65,18 @@ std::unordered_map<uint8_t, Plant> DatapackGeneralLoader::loadPlants(const std::
         if(plantItem->Attribute("id")!=NULL && plantItem->Attribute("itemUsed")!=NULL)
         {
             const uint8_t &id=stringtouint8(plantItem->Attribute("id"),&ok);
-            const uint16_t &itemUsed=stringtouint16(plantItem->Attribute("itemUsed"),&ok2);
+            uint16_t itemUsed=0;
+            {
+                std::string itemUsedLower=str_tolower(plantItem->Attribute("itemUsed"));
+                const auto &tempNameToItemId=CommonDatapack::commonDatapack.get_tempNameToItemId();
+                if(tempNameToItemId.find(itemUsedLower)!=tempNameToItemId.cend())
+                {
+                    itemUsed=tempNameToItemId.at(itemUsedLower);
+                    ok2=true;
+                }
+                else
+                    itemUsed=stringtouint16(plantItem->Attribute("itemUsed"),&ok2);
+            }
             if(ok && ok2)
             {
                 if(plants.find(id)==plants.cend())

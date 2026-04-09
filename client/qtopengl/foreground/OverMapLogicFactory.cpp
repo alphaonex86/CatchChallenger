@@ -142,7 +142,7 @@ void OverMapLogic::haveSellFactoryObject(const CatchChallenger::SoldStat &stat,c
     abort();
 }
 
-void OverMapLogic::haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<CatchChallenger::ItemToSellOrBuy> &resources,const std::vector<CatchChallenger::ItemToSellOrBuy> &products)
+void OverMapLogic::haveFactoryList(const uint32_t &/*remainingProductionTime*/,const std::vector<CatchChallenger::ItemToSellOrBuy> &/*resources*/,const std::vector<CatchChallenger::ItemToSellOrBuy> &/*products*/)
 {
     abort();
     /*
@@ -207,7 +207,7 @@ void OverMapLogic::haveFactoryList(const uint32_t &remainingProductionTime,const
     updateFactoryStatProduction(industryStatus,industry);*/
 }
 
-void OverMapLogic::updateFactoryStatProduction(const CatchChallenger::IndustryStatus &industryStatus,const CatchChallenger::Industry &industry)
+void OverMapLogic::updateFactoryStatProduction(const CatchChallenger::IndustryStatus &/*industryStatus*/,const CatchChallenger::Industry &/*industry*/)
 {
     abort();
     /*

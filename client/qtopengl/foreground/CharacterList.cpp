@@ -209,10 +209,6 @@ QRectF CharacterList::boundingRect() const
 void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
 {
     unsigned int space=10;
-    unsigned int fontSize=20;
-    unsigned int multiItemH=100;
-    if(w->height()>300)
-        fontSize=w->height()/6;
     if(w->width()<600 || w->height()<600)
     {
         add->setSize(148,61);
@@ -220,7 +216,6 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
         remove->setSize(56,62);
         select->setSize(56,62);
         back->setSize(56,62);
-        multiItemH=50;
     }
     else if(w->width()<900 || w->height()<600)
     {
@@ -229,7 +224,6 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
         remove->setSize(84,93);
         select->setSize(84,93);
         back->setSize(84,93);
-        multiItemH=75;
     }
     else {
         space=30;
@@ -274,7 +268,7 @@ void CharacterList::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget 
     characterEntryList->setFixedSize(wdialog->width()-space-space,wdialog->height()-space-space);
 }
 
-void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &callParentClass)
+void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated,bool &/*callParentClass*/)
 {
     add->mousePressEventXY(p,pressValidated);
     remove->mousePressEventXY(p,pressValidated);
@@ -282,7 +276,7 @@ void CharacterList::mousePressEventXY(const QPointF &p,bool &pressValidated,bool
     select->mousePressEventXY(p,pressValidated);
 }
 
-void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &callParentClass)
+void CharacterList::mouseReleaseEventXY(const QPointF &p, bool &pressValidated,bool &/*callParentClass*/)
 {
     add->mouseReleaseEventXY(p,pressValidated);
     remove->mouseReleaseEventXY(p,pressValidated);

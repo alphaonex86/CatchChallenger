@@ -1,7 +1,7 @@
 #include "OverMapLogic.hpp"
 #include "../ConnexionManager.hpp"
 
-void OverMapLogic::haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &items)
+void OverMapLogic::haveShopList(const std::vector<CatchChallenger::ItemToSellOrBuy> &/*items*/)
 {
     abort();
 }

@@ -73,7 +73,9 @@ std::vector<FacilityLibGeneral::InodeDescriptor> FacilityLibGeneral::listFolderN
             inode.name=ent->d_name;
             inode.absoluteFilePath=folder+'/'+ent->d_name;
             struct stat myStat;
-            if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0)
+            //if(strcmp(ent->d_name,".")!=0 && strcmp(ent->d_name,"..")!=0)
+            //just hide . and .. and any hiden files
+            if(ent->d_name[0]!='.' && ent->d_name[0]!=0x00)
             {
                 if(stat((folder+ent->d_name).c_str(),&myStat)==0)
                 {
@@ -297,6 +299,8 @@ std::string FacilityLibGeneral::getSuffixAndValidatePathFromFS(const std::string
 {
     const size_t &size=fileName.size();
     if(size<5)
+        return std::string();
+    if(fileName.at(0)=='.')//hide the unix hidden file
         return std::string();
     const char * const data=fileName.data();
     size_t index=size;

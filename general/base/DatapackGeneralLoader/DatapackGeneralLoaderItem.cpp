@@ -1,8 +1,8 @@
 #include "DatapackGeneralLoader.hpp"
-#include "../../general/base/FacilityLibGeneral.hpp"
-#include "../../general/base/cpp11addition.hpp"
-#include "../../general/base/CommonDatapack.hpp"
-#include "../../general/tinyXML2/customtinyxml2.hpp"
+#include "../FacilityLibGeneral.hpp"
+#include "../cpp11addition.hpp"
+#include "../CommonDatapack.hpp"
+#include "../../tinyXML2/customtinyxml2.hpp"
 #include <iostream>
 
 using namespace CatchChallenger;
@@ -83,7 +83,7 @@ ItemFull DatapackGeneralLoader::loadItems(std::unordered_map<std::string,CATCHCH
                     {
                         if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
                         {
-                            tempNameToItemId[name->GetText()]=id;
+                            tempNameToItemId[str_tolower(name->GetText())]=id;
                             break;
                         }
                         name = name->NextSiblingElement("name");
