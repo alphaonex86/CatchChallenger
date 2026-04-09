@@ -432,10 +432,8 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                         property_text["lookAt"]="bottom";
                                         std::cerr << "skin but not lookAt, fixed by bottom: " << SubChild->Name() << " (" << file << ")" << std::endl;
                                     }
-                                    if(property_text.find("file")!=property_text.cend() && property_text.find("id")!=property_text.cend())
+                                    if(property_text.find("id")!=property_text.cend())
                                     {
-                                        if(!stringEndsWith(property_text["file"],".xml"))
-                                            property_text["file"]+=".xml";
                                         Map_to_send::Bot_Semi bot_semi;
                                         bot_semi.id=stringtouint8(property_text.at("id"),&ok);
                                         bot_semi.property_text=property_text;

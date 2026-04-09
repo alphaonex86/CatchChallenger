@@ -6,6 +6,10 @@
 #include <string.h>
 #include "../../general/base/FacilityLib.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <stdio.h>
+#include <unistd.h>
+#endif
 
 using namespace CatchChallenger;
 
@@ -535,6 +539,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                     });
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
                     #elif CATCHCHALLENGER_DB_FILE
+                    ::unlink(("database/zone/"+CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.capturedCity)).c_str());
                     #else
                     #error Define what do here
                     #endif
@@ -550,6 +555,15 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                                     });
                         #elif CATCHCHALLENGER_DB_BLACKHOLE
                         #elif CATCHCHALLENGER_DB_FILE
+                        {
+                            const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
+                            FILE *fp=fopen(("database/zone/"+zoneName).c_str(),"wb");
+                            if(fp!=NULL)
+                            {
+                                fwrite(&clanId,sizeof(clanId),1,fp);
+                                fclose(fp);
+                            }
+                        }
                         #else
                         #error Define what do here
                         #endif
@@ -563,6 +577,15 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                                     });
                         #elif CATCHCHALLENGER_DB_BLACKHOLE
                         #elif CATCHCHALLENGER_DB_FILE
+                        {
+                            const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
+                            FILE *fp=fopen(("database/zone/"+zoneName).c_str(),"wb");
+                            if(fp!=NULL)
+                            {
+                                fwrite(&clanId,sizeof(clanId),1,fp);
+                                fclose(fp);
+                            }
+                        }
                         #else
                         #error Define what do here
                         #endif

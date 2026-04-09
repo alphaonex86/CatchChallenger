@@ -121,8 +121,11 @@ public:
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
-    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr);
 
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    std::vector<tinyxml2::XMLDocument*> xmlDocsToKeepInternal;
+    #endif
 
     //for tiled
     #ifdef TILED_ZLIB

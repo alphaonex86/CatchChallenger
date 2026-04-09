@@ -13,7 +13,7 @@ void BaseServer::preload_15_async_map_semi_after_db_id()
         abort();
     }
 
-    mapPathToId.clear();
+    //mapPathToId is cleared at end of preload_18_sync_profile(), the last consumer
 
     preload_16_async_zone_sql();
 }

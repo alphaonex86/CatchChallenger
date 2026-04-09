@@ -97,8 +97,9 @@ void BaseServer::preload_1_the_data()
         preload_6_sync_the_datapack();
         preload_7_sync_the_skin();
         preload_8_sync_monsters_drops();
+        preload_zone();
         preload_9_sync_the_map();
-        mapPathToId.clear();
+        //mapPathToId is cleared later at step 15 (preload_15_async_map_semi_after_db_id), after step 12 uses it
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
