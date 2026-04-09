@@ -177,9 +177,8 @@ bool MapServer::parseUnknownObject(std::string type,uint32_t object_x,uint32_t o
 
 bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step)
 {
-    (void)object_x;
-    (void)object_y;
-    (void)step;
+    if(strcmp(step->Attribute("type"),"text")==0)
+        return true;//ignore, it's for client only
     if(strcmp(step->Attribute("type"),"heal")==0)
     {
         heal.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
@@ -193,6 +192,38 @@ bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const ti
             std::cerr << "zonecapture point already on the map: for bot id: " << object_x << "," << object_y << std::endl;
         else
             zoneCapture.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
+        return true;
+    }
+    if(strcmp(step->Attribute("type"),"warehouse")==0)
+    {
+        warehouse.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
+        return true;
+    }
+    if(strcmp(step->Attribute("type"),"sell")==0)
+    {
+        sell.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
+        return true;
+    }
+    if(strcmp(step->Attribute("type"),"quests")==0)
+    {
+        quests.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
+        return true;
+    }
+    if(strcmp(step->Attribute("type"),"industry")==0)
+    {
+        if(step->Attribute("industry")==NULL)
+            std::cerr << "industry point have not the industry attribute: for bot at: " << object_x << "," << object_y << std::endl;
+        else
+        {
+            bool ok=false;
+            const uint8_t industryIndex=stringtouint8(step->Attribute("industry"),&ok);
+            if(!ok)
+                std::cerr << "industry attribute is not a number: for bot at: " << object_x << "," << object_y << std::endl;
+            else if(industryIndex>=industries.size())
+                std::cerr << "industry index " << industryIndex << " out of range (" << industries.size() << "): for bot at: " << object_x << "," << object_y << std::endl;
+            else
+                industries_pos[std::pair<uint8_t,uint8_t>(object_x,object_y)]=industryIndex;
+        }
         return true;
     }
     return false;

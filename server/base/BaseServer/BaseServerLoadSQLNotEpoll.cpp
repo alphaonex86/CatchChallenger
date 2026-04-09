@@ -5,6 +5,11 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/cpp11addition.hpp"
 #include <iostream>
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <sys/stat.h>
+#include <stdio.h>
+#include <unistd.h>
+#endif
 
 using namespace CatchChallenger;
 
@@ -50,6 +55,36 @@ void BaseServer::preload_zone_return()
     GlobalServerData::serverPrivateVariables.db_server->clear();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        unsigned int index=0;
+        while(index<entryListZone.size())
+        {
+            std::string zoneCodeName=entryListZone.at(index).name;
+            stringreplaceOne(zoneCodeName,".xml","");
+            struct stat sb;
+            if(::stat(("database/zone/"+zoneCodeName).c_str(),&sb)==0)
+            {
+                FILE *fp=fopen(("database/zone/"+zoneCodeName).c_str(),"rb");
+                if(fp!=NULL)
+                {
+                    uint32_t clanId=0;
+                    if(fread(&clanId,sizeof(clanId),1,fp)==1)
+                    {
+                        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)!=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+                        {
+                            const ZONE_TYPE &zoneId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().at(zoneCodeName);
+                            GlobalServerData::serverPrivateVariables.cityStatusList[zoneId].clan=clanId;
+                            GlobalServerData::serverPrivateVariables.cityStatusListReverse[clanId]=zoneId;
+                        }
+                        else
+                            std::cerr << "preload_zone_return() zone not found: " << zoneCodeName << std::endl;
+                    }
+                    fclose(fp);
+                }
+            }
+            index++;
+        }
+    }
     #else
     #error Define what do here
     #endif
@@ -154,7 +189,45 @@ void BaseServer::preload_16_async_zone_sql()
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     preload_zone_return();
     #elif CATCHCHALLENGER_DB_FILE
-    preload_zone_return();
+    {
+        uint16_t indexZone=0;
+        if(entryListZone.empty())
+        {
+            #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
+            if(GlobalServerData::serverSettings.automatic_account_creation)
+                load_account_max_id();
+            else if(CommonSettingsCommon::commonSettingsCommon.max_character)
+                load_character_max_id();
+            else
+            #endif
+            preload_17_async_baseServerMasterLoadDictionaryLoad();
+        }
+        else
+        {
+            while(entryListIndex<entryListZone.size())
+            {
+                std::string zoneCodeName=entryListZone.at(entryListIndex).name;
+                stringreplaceOne(zoneCodeName,".xml","");
+                if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+                {
+                    std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
+                    zoneToId[zoneCodeName]=indexZone;
+                    std::vector<std::string> &idToZone=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone_rw();
+                    while(idToZone.size()<=indexZone)
+                        idToZone.push_back(std::string());
+                    idToZone[indexZone]=zoneCodeName;
+                    if(indexZone>60000)
+                    {
+                        std::cerr << "Error, zone count can't be > 60000" << std::endl;
+                        abort();
+                    }
+                    indexZone++;
+                }
+                entryListIndex++;
+            }
+            preload_zone_return();
+        }
+    }
     #else
     #error Define what do here
     #endif

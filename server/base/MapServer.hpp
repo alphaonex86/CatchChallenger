@@ -24,9 +24,9 @@ public:
     //on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
     MapServer();
     void doDDOSLocalChat();
-    bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text) override;
-    bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text) override;
-    bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step) override;
+    bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
+    bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
+    bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step);
     static unsigned int playerToFullInsert(const Client &player, char * const bufferForOutput);
 
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];
@@ -57,6 +57,9 @@ public:
     std::unordered_map<std::pair<uint8_t,uint8_t>,Orientation,pairhash> rescue;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_map<std::pair<uint8_t,uint8_t> is better
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;//less than 5% map have rescue point, maybe other structure like static std::unordered_map<std::unordered_set<std::pair<uint8_t,uint8_t> is better
     std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> zoneCapture;//ZONE_TYPE removed, will use the zone of current map (prevent error and resolv zone to id), 5% of the map
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> warehouse;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> sell;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> quests;
     //std::map<std::pair<uint8_t,uint8_t>,PlantOnMap,pairhash> plants;->see MapServerCrafting
 
     //see Map_server_MapVisibility_Simple_StoreOnSender for flat_map_list

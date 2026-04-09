@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
     ::mkdir("database/accounts",0700);
     ::mkdir("database/characters",0700);
     ::mkdir("database/clans",0700);
+    ::mkdir("database/zone",0700);
     #endif
 
     #ifndef CATCHCHALLENGER_DB_BLACKHOLE

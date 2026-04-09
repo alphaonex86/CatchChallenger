@@ -519,4 +519,7 @@ void BaseServer::preload_18_sync_profile()
         abort();
     }
     std::cout << GlobalServerData::serverPrivateVariables.serverProfileInternalList.size() << " profile loaded" << std::endl;
+
+    //last consumer of mapPathToId, clear it now
+    mapPathToId.clear();
 }

@@ -49,6 +49,11 @@ Map_loader::Map_loader()
 
 Map_loader::~Map_loader()
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    for(tinyxml2::XMLDocument *doc : xmlDocsToKeepInternal)
+        delete doc;
+    xmlDocsToKeepInternal.clear();
+    #endif
 }
 
 #ifdef TILED_ZLIB
@@ -345,13 +350,15 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                const tinyxml2::XMLElement *step = bot->FirstChildElement("step");
                while(step!=NULL)
                {
-                   if(step->Attribute("id")==NULL)
-                       std::cerr << file << " bot id attribute is not found" << std::endl;
-                   else if(step->Attribute("type")==NULL)
-                       std::cerr << file << " bot type attribute is not found" << std::endl;
+                   if(step->Attribute("type")==NULL)
+                       std::cerr << file << " bot step type attribute is not found" << std::endl;
                    else
                    {
-                       const uint8_t stepId=stringtouint8(step->Attribute("id"));
+                       uint8_t stepId=1;
+                       if(step->Attribute("id")==NULL)
+                       {}//std::cerr << file << " bot step id attribute is not found" << std::endl;
+                       else
+                            stepId=stringtouint8(step->Attribute("id"));
                        botslist[indexBot].steps[stepId]=step;
                        if(strcmp(step->Attribute("type"),"shop")==0)
                        {
@@ -359,13 +366,13 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                            const tinyxml2::XMLElement *product = step->FirstChildElement("product");
                            while(product!=NULL)
                            {
-                               if(step->Attribute("itemId")==NULL)
-                                   std::cerr << file << "itemId attribute not found" << std::endl;
+                               if(product->Attribute("item")==NULL)
+                                   std::cerr << file << " item attribute not found for shop product" << std::endl;
                                else
                                {
                                    bool found=false;
                                    CATCHCHALLENGER_TYPE_ITEM itemId=0;
-                                   std::string item(step->Attribute("itemId"));
+                                   std::string item(product->Attribute("item"));
                                    item=str_tolower(item);
                                    if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(item)!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
                                    {
@@ -375,7 +382,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    else
                                    {
                                        bool ok=false;
-                                       const uint16_t temp=stringtouint16(step->Attribute("shop"),&ok);
+                                       const uint16_t temp=stringtouint16(product->Attribute("item"),&ok);
                                        if(ok && CommonDatapack::commonDatapack.get_items().item.find(temp)!=CommonDatapack::commonDatapack.get_items().item.cend())
                                        {
                                            itemId=temp;
@@ -386,10 +393,10 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    {
                                        const Item &i=CommonDatapack::commonDatapack.get_items().item.at(itemId);
                                        uint32_t price=i.price;
-                                       if(step->Attribute("overridePrice")!=NULL)
+                                       if(product->Attribute("overridePrice")!=NULL)
                                        {
                                            bool ok=false;
-                                           const uint32_t tprice=stringtouint32(step->Attribute("overridePrice"),&ok);
+                                           const uint32_t tprice=stringtouint32(product->Attribute("overridePrice"),&ok);
                                            price=tprice;
                                        }
                                        s.items[itemId]=price;
@@ -411,7 +418,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                if(gain->Attribute("cash")!=NULL)
                                {
                                    bool ok=false;
-                                   const uint32_t cash=stringtouint32(step->Attribute("cash"),&ok);
+                                   const uint32_t cash=stringtouint32(gain->Attribute("cash"),&ok);
                                    t.cash=cash;
                                }
                                if(gain->Attribute("item")!=NULL)
@@ -420,16 +427,16 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.id=0;
                                    i.quantity=1;
                                    bool ok=false;
-                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(step->Attribute("item"),&ok);
+                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(gain->Attribute("item"),&ok);
                                    if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
                                    {
                                        i.id=itemId;
                                        i.quantity=1;
                                        t.items.push_back(i);
                                    }
-                                   else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(step->Attribute("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                   else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(gain->Attribute("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
                                    {
-                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(step->Attribute("item"));
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(gain->Attribute("item"));
                                        i.quantity=1;
                                        t.items.push_back(i);
                                    }
@@ -446,19 +453,19 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.id=0;//monster id
                                    i.level=1;
                                    bool ok=false;
-                                   i.id=stringtouint16(step->Attribute("id"),&ok);
+                                   i.id=stringtouint16(monster->Attribute("id"),&ok);
                                    if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
                                    {}
                                    else
                                    {
                                        i.id=0;//monster id
-                                       if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(step->Attribute("id"))!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
-                                           i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(step->Attribute("id"));
+                                       if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(monster->Attribute("id"))!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
+                                           i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(monster->Attribute("id"));
                                    }
                                    if(i.id!=0 && monster->Attribute("level")!=NULL)
                                    {
                                        bool ok=false;
-                                       i.level=stringtouint8(step->Attribute("level"),&ok);
+                                       i.level=stringtouint8(monster->Attribute("level"),&ok);
                                        if(ok)
                                            t.monsters.push_back(i);
                                    }
@@ -590,7 +597,7 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
         bot = bot->NextSiblingElement("bot");
     }
     #ifdef EPOLLCATCHCHALLENGERSERVER
-    delete domDocument;
+    xmlDocsToKeepInternal.push_back(domDocument);
     #endif
     return true;
 }
@@ -613,9 +620,21 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
                monsters->Attribute("maxLevel")!=NULL) || monsters->Attribute("level")!=NULL) && monsters->Attribute("luck")!=NULL)
             {
                 MapMonster mapMonster;
-                mapMonster.id=stringtouint16(monsters->Attribute("id"),&ok);
-                if(!ok)
-                    std::cerr << "id is not a number: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
+                {
+                    const std::string monsterIdStr=str_tolower(monsters->Attribute("id"));
+                    const auto &tempNameToMonsterId=CommonDatapack::commonDatapack.get_tempNameToMonsterId();
+                    if(tempNameToMonsterId.find(monsterIdStr)!=tempNameToMonsterId.cend())
+                    {
+                        mapMonster.id=tempNameToMonsterId.at(monsterIdStr);
+                        ok=true;
+                    }
+                    else
+                    {
+                        mapMonster.id=stringtouint16(monsterIdStr,&ok);
+                        if(!ok)
+                            std::cerr << "id is not a number or known monster name: child->Name(): " << monsters->Name() << ", file: " << fileName << std::endl;
+                    }
+                }
                 if(ok)
                     if(CommonDatapack::commonDatapack.get_monsters().find(mapMonster.id)==CommonDatapack::commonDatapack.get_monsters().cend())
                     {
@@ -723,16 +742,17 @@ std::vector<MapMonster> Map_loader::loadSpecificMonster(const std::string &fileN
     return monsterTypeList;
 }
 
-void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
+void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep)
 {
     Map_loader map_temp;
     std::vector<std::string> map_name;
     std::vector<std::string> map_name_to_do_id;
     struct stat buffer;
+    memset(&buffer,0,sizeof(buffer));
     if(::stat(datapack_mapPath.c_str(),&buffer)!=0)
         return;
     std::vector<std::string> returnList;
-    switch(buffer.st_mode)
+    switch(buffer.st_mode & S_IFMT)
     {
         case S_IFREG:
             returnList.push_back(datapack_mapPath);
@@ -740,6 +760,10 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         case S_IFDIR:
             returnList=FacilityLibGeneral::listFolder(datapack_mapPath);
             std::sort(returnList.begin(), returnList.end());
+        break;
+        default:
+            std::cerr << datapack_mapPath << " exists but is not file or folder, is: " << std::to_string(buffer.st_mode) << std::endl;
+            abort();
         break;
     }
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
@@ -1220,6 +1244,14 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
 
     std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
     std::cout << semi_loaded_map.size() << " map(s) loaded into " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+
+    #ifdef EPOLLCATCHCHALLENGERSERVER
+    if(xmlDocsToKeep!=nullptr)
+        *xmlDocsToKeep=std::move(map_temp.xmlDocsToKeepInternal);
+    //else: map_temp destructor will delete them
+    #else
+    (void)xmlDocsToKeep;
+    #endif
 }
 
 std::string Map_loader::errorString()

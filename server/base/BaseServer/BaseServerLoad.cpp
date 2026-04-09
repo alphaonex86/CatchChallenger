@@ -94,6 +94,7 @@ void BaseServer::preload_3_sync_the_ddos()
 
 bool BaseServer::preload_zone_init()
 {
+    uint16_t indexZone=0;
     unsigned int index=0;
     while(index<entryListZone.size())
     {
@@ -105,6 +106,24 @@ bool BaseServer::preload_zone_init()
         }
         std::string zoneCodeName=entryListZone.at(index).name;
         stringreplaceOne(zoneCodeName,".xml","");
+
+        //populate zoneToId/idToZone
+        if(CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().find(zoneCodeName)==CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId().cend())
+        {
+            std::unordered_map<std::string,ZONE_TYPE> &zoneToId=CommonDatapackServerSpec::commonDatapackServerSpec.get_zoneToId_rw();
+            zoneToId[zoneCodeName]=indexZone;
+            std::vector<std::string> &idToZone=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone_rw();
+            while(idToZone.size()<=indexZone)
+                idToZone.push_back(std::string());
+            idToZone[indexZone]=zoneCodeName;
+            if(indexZone>60000)
+            {
+                std::cerr << "Error, zone count can't be > 60000" << std::endl;
+                abort();
+            }
+            indexZone++;
+        }
+
         const std::string &file=entryListZone.at(index).absoluteFilePath;
         tinyxml2::XMLDocument *domDocument;
         domDocument=new tinyxml2::XMLDocument();
