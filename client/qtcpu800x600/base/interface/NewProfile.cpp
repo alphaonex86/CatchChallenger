@@ -5,6 +5,7 @@
 #include <QByteArray>
 #include <QMessageBox>
 #include <QDebug>
+#include <iostream>
 
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
@@ -23,23 +24,29 @@ NewProfile::NewProfile(const std::string &datapackPath, QWidget *parent) :
     if(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().empty())
     {
         QMessageBox::critical(this,tr("Error"),tr("No profile selected to start a new game"));
+        std::cerr << "No profile selected to start a new game" << std::endl;
         close();
         return;
     }
     loadProfileText();
-    ui->comboBox->clear();
-    unsigned int index=0;
-    while(index<profileTextList.size())
+    if(profileTextList.empty())
+        std::cerr << "No loadProfileText to start a new game" << std::endl;
+    else
     {
-        ui->comboBox->addItem(QString::fromStdString(profileTextList.at(index).name));
-        index++;
-    }
-    if(ui->comboBox->count()>0)
-    {
-        srand(static_cast<uint32_t>(time(NULL)));
-        ui->comboBox->setCurrentIndex(rand()%ui->comboBox->count());
-        ui->description->setText(QString::fromStdString(profileTextList.at(ui->comboBox->currentIndex()).description));
-        ui->ok->setEnabled(true);
+        ui->comboBox->clear();
+        unsigned int index=0;
+        while(index<profileTextList.size())
+        {
+            ui->comboBox->addItem(QString::fromStdString(profileTextList.at(index).name));
+            index++;
+        }
+        if(ui->comboBox->count()>0)
+        {
+            srand(static_cast<uint32_t>(time(NULL)));
+            ui->comboBox->setCurrentIndex(rand()%ui->comboBox->count());
+            ui->description->setText(QString::fromStdString(profileTextList.at(ui->comboBox->currentIndex()).description));
+            ui->ok->setEnabled(true);
+        }
     }
 }
 
@@ -50,11 +57,11 @@ NewProfile::~NewProfile()
 
 void NewProfile::loadProfileText()
 {
-    const std::unordered_map<uint32_t,DatapackClientLoader::ProfileText> &textList=
-            QtDatapackClientLoader::datapackLoader->get_profileTextList();
+    const std::unordered_map<uint32_t,DatapackClientLoader::ProfileText> &textList=QtDatapackClientLoader::datapackLoader->get_profileTextList();
+    const std::vector<CatchChallenger::Profile> &profile=CatchChallenger::CommonDatapack::commonDatapack.get_profileList();
     profileTextList.clear();
     unsigned int index=0;
-    while(index<static_cast<unsigned int>(CatchChallenger::CommonDatapack::commonDatapack.get_profileList().size()))
+    while(index<profile.size())
     {
         const auto it=textList.find(index);
         if(it!=textList.cend())

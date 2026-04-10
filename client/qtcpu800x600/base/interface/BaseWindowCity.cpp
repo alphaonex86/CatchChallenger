@@ -14,7 +14,10 @@ void BaseWindow::cityCaptureUpdateTime()
         nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
         nextCatch=QDateTime::fromMSecsSinceEpoch(FacilityLib::nextCaptureTime(city));
-    nextCityCatchTimer.start(static_cast<uint32_t>(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()));
+    qint64 interval=nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+    if(interval<1000)
+        interval=1000;
+    nextCityCatchTimer.start(static_cast<int>(interval));
 }
 
 void BaseWindow::updatePageZoneCatch()

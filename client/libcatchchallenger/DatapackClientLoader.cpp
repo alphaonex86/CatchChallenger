@@ -8,6 +8,7 @@
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/base/Map_loader.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../general/hps/hps.h"
@@ -125,6 +126,7 @@ void DatapackClientLoader::parseDatapack(const std::string &datapackPath,const s
     parseSkillsExtra();
     parseAudioAmbiance();
     parseReputationExtra();
+    parseProfileText();
     auto end_time2 = std::chrono::high_resolution_clock::now();
     auto time2 = end_time2 - start_time2;
     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() other took " << time2/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
@@ -1264,6 +1266,87 @@ void DatapackClientLoader::parseAudioAmbiance()
     }
 
     std::cout << std::to_string(audioAmbiance.size()) << " audio ambiance(s) link loaded" << std::endl;
+}
+
+void DatapackClientLoader::parseProfileText()
+{
+    const std::string &file=datapackPath+DATAPACK_BASE_PATH_PLAYERBASE+"start.xml";
+    const std::vector<const tinyxml2::XMLElement *> xmlList=
+            CatchChallenger::DatapackGeneralLoader::loadProfileList(
+                datapackPath,file,
+                CatchChallenger::CommonDatapack::commonDatapack.get_items().item,
+                CatchChallenger::CommonDatapack::commonDatapack.get_monsters(),
+                CatchChallenger::CommonDatapack::commonDatapack.get_reputation()
+                ).first;
+    uint32_t profileIndex=0;
+    while(profileIndex<xmlList.size())
+    {
+        ProfileText profile;
+        const tinyxml2::XMLElement *startItem=xmlList.at(profileIndex);
+
+        //load the name
+        bool name_found=false;
+        const tinyxml2::XMLElement *name = startItem->FirstChildElement("name");
+        if(!language.empty() && language!="en")
+            while(name!=NULL)
+            {
+                if(name->Attribute("lang")!=NULL && name->Attribute("lang")==language && name->GetText()!=NULL)
+                {
+                    profile.name=name->GetText();
+                    name_found=true;
+                    break;
+                }
+                name = name->NextSiblingElement("name");
+            }
+        if(!name_found)
+        {
+            name = startItem->FirstChildElement("name");
+            while(name!=NULL)
+            {
+                if(name->Attribute("lang")==NULL || strcmp(name->Attribute("lang"),"en")==0)
+                    if(name->GetText()!=NULL)
+                    {
+                        profile.name=name->GetText();
+                        break;
+                    }
+                name = name->NextSiblingElement("name");
+            }
+        }
+
+        //load the description
+        bool description_found=false;
+        const tinyxml2::XMLElement *description = startItem->FirstChildElement("description");
+        if(!language.empty() && language!="en")
+            while(description!=NULL)
+            {
+                if(description->Attribute("lang")!=NULL && description->Attribute("lang")==language && description->GetText()!=NULL)
+                {
+                    profile.description=description->GetText();
+                    description_found=true;
+                    break;
+                }
+                description = description->NextSiblingElement("description");
+            }
+        if(!description_found)
+        {
+            description = startItem->FirstChildElement("description");
+            while(description!=NULL)
+            {
+                if(description->Attribute("lang")==NULL || strcmp(description->Attribute("lang"),"en")==0)
+                    if(description->GetText()!=NULL)
+                    {
+                        profile.description=description->GetText();
+                        break;
+                    }
+                description = description->NextSiblingElement("description");
+            }
+        }
+
+        profileTextList[profileIndex]=profile;
+        profileIndex++;
+    }
+
+    std::cout << std::to_string(profileTextList.size()) << " profile text(s) loaded" << std::endl;
 }
 
 void DatapackClientLoader::parseQuestsLink()
