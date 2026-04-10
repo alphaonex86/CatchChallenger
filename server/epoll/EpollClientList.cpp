@@ -10,16 +10,20 @@ EpollClientList::EpollClientList()
 
     size_t tmax=max;
     clients_removed_index.resize(tmax);
-    do
     {
-        clients_removed_index[max-tmax]=tmax;
-    } while(tmax>0);
+        SIMPLIFIED_PLAYER_ID_FOR_MAP index=0;
+        while(index<tmax)
+        {
+            clients_removed_index[index]=tmax-index;
+            index++;
+        }
+    }
 
     clients.reserve(tmax);
     unsigned int index=0;
     while(index<tmax)
     {
-        clients.push_back(ClientWithMapEpoll(index));
+        clients.emplace_back(index);
         ClientWithMapEpoll &c=clients[index];
         c.resetAll();
         c.setToDefault();

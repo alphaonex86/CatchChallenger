@@ -211,6 +211,8 @@ void DatapackDownloaderMainSub::datapackChecksumDoneSub(const std::vector<std::s
     hashSub=hash;
     this->datapackFilesListSub=datapackFilesList;
     this->partialHashListSub=partialHashList;
+    if(datapackFilesListSub.empty())
+        std::cerr << "WARNING DatapackDownloader::datapackChecksumDoneSub(): local Sub datapack file list is empty" << std::endl;
     if(!datapackFilesListSub.empty() && hash==sendedHashSub)
     {
         std::cout << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << std::endl;

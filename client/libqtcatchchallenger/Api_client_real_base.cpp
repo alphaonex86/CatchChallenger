@@ -256,6 +256,8 @@ void Api_client_real::datapackChecksumDoneBase(const std::vector<std::string> &d
 
     this->datapackFilesListBase=datapackFilesList;
     this->partialHashListBase=partialHashList;
+    if(datapackFilesListBase.empty())
+        std::cerr << "WARNING Api_client_real::datapackChecksumDoneBase(): local Base datapack file list is empty" << std::endl;
     if(!datapackFilesListBase.empty() && hash==CommonSettingsCommon::commonSettingsCommon.datapackHashBase)
     {
         std::cerr << "Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote " << binarytoHexa(hash) << std::endl;

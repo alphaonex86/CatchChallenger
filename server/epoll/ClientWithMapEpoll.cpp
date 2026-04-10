@@ -10,6 +10,7 @@ void ClientWithMapEpoll::reset(int infd)
 {
     ProtocolParsingBase::reset();
     this->infd=infd;
+    stat=ClientStat::None;
 }
 
 void ClientWithMapEpoll::closeSocket()

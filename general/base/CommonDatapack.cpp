@@ -55,6 +55,15 @@ void CommonDatapack::parseDatapack(const std::string &datapackPath)
     parseMonstersItemToLearn();
     parseProfileList();
     parseLayersOptions();
+    #else
+    parseSkins();
+    parseReputation();
+    parseBuff();
+    parseTypes();
+    parseItems();
+    parseSkills();
+    parseMonsters();
+    parseProfileList();
     #endif
 
     parsing=false;

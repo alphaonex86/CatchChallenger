@@ -113,7 +113,7 @@ bool Client::parseInputBeforeLogin(const uint8_t &packetCode, const uint8_t &que
             {
                 if(stat!=ClientStat::None)
                 {
-                    errorOutput("stat!=EpollClientLoginStat::None for case 0xA0");
+                    errorOutput("stat!=EpollClientLoginStat::None for case 0xA0, stat=" + std::to_string(static_cast<uint8_t>(stat)));
                     return false;
                 }
                 #ifdef CATCHCHALLENGER_EXTRA_CHECK

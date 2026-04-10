@@ -199,6 +199,18 @@ void BaseServer::preload_dictionary_map_return()
         index++;
     }
 
+    #ifdef CATCHCHALLENGER_CACHE_HPS
+    // When loading from HPS cache, load dictionary_map_database_to_internal from cache
+    if(serialBuffer!=nullptr)
+    {
+        CATCHCHALLENGER_TYPE_MAPID mapListSize=0;
+        *serialBuffer >> mapListSize;
+        *serialBuffer >> Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list;
+        DictionaryServer::dictionary_map_database_to_internal.clear();
+        *serialBuffer >> DictionaryServer::dictionary_map_database_to_internal;
+        obsoleteMap=0;
+    }
+    #endif
     if(obsoleteMap)
         std::cerr << obsoleteMap << " SQL obsolete map dictionary" << std::endl;
     std::cout << DictionaryServer::dictionary_map_database_to_internal.size() << " SQL map dictionary" << std::endl;
@@ -473,7 +485,7 @@ void BaseServer::preload_industries_return()
         CATCHCHALLENGER_TYPE_MAPID dbSize=0;
         lastSize=out_file->tellp();
 
-        //the player load well without this, is loaded by another way: std::vector<MapServer *> DictionaryServer::dictionary_map_database_to_internal;
+        hps::to_stream(DictionaryServer::dictionary_map_database_to_internal, *out_file);
 
         dbSize+=((uint32_t)out_file->tellp()-(uint32_t)lastSize);lastSize=out_file->tellp();
         std::cout << "DictionaryServer Size: " << dbSize << "B" << std::endl;

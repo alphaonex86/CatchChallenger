@@ -689,28 +689,31 @@ if(c->getPlayerId()>0)
                             #ifdef PROTOCOLPARSINGDEBUG
                             std::cout << "new MapVisibilityAlgorithm: " << infd << " " << client << std::endl;
                             #endif
-                            //just for informations
-                            /*{
+                            //populate client.socketString so headerOutput()/normalOutput()/errorOutput()
+                            //display a real "<ip>:<port>:" prefix instead of the empty string fallback.
+                            //Mirrors server/gateway/main-epoll-gateway.cpp accept path.
+                            {
+                                if(client.socketString!=NULL)
+                                {
+                                    delete[] client.socketString;
+                                    client.socketString=NULL;
+                                    client.socketStringSize=0;
+                                }
                                 char hbuf[NI_MAXHOST], sbuf[NI_MAXSERV];
-                                const int &s2 = getnameinfo(&in_addr, in_len,
-                                hbuf, sizeof hbuf,
-                                sbuf, sizeof sbuf,
-                                NI_NUMERICHOST | NI_NUMERICSERV);
+                                const int s2 = getnameinfo(&in_addr, in_len,
+                                                           hbuf, sizeof hbuf,
+                                                           sbuf, sizeof sbuf,
+                                                           NI_NUMERICHOST | NI_NUMERICSERV);
                                 if(s2 == 0)
                                 {
-                                    #ifdef CATCHCHALLENGER_EXTRA_CHECK
-                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << ", clientnumberToDebug: " << clientnumberToDebug << std::endl;
-                                    #else
-                                    //std::cout << "Accepted connection on descriptor " << infd << "(host=" << hbuf << ", port=" << sbuf << "), client: " << client << std::endl;
-                                    #endif
-                                    *socketStringSize=static_cast<int>(strlen(hbuf))+static_cast<int>(strlen(sbuf))+1+1;
-                                    (*socketString)=new char[*socketStringSize];
-                                    strcpy(*socketString,hbuf);
-                                    strcat(*socketString,":");
-                                    strcat(*socketString,sbuf);
-                                    (*socketString)[*socketStringSize-1]='\0';
+                                    client.socketStringSize=static_cast<int>(strlen(hbuf))+static_cast<int>(strlen(sbuf))+1+1;
+                                    client.socketString=new char[client.socketStringSize];
+                                    strcpy(client.socketString,hbuf);
+                                    strcat(client.socketString,":");
+                                    strcat(client.socketString,sbuf);
+                                    client.socketString[client.socketStringSize-1]='\0';
                                 }
-                            }*/
+                            }
                             epoll_event event;
                             memset(&event,0,sizeof(event));
                             event.data.ptr = &client;

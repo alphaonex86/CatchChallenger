@@ -1749,19 +1749,18 @@ public:
     /*COORD_TYPE*/ uint8_t y;
     Orientation orientation;
 
-    /// \todo support multiple map start, change both:
-    std::string mapString;
     std::string databaseId;/*to resolve with the dictionary, in string (not the number), need port prepare profile
     needed: start.xml define monster, start.xml into map define place*/
+    CATCHCHALLENGER_TYPE_MAPID mapIndex;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
-        buf << x << y << (uint8_t)orientation << mapString << databaseId;
+        buf << x << y << (uint8_t)orientation << databaseId << mapIndex;
     }
     template <class B>
     void parse(B& buf) {
         uint8_t value=0;
-        buf >> x >> y >> value >> mapString >> databaseId;
+        buf >> x >> y >> value >> databaseId >> mapIndex;
         orientation=(Orientation)value;
     }
     #endif

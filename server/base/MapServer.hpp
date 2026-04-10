@@ -67,6 +67,7 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {
+        buf << id_db;
         buf << border.bottom.x_offset << border.bottom.mapIndex;
         buf << border.left.y_offset << border.left.mapIndex;
         buf << border.right.y_offset << border.right.mapIndex;
@@ -116,8 +117,8 @@ public:
             buf << n.first;
             buf << n.second;
         }
-        buf << (uint8_t)heal.size();
-        for(const auto& n : heal)
+        buf << (uint8_t)zoneCapture.size();
+        for(const auto& n : zoneCapture)
         {
             buf << n.first;
             buf << n.second;
@@ -127,6 +128,11 @@ public:
     }
     template <class B>
     void parse(B& buf) {
+        buf >> id_db;
+        buf >> border.bottom.x_offset >> border.bottom.mapIndex;
+        buf >> border.left.y_offset >> border.left.mapIndex;
+        buf >> border.right.y_offset >> border.right.mapIndex;
+        buf >> border.top.x_offset >> border.top.mapIndex;
         buf >> teleporters;
         buf >> flat_simplified_map;
 
@@ -148,6 +154,7 @@ public:
             buf >> s;
             shops[std::pair<uint8_t,uint8_t>(x,y)]=s;
         }
+        buf >> tempSize;
         for(int i=0;i<tempSize;i++)
         {
             uint8_t x=0,y=0;
@@ -157,6 +164,7 @@ public:
             buf >> s;
             botsFightTrigger[std::pair<uint8_t,uint8_t>(x,y)]=s;
         }
+        buf >> tempSize;
         for(int i=0;i<tempSize;i++)
         {
             uint8_t x=0,y=0;
@@ -167,6 +175,7 @@ public:
             items[std::pair<uint8_t,uint8_t>(x,y)]=s;
         }
 
+        buf >> tempSize;
         for(int i=0;i<tempSize;i++)
         {
             uint8_t x=0,y=0;
@@ -176,6 +185,7 @@ public:
             buf >> s;
             rescue[std::pair<uint8_t,uint8_t>(x,y)]=(Orientation)s;
         }
+        buf >> tempSize;
         for(int i=0;i<tempSize;i++)
         {
             uint8_t x=0,y=0;
@@ -183,13 +193,12 @@ public:
             buf >> y;
             heal.insert(std::pair<uint8_t,uint8_t>(x,y));
         }
+        buf >> tempSize;
         for(int i=0;i<tempSize;i++)
         {
             uint8_t x=0,y=0;
             buf >> x;
             buf >> y;
-            Shop s;
-            buf >> s;
             zoneCapture.insert(std::pair<uint8_t,uint8_t>(x,y));
         }
 

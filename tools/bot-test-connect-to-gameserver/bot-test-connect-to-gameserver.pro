@@ -1,5 +1,8 @@
 DEFINES += CATCHCHALLENGER_NOAUDIO
 
+linux:QMAKE_LFLAGS += -fuse-ld=mold
+linux:LIBS += -fuse-ld=mold
+
 include(../../general/general.pri)
 include(../bot/simple/Simple.pri)
 
