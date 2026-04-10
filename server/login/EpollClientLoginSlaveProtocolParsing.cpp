@@ -17,6 +17,12 @@ void EpollClientLoginSlave::doDDOSComputeAll()
         client_list.at(index)->doDDOSCompute();
         index++;
     }
+    index=0;
+    while(index<stat_client_list.size())
+    {
+        stat_client_list.at(index)->doDDOSCompute();
+        index++;
+    }
 }
 
 void EpollClientLoginSlave::doDDOSCompute()

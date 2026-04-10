@@ -318,6 +318,7 @@ private:
     void parseAudioAmbiance();
     void parseZoneExtra();
     void parseReputationExtra();
+    void parseProfileText();
 };
 
 #endif // DATAPACKCLIENTLOADER_H

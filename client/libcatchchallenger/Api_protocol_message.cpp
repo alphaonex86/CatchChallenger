@@ -1294,22 +1294,9 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     items[id]=quantity;
                 index++;
             }
-            if((size-pos)<(unsigned int)sizeof(uint16_t))
-            {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
-                           ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
-                              );
-                return false;
-            }
-            #ifdef MAXIMIZEPERFORMANCEOVERDATABASESIZE
-            player_informations.items=items;
-            player_informations.warehouse_items=warehouse_items;
-            have_inventory(player_informations.items,player_informations.warehouse_items);
-            #else
             for (auto itr = items.cbegin(); itr != items.cend(); ++itr)
                 player_informations.items[itr->first]=itr->second;
             have_inventory(items);
-            #endif
         }
         break;
         //Add object

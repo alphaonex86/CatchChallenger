@@ -320,6 +320,7 @@ void QtDatapackClientLoader::parseDatapackMainSub(const std::string &mainDatapac
 
     //convert mapPathToId to mapIdToPath
     mapIdToPath.clear();
+    mapIdToPath.resize(mapPathToId.size());
     for (const std::pair<const std::string, CATCHCHALLENGER_TYPE_MAPID>& n : mapPathToId)
     {
         const std::string path(n.first);

@@ -722,8 +722,8 @@ if(c->getPlayerId()>0)
                             if(s2 == -1)
                             {
                                 std::cerr << "epoll_ctl on socket error" << std::endl;
-                                client.setToDefault();
                                 client.disconnectClient();
+                                client.setToDefault();
                                 epollClientList->remove(client);
                             }
                             else
@@ -731,8 +731,8 @@ if(c->getPlayerId()>0)
                                 if(::write(infd,encodingBuff,sizeof(encodingBuff))!=sizeof(encodingBuff))
                                 {
                                     std::cerr << "socket first byte write error" << std::endl;
-                                    client.setToDefault();
                                     client.disconnectClient();
+                                    client.setToDefault();
                                     epollClientList->remove(client);
                                 }
                             }
@@ -759,8 +759,8 @@ if(c->getPlayerId()>0)
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
                         numberOfConnectedClient--;
 
-                        client->setToDefault();
                         client->disconnectClient();
+                        client->setToDefault();
                         epollClientList->remove(*client);
 
                         continue;
@@ -778,8 +778,8 @@ if(c->getPlayerId()>0)
                         // Crash at 51th: /usr/bin/php -f loginserver-json-generator.php 127.0.0.1 39034
                         numberOfConnectedClient--;
 
-                        client->setToDefault();
                         client->disconnectClient();
+                        client->setToDefault();
                         epollClientList->remove(*client);
                     }
                 }

@@ -529,6 +529,7 @@ void Api_protocol_Qt::newCharacterId(const uint8_t &returnCode,const uint32_t &c
 }
 void Api_protocol_Qt::haveCharacter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const Direction &last_direction)
 {
+    have_current_player_info(player_informations);
     emit QthaveCharacter(mapIndex,x,y,last_direction);
 }
 //events

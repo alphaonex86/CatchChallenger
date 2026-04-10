@@ -133,30 +133,36 @@ std::string FacilityLib::genderToString(const Gender &gender)
 
 uint64_t FacilityLib::nextCaptureTime(const City &city)
 {
-    time_t t=time(0);   // get time now
-    struct std::tm * nextCityCapture=localtime(&t);
-    nextCityCapture->tm_sec=0;
-    nextCityCapture->tm_min=city.capture.minute;
-    nextCityCapture->tm_hour=city.capture.hour;
+    const time_t now=time(0);   // get time now
+    struct std::tm nextCityCapture=*localtime(&now);
+    nextCityCapture.tm_sec=0;
+    nextCityCapture.tm_min=city.capture.minute;
+    nextCityCapture.tm_hour=city.capture.hour;
     if(city.capture.frenquency==City::Capture::Frequency_week)
     {
-        while(nextCityCapture->tm_wday!=(int)city.capture.day)
+        // advance to the desired weekday (0..6)
+        int daysToAdd=((int)city.capture.day - nextCityCapture.tm_wday + 7) % 7;
+        nextCityCapture.tm_mday+=daysToAdd;
+        time_t result=std::mktime(&nextCityCapture);
+        // if computed time is in the past (today, but capture hour passed), add a week
+        if(result<=now)
         {
-            t+=3600*24;
-            nextCityCapture=localtime(&t);
+            nextCityCapture.tm_mday+=7;
+            result=std::mktime(&nextCityCapture);
         }
+        return static_cast<uint64_t>(result);
     }
     else
     {
-        if(nextCityCapture->tm_mon>=12)
+        // monthly: same day, configured hour; advance month if past
+        time_t result=std::mktime(&nextCityCapture);
+        if(result<=now)
         {
-            nextCityCapture->tm_mon=0;
-            nextCityCapture->tm_year++;
+            nextCityCapture.tm_mon++;
+            result=std::mktime(&nextCityCapture);
         }
-        else
-            nextCityCapture->tm_mon++;
+        return static_cast<uint64_t>(result);
     }
-    return std::mktime(nextCityCapture);
 }
 
 uint32_t FacilityLib::privateMonsterToBinary(char *data,const PlayerMonster &monster,const uint32_t &character_id)

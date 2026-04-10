@@ -72,8 +72,8 @@ void Client::insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &ma
 {
     if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
-    if(index_on_map!=PLAYER_INDEX_FOR_CONNECTED_MAX)
-        std::cout << "index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::insertClientOnMap()" << std::endl;
+    /* keep comment to debug, but disable to not flood the console if(index_on_map!=PLAYER_INDEX_FOR_CONNECTED_MAX)
+        std::cout << "index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::insertClientOnMap()" << std::endl;*/
     index_on_map=map.insertOnMap(getIndexConnect());
 }
 

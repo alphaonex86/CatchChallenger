@@ -173,6 +173,11 @@ void DdosBuffer<T,maxItems>::reset()
     m_stop=0;
     m_total=0;
     m_newValue=0;
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    lastFlush=(uint64_t)tv.tv_sec;
+    #endif
 }
 
 template <class T,uint8_t maxItems>
