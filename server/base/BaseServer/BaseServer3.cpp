@@ -80,6 +80,26 @@ void BaseServer::preload_1_the_data()
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
 
         //baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);
+        BaseServerMasterSendDatapack::skinList=GlobalServerData::serverPrivateVariables.skinList;
+
+        // Set runtime datapack folder paths (normally done in preload_6_sync_the_datapack
+        // which is skipped in cache load mode). These depend only on settings, not parsed datapack.
+        GlobalServerData::serverPrivateVariables.mainDatapackFolder=
+                GlobalServerData::serverSettings.datapack_basePath+
+                "map/main/"+
+                CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+                "/";
+        if(CommonSettingsServer::commonSettingsServer.subDatapackCode.size()>0)
+        {
+            GlobalServerData::serverPrivateVariables.subDatapackFolder=
+                    GlobalServerData::serverSettings.datapack_basePath+
+                    "map/main/"+
+                    CommonSettingsServer::commonSettingsServer.mainDatapackCode+
+                    "/sub/"+
+                    CommonSettingsServer::commonSettingsServer.subDatapackCode+
+                    "/";
+        }
+
         in_file=nullptr;
     }
     else

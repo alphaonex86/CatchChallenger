@@ -28,6 +28,21 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
     #ifdef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
     const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
     const std::unordered_set<std::string> &extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(extensionAllowed.empty())
+    {
+        std::cerr << "extensionAllowed can't be empty when you call Client::datapack_file_list()" << std::endl;
+        abort();
+    }
+    #endif
+    #else
+    #ifdef CATCHCHALLENGER_EXTRA_CHECK
+    if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+    {
+        std::cerr << "BaseServerMasterSendDatapack::extensionAllowed can't be empty when you call Client::datapack_file_list()" << std::endl;
+        abort();
+    }
+    #endif
     #endif
 
     unsigned int index=0;
@@ -40,7 +55,6 @@ std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> 
         #endif
         const std::string &suffix=FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName);
         //if(regex_search(fileName,GlobalServerData::serverPrivateVariables.datapack_rightFileName))
-        //try replace by better algo
         if(!suffix.empty())
         {
 //            const std::string &suffix=FacilityLibGeneral::getSuffix(fileName);

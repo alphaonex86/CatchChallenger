@@ -15,7 +15,16 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     if(!CommonSettingsCommon::commonSettingsCommon.httpDatapackMirrorBase.empty())
         return std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>();
     if(GlobalServerData::serverSettings.datapackCache==-1)
+    {
+        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+        if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+        {
+            const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+        }
+        #endif
         return datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
+    }
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_base==0)
@@ -40,7 +49,16 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
 std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_main()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
+    {
+        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+        if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+        {
+            const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+        }
+        #endif
         return datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
+    }
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_main==0)
@@ -65,7 +83,16 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
 std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile> Client::datapack_file_list_cached_sub()
 {
     if(GlobalServerData::serverSettings.datapackCache==-1)
+    {
+        #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+        if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+        {
+            const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+            BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+        }
+        #endif
         return datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
+    }
     else if(GlobalServerData::serverSettings.datapackCache==0)
     {
         if(Client::datapack_list_cache_timestamp_sub==0)
@@ -109,11 +136,21 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         case DatapackStatus::Base:
             filesList=datapack_file_list_cached_base();
             datapackPath=GlobalServerData::serverSettings.datapack_basePath;
+            if(filesList.empty())
+            {
+                std::cerr << "datapack_file_list_cached_base() can't return empty list" << std::endl;
+                abort();
+            }
         break;
         #endif
         case DatapackStatus::Main:
             filesList=datapack_file_list_cached_main();
             datapackPath=GlobalServerData::serverPrivateVariables.mainDatapackFolder;
+            if(filesList.empty())
+            {
+                std::cerr << "datapack_file_list_cached_main() can't return empty list" << std::endl;
+                abort();
+            }
         break;
         case DatapackStatus::Sub:
             filesList=datapack_file_list_cached_sub();
@@ -240,14 +277,14 @@ void Client::datapackList(const uint8_t &query_id,const std::vector<std::string>
         {
             #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
             case DatapackStatus::Base:
-                errorOutput("Ask datapack list where the checksum match Base");
+                errorOutput("ERROR or DDOS: Checksum send previously to the client, then the client should have see it match (and have already the same version of datapack than the server) and not ask again the files list: Base");
             break;
             #endif
             case DatapackStatus::Main:
-                errorOutput("Ask datapack list where the checksum match Main");
+                errorOutput("ERROR or DDOS: Checksum send previously to the client, then the client should have see it match (and have already the same version of datapack than the server) and not ask again the files list: Main");
             break;
             case DatapackStatus::Sub:
-                errorOutput("Ask datapack list where the checksum match Sub");
+                errorOutput("ERROR or DDOS: Checksum send previously to the client, then the client should have see it match (and have already the same version of datapack than the server) and not ask again the files list: Sub");
             break;
             default:
             return;

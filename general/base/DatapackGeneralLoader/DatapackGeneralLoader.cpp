@@ -333,9 +333,10 @@ std::pair<std::vector<const tinyxml2::XMLElement *>, std::vector<Profile> > Data
     return returnVar;
 }
 
-std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,const std::vector<Profile> &profileCommon)
+std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,const std::vector<Profile> &profileCommon,
+        const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
-    std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file);
+    std::vector<ServerSpecProfile> serverProfile=loadServerProfileListInternal(datapackPath,mainDatapackCode,file,mapPathToId);
     //index of base profile
     std::unordered_set<std::string> profileId,serverProfileId;
     {
@@ -390,7 +391,8 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileList(cons
     return serverProfile;
 }
 
-std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file)
+std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInternal(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &file,
+        const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::unordered_set<std::string> idDuplicate;
     std::vector<ServerSpecProfile> serverProfileList;
@@ -443,18 +445,25 @@ std::vector<ServerSpecProfile> DatapackGeneralLoader::loadServerProfileListInter
         const tinyxml2::XMLElement * map = startItem->FirstChildElement("map");
         if(map!=NULL && map->Attribute("file")!=NULL && map->Attribute("x")!=NULL && map->Attribute("y")!=NULL)
         {
-            serverProfile.mapString=map->Attribute("file");
-            if(!stringEndsWith(serverProfile.mapString,".tmx"))
-                serverProfile.mapString+=".tmx";
-            if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+serverProfile.mapString))
+            std::string mapStr=map->Attribute("file");
+            if(!stringEndsWith(mapStr,".tmx"))
+                mapStr+=".tmx";
+            if(!CatchChallenger::FacilityLibGeneral::isFile(datapackPath+DATAPACK_BASE_PATH_MAPMAIN+mainDatapackCode+'/'+mapStr))
             {
-                std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << serverProfile.mapString << ": child->Name(): " << startItem->Name() << std::endl;
+                std::cerr << "Unable to open the xml file: " << file << ", map don't exists " << mapStr << ": child->Name(): " << startItem->Name() << std::endl;
                 {
-                    std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
+                    std::cerr << "Into the starter the map \"" << mapStr << "\" is not found, fix it (abort)" << std::endl;
                     abort();
                 }
                 startItem = startItem->NextSiblingElement("start");
                 continue;
+            }
+            {
+                std::string mapKey=mapStr;
+                stringreplaceOne(mapKey,std::string(".tmx"),std::string(""));
+                const auto it=mapPathToId.find(mapKey);
+                if(it!=mapPathToId.cend())
+                    serverProfile.mapIndex=it->second;
             }
             serverProfile.x=stringtouint8(map->Attribute("x"),&ok);
             if(!ok)

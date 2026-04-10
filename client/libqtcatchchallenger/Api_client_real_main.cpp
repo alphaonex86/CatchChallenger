@@ -269,6 +269,8 @@ void Api_client_real::datapackChecksumDoneMain(const std::vector<std::string> &d
 
     this->datapackFilesListMain=datapackFilesList;
     this->partialHashListMain=partialHashList;
+    if(datapackFilesListMain.empty())
+        std::cerr << "WARNING Api_client_real::datapackChecksumDoneMain(): local Main datapack file list is empty" << std::endl;
     if(!datapackFilesListMain.empty() && hash==CommonSettingsServer::commonSettingsServer.datapackHashServerMain)
     {
         std::cerr << "Main: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote " << binarytoHexa(hash) << std::endl;

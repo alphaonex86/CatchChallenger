@@ -1,0 +1,78 @@
+[32m[1m/home/user/Desktop/CatchChallenger/working/tools/bot-test-connect-to-gameserver/build/llvm-Debug/bottest.xml[39m[0m
+GlobalControler::on_connect_clicked()
+Api_protocol::resetAll(): stageConnexion=CatchChallenger::Api_protocol::StageConnexion::Stage1 set at ../../../../client/libqtcatchchallenger/Api_protocol_Qt.cpp:397
+Try connect on:  "localhost" : 61917
+Api_protocol_Qt::stateChanged(1)
+Api_protocol_Qt::stateChanged(2)
+Api_protocol_Qt::stateChanged(3)
+Api_protocol::connectTheExternalSocketInternal()
+Api_protocol::connectTheExternalSocketInternal()
+Api_protocol::tryLogin()
+Api_protocol::protocol_is_good(), login is empty, normal for login without creation
+Try create account: login: 753D02D675EA99D58390283FC042F4FEE06C9C9CB02D677BD3DE7928 and pass: 42ED245F0483A14E5AC60C389272E806B3F79E136C4F9BB9C95FEB0A
+Api_client_real::sendDatapackContentBase()
+Hash not same CommonSettingsCommon::commonSettingsCommon.datapackHashBase  "36BCD61A9F99DF9DE5BAB1B5DBCEBBD02FCECA9C9878631AF657FE80"  hashBase  ""
+"listDatapack(): remove invalid file: items/catchtrap/1_failed.xcf"
+"listDatapack(): remove invalid file: items/catchtrap/1_success.xcf"
+"listDatapack(): remove invalid file: items/catchtrap/catchtrap-traveling.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/0.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/1.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/2.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/3.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/4.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/5.xcf"
+"listDatapack(): remove invalid file: monsters/skill-animation/6.xcf"
+"listDatapack(): remove invalid file: README.md"
+"listDatapack(): remove invalid file: datapack-change.md"
+Api_client_real::sendDatapackContentBase() doDifferedChecksumBase
+QtDatapackChecksum::doDifferedChecksumBase
+GlobalControler::logged()
+GlobalControler::updateServerList()
+character not found: "botTest", charactersGroupIndex: 0, will create after datapack ready
+Api_client_real::datapackChecksumDoneBase
+Base: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote 36BCD61A9F99DF9DE5BAB1B5DBCEBBD02FCECA9C9878631AF657FE80
+Api_client_real::datapackDownloadFinishedBase()
+Api_protocol_Qt::haveTheDatapack()
+MultipleBotConnectionImplFoprGui::haveTheDatapack()
+4 skin(s) loaded
+2 reputation(s) loaded
+9 monster buff(s) loaded
+14 type(s) loaded
+80 items(s) loaded
+3 trap(s) loaded
+46 monster skill(s) loaded
+43 monster(s) loaded
+1 profile(s) loaded
+"botlogin" have no character and no server selected:  1 , charactersGroupIndex:  0
+"botlogin" client->charactersList.at(charactersGroupIndex).empty()
+GlobalControler::datapackIsReady()
+MultipleBotConnectionImplForGui::serverSelect():  0 , uniqueKey:  0
+MultipleBotConnectionImplFoprGui::serverSelect(): uniqueKey==0, suspect bug
+"botlogin" have not character
+GlobalControler::datapackIsReady() character_id==0, creating character
+creating character: botTest
+[1madd character triggered[0m
+create new character
+created character with id: 1, returnCode: 0, line: ../../../../client/libcatchchallenger/Api_protocol_reply.cpp: 550
+Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t)
+Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t,uint32_t)
+Api_protocol::selectCharacter(): 0x5639f1870f20, select char: 1, charactersGroupIndex: 0, serverUniqueKey: 0, line: ../../../../client/libcatchchallenger/Api_protocol.cpp: 655
+add character on map:  1   0x5639f153adb0  api:  CatchChallenger::Api_client_real(0x5639f1870f10)  at  ../../../bot/MultipleBotConnection.cpp : 569
+Select new character created after creation: 1
+MultipleBotConnection::ifMultipleConnexionStartCreation(): !multipleConnexion()
+created character with id: 2, returnCode: 0, line: ../../../../client/libcatchchallenger/Api_protocol_reply.cpp: 550
+Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t)
+Api_protocol::selectCharacter(uint8_t,uint32_t,uint32_t,uint32_t)
+character select already send, line: ../../../../client/libcatchchallenger/Api_protocol.cpp: 631
+Unable to select character after creation: 2
+Api_protocol::selectCharacter() reply for 0xAC 0x5639f1870f20 ../../../../client/libcatchchallenger/Api_protocol_reply.cpp:571
+!CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.isParsedContent(), don't forget call CommonDatapackServerSpec::parseDatapack(), and when finished Api_protocol::have_main_and_sub_datapack_loaded()
+Stop character loading for now, then character_selected=false
+MultipleBotConnectionImplFoprGui::haveTheDatapackMainSubCode()
+mainNeedUpdate CommonSettingsCommon::commonSettingsCommon.datapackHashBase  "AB3934BE844329B4096385E87A9CF7ADFE1B1C988D20A1AF669B4E4E"  hashBase  ""
+Main: Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote AB3934BE844329B4096385E87A9CF7ADFE1B1C988D20A1AF669B4E4E
+MultipleBotConnectionImplFoprGui::haveTheDatapackMainSub()
+player_informations.recipes=NULL;
+selected character:  0x5639f153adb0  at  ../../../bot/MultipleBotConnection.cpp : 214
+Procotol wrong or corrupted wrong size with main ident: 84, data: 0000F10100000000000001000000, line: ../../../../client/libcatchchallenger/Api_protocol_message.cpp:1300
+"MultipleBotConnectionImplFoprGui::newError() error: Procotol wrong or corrupted, detailedError: wrong size with main ident: 84, data: 0000F10100000000000001000000, line: ../../../../client/libcatchchallenger/Api_protocol_message.cpp:1300"

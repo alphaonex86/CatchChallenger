@@ -30,12 +30,10 @@ void BaseServer::preload_18_sync_profile()
     {
         unsigned int emptyMap=0;
         unsigned int index=0;
-        std::vector<ServerSpecProfile> &l=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList_rw();
+        const std::vector<ServerSpecProfile> &l=CommonDatapackServerSpec::commonDatapackServerSpec.get_serverProfileList();
         while(index<l.size())
         {
-            ServerSpecProfile &serverSpecProfile=l[index];
-            stringreplaceOne(serverSpecProfile.mapString,".tmx","");
-            if(serverSpecProfile.mapString.empty())
+            if(l[index].mapIndex==65535)
                 emptyMap++;
             index++;
         }
@@ -70,15 +68,10 @@ void BaseServer::preload_18_sync_profile()
         serverProfileInternal.valid=false;
         serverProfileInternal.x=0;
         serverProfileInternal.y=0;
-        if(mapPathToId.find(serverProfile.mapString)==mapPathToId.cend())
-        {
-            std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not found, fix it (abort)" << std::endl;
-            abort();
-        }
-        serverProfileInternal.mapIndex=mapPathToId.at(serverProfile.mapString);
+        serverProfileInternal.mapIndex=serverProfile.mapIndex;
         if(serverProfileInternal.mapIndex==65535)
         {
-            std::cerr << "Into the starter the map \"" << serverProfile.mapString << "\" is not resolved, fix it (abort)" << std::endl;
+            std::cerr << "Into the starter the map index is not resolved for profile " << profileIndex << ", fix it (abort)" << std::endl;
             abort();
         }
         serverProfileInternal.x=serverProfile.x;

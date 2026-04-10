@@ -101,14 +101,24 @@ void Client::setToDefault()
     stat=ClientStat::Free;
     lastdaillygift=0;
     pingInProgress=0;
+    otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
+    otherPlayerTrade=PLAYER_INDEX_FOR_CONNECTED_MAX;
 
     //disable reserve
     if(otherPlayerBattle!=PLAYER_INDEX_FOR_CONNECTED_MAX)
     {
-        Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
-        otherPlayerTrade.battleCanceled();
-        otherPlayerTrade.otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
-        otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
+        if(ClientList::list==nullptr)
+        {
+            std::cerr << "ERROR ClientList::list is not initialized yet" << std::endl;
+            abort();
+        }
+        if(!ClientList::list->empty(this->otherPlayerTrade))
+        {
+            Client &otherPlayerTrade=ClientList::list->rw(this->otherPlayerTrade);
+            otherPlayerTrade.battleCanceled();
+            otherPlayerTrade.otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
+            otherPlayerBattle=PLAYER_INDEX_FOR_CONNECTED_MAX;
+        }
     }
 
     index_on_map=PLAYER_INDEX_FOR_CONNECTED_MAX;
@@ -463,7 +473,7 @@ std::string Client::headerOutput() const
         #else
         std::string ip;
         if(socketString==NULL)
-            ip="[IP]:[PORT]";
+            ip="";
         else
             ip=socketString;
         return ip+": ";
@@ -819,14 +829,11 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     std::string encyclopedia_itemS;
     if(public_and_private_informations.encyclopedia_item!=nullptr)
         encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
-    std::string bot_already_beatenS;
-
-    //see Player_private_and_public_informations_Map
-    //serialise list of bot fight in form: map DB id + id
+    //bot_already_beaten is already serialised inside public_and_private_informations.mapData (per-map bots_beaten set)
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
-        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << bot_already_beatenS
+        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader
         << public_and_private_informations.quests << public_and_private_informations.reputation
         << public_and_private_informations.items;
     buf << public_and_private_informations.mapData << public_and_private_informations.allowCreateClan;
@@ -836,7 +843,8 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << botFightMonsters;
     buf << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex << queryNumberList;
-    buf << botFight << isInCityCapture;
+    //botFight and isInCityCapture are runtime-only state; on reconnect the
+    //player is never mid-fight nor mid-city-capture, so they are not serialised.
 
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
     CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
@@ -892,7 +900,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> botFightMonsters;
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
-    buf >> isInCityCapture;
+    //botFight and isInCityCapture are runtime-only and not serialised
 
     uint8_t value=0;
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;

@@ -383,6 +383,8 @@ void DatapackDownloaderBase::datapackChecksumDoneBase(const std::vector<std::str
     hashBase=hash;
     this->datapackFilesListBase=datapackFilesList;
     this->partialHashListBase=partialHashList;
+    if(datapackFilesListBase.empty())
+        std::cerr << "WARNING DatapackDownloaderBase::datapackChecksumDoneBase(): local Base datapack file list is empty" << std::endl;
     if(!datapackFilesListBase.empty() && hash==sendedHashBase)
     {
         std::cout << "Datapack is not empty and get nothing from serveur because the local datapack hash match with the remote" << std::endl;

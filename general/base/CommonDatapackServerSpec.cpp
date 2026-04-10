@@ -42,7 +42,7 @@ void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &d
 
     #ifndef BOTTESTCONNECT
     parseQuests(mapPathToId);
-    parseServerProfileList();
+    parseServerProfileList(mapPathToId);
     #ifdef CATCHCHALLENGER_CLIENT
     applyMonstersRate();
     #endif
@@ -70,12 +70,12 @@ void CommonDatapackServerSpec::parseQuests(const std::unordered_map<std::string,
     std::cout << quests.size() << " quest(s) loaded" << std::endl;
 }
 
-void CommonDatapackServerSpec::parseServerProfileList()
+void CommonDatapackServerSpec::parseServerProfileList(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     std::string startFile=datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/sub/"+subDatapackCode+"/start.xml";
     if(!CatchChallenger::FacilityLibGeneral::isFile(startFile))
         startFile=datapackPath+DATAPACK_BASE_PATH_PLAYERSPEC+"/"+mainDatapackCode+"/start.xml";
-    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,startFile,CommonDatapack::commonDatapack.get_profileList());
+    serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,startFile,CommonDatapack::commonDatapack.get_profileList(),mapPathToId);
     std::cout << serverProfileList.size() << " server profile(s) loaded" << std::endl;
 }
 

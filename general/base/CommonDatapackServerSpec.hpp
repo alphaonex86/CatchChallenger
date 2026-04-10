@@ -58,7 +58,7 @@ private:
     std::string subDatapackCode;
 private:
     void parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
-    void parseServerProfileList();
+    void parseServerProfileList(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     #ifdef CATCHCHALLENGER_CLIENT
     void applyMonstersRate();//xp,sp variable by server, only have this second pass on client, take care
     #endif

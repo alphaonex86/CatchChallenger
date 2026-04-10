@@ -1,6 +1,9 @@
 linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
 linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
 
+linux:QMAKE_LFLAGS += -fuse-ld=mold
+linux:LIBS += -fuse-ld=mold
+
 DEFINES += OPENGL CATCHCHALLENGER_CACHE_HPS
 wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
 wasm: {
