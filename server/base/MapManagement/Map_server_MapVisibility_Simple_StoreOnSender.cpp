@@ -29,7 +29,7 @@ Map_server_MapVisibility_Simple_StoreOnSender::~Map_server_MapVisibility_Simple_
 {
 }
 
-unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(char *output,const size_t &clients_size)
+unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size)
 {
     if(clients_size<=1)
         return 0;
@@ -40,7 +40,7 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
     // can be only this map with this algo, then 1 map
     output[posOutput]=0x01;//map list count
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(id);//map id
+    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(mapIndex);//map id
     posOutput+=2;
     posOutput+=1;
     unsigned int count=0;
@@ -66,12 +66,12 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAll(cha
     return posOutput;
 }
 
-unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWithFilter(char *output,const size_t &clients_size,const size_t &skipped_id)
+unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id)
 {
     if(clients_size<=1)
         return 0;
     if(skipped_id>=255)
-        return send_reinsertAll(output,clients_size);
+        return send_reinsertAll(mapIndex,output,clients_size);
     uint32_t posOutput=0;
     output[posOutput]=0x6B;
     posOutput+=1+4;
@@ -79,7 +79,7 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWith
     // can be only this map with this algo, then 1 map
     output[posOutput]=0x01;//map list count
     posOutput+=1;
-    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(id);//map id
+    *reinterpret_cast<uint16_t *>(output+posOutput)=htole16(mapIndex);//map id
     posOutput+=2;
     posOutput+=1;
     unsigned int count=0;
@@ -106,7 +106,7 @@ unsigned int Map_server_MapVisibility_Simple_StoreOnSender::send_reinsertAllWith
 }
 
 // broadcast all, no filter then resend same data
-void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
+void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     uint32_t posOutput=0;//if > 0 then cache created
     uint32_t baseOutput=0;
@@ -156,7 +156,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
                         posOutput+=1;//drop all
 
-                        posOutput+=send_reinsertAll(ProtocolParsingBase::tempBigBufferForOutput+1,clients_size);
+                        posOutput+=send_reinsertAll(mapIndex,ProtocolParsingBase::tempBigBufferForOutput+1,clients_size);
                     }
                     posOutput+=client.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
                     client.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput+baseOutput,posOutput-baseOutput);
@@ -172,7 +172,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU()
 }
 
 // filter if already send, then consume CPU and use MapManagement/ClientWithMap sendedStatus/sendedMap
-void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
+void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
     //if too many player then just stop update
     size_t clients_size=map_clients_id.size();
@@ -186,7 +186,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
     while(index_client<map_clients_id.size())
     {
         if(index_client==0)
-            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(id);//map id
+            *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(mapIndex);//map id
         const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
@@ -204,7 +204,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                         uint32_t posOutput=0;
                         ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x65;//drop all player on map
                         posOutput+=1;//drop all
-                        posOutput+=send_reinsertAllWithFilter(ProtocolParsingBase::tempBigBufferForOutput+1,clients_size,index_client);
+                        posOutput+=send_reinsertAllWithFilter(mapIndex,ProtocolParsingBase::tempBigBufferForOutput+1,clients_size,index_client);
                         posOutput+=clientWithMap.sendPing(ProtocolParsingBase::tempBigBufferForOutput);//pingInProgress++ into this
                         clientWithMap.sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
                         clientWithMap.sendedStatus.clear();
@@ -306,7 +306,7 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network()
                                 ProtocolParsingBase::tempBigBufferForOutput[0x00]=0x6B;//full Insert player on map, need be delayed if no map loaded, append to current player list, need clear if send whole list
                                 *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1)=htole32(posOutput);
                                 ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
-                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(id);//map id
+                                *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(mapIndex);//map id
                                 if(insertCount<254)
                                     ProtocolParsingBase::tempBigBufferForOutput[1+4+1+2]=static_cast<uint8_t>(insertCount);//player count
                                 else

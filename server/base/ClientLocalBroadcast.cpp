@@ -82,8 +82,11 @@ void Client::removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender &ma
     if(getIndexConnect()==PLAYER_INDEX_FOR_CONNECTED_MAX)
         return;
     if(index_on_map==PLAYER_INDEX_FOR_CONNECTED_MAX)
+    {
         std::cout << "index_on_map==SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::removeClientOnMap()" << std::endl;
-    map.removeOnMap(getIndexConnect());
+        return;
+    }
+    map.removeOnMap(index_on_map);
 
     index_on_map=PLAYER_INDEX_FOR_CONNECTED_MAX;
     mapIndex=65535;

@@ -101,7 +101,7 @@ void Client::characterIsRightSendData()
         }
     }
 
-    ProtocolParsingBase::tempBigBufferForOutput[posOutput]=mapIndex;
+    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(mapIndex);
     posOutput+=2;
     ProtocolParsingBase::tempBigBufferForOutput[posOutput]=getX();
     posOutput+=1;

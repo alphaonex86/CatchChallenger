@@ -238,21 +238,21 @@ void Client::fightFinished()
     CommonFightEngine::fightFinished();
 }
 
-bool Client::botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y)
+bool Client::botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y)
 {
     if(isInFight())
     {
-        errorOutput("error: map: "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
+        errorOutput("error: map: "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+"), is in fight");
         return false;
     }
     std::pair<uint8_t,uint8_t> pos(x,y);
     if(map.botsFightTrigger.find(pos)!=map.botsFightTrigger.cend())
     {
         const uint8_t &botFightId=map.botsFightTrigger.at(pos);
-        if(!haveBeatBot(map.id,botFightId))
+        if(!haveBeatBot(mapIndex,botFightId))
         {
-            normalOutput("is now in fight on map "+std::to_string(map.id)+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
-            botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(map.id,botFightId));
+            normalOutput("is now in fight on map "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+") with the bot "+std::to_string(botFightId));
+            botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(mapIndex,botFightId));
             return true;
         }
     }

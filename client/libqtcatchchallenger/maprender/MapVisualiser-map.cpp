@@ -96,11 +96,12 @@ void MapVisualiser::resetAll()
 //open the file, and load it into the variables
 void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
-    if(current_map==0)
+    if(current_map==65535)
     {
-        std::cerr << "MapVisualiser::loadOtherMap() map empty" << std::endl;
+        std::cerr << "MapVisualiser::loadOtherMap() current_map==65535 (map empty), mapIndex=" << mapIndex << std::endl;
         return;
     }
+    std::cerr << "MapVisualiser::loadOtherMap() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     //already loaded
     if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
         return;
@@ -128,6 +129,7 @@ void MapVisualiser::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 
 void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
+    std::cerr << "MapVisualiser::asyncDetectBorder() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     if(CatchChallenger::QMap_client::all_map.find(mapIndex)==CatchChallenger::QMap_client::all_map.cend())
     {
         qDebug() << "Map is NULL, can't load more at MapVisualiser::asyncDetectBorder()";
@@ -136,14 +138,14 @@ void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
     CatchChallenger::QMap_client *tempMapObject=CatchChallenger::QMap_client::all_map.at(mapIndex);
     const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
     QRect current_map_rect;
-    if(current_map!=0 && CatchChallenger::QMap_client::all_map.find(current_map)!=CatchChallenger::QMap_client::all_map.cend())
+    if(current_map!=65535 && CatchChallenger::QMap_client::all_map.find(current_map)!=CatchChallenger::QMap_client::all_map.cend())
     {
         const CatchChallenger::CommonMap &currentLogical=QtDatapackClientLoader::datapackLoader->getMap(current_map);
         current_map_rect=QRect(0,0,currentLogical.width,currentLogical.height);
     }
     else
     {
-        qDebug() << "The current map is not set, crash prevented";
+        std::cerr << "MapVisualiser::asyncDetectBorder() current_map not set or not loaded (current_map=" << current_map << "), crash prevented" << std::endl;
         return;
     }
     QRect map_rect(tempMapObject->relative_x,tempMapObject->relative_y,logicalMap.width,logicalMap.height);
@@ -199,8 +201,12 @@ void MapVisualiser::asyncDetectBorder(const CATCHCHALLENGER_TYPE_MAPID &mapIndex
 
 bool MapVisualiser::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, QMap_client * tempMapObject)
 {
-    if(current_map==0)
+    std::cerr << "MapVisualiser::asyncMapLoaded() mapIndex=" << mapIndex << " current_map=" << current_map << " tempMapObject=" << tempMapObject << std::endl;
+    if(current_map==65535)
+    {
+        std::cerr << "MapVisualiser::asyncMapLoaded() current_map==65535, ignoring async load of mapIndex=" << mapIndex << std::endl;
         return false;
+    }
     if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
     {
         vectorremoveOne(asyncMap,mapIndex);
@@ -238,7 +244,7 @@ bool MapVisualiser::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, Q
         {
             const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(mapIndex);
             QRect current_map_rect;
-            if(current_map!=0 && CatchChallenger::QMap_client::all_map.find(current_map)!=CatchChallenger::QMap_client::all_map.cend())
+            if(current_map!=65535 && CatchChallenger::QMap_client::all_map.find(current_map)!=CatchChallenger::QMap_client::all_map.cend())
             {
                 const CatchChallenger::CommonMap &currentLogical=QtDatapackClientLoader::datapackLoader->getMap(current_map);
                 current_map_rect=QRect(0,0,currentLogical.width,currentLogical.height);

@@ -951,6 +951,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
     }
 
     character_selected=true;
+    //initialize MoveOnTheMap state so send_player_direction() works after character load
+    if(last_direction_is_set==false)
+        setLastDirection(player_last_direction);
     haveCharacter(player_mapIndex,player_x,player_y,player_last_direction);
     return true;
 }

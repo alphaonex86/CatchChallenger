@@ -1,6 +1,7 @@
 #include "BaseWindow.h"
 #include "ui_BaseWindow.h"
 #include "../Options.h"
+#include "../AutoArgs.h"
 #include "../FacilityLibClient.h"
 #include "../../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
@@ -715,6 +716,12 @@ void BaseWindow::updateConnectingStatus()
     if(isLogged && datapackIsParsed)
     {
         const std::vector<ServerFromPoolForDisplay> &serverOrdenedList=client->getServerOrdenedList();
+        if(serverSelected==-1 && serverOrdenedList.size()==1)
+        {
+            serverSelected=0;
+            updateConnectingStatus();
+            return;
+        }
         if(serverSelected==-1)
         {
             if(ui->stackedWidget->currentWidget()!=ui->page_serverList)
@@ -784,6 +791,31 @@ void BaseWindow::updateConnectingStatus()
                     }
                     on_character_add_clicked();
                     return;
+                }
+                if(!AutoArgs::character.isEmpty())
+                {
+                    const std::string targetName=AutoArgs::character.toStdString();
+                    int matchIndex=-1;
+                    for(unsigned int i=0;i<characterEntryList.size();i++)
+                    {
+                        if(characterEntryList.at(i).pseudo==targetName)
+                        {
+                            matchIndex=(int)i;
+                            break;
+                        }
+                    }
+                    if(matchIndex>=0 && matchIndex<ui->characterEntryList->count())
+                    {
+                        characterSelected=true;
+                        ui->characterEntryList->item(matchIndex)->setSelected(true);
+                        on_character_select_clicked();
+                        return;
+                    }
+                    else
+                    {
+                        std::cerr << "AutoArgs: character \"" << targetName
+                                  << "\" not found in character list" << std::endl;
+                    }
                 }
                 if(characterListForSelection.size()==1 && CommonSettingsCommon::commonSettingsCommon.min_character>=characterListForSelection.size() &&
                         CommonSettingsCommon::commonSettingsCommon.max_character<=characterListForSelection.size())

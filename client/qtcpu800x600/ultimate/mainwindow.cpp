@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "AddServer.h"
 #include "ui_mainwindow.h"
+#include "../base/AutoArgs.h"
 #include "../../libqtcatchchallenger/InternetUpdater.hpp"
 #include "../../libcatchchallenger/BlacklistPassword.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
@@ -199,6 +200,34 @@ MainWindow::MainWindow(QWidget *parent) :
     {
         if(Ultimate::ultimate.setKey(keySettings.value("key").toString().toStdString()))
             ui->UltimateKey->hide();
+    }
+
+    if(!AutoArgs::server.isEmpty())
+    {
+        on_multiplayer_clicked();
+        ListEntryEnvolued *match=nullptr;
+        for(ListEntryEnvolued * const entry : server)
+        {
+            if(!serverConnexion.contains(entry))
+                continue;
+            const ConnexionInfo * const connexionInfo=serverConnexion.value(entry);
+            if(connexionInfo->name==AutoArgs::server)
+            {
+                match=entry;
+                break;
+            }
+        }
+        if(match!=nullptr)
+        {
+            selectedServer=match;
+            serverListEntryEnvoluedUpdate();
+            on_server_select_clicked();
+        }
+        else
+        {
+            std::cerr << "AutoArgs: server \"" << AutoArgs::server.toStdString()
+                      << "\" not found in server list" << std::endl;
+        }
     }
 }
 
@@ -996,6 +1025,18 @@ void MainWindow::on_server_select_clicked()
         ui->lineEditPass->setText(QString());
     settings.endGroup();
     ui->checkBoxRememberPassword->setChecked(!ui->lineEditPass->text().isEmpty());
+
+    if(AutoArgs::autologin)
+    {
+        if(ui->lineEditLogin->text().isEmpty() || ui->lineEditPass->text().isEmpty())
+        {
+            std::cerr << "AutoArgs: --autologin set but login or password is empty, skipping" << std::endl;
+        }
+        else
+        {
+            on_pushButtonTryLogin_clicked();
+        }
+    }
 }
 
 void MainWindow::on_login_cancel_clicked()

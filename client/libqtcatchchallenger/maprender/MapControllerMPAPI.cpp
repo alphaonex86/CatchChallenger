@@ -92,8 +92,9 @@ bool MapControllerMP::insert_player_final(const SIMPLIFIED_PLAYER_ID_FOR_MAP &si
     if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         /// \bug here pass after delete a party, create a new
-        emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
-                   std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
+        emit error("insert_player_final(): mapId="+std::to_string(mapId)+" >= maps.size()="+
+                   std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size())+
+                   " simplifiedIndex="+std::to_string(simplifiedIndex));
         return true;
     }
     #ifdef DEBUG_CLIENT_PLAYER_ON_MAP

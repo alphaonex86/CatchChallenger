@@ -15,6 +15,8 @@
 #include "above/OptionsDialog.hpp"
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
+#include "CliOptions.hpp"
+#include <QTimer>
 #include "../../general/base/Version.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -396,6 +398,13 @@ void ScreenTransition::toMainScreen()
     }
     setForeground(m);
     setWindowTitle(tr("CatchChallenger %1").arg(QString::fromStdString(CatchChallenger::Version::str)));
+    //if --server CLI arg was set, auto open the Multi screen (only the first time)
+    static bool autoOpenMultiTried=false;
+    if(!autoOpenMultiTried && !CliOptions::serverName.isEmpty())
+    {
+        autoOpenMultiTried=true;
+        openMulti();
+    }
 }
 
 void ScreenTransition::openOptions()
@@ -857,6 +866,9 @@ void ScreenTransition::goToMap()
     setBackground(ccmap);
     setForeground(overmap);
     setAbove(nullptr);
+    //if --closewhenonmap CLI arg was set, close 1s after spawning
+    if(CliOptions::closeWhenOnMap)
+        QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
 }
 
 void ScreenTransition::render()

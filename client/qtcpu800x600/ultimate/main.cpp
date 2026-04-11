@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "mainwindow.h"
 #include "../base/LanguagesSelect.h"
+#include "../base/AutoArgs.h"
 #include "../../libqtcatchchallenger/LocalListener.hpp"
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include <iostream>
@@ -8,6 +9,7 @@
 
 int main(int argc, char *argv[])
 {
+    AutoArgs::parse(argc,argv);
     QApplication a(argc, argv);
     a.setApplicationName("client-qtcpu800x600");
     a.setOrganizationName("CatchChallenger");

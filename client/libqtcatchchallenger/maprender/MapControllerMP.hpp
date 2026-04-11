@@ -23,7 +23,7 @@ public:
 
     virtual void resetAll();
     virtual void connectAllSignals(CatchChallenger::Api_protocol_Qt *client);
-    void setScale(const float &scaleSize);
+    void setScale(float scaleSize);
     void updateScale();
     void resizeEvent(QResizeEvent *event);
 
@@ -82,6 +82,9 @@ public slots:
 
     bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
     virtual bool asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject);
+
+    //initial position from QthaveCharacter (after character selection)
+    void loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
 
     //player info
     void have_current_player_info(const CatchChallenger::Player_private_and_public_informations &informations);
@@ -158,7 +161,13 @@ private:
         CatchChallenger::Direction direction;
     };
     std::vector<DelayedTeleportTo> delayedTeleportTo;
+
+    //initial player position to load after datapack and player info are ready
+    bool pendingInitialPlayerLoad;
+    DelayedTeleportTo initialPlayerPosition;
+
     double scaleSize;
+    float requestedScaleSize;
     bool isTeleported;
     static QFont playerpseudofont;
     static QPixmap *imgForPseudoAdmin;

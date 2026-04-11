@@ -71,6 +71,8 @@ public:
 
     void unblock();
     virtual bool teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    //center the QGraphicsView on the integer player tile (x,y). The current map is at scene origin (0,0), tile pixel size = CLIENT_BASE_TILE_SIZE
+    void centerOnPlayerTile();
 private:
     //player
     Tiled::MapObject * playerMapObject;
@@ -180,8 +182,8 @@ protected slots:
     void stopMove();
 signals:
     void send_player_direction(const CatchChallenger::Direction &the_direction);
-    void stopped_in_front_of(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
-    void actionOn(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);
+    void stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
+    void actionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y);
     void actionOnNothing();
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);
     void wildFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y);

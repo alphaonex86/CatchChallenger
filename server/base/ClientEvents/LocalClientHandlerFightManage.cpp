@@ -31,7 +31,8 @@ void Client::heal()
     normalOutput("ask heal at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction to heal");
@@ -68,7 +69,8 @@ void Client::requestFight()
     normalOutput("request fight at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from requestFight");
@@ -78,13 +80,13 @@ void Client::requestFight()
     if(new_map->botsFightTrigger.find(pos)!=new_map->botsFightTrigger.cend())
     {
         const uint8_t botsFightId=new_map->botsFightTrigger.at(pos);
-        if(haveBeatBot(new_map->id,botsFightId))
+        if(haveBeatBot(new_map_index,botsFightId))
         {
             errorOutput("You can't rebeat this fighter");
             return;
         }
         normalOutput("is now in fight (after a request) on map with the bot "+std::to_string(botsFightId));
-        botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(new_map->id,botsFightId));
+        botFightStart(std::pair<CATCHCHALLENGER_TYPE_MAPID/*mapId*/,uint8_t/*botId*/>(new_map_index,botsFightId));
         return;
     }
     errorOutput("no fight with in this direction");

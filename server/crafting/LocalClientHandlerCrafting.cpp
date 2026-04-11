@@ -91,7 +91,8 @@ void Client::takeAnObjectOnMap()
     normalOutput("takeAnObjectOnMap()");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -100,13 +101,13 @@ void Client::takeAnObjectOnMap()
     //check if is item
     if(new_map->items.find(std::pair<uint8_t,uint8_t>(new_x,new_y))==new_map->items.cend())
     {
-        errorOutput("Not on map item on this place: "+std::to_string(new_map->id)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
+        errorOutput("Not on map item on this place: "+std::to_string(new_map_index)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
         return;
     }
-    Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map->id];
+    Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map_index];
     if(mapData.plants.find(std::pair<uint8_t,uint8_t>(new_x,new_y))!=mapData.plants.cend())
     {
-        errorOutput("Have already this item: "+std::to_string(new_map->id)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
+        errorOutput("Have already this item: "+std::to_string(new_map_index)+" at "+std::to_string(new_x)+","+std::to_string(new_y));
         return;
     }
     const ItemOnMap &item=new_map->items.at(std::pair<uint8_t,uint8_t>(new_x,new_y));

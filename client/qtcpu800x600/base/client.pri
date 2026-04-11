@@ -46,9 +46,11 @@ SOURCES += \
     $$PWD/ChatParsing.cpp \
     $$PWD/LanguagesSelect.cpp \
     $$PWD/CachedString.cpp \
-    $$PWD/FacilityLibClient.cpp
+    $$PWD/FacilityLibClient.cpp \
+    $$PWD/AutoArgs.cpp
 
 HEADERS  += \
+    $$PWD/AutoArgs.h \
     $$PWD/interface/BaseWindow.h \
     $$PWD/interface/ListEntryEnvolued.h \
     $$PWD/interface/Chat.h \

@@ -31,10 +31,12 @@ MapControllerMP::MapControllerMP(const bool &centerOnPlayer, const bool &debugTa
     playerpseudofont=QFont(QStringLiteral("Arial"));
     playerpseudofont.setPixelSize(14);
     player_informations_is_set=false;
+    pendingInitialPlayerLoad=false;
 
     resetAll();
 
     scaleSize=1;
+    requestedScaleSize=1;
 }
 
 MapControllerMP::~MapControllerMP()
@@ -65,6 +67,8 @@ void MapControllerMP::connectAllSignals(CatchChallenger::Api_protocol_Qt *client
         abort();
     if(!QObject::connect(client,&CatchChallenger::Api_client_real::QtteleportTo,                 this,&MapControllerMP::teleportTo,Qt::QueuedConnection))
         abort();
+    if(!QObject::connect(client,&CatchChallenger::Api_client_real::QthaveCharacter,              this,&MapControllerMP::loadCurrentPlayer,Qt::QueuedConnection))
+        abort();
     #endif
 }
 
@@ -88,19 +92,24 @@ void MapControllerMP::resetAll()
     mHaveTheDatapack=false;
     player_informations_is_set=false;
     isTeleported=true;
+    pendingInitialPlayerLoad=false;
 
     MapVisualiserPlayer::resetAll();
 }
 
-void MapControllerMP::setScale(const float &scaleSize)
+void MapControllerMP::setScale(float scaleSize)
 {
-    double scaleSizeDouble=static_cast<double>(scaleSize);
-    double scaleSizeQReal=static_cast<qreal>(scaleSizeDouble);
-    if(scaleSize<1 || scaleSize>4)
+    if(scaleSize<1)
     {
-        qDebug() << QStringLiteral("scaleSize out of range 1-4: %1").arg(scaleSizeQReal);
-        return;
+        qDebug() << QStringLiteral("scaleSize lower than 1: %1").arg(scaleSize);
+        scaleSize=1;
     }
+    if(scaleSize>4)
+    {
+        qDebug() << QStringLiteral("scaleSize greater than 4: %1").arg(scaleSize);
+        scaleSize=4;
+    }
+    requestedScaleSize=scaleSize;
     //scaleSize 1: 32*16px = 512px
     //scaleSize 4: 8*16px = 128px
     const int w=width();
@@ -120,13 +129,14 @@ void MapControllerMP::setScale(const float &scaleSize)
 
 void MapControllerMP::updateScale()
 {
-    setScale(this->scaleSize);
+    setScale(requestedScaleSize);
 }
 
 void MapControllerMP::resizeEvent(QResizeEvent *event)
 {
-    Q_UNUSED(event);
+    MapVisualiserPlayerWithFight::resizeEvent(event);
     updateScale();
+    centerOnPlayerTile();
 }
 
 const std::unordered_map<uint8_t,MapControllerMP::OtherPlayer> &MapControllerMP::getOtherPlayerList() const
@@ -270,11 +280,7 @@ void MapControllerMP::loadOtherPlayerFromMap(const OtherPlayer &otherPlayer,cons
         }
         removeUnusedMap();
     }*/
-    /// \todo temp fix, do a better fix
-    std::cout << "playerMapObject=getPlayerMapObject();" << std::endl;
-    const Tiled::MapObject * playerMapObject=getPlayerMapObject();
-    if(MapObjectItem::objectLink.find(const_cast<Tiled::MapObject *>(playerMapObject))!=MapObjectItem::objectLink.cend())
-        centerOn(MapObjectItem::objectLink.at(const_cast<Tiled::MapObject *>(playerMapObject)));
+    centerOnPlayerTile();
 
     if(ObjectGroupItem::objectGroupLink.find(presumed_map_pointer->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
     {
@@ -390,8 +396,22 @@ void MapControllerMP::unloadOtherMonsterFromCurrentMap(const MapControllerMP::Ot
     }
 }
 
+void MapControllerMP::loadCurrentPlayer(const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
+{
+    std::cerr << "MapControllerMP::loadCurrentPlayer() mapId=" << mapId << " x=" << (int)x << " y=" << (int)y
+              << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
+    initialPlayerPosition.mapId=mapId;
+    initialPlayerPosition.x=x;
+    initialPlayerPosition.y=y;
+    initialPlayerPosition.direction=direction;
+    pendingInitialPlayerLoad=true;
+    if(mHaveTheDatapack && player_informations_is_set)
+        reinject_signals();
+}
+
 bool MapControllerMP::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
+    std::cerr << "MapControllerMP::teleportTo() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << " mHaveTheDatapack=" << mHaveTheDatapack << " player_informations_is_set=" << player_informations_is_set << std::endl;
     #if defined (ONLYMAPRENDER)
     (void)mapIndex;
     (void)x;
@@ -406,17 +426,19 @@ bool MapControllerMP::teleportTo(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,cons
         tempItem.y=y;
         tempItem.direction=direction;
         delayedTeleportTo.push_back(tempItem);
-        #ifdef DEBUG_CLIENT_PLAYER_ON_MAP
-        qDebug() << QStringLiteral("delayed teleportTo(%1,%2,%3,%4)").arg(DatapackClientLoader::datapackLoader.maps.value(mapIndex)).arg(x).arg(y).arg(CatchChallenger::MoveOnTheMap::directionToString(direction));
-        #endif
+        std::cerr << "MapControllerMP::teleportTo() delayed (datapack/player not ready)" << std::endl;
         return true;
     }
     client->teleportDone();
     MapVisualiserPlayer::unloadPlayerFromCurrentMap();
     if(!MapVisualiserPlayer::teleportTo(mapIndex,x,y,direction))
+    {
+        std::cerr << "MapControllerMP::teleportTo() MapVisualiserPlayer::teleportTo failed" << std::endl;
         return false;
+    }
 
     passMapIntoOld();
+    std::cerr << "MapControllerMP::teleportTo() current_map=" << current_map << " haveMapInMemory=" << haveMapInMemory(current_map) << std::endl;
     if(!haveMapInMemory(current_map))
     {
         emit inWaitingOfMap();
@@ -508,6 +530,32 @@ void MapControllerMP::reinject_signals()
         #ifdef DEBUG_CLIENT_LOAD_ORDER
         qDebug() << QStringLiteral("MapControllerMP::reinject_signals(): mHaveTheDatapack && player_informations_is_set");
         #endif
+        //load current player onto the map (initial position from QthaveCharacter)
+        if(pendingInitialPlayerLoad && current_map==65535)
+        {
+            pendingInitialPlayerLoad=false;
+            const std::vector<std::string> &maps=QtDatapackClientLoader::datapackLoader->get_maps();
+            std::cerr << "MapControllerMP::reinject_signals() loading current player on mapId="
+                      << initialPlayerPosition.mapId << " x=" << (int)initialPlayerPosition.x
+                      << " y=" << (int)initialPlayerPosition.y
+                      << " maps.size()=" << maps.size() << std::endl;
+            if(initialPlayerPosition.mapId>=(CATCHCHALLENGER_TYPE_MAPID)maps.size())
+            {
+                std::cerr << "MapControllerMP::reinject_signals() ABORT initial player load: mapId="
+                          << initialPlayerPosition.mapId << " >= maps.size()=" << maps.size() << std::endl;
+            }
+            else
+            {
+                const CatchChallenger::Player_public_informations &public_info=
+                        client->get_player_informations().public_informations;
+                if(!haveMapInMemory(initialPlayerPosition.mapId))
+                    emit inWaitingOfMap();
+                //insert_player_internal sets current_map and calls loadPlayerMap which triggers loadOtherMap
+                MapVisualiserPlayer::insert_player_internal(public_info,
+                        initialPlayerPosition.mapId,initialPlayerPosition.x,initialPlayerPosition.y,
+                        initialPlayerPosition.direction,skinFolderList);
+            }
+        }
         index=0;
         const unsigned int delayedActions_size=delayedActions.size();
         while(index<delayedActions.size())

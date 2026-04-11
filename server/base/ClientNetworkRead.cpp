@@ -15,6 +15,13 @@ void Client::doDDOSCompute()
     chatPacketKick.flush();
     otherPacketKick.flush();
 }
+
+void Client::doDDOSReset()
+{
+    movePacketKick.reset();
+    chatPacketKick.reset();
+    otherPacketKick.reset();
+}
 #endif
 
 void Client::sendNewEvent(char * const data, const uint32_t &size)
