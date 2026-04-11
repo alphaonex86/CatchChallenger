@@ -222,8 +222,11 @@ bool MapController::canGoTo(const CatchChallenger::Direction &direction, const C
     if(!QtDatapackClientLoader::datapackLoader->move(direction,new_map,new_x,new_y,false))
         return false;
     const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
-    if(maps_convert.size()>=new_map)
+    if(new_map>=maps_convert.size())
+    {
+        std::cerr << "MapController::canGoTo() new_map " << new_map << " >= maps_convert.size() " << maps_convert.size() << std::endl;
         return false;
+    }
     const CatchChallenger::QMap_client * map_full=CatchChallenger::QMap_client::all_map.at(new_map);
     // to detect colision then in logical map just mark as colision to have same data into server and client
     if(map_full->botsDisplay.find(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(x),static_cast<uint8_t>(y)))!=map_full->botsDisplay.cend())
@@ -358,8 +361,11 @@ void MapController::loadBotOnTheMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, 
     }
 
     const std::vector<std::string> &maps_convert=QtDatapackClientLoader::datapackLoader->get_maps();
-    if(maps_convert.size()>=mapIndex)
+    if(mapIndex>=maps_convert.size())
+    {
+        std::cerr << "MapController::loadBotOnTheMap() mapIndex " << mapIndex << " >= maps_convert.size() " << maps_convert.size() << std::endl;
         return;
+    }
 #ifdef BOT_ICON_FEATURES
     const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(parsedMap->mapIndex);
     std::pair<uint8_t,uint8_t> Qtpos(x,y);

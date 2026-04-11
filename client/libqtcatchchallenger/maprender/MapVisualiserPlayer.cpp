@@ -7,6 +7,7 @@
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#include "../libcatchchallenger/ClientVariable.hpp"
 #include "QMap_client.hpp"
 
 #include <qmath.h>
@@ -86,6 +87,28 @@ MapVisualiserPlayer::MapVisualiserPlayer(const bool &centerOnPlayer, const bool 
     lastAction.start();
 }
 
+void MapVisualiserPlayer::centerOnPlayerTile()
+{
+    if(!centerOnPlayer)
+        return;
+    //The current map is always drawn at scene origin (0,0) in pixel units
+    //(see MapItem::setMapPosition, where border maps have relative pixel offset).
+    //Prefer the sprite's actual tile-unit position so that the view follows the
+    //player smoothly during intermediate animation steps (moveStepSlot() advances
+    //playerMapObject by 0.20 tiles per step). At rest, playerMapObject is at
+    //(x, y+1), so subtract 1 from y to match the tile center used when idle.
+    qreal tile_x=static_cast<qreal>(x);
+    qreal tile_y=static_cast<qreal>(y);
+    if(playerMapObject!=NULL)
+    {
+        tile_x=playerMapObject->x();
+        tile_y=playerMapObject->y()-1.0;
+    }
+    const qreal cx=tile_x*CLIENT_BASE_TILE_SIZE+static_cast<qreal>(CLIENT_BASE_TILE_SIZE)/2.0;
+    const qreal cy=tile_y*CLIENT_BASE_TILE_SIZE+static_cast<qreal>(CLIENT_BASE_TILE_SIZE)/2.0;
+    centerOn(cx,cy);
+}
+
 MapVisualiserPlayer::~MapVisualiserPlayer()
 {
 /*    if(animationTileset!=NULL)
@@ -111,8 +134,11 @@ bool MapVisualiserPlayer::haveMapInMemory(const CATCHCHALLENGER_TYPE_MAPID &mapI
 
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
-    if(current_map==0 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    if(current_map==65535 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cerr << "MapVisualiserPlayer::keyPressEvent() ignored: current_map=" << current_map << std::endl;
         return;
+    }
 
     //ignore the no arrow key
     if(keyAccepted.find(event->key())==keyAccepted.cend())
@@ -547,8 +573,7 @@ void MapVisualiserPlayer::moveStepSlot()
         break;
     }
 
-    if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    centerOnPlayerTile();
     loadGrassTile();
 
     moveStep++;
@@ -641,8 +666,12 @@ void MapVisualiserPlayer::moveStepSlot()
 
 bool MapVisualiserPlayer::asyncMapLoaded(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,QMap_client * tempMapObject)
 {
-    if(current_map==0)
+    std::cerr << "MapVisualiserPlayer::asyncMapLoaded() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
+    if(current_map==65535)
+    {
+        std::cerr << "MapVisualiserPlayer::asyncMapLoaded() current_map==65535, ignoring" << std::endl;
         return false;
+    }
     if(MapVisualiser::asyncMapLoaded(mapIndex,tempMapObject))
     {
         if(tempMapObject!=NULL)
@@ -872,8 +901,7 @@ void MapVisualiserPlayer::finalPlayerStep(bool parseKey)
     //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
     playerMapObject->setPosition(QPoint(x,y+1));
     MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-    if(centerOnPlayer)
-        centerOn(MapObjectItem::objectLink.at(playerMapObject));
+    centerOnPlayerTile();
 
     if(haveStopTileAction())
         return;
@@ -1042,7 +1070,7 @@ void MapVisualiserPlayer::parseStop()
             else
             {
                 const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
-                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1055,7 +1083,7 @@ void MapVisualiserPlayer::parseStop()
             else
             {
                 const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
-                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1068,7 +1096,7 @@ void MapVisualiserPlayer::parseStop()
             else
             {
                 const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
-                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1081,7 +1109,7 @@ void MapVisualiserPlayer::parseStop()
             else
             {
                 const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
-                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),lx,ly);
+                emit stopped_in_front_of(const_cast<CatchChallenger::Map_client *>(static_cast<const CatchChallenger::Map_client *>(&destMap)),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1143,7 +1171,7 @@ void MapVisualiserPlayer::parseAction()
                         botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1168,7 +1196,7 @@ void MapVisualiserPlayer::parseAction()
                         botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1194,7 +1222,7 @@ void MapVisualiserPlayer::parseAction()
                         botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1219,7 +1247,7 @@ void MapVisualiserPlayer::parseAction()
                         botDisplay->mapObject->setCell(cell);
                     }
                 }
-                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),lx,ly);
+                emit actionOn(static_cast<CatchChallenger::Map_client *>(&destMap),tempMapIndex,lx,ly);
             }
         }
         break;
@@ -1289,8 +1317,11 @@ void MapVisualiserPlayer::transformLookToMove()
 
 void MapVisualiserPlayer::keyReleaseEvent(QKeyEvent * event)
 {
-    if(current_map==0 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    if(current_map==65535 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
+    {
+        std::cerr << "MapVisualiserPlayer::keyReleaseEvent() ignored: current_map=" << current_map << std::endl;
         return;
+    }
 
     //ignore the no arrow key
     if(keyAccepted.find(event->key())==keyAccepted.cend())
@@ -1397,7 +1428,7 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
     if(mapId>=(uint32_t)QtDatapackClientLoader::datapackLoader->get_maps().size())
     {
         /// \bug here pass after delete a party, create a new
-        emit error("mapId greater than QtDatapackClientLoader::datapackLoader->maps.size(): "+
+        emit error("insert_player_internal(): mapId="+std::to_string(mapId)+" >= maps.size()="+
                    std::to_string(QtDatapackClientLoader::datapackLoader->get_maps().size()));
         return true;
     }
@@ -1405,9 +1436,9 @@ bool MapVisualiserPlayer::insert_player_internal(const CatchChallenger::Player_p
     {
         std::cout << "MapVisualiserPlayer::insert_player_internal() loading player" << std::endl;
         //ignore to improve the performance server because can reinsert all player of map using the overall client list
-        if(current_map!=0)
+        if(current_map!=65535)
         {
-            qDebug() << "Current player already loaded on the map";
+            qDebug() << "Current player already loaded on the map (current_map=" << current_map << ")";
             return true;
         }
         /// \todo do a player cache here
@@ -1538,7 +1569,7 @@ void MapVisualiserPlayer::resetAll()
 {
     if(!playerTileset->loadFromImage(QImage(QStringLiteral(":/CC/images/player_default/trainer.png")),QStringLiteral(":/CC/images/player_default/trainer.png")))
         qDebug() << "Unable the load the default player tileset";
-    current_monster_map=0;
+    current_monster_map=65535;
     unloadPlayerFromCurrentMap();
     moveTimer.setInterval(250/5);
     moveTimer.setSingleShot(true);
@@ -1618,9 +1649,11 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
 //call after enter on new map
 void MapVisualiserPlayer::loadPlayerFromCurrentMap()
 {
+    std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() current_map=" << current_map << " x=" << (int)x << " y=" << (int)y << " centerOnPlayer=" << centerOnPlayer << std::endl;
+    std::cerr << "[CENTER DEBUG] centerOnPlayer=" << (centerOnPlayer ? "TRUE" : "FALSE") << std::endl;
     if(CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())
     {
-        qDebug() << QStringLiteral("all_map have not the current map: %1").arg(current_map);
+        std::cerr << "MapVisualiserPlayer::loadPlayerFromCurrentMap() all_map has no current_map=" << current_map << std::endl;
         return;
     }
     {
@@ -1641,8 +1674,7 @@ void MapVisualiserPlayer::loadPlayerFromCurrentMap()
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         playerMapObject->setPosition(QPoint(x,y+1));
         MapObjectItem::objectLink.at(playerMapObject)->setZValue(y);
-        if(centerOnPlayer)
-            centerOn(MapObjectItem::objectLink.at(playerMapObject));
+        centerOnPlayerTile();
     }
 
     loadMonsterFromCurrentMap();
@@ -1749,6 +1781,7 @@ void MapVisualiserPlayer::loadGrassTile()
 
 void MapVisualiserPlayer::mapDisplayedSlot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
 {
+    std::cerr << "MapVisualiserPlayer::mapDisplayedSlot() mapIndex=" << mapIndex << " current_map=" << current_map << std::endl;
     if(current_map==mapIndex)
     {
         emit currentMapLoaded();

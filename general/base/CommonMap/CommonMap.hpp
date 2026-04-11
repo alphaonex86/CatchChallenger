@@ -40,11 +40,10 @@ class DLL_PUBLIC CommonMap : public BaseMap
 public:
     Map_Border border;
 
-    /* on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id and find the right pointer
-    on client, MapVisualiserThread set this variable
-    id is used on the server to say on client on what file is, player login spawn map
-    map/main/test/city.tmx 99 on server, spawn on map id 99 -> 99 on client and load map map/main/test/city.tmx */
-    CATCHCHALLENGER_TYPE_MAPID id;
+    /* CATCHCHALLENGER_TYPE_MAPID id; enable this generate crash because generate inconsistency between this var and the map list index
+     * on server you can use GlobalServerData::serverPrivateVariables.flat_map_list to store id
+     * on server is QtDatapackClientLoader::datapackLoader->getMap(current_map)
+     * if you have map object then you can look how was get to have the pointer */
 
     /* see flat_simplified_map
      * after resolution the index is position (x+y*width)

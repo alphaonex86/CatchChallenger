@@ -43,21 +43,33 @@ void PathFinding::searchPath(const std::vector<CatchChallenger::CommonMap> &mapL
     tryCancel=false;
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,SimplifiedMapForPathFinding> simplifiedMapList;
     //load the data
-    for (const auto &map : mapList) {
-        if(!map.flat_simplified_map.empty())
+    // Key simplifiedMapList by the vector index in mapList (same space as
+    // current_map_index / source_map_index). CommonMap::id must NOT be used as
+    // a key: in Map_loader it is 1-based (incremented before assignment), which
+    // caused a crash when later doing mapList.at(map.id) / simplifiedMapList.at(source_map_index).
+    for (CATCHCHALLENGER_TYPE_MAPID mapIndex=0; mapIndex<(CATCHCHALLENGER_TYPE_MAPID)mapList.size(); ++mapIndex) {
+        const CatchChallenger::CommonMap &map=mapList.at(mapIndex);
+        if(map.flat_simplified_map.empty())
         {
-            SimplifiedMapForPathFinding simplifiedMap;
-            simplifiedMap.width=map.width;
-            simplifiedMap.height=map.height;
-            simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
-            memcpy(simplifiedMap.simplifiedMap,map.flat_simplified_map.data(),simplifiedMap.width*simplifiedMap.height);
-            simplifiedMapList[map.id]=simplifiedMap;
+            std::cerr << "PathFinding::searchPath(): flat_simplified_map.empty() for map index "
+                      << std::to_string(mapIndex) << ", this should not happen" << std::endl;
+            continue;
         }
+        SimplifiedMapForPathFinding simplifiedMap;
+        simplifiedMap.width=map.width;
+        simplifiedMap.height=map.height;
+        simplifiedMap.simplifiedMap=new uint8_t[simplifiedMap.width*simplifiedMap.height];
+        memcpy(simplifiedMap.simplifiedMap,map.flat_simplified_map.data(),simplifiedMap.width*simplifiedMap.height);
+        simplifiedMapList[mapIndex]=simplifiedMap;
     }
     //resolv the border
-    for (const auto &n : simplifiedMapList) {
-        const CATCHCHALLENGER_TYPE_MAPID &mapId=n.first;
-        const CatchChallenger::CommonMap &map=mapList.at(mapId);
+    for (CATCHCHALLENGER_TYPE_MAPID mapIndex=0; mapIndex<(CATCHCHALLENGER_TYPE_MAPID)mapList.size(); ++mapIndex) {
+        const CatchChallenger::CommonMap &map=mapList.at(mapIndex);
+        if(map.flat_simplified_map.empty())
+            continue;
+        const CATCHCHALLENGER_TYPE_MAPID &mapId=mapIndex;
+        if(simplifiedMapList.find(mapId)==simplifiedMapList.cend())
+            continue;
         if(map.border.bottom.mapIndex!=65535 && simplifiedMapList.find(map.border.bottom.mapIndex)!=simplifiedMapList.cend())
         {
             simplifiedMapList[mapId].border.bottom.map=map.border.bottom.mapIndex;

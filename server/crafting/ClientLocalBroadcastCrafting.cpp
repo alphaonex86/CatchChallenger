@@ -21,7 +21,8 @@ void Client::plantSeed(const uint8_t &plant_id)
         return;
     }
     COORD_TYPE new_x=0,new_y=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -35,14 +36,14 @@ void Client::plantSeed(const uint8_t &plant_id)
     }
     //check if is free
     {
-        const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(new_map->id);
+        const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(new_map_index);
         if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
         {
             errorOutput("Have already a plant in plantOnlyVisibleByPlayer==true");
             return;
         }
     }
-    useSeed(plant_id,new_map->id,x,y);
+    useSeed(plant_id,new_map_index,x,y);
 }
 
 //plant
@@ -128,7 +129,8 @@ void Client::collectPlant()
     normalOutput("collectPlant()");
     #endif
     COORD_TYPE new_x=0,new_y=0;
-    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+    CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+    const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
     if(new_map==nullptr)
     {
         errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");
@@ -142,7 +144,7 @@ void Client::collectPlant()
     }
     //check if is free
     const auto &current_time=sFrom1970();
-    Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map->id];
+    Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData[new_map_index];
     if(mapData.plants.find(std::pair<uint8_t,uint8_t>(x,y))!=mapData.plants.cend())
     {
         const PlayerPlant /*can't reference because deleted later*/playerPlant=mapData.plants.at(std::pair<uint8_t,uint8_t>(x,y));
@@ -172,7 +174,7 @@ void Client::collectPlant()
     }
     else
     {
-        errorOutput("!public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap): "+std::to_string(new_map->id)+","+
+        errorOutput("!public_and_private_informations.plantOnMap.contains(plant.indexOfOnMap): "+std::to_string(new_map_index)+","+
                     " at "+std::to_string(x)+","+std::to_string(y));
         return;
     }

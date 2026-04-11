@@ -61,6 +61,7 @@ private:
 
     QNetworkAccessManager qnam;
     QNetworkReply *reply;
+    bool autoSelectTried;
 
     CustomButton *server_add;
     CustomButton *server_remove;

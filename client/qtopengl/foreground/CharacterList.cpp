@@ -5,6 +5,7 @@
 #include "../ConnexionManager.hpp"
 #include "../above/AddCharacter.hpp"
 #include "../above/NewGame.hpp"
+#include "../CliOptions.hpp"
 #include "../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../general/base/CommonSettingsCommon.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
@@ -360,6 +361,28 @@ void CharacterList::updateCharacterList()
     }
     int charaterCount=characterListForSelection.at(charactersGroupIndex).size();
     add->setEnabled(charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character);
+    //auto select the character with name from --character CLI arg
+    static bool autoSelectCharacterTried=false;
+    if(!autoSelectCharacterTried && !CliOptions::characterName.isEmpty())
+    {
+        const std::string wanted=CliOptions::characterName.toStdString();
+        unsigned int i=0;
+        while(i<characterListForSelection.at(charactersGroupIndex).size())
+        {
+            const CatchChallenger::CharacterEntry &characterEntry=characterListForSelection.at(charactersGroupIndex).at(i);
+            if(characterEntry.pseudo==wanted && characterEntry.delete_time_left==0)
+            {
+                autoSelectCharacterTried=true;
+                if((int)i<characterEntryList->count())
+                {
+                    characterEntryList->item(i)->setSelected(true);
+                    select_clicked();
+                }
+                return;
+            }
+            i++;
+        }
+    }
     if(charaterCount<CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount<CommonSettingsCommon::commonSettingsCommon.max_character)
         add_clicked();
     else if(charaterCount==CommonSettingsCommon::commonSettingsCommon.min_character && charaterCount==CommonSettingsCommon::commonSettingsCommon.max_character)

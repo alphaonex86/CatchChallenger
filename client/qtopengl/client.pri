@@ -129,6 +129,7 @@ android: {
 SOURCES += \
     $$PWD/main.cpp \
     $$PWD/CCTitle.cpp \
+    $$PWD/CliOptions.cpp \
     $$PWD/ConnexionManager.cpp \
     $$PWD/foreground/LoadingScreen.cpp \
     $$PWD/CustomButton.cpp \
@@ -142,6 +143,7 @@ HEADERS  += \
     $$PWD/CCprogressbar.hpp \
     $$PWD/ClientStructures.hpp \
     $$PWD/CCTitle.hpp \
+    $$PWD/CliOptions.hpp \
     $$PWD/ConnexionManager.hpp \
     $$PWD/CustomButton.hpp \
     $$PWD/foreground/LoadingScreen.hpp \

@@ -1,5 +1,6 @@
 #include "MapVisualiser.hpp"
 
+#include <iostream>
 #include <QCoreApplication>
 #include <QGraphicsItem>
 #include <QGraphicsScene>
@@ -23,6 +24,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     mScene(new QGraphicsScene(this)),
     mark(NULL)
 {
+    std::cerr << "MapVisualiser::MapVisualiser() debugTags=" << debugTags << " useCache=" << useCache << " openGL=" << openGL << std::endl;
     qRegisterMetaType<CATCHCHALLENGER_TYPE_MAPID>("CATCHCHALLENGER_TYPE_MAPID");
 
     if(!connect(this,&MapVisualiser::loadOtherMapAsync,&mapVisualiserThread,&MapVisualiserThread::loadOtherMapAsync,Qt::QueuedConnection))
@@ -41,7 +43,6 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setRenderHint(QPainter::HighQualityAntialiasing,false);
     #endif
     setRenderHint(QPainter::SmoothPixmapTransform,false);
-    setCacheMode(QGraphicsView::CacheBackground);
     QPixmapCache::setCacheLimit(102400);
 
     mapVisualiserThread.debugTags=debugTags;
@@ -70,14 +71,13 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
     setScene(mScene);
 /*    setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setDragMode(QGraphicsView::ScrollHandDrag);*/
-    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState | QGraphicsView::IndirectPainting);
+    setOptimizationFlags(QGraphicsView::DontAdjustForAntialiasing | QGraphicsView::DontSavePainterState);
     setBackgroundBrush(Qt::black);
     setFrameStyle(0);
 
-    viewport()->setAttribute(Qt::WA_StaticContents);
-    viewport()->setAttribute(Qt::WA_TranslucentBackground);
-    viewport()->setAttribute(Qt::WA_NoSystemBackground);
-    setViewportUpdateMode(QGraphicsView::NoViewportUpdate);
+    //black screen fix: removed WA_TranslucentBackground/WA_NoSystemBackground/NoViewportUpdate
+    //and removed CacheBackground because it caches a stale view when items are added later
+    setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
 
     tagTilesetIndex=0;
     markPathFinding=Tiled::Tileset::create(QStringLiteral("mark path finding"),16,24);
@@ -91,6 +91,7 @@ MapVisualiser::MapVisualiser(const bool &debugTags,const bool &useCache,const bo
 
     mScene->addItem(mapItem);
     //mScene->setSceneRect(QRectF(xPerso*TILE_SIZE,yPerso*TILE_SIZE,64,32));
+    std::cerr << "MapVisualiser::MapVisualiser() ready, mScene=" << mScene << " mapItem=" << mapItem << std::endl;
     render();
 }
 

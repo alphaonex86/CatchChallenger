@@ -189,7 +189,7 @@ void Client::put_on_the_map(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,const COO
 
     updateCanDoFight();
     if(getAbleToFight())
-        botFightCollision(map,x,y);
+        botFightCollision(mapIndex,map,x,y);
     else if(haveMonsters())
         checkLoose();
 
@@ -351,10 +351,10 @@ Direction Client::lookToMove(const Direction &direction)
 }
 
 //return nullptr if can't move in this direction
-const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y)
+const Map_server_MapVisibility_Simple_StoreOnSender * Client::mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y)
 {
     // to not apply the changes
-    CATCHCHALLENGER_TYPE_MAPID mapIndex=this->mapIndex;
+    mapIndex=this->mapIndex;
     const Map_server_MapVisibility_Simple_StoreOnSender &map=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapIndex);
     x=this->x;
     y=this->y;

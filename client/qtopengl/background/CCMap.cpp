@@ -174,23 +174,25 @@ void CCMap::keyReleaseEvent(QKeyEvent *event, bool &eventTriggerGeneral)
     eventTriggerGeneral=false;
 }
 
-void CCMap::onMapControllerStoppedInFrontOf(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+void CCMap::onMapControllerStoppedInFrontOf(CatchChallenger::Map_client */*map*/, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    emit stopped_in_front_of(map->id,x,y);
+    emit stopped_in_front_of(mapIndex,x,y);
 }
 
-void CCMap::onMapControllerActionOn(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+void CCMap::onMapControllerActionOn(CatchChallenger::Map_client */*map*/, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    emit actionOn(map->id,x,y);
+    emit actionOn(mapIndex,x,y);
 }
 
-void CCMap::onMapControllerWildFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+void CCMap::onMapControllerWildFightCollision(CatchChallenger::Map_client */*map*/, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    emit wildFightCollision(map->id,x,y);
+    //wild fight collision is always on the current map (see MapVisualiserPlayerWithFight, &logicalMap is obtained from current_map)
+    emit wildFightCollision(mapController.currentMap(),x,y);
 }
 
-void CCMap::onMapControllerBotFightCollision(CatchChallenger::Map_client *map, const COORD_TYPE &x, const COORD_TYPE &y)
+void CCMap::onMapControllerBotFightCollision(CatchChallenger::Map_client */*map*/, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    emit botFightCollision(map->id,x,y);
+    //bot fight collision is always on the current map (see MapVisualiserPlayerWithFight, &logicalMap is obtained from current_map)
+    emit botFightCollision(mapController.currentMap(),x,y);
 }
 

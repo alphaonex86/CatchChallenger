@@ -50,7 +50,6 @@ Map_full::Map_full()
     logicalMap.width=0;
     logicalMap.height=0;
     logicalMap.group=0;
-    logicalMap.id=0;
     tiledMap=NULL;
     tiledRender=NULL;
     objectGroup=NULL;
@@ -686,7 +685,6 @@ QString Map2Png::loadOtherMap(const QString &fileName)
     Map_full_map2png *tempMapObject=new Map_full_map2png();
     tempMapObject->logicalMap.group=0;
     tempMapObject->logicalMap.height=0;
-    tempMapObject->logicalMap.id=0;
     tempMapObject->logicalMap.width=0;
     tempMapObject->objectGroup=nullptr;
     tempMapObject->tiledMap=nullptr;

@@ -70,7 +70,9 @@ QMap_client *MapVisualiserThread::loadOtherMap(const CATCHCHALLENGER_TYPE_MAPID 
     const std::string resolvedFileName=QFileInfo(QString::fromStdString(
         QtDatapackClientLoader::datapackLoader->getDatapackPath()+
         QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
-        QtDatapackClientLoader::datapackLoader->get_maps().at(mapIndex))).absoluteFilePath().toStdString();
+        QtDatapackClientLoader::datapackLoader->get_maps().at(mapIndex)+".tmx")).absoluteFilePath().toStdString();
+    std::cerr << "MapVisualiserThread::loadOtherMap() mapIndex=" << mapIndex
+              << " resolvedFileName=" << resolvedFileName << std::endl;
     QMap_client *tempMapObject=new QMap_client();
 
     tileToTriggerAnimationContent.clear();

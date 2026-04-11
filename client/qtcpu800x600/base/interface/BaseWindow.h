@@ -200,11 +200,11 @@ private slots:
     std::string getSkinPath(const std::string &skinName, const std::string &type) const;
     void monsterCatch(const bool &success);
     //render
-    void stopped_in_front_of(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    void stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y);
     bool stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     int32_t havePlant(const CatchChallenger::CommonMap *map, uint8_t x, uint8_t y) const;//return -1 if not found, else the index
     void actionOnNothing();
-    void actionOn(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
+    void actionOn(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y);
     bool actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     void botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y);
     void blockedOn(const MapVisualiserPlayer::BlockedOn &blockOnVar);

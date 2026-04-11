@@ -413,17 +413,7 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
                         index++;
                     }
                 }
-                if(QtDatapackClientLoader::datapackLoader->get_mapToId().find(seedInWaiting.map)!=QtDatapackClientLoader::datapackLoader->get_mapToId().cend())
-                {
-                    const CATCHCHALLENGER_TYPE_MAPID expectedMapId=QtDatapackClientLoader::datapackLoader->get_mapToId().at(seedInWaiting.map);
-                    const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(expectedMapId);
-                    if(expectedMapId!=logicalMap.id)
-                    {
-                        std::cerr << __FILE__ << ":" << __LINE__ << " data corrupted (abort)" << std::endl;
-                        abort();
-                    }
-                }
-                else
+                if(QtDatapackClientLoader::datapackLoader->get_mapToId().find(seedInWaiting.map)==QtDatapackClientLoader::datapackLoader->get_mapToId().cend())
                 {
                     //check duplicate
                     std::unordered_set<int> detectDuplicate;

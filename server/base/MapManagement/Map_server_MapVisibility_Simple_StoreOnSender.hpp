@@ -25,12 +25,12 @@ public:
     //void send_reinsertAll();
     //void send_SYNCAll();
     //void send_insert(unsigned int &clientsToSendDataSizeNewClients,unsigned int &clientsToSendDataSizeOldClients);
-    unsigned int send_reinsertAll(char *output, const size_t &clients_size);
-    unsigned int send_reinsertAllWithFilter(char *output,const size_t &clients_size,const size_t &skipped_id);
+    unsigned int send_reinsertAll(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output, const size_t &clients_size);
+    unsigned int send_reinsertAllWithFilter(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,char *output,const size_t &clients_size,const size_t &skipped_id);
     // broadcast all, no filter then resend same data
-    void min_CPU();
+    void min_CPU(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     // filter if already send, then consume CPU
-    void min_network();
+    void min_network(const CATCHCHALLENGER_TYPE_MAPID &mapIndex);
     //to prevent allocate memory
     static char tempBigBufferForChanges[1+4+1+255*(1+1+1+1)];
     static char tempBigBufferForRemove[1+4+1+255];

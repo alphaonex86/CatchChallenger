@@ -70,7 +70,8 @@ void Client::waitingForCityCaputre(const bool &cancel)
         normalOutput("ask zonecapture at "+this->map->map_file+" ("+std::to_string(this->x)+","+std::to_string(this->y)+")");
         #endif
         COORD_TYPE new_x=0,new_y=0;
-        const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_x,new_y);
+        CATCHCHALLENGER_TYPE_MAPID new_map_index=0;
+        const Map_server_MapVisibility_Simple_StoreOnSender * new_map=Client::mapAndPosIfMoveInLookingDirectionJumpColision(new_map_index,new_x,new_y);
         if(new_map==nullptr)
         {
             errorOutput("Can't move at this direction from "+std::to_string(mapIndex)+" ("+std::to_string(x)+","+std::to_string(y)+")");

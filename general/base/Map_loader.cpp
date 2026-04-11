@@ -785,7 +785,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
     std::regex mapFilter("\\.tmx$");
     std::regex mapExclude("[\"']");
 
-    CATCHCHALLENGER_TYPE_MAPID mapIdToSyncServerAndClient=0;
     index=0;
     while(index<returnList.size())
     {
@@ -793,7 +792,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         stringreplaceAll(fileName,"\\","/");
         if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
         {
-            mapIdToSyncServerAndClient++;
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             std::cout << "load the map: " << fileName << std::endl;
             #endif
@@ -821,7 +819,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
 
                 mapFinal.width			= static_cast<uint8_t>(map_temp.map_to_send.width);
                 mapFinal.height			= static_cast<uint8_t>(map_temp.map_to_send.height);
-                mapFinal.id=mapIdToSyncServerAndClient;
 
                 Map_semi map_semi;
                 map_semi.old_map				= map_temp.map_to_send;
@@ -917,7 +914,6 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
 
                 mapFinal.width			= 0;
                 mapFinal.height			= 0;
-                mapFinal.id=mapIdToSyncServerAndClient;
             }
         }
         index++;

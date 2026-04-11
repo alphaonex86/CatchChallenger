@@ -83,6 +83,7 @@ public:
     bool triggerDaillyGift(const uint64_t &timeRangeEventTimestamps);//return true if validated and gift sended
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     void doDDOSCompute();
+    void doDDOSReset();
     #endif
     void breakNeedMoreData() override;
     void receive_instant_player_number(const uint16_t &connected_players, const char * const data, const uint8_t &size);
@@ -526,7 +527,7 @@ private:
     bool isInBattle() const override;
     bool learnSkillInternal(const uint8_t &monsterPosition,const uint16_t &skill);
     void getRandomNumberIfNeeded() const;
-    bool botFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map, const COORD_TYPE &x, const COORD_TYPE &y);
+    bool botFightCollision(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const Map_server_MapVisibility_Simple_StoreOnSender &map, const COORD_TYPE &x, const COORD_TYPE &y);
     bool checkFightCollision(const Map_server_MapVisibility_Simple_StoreOnSender &map,const COORD_TYPE &x,const COORD_TYPE &y);
     void registerBattleRequest(Client &otherPlayerBattle);
     void saveAllMonsterPosition();
@@ -590,7 +591,7 @@ private:
     bool removeSkill(PlayerMonster * currentMonster,const unsigned int &index) override;
 
     //return nullptr if can't move in this direction
-    const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(COORD_TYPE &x,COORD_TYPE &y);
+    const Map_server_MapVisibility_Simple_StoreOnSender *mapAndPosIfMoveInLookingDirectionJumpColision(CATCHCHALLENGER_TYPE_MAPID &mapIndex,COORD_TYPE &x,COORD_TYPE &y);
 
     //trade
     PLAYER_INDEX_FOR_CONNECTED otherPlayerTrade;

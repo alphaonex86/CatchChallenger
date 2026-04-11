@@ -1,5 +1,7 @@
 #include "MapObjectItem.hpp"
+#include "../libcatchchallenger/ClientVariable.hpp"
 #include <tiled/objectgroup.h>
+#include <tiled/tile.h>
 
 std::unordered_map<Tiled::ObjectGroup *,Tiled::MapRenderer *> MapObjectItem::mRendererList;
 std::unordered_map<Tiled::MapObject *,MapObjectItem *> MapObjectItem::objectLink;
@@ -14,6 +16,21 @@ MapObjectItem::MapObjectItem(Tiled::MapObject *mapObject,
 
 QRectF MapObjectItem::boundingRect() const
 {
+    //paint() draws non-door cell objects with painter translated by
+    //(x*CLIENT_BASE_TILE_SIZE,y*CLIENT_BASE_TILE_SIZE) and with bottom-left tile anchor,
+    //so the actual painted pixel scene rect is:
+    //  (x*TS, y*TS - tileH) .. (x*TS + tileW, y*TS)
+    //The existing renderer->boundingRect(mMapObject) returns tile-unit coordinates
+    //because positions here are stored in tile-unit. Override to return the correct
+    //pixel-unit rect so Qt doesn't cull the sprite out of the view.
+    if(mMapObject->type()!="door" && !mMapObject->cell().isEmpty() && mMapObject->cell().tile()!=nullptr)
+    {
+        const QSize tileSize=mMapObject->cell().tile()->size();
+        const qreal mx=static_cast<qreal>(mMapObject->x())*CLIENT_BASE_TILE_SIZE;
+        const qreal my=static_cast<qreal>(mMapObject->y())*CLIENT_BASE_TILE_SIZE;
+        return QRectF(mx-1,my-static_cast<qreal>(tileSize.height())-1,
+                      static_cast<qreal>(tileSize.width())+2,static_cast<qreal>(tileSize.height())+2);
+    }
     Tiled::ObjectGroup * objectGroup=mMapObject->objectGroup();
     if(mRendererList.find(objectGroup)!=mRendererList.cend())
         return mRendererList.at(objectGroup)->boundingRect(mMapObject);

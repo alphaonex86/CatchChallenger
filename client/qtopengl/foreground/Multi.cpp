@@ -19,6 +19,7 @@
 #include "../MultiItem.hpp"
 #include "../above/AddOrEditServer.hpp"
 #include "../above/Login.hpp"
+#include "../CliOptions.hpp"
 #include <iostream>
 #include <utime.h>
 #if defined(_WIN32) || defined(Q_OS_MAC)
@@ -26,7 +27,8 @@
 #endif
 
 Multi::Multi() :
-    reply(nullptr)
+    reply(nullptr),
+    autoSelectTried(false)
 {
     srand(time(0));
     login=nullptr;
@@ -128,6 +130,26 @@ void Multi::displayServerList()
 
         serverConnexion.push_back(newEntry);
         index++;
+    }
+
+    //auto select the server with name from --server CLI arg
+    if(!autoSelectTried && !CliOptions::serverName.isEmpty())
+    {
+        unsigned int i=0;
+        while(i<mergedConnexionInfoList.size())
+        {
+            const ConnexionInfo &connexionInfo=mergedConnexionInfoList.at(i);
+            if(connexionInfo.name==CliOptions::serverName &&
+               (!connexionInfo.host.isEmpty() || !connexionInfo.ws.isEmpty()))
+            {
+                autoSelectTried=true;
+                selectedServer.unique_code=connexionInfo.unique_code;
+                selectedServer.isCustom=connexionInfo.isCustom;
+                server_select_clicked();
+                return;
+            }
+            i++;
+        }
     }
 }
 
@@ -864,6 +886,13 @@ void Multi::server_select_clicked()
     }
     Settings::settings->endGroup();
     emit setAbove(login);
+    //auto login when --autologin CLI arg was set
+    static bool autoLoginTried=false;
+    if(!autoLoginTried && CliOptions::autologin)
+    {
+        autoLoginTried=true;
+        login->validate();
+    }
 }
 
 void Multi::server_select_finished()

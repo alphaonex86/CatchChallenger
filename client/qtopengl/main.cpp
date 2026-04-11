@@ -16,6 +16,7 @@
 #include <QScreen>
 #include "../libqtcatchchallenger/Language.hpp"
 #include "MyApplication.h"
+#include "CliOptions.hpp"
 #include "../libqtcatchchallenger/Settings.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../libqtcatchchallenger/Audio.hpp"
@@ -179,6 +180,40 @@ int main(int argc, char *argv[])
     {
         if(!localListener.tryListen())
             return 0;
+    }
+
+    //parse the command line arguments
+    {
+        int index=1;
+        while(index<arguments.size())
+        {
+            const QString &arg=arguments.at(index);
+            if(arg==QStringLiteral("--server"))
+            {
+                if((index+1)<arguments.size())
+                {
+                    CliOptions::serverName=arguments.at(index+1);
+                    index++;
+                }
+                else
+                    std::cerr << "--server require a name argument" << std::endl;
+            }
+            else if(arg==QStringLiteral("--autologin"))
+                CliOptions::autologin=true;
+            else if(arg==QStringLiteral("--character"))
+            {
+                if((index+1)<arguments.size())
+                {
+                    CliOptions::characterName=arguments.at(index+1);
+                    index++;
+                }
+                else
+                    std::cerr << "--character require a name argument" << std::endl;
+            }
+            else if(arg==QStringLiteral("--closewhenonmap"))
+                CliOptions::closeWhenOnMap=true;
+            index++;
+        }
     }
 
     if(Settings::settings->contains("language"))

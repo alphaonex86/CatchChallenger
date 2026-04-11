@@ -21,6 +21,17 @@ MapItem::MapItem(QGraphicsItem *parent,const bool &useCache)
 
 void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map, Tiled::MapRenderer *renderer,const int &playerLayerIndex)
 {
+    std::cerr << "MapItem::addMap() mapIndex=" << mapIndex << " map=" << map << " renderer=" << renderer << " playerLayerIndex=" << playerLayerIndex << " cache=" << cache << std::endl;
+    if(map==NULL)
+    {
+        std::cerr << "MapItem::addMap() map is NULL (abort add)" << std::endl;
+        return;
+    }
+    if(renderer==NULL)
+    {
+        std::cerr << "MapItem::addMap() renderer is NULL (abort add)" << std::endl;
+        return;
+    }
     if(displayed_layer.find(map)!=displayed_layer.cend())
     {
         qDebug() << "Map already displayed";
@@ -29,6 +40,7 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
     //align zIndex to "Dyna management" Layer
     int index=-playerLayerIndex;
     const QList<Tiled::Layer *> &layers=map->layers();
+    std::cerr << "MapItem::addMap() layers.size()=" << layers.size() << std::endl;
 
     QImage image;
     QGraphicsItem * graphicsItem=NULL;
@@ -123,7 +135,12 @@ void MapItem::addMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex,Tiled::Map *map,
             graphicsItem->setZValue(index);
             displayed_layer[map].insert(graphicsItem);
         }
+        else
+            std::cerr << "MapItem::addMap() final tempPixmap.convertFromImage failed" << std::endl;
     }
+    std::cerr << "MapItem::addMap() done mapIndex=" << mapIndex << " " << layers.size() << " layers, " << displayed_layer[map].size() << " items added (width=" << width << " height=" << height << ")" << std::endl;
+    if(displayed_layer[map].empty())
+        std::cerr << "MapItem::addMap() WARNING: NO items added for mapIndex=" << mapIndex << " (black map will result)" << std::endl;
 
     #ifdef DEBUG_RENDER_CACHE
     if(cache)
@@ -151,8 +168,12 @@ void MapItem::removeMap(Tiled::Map *map)
 
 void MapItem::setMapPosition(Tiled::Map *map, int16_t global_x/*pixel, need be 16Bits*/, int16_t global_y/*pixel, need be 16Bits*/)
 {
+    std::cerr << "MapItem::setMapPosition() map=" << map << " global_x=" << global_x << " global_y=" << global_y << std::endl;
     if(displayed_layer.find(map)==displayed_layer.cend())
-            return;
+    {
+        std::cerr << "MapItem::setMapPosition() map not in displayed_layer (skip)" << std::endl;
+        return;
+    }
     const std::unordered_set<QGraphicsItem *> &values = displayed_layer.at(map);
     for( const auto& value : values ) {
         value->setPos(static_cast<qreal>(static_cast<double>(global_x)),static_cast<qreal>(static_cast<double>(global_y)));

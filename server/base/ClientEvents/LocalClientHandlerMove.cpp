@@ -140,9 +140,9 @@ bool Client::singleMove(const Direction &direction)
                 break;
                 case CatchChallenger::MapConditionType_FightBot:
                 {
-                    if(!haveBeatBot(map.id,teleporter.condition.data.fightBot))
+                    if(!haveBeatBot(mapIndex,teleporter.condition.data.fightBot))
                     {
-                        errorOutput("Need have FightBot win to use this teleporter: map "+std::to_string(map.id)+"/"+std::to_string(teleporter.condition.data.fightBot)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
+                        errorOutput("Need have FightBot win to use this teleporter: map "+std::to_string(mapIndex)+"/"+std::to_string(teleporter.condition.data.fightBot)+" with map: "+std::to_string(mapIndex)+"("+std::to_string(x)+","+std::to_string(y)+")");
                         return false;
                     }
                 }
@@ -200,7 +200,7 @@ bool Client::singleMove(const Direction &direction)
             unvalidated_rescue.orientation=map.rescue.at(std::pair<uint8_t,uint8_t>(x,y));
         }
     }
-    if(botFightCollision(map,x,y))
+    if(botFightCollision(mapIndex,map,x,y))
         return true;
     if(public_and_private_informations.repel_step<=0)
     {

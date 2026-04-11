@@ -3,3 +3,9 @@
 * async the ressources loading to never freeze the interface
 * async the network to never wait the internet and timeout if apply
 * client side predicion and compute (like path finding) to scale better on server
+
+# arguments, mostly to debug
+* --server name: on screen selection, auto select the server with this name
+* --autologin: on login/pass page, automaticlly try login
+* --character name: on character selection page, automaticly select character with this name
+* --closewhenonmap: close 1s after the character is spawn on map

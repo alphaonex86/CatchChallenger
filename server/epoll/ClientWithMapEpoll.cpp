@@ -10,6 +10,13 @@ void ClientWithMapEpoll::reset(int infd)
 {
     ProtocolParsingBase::reset();
     this->infd=infd;
+    //slot is being reused for a fresh connection (Free -> None): drop any
+    //leftover DDOS counters from the previous tenant of this slot, otherwise
+    //the new client inherits stale data and DdosBuffer::total() may falsely
+    //report the ">300s without flush" guard.
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    doDDOSReset();
+    #endif
     stat=ClientStat::None;
 }
 

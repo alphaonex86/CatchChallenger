@@ -29,7 +29,7 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
     case GameServerSettings::MapVisibility::Minimize_CPU:
        while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())//put loop into condition to have best performance
        {
-           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_CPU();
+           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_CPU(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;
@@ -38,7 +38,7 @@ void MapVisibilityAlgorithm_WithoutSender::generalPurgeBuffer()
        ProtocolParsingBase::tempBigBufferForOutput[1+4]=0x01;//map list count
        while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())//put loop into condition to have best performance
        {
-           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_network();
+           Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(index).min_network(static_cast<CATCHCHALLENGER_TYPE_MAPID>(index));
            index++;
        }
        break;
