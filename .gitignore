@@ -64,6 +64,13 @@ Makefile*
 *.qm
 *.prl
 
+.qtcreator
+moc_*
+ui_*
+qrc_*
+Makefile
+.claude
+
 # Qt unit tests
 target_wrapper.*
 
@@ -98,3 +105,6 @@ tools/to-pack/data/windows-x*
 /server/server-properties.xml
 /client/datapack
 /server/datapack
+
+client/qtopengl/catchchallenger
+client/qtcpu800x600/catchchallenger

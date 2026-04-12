@@ -128,7 +128,9 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     /* account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9),
     allow(10),item(11),item_warehouse(12),recipes(13),reputations(14),
-    encyclopedia_monster(15),encyclopedia_item(16),achievements(17),blob_version(18),date(19)*/
+    encyclopedia_monster(15),encyclopedia_item(16),achievements(17),date(18),lastdaillygift(19)
+    NB: the SELECT in PreparedDBQueryCommon::db_query_character_by_id dropped
+    blob_version; date/lastdaillygift indices shifted by one vs the old layout. */
 
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
@@ -592,7 +594,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     //achievements(17) ignored for now
 
-    const uint64_t &commonCharacterDate=GlobalServerData::serverPrivateVariables.db_common->stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(19),&ok);
+    const uint64_t &commonCharacterDate=GlobalServerData::serverPrivateVariables.db_common->stringtouint64(GlobalServerData::serverPrivateVariables.db_common->value(18),&ok);
     if(!ok)
     {
         character_id_db=characterId;

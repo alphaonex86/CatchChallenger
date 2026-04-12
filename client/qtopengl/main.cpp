@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
             }
             else if(arg==QStringLiteral("--closewhenonmap"))
                 CliOptions::closeWhenOnMap=true;
+            else if(arg==QStringLiteral("--dropsenddataafteronmap"))
+                CliOptions::dropSendDataAfterOnMap=true;
             index++;
         }
     }

@@ -3,6 +3,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/MoveOnTheMap.hpp"
+#include "../../libcatchchallenger/Api_protocol.hpp"
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "QMap_client.hpp"
 #include "TemporaryTile.hpp"
@@ -76,6 +77,10 @@ void MapVisualiserPlayerWithFight::keyPressParse()
 
 bool MapVisualiserPlayerWithFight::haveStopTileAction()
 {
+    //--dropsenddataafteronmap: skip all fight-triggering collisions on the
+    //stopped tile so the player can freely explore the datapack map.
+    if(CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+        return false;
     if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight at moveStepSlot()";
@@ -163,6 +168,10 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
 {
     if(!MapVisualiserPlayer::canGoTo(direction,mapIndex,x,y,checkCollision))
         return false;
+    //--dropsenddataafteronmap: allow walking through fight triggers and
+    //monster zones so exploration is unhindered.
+    if(CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+        return true;
     if(client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight";

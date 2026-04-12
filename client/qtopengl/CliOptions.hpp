@@ -10,6 +10,7 @@ public:
     static bool autologin;
     static QString characterName;
     static bool closeWhenOnMap;
+    static bool dropSendDataAfterOnMap;
 };
 
 #endif // CLIOPTIONS_HPP

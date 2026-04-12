@@ -1496,14 +1496,26 @@ void MainWindow::stateChanged(QAbstractSocket::SocketState socketState)
     if(socketState==QAbstractSocket::ConnectedState)
     {
         //If comment: Internal problem: Api_protocol::sendProtocol() !haveFirstHeader
+        //For fake socket (solo mode) Api_protocol_Qt::readForFirstHeader() already
+        //calls connectTheExternalSocketInternal() -> sendProtocol() after reading
+        //the first byte written by QtServer::newConnection(), so we must NOT send
+        //it a second time from here or we trip have_send_protocol and kill the
+        //connection with "Have already send the protocol".
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET)
+        const bool usingFakeSocket=(socket!=NULL && socket->fakeSocket!=NULL);
+        #else
+        const bool usingFakeSocket=false;
+        #endif
         #if !defined(NOTCPSOCKET) && !defined(NOWEBSOCKET)
         if(realSslSocket==NULL && realWebSocket==NULL)
         {}//client->sendProtocol();
         else
             qDebug() << "Tcp/Web socket found, skip sendProtocol()";
         #elif !defined(NOTCPSOCKET)
-        if(realSslSocket==NULL)
+        if(realSslSocket==NULL && !usingFakeSocket)
             client->sendProtocol();
+        else if(usingFakeSocket)
+            qDebug() << "Fake socket found, skip sendProtocol() (already sent by readForFirstHeader)";
         else
             qDebug() << "Tcp socket found, skip sendProtocol()";
         #elif !defined(NOWEBSOCKET)

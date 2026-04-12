@@ -7,6 +7,7 @@ QString AutoArgs::server;
 bool AutoArgs::autologin=false;
 QString AutoArgs::character;
 bool AutoArgs::closeWhenOnMap=false;
+bool AutoArgs::dropSendDataAfterOnMap=false;
 
 void AutoArgs::parse(int &argc, char *argv[])
 {
@@ -24,6 +25,12 @@ void AutoArgs::parse(int &argc, char *argv[])
         if(std::strcmp(arg,"--closewhenonmap")==0)
         {
             closeWhenOnMap=true;
+            i++;
+            continue;
+        }
+        if(std::strcmp(arg,"--dropsenddataafteronmap")==0)
+        {
+            dropSendDataAfterOnMap=true;
             i++;
             continue;
         }
@@ -59,5 +66,6 @@ void AutoArgs::parse(int &argc, char *argv[])
     std::cerr << "AutoArgs: server=\"" << server.toStdString()
               << "\" autologin=" << (autologin?"true":"false")
               << " character=\"" << character.toStdString() << "\""
-              << " closeWhenOnMap=" << (closeWhenOnMap?"true":"false") << std::endl;
+              << " closeWhenOnMap=" << (closeWhenOnMap?"true":"false")
+              << " dropSendDataAfterOnMap=" << (dropSendDataAfterOnMap?"true":"false") << std::endl;
 }

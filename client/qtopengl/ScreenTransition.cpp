@@ -16,6 +16,7 @@
 #include "above/DebugDialog.hpp"
 #include "ConnexionManager.hpp"
 #include "CliOptions.hpp"
+#include "../libcatchchallenger/Api_protocol.hpp"
 #include <QTimer>
 #include "../../general/base/Version.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
@@ -868,7 +869,15 @@ void ScreenTransition::goToMap()
     setAbove(nullptr);
     //if --closewhenonmap CLI arg was set, close 1s after spawning
     if(CliOptions::closeWhenOnMap)
+    {
+        std::cerr << "CliOptions: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
+    }
+    if(CliOptions::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+    {
+        std::cerr << "CliOptions: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
+        CatchChallenger::Api_protocol::dropOutputAfterOnMap=true;
+    }
 }
 
 void ScreenTransition::render()

@@ -10,6 +10,7 @@ public:
     static bool autologin;
     static QString character;
     static bool closeWhenOnMap;
+    static bool dropSendDataAfterOnMap;
 
     static void parse(int &argc, char *argv[]);
 };

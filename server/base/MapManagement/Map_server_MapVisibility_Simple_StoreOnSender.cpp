@@ -118,11 +118,20 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_CPU(const CATCHCHALLENGE
     clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
         return;
+    //No visibility broadcast to compose when the map has 0 or 1 client: there
+    //is no other player to insert/move/remove. send_reinsertAll() would also
+    //early-return 0, leaving the shared output buffer half-composed (0x65
+    //written at buffer[2] with no matching 0x6B packet following), and the
+    //subsequent sendPing() would clobber the first-insert header at buffer[0..2),
+    //producing a corrupt stream that fails client-side with
+    //"unknown ident main code: 26" (0x1A is uninitialized tail data).
+    if(clients_size<=1)
+        return;
 
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {
-        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
+        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.at(index_client);
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK
@@ -181,13 +190,18 @@ void Map_server_MapVisibility_Simple_StoreOnSender::min_network(const CATCHCHALL
     clients_size-=map_removed_index.size();
     if(clients_size>=GlobalServerData::serverSettings.mapVisibility.simple.max)
         return;
+    //Same guard as min_CPU(): nothing to broadcast with 0 or 1 client on the
+    //map, and send_reinsertAllWithFilter() would return 0 leaving the buffer
+    //half-composed.
+    if(clients_size<=1)
+        return;
 
     unsigned int index_client=0;
     while(index_client<map_clients_id.size())
     {
         if(index_client==0)
             *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+4+1)=htole16(mapIndex);//map id
-        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.size();
+        const PLAYER_INDEX_FOR_CONNECTED &map_c_idP=map_clients_id.at(index_client);
         if(map_c_idP!=PLAYER_INDEX_FOR_CONNECTED_MAX)
         {
             #ifdef CATCHCHALLENGER_EXTRA_CHECK

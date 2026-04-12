@@ -4,3 +4,4 @@ QString CliOptions::serverName;
 bool CliOptions::autologin=false;
 QString CliOptions::characterName;
 bool CliOptions::closeWhenOnMap=false;
+bool CliOptions::dropSendDataAfterOnMap=false;

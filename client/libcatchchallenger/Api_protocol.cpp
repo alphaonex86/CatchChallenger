@@ -28,6 +28,8 @@ const unsigned char protocolHeaderToMatchGameServer[] = PROTOCOL_HEADER_GAMESERV
 
 std::unordered_set<std::string> Api_protocol::extensionAllowed;
 
+bool Api_protocol::dropOutputAfterOnMap=false;
+
 /*std::string "<root>"="<root>";
 std::string "</root>"="</root>";
 std::string Api_protocol::text_name="name";
@@ -1778,6 +1780,9 @@ void Api_protocol::resetAll()
 
     ProtocolParsingInputOutput::reset();
     flags|=0x08;
+    //--dropsenddataafteronmap: re-enable outgoing traffic after a
+    //disconnect so a subsequent reconnect can send data again.
+    dropOutputAfterOnMap=false;
 }
 
 void Api_protocol::unloadSelection()
@@ -2106,6 +2111,8 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
 
 bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * const data,const unsigned int &size)
 {
+    if(dropOutputAfterOnMap)
+        return true;
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
     {
@@ -2148,6 +2155,8 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
 
 bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
+    if(dropOutputAfterOnMap)
+        return true;
     registerOutputQuery(queryNumber,packetCode);
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
