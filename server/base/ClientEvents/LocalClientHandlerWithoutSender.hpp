@@ -2,6 +2,7 @@
 #define CATCHCHALLENGER_LOCALCLIENBTHANDLERWITHOUTSENDER_H
 
 #include <vector>
+#include <cstdint>
 
 namespace CatchChallenger {
 class LocalClientHandlerWithoutSender
@@ -10,7 +11,6 @@ public:
     explicit LocalClientHandlerWithoutSender();
     virtual ~LocalClientHandlerWithoutSender();
     static LocalClientHandlerWithoutSender localClientHandlerWithoutSender;
-    std::vector<void*> allClient;
 public:
     void doAllAction();
     void doDDOSChat();

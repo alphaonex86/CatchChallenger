@@ -9,6 +9,7 @@
 #include "LinkToMaster.hpp"
 #endif
 #endif
+#include "../../general/base/cpp11addition.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -18,7 +19,7 @@ void Client::sendSystemMessage(const std::string &text, const bool &important, c
 {
     if(text.size()>65535)
     {
-        std::cerr << "sendSystemMessage() text too big (abort): " << text << std::endl;
+        std::cerr << "sendSystemMessage() text too big (abort): " << sanitizeUtf8String(text) << std::endl;
         abort();
     }
     //send the network message

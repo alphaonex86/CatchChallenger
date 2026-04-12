@@ -155,7 +155,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
-                            public_informations.pseudo=std::string(data+pos,pseudoSize);
+                            public_informations.pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                             pos+=pseudoSize;
                             if(public_informations.pseudo.empty())
                             {
@@ -642,7 +642,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                   );
                     return false;
                 }
-                text=std::string(data+pos,textSize);
+                text=sanitizeUtf8String(data+pos,textSize);
                 pos+=textSize;
             }
             if(chat_type==Chat_type_system || chat_type==Chat_type_system_important)
@@ -671,7 +671,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                    );
                         return false;
                     }
-                    pseudo=std::string(data+pos,pseudoSize);
+                    pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                     pos+=pseudoSize;
                     if(pseudo.empty())
                     {
@@ -867,7 +867,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
-                    text=std::string(data+pos,textSize);
+                    text=sanitizeUtf8String(data+pos,textSize);
                     pos+=textSize;
                 }
             }
@@ -912,7 +912,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                   );
                     return false;
                 }
-                name=std::string(data+pos,stringSize);
+                name=sanitizeUtf8String(data+pos,stringSize);
                 pos+=stringSize;
             }
             clanInformations(name);
@@ -945,7 +945,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                   );
                     return false;
                 }
-                name=std::string(data+pos,size);
+                name=sanitizeUtf8String(data+pos,stringSize);
                 pos+=stringSize;
             }
             clanInvite(clanId,name);
@@ -1493,7 +1493,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                   );
                     return false;
                 }
-                pseudo=std::string(data+pos,pseudoSize);
+                pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                 pos+=pseudoSize;
                 if(pseudo.empty())
                 {
@@ -1956,7 +1956,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                   );
                     return false;
                 }
-                pseudo=std::string(data+pos,pseudoSize);
+                pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                 pos+=pseudoSize;
                 if(pseudo.empty())
                 {

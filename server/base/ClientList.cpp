@@ -56,6 +56,11 @@ void ClientList::insert_characterSelected(const Client &c)
             abort();
         }
     }
+    if(maxIndex<playerByPseudo.size())
+    {
+        std::cerr << "ClientList::insert_characterSelected() maxIndex<playerByPseudo.size()" << std::endl;
+        abort();
+    }
     #endif
     playerByPseudo[c.getPseudo()]=c.getIndexConnect();
     return;

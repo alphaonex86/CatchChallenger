@@ -1,5 +1,6 @@
 #include "LinkToMaster.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include "../../general/sha224/sha224.hpp"
 #include "../base/GlobalServerData.hpp"
 #include "../base/Client.hpp"
@@ -300,7 +301,7 @@ bool LinkToMaster::disconnectClient()
 //input/ouput layer
 void LinkToMaster::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << sanitizeUtf8String(error) << std::endl;
     //critical error, prefer restart from 0
     abort();
 
@@ -309,18 +310,18 @@ void LinkToMaster::errorParsingLayer(const std::string &error)
 
 void LinkToMaster::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message << std::endl;
+    std::cout << sanitizeUtf8String(message) << std::endl;
 }
 
 void LinkToMaster::errorParsingLayer(const char * const error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << sanitizeUtf8String(std::string(error)) << std::endl;
     disconnectClient();
 }
 
 void LinkToMaster::messageParsingLayer(const char * const message) const
 {
-    std::cout << message << std::endl;
+    std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
 BaseClassSwitch::EpollObjectType LinkToMaster::getType() const

@@ -129,7 +129,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
                               );
                 return false;
             }
-            std::string pseudo=std::string(data+pos,pseudoSize);
+            std::string pseudo=sanitizeUtf8String(data+pos,pseudoSize);
             pos+=pseudoSize;
             if(pseudo.empty())
             {
@@ -172,7 +172,7 @@ bool Api_protocol::parseQuery(const uint8_t &packetCode, const uint8_t &queryNum
                               );
                 return false;
             }
-            std::string pseudo=std::string(data+pos,pseudoSize);
+            std::string pseudo=sanitizeUtf8String(data+pos,pseudoSize);
             pos+=pseudoSize;
             if(pseudo.empty())
             {

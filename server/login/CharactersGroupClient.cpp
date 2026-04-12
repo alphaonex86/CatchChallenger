@@ -55,7 +55,7 @@ void CharactersGroupForLogin::character_list_object()
             uint32_t time_to_delete=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(3),&ok);
             if(!ok)
             {
-                std::cerr << "time_to_delete is not number: " << databaseBaseCommon->value(3) << " for " << character_id << " fixed by 0" << std::endl;
+                std::cerr << "time_to_delete is not number: " << sanitizeUtf8String(databaseBaseCommon->value(3)) << " for " << character_id << " fixed by 0" << std::endl;
                 time_to_delete=0;
             }
             if(time_to_delete==0 || current_time<time_to_delete)
@@ -76,7 +76,7 @@ void CharactersGroupForLogin::character_list_object()
                     const std::string &normalisedString=databaseBaseCommon->value(1);
                     if(normalisedString.size()>255)
                     {
-                        std::cerr << "pseudo too large utf8 data: " << databaseBaseCommon->value(1) << " by hide this char" << std::endl;
+                        std::cerr << "pseudo too large utf8 data: " << sanitizeUtf8String(databaseBaseCommon->value(1)) << " by hide this char" << std::endl;
                         tempRawDataSize-=sizeof(uint32_t);
                         validCharaterCount--;
                         continue;
@@ -84,7 +84,7 @@ void CharactersGroupForLogin::character_list_object()
                     const uint8_t &newSize=FacilityLibGeneral::toUTF8WithHeader(normalisedString,tempRawData+tempRawDataSize);
                     if(newSize==0)
                     {
-                        std::cerr << "can't be empty or have wrong or too large utf8 data: " << databaseBaseCommon->value(1) << " by hide this char" << std::endl;
+                        std::cerr << "can't be empty or have wrong or too large utf8 data: " << sanitizeUtf8String(databaseBaseCommon->value(1)) << " by hide this char" << std::endl;
                         tempRawDataSize-=sizeof(uint32_t);
                         validCharaterCount--;
                         continue;
@@ -97,7 +97,7 @@ void CharactersGroupForLogin::character_list_object()
                     const uint32_t databaseSkinId=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(2),&ok);
                     if(!ok)//if not number
                     {
-                        std::cerr << "character return skin is not number: " << databaseBaseCommon->value(2) << " for " << character_id << " fixed by 0" << std::endl;
+                        std::cerr << "character return skin is not number: " << sanitizeUtf8String(databaseBaseCommon->value(2)) << " for " << character_id << " fixed by 0" << std::endl;
                         tempRawData[tempRawDataSize]=0;
                         ok=true;
                     }
@@ -105,7 +105,7 @@ void CharactersGroupForLogin::character_list_object()
                     {
                         if(databaseSkinId>=(uint32_t)DictionaryLogin::dictionary_skin_database_to_internal.size())//out of range
                         {
-                            std::cerr << "character return skin out of range: " << databaseBaseCommon->value(2) << " for " << character_id << " fixed by 0" << std::endl;
+                            std::cerr << "character return skin out of range: " << sanitizeUtf8String(databaseBaseCommon->value(2)) << " for " << character_id << " fixed by 0" << std::endl;
                             tempRawData[tempRawDataSize]=0;
                             ok=true;
                         }
@@ -132,7 +132,7 @@ void CharactersGroupForLogin::character_list_object()
                     unsigned int played_time=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(4),&ok);
                     if(!ok)
                     {
-                        std::cerr << "played_time is not number: " << databaseBaseCommon->value(4) << " for " << character_id << " fixed by 0" << std::endl;
+                        std::cerr << "played_time is not number: " << sanitizeUtf8String(databaseBaseCommon->value(4)) << " for " << character_id << " fixed by 0" << std::endl;
                         played_time=0;
                     }
                     *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
@@ -144,7 +144,7 @@ void CharactersGroupForLogin::character_list_object()
                     unsigned int last_connect=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(5),&ok);
                     if(!ok)
                     {
-                        std::cerr << "last_connect is not number: " << databaseBaseCommon->value(5) << " for " << character_id << " fixed by 0" << std::endl;
+                        std::cerr << "last_connect is not number: " << sanitizeUtf8String(databaseBaseCommon->value(5)) << " for " << character_id << " fixed by 0" << std::endl;
                         last_connect=current_time;
                     }
                     *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
@@ -155,7 +155,7 @@ void CharactersGroupForLogin::character_list_object()
                 deleteCharacterNow(character_id);
         }
         else
-            std::cerr << "Server id is not number: " << databaseBaseCommon->value(0) << " for " << character_id << " fixed by 0" << std::endl;
+            std::cerr << "Server id is not number: " << sanitizeUtf8String(databaseBaseCommon->value(0)) << " for " << character_id << " fixed by 0" << std::endl;
     }
     tempRawData[0]=validCharaterCount;
 
@@ -221,7 +221,7 @@ void CharactersGroupForLogin::server_list_object()
                 unsigned int played_time=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(1),&ok);
                 if(!ok)
                 {
-                    std::cerr << "played_time is not number: " << databaseBaseCommon->value(1) << " fixed by 0" << std::endl;
+                    std::cerr << "played_time is not number: " << sanitizeUtf8String(databaseBaseCommon->value(1)) << " fixed by 0" << std::endl;
                     played_time=0;
                 }
                 *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(played_time);
@@ -231,7 +231,7 @@ void CharactersGroupForLogin::server_list_object()
                 unsigned int last_connect=databaseBaseCommon->stringtouint32(databaseBaseCommon->value(2),&ok);
                 if(!ok)
                 {
-                    std::cerr << "last_connect is not number: " << databaseBaseCommon->value(2) << " fixed by 0" << std::endl;
+                    std::cerr << "last_connect is not number: " << sanitizeUtf8String(databaseBaseCommon->value(2)) << " fixed by 0" << std::endl;
                     last_connect=current_time;
                 }
                 *reinterpret_cast<uint32_t *>(tempRawData+tempRawDataSize)=htole32(last_connect);
@@ -241,7 +241,7 @@ void CharactersGroupForLogin::server_list_object()
             }
         }
         else
-            std::cerr << "Character id is not number: " << databaseBaseCommon->value(0) << std::endl;
+            std::cerr << "Character id is not number: " << sanitizeUtf8String(databaseBaseCommon->value(0)) << std::endl;
     }
 
     client->server_list_return(validServerCount,tempRawData,tempRawDataSize);

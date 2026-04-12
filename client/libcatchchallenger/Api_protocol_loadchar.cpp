@@ -5,6 +5,7 @@
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include <iostream>
 #include <regex>
@@ -469,7 +470,7 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 parseError("Procotol wrong or corrupted",std::string("wrong size with main ident: %1, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
-            player_informations.public_informations.pseudo=std::string(data+pos,textSize);
+            player_informations.public_informations.pseudo=sanitizeUtf8String(data+pos,textSize);
             pos+=textSize;
         }
         else

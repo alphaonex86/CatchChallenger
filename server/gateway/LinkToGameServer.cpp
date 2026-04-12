@@ -482,24 +482,24 @@ uint8_t LinkToGameServer::freeQueryNumberToServer()
 //input/ouput layer
 void LinkToGameServer::errorParsingLayer(const std::string &error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << sanitizeUtf8String(error) << std::endl;
     disconnectClient();
 }
 
 void LinkToGameServer::messageParsingLayer(const std::string &message) const
 {
-    std::cout << message << std::endl;
+    std::cout << sanitizeUtf8String(message) << std::endl;
 }
 
 void LinkToGameServer::errorParsingLayer(const char * const error)
 {
-    std::cerr << error << std::endl;
+    std::cerr << sanitizeUtf8String(std::string(error)) << std::endl;
     disconnectClient();
 }
 
 void LinkToGameServer::messageParsingLayer(const char * const message) const
 {
-    std::cout << message << std::endl;
+    std::cout << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
 BaseClassSwitch::EpollObjectType LinkToGameServer::getType() const

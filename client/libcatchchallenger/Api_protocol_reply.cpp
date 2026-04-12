@@ -348,7 +348,7 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                                                       );
                                         return false;
                                     }
-                                    characterEntry.pseudo=std::string(data+pos,pseudoSize);
+                                    characterEntry.pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                                     pos+=pseudoSize;
                                 }
                             }

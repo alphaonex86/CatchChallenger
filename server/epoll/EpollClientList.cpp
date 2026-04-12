@@ -7,6 +7,7 @@ EpollClientList::EpollClientList()
     size_t max=CatchChallenger::GlobalServerData::serverSettings.max_players;
     if(max>PLAYER_INDEX_FOR_CONNECTED_MAX)
         max=PLAYER_INDEX_FOR_CONNECTED_MAX-1;
+    clients_removed_index.reserve(max);
 
     size_t tmax=max;
     clients_removed_index.resize(tmax);
@@ -17,6 +18,7 @@ EpollClientList::EpollClientList()
             clients_removed_index[index]=tmax-index;
             index++;
         }
+        maxIndex=max;
     }
 
     clients.reserve(tmax);
