@@ -2,6 +2,7 @@
 #include "GlobalServerData.hpp"
 #include "GameServerVariables.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <vector>
 #include <cstring>
 
@@ -72,20 +73,19 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
     {
         case 0x02:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint8_t)*2)
+            if(size!=(int)sizeof(uint8_t)*2)//*2 because stepCount 8Bits and direction 8Bits
             {
                 errorOutput("Wrong size in move packet");
                 return false;
             }
-            #endif
+            const uint8_t &stepCount=*data;
             const uint8_t &direction=*(data+sizeof(uint8_t));
             if(direction<1 || direction>8)
             {
                 errorOutput("Bad direction number: "+std::to_string(direction));
                 return false;
             }
-            moveThePlayer(static_cast<uint8_t>(*data),static_cast<Direction>(direction));
+            moveThePlayer(stepCount,static_cast<Direction>(direction));
             return true;
         }
         break;
@@ -125,7 +125,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                                 errorOutput("wrong utf8 to std::string size in PM for text");
                                 return false;
                             }
-                            text=std::string(data+pos,textSize);
+                            text=sanitizeUtf8String(data+pos,textSize);
                             pos+=textSize;
                         }
                     }
@@ -145,7 +145,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                                 errorOutput("wrong utf8 to std::string size in PM for pseudo");
                                 return false;
                             }
-                            pseudo=std::string(data+pos,pseudoSize);
+                            pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                             pos+=pseudoSize;
                         }
                     }
@@ -176,7 +176,7 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                         errorOutput("wrong utf8 to std::string size");
                         return false;
                     }
-                    text=std::string(data+pos,textSize);
+                    text=sanitizeUtf8String(data+pos,textSize);
                     pos+=textSize;
                 }
 
@@ -457,13 +457,6 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
         //use skill
         case 0x11:
         {
-            #ifdef CATCHCHALLENGER_EXTRA_CHECK
-            if(size!=(int)sizeof(uint16_t))
-            {
-                errorOutput("Wrong size in move packet");
-                return false;
-            }
-            #endif
             if(size!=(int)sizeof(uint16_t))
             {
                 errorOutput("Wrong size in move packet");

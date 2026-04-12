@@ -42,6 +42,91 @@ std::size_t pairhash::operator()(const std::pair<uint16_t, uint16_t> &x) const
     return (x.first << 16) + x.second;
 }
 
+std::string sanitizeUtf8String(const char * const data,const unsigned int &size)
+{
+    std::string result;
+    result.reserve(size);
+    unsigned int i=0;
+    while(i<size)
+    {
+        const unsigned char c=static_cast<unsigned char>(data[i]);
+        unsigned int seqLen=0;
+        if(c<=0x7F)
+            seqLen=1;
+        else if((c&0xE0)==0xC0)
+            seqLen=2;
+        else if((c&0xF0)==0xE0)
+            seqLen=3;
+        else if((c&0xF8)==0xF0)
+            seqLen=4;
+        else
+        {
+            //invalid leading byte, skip
+            ++i;
+            continue;
+        }
+        if(i+seqLen>size)
+            break;//truncated sequence
+        //validate continuation bytes
+        bool valid=true;
+        for(unsigned int j=1;j<seqLen;++j)
+        {
+            if((static_cast<unsigned char>(data[i+j])&0xC0)!=0x80)
+            {
+                valid=false;
+                break;
+            }
+        }
+        if(!valid)
+        {
+            ++i;
+            continue;
+        }
+        //decode codepoint for overlong and control char check
+        uint32_t cp=0;
+        if(seqLen==1)
+            cp=c;
+        else if(seqLen==2)
+            cp=((c&0x1F)<<6)|(static_cast<unsigned char>(data[i+1])&0x3F);
+        else if(seqLen==3)
+            cp=((c&0x0F)<<12)|((static_cast<unsigned char>(data[i+1])&0x3F)<<6)|(static_cast<unsigned char>(data[i+2])&0x3F);
+        else
+            cp=((c&0x07)<<18)|((static_cast<unsigned char>(data[i+1])&0x3F)<<12)|((static_cast<unsigned char>(data[i+2])&0x3F)<<6)|(static_cast<unsigned char>(data[i+3])&0x3F);
+        //reject overlong encodings
+        if((seqLen==2 && cp<0x80) || (seqLen==3 && cp<0x800) || (seqLen==4 && cp<0x10000))
+        {
+            i+=seqLen;
+            continue;
+        }
+        //reject surrogates and out of range
+        if((cp>=0xD800 && cp<=0xDFFF) || cp>0x10FFFF)
+        {
+            i+=seqLen;
+            continue;
+        }
+        //reject C0 control chars (except tab 0x09, newline 0x0A, carriage return 0x0D)
+        if(cp<0x20 && cp!=0x09 && cp!=0x0A && cp!=0x0D)
+        {
+            i+=seqLen;
+            continue;
+        }
+        //reject DEL and C1 control chars
+        if(cp==0x7F || (cp>=0x80 && cp<=0x9F))
+        {
+            i+=seqLen;
+            continue;
+        }
+        result.append(data+i,seqLen);
+        i+=seqLen;
+    }
+    return result;
+}
+
+std::string sanitizeUtf8String(const std::string &data)
+{
+    return sanitizeUtf8String(data.data(),static_cast<unsigned int>(data.size()));
+}
+
 std::string str_tolower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(),
                 // static_cast<int(*)(int)>(std::tolower)         // wrong

@@ -180,24 +180,24 @@ void EpollClientLoginMaster::errorParsingLayer(const std::string &error)
         disconnectClient();
         return;
     }
-    std::cerr << socketString/* << ": " already concat to improve the performance*/ << error << std::endl;
+    std::cerr << socketString/* << ": " already concat to improve the performance*/ << sanitizeUtf8String(error) << std::endl;
     disconnectClient();
 }
 
 void EpollClientLoginMaster::messageParsingLayer(const std::string &message) const
 {
-    std::cout << socketString/* << ": " already concat to improve the performance*/ << message << std::endl;
+    std::cout << socketString/* << ": " already concat to improve the performance*/ << sanitizeUtf8String(message) << std::endl;
 }
 
 void EpollClientLoginMaster::errorParsingLayer(const char * const error)
 {
-    std::cerr << socketString/* << ": " already concat to improve the performance*/ << error << std::endl;
+    std::cerr << socketString/* << ": " already concat to improve the performance*/ << sanitizeUtf8String(std::string(error)) << std::endl;
     disconnectClient();
 }
 
 void EpollClientLoginMaster::messageParsingLayer(const char * const message) const
 {
-    std::cout << socketString/* << ": " already concat to improve the performance*/ << message << std::endl;
+    std::cout << socketString/* << ": " already concat to improve the performance*/ << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
 BaseClassSwitch::EpollObjectType EpollClientLoginMaster::getType() const

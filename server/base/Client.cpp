@@ -9,6 +9,7 @@
 #include "../../general/sha224/sha224.hpp"
 #endif
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 
 #include "BaseServer/BaseServerLogin.hpp"
 #include "MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
@@ -424,7 +425,7 @@ void Client::errorOutput(const std::string &errorString)
     if(stat==ClientStat::None)
     {
         #ifndef NOSINGLEPLAYER
-        std::cerr << headerOutput() << "Kicked when stat==ClientStat::None by: " << errorString << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
+        std::cerr << headerOutput() << "Kicked when stat==ClientStat::None by: " << sanitizeUtf8String(errorString) << std::endl;//silent if protocol not passed, to not flood the log if other client like http client (browser) is connected
         #endif
         disconnectClient();//include closeSocket();, but do it again:
         closeSocket();
@@ -433,7 +434,7 @@ void Client::errorOutput(const std::string &errorString)
     if(stat==ClientStat::CharacterSelected)
         sendSystemMessage(public_and_private_informations.public_informations.pseudo+" have been kicked from server, have try hack",false);
 
-    std::cerr << headerOutput() << "Kicked by: " << errorString << std::endl;
+    std::cerr << headerOutput() << "Kicked by: " << sanitizeUtf8String(errorString) << std::endl;
     disconnectClient();
 }
 
@@ -450,7 +451,7 @@ std::string Client::headerOutput() const
         if(GlobalServerData::serverSettings.anonymous)
             return std::to_string(character_id_db)+": ";
         else
-            return public_and_private_informations.public_informations.pseudo+": ";
+            return sanitizeUtf8String(public_and_private_informations.public_informations.pseudo)+": ";
     }
     else
     {
@@ -483,7 +484,7 @@ std::string Client::headerOutput() const
 
 void Client::normalOutput(const std::string &message) const
 {
-    std::cout << headerOutput() << message << std::endl;
+    std::cout << headerOutput() << sanitizeUtf8String(message) << std::endl;
 }
 
 std::string Client::getPseudo() const

@@ -1,6 +1,7 @@
 #include "Client.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
+#include "../../general/base/cpp11addition.hpp"
 #include <cstring>
 
 using namespace CatchChallenger;
@@ -174,7 +175,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                             errorOutput("wrong utf8 to std::string size in clan action for text");
                             return false;
                         }
-                        tempString=std::string(data+pos,textSize);
+                        tempString=sanitizeUtf8String(data+pos,textSize);
                         pos+=textSize;
                     }
                     clanAction(queryNumber,clanActionId,tempString);
@@ -470,7 +471,7 @@ bool Client::parseQuery(const uint8_t &packetCode,const uint8_t &queryNumber,con
                         errorOutput("wrong utf8 to std::string size in PM for text");
                         return false;
                     }
-                    pseudo=std::string(data+pos,textSize);
+                    pseudo=sanitizeUtf8String(data+pos,textSize);
                     pos+=textSize;
                 }
             }

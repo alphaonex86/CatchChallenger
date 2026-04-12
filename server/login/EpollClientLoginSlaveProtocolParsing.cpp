@@ -420,7 +420,7 @@ bool EpollClientLoginSlave::parseQuery(const uint8_t &mainCodeType,const uint8_t
                     parseNetworkReadError("wrong size with the main ident: "+std::to_string(mainCodeType)+", data: "+binarytoHexa(data,size));
                     return false;
                 }
-                pseudo=std::string(data+cursor,pseudoSize);
+                pseudo=sanitizeUtf8String(data+cursor,pseudoSize);
                 cursor+=pseudoSize;
             }
             {

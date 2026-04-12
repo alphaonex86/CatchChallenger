@@ -69,13 +69,13 @@ bool EpollClientLoginSlave::disconnectClient()
 //input/ouput layer
 void EpollClientLoginSlave::errorParsingLayer(const std::string &error)
 {
-    std::cerr << socketString << ": " << error << std::endl;
+    std::cerr << socketString << ": " << sanitizeUtf8String(error) << std::endl;
     disconnectClient();
 }
 
 void EpollClientLoginSlave::messageParsingLayer(const std::string &message) const
 {
-    std::cout << socketString << ": " << message << std::endl;
+    std::cout << socketString << ": " << sanitizeUtf8String(message) << std::endl;
 }
 
 void EpollClientLoginSlave::errorParsingLayer(const char * const error)
@@ -86,13 +86,13 @@ void EpollClientLoginSlave::errorParsingLayer(const char * const error)
         disconnectClient();
         return;
     }
-    std::cerr << socketString << ": " << error << std::endl;
+    std::cerr << socketString << ": " << sanitizeUtf8String(std::string(error)) << std::endl;
     disconnectClient();
 }
 
 void EpollClientLoginSlave::messageParsingLayer(const char * const message) const
 {
-    std::cout << socketString << ": " << message << std::endl;
+    std::cout << socketString << ": " << sanitizeUtf8String(std::string(message)) << std::endl;
 }
 
 BaseClassSwitch::EpollObjectType EpollClientLoginSlave::getType() const

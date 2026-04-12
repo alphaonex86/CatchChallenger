@@ -15,7 +15,7 @@ void BaseServer::loadAndFixSettings()
     GlobalServerData::serverPrivateVariables.server_message=stringsplit(GlobalServerData::serverSettings.server_message,'\n');
     while(GlobalServerData::serverPrivateVariables.server_message.size()>16)
     {
-        std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, remove: " << GlobalServerData::serverPrivateVariables.server_message.at(GlobalServerData::serverPrivateVariables.server_message.size()-1) << std::endl;
+        std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, remove: " << sanitizeUtf8String(GlobalServerData::serverPrivateVariables.server_message.at(GlobalServerData::serverPrivateVariables.server_message.size()-1)) << std::endl;
         GlobalServerData::serverPrivateVariables.server_message.pop_back();
     }
     unsigned int index=0;
@@ -23,7 +23,7 @@ void BaseServer::loadAndFixSettings()
     {
         if(GlobalServerData::serverPrivateVariables.server_message.at(index).size()>128)
         {
-            std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, truncate: " << GlobalServerData::serverPrivateVariables.server_message.at(index) << std::endl;
+            std::cerr << "GlobalServerData::serverPrivateVariables.server_message too big, truncate: " << sanitizeUtf8String(GlobalServerData::serverPrivateVariables.server_message.at(index)) << std::endl;
             GlobalServerData::serverPrivateVariables.server_message[index].resize(128);
         }
         index++;

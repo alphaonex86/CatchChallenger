@@ -39,6 +39,7 @@
 #include <QTime>
 #include <QDebug>
 #include <QElapsedTimer>
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -54,6 +55,15 @@ int main(int argc, char *argv[])
     a.setApplicationVersion(QStringLiteral("1.0"));
 
     QStringList arguments=QCoreApplication::arguments();
+
+    QString renderAllHelp=QStringLiteral("--help");
+    if(arguments.contains(renderAllHelp))
+    {
+        std::cout << "--renderAll [map_tmx_path] [map_preview_png_path]: render the map and adjacent map as map overview into png" << std::endl;
+        std::cout << "[map_tmx_path] [map_preview_png_path]: render single tmx file into png" << std::endl;
+        return 0;
+    }
+
     bool renderAll=false;
     if(arguments.size()==1)
         renderAll=true;

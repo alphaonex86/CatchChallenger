@@ -76,6 +76,8 @@ DLL_PUBLIC std::string FSabsoluteFilePath(const std::string &string);
 DLL_PUBLIC std::string FSabsolutePath(const std::string &string);
 DLL_PUBLIC uint64_t msFrom1970();
 DLL_PUBLIC uint64_t sFrom1970();
+DLL_PUBLIC std::string sanitizeUtf8String(const char * const data,const unsigned int &size);
+DLL_PUBLIC std::string sanitizeUtf8String(const std::string &data);
 
 template <class T>
 int vectorindexOf(const std::vector<T> &list,const T &item)

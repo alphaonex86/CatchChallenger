@@ -1,6 +1,7 @@
 #include "LocalClientHandlerWithoutSender.hpp"
 #include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
 #include "../Client.hpp"
+#include "../ClientList.hpp"
 #include "../GlobalServerData.hpp"
 
 using namespace CatchChallenger;
@@ -19,10 +20,14 @@ void LocalClientHandlerWithoutSender::doAllAction()
 {
     if(GlobalServerData::serverSettings.secondToPositionSync>0)
     {
-        unsigned int index=0;
-        while(index<allClient.size())
+        PLAYER_INDEX_FOR_CONNECTED index=0;
+        while(index<ClientList::list->size())
         {
-            static_cast<Client *>(allClient.at(index))->savePosition();
+            if(!ClientList::list->empty(index))
+            {
+                Client &c=ClientList::list->rw(index);
+                c.savePosition();
+            }
             index++;
         }
     }
@@ -30,10 +35,26 @@ void LocalClientHandlerWithoutSender::doAllAction()
 
 void LocalClientHandlerWithoutSender::doDDOSChat()
 {
-    unsigned int index=0;
-    while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
     {
-        Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[index].doDDOSLocalChat();
-        index++;
+        CATCHCHALLENGER_TYPE_MAPID index=0;
+        while(index<Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        {
+            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[index].doDDOSLocalChat();
+            index++;
+        }
     }
+    #ifdef CATCHCHALLENGER_DDOS_FILTER
+    {
+        PLAYER_INDEX_FOR_CONNECTED index=0;
+        while(index<ClientList::list->size())
+        {
+            if(!ClientList::list->empty(index))
+            {
+                Client &c=ClientList::list->rw(index);
+                c.doDDOSCompute();
+            }
+            index++;
+        }
+    }
+    #endif
 }
