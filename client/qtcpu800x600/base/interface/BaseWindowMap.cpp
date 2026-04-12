@@ -3,6 +3,7 @@
 #include "../../../libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../../../general/base/CommonSettingsServer.hpp"
 #include "../../../libqtcatchchallenger/maprender/QMap_client.hpp"
+#include "../../../libcatchchallenger/Api_protocol.hpp"
 #include "../AutoArgs.h"
 #include <QTimer>
 #include <QCoreApplication>
@@ -208,6 +209,11 @@ void BaseWindow::currentMapLoaded()
     {
         std::cerr << "AutoArgs: --closewhenonmap, exiting in 1s" << std::endl;
         QTimer::singleShot(1000,QCoreApplication::instance(),&QCoreApplication::quit);
+    }
+    if(AutoArgs::dropSendDataAfterOnMap && !CatchChallenger::Api_protocol::dropOutputAfterOnMap)
+    {
+        std::cerr << "AutoArgs: --dropsenddataafteronmap, dropping all client->server traffic from now on" << std::endl;
+        CatchChallenger::Api_protocol::dropOutputAfterOnMap=true;
     }
     //name
     {

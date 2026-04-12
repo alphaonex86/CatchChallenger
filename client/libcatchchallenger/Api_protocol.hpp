@@ -99,6 +99,10 @@ public:
     Player_private_and_public_informations player_informations;
     std::vector<uint8_t> events;
 
+    //when true, outgoing packets are silently dropped (used by
+    //--dropsenddataafteronmap to explore datapack maps locally).
+    static bool dropOutputAfterOnMap;
+
     enum ProxyMode
     {
         Reconnect=0x01,

@@ -9,3 +9,4 @@
 * --autologin: on login/pass page, automaticlly try login
 * --character name: on character selection page, automaticly select character with this name
 * --closewhenonmap: close 1s after the character is spawn on map
+* --dropsenddataafteronmap: dropany output comunicacion from client to server after the player spawn on map, used to explore datapack map, ignore zone monster colision (to not open fight with wild monster) and any fight

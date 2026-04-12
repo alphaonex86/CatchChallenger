@@ -303,6 +303,7 @@ void BaseServer::preload_industries_return()
     for (size_t i = 0; i < s; i++){}
     #else
     while(GlobalServerData::serverPrivateVariables.db_server->next())
+    {}
     #endif
     /*{
         IndustryStatus industryStatus;
