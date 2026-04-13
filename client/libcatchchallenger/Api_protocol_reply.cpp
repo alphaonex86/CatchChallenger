@@ -233,20 +233,6 @@ bool Api_protocol::parseReplyData(const uint8_t &packetCode, const uint8_t &quer
                 }
                 CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                 pos+=sizeof(uint16_t);
-                if((size-pos)<(unsigned int)sizeof(uint8_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size to get the maxPlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
-                }
-                CommonSettingsCommon::commonSettingsCommon.maxPlayerItems=data[pos];
-                pos+=sizeof(uint8_t);
-                if((size-pos)<(unsigned int)sizeof(uint16_t))
-                {
-                    parseError("Procotol wrong or corrupted","wrong size to get the maxWarehousePlayerItems, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
-                    return false;
-                }
-                CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
-                pos+=sizeof(uint16_t);
                 if((size-pos)<CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
                     parseError("Procotol wrong or corrupted","wrong size to get the datapack checksum, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));

@@ -100,7 +100,6 @@ protected:
     virtual bool giveXP(int xp);
     virtual bool addLevel(PlayerMonster * monster,const uint8_t &numberOfLevel=1);
     virtual void levelUp(const uint8_t &level,const uint8_t &monsterIndex);
-    virtual std::vector<Monster::AttackToLearn> autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex);
     virtual Skill::AttackReturn doTheCurrentMonsterAttack(const uint16_t &skill, const uint8_t &skillLevel);
     Skill::AttackReturn genericMonsterAttack(PublicPlayerMonster *currentMonster,PublicPlayerMonster *otherMonster,const uint16_t &skill, const uint8_t &skillLevel);
     virtual uint32_t catchAWild(const bool &toStorage, const PlayerMonster &newMonster) = 0;

@@ -52,8 +52,6 @@ void send_settings(
     CommonSettingsCommon::commonSettingsCommon.character_delete_time			= stringtouint32(settings->value("character_delete_time"));
     CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters                = stringtouint8(settings->value("maxPlayerMonsters"));
     CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters       = stringtouint16(settings->value("maxWarehousePlayerMonsters"));
-    CommonSettingsCommon::commonSettingsCommon.maxPlayerItems                   = stringtouint8(settings->value("maxPlayerItems"));
-    CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems          = stringtouint16(settings->value("maxWarehousePlayerItems"));
     //connection
     formatedServerSettings.automatic_account_creation   = stringtobool(settings->value("automatic_account_creation"));
     #endif

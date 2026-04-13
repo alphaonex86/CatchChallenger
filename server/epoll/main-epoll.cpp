@@ -136,6 +136,30 @@ int main(int argc, char *argv[])
         std::cerr << "argc<1: wrong arg count" << std::endl;
         return EXIT_FAILURE;
     }
+    if(argc>=2 && (strcmp(argv[1],"--help")==0 || strcmp(argv[1],"-h")==0 || strcmp(argv[1],"help")==0))
+    {
+        std::cout << "Usage: " << argv[0] << " [OPTION]" << std::endl;
+        std::cout << std::endl;
+        std::cout << "CatchChallenger epoll game server." << std::endl;
+        std::cout << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  (none)              Start the server normally (loads datapack cache if available)" << std::endl;
+#ifdef CATCHCHALLENGER_CACHE_HPS
+        std::cout << "  save, --save, -s    Parse the datapack, write datapack-cache.bin, then exit" << std::endl;
+#endif
+        std::cout << "  help, --help, -h    Display this help message and exit" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Files:" << std::endl;
+        std::cout << "  server-properties.xml   Server configuration (port, databases, mirrors, ...)" << std::endl;
+        std::cout << "  datapack/               Datapack directory (must contain informations.xml)" << std::endl;
+#ifdef CATCHCHALLENGER_CACHE_HPS
+        std::cout << "  datapack-cache.bin      Pre-computed datapack cache (created by 'save')" << std::endl;
+#endif
+#ifdef CATCHCHALLENGER_DB_FILE
+        std::cout << "  database/               File-based database directory (accounts, characters, ...)" << std::endl;
+#endif
+        return EXIT_SUCCESS;
+    }
     CatchChallenger::FacilityLibGeneral::applicationDirPath=argv[0];
 
     srand(static_cast<unsigned int>(time(NULL)));

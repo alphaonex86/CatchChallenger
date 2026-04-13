@@ -24,8 +24,6 @@ public:
 
     uint8_t maxPlayerMonsters;
     uint16_t maxWarehousePlayerMonsters;
-    uint8_t maxPlayerItems;
-    uint16_t maxWarehousePlayerItems;
 
     static CommonSettingsCommon commonSettingsCommon;
 };
