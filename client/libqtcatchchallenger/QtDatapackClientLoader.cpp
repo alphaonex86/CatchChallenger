@@ -47,6 +47,16 @@ QtDatapackClientLoader::~QtDatapackClientLoader()
     #endif
 }
 
+void QtDatapackClientLoader::stopAllThreads()
+{
+    for(QtDatapackClientLoaderThread *t : threads)
+    {
+        t->stop();
+        t->wait();
+    }
+    threads.clear();
+}
+
 QPixmap QtDatapackClientLoader::defaultInventoryImage()
 {
     return *mDefaultInventoryImage;

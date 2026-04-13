@@ -30,7 +30,9 @@ void Client::characterIsRightSendData()
         }
     }
 
-    insertClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);//imply set index_on_map
+    //insertClientOnMap removed: put_on_the_map() below already calls insertClientOnMap,
+    //calling it here too caused map_clients_id to have 2 entries for the same player,
+    //which made clients_size==2 and triggered the visibility buffer corruption crash
     Client::timeRangeEventNew=true;
     checkLoose(false);
 

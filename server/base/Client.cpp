@@ -197,8 +197,10 @@ void Client::setToDefault()
 //need be call after isReadyToDelete() emited
 Client::~Client()
 {
+    #ifdef EPOLLCATCHCHALLENGERSERVER
     std::cerr << "should never pass here, client now should just set to free slot" << std::endl;
     abort();
+    #endif
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=NULL;
     #endif

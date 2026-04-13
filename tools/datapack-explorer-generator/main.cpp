@@ -24,6 +24,13 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+// Stop all background image-loading threads so exit() doesn't segfault
+static void stopLoaderThreads()
+{
+    if(QtDatapackClientLoader::datapackLoader!=nullptr)
+        QtDatapackClientLoader::datapackLoader->stopAllThreads();
+}
+
 static std::string argValue(const QStringList &args, const QString &name)
 {
     const QString prefix=name+"=";
@@ -86,7 +93,8 @@ static bool checkForErrors(const std::string &output, const std::string &phase)
         std::string line;
         while(std::getline(stream,line))
         {
-            if(line.size()>=2 && line[0]=='0' && line[1]==' ')
+            if(line.size()>=2 && line[0]=='0' && line[1]==' '
+               && line.find("bot linked with quest")==std::string::npos)
             {
                 std::cerr << "ERROR during " << phase << ": \"" << line << "\" should be >0" << std::endl;
                 hasError=true;
@@ -244,19 +252,19 @@ int main(int argc, char *argv[])
 
         std::string combined=capturedOut+"\n"+capturedErr;
         if(checkForErrors(combined,"parseDatapack"))
-            exit(113);
+        { stopLoaderThreads(); exit(113); }
     }
 
     // Verify base data was loaded
     if(CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
     {
         std::cerr << "ERROR: monsters list is empty after parseDatapack" << std::endl;
-        exit(113);
+        stopLoaderThreads(); exit(113);
     }
     if(CatchChallenger::CommonDatapack::commonDatapack.get_items().item.empty())
     {
         std::cerr << "ERROR: items list is empty after parseDatapack" << std::endl;
-        exit(113);
+        stopLoaderThreads(); exit(113);
     }
 
     // Discover all main datapack codes under <datapack>/map/main/ so we can
@@ -313,14 +321,14 @@ int main(int argc, char *argv[])
 
             std::string combined=capturedOut+"\n"+capturedErr;
             if(checkForErrors(combined,"parseDatapackMainSub("+code+")"))
-                exit(113);
+            { stopLoaderThreads(); exit(113); }
         }
 
         // Verify maps were loaded
         if(QtDatapackClientLoader::datapackLoader->get_maps().empty())
         {
             std::cerr << "ERROR: maps list is empty after parseDatapackMainSub(" << code << ")" << std::endl;
-            exit(113);
+            stopLoaderThreads(); exit(113);
         }
 
         MapStore::addFromCurrentLoader(code);

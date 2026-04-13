@@ -125,6 +125,39 @@ std::pair<bool,Quest> DatapackGeneralLoader::loadSingleQuest(const std::string &
             return std::pair<bool,Quest>(false,quest);
         }
     }
+    else if(root->Attribute("bot")!=NULL)
+    {
+        // Old format: bot="mapName/botId" (combined map and bot in one attribute)
+        const std::string botAttr(root->Attribute("bot"));
+        const size_t slashPos=botAttr.rfind('/');
+        if(slashPos!=std::string::npos)
+        {
+            const std::string mapPart=botAttr.substr(0,slashPos);
+            const std::string botPart=botAttr.substr(slashPos+1);
+            const CATCHCHALLENGER_TYPE_BOTID tempInt=stringtouint8(botPart.c_str(),&ok);
+            if(ok)
+            {
+                botToTalkBotId=tempInt;
+                if(mapPathToId.find(mapPart)!=mapPathToId.cend())
+                    botToTalkMapId=mapPathToId.at(mapPart);
+                else
+                {
+                    std::cerr << "Unable to found the file: " << mapPart << ", \"map\" into map list (from bot attribute)" << std::endl;
+                    return std::pair<bool,Quest>(false,quest);
+                }
+            }
+            else
+            {
+                std::cerr << "Unable to open the file: " << file << ", \"bot\" id part is not a number: " << botPart << std::endl;
+                return std::pair<bool,Quest>(false,quest);
+            }
+        }
+        else
+        {
+            std::cerr << "Unable to open the file: " << file << ", \"bot\" has no map= attribute and no map/id format" << std::endl;
+            return std::pair<bool,Quest>(false,quest);
+        }
+    }
     else
     {
         std::cerr << "Unable to open the file: " << file << ", \"bot\" or \"map\" root balise not found for reputation of the xml file" << std::endl;
