@@ -168,11 +168,7 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
 {
     if(!MapVisualiserPlayer::canGoTo(direction,mapIndex,x,y,checkCollision))
         return false;
-    //--dropsenddataafteronmap: allow walking through fight triggers and
-    //monster zones so exploration is unhindered.
-    if(CatchChallenger::Api_protocol::dropOutputAfterOnMap)
-        return true;
-    if(client->isInFight())
+    if(!CatchChallenger::Api_protocol::dropOutputAfterOnMap && client->isInFight())
     {
         qDebug() << "Strange, try move when is in fight";
         return false;
@@ -192,64 +188,67 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
     const auto &playerItems=client->get_player_informations().items;
     const auto &playerQuests=client->get_player_informations().quests;
 
+    if(!CatchChallenger::Api_protocol::dropOutputAfterOnMap)
     {
-        int list_size=map_client.teleporters.size();
-        int index=0;
-        while(index<list_size)
         {
-            const CatchChallenger::Teleporter &teleporter=map_client.teleporters.at(index);
-            if(teleporter.source_x==lx && teleporter.source_y==ly)
+            int list_size=map_client.teleporters.size();
+            int index=0;
+            while(index<list_size)
             {
-                switch(teleporter.condition.type)
+                const CatchChallenger::Teleporter &teleporter=map_client.teleporters.at(index);
+                if(teleporter.source_x==lx && teleporter.source_y==ly)
                 {
-                    case CatchChallenger::MapConditionType_None:
-                    case CatchChallenger::MapConditionType_Clan://not do for now
-                    break;
-                    case CatchChallenger::MapConditionType_FightBot:
-                        if(!haveBeatBot(newMapIndex,teleporter.condition.data.fightBot))
-                            return false;
-                    break;
-                   case CatchChallenger::MapConditionType_Item:
-                        if(playerItems.find(teleporter.condition.data.item)==playerItems.cend())
-                        {
-                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
-                            return false;
-                        }
-                    break;
-                    case CatchChallenger::MapConditionType_Quest:
-                        if(playerQuests.find(teleporter.condition.data.quest)==playerQuests.cend())
-                        {
-                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
-                            return false;
-                        }
-                        if(!playerQuests.at(teleporter.condition.data.quest).finish_one_time)
-                        {
-                            if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
-                                emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
-                            return false;
-                        }
-                      break;
-                    default:
-                    break;
+                    switch(teleporter.condition.type)
+                    {
+                        case CatchChallenger::MapConditionType_None:
+                        case CatchChallenger::MapConditionType_Clan://not do for now
+                        break;
+                        case CatchChallenger::MapConditionType_FightBot:
+                            if(!haveBeatBot(newMapIndex,teleporter.condition.data.fightBot))
+                                return false;
+                        break;
+                       case CatchChallenger::MapConditionType_Item:
+                            if(playerItems.find(teleporter.condition.data.item)==playerItems.cend())
+                            {
+                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                    emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
+                                return false;
+                            }
+                        break;
+                        case CatchChallenger::MapConditionType_Quest:
+                            if(playerQuests.find(teleporter.condition.data.quest)==playerQuests.cend())
+                            {
+                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                    emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
+                                return false;
+                            }
+                            if(!playerQuests.at(teleporter.condition.data.quest).finish_one_time)
+                            {
+                                if(index<(int)map_full->teleport_condition_texts.size() && !map_full->teleport_condition_texts.at(index).empty())
+                                    emit teleportConditionNotRespected(map_full->teleport_condition_texts.at(index));
+                                return false;
+                            }
+                          break;
+                        default:
+                        break;
+                    }
                 }
+                index++;
             }
-            index++;
         }
-    }
 
-    {
-        std::pair<uint8_t,uint8_t> pos(lx,ly);
-        if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
         {
-            const uint8_t fightId=map_client.botsFightTrigger.at(pos);
-            if(!haveBeatBot(newMapIndex,fightId))
+            std::pair<uint8_t,uint8_t> pos(lx,ly);
+            if(map_client.botsFightTrigger.find(pos)!=map_client.botsFightTrigger.cend())
             {
-                if(!client->getAbleToFight())
+                const uint8_t fightId=map_client.botsFightTrigger.at(pos);
+                if(!haveBeatBot(newMapIndex,fightId))
                 {
-                    emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
-                    return false;
+                    if(!client->getAbleToFight())
+                    {
+                        emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                        return false;
+                    }
                 }
             }
         }
@@ -264,17 +263,20 @@ bool MapVisualiserPlayerWithFight::canGoTo(const CatchChallenger::Direction &dir
             const CatchChallenger::MonstersCollision &monstersCollision=CatchChallenger::CommonDatapack::commonDatapack.get_monstersCollision().at(monstersCollisionValue.walkOn.at(index));
             if(monstersCollision.item==0 || playerItems.find(monstersCollision.item)!=playerItems.cend())
             {
-                if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
+                if(!CatchChallenger::Api_protocol::dropOutputAfterOnMap)
                 {
-                    if(!client->getAbleToFight())
+                    if(!monstersCollisionValue.walkOnMonsters.at(index).defaultMonsters.empty())
                     {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
-                        return false;
-                    }
-                    if(!client->canDoRandomFight(commonMap,lx,ly))
-                    {
-                        emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
-                        return false;
+                        if(!client->getAbleToFight())
+                        {
+                            emit blockedOn(MapVisualiserPlayer::BlockedOn_ZoneFight);
+                            return false;
+                        }
+                        if(!client->canDoRandomFight(commonMap,lx,ly))
+                        {
+                            emit blockedOn(MapVisualiserPlayer::BlockedOn_RandomNumber);
+                            return false;
+                        }
                     }
                 }
                 return true;

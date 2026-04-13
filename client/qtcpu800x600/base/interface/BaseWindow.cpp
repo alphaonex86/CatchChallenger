@@ -601,6 +601,7 @@ void BaseWindow::receiveLanPort(uint16_t port)
 {
    chat->new_system_text(CatchChallenger::Chat_type::Chat_type_system_important,tr("Open to port %1").arg(port).toStdString());
    ui->openToLan->setToolTip(tr("Open to port %1").arg(port));
+   ui->frame_main_display_interface_player->show();
    QMessageBox::information(this,tr("Server ready"),tr("Server open with TCP port: %1").arg(port));
 }
 #endif
@@ -682,21 +683,21 @@ void BaseWindow::number_of_player(uint16_t number,uint16_t max)
 {
     if(max>=65534)
         ui->frame_main_display_interface_player->hide();
+    else if(!multiplayer && ui->openToLan->isEnabled())
+        ui->frame_main_display_interface_player->hide();
     else
-    {
         ui->frame_main_display_interface_player->show();
-        QString stringMax;
-        if(max>1000)
-            stringMax=QStringLiteral("%1K").arg(max/1000);
-        else
-            stringMax=QString::number(max);
-        QString stringNumber;
-        if(number>1000)
-            stringNumber=QStringLiteral("%1K").arg(number/1000);
-        else
-            stringNumber=QString::number(number);
-        ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(stringNumber).arg(stringMax));
-    }
+    QString stringMax;
+    if(max>1000)
+        stringMax=QStringLiteral("%1K").arg(max/1000);
+    else
+        stringMax=QString::number(max);
+    QString stringNumber;
+    if(number>1000)
+        stringNumber=QStringLiteral("%1K").arg(number/1000);
+    else
+        stringNumber=QString::number(number);
+    ui->label_interface_number_of_player->setText(QStringLiteral("%1/%2").arg(stringNumber).arg(stringMax));
 }
 
 void BaseWindow::on_toolButton_interface_quit_clicked()
