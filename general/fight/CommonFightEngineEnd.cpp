@@ -352,5 +352,4 @@ bool CommonFightEngine::addLevel(PlayerMonster * monster, const uint8_t &numberO
 
 void CommonFightEngine::levelUp(const uint8_t &level,const uint8_t &monsterIndex)//call after done the level
 {
-    autoLearnSkill(level,monsterIndex);
 }

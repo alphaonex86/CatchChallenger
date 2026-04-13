@@ -71,7 +71,7 @@ void NormalServerGlobal::displayInfo()
 void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, const std::string &datapack_basePath)
 {
     if(!settings->contains("max-players"))
-        settings->setValue("max-players",200);
+        settings->setValue("max-players",10);
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     if(!settings->contains("character_delete_time"))
         settings->setValue("character_delete_time",604800);
@@ -92,10 +92,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("maxPlayerMonsters",8);
     if(!settings->contains("maxWarehousePlayerMonsters"))
         settings->setValue("maxWarehousePlayerMonsters",30);
-    if(!settings->contains("maxPlayerItems"))
-        settings->setValue("maxPlayerItems",30);
-    if(!settings->contains("maxWarehousePlayerItems"))
-        settings->setValue("maxWarehousePlayerItems",150);
     #endif
     if(!settings->contains("everyBodyIsRoot"))
         settings->setValue("everyBodyIsRoot",false);
@@ -109,10 +105,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("server_blobversion_datapack",0);
     if(!settings->contains("pvp"))
         settings->setValue("pvp",true);
-    if(!settings->contains("useSP"))
-        settings->setValue("useSP",true);
-    if(!settings->contains("autoLearn"))
-        settings->setValue("autoLearn",false);
     if(!settings->contains("server-port"))
         settings->setValue("server-port",10000+rand()%(65535-10000));
     if(!settings->contains("sendPlayerNumber"))
@@ -129,8 +121,6 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
         settings->setValue("proxy","");
     if(!settings->contains("proxy_port"))
         settings->setValue("proxy_port",9050);
-    if(!settings->contains("forcedSpeed"))
-        settings->setValue("forcedSpeed",CATCHCHALLENGER_SERVER_NORMAL_SPEED);
     if(!settings->contains("dontSendPseudo"))
         settings->setValue("dontSendPseudo",false);
     if(!settings->contains("dontSendPlayerType"))

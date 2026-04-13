@@ -134,52 +134,6 @@ bool CommonFightEngine::removeSkill(PlayerMonster * currentMonster,const unsigne
     }
 }
 
-std::vector<Monster::AttackToLearn> CommonFightEngine::autoLearnSkill(const uint8_t &level,const uint8_t &monsterIndex)
-{
-    std::vector<Monster::AttackToLearn> returnVar;
-    const PlayerMonster &monster=get_public_and_private_informations().monsters.at(monsterIndex);
-    unsigned int sub_index=0;
-    unsigned int sub_index2=0;
-    const size_t &learn_size=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size();
-    while(sub_index<learn_size)
-    {
-        const Monster::AttackToLearn &learn=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.at(sub_index);
-        if(learn.learnAtLevel==level)
-        {
-            //search if have already the previous skill
-            sub_index2=0;
-            const size_t &monster_skill_size=monster.skills.size();
-            while(sub_index2<monster_skill_size)
-            {
-                if(monster.skills.at(sub_index2).skill==learn.learnSkill)
-                {
-                    if(monster.skills.at(sub_index2).level<learn.learnSkillLevel)
-                    {
-                        setSkillLevel(&get_public_and_private_informations().monsters[monsterIndex],sub_index2,learn.learnSkillLevel);
-                        returnVar.push_back(learn);
-                    }
-                    break;
-                }
-                sub_index2++;
-            }
-            if(sub_index2==monster_skill_size)
-            {
-                if(learn.learnSkillLevel==1)
-                {
-                    PlayerMonster::PlayerSkill temp;
-                    temp.skill=learn.learnSkill;
-                    temp.level=1;
-                    temp.endurance=CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().at(learn.learnSkill).level.at(learn.learnSkillLevel-1).endurance;
-                    addSkill(&get_public_and_private_informations().monsters[monsterIndex],temp);
-                    returnVar.push_back(learn);
-                }
-            }
-        }
-        sub_index++;
-    }
-    return returnVar;
-}
-
 bool CommonFightEngine::useSkill(const uint16_t &skill)
 {
     doTurnIfChangeOfMonster=true;

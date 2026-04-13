@@ -130,10 +130,6 @@ void BaseServer::preload_30_sync_other()
         posOutput+=1;
         *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters);
         posOutput+=2;
-        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=CommonSettingsCommon::commonSettingsCommon.maxPlayerItems;
-        posOutput+=1;
-        *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerItems);
-        posOutput+=2;
 
         if(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size()!=28)
         {
