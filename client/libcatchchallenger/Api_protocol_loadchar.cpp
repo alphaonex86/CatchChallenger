@@ -554,6 +554,9 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
         player_informations.monsters.push_back(monster);
         index++;
     }
+    //set the overworld monster from the first monster in the team
+    if(!player_informations.monsters.empty())
+        player_informations.public_informations.monsterId=player_informations.monsters.front().monster;
     //monsters
     if((size-pos)<(int)sizeof(uint8_t))
     {
