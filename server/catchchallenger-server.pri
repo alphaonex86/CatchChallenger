@@ -59,15 +59,8 @@ SOURCES += \
     $$PWD/base/MapManagement/MapBasicMove.cpp \
     $$PWD/base/DictionaryLogin.cpp \
     $$PWD/base/DictionaryServer.cpp \
-    $$PWD/base/PreparedDBQueryLogin.cpp \
-    $$PWD/base/PreparedDBQueryCommon.cpp \
-    $$PWD/base/PreparedDBQueryServer.cpp \
-    $$PWD/base/DatabaseBase.cpp \
     $$PWD/base/TimeRangeEventScanBase.cpp \
-    $$PWD/base/TinyXMLSettings.cpp \
-    $$PWD/base/DatabaseFunction.cpp \
     $$PWD/base/StringWithReplacement.cpp \
-    $$PWD/base/PreparedStatementUnit.cpp \
     $$PWD/crafting/BaseServerCrafting.cpp \
     $$PWD/crafting/ClientLocalBroadcastCrafting.cpp \
     $$PWD/crafting/LocalClientHandlerCrafting.cpp \
@@ -80,3 +73,18 @@ SOURCES += \
     $$PWD/fight/LocalClientHandlerFightBattle.cpp \
     $$PWD/fight/BaseServerFight.cpp \
     $$PWD/fight/ClientHeavyLoadFight.cpp
+
+!contains(DEFINES, CATCHCHALLENGER_DB_FILE) {
+SOURCES += \
+    $$PWD/base/PreparedDBQueryLogin.cpp \
+    $$PWD/base/PreparedDBQueryCommon.cpp \
+    $$PWD/base/PreparedDBQueryServer.cpp \
+    $$PWD/base/DatabaseBase.cpp \
+    $$PWD/base/DatabaseFunction.cpp \
+    $$PWD/base/PreparedStatementUnit.cpp
+}
+
+!contains(DEFINES, CATCHCHALLENGER_NOXML) {
+SOURCES += \
+    $$PWD/base/TinyXMLSettings.cpp
+}

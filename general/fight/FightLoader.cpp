@@ -1,6 +1,8 @@
 #include "FightLoader.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #ifndef EPOLLCATCHCHALLENGERSERVER
 #include "../base/CommonDatapack.hpp"
+#endif
 #endif
 #include "../base/cpp11addition.hpp"
 #include <iostream>
@@ -15,6 +17,7 @@ bool CatchChallenger::operator<(const Monster::AttackToLearn &entry1, const Mons
         return entry1.learnSkill < entry2.learnSkill;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 std::vector<Type> FightLoader::loadTypes(const std::string &file)
 {
@@ -142,6 +145,7 @@ std::vector<Type> FightLoader::loadTypes(const std::string &file)
     #endif
     return types;
 }
+#endif
 #endif
 
 #ifndef EPOLLCATCHCHALLENGERSERVERNOGAMESERVER

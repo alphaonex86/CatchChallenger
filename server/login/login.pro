@@ -1,8 +1,8 @@
-#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x -fno-rtti"
-#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -std=c++0x -fno-rtti"
+#QMAKE_CFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -fno-rtti"
+#QMAKE_CXXFLAGS+="-pipe -march=native -O2 -fomit-frame-pointer -floop-block -floop-interchange -fgraphite -funroll-loops -ffast-math -fno-rtti"
 TEMPLATE = app
 QMAKE_CFLAGS+="-fstack-protector-all -g -fno-rtti"
-QMAKE_CXXFLAGS+="-fstack-protector-all -std=c++0x -g -fno-rtti"
+QMAKE_CXXFLAGS+="-fstack-protector-all -g -fno-rtti"
 linux:QMAKE_CXXFLAGS+="-Wno-missing-braces -Wno-delete-non-virtual-dtor -Wall -Wextra"
 linux:QMAKE_CFLAGS+="-Wno-missing-braces -Wall -Wextra"
 
@@ -25,7 +25,7 @@ LIBS    += -lpq
 
 DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 
-CONFIG += c++11
+CONFIG += c++20
 
 TARGET = catchchallenger-server-login
 CONFIG   += console

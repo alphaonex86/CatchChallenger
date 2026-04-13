@@ -4,8 +4,10 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../VariableServer.hpp"
 #include "../../general/base/cpp11addition.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../general/sha224/sha224.hpp"
 #include <xxhash.h>
+#endif
 
 #include <regex>
 #include <iostream>
@@ -33,7 +35,9 @@ std::unordered_map<std::string,uint32_t> BaseServerMasterSendDatapack::datapack_
 std::unordered_map<std::string,BaseServerMasterSendDatapack::DatapackCacheFile> BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
 #endif
 
+#ifndef CATCHCHALLENGER_NOXML
 std::regex BaseServerMasterSendDatapack::fileNameStartStringRegex=std::regex("^[a-zA-Z]:/");
+#endif
 
 BaseServerMasterSendDatapack::BaseServerMasterSendDatapack()
 {
@@ -43,6 +47,7 @@ BaseServerMasterSendDatapack::~BaseServerMasterSendDatapack()
 {
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void BaseServerMasterSendDatapack::load(const std::string &datapack_basePath)
 {
     this->datapack_basePathLogin=datapack_basePath;
@@ -167,6 +172,7 @@ void BaseServerMasterSendDatapack::loadTheDatapackFileList()
 
     std::cout << datapack_file_temp.size() << " files for datapack loaded" << std::endl;
 }
+#endif
 
 void BaseServerMasterSendDatapack::unload()
 {

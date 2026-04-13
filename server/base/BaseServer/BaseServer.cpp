@@ -362,9 +362,9 @@ bool BaseServer::initialize_the_database()
     return true;
 }
 
+#if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
 void BaseServer::initialize_the_database_prepared_query()
 {
-    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     #if ! defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER) || defined(CATCHCHALLENGER_CLIENT)
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     {
@@ -380,12 +380,8 @@ void BaseServer::initialize_the_database_prepared_query()
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.initDatabaseQueryCommonWithoutSP(GlobalServerData::serverPrivateVariables.db_common->databaseType(),GlobalServerData::serverPrivateVariables.db_common);
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.initDatabaseQueryCommonWithSP(GlobalServerData::serverPrivateVariables.db_common->databaseType(),GlobalServerData::serverPrivateVariables.db_common);
     GlobalServerData::serverPrivateVariables.preparedDBQueryServer.initDatabaseQueryServer(GlobalServerData::serverPrivateVariables.db_server->databaseType(),GlobalServerData::serverPrivateVariables.db_server);
-    #elif CATCHCHALLENGER_DB_BLACKHOLE
-    #elif CATCHCHALLENGER_DB_FILE
-    #else
-    #error Define what do here
-    #endif
 }
+#endif
 
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER

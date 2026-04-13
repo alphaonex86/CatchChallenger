@@ -4,9 +4,11 @@
 #include "CommonSettingsServer.hpp"
 #endif
 #include "GeneralVariable.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "Map_loader.hpp"
 #include "../fight/FightLoader.hpp"
 #include "DatapackGeneralLoader/DatapackGeneralLoader.hpp"
+#endif
 #include "../../general/base/FacilityLibGeneral.hpp"
 
 #include <iostream>
@@ -23,6 +25,7 @@ CommonDatapackServerSpec::CommonDatapackServerSpec()
     parsingSpec=false;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode, const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     if(!CommonDatapack::commonDatapack.isParsedContent())
@@ -58,12 +61,14 @@ void CommonDatapackServerSpec::parseDatapackAfterZoneAndMap(const std::string &d
     parsingSpec=false;
     isParsedSpec=true;
 }
+#endif
 
 bool CommonDatapackServerSpec::isParsedContent() const
 {
     return isParsedSpec;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void CommonDatapackServerSpec::parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId)
 {
     quests=DatapackGeneralLoader::loadQuests(datapackPath+DATAPACK_BASE_PATH_QUESTS1+mainDatapackCode+DATAPACK_BASE_PATH_QUESTS2,mapPathToId);
@@ -78,6 +83,7 @@ void CommonDatapackServerSpec::parseServerProfileList(const std::unordered_map<s
     serverProfileList=DatapackGeneralLoader::loadServerProfileList(datapackPath,mainDatapackCode,startFile,CommonDatapack::commonDatapack.get_profileList(),mapPathToId);
     std::cout << serverProfileList.size() << " server profile(s) loaded" << std::endl;
 }
+#endif
 
 #ifdef CATCHCHALLENGER_CLIENT
 void CommonDatapackServerSpec::applyMonstersRate()
@@ -135,6 +141,7 @@ void CommonDatapackServerSpec::applyMonstersRate()
 }
 #endif
 
+#ifndef CATCHCHALLENGER_NOXML
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 void CommonDatapackServerSpec::parseMonstersDrop()
 {
@@ -143,6 +150,7 @@ void CommonDatapackServerSpec::parseMonstersDrop()
                                                        CommonDatapack::commonDatapack.get_monsters());
     std::cout << monsterDrops.size() << " monters drop(s) loaded" << std::endl;
 }
+#endif
 #endif
 
 void CommonDatapackServerSpec::unload()
@@ -154,7 +162,9 @@ void CommonDatapackServerSpec::unload()
     parsingSpec=true;
     quests.clear();
     #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_NOXML
     Map_loader::teleportConditionsUnparsed.clear();
+    #endif
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     monsterDrops.clear();

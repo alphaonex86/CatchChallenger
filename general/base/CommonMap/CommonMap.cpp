@@ -18,8 +18,10 @@ bool CommonMap::parseUnknownObject(std::string type,uint32_t object_x,uint32_t o
     return true;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 bool CommonMap::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step)
 {
     unknownBotStepBuffer.push_back({object_x,object_y,step});
     return true;
 }
+#endif

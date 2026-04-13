@@ -4,6 +4,9 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cstdint>
+#include "../../general/base/lib.h"
+#include "../../general/tinyXML2/customtinyxml2.hpp"
 
 namespace CatchChallenger {
 enum MapEvent
@@ -11,7 +14,7 @@ enum MapEvent
     MapEvent_DoubleClick,
     MapEvent_SimpleClick
 };
-class ServerFromPoolForDisplay
+class DLL_PUBLIC ServerFromPoolForDisplay
 {
 public:
     //connect info
@@ -60,6 +63,16 @@ struct ServerForSelection
     uint8_t serverIndex;
     uint32_t playedTime;
     uint32_t lastConnect;
+};
+
+//permanent bot on client, temp to parse on the server
+struct Bot
+{
+    std::unordered_map<uint8_t,const tinyxml2::XMLElement *> step;
+    std::unordered_map<std::string,std::string> properties;
+    uint8_t botId;
+    std::string skin;
+    std::string name;
 };
 
 }

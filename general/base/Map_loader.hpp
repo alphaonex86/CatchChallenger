@@ -7,7 +7,9 @@
 #include "GeneralStructures.hpp"
 #include "CommonMap/CommonMap.hpp"
 #include "lib.h"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../tinyXML2/tinyxml2.hpp"
+#endif
 
 #ifdef CATCHCHALLENGER_CLASS_GATEWAY
 #error This kind don't need reply on that's, not need load the map content
@@ -66,7 +68,11 @@ public:
         std::pair<uint8_t,uint8_t> point;
         uint8_t id;
         std::unordered_map<std::string,std::string> property_text;
+        #ifndef CATCHCHALLENGER_NOXML
         std::unordered_map<uint8_t,const tinyxml2::XMLElement *> steps;
+        #else
+        std::unordered_map<uint8_t,const void *> steps;
+        #endif
     };
     std::vector<Bot_Semi> bots;//to pass pos to xml file, used into colision too
     struct ItemOnMap_Semi
@@ -94,7 +100,11 @@ public:
      * 1-199 monster def and condition */
     std::vector<uint8_t> flat_simplified_map;//can't be pointer, server can have unique pointer, but client need another pointer or pointer mulitple in case of multi-bots
 
+    #ifndef CATCHCHALLENGER_NOXML
     const tinyxml2::XMLElement * xmlRoot;
+    #else
+    const void * xmlRoot;
+    #endif
 };
 
 struct Map_semi
@@ -117,14 +127,18 @@ public:
     bool tryLoadMap(const std::string &file, CommonMap &mapFinal, const bool &botIsNotWalkable);
     bool loadExtraXml(CommonMap &mapFinal,const std::string &file, std::vector<Map_to_send::Bot_Semi> &botslist, std::vector<std::string> detectedMonsterCollisionMonsterType, std::vector<std::string> detectedMonsterCollisionLayer,std::string &zoneName);
     static std::string resolvRelativeMap(const std::string &file, const std::string &link, const std::string &datapackPath=std::string());
+    #ifndef CATCHCHALLENGER_NOXML
     static MapCondition xmlConditionToMapCondition(const std::string &conditionFile,const tinyxml2::XMLElement * const item);
+    #endif
     std::vector<MapMonster> loadSpecificMonster(const std::string &fileName,const std::string &monsterType);
+    #ifndef CATCHCHALLENGER_NOXML
     static std::unordered_map<std::string/*file*/, std::unordered_map<uint16_t/*id*/,tinyxml2::XMLElement *> > teleportConditionsUnparsed;
 
     static void loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const std::string &datapack_mapPath,std::vector<Map_semi> &semi_loaded_map,std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId,std::vector<tinyxml2::XMLDocument*> *xmlDocsToKeep=nullptr);
 
     #ifdef EPOLLCATCHCHALLENGERSERVER
     std::vector<tinyxml2::XMLDocument*> xmlDocsToKeepInternal;
+    #endif
     #endif
 
     //for tiled

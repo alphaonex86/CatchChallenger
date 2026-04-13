@@ -1,3 +1,4 @@
+#ifndef CATCHCHALLENGER_NOXML
 #include <string>
 #include "../base/ServerStructures.hpp"
 #include "../base/TinyXMLSettings.hpp"
@@ -609,3 +610,4 @@ void send_settings(
     #endif
     #endif
 }
+#endif // CATCHCHALLENGER_NOXML

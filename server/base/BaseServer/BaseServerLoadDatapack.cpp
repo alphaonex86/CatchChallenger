@@ -4,12 +4,15 @@
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include <xxhash.h>
 #include "../../general/sha224/sha224.hpp"
+#endif
 #include "../Client.hpp"
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_NOXML
 void BaseServer::preload_6_sync_the_datapack()
 {
     #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
@@ -465,6 +468,7 @@ void BaseServer::preload_6_sync_the_datapack()
               << binarytoHexa(CommonSettingsServer::commonSettingsServer.datapackHashServerSub)
               << " hash for datapack loaded sub" << std::endl;
 }
+#endif
 
 void BaseServer::preload_10_sync_the_gift()
 {

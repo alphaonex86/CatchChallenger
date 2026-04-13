@@ -146,6 +146,8 @@ void BaseServer::unload_other()
         Client::characterIsRightFinalStepHeader=NULL;
     }
 
+    #ifndef CATCHCHALLENGER_NOXML
     CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
     Map_loader::teleportConditionsUnparsed.clear();
+    #endif
 }

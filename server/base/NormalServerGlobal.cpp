@@ -68,6 +68,7 @@ void NormalServerGlobal::displayInfo()
               << std::endl;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, const std::string &datapack_basePath)
 {
     if(!settings->contains("max-players"))
@@ -415,3 +416,4 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
 
     settings->sync();
 }
+#endif

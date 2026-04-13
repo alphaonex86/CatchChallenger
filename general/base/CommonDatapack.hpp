@@ -5,7 +5,9 @@
 #include <string>
 
 #include "GeneralStructures.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../tinyXML2/tinyxml2.hpp"
+#endif
 #include "lib.h"
 
 namespace CatchChallenger {
@@ -18,7 +20,9 @@ public:
     static CommonDatapack commonDatapack;
 public:
     void unload();
+    #ifndef CATCHCHALLENGER_NOXML
     void parseDatapack(const std::string &datapackPath);
+    #endif
     bool isParsedContent() const;
 protected:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -50,7 +54,9 @@ protected:
     std::unordered_map<uint16_t,Skill> monsterSkills;
     std::vector<Profile> profileList;
 
+    #ifndef CATCHCHALLENGER_NOXML
     std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> xmlLoadedFile;//keep for Map_loader::getXmlCondition(), need to be deleted later
+    #endif
     std::vector<std::string > skins;//I think it's clean after use, database have only number
 public:
     #ifndef CATCHCHALLENGER_CLASS_MASTER
@@ -82,8 +88,10 @@ public:
     const std::unordered_map<uint16_t,Skill> &get_monsterSkills() const;
     const std::vector<Profile> &get_profileList() const;
 public:
+    #ifndef CATCHCHALLENGER_NOXML
     const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile() const;//keep for Map_loader::getXmlCondition(), need to be deleted later
     std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &get_xmlLoadedFile_rw();
+    #endif
     const std::vector<std::string > &get_skins() const;//I think it's clean after use, database have only number
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
@@ -151,6 +159,7 @@ private:
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> tempNameToSkillId;
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId;
 private:
+    #ifndef CATCHCHALLENGER_NOXML
     void parseTypes();
     void parseItems();
     void parsePlants();
@@ -168,6 +177,7 @@ private:
     void parseProfileList();
     void parseLayersOptions();
     void parseSkins();
+    #endif
 };
 }
 

@@ -1,8 +1,10 @@
 #include "BaseServer.hpp"
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../general/tinyXML2/tinyxml2.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
+#endif
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 
@@ -94,6 +96,7 @@ void BaseServer::preload_3_sync_the_ddos()
 
 bool BaseServer::preload_zone_init()
 {
+    #ifndef CATCHCHALLENGER_NOXML
     uint16_t indexZone=0;
     unsigned int index=0;
     while(index<entryListZone.size())
@@ -192,6 +195,9 @@ bool BaseServer::preload_zone_init()
     }
 
     std::cout << GlobalServerData::serverPrivateVariables.zoneIdToMapList.size() << " zone(s) loaded" << std::endl;
+    #else
+    (void)entryListZone;
+    #endif
     return true;
 }
 
@@ -200,6 +206,7 @@ bool BaseServer::preload_the_city_capture()
     return load_next_city_capture();
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void BaseServer::preload_7_sync_the_skin()
 {
     std::vector<std::string> skinFolderList=FacilityLibGeneral::skinIdList(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_SKIN);
@@ -212,6 +219,7 @@ void BaseServer::preload_7_sync_the_skin()
 
     std::cout << skinFolderList.size() << " skin(s) loaded" << std::endl;
 }
+#endif
 
 void BaseServer::preload_11_sync_the_players()
 {

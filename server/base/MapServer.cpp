@@ -175,6 +175,7 @@ bool MapServer::parseUnknownObject(std::string type,uint32_t object_x,uint32_t o
     return false;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step)
 {
     if(strcmp(step->Attribute("type"),"text")==0)
@@ -228,3 +229,4 @@ bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const ti
     }
     return false;
 }
+#endif

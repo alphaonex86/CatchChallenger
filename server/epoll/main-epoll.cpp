@@ -9,7 +9,9 @@
 #warning dictionary_serialBuffer and server_serialBuffer not open as DB
 #endif
 #include "../base/ServerStructures.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../base/TinyXMLSettings.hpp"
+#endif
 #include "../base/GlobalServerData.hpp"
 #include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/CommonSettingsServer.hpp"
@@ -46,13 +48,16 @@ EpollSslServer *server=NULL;
 #else
 EpollServer *server=NULL;
 #endif
+#ifndef CATCHCHALLENGER_NOXML
 TinyXMLSettings *settings=NULL;
+#endif
 
 std::string master_host;
 uint16_t master_port;
 uint8_t master_tryInterval;
 uint8_t master_considerDownAfterNumberOfTry;
 
+#ifndef CATCHCHALLENGER_NOXML
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 {
@@ -73,6 +78,7 @@ void generateTokenStatClient(TinyXMLSettings &settings,char * const data)
     fclose(fpRandomFile);
     settings.sync();
 }
+#endif
 #endif
 
 std::vector<void *> elementsToDelete[16];
@@ -107,6 +113,7 @@ void signal_callback_handler(int signum){
     elementsToDeleteSize++;
 }*/
 
+#ifndef CATCHCHALLENGER_NOXML
 void send_settings(
         #ifdef SERVERSSL
         EpollSslServer *server
@@ -119,6 +126,7 @@ void send_settings(
         uint8_t &master_tryInterval,
         uint8_t &master_considerDownAfterNumberOfTry
         );
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -207,6 +215,7 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
 
+    #ifndef CATCHCHALLENGER_NOXML
     #if defined(CATCHCHALLENGER_CACHE_HPS) && !defined(CATCHCHALLENGER_CLASS_ONLYGAMESERVER)
     if(save || !server->binaryCacheIsOpen())
     #endif
@@ -214,6 +223,7 @@ int main(int argc, char *argv[])
         settings=new TinyXMLSettings(FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/server-properties.xml");
         NormalServerGlobal::checkSettingsFile(settings,FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack/");
     }
+    #endif
 
     if(!Epoll::epoll.init())
         return EPOLLERR;
@@ -225,7 +235,14 @@ int main(int argc, char *argv[])
         server->setNormalSettings(server->loadSettingsFromBinaryCache(master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry));
     else
     #endif
+    {
+        #ifndef CATCHCHALLENGER_NOXML
         send_settings(server,settings,master_host,master_port,master_tryInterval,master_considerDownAfterNumberOfTry);
+        #else
+        std::cerr << "CATCHCHALLENGER_NOXML defined but no binary cache available (abort)" << std::endl;
+        abort();
+        #endif
+    }
 
     #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     {
@@ -554,7 +571,9 @@ int main(int argc, char *argv[])
         }
     }
     #endif
+    #ifndef CATCHCHALLENGER_NOXML
     delete settings;
+    #endif
 
     char buf[4096];
     memset(buf,0,4096);

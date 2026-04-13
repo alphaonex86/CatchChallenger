@@ -9,7 +9,9 @@
 #include "../../../general/base/FacilityLibGeneral.hpp"
 #include "../../../general/base/lib.h"
 #include "../../../general/base/Map_loader.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../../general/tinyXML2/tinyxml2.hpp"
+#endif
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include "../../../general/hps/hps.h"
 #endif
@@ -36,7 +38,9 @@ public:
     #endif
     #endif
     DLL_PUBLIC GameServerSettings getSettings() const;
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     static void initialize_the_database_prepared_query();
+    #endif
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void setSave(const std::string &file);
     void setLoad(const std::string &file);
@@ -97,14 +101,18 @@ protected:
     void preload_17_async_baseServerMasterLoadDictionaryLoad();
     bool preload_the_city_capture();
     bool preload_9_sync_the_map();
+    #ifndef CATCHCHALLENGER_NOXML
     void preload_7_sync_the_skin();
     void preload_6_sync_the_datapack();
+    #endif
     void preload_10_sync_the_gift();
     virtual void preload_11_sync_the_players();
     void preload_18_sync_profile();
     virtual void preload_the_visibility_algorithm();
     virtual void preload_finish();
+    #ifndef CATCHCHALLENGER_NOXML
     void preload_8_sync_monsters_drops();
+    #endif
     void preload_19_async_sql_monsters_max_id();
     static void load_monsters_max_id_static(void *object);
     void load_monsters_max_id_return();
@@ -164,7 +172,9 @@ protected:
     std::vector<FacilityLibGeneral::InodeDescriptor> entryListZone;
     unsigned int entryListIndex;
     #ifdef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_NOXML
     std::vector<tinyxml2::XMLDocument *> toDeleteAfterBotLoad;
+    #endif
     #endif
     bool preload_industries_call;
 

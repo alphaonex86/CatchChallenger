@@ -1,5 +1,4 @@
-CONFIG += c++17
-QMAKE_CXXFLAGS+="-std=c++0x"
+CONFIG += c++20
 mac:QMAKE_CXXFLAGS+="-stdlib=libc++"
 
 QT       -= core
@@ -23,25 +22,12 @@ SOURCES += $$PWD/base/GeneralStructures.cpp \
     $$PWD/base/ProtocolParsingOutput.cpp \
     $$PWD/base/ProtocolParsingCheck.cpp \
     $$PWD/base/MoveOnTheMap.cpp \
-    $$PWD/base/Map_loader.cpp \
-    $$PWD/base/Map_loaderMain.cpp \
     $$PWD/base/FacilityLib.cpp \
     $$PWD/base/FacilityLibGeneral.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMap.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMonsterDrop.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp \
-    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp \
     $$PWD/base/cpp11addition.cpp \
     $$PWD/base/cpp11additionstringtointcpp.cpp \
     $$PWD/base/cpp11additionstringtointc.cpp \
     $$PWD/fight/FightLoader.cpp \
-    $$PWD/fight/FightLoaderBuff.cpp \
-    $$PWD/fight/FightLoaderMonster.cpp \
-    $$PWD/fight/FightLoaderSkill.cpp \
     $$PWD/base/CommonMap/BaseMap.cpp \
     $$PWD/base/CommonMap/CommonMap.cpp \
     $$PWD/base/CommonMap/ItemOnMap.cpp \
@@ -88,6 +74,23 @@ HEADERS  += $$PWD/base/GeneralStructures.hpp \
     $$PWD/fight/CommonFightEngine.hpp \
     $$PWD/fight/CommonFightEngineBase.hpp \
     $$PWD/sha224/sha224.hpp
+
+!contains(DEFINES, CATCHCHALLENGER_NOXML) {
+SOURCES += \
+    $$PWD/base/Map_loader.cpp \
+    $$PWD/base/Map_loaderMain.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoader.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderCrafting.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderItem.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMap.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderMonsterDrop.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderPlant.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderQuest.cpp \
+    $$PWD/base/DatapackGeneralLoader/DatapackGeneralLoaderReputation.cpp \
+    $$PWD/fight/FightLoaderBuff.cpp \
+    $$PWD/fight/FightLoaderMonster.cpp \
+    $$PWD/fight/FightLoaderSkill.cpp
+}
 
 LIBS    += -lzstd -lxxhash
 

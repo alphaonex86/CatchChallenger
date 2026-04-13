@@ -31,6 +31,13 @@ void BaseServer::preload_1_the_data()
 
     //load from cache here
     #ifdef CATCHCHALLENGER_CACHE_HPS
+    #ifdef CATCHCHALLENGER_NOXML
+    if(in_file==nullptr)
+    {
+        std::cerr << "CATCHCHALLENGER_NOXML defined but no binary cache (datapack-cache.bin) available (abort)" << std::endl;
+        abort();
+    }
+    #endif
     if(in_file!=nullptr)
     {
         size_t lastSize=serialBuffer->tellg();
@@ -105,6 +112,7 @@ void BaseServer::preload_1_the_data()
     else
     #endif
     {
+        #ifndef CATCHCHALLENGER_NOXML
         {
             const auto &now = msFrom1970();
             CommonDatapack::commonDatapack.parseDatapack(GlobalServerData::serverSettings.datapack_basePath);
@@ -123,7 +131,12 @@ void BaseServer::preload_1_the_data()
         const auto &after = msFrom1970();
         std::cout << "Loaded map and other " << (after-now) << "ms" << std::endl;
         baseServerMasterSendDatapack.load(GlobalServerData::serverSettings.datapack_basePath);//skinList
+        #else
+        std::cerr << "CATCHCHALLENGER_NOXML defined but no binary cache available in non-cache path (abort)" << std::endl;
+        abort();
+        #endif
         #ifdef CATCHCHALLENGER_CACHE_HPS
+        #ifndef CATCHCHALLENGER_NOXML
         if(out_file!=nullptr)
         {
             size_t lastSize=0;
@@ -155,7 +168,8 @@ void BaseServer::preload_1_the_data()
             hps::to_stream(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list, *out_file);
             std::cout << "map size: " << ((uint32_t)out_file->tellp()-(uint32_t)lastSize) << "B" << std::endl;lastSize=out_file->tellp();
         }
-        #endif
+        #endif // CATCHCHALLENGER_NOXML
+        #endif // CATCHCHALLENGER_CACHE_HPS
     }
 
     preload_10_sync_the_gift();

@@ -20,32 +20,29 @@ Interface UI is from bought template (then under copyright)
 
 ## Compiling
 
-Use **C++11**
+Use **C++20**, maybe considering C++23 for std::flat_map for datapack in memory data (it's RO data)
 
 Dependency:
-* zlib (can be disabled but it's for tiled map editor)
+* zlib (can be disabled but it's for tiled map editor). zstd
+* blake3 to have maximal performance and be future proof to replace sha224
+* xxh to have light check for what file have changed, eg truncated to 32Bits datapack file list
 * Client
-  * Qt openssl enabled to have QSslSocket or QtWebSocket
+  * Qt openssl enabled to have QSslSocket or QtWebSocket, QThread
 * Server
-  * Qt if generic server
-  * db
-  * db driver (mysql, sqlite for game solo, postgresql, depands of you choice)
+  * Qt if generic server + Qt SQL drivers (mysql, sqlite for game solo, postgresql)
+  * libpq (postgresql in async) or raw binary file
 * Gateway
   * curl to download datapack via http
-  
-### Linux distro
-**Ubuntu**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
-
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev libqt5sql5-psql libqt5websockets5-dev libqt5sql5-psql libqt5sql5-sqlite libqt5sql5-mysql qtdeclarative5-dev qtscript5-dev
 
 ### Client
-**Debian stretch**: apt-get install build-essential gcc automake qt5-qmake libzstd-dev zlib1g-dev libssl-dev libpq-dev qttools5-dev qtdeclarative5-dev qtscript5-dev
 
 ```sh
 cd client/
 qmake *.pro
 make
-git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack datapack
+mkdir datapack
+cd datapack
+git clone --depth=1 https://github.com/alphaonex86/CatchChallenger-datapack internal
 chmod a+x catchchallenger
 ./catchchallenger
 ```
