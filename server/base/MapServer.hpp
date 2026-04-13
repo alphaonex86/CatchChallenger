@@ -26,7 +26,9 @@ public:
     void doDDOSLocalChat();
     bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
     bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
+    #ifndef CATCHCHALLENGER_NOXML
     bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step);
+    #endif
     static unsigned int playerToFullInsert(const Client &player, char * const bufferForOutput);
 
     uint8_t localChatDrop[CATCHCHALLENGER_SERVER_DDOS_MAX_VALUE];

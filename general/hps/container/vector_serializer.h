@@ -21,18 +21,28 @@ class Serializer<
  public:
   static void serialize(const std::vector<T>& container, B& ob) {
     Serializer<size_t, B>::serialize(container.size(), ob);
+#ifdef HPS_VECTOR_RAW_BINARY
+    const char* ptr = reinterpret_cast<const char*>(container.data());
+    ob.write(ptr, container.size() * sizeof(T));
+#else
     for (const T& elem : container) {
       Serializer<T, B>::serialize(elem, ob);
     }
+#endif
   }
 
   static void parse(std::vector<T>& container, B& ib) {
     size_t n_elems;
     Serializer<size_t, B>::parse(n_elems, ib);
     container.resize(n_elems);
+#ifdef HPS_VECTOR_RAW_BINARY
+    char* ptr = reinterpret_cast<char*>(container.data());
+    ib.read(ptr, n_elems * sizeof(T));
+#else
     for (size_t i = 0; i < n_elems; i++) {
       Serializer<T, B>::parse(container[i], ib);
     }
+#endif
   }
 };
 

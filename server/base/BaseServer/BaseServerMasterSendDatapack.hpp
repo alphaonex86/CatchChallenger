@@ -15,7 +15,9 @@ public:
     explicit BaseServerMasterSendDatapack();
     virtual ~BaseServerMasterSendDatapack();
 
+    #ifndef CATCHCHALLENGER_NOXML
     void load(const std::string &datapack_basePath);
+    #endif
     void unload();
 
     static std::unordered_map<std::string,uint8_t> skinList;
@@ -48,13 +50,19 @@ public:
     static std::unordered_map<std::string,uint32_t> datapack_file_list_cache;
     static std::unordered_map<std::string,DatapackCacheFile> datapack_file_hash_cache_base;
     #endif
+    #ifndef CATCHCHALLENGER_NOXML
     static std::regex fileNameStartStringRegex;
+    #endif
 private:
+    #ifndef CATCHCHALLENGER_NOXML
     void preload_the_skin();
     void loadTheDatapackFileList();
+    #endif
 private:
+    #ifndef CATCHCHALLENGER_NOXML
     //not global because all server don't need load the dictionary
     std::string datapack_basePathLogin;
+    #endif
 };
 }
 

@@ -2,7 +2,7 @@ QT       += core xml
 QT       -= gui
 
 TARGET = tmxTileLayerConverterToZstd
-CONFIG   += c++11
+CONFIG   += c++20
 CONFIG   += console
 CONFIG   -= app_bundle
 

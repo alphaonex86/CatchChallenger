@@ -26,3 +26,4 @@ HEADERS  += $$PWD/serializer.h \
     $$PWD/container/bit_filters.h
 
 DEFINES += CATCHCHALLENGER_CACHE_HPS
+#DEFINES += HPS_VECTOR_RAW_BINARY

@@ -12,7 +12,9 @@
 #include "Teleporter.hpp"
 #include "BaseMap.hpp"
 #include "Map_Border.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../tinyXML2/tinyxml2.hpp"
+#endif
 
 namespace CatchChallenger {
 
@@ -31,7 +33,11 @@ struct UnknownObjectEntry {
 struct UnknownBotStepEntry {
     uint32_t object_x;
     uint32_t object_y;
+    #ifndef CATCHCHALLENGER_NOXML
     const tinyxml2::XMLElement *step;
+    #else
+    const void *step;
+    #endif
 };
 
 //the only visible map is loaded on client, all map on server
@@ -68,12 +74,16 @@ public:
     //buffer unknown entries for later processing by server
     std::vector<UnknownMovingEntry> unknownMovingBuffer;
     std::vector<UnknownObjectEntry> unknownObjectBuffer;
+    #ifndef CATCHCHALLENGER_NOXML
     std::vector<UnknownBotStepEntry> unknownBotStepBuffer;
+    #endif
 
     //extra parse function, buffer unknown data for later processing
     bool parseUnknownMoving(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
     bool parseUnknownObject(std::string type,uint32_t object_x,uint32_t object_y,std::unordered_map<std::string,std::string> property_text);
+    #ifndef CATCHCHALLENGER_NOXML
     bool parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const tinyxml2::XMLElement *step);
+    #endif
 
 };
 }

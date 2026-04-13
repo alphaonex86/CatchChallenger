@@ -7,12 +7,15 @@
 #include <vector>
 
 #include "../GeneralStructures.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../tinyXML2/tinyxml2.hpp"
+#endif
 #include "../../../general/base/lib.h"
 
 namespace CatchChallenger {
 class DatapackGeneralLoader
 {
+#ifndef CATCHCHALLENGER_NOXML
 public:
     static std::vector<std::string> loadSkins(const std::string &folder);
     static std::vector<Reputation> loadReputation(const std::string &file);//Player_private_and_public_informations, std::unordered_map<uint8_t,PlayerReputation> reputation;
@@ -44,6 +47,7 @@ public:
     static std::vector<Event> loadEvents(const std::string &file);
     static std::unordered_map<uint16_t,Shop> preload_shop(const std::string &file, const std::unordered_map<uint16_t, Item> &items);/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     #endif
+#endif
 };
 }
 

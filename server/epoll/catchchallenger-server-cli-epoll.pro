@@ -31,7 +31,5 @@ DEFINES += CATCHCHALLENGER_DB_PREPAREDSTATEMENT
 # store as file to reduce RAM need
 #DEFINES += CATCHCHALLENGER_DB_FILE
 
-CONFIG += c++11
-
 TARGET = catchchallenger-server-cli-epoll
 CONFIG   += console

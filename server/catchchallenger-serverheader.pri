@@ -24,13 +24,21 @@ HEADERS += \
     $$PWD/base/DictionaryLogin.hpp \
     $$PWD/base/DdosBuffer.hpp \
     $$PWD/base/DictionaryServer.hpp \
-    $$PWD/base/PreparedDBQuery.hpp \
-    $$PWD/base/DatabaseBase.hpp \
     $$PWD/base/BaseServer/BaseServerLogin.hpp \
     $$PWD/base/TimeRangeEventScanBase.hpp \
-    $$PWD/base/TinyXMLSettings.hpp \
-    $$PWD/base/DatabaseFunction.hpp \
     $$PWD/base/StringWithReplacement.hpp \
     $$PWD/base/GameServerVariables.hpp \
-    $$PWD/base/PreparedStatementUnit.hpp \
     $$PWD/crafting/MapServerCrafting.hpp
+
+!contains(DEFINES, CATCHCHALLENGER_DB_FILE) {
+HEADERS += \
+    $$PWD/base/PreparedDBQuery.hpp \
+    $$PWD/base/DatabaseBase.hpp \
+    $$PWD/base/DatabaseFunction.hpp \
+    $$PWD/base/PreparedStatementUnit.hpp
+}
+
+!contains(DEFINES, CATCHCHALLENGER_NOXML) {
+HEADERS += \
+    $$PWD/base/TinyXMLSettings.hpp
+}

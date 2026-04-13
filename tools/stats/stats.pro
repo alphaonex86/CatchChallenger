@@ -1,7 +1,5 @@
 QT       -= gui core
-CONFIG += c++11
-QMAKE_CFLAGS="-std=c++0x"
-QMAKE_CXXFLAGS="-std=c++0x"
+CONFIG += c++20
 
 TARGET = stats
 CONFIG   += console

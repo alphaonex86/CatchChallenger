@@ -3,7 +3,9 @@
 #include "../base/DatabaseFunction.hpp"
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../../general/base/DatapackGeneralLoader/DatapackGeneralLoader.hpp"
+#endif
 
 #include <string>
 #include <vector>
@@ -11,12 +13,14 @@
 
 using namespace CatchChallenger;
 
+#ifndef CATCHCHALLENGER_NOXML
 void BaseServer::preload_8_sync_monsters_drops()
 {
     GlobalServerData::serverPrivateVariables.monsterDrops=DatapackGeneralLoader::loadMonsterDrop(GlobalServerData::serverSettings.datapack_basePath+DATAPACK_BASE_PATH_MONSTERS,CommonDatapack::commonDatapack.get_items().item,CommonDatapack::commonDatapack.get_monsters());
 
     std::cout << CommonDatapack::commonDatapack.get_monsters().size() << " monster drop(s) loaded" << std::endl;
 }
+#endif
 
 #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 void BaseServer::preload_19_async_sql_monsters_max_id()

@@ -14,7 +14,9 @@ public:
     explicit CommonDatapackServerSpec();
 public:
     void unload();
+    #ifndef CATCHCHALLENGER_NOXML
     void parseDatapackAfterZoneAndMap(const std::string &datapackPath, const std::string &mainDatapackCode, const std::string &subDatapackCode,const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
+    #endif
     bool isParsedContent() const;
     static CommonDatapackServerSpec commonDatapackServerSpec;
 
@@ -57,6 +59,7 @@ private:
     std::string mainDatapackCode;
     std::string subDatapackCode;
 private:
+    #ifndef CATCHCHALLENGER_NOXML
     void parseQuests(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     void parseServerProfileList(const std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> &mapPathToId);
     #ifdef CATCHCHALLENGER_CLIENT
@@ -64,6 +67,7 @@ private:
     #endif
     #ifndef CATCHCHALLENGER_CLASS_MASTER
     void parseMonstersDrop();//drop rate variable by server
+    #endif
     #endif
 };
 }

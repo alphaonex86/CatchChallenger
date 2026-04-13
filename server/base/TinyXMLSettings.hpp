@@ -1,6 +1,8 @@
 #ifndef TINYXMLSETTINGS_H
 #define TINYXMLSETTINGS_H
 
+#ifndef CATCHCHALLENGER_NOXML
+
 #include <string>
 
 #include "../../general/tinyXML2/tinyxml2.hpp"
@@ -27,5 +29,7 @@ private:
     std::string file;
     bool modified;
 };
+
+#endif // CATCHCHALLENGER_NOXML
 
 #endif // TINYXMLSETTINGS_H

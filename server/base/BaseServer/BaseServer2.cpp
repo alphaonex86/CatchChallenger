@@ -298,11 +298,12 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     std::cout << "Loaded the server SQL datapack into " << (now-timeDatapack) << "ms" << std::endl;
     preload_30_sync_other();
     #if defined(EPOLLCATCHCHALLENGERSERVER) && ! defined(CATCHCHALLENGER_CLIENT)
-
+    #ifndef CATCHCHALLENGER_NOXML
     //delete content of Map_loader::getXmlCondition()
     CommonDatapack::commonDatapack.get_xmlLoadedFile_rw().clear();
 
     Map_loader::teleportConditionsUnparsed.clear();
+    #endif
     #endif
     #ifndef EPOLLCATCHCHALLENGERSERVER
     entryListZone.clear();

@@ -1,9 +1,11 @@
 #include "CommonDatapack.hpp"
 #include "GeneralVariable.hpp"
+#ifndef CATCHCHALLENGER_NOXML
 #include "../fight/FightLoader.hpp"
 #include "DatapackGeneralLoader/DatapackGeneralLoader.hpp"
 #ifndef CATCHCHALLENGER_CLASS_MASTER
 #include "CommonSettingsServer.hpp"
+#endif
 #endif
 
 #include <iostream>
@@ -30,6 +32,7 @@ CommonDatapack::CommonDatapack()
     #endif
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 void CommonDatapack::parseDatapack(const std::string &datapackPath)
 {
     if(isParsed)
@@ -217,6 +220,7 @@ void CommonDatapack::parseLayersOptions()
     std::cout << "layers options parsed" << std::endl;
     #endif
 }
+#endif
 
 bool CommonDatapack::isParsedContent() const
 {
@@ -254,7 +258,9 @@ void CommonDatapack::unload()
     types.clear();
     #endif // CATCHCHALLENGER_CLASS_MASTER
     #ifndef EPOLLCATCHCHALLENGERSERVER
+    #ifndef CATCHCHALLENGER_NOXML
     xmlLoadedFile.clear();
+    #endif
     #endif
     skins.clear();
     tempNameToItemId.clear();
@@ -387,6 +393,7 @@ const std::vector<Profile> &CommonDatapack::get_profileList() const
     return profileList;
 }
 
+#ifndef CATCHCHALLENGER_NOXML
 const std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::get_xmlLoadedFile() const
 {
     return xmlLoadedFile;
@@ -396,6 +403,7 @@ std::unordered_map<std::string/*file*/,tinyxml2::XMLDocument> &CommonDatapack::g
 {
     return xmlLoadedFile;
 }
+#endif
 
 const std::vector<std::string > &CommonDatapack::get_skins() const
 {
