@@ -1696,23 +1696,23 @@ void MapVisualiserPlayer::loadMonsterFromCurrentMap()
         {
             if(ObjectGroupItem::objectGroupLink.find(currentGroup)!=ObjectGroupItem::objectGroupLink.cend())
                 ObjectGroupItem::objectGroupLink.at(currentGroup)->removeObject(monsterMapObject);
-            if(currentGroup!=CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)
+            if(currentGroup!=CatchChallenger::QMap_client::all_map.at(current_monster_map)->objectGroup)
                 qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), the monsterMapObject group is wrong: %1").arg(currentGroup->name());
         }
-        if(ObjectGroupItem::objectGroupLink.find(CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
-            ObjectGroupItem::objectGroupLink.at(CatchChallenger::QMap_client::all_map.at(current_map)->objectGroup)->addObject(monsterMapObject);
+        if(ObjectGroupItem::objectGroupLink.find(CatchChallenger::QMap_client::all_map.at(current_monster_map)->objectGroup)!=ObjectGroupItem::objectGroupLink.cend())
+            ObjectGroupItem::objectGroupLink.at(CatchChallenger::QMap_client::all_map.at(current_monster_map)->objectGroup)->addObject(monsterMapObject);
         else
-            qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_map->objectGroup");
+            qDebug() << QStringLiteral("loadPlayerFromCurrentMap(), ObjectGroupItem::objectGroupLink not contains current_monster_map->objectGroup");
         //move to the final position (integer), y+1 because the tile lib start y to 1, not 0
         monsterMapObject->setPosition(QPointF(monster_x-0.5,monster_y+1));
-        MapObjectItem::objectLink.at(monsterMapObject)->setZValue(y);
+        MapObjectItem::objectLink.at(monsterMapObject)->setZValue(monster_y);
     }
 }
 
 //call before leave the old map (and before loadPlayerFromCurrentMap())
 void MapVisualiserPlayer::unloadPlayerFromCurrentMap()
 {
-    if(monsterMapObject==nullptr)
+    if(playerMapObject==nullptr)
         return;
     {
         Tiled::ObjectGroup *currentGroup=playerMapObject->objectGroup();
@@ -1864,6 +1864,7 @@ void MapVisualiserPlayer::resetMonsterTile()
 
 void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
 {
+    std::cerr << "MapVisualiserPlayer::updatePlayerMonsterTile() monster=" << monster << std::endl;
     bool resetMonster=false;
     if(monsterMapObject!=NULL)
     {
@@ -1887,10 +1888,14 @@ void MapVisualiserPlayer::updatePlayerMonsterTile(const uint16_t &monster)
             monsterTilesetCache[imagePath]=monsterTileset;
         }
         else
+        {
+            std::cerr << "MapVisualiserPlayer::updatePlayerMonsterTile() image not found: " << imagePath << std::endl;
             monsterTileset=NULL;
+        }
     }
     if(monsterTileset!=NULL)
     {
+        std::cerr << "MapVisualiserPlayer::updatePlayerMonsterTile() monsterMapObject created" << std::endl;
         monsterMapObject = new Tiled::MapObject();
         monsterMapObject->setName("Current player monster");
 
