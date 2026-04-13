@@ -907,7 +907,7 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
 
     std::string xmlExtra=file;
     stringreplaceAll(xmlExtra,".tmx",".xml");
-    loadExtraXml(mapFinal,xmlExtra,map_to_send_temp.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,map_to_send_temp.zoneName);
+    loadExtraXml(mapFinal,xmlExtra,this->map_to_send.bots,detectedMonsterCollisionMonsterType,detectedMonsterCollisionLayer,this->map_to_send.zoneName);
 
     bool previousHaveMonsterWarn=false;
     {

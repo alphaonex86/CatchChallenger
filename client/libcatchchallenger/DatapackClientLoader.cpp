@@ -858,6 +858,81 @@ void DatapackClientLoader::parseMaps()
     CatchChallenger::Map_loader::loadAllMapsAndLink(mapList,getDatapackPath()+getMainDatapackPath(),semi_loaded_map,mapPathToId);
     CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.parseDatapackAfterZoneAndMap(getDatapackPath(),CommonSettingsServer::commonSettingsServer.mainDatapackCode,
     CommonSettingsServer::commonSettingsServer.subDatapackCode,mapPathToId);
+    // Populate mapBots from semi_loaded_map
+    mapBots.clear();
+    std::cerr << "mapBots: iterating semi_loaded_map.size()=" << semi_loaded_map.size() << std::endl;
+    {
+        unsigned int mapIdx=0;
+        while(mapIdx<semi_loaded_map.size())
+        {
+            const CatchChallenger::Map_to_send &old_map=semi_loaded_map.at(mapIdx).old_map;
+            std::cerr << "  mapIdx=" << mapIdx << " bots.size()=" << old_map.bots.size() << std::endl;
+            unsigned int botIdx=0;
+            while(botIdx<old_map.bots.size())
+            {
+                const CatchChallenger::Map_to_send::Bot_Semi &botSemi=old_map.bots.at(botIdx);
+                if(!botSemi.steps.empty())
+                {
+                    CatchChallenger::Bot bot;
+                    bot.step=botSemi.steps;
+                    bot.properties=botSemi.property_text;
+                    bot.botId=botSemi.id;
+                    if(botSemi.property_text.find("skin")!=botSemi.property_text.cend())
+                        bot.skin=botSemi.property_text.at("skin");
+                    // Get name from XML <bot> element
+                    if(old_map.xmlRoot!=nullptr)
+                    {
+                        const tinyxml2::XMLElement *botXml=old_map.xmlRoot->FirstChildElement("bot");
+                        while(botXml!=nullptr)
+                        {
+                            if(botXml->Attribute("id")!=nullptr)
+                            {
+                                bool ok;
+                                const uint8_t xmlBotId=stringtouint8(botXml->Attribute("id"),&ok);
+                                if(ok && xmlBotId==botSemi.id)
+                                {
+                                    bool name_found=false;
+                                    const tinyxml2::XMLElement *name=botXml->FirstChildElement("name");
+                                    if(!language.empty() && language!="en")
+                                        while(name!=nullptr)
+                                        {
+                                            if(name->Attribute("lang")!=nullptr && name->Attribute("lang")==language && name->GetText()!=nullptr)
+                                            {
+                                                bot.name=name->GetText();
+                                                name_found=true;
+                                                break;
+                                            }
+                                            name=name->NextSiblingElement("name");
+                                        }
+                                    if(!name_found)
+                                    {
+                                        name=botXml->FirstChildElement("name");
+                                        while(name!=nullptr)
+                                        {
+                                            if(name->Attribute("lang")==nullptr || strcmp(name->Attribute("lang"),"en")==0)
+                                                if(name->GetText()!=nullptr)
+                                                {
+                                                    bot.name=name->GetText();
+                                                    break;
+                                                }
+                                            name=name->NextSiblingElement("name");
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            botXml=botXml->NextSiblingElement("bot");
+                        }
+                    }
+                    mapBots[mapIdx][botSemi.point]=bot;
+                    std::cerr << "  mapBots: mapIdx=" << mapIdx << " pos=(" << (int)botSemi.point.first << "," << (int)botSemi.point.second << ") botId=" << (int)botSemi.id << " name=" << bot.name << " steps=" << bot.step.size() << std::endl;
+                }
+                botIdx++;
+            }
+            mapIdx++;
+        }
+    }
+    std::cerr << "mapBots populated: " << mapBots.size() << " map(s) with bots" << std::endl;
 #endif
     std::cout << std::to_string(mapPathToId.size()) << " map(s) extra loaded" << std::endl;
 }
@@ -884,6 +959,7 @@ void DatapackClientLoader::resetAll()
     itemToPlants.clear();
     questsExtra.clear();
     botToQuestStart.clear();
+    mapBots.clear();
     //botFightsExtra.clear();
     monsterExtra.clear();
     monsterBuffsExtra.clear();
@@ -1989,6 +2065,25 @@ const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> &DatapackClient
 const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> &DatapackClientLoader::get_botToQuestStart() const
 {
     return botToQuestStart;
+}
+
+const CatchChallenger::Bot* DatapackClientLoader::getBot(CATCHCHALLENGER_TYPE_MAPID mapIndex, uint8_t x, uint8_t y) const
+{
+    auto mapIt=mapBots.find(mapIndex);
+    if(mapIt==mapBots.cend())
+    {
+        std::cerr << "  getBot() mapIndex=" << mapIndex << " not found in mapBots (mapBots.size()=" << mapBots.size() << ")" << std::endl;
+        return nullptr;
+    }
+    auto botIt=mapIt->second.find(std::pair<uint8_t,uint8_t>(x,y));
+    if(botIt==mapIt->second.cend())
+    {
+        std::cerr << "  getBot() mapIndex=" << mapIndex << " found, but no bot at (" << (int)x << "," << (int)y << "). Bots on this map:" << std::endl;
+        for(const auto &entry : mapIt->second)
+            std::cerr << "    bot at (" << (int)entry.first.first << "," << (int)entry.first.second << ") id=" << (int)entry.second.botId << std::endl;
+        return nullptr;
+    }
+    return &botIt->second;
 }
 
 /*const std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,DatapackClientLoader::BotFightExtra>> &DatapackClientLoader::get_botFightsExtra() const

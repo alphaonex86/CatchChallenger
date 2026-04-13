@@ -16,7 +16,8 @@ using namespace CatchChallenger;
 
 void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)
 {
-    if(stopped_in_front_of_check_bot(map,x,y))
+    std::cerr << "BaseWindow::stopped_in_front_of() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << std::endl;
+    if(stopped_in_front_of_check_bot(mapIndex,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
@@ -34,22 +35,22 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, const CAT
                 case CatchChallenger::Direction_look_at_left:
                 if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_left,mapIndex,x,y,false))
                     if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_left,borderMapIndex,x,y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
+                        stopped_in_front_of_check_bot(borderMapIndex,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_right:
                 if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_right,mapIndex,x,y,false))
                     if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_right,borderMapIndex,x,y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
+                        stopped_in_front_of_check_bot(borderMapIndex,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_top:
                 if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_top,mapIndex,x,y,false))
                     if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_top,borderMapIndex,x,y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
+                        stopped_in_front_of_check_bot(borderMapIndex,x,y);
                 break;
                 case CatchChallenger::Direction_look_at_bottom:
                 if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_bottom,mapIndex,x,y,false))
                     if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_bottom,borderMapIndex,x,y,false))
-                        stopped_in_front_of_check_bot(map,x,y);
+                        stopped_in_front_of_check_bot(borderMapIndex,x,y);
                 break;
                 default:
                 break;
@@ -58,13 +59,18 @@ void BaseWindow::stopped_in_front_of(CatchChallenger::Map_client *map, const CAT
     }
 }
 
-bool BaseWindow::stopped_in_front_of_check_bot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+bool BaseWindow::stopped_in_front_of_check_bot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)
 {
-    (void)map;
-    (void)x;
-    (void)y;
-    // Bot data is no longer stored in Map_client; detection is handled by the maprender layer
-    return false;
+    std::cerr << "BaseWindow::stopped_in_front_of_check_bot() mapIndex=" << mapIndex << " x=" << (int)x << " y=" << (int)y << std::endl;
+    const CatchChallenger::Bot *bot=QtDatapackClientLoader::datapackLoader->getBot(mapIndex,x,y);
+    if(bot==nullptr)
+    {
+        std::cerr << "  getBot returned nullptr" << std::endl;
+        return false;
+    }
+    std::cerr << "  bot found! botId=" << (int)bot->botId << " name=" << bot->name << " steps=" << bot->step.size() << std::endl;
+    showTip(tr("To interact with the bot press <i><b>Enter</b></i>").toStdString());
+    return true;
 }
 
 //return -1 if not found, else the index
@@ -86,7 +92,7 @@ void BaseWindow::actionOn(Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &map
 {
     if(ui->IG_dialog->isVisible())
         ui->IG_dialog->setVisible(false);
-    if(actionOnCheckBot(map,x,y))
+    if(actionOnCheckBot(mapIndex,x,y))
         return;
     else if(CatchChallenger::MoveOnTheMap::isDirt(*map,x,y))
     {
@@ -115,22 +121,22 @@ void BaseWindow::actionOn(Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &map
             case CatchChallenger::Direction_look_at_left:
             if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_left,mapIndex,x,y,false))
                 if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_left,borderMapIndex,x,y,false))
-                    actionOnCheckBot(map,x,y);
+                    actionOnCheckBot(borderMapIndex,x,y);
             break;
             case CatchChallenger::Direction_look_at_right:
             if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_right,mapIndex,x,y,false))
                 if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_right,borderMapIndex,x,y,false))
-                    actionOnCheckBot(map,x,y);
+                    actionOnCheckBot(borderMapIndex,x,y);
             break;
             case CatchChallenger::Direction_look_at_top:
             if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_top,mapIndex,x,y,false))
                 if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_top,borderMapIndex,x,y,false))
-                    actionOnCheckBot(map,x,y);
+                    actionOnCheckBot(borderMapIndex,x,y);
             break;
             case CatchChallenger::Direction_look_at_bottom:
             if(QtDatapackClientLoader::datapackLoader->canGoTo(CatchChallenger::Direction_move_at_bottom,mapIndex,x,y,false))
                 if(QtDatapackClientLoader::datapackLoader->move(CatchChallenger::Direction_move_at_bottom,borderMapIndex,x,y,false))
-                    actionOnCheckBot(map,x,y);
+                    actionOnCheckBot(borderMapIndex,x,y);
             break;
             default:
             break;
@@ -138,13 +144,15 @@ void BaseWindow::actionOn(Map_client *map, const CATCHCHALLENGER_TYPE_MAPID &map
     }
 }
 
-bool BaseWindow::actionOnCheckBot(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)
+bool BaseWindow::actionOnCheckBot(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, uint8_t x, uint8_t y)
 {
-    (void)map;
-    (void)x;
-    (void)y;
-    // Bot data is no longer stored in Map_client; detection is handled by the maprender layer
-    return false;
+    const CatchChallenger::Bot *bot=QtDatapackClientLoader::datapackLoader->getBot(mapIndex,x,y);
+    if(bot==nullptr)
+        return false;
+    actualBot=*bot;
+    isInQuest=false;
+    goToBotStep(1);
+    return true;
 }
 
 void BaseWindow::botFightCollision(CatchChallenger::Map_client *map, uint8_t x, uint8_t y)

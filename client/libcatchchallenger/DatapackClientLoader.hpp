@@ -10,6 +10,7 @@
 #include "../../general/base/cpp11addition.hpp"
 #include "../../general/base/GeneralType.hpp"
 #include "Map_client.hpp"
+#include "ClientStructures.hpp"
 
 class DLL_PUBLIC DatapackClientLoader
 {
@@ -235,6 +236,7 @@ public:
     const std::unordered_map<uint32_t,ProfileText> &get_profileTextList() const;
     const std::unordered_map<std::string,VisualCategory> &get_visualCategories() const;
     const std::string &get_language() const;
+    const CatchChallenger::Bot* getBot(CATCHCHALLENGER_TYPE_MAPID mapIndex, uint8_t x, uint8_t y) const;
     const std::vector<std::string> &get_maps() const;
     const std::vector<std::string> &get_skins() const;
     ///todo drop the full path and .tmx
@@ -256,6 +258,7 @@ protected:
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,QuestExtra> questsExtra;
     std::unordered_map<std::string,CATCHCHALLENGER_TYPE_QUEST> questsPathToId;
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,std::vector<CATCHCHALLENGER_TYPE_QUEST>>> botToQuestStart;
+    std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<std::pair<uint8_t,uint8_t>,CatchChallenger::Bot,pairhash>> mapBots;
     //std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::unordered_map<CATCHCHALLENGER_TYPE_BOTID,BotFightExtra>> botFightsExtra;-> load ondemand with map
     std::unordered_map<std::string,ZoneExtra> zonesExtra;
     std::unordered_map<std::string,std::string/*relative to main datapack or base datapack*/> audioAmbiance;

@@ -158,9 +158,6 @@ int main(int argc, char *argv[])
         std::cout << "Options:" << std::endl;
         std::cout << "  --datapack=PATH        Path to the CatchChallenger datapack folder (required)" << std::endl;
         std::cout << "  --localpath=PATH       Output directory for generated HTML pages (required)" << std::endl;
-        std::cout << "  --maindatapack=CODE    Main datapack code to process (default: official)" << std::endl;
-        std::cout << "                         If not set, all codes under map/main/ are discovered" << std::endl;
-        std::cout << "  --subdatapack=CODE     Sub datapack code (default: empty)" << std::endl;
         std::cout << "  --map2png=PATH         Path to the map2png binary for map image generation" << std::endl;
         std::cout << "                         Called with -platform offscreen. If not set or empty," << std::endl;
         std::cout << "                         map preview/overview images are not generated" << std::endl;
@@ -177,14 +174,9 @@ int main(int argc, char *argv[])
 
     std::string datapackPath=argValue(args,"--datapack");
     std::string localPath=argValue(args,"--localpath");
-    std::string mainDatapack=argValue(args,"--maindatapack");
-    std::string subDatapack=argValue(args,"--subdatapack");
     std::string map2pngPath;
     if(hasArg(args,"--map2png"))
         map2pngPath=argValue(args,"--map2png");
-
-    if(mainDatapack.empty())
-        mainDatapack="official";
 
     if(datapackPath.empty() || localPath.empty())
     {
@@ -198,8 +190,6 @@ int main(int argc, char *argv[])
 
     Helper::setLocalPath(localPath);
     Helper::setDatapackPath(datapackPath);
-    Helper::setMainDatapackCode(mainDatapack);
-    Helper::setSubDatapackCode(subDatapack);
     Helper::setMap2PngPath(map2pngPath);
 
     // Load template.html next to the binary / source dir. It must contain
@@ -267,15 +257,8 @@ int main(int argc, char *argv[])
         stopLoaderThreads(); exit(113);
     }
 
-    // Discover all main datapack codes under <datapack>/map/main/ so we can
-    // generate pages for every main/sub combination. If the user provided
-    // an explicit --maindatapack value we still only process that one.
+    // Discover all main datapack codes under <datapack>/map/main/
     std::vector<std::string> mainCodes;
-    if(!mainDatapack.empty() && hasArg(args,"--maindatapack"))
-    {
-        mainCodes.push_back(mainDatapack);
-    }
-    else
     {
         const std::string mainRoot=datapackPath+"map/main/";
         DIR *d=::opendir(mainRoot.c_str());
@@ -294,44 +277,73 @@ int main(int argc, char *argv[])
             ::closedir(d);
         }
         if(mainCodes.empty())
-            mainCodes.push_back(mainDatapack);
+            mainCodes.push_back("official");
     }
     std::sort(mainCodes.begin(),mainCodes.end());
 
+    // Helper to list sub-datapack codes under map/main/{code}/sub/
+    auto discoverSubCodes=[&](const std::string &mainCode) -> std::vector<std::string> {
+        std::vector<std::string> subs;
+        subs.push_back(std::string()); // empty = base (no sub)
+        const std::string subRoot=datapackPath+"map/main/"+mainCode+"/sub/";
+        DIR *d=::opendir(subRoot.c_str());
+        if(d!=nullptr)
+        {
+            struct dirent *ent;
+            while((ent=::readdir(d))!=nullptr)
+            {
+                std::string n=ent->d_name;
+                if(n=="." || n=="..")
+                    continue;
+                if(!Helper::isDir(subRoot+n))
+                    continue;
+                subs.push_back(n);
+            }
+            ::closedir(d);
+        }
+        std::sort(subs.begin(),subs.end());
+        return subs;
+    };
+
     for(const std::string &code : mainCodes)
     {
-        std::cout << "Parsing main/sub: " << code << " / " << subDatapack << std::endl;
-        Helper::setMainDatapackCode(code);
-
-        // Set CommonSettingsServer so internal loader paths are correct
-        CommonSettingsServer::commonSettingsServer.mainDatapackCode=code;
-        CommonSettingsServer::commonSettingsServer.subDatapackCode=subDatapack;
-
+        std::vector<std::string> subCodes=discoverSubCodes(code);
+        for(const std::string &sub : subCodes)
         {
-            std::string capturedOut, capturedErr;
+            std::cout << "Parsing main/sub: " << code << " / " << (sub.empty()?"(none)":sub) << std::endl;
+            Helper::setMainDatapackCode(code);
+            Helper::setSubDatapackCode(sub);
+
+            // Set CommonSettingsServer so internal loader paths are correct
+            CommonSettingsServer::commonSettingsServer.mainDatapackCode=code;
+            CommonSettingsServer::commonSettingsServer.subDatapackCode=sub;
+
             {
-                StdoutCapture soc;
-                StderrCapture sec;
-                QtDatapackClientLoader::datapackLoader->parseDatapackMainSub(code,subDatapack);
-                capturedOut=soc.str();
-                capturedErr=sec.str();
+                std::string capturedOut, capturedErr;
+                {
+                    StdoutCapture soc;
+                    StderrCapture sec;
+                    QtDatapackClientLoader::datapackLoader->parseDatapackMainSub(code,sub);
+                    capturedOut=soc.str();
+                    capturedErr=sec.str();
+                }
+                if(!capturedOut.empty()) std::cout << capturedOut;
+                if(!capturedErr.empty()) std::cerr << capturedErr;
+
+                std::string combined=capturedOut+"\n"+capturedErr;
+                if(checkForErrors(combined,"parseDatapackMainSub("+code+","+sub+")"))
+                { stopLoaderThreads(); exit(113); }
             }
-            if(!capturedOut.empty()) std::cout << capturedOut;
-            if(!capturedErr.empty()) std::cerr << capturedErr;
 
-            std::string combined=capturedOut+"\n"+capturedErr;
-            if(checkForErrors(combined,"parseDatapackMainSub("+code+")"))
-            { stopLoaderThreads(); exit(113); }
+            // Verify maps were loaded
+            if(QtDatapackClientLoader::datapackLoader->get_maps().empty())
+            {
+                std::cerr << "ERROR: maps list is empty after parseDatapackMainSub(" << code << "," << sub << ")" << std::endl;
+                stopLoaderThreads(); exit(113);
+            }
+
+            MapStore::addFromCurrentLoader(code);
         }
-
-        // Verify maps were loaded
-        if(QtDatapackClientLoader::datapackLoader->get_maps().empty())
-        {
-            std::cerr << "ERROR: maps list is empty after parseDatapackMainSub(" << code << ")" << std::endl;
-            stopLoaderThreads(); exit(113);
-        }
-
-        MapStore::addFromCurrentLoader(code);
     }
 
     Generator::generateAll();
