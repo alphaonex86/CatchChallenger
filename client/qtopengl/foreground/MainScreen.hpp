@@ -10,7 +10,7 @@
 
 #ifndef CATCHCHALLENGER_NOAUDIO
 #include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
-#include <QAudioOutput>
+#include <QAudioSink>
 #endif
 
 class MainScreen : public ScreenInput

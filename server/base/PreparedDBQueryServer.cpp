@@ -20,7 +20,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER)) || defined(CATCHCHALLENGER_CLASS_QT)
         case DatabaseBase::DatabaseType::Mysql:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE `character_forserver` SET `map`=%1,`x`=%2,`y`=%3,`orientation`=%4,`rescue_map`=%5,`rescue_x`=%6,`rescue_y`=%7,`rescue_orientation`=%8,`unvalidated_rescue_map`=%9,`unvalidated_rescue_x`=%10,`unvalidated_rescue_y`=%11,`unvalidated_rescue_orientation`=%12 WHERE `character`=%13",database);
-        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,`market_cash`,LOWER(HEX(`quest`)),`date` FROM `character_forserver` WHERE `character`=%1",database);
+        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT `map`,`x`,`y`,`orientation`,`rescue_map`,`rescue_x`,`rescue_y`,`rescue_orientation`,`unvalidated_rescue_map`,`unvalidated_rescue_x`,`unvalidated_rescue_y`,`unvalidated_rescue_orientation`,LOWER(HEX(`quest`)),`date` FROM `character_forserver` WHERE `character`=%1",database);
         PreparedDBQueryServer::db_query_delete_character_server_by_id=PreparedStatementUnit("DELETE FROM `character_forserver` WHERE `character`=%1",database);
         PreparedDBQueryServer::db_query_select_character_bymap=PreparedStatementUnit("SELECT `map`,LOWER(HEX(`plants`)),LOWER(HEX(`items`)),LOWER(HEX(`fights`)) FROM `character_bymap` WHERE `character`=%1",database);
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO `factory`(`id`,`resources`,`products`,`last_update`) VALUES(%1,'%2','%3',%4)",database);
@@ -39,7 +39,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         case DatabaseBase::DatabaseType::SQLite:
         PreparedDBQueryServer::db_query_update_character_forserver_map=PreparedStatementUnit("UPDATE character_forserver SET map=%1,x=%2,y=%3,orientation=%4,rescue_map=%5,rescue_x=%6,rescue_y=%7,rescue_orientation=%8,unvalidated_rescue_map=%9,unvalidated_rescue_x=%10,unvalidated_rescue_y=%11,unvalidated_rescue_orientation=%12 WHERE character=%13",database);
 
-        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,quest,date FROM character_forserver WHERE character=%1",database);
+        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,quest,date FROM character_forserver WHERE character=%1",database);
         PreparedDBQueryServer::db_query_delete_character_server_by_id=PreparedStatementUnit("DELETE FROM character_forserver WHERE character=%1",database);
         PreparedDBQueryServer::db_query_select_character_bymap=PreparedStatementUnit("SELECT map,plants,items,fights FROM character_bymap WHERE character=%1",database);
         PreparedDBQueryServer::db_query_insert_factory=PreparedStatementUnit("INSERT INTO factory(id,resources,products,last_update) VALUES(%1,'%2','%3',%4)",database);
@@ -70,7 +70,7 @@ void PreparedDBQueryServer::initDatabaseQueryServer(const DatabaseBase::Database
         PreparedDBQueryServer::db_query_insert_city=PreparedStatementUnit("INSERT INTO city(clan,city) VALUES(%1,'%2');",database);
 
         PreparedDBQueryServer::db_query_update_character_quests=PreparedStatementUnit("UPDATE character_forserver SET quest=decode('%1','hex') WHERE character=%2",database);
-        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,market_cash,encode(quest,'hex'),date FROM character_forserver WHERE character=%1",database);
+        PreparedDBQueryServer::db_query_character_server_by_id=PreparedStatementUnit("SELECT map,x,y,orientation,rescue_map,rescue_x,rescue_y,rescue_orientation,unvalidated_rescue_map,unvalidated_rescue_x,unvalidated_rescue_y,unvalidated_rescue_orientation,encode(quest,'hex'),date FROM character_forserver WHERE character=%1",database);
         PreparedDBQueryServer::db_query_delete_character_server_by_id=PreparedStatementUnit("DELETE FROM character_forserver WHERE character=%1",database);
         PreparedDBQueryServer::db_query_select_character_bymap=PreparedStatementUnit("SELECT map,encode(plants,'hex'),encode(items,'hex'),encode(fights,'hex') FROM character_bymap WHERE character=%1",database);
         PreparedDBQueryServer::db_query_update_plant=PreparedStatementUnit("UPDATE character_bymap SET plants=decode('%1','hex') WHERE character=%2 AND map=%3",database);

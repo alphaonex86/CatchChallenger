@@ -114,7 +114,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     /*map(0),x(1),y(2),orientation(3),
     rescue_map(4),rescue_x(5),rescue_y(6),rescue_orientation(7),
     unvalidated_rescue_map(8),unvalidated_rescue_x(9),unvalidated_rescue_y(10),unvalidated_rescue_orientation(11),
-    market_cash(12),quest(13),date(14)*/
+    quest(12),date(13)*/
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     callbackRegistred.pop();
     const auto &characterIdString=std::to_string(characterId);
@@ -174,7 +174,7 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
     else
     {
         bool ok;
-        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(14),&ok);
+        const uint64_t &server_date=GlobalServerData::serverPrivateVariables.db_server->stringtouint64(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
         if(!ok || server_date<characterCreationDateList.at(characterId))
         {
             //drop before re-add
@@ -225,20 +225,20 @@ void Client::selectCharacterServer_return(const uint8_t &query_id,const uint32_t
 
     //quest
     {
-        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(13),&ok);
+        const std::vector<char> &quests=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(12),&ok);
         #ifndef CATCHCHALLENGER_EXTRA_CHECK
         const char * const raw_quests=quests.data();
         #endif
         if(!ok)
         {
-            characterSelectionIsWrong(query_id,0x04,"quest: "+GlobalServerData::serverPrivateVariables.db_server->value(13)+" is not a hexa");
+            characterSelectionIsWrong(query_id,0x04,"quest: "+GlobalServerData::serverPrivateVariables.db_server->value(12)+" is not a hexa");
             return;
         }
         else
         {
             if(quests.size()%(2/*quest incremental id*/+1/*finish_one_time*/+1/*quest.step*/)!=0)
             {
-                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(13));
+                characterSelectionIsWrong(query_id,0x04,"quests missing data: "+GlobalServerData::serverPrivateVariables.db_server->value(12));
                 return;
             }
             else

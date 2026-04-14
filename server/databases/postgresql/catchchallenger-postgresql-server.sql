@@ -34,9 +34,6 @@ CREATE TABLE character_forserver (
     unvalidated_rescue_y smallint NOT NULL,
     unvalidated_rescue_orientation smallint NOT NULL,
     date bigint NOT NULL,
-    botfight_id bytea NOT NULL,
-    itemonmap bytea NOT NULL,
-    plants bytea,
     quest bytea NOT NULL
 );
 

@@ -26,7 +26,6 @@ CREATE TABLE IF NOT EXISTS `character_forserver` (
   `unvalidated_rescue_y` tinyint(3) unsigned NOT NULL,
   `unvalidated_rescue_orientation` smallint(6) NOT NULL,
   `date` int(11) unsigned NOT NULL,
-  `by_map` blob NOT NULL,
   `quest` blob NOT NULL,
   PRIMARY KEY (`character`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

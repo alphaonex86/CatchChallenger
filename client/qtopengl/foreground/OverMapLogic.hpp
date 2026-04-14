@@ -6,7 +6,7 @@
 #include "../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../general/base/GeneralStructures.hpp"
 #ifndef CATCHCHALLENGER_NOAUDIO
-#include <QAudioOutput>
+#include <QAudioSink>
 #include "../../libqtcatchchallenger/QInfiniteBuffer.hpp"
 #endif
 #include <QListWidgetItem>

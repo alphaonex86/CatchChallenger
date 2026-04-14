@@ -240,6 +240,8 @@ uint8_t MoveOnTheMap::getMapZoneCode(const CommonMap &map, const uint8_t &x, con
 
 CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
+    if(x>=map.width || y>=map.height)
+        return CatchChallenger::ParsedLayerLedges_NoLedges;
     const uint8_t &i=map.flat_simplified_map.at(x+y*map.width);
     if(i<250 || i>253)
         return CatchChallenger::ParsedLayerLedges_NoLedges;
@@ -248,6 +250,8 @@ CatchChallenger::ParsedLayerLedges MoveOnTheMap::getLedge(const CommonMap &map, 
 
 bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &x, const uint8_t &y,const CatchChallenger::Direction &direction)
 {
+    if(x>=map.width || y>=map.height)
+        return false;
     //exclude here ParsedLayerLedges, because don't have info about direction
     const uint8_t &val=map.flat_simplified_map.at(x+y*map.width);
     if(val<200)
@@ -282,11 +286,15 @@ bool MoveOnTheMap::isWalkableWithDirection(const CommonMap &map, const uint8_t &
 
 bool MoveOnTheMap::isDirt(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
+    if(x>=map.width || y>=map.height)
+        return false;
     return map.flat_simplified_map.at(x+y*map.width)==249;
 }
 
 MonstersCollisionValue MoveOnTheMap::getZoneCollision(const CommonMap &map, const uint8_t &x, const uint8_t &y)
 {
+    if(x>=map.width || y>=map.height)
+        return MonstersCollisionValue();
     const uint8_t &val=map.flat_simplified_map.at(x+y*map.width);
     if(map.zones.size()<=val)
         return MonstersCollisionValue();

@@ -26,9 +26,6 @@ you have: characters/ZZZZZZZZZZZZZZ where ZZZZZZZZZZZZZZ is the character name i
   * uint8_t unvalidated_rescue_x
   * uint8_t unvalidated_rescue_y
   * uint8_t unvalidated_rescue_orientation
-  * uint64_t market_cash bigint
-  * string botfight_id
-  * std::set<uint16_t> itemonmap
   * std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> quest
 
 List:

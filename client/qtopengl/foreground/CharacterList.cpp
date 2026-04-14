@@ -405,7 +405,8 @@ void CharacterList::newCharacterId(const uint8_t &returnCode, const uint32_t &ch
         updateCharacterList();
         characterEntryList->item(characterEntryList->count()-1)->setSelected(true);
         if(characterEntryList->count()>=CommonSettingsCommon::commonSettingsCommon.min_character &&
-                characterEntryList->count()<=CommonSettingsCommon::commonSettingsCommon.max_character)
+                characterEntryList->count()<=CommonSettingsCommon::commonSettingsCommon.max_character &&
+                !connexionManager->client->character_select_is_send())
             select_clicked();
     }
     else

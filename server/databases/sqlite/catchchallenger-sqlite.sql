@@ -52,7 +52,6 @@ CREATE TABLE IF NOT EXISTS "character_forserver" (
 	"unvalidated_rescue_y"	INTEGER,
 	"unvalidated_rescue_orientation"	INTEGER,
 	"date"	INTEGER,
-	"market_cash"	INTEGER,
 	"quest"	BLOB
 );
 CREATE TABLE IF NOT EXISTS "city" (

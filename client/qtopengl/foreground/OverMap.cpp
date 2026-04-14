@@ -301,8 +301,21 @@ void OverMap::paint(QPainter *, const QStyleOptionGraphicsItem *, QWidget *w)
         }
     }
 
-    playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
-    playersCount->setPos(w->width()-space-80,space+15);
+    {
+        bool showPlayersCount=!connexionManager->isLocalGame();
+        #if defined(CATCHCHALLENGER_SOLO) && !defined(NOTCPSOCKET) && !defined(NOSINGLEPLAYER) && defined(CATCHCHALLENGER_MULTI)
+        if(!showPlayersCount && CatchChallenger::InternalServer::internalServer!=nullptr
+           && CatchChallenger::InternalServer::internalServer->openIsOpenToLan())
+            showPlayersCount=true;
+        #endif
+        playersCountBack->setVisible(showPlayersCount);
+        playersCount->setVisible(showPlayersCount);
+        if(showPlayersCount)
+        {
+            playersCountBack->setPos(w->width()-space-playersCountBack->pixmap().width(),space);
+            playersCount->setPos(w->width()-space-80,space+15);
+        }
+    }
 
     int physicalDpiX=w->physicalDpiX();
 

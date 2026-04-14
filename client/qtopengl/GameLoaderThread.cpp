@@ -26,7 +26,7 @@ void GameLoaderThread::run()
     {
         QElapsedTimer myTimer;
         myTimer.start();
-        const QString &file=toLoad.at(index);
+        const QString &file=toLoad[index];
         if(file.endsWith(QStringLiteral(".opus"))) {
             uint64_t pos=0;
             #ifndef CATCHCHALLENGER_NOAUDIO

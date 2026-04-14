@@ -7,6 +7,7 @@
 #include "foreground/LoadingScreen.hpp"
 #include <iostream>
 #include <QStandardPaths>
+#include <QCoreApplication>
 
 ConnexionManager::ConnexionManager(LoadingScreen *l)
 {
@@ -307,7 +308,15 @@ void ConnexionManager::connectTheExternalSocket(ConnexionInfo connexionInfo,Catc
 
     /*baseWindow->connectAllSignals();
     baseWindow->setMultiPlayer(true,client);*/
+    #ifdef CATCHCHALLENGER_SOLO
+    QDir datapack;
+    if(fakeSocket!=nullptr)
+        datapack=QDir(QCoreApplication::applicationDirPath()+QStringLiteral("/datapack/internal/"));
+    else
+        datapack=QDir(serverToDatapachPath(connexionInfo));
+    #else
     QDir datapack(serverToDatapachPath(connexionInfo));
+    #endif
     if(!datapack.exists())
         if(!datapack.mkpath(datapack.absolutePath()))
         {

@@ -540,7 +540,7 @@ void ScreenTransition::openSolo()
 
     {
         //std::string datapackPathBase=client->datapackPathBase();
-        std::string datapackPathBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/";
+        std::string datapackPathBase=QCoreApplication::applicationDirPath().toStdString()+"/datapack/internal/";
         CatchChallenger::GameServerSettings formatedServerSettings=internalServer->getSettings();
 
         CommonSettingsServer::commonSettingsServer.waitBeforeConnectAfterKick=0;

@@ -6,7 +6,9 @@
 #include "QInfiniteBuffer.hpp"
 
 #include <QString>
-#include <QAudioOutput>
+#include <QAudioSink>
+#include <QAudioDevice>
+#include <QMediaDevices>
 #include <QList>
 #include <QBuffer>
 #include <QAudioFormat>
@@ -19,7 +21,7 @@ public:
     static Audio *audio;
     void setVolume(const int &volume);
     QStringList output_list();
-    void setPlayerVolume(QAudioOutput * const player);
+    void setPlayerVolume(QAudioSink * const player);
     QAudioFormat format() const;
     static bool decodeOpus(const std::string &filePath,QByteArray &data);
 
@@ -27,15 +29,15 @@ public:
     virtual std::string startAmbiance(const std::string &soundPath);
     virtual void stopCurrentAmbiance();
 public:
-    void addPlayer(QAudioOutput * const player);
-    void removePlayer(QAudioOutput * const player);
+    void addPlayer(QAudioSink * const player);
+    void removePlayer(QAudioSink * const player);
 private:
-    std::vector<QAudioOutput *> playerList;
+    std::vector<QAudioSink *> playerList;
 protected:
     QAudioFormat m_format;
     int volume;
 protected:
-    QAudioOutput *ambiance_player;
+    QAudioSink *ambiance_player;
     QInfiniteBuffer *ambiance_buffer;
     QByteArray ambiance_data;
 };
