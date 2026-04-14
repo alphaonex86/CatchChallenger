@@ -174,6 +174,7 @@ int main(int argc, char *argv[])
 
     #ifdef CATCHCHALLENGER_DB_FILE
     ::mkdir("database",0700);
+    ::mkdir("database/login",0700);
     ::mkdir("database/accounts",0700);
     ::mkdir("database/characters",0700);
     ::mkdir("database/clans",0700);

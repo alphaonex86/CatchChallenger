@@ -138,7 +138,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
     callbackRegistred.pop();
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-//    std::cerr << "askLogin_return for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
+//    std::cerr << "askLogin_return for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
     #else
     #error Define what do here
     #endif
@@ -148,7 +148,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         struct stat sb;
-        if(::stat(("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)).c_str(),&sb)!=0)
+        if(::stat(("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE)).c_str(),&sb)!=0)
         #else
         #error Define what do here
         #endif
@@ -182,10 +182,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
         else
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            std::ifstream in_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ifstream::binary);
+            std::ifstream in_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
-                std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
                 abort();
                 return;
             }
@@ -211,7 +211,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                         s >> secretTokenBinary;
                         if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                         {
-                            std::cerr << "convertion to binary for pass failed for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                            std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
                             abort();
                         }
                         #else
@@ -305,7 +305,7 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
                     std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
                     {
-                        std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                        std::cerr << "Unable to open data base file database/accounts/" << account_id_db << " (abort)" << std::endl;
                         abort();
                         return;
                     }
@@ -574,10 +574,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         }
         {
             {
-                std::ofstream out_file("database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
+                std::ofstream out_file("database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file " << "database/login/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
                     abort();
                     return;
                 }
@@ -587,7 +587,7 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 memcpy(secretTokenBinary.data(),askLoginParam->pass,CATCHCHALLENGER_SHA224HASH_SIZE);
                 if(secretTokenBinary.size()!=CATCHCHALLENGER_SHA224HASH_SIZE)
                 {
-                    std::cerr << "convertion to binary for pass failed for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
+                    std::cerr << "convertion to binary for pass failed for: database/login/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " " << secretTokenBinary.size() << "!=" << CATCHCHALLENGER_SHA224HASH_SIZE << std::endl;
                     abort();
                 }
                 hps::to_stream(secretTokenBinary, out_file);
@@ -597,15 +597,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file " << "database/accounts/"+binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file database/accounts/" << account_id_db << " (abort)" << std::endl;
                     abort();
                     return;
                 }
 
                 std::vector<CharacterEntry> characterEntryList;
                 hps::to_stream(characterEntryList, out_file);
-
-                //std::cerr << "createAccount_return) for: database/accounts/" << binarytoHexa(askLoginParam->login,CATCHCHALLENGER_SHA224HASH_SIZE) << std::endl;
             }
         }
         #else

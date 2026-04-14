@@ -123,13 +123,17 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
     if(playerMapObject!=NULL)
     {
         unloadPlayerFromCurrentMap();
-        delete playerMapObject;
+        if(playerMapObject->objectGroup()==NULL)
+            delete playerMapObject;
+        // else: still owned by ObjectGroup, its destructor will qDeleteAll(mObjects)
         playerMapObject=NULL;
     }
     if(monsterMapObject!=nullptr)
     {
         unloadMonsterFromCurrentMap();
-        delete monsterMapObject;
+        if(monsterMapObject->objectGroup()==nullptr)
+            delete monsterMapObject;
+        // else: still owned by ObjectGroup, its destructor will qDeleteAll(mObjects)
         monsterMapObject=nullptr;
     }
 }
