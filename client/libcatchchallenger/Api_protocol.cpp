@@ -431,7 +431,14 @@ void Api_protocol::send_player_move_internal(const uint8_t &moved_unit,const Cat
         std::cerr << "direction given wrong: " << directionInt << std::endl;
         abort();
     }
-    //std::cout << std::to_string(moved_unit) << " into " << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;-> spam for bot
+    if(dropOutputAfterOnMap)
+    {
+        std::cerr << "========================================================" << std::endl;
+        std::cerr << "=== WARNING: MOVE DROPPED (--dropsenddataafteronmap) ===" << std::endl;
+        std::cerr << "=== moved_unit=" << std::to_string(moved_unit) << " direction=" << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;
+        std::cerr << "========================================================" << std::endl;
+    }
+    std::cout << "Api_protocol::send_player_move_internal() moved_unit=" << std::to_string(moved_unit) << " into " << CatchChallenger::MoveOnTheMap::directionToString(direction) << std::endl;
     char buffer[2];
     buffer[0]=moved_unit;
     buffer[1]=directionInt;
@@ -543,6 +550,7 @@ bool Api_protocol::teleportDone()
 
 bool Api_protocol::addCharacter(const uint8_t &charactersGroupIndex,const uint8_t &profileIndex, const std::string &pseudo, const uint8_t &monsterGroupId, const uint8_t &skinId)
 {
+    std::cout << "Api_protocol::addCharacter() pseudo: " << pseudo << std::endl;
     if(!is_logged)
     {
         std::cerr << "is not logged, line: " << __FILE__ << ": " << __LINE__ << std::endl;
@@ -2112,7 +2120,10 @@ bool Api_protocol::postReplyData(const uint8_t &queryNumber, const char * const 
 bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * const data,const unsigned int &size)
 {
     if(dropOutputAfterOnMap)
+    {
+        std::cerr << "=== DROPPED packOutcommingData packetCode=0x" << std::hex << (unsigned int)packetCode << std::dec << " size=" << size << " ===" << std::endl;
         return true;
+    }
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)
     {
@@ -2156,7 +2167,10 @@ bool Api_protocol::packOutcommingData(const uint8_t &packetCode,const char * con
 bool Api_protocol::packOutcommingQuery(const uint8_t &packetCode, const uint8_t &queryNumber, const char * const data, const unsigned int &size)
 {
     if(dropOutputAfterOnMap)
+    {
+        std::cerr << "=== DROPPED packOutcommingQuery packetCode=0x" << std::hex << (unsigned int)packetCode << std::dec << " queryNumber=" << (unsigned int)queryNumber << " size=" << size << " ===" << std::endl;
         return true;
+    }
     registerOutputQuery(queryNumber,packetCode);
     const uint8_t &fixedSize=ProtocolParsingBase::packetFixedSize[packetCode];
     if(fixedSize!=0xFE)

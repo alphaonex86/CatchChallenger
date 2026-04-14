@@ -13,6 +13,9 @@ void ProtocolParsingInputOutput::registerOutputQuery(const uint8_t &queryNumber,
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     if(outputQueryNumberToPacketCode[queryNumber]!=0x00)
     {
+        std::cerr << "registerOutputQuery() conflict: queryNumber=" << std::to_string(queryNumber)
+                  << " already registered with packetCode=0x" << std::hex << static_cast<unsigned int>(outputQueryNumberToPacketCode[queryNumber])
+                  << std::dec << ", new packetCode=0x" << std::hex << static_cast<unsigned int>(packetCode) << std::dec << std::endl;
         errorParsingLayer("Query with this query number already found");
         return;
     }

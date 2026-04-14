@@ -1107,7 +1107,16 @@ void OverMapLogic::cityCaptureUpdateTime()
         nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+24*3600*7*1000);
     else
         nextCatch=QDateTime::fromMSecsSinceEpoch(CatchChallenger::FacilityLib::nextCaptureTime(city));
-    nextCityCatchTimer.start(static_cast<uint32_t>(nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()));
+    {
+        const int64_t timerInterval=nextCatch.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch();
+        if(timerInterval>0)
+            nextCityCatchTimer.start(static_cast<uint32_t>(timerInterval));
+        else
+        {
+            std::cerr << "cityCaptureUpdateTime(): next capture time is in the past (" << timerInterval << "ms), stop timer" << std::endl;
+            nextCityCatchTimer.stop();
+        }
+    }
 }
 
 void OverMapLogic::updatePageZoneCatch()
@@ -1570,7 +1579,12 @@ void OverMapLogic::cityCapture(const uint32_t &remainingTime,const uint8_t &type
         std::cout << "City capture disabled" << std::endl;
         return;//disabled
     }
-    nextCityCatchTimer.start(remainingTime*1000);
+    {
+        const int64_t timerInterval=static_cast<int64_t>(remainingTime)*1000;
+        if(timerInterval<0 || timerInterval>INT_MAX)
+            std::cerr << "QTimer negative interval at " << __FILE__ << ":" << __LINE__ << " value: " << timerInterval << std::endl;
+        nextCityCatchTimer.start(remainingTime*1000);
+    }
     nextCatch=QDateTime::fromMSecsSinceEpoch(QDateTime::currentMSecsSinceEpoch()+remainingTime*1000);
     city.capture.frenquency=(CatchChallenger::City::Capture::Frequency)type;
     city.capture.day=(CatchChallenger::City::Capture::Day)QDateTime::currentDateTime().addSecs(remainingTime).date().dayOfWeek();

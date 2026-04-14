@@ -117,11 +117,19 @@ MapVisualiserPlayer::~MapVisualiserPlayer()
         delete nextCurrentObject;
     if(grassCurrentObject!=NULL)
         delete grassCurrentObject;
+    // playerMapObject may have been added to an ObjectGroup via addObject().
+    // Must remove from ObjectGroup before deleting, otherwise ObjectGroup::~ObjectGroup()
+    // will qDeleteAll(mObjects) on the already-freed pointer → double-free crash.
     if(playerMapObject!=NULL)
+    {
+        unloadPlayerFromCurrentMap();
         delete playerMapObject;
+        playerMapObject=NULL;
+    }
     if(monsterMapObject!=nullptr)
     {
-        //delete monsterMapObject;-> do a clean fix
+        unloadMonsterFromCurrentMap();
+        delete monsterMapObject;
         monsterMapObject=nullptr;
     }
 }
@@ -332,7 +340,12 @@ void MapVisualiserPlayer::moveStepSlot()
         {
             MapDoor* door=map_full->doors.at(std::pair<uint8_t,uint8_t>(static_cast<uint8_t>(nx),static_cast<uint8_t>(ny)));
             door->startOpen(250);
-            moveAnimationTimer.start(door->timeToOpen());
+            {
+                const int timerInterval=door->timeToOpen();
+                if(timerInterval<0)
+                    std::cerr << "QTimer negative interval at " << __FILE__ << ":" << __LINE__ << " value: " << timerInterval << std::endl;
+                moveAnimationTimer.start(timerInterval);
+            }
 
             //block but set good look direction
             uint8_t baseTile;

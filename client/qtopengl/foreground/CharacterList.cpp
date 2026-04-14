@@ -123,9 +123,9 @@ void CharacterList::add_finished()
 
 void CharacterList::newGame_finished()
 {
+    emit setAbove(nullptr);
     if(!newGame->isOk())
     {
-        emit setAbove(nullptr);
         if(characterEntryList->count()<CommonSettingsCommon::commonSettingsCommon.min_character)
             emit backSubServer();
         return;

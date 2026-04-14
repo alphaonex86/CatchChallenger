@@ -66,6 +66,7 @@ void Client::setToDefault()
     TXSize=0;
     #endif
     memset(inputQueryNumberToPacketCode,0x00,sizeof(inputQueryNumberToPacketCode));
+    memset(outputQueryNumberToPacketCode,0x00,sizeof(outputQueryNumberToPacketCode));
 
     //map move
     mapIndex=65535;
@@ -903,6 +904,10 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> botFightMonsters;
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
+    //queryNumberList is runtime-only, regenerate after cache load
+    queryNumberList.clear();
+    for(uint8_t i=0;i<CATCHCHALLENGER_MAXPROTOCOLQUERY;i++)
+        queryNumberList.push_back(i);
     //botFight and isInCityCapture are runtime-only and not serialised
 
     uint8_t value=0;

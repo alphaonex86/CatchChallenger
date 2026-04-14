@@ -812,14 +812,14 @@ public:
 class ItemFull
 {
 public:
-    std::unordered_map<uint16_t, std::vector<MonsterItemEffect> > monsterItemEffect;
-    std::unordered_map<uint16_t, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<uint16_t/*monster*/,uint16_t/*evolveTo*/> > evolutionItem;
-    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<uint16_t/*monster*/> > itemToLearn;
-    std::unordered_map<uint16_t, uint32_t> repel;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffect> > monsterItemEffect;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, std::vector<MonsterItemEffectOutOfFight> > monsterItemEffectOutOfFight;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER/*monster*/,CATCHCHALLENGER_TYPE_MONSTER/*evolveTo*/> > evolutionItem;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/, std::unordered_set<CATCHCHALLENGER_TYPE_MONSTER/*monster*/> > itemToLearn;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, uint32_t> repel;
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Item> item;
     CATCHCHALLENGER_TYPE_ITEM itemMaxId;
-    std::unordered_map<uint16_t, Trap> trap;
+    std::unordered_map<CATCHCHALLENGER_TYPE_ITEM, Trap> trap;
     #ifdef CATCHCHALLENGER_CACHE_HPS
     template <class B>
     void serialize(B& buf) const {

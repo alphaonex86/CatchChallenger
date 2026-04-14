@@ -336,6 +336,16 @@ const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> CommonDatapac
     return tempNameToMonsterId;
 }
 
+void CommonDatapack::set_tempNameToItemId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &v)
+{
+    tempNameToItemId=v;
+}
+
+void CommonDatapack::set_tempNameToMonsterId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &v)
+{
+    tempNameToMonsterId=v;
+}
+
 const bool &CommonDatapack::get_monsterRateApplied() const
 {
     return monsterRateApplied;

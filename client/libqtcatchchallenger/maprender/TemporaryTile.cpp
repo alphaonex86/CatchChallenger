@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QDebug>
+#include <iostream>
 
 Tiled::Tile *TemporaryTile::empty=NULL;
 
@@ -28,6 +29,8 @@ void TemporaryTile::startAnimation(Tiled::Tile *tile,const uint32_t &ms,const ui
     Tiled::Cell cell=object->cell();
     cell.setTile(tile);
     object->setCell(cell);
+    if(static_cast<int>(ms)<0)
+        std::cerr << "QTimer negative interval at " << __FILE__ << ":" << __LINE__ << " value: " << ms << std::endl;
     timer.start(ms);
     this->count=count;
     this->index=0;

@@ -39,6 +39,7 @@ ObjectGroupItem::~ObjectGroupItem()
             index++;
         }
     }
+    objectGroupLink.erase(mObjectGroup);
 }
 
 QRectF ObjectGroupItem::boundingRect() const
@@ -72,9 +73,8 @@ void ObjectGroupItem::removeObject(Tiled::MapObject *object)
     if(MapObjectItem::objectLink.find(object)==MapObjectItem::objectLink.cend())
     {
         qDebug() << "The tiled object not exist on this layer";
-        #ifndef CATCHCHALLENGER_EXTRA_CHECK
-        return;
-        #endif
+        // Still remove from ObjectGroup even if visual wrapper is missing,
+        // otherwise the ObjectGroup destructor will double-free this object
     }
     else
     {

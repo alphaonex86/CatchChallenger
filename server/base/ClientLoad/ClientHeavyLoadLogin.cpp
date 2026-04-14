@@ -564,12 +564,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            FILE *fp=fopen("database/server","r+");
-            if(fp==NULL) {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
-            if(fseek(fp,sizeof(GlobalServerData::serverPrivateVariables.maxClanId),SEEK_SET)!=0)
-            {std::cerr << "error to open in write seek the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
-            fwrite(&GlobalServerData::serverPrivateVariables.maxAccountId,sizeof(GlobalServerData::serverPrivateVariables.maxAccountId),1,fp);
-            fclose(fp);
+            std::ofstream out_file("database/server", std::ofstream::binary);
+            if(!out_file.good() || !out_file.is_open())
+            {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
+            hps::to_stream(GlobalServerData::serverSettings.city, out_file);
         }
         {
             {

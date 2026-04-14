@@ -193,7 +193,7 @@ void BaseWindow::setMultiPlayer(bool multiplayer, Api_protocol_Qt *client)
     /*if(!multiplayer)
         mapController->setOpenGl(true);*/
     //frame_main_display_right->setVisible(multiplayer);
-    ui->frame_main_display_interface_player->setVisible(multiplayer);//displayed when have the player connected (if have), shown on lan open
+    ui->frame_main_display_interface_player->hide();//hidden until number_of_player() receives real data, or receiveLanPort() is called
 
     if(!connect(static_cast<Api_protocol_Qt *>(client),&Api_protocol_Qt::QtnewError,  this,&BaseWindow::newError))
         abort();
