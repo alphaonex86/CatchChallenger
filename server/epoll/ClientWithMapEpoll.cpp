@@ -17,6 +17,9 @@ void ClientWithMapEpoll::reset(int infd)
     #ifdef CATCHCHALLENGER_DDOS_FILTER
     doDDOSReset();
     #endif
+    //reset visibility state so PATH1 (full insert) runs on first map tick
+    sendedMap=65535;
+    sendedStatus.clear();
     stat=ClientStat::None;
 }
 

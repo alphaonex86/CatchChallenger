@@ -666,7 +666,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
