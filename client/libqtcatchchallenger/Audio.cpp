@@ -11,16 +11,13 @@ Audio::Audio()
     //init audio here
     m_format.setSampleRate(48000);
     m_format.setChannelCount(2);
-    /* todo change to Qt6: m_format.setSampleSize(16);
-    m_format.setCodec("audio/pcm");
-    m_format.setByteOrder(QAudioFormat::LittleEndian);
-    m_format.setSampleType(QAudioFormat::SignedInt);
+    m_format.setSampleFormat(QAudioFormat::Int16);
 
-    QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    QAudioDevice info=QMediaDevices::defaultAudioOutput();
     if (!info.isFormatSupported(m_format)) {
         std::cerr << "raw audio format not supported by backend, cannot play audio." << std::endl;
         return;
-    }*/
+    }
 
     volume=100;
     ambiance_player=nullptr;
@@ -44,7 +41,7 @@ void Audio::setVolume(const int &volume)
     this->volume=volume;
 }
 
-void Audio::addPlayer(QAudioOutput * const player)
+void Audio::addPlayer(QAudioSink * const player)
 {
     if(vectorcontainsAtLeastOne(playerList,player))
         return;
@@ -52,12 +49,12 @@ void Audio::addPlayer(QAudioOutput * const player)
     player->setVolume((qreal)volume/100);
 }
 
-void Audio::removePlayer(QAudioOutput * const player)
+void Audio::removePlayer(QAudioSink * const player)
 {
     vectorremoveOne(playerList,player);
 }
 
-void Audio::setPlayerVolume(QAudioOutput * const player)
+void Audio::setPlayerVolume(QAudioSink * const player)
 {
     player->setVolume((qreal)volume/100);
 }
@@ -134,12 +131,11 @@ std::string Audio::startAmbiance(const std::string &soundPath)
 {
     stopCurrentAmbiance();
 
-    /* todo change to Qt6: QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+    QAudioDevice info=QMediaDevices::defaultAudioOutput();
     if (!info.isFormatSupported(m_format))
         return "raw audio format not supported by backend, cannot play audio.";
 
-    ambiance_player = new QAudioOutput(Audio::audio->format());
-    // Create a new Media
+    ambiance_player = new QAudioSink(info,Audio::audio->format());
     if(ambiance_player!=nullptr)
     {
         //decode file
@@ -160,7 +156,7 @@ std::string Audio::startAmbiance(const std::string &soundPath)
             ambiance_data.clear();
             return "Audio::decodeOpus failed";
         }
-    }*/
+    }
     return "ambiance_player==nullptr";
 }
 
@@ -169,7 +165,7 @@ void Audio::stopCurrentAmbiance()
     if(ambiance_player!=nullptr)
     {
         removePlayer(ambiance_player);
-        /* todo change to Qt6: ambiance_player->stop();*/
+        ambiance_player->stop();
         delete ambiance_player;
         ambiance_player=nullptr;
         ambiance_data.clear();

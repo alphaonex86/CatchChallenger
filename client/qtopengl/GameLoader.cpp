@@ -11,15 +11,15 @@ GameLoader::GameLoader()
 {
     const int tc=QThread::idealThreadCount();
     threads.clear();
-    std::vector<GameLoaderThread *> threads;
+    std::vector<GameLoaderThread *> threadList;
     int index=0;
     while(index<tc || index==0)//always create 1 thread
     {
         GameLoaderThread *t=new GameLoaderThread(index);
         connect(t,&QThread::finished,this,&GameLoader::threadFinished,Qt::QueuedConnection);
         connect(t,&GameLoaderThread::addSize,this,&GameLoader::addSize,Qt::QueuedConnection);
-        this->threads.insert(t);
-        threads.push_back(t);
+        threads.insert(t);
+        threadList.push_back(t);
         index++;
     }
 
@@ -33,10 +33,7 @@ GameLoader::GameLoader()
             QString file=it.next();
             if(file.endsWith(QStringLiteral(".opus")))
             {
-                if(tc<2)
-                    threads.at(0)->toLoad.push_back(file);
-                else
-                    threads.at(index%threads.size())->toLoad.push_back(file);
+                threadList[index%threadList.size()]->toLoad.push_back(file);
                 index++;
                 sizeToProcess+=QFileInfo(file).size();
             }
@@ -53,10 +50,7 @@ GameLoader::GameLoader()
                     file.endsWith(QStringLiteral(".webp"))
                     )
             {
-                if(tc<2)
-                    threads.at(0)->toLoad.push_back(file);
-                else
-                    threads.at(index%threads.size())->toLoad.push_back(file);
+                threadList[index%threadList.size()]->toLoad.push_back(file);
                 index++;
                 sizeToProcess+=QFileInfo(file).size();
             }
@@ -65,9 +59,9 @@ GameLoader::GameLoader()
 
     {
         unsigned int index=0;
-        while(index<threads.size())
+        while(index<threadList.size())
         {
-            threads.at(index)->start(QThread::LowestPriority);
+            threadList[index]->start(QThread::LowestPriority);
             index++;
         }
     }

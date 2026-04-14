@@ -1,14 +1,12 @@
-linux:QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
-linux:QMAKE_CFLAGS+="-Wno-deprecated-declarations"
-
-linux:QMAKE_LFLAGS += -fuse-ld=mold
-linux:LIBS += -fuse-ld=mold
+linux: {
+    QMAKE_CXXFLAGS+="-Wno-deprecated-declarations"
+    QMAKE_CFLAGS+="-Wno-deprecated-declarations"
+    QMAKE_LFLAGS += -fuse-ld=mold
+    LIBS += -fuse-ld=mold
+}
 
 DEFINES += OPENGL CATCHCHALLENGER_CACHE_HPS
-wasm: DEFINES += CATCHCHALLENGER_NOAUDIO
-wasm: {
-    DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
-}
+wasm: DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS CATCHCHALLENGER_NOAUDIO
 DEFINES += CATCHCHALLENGER_DB_SQLITE
 #DEFINES+=PROTOCOLPARSINGDEBUG
 DEFINES += CATCHCHALLENGER_CLASS_QT
