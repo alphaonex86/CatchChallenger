@@ -1,7 +1,6 @@
 SOURCES += \
     $$PWD/base/GlobalServerData.cpp \
     $$PWD/base/PlayerUpdaterBase.cpp \
-    $$PWD/base/SqlFunction.cpp \
     $$PWD/base/BaseServer/BaseServer.cpp \
     $$PWD/base/BaseServer/BaseServer2.cpp \
     $$PWD/base/BaseServer/BaseServer3.cpp \
@@ -76,6 +75,7 @@ SOURCES += \
 
 !contains(DEFINES, CATCHCHALLENGER_DB_FILE) {
 SOURCES += \
+    $$PWD/base/SqlFunction.cpp \
     $$PWD/base/PreparedDBQueryLogin.cpp \
     $$PWD/base/PreparedDBQueryCommon.cpp \
     $$PWD/base/PreparedDBQueryServer.cpp \

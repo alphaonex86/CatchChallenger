@@ -29,8 +29,18 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     {
         if(Client::datapack_list_cache_timestamp_base==0)
         {
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+            {
+                const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            }
+            #endif
             Client::datapack_list_cache_timestamp_base=sFrom1970();
             BaseServerMasterSendDatapack::datapack_file_hash_cache_base=datapack_file_list(GlobalServerData::serverSettings.datapack_basePath,"map/main/");
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            BaseServerMasterSendDatapack::extensionAllowed.clear();
+            #endif
         }
         return BaseServerMasterSendDatapack::datapack_file_hash_cache_base;
     }
@@ -63,8 +73,18 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     {
         if(Client::datapack_list_cache_timestamp_main==0)
         {
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+            {
+                const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            }
+            #endif
             Client::datapack_list_cache_timestamp_main=sFrom1970();
             Client::datapack_file_hash_cache_main=datapack_file_list(GlobalServerData::serverPrivateVariables.mainDatapackFolder,"sub/");
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            BaseServerMasterSendDatapack::extensionAllowed.clear();
+            #endif
         }
         return Client::datapack_file_hash_cache_main;
     }
@@ -97,8 +117,18 @@ std::unordered_map<std::string, BaseServerMasterSendDatapack::DatapackCacheFile>
     {
         if(Client::datapack_list_cache_timestamp_sub==0)
         {
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            if(BaseServerMasterSendDatapack::extensionAllowed.empty())
+            {
+                const std::vector<std::string> &extensionAllowedTemp=stringsplit(std::string(CATCHCHALLENGER_EXTENSION_ALLOWED+std::string(";")+CATCHCHALLENGER_EXTENSION_COMPRESSED),';');
+                BaseServerMasterSendDatapack::extensionAllowed=std::unordered_set<std::string>(extensionAllowedTemp.begin(),extensionAllowedTemp.end());
+            }
+            #endif
             Client::datapack_list_cache_timestamp_sub=sFrom1970();
             Client::datapack_file_hash_cache_sub=datapack_file_list(GlobalServerData::serverPrivateVariables.subDatapackFolder,"");
+            #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR
+            BaseServerMasterSendDatapack::extensionAllowed.clear();
+            #endif
         }
         return Client::datapack_file_hash_cache_sub;
     }

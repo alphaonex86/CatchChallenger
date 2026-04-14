@@ -85,7 +85,8 @@ bool Client::parseMessage(const uint8_t &packetCode,const char * const data,cons
                 errorOutput("Bad direction number: "+std::to_string(direction));
                 return false;
             }
-            moveThePlayer(stepCount,static_cast<Direction>(direction));
+            const bool moveOk=moveThePlayer(stepCount,static_cast<Direction>(direction));
+            (void)moveOk;
             return true;
         }
         break;

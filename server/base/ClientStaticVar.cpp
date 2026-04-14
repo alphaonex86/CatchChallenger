@@ -44,7 +44,6 @@ DdosBuffer<uint16_t,3> Client::generalChatDrop;
 DdosBuffer<uint16_t,3> Client::clanChatDrop;
 DdosBuffer<uint16_t,3> Client::privateChatDrop;
 
-std::vector<uint8_t> Client::selectCharacterQueryId;
 //std::vector<uint16_t> Client::simplifiedIdList;
 
 #ifndef CATCHCHALLENGER_SERVER_DATAPACK_ONLYBYMIRROR

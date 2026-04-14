@@ -267,7 +267,7 @@ private:
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     std::queue<std::string > paramToPassToCallBackType;
     #endif
-    static std::vector<uint8_t> selectCharacterQueryId;
+    std::vector<uint8_t> selectCharacterQueryId;
 
     // for status
     bool stopIt;

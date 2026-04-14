@@ -2,6 +2,7 @@
 #include "../../general/base/GeneralVariable.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/CommonSettingsCommon.hpp"
 #include "../../general/base/FacilityLibGeneral.hpp"
 #include "../../general/tinyXML2/customtinyxml2.hpp"
 #include <tileset.h>
@@ -116,6 +117,24 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPMAIN=DATAPACK_BASE_PATH_MAPMAIN "na/";
         DatapackClientLoader::text_DATAPACK_BASE_PATH_MAPSUB=std::string(DATAPACK_BASE_PATH_MAPSUB1)+"na/"+std::string(DATAPACK_BASE_PATH_MAPSUB2)+"nabis/";
 
+        //remove cache if the hash it was built for differs from current server hash
+        if(!cachepath.empty() && !CommonSettingsCommon::commonSettingsCommon.datapackHashBase.empty())
+        {
+            const QString cacheHashKey=QStringLiteral("DatapackCacheHashBase-")+QString::fromStdString(datapackPath);
+            if(Settings::settings->contains(cacheHashKey))
+            {
+                const QByteArray &data=QByteArray::fromHex(Settings::settings->value(cacheHashKey).toString().toUtf8());
+                const std::string cacheBuiltHash=std::string(data.constData(),data.size());
+                const std::string serverHash(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.begin(),
+                                             CommonSettingsCommon::commonSettingsCommon.datapackHashBase.end());
+                if(cacheBuiltHash!=serverHash)
+                {
+                    std::cout << "datapack base cache removed, cache hash != server hash" << std::endl;
+                    ::unlink(cachepath.c_str());
+                }
+            }
+        }
+
         bool loaded=false;
         if(!cachepath.empty())
         {
@@ -130,6 +149,12 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     #endif
                     uint8_t cacheversion=0;
                     serialBuffer >> cacheversion;//to discard buggy cache later
+                    if(cacheversion!=2)
+                    {
+                        ::unlink(cachepath.c_str());
+                    }
+                    else
+                    {
                     serialBuffer >> CatchChallenger::CommonDatapack::commonDatapack;
                     serialBuffer >> visualCategories;
                     serialBuffer >> typeExtra;
@@ -141,10 +166,30 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     serialBuffer >> monsterExtra;
                     serialBuffer >> monsterBuffsExtra;
                     serialBuffer >> reputationNameToId;//used by client->player_informations.reputation[reputationId]
+                    {
+                        std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> tempNameToItemId;
+                        std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> tempNameToMonsterId;
+                        serialBuffer >> tempNameToItemId;
+                        serialBuffer >> tempNameToMonsterId;
+                        CatchChallenger::CommonDatapack::commonDatapack.set_tempNameToItemId(tempNameToItemId);
+                        CatchChallenger::CommonDatapack::commonDatapack.set_tempNameToMonsterId(tempNameToMonsterId);
+                    }
                     auto end_time = std::chrono::high_resolution_clock::now();
                     auto time = end_time - start_time;
                     std::cout << "CatchChallenger::CommonDatapack::commonDatapack.parseDatapack() took " << time/std::chrono::milliseconds(1) << "ms to parse " << datapackPath << std::endl;
                     loaded=true;
+                    //save the cache hash key if not yet present (migration)
+                    if(!CommonSettingsCommon::commonSettingsCommon.datapackHashBase.empty())
+                    {
+                        const QString cacheHashKey=QStringLiteral("DatapackCacheHashBase-")+QString::fromStdString(datapackPath);
+                        if(!Settings::settings->contains(cacheHashKey))
+                            Settings::settings->setValue(cacheHashKey,
+                                QString(QByteArray(
+                                    CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                                    static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
+                                ).toHex()));
+                    }
+                    }//else cacheversion
                     #ifdef __EXCEPTIONS
                 }
                 catch (...) {
@@ -166,12 +211,12 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
         parseBuffExtra();
 
         #ifdef CATCHCHALLENGER_CACHE_HPS
-            if(!cachepath.empty())
+            if(!cachepath.empty() && !CatchChallenger::CommonDatapack::commonDatapack.get_monsters().empty())
             {
                 std::ofstream out_file(cachepath+".tmp", std::ofstream::binary);
                 if(out_file.good() && out_file.is_open())
                 {
-                    uint8_t cacheversion=0;//to discard buggy cache later
+                    uint8_t cacheversion=2;//to discard buggy cache later
                     hps::to_stream(cacheversion, out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack, out_file);
                     hps::to_stream(visualCategories, out_file);
@@ -184,11 +229,22 @@ void QtDatapackClientLoader::parseDatapack(const std::string &datapackPath)
                     hps::to_stream(monsterExtra, out_file);
                     hps::to_stream(monsterBuffsExtra, out_file);
                     hps::to_stream(reputationNameToId, out_file);//used by client->player_informations.reputation[reputationId]
+                    hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToItemId(), out_file);
+                    hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.get_tempNameToMonsterId(), out_file);
                     hps::to_stream(CatchChallenger::CommonDatapack::commonDatapack.monstersCollisionTemp, out_file);
                     out_file.flush();
                     out_file.close();
                     if(::rename((cachepath+".tmp").c_str(),cachepath.c_str())!=0)
                         std::cerr << "unable to rename from: " << (cachepath+".tmp") << " to: " << cachepath << std::endl;
+                    else if(!CommonSettingsCommon::commonSettingsCommon.datapackHashBase.empty())
+                    {
+                        //save the server hash the cache was built for
+                        Settings::settings->setValue(QStringLiteral("DatapackCacheHashBase-")+QString::fromStdString(datapackPath),
+                            QString(QByteArray(
+                                CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                                static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
+                            ).toHex()));
+                    }
                 }
             }
             auto end_time = std::chrono::high_resolution_clock::now();

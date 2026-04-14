@@ -109,7 +109,7 @@ void NormalServerGlobal::checkSettingsFile(TinyXMLSettings * const settings, con
     if(!settings->contains("server-port"))
         settings->setValue("server-port",10000+rand()%(65535-10000));
     if(!settings->contains("sendPlayerNumber"))
-        settings->setValue("sendPlayerNumber",false);
+        settings->setValue("sendPlayerNumber",true);
     if(!settings->contains("tolerantMode"))
         settings->setValue("tolerantMode",false);
     if(!settings->contains("compression"))

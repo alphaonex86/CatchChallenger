@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
-#ifdef CATCHCHALLENGER_DB_FILE
+#if defined(CATCHCHALLENGER_DB_FILE) || defined(CATCHCHALLENGER_CACHE_HPS)
 #include <sys/stat.h>
 #warning dictionary_serialBuffer and server_serialBuffer not open as DB
 #endif
@@ -201,8 +201,13 @@ int main(int argc, char *argv[])
     }
     else
     {
-        const std::string &datapackCache=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin";
-        server->setLoad(datapackCache);
+        const std::string &basePath=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath);
+        const std::string &datapackCache=basePath+"/datapack-cache.bin";
+        struct stat cacheStat,xmlStat;
+        if(::stat(datapackCache.c_str(),&cacheStat)==0 &&
+           ::stat((basePath+"/server-properties.xml").c_str(),&xmlStat)==0 &&
+           cacheStat.st_mtime==xmlStat.st_mtime)
+            server->setLoad(datapackCache);
     }
     #endif
 
@@ -730,7 +735,7 @@ if(c->getPlayerId()>0)
                             }
                             #endif
                             #ifdef PROTOCOLPARSINGDEBUG
-                            std::cout << "new MapVisibilityAlgorithm: " << infd << " " << client << std::endl;
+                            std::cout << "new MapVisibilityAlgorithm: " << infd << " " << (void*)&client << std::endl;
                             #endif
                             //populate client.socketString so headerOutput()/normalOutput()/errorOutput()
                             //display a real "<ip>:<port>:" prefix instead of the empty string fallback.
@@ -811,9 +816,6 @@ if(c->getPlayerId()>0)
                     //ready to read
                     if(events[i].events & EPOLLIN)
                     {
-                        #ifdef PROTOCOLPARSINGDEBUG
-                        std::cout << "client " << events[i].data.ptr << " client->parseIncommingData()" << std::endl;
-                        #endif
                         client->parseIncommingData();
                     }
                     if(events[i].events & EPOLLRDHUP || events[i].events & EPOLLHUP || !client->isValid())

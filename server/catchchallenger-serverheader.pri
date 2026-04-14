@@ -6,7 +6,6 @@ HEADERS += \
     $$PWD/base/NormalServerGlobal.hpp \
     $$PWD/base/GlobalServerData.hpp \
     $$PWD/base/PlayerUpdaterBase.hpp \
-    $$PWD/base/SqlFunction.hpp \
     $$PWD/base/BaseServer/BaseServer.hpp \
     $$PWD/base/BaseServer/BaseServerMasterLoadDictionary.hpp \
     $$PWD/base/BaseServer/BaseServerMasterSendDatapack.hpp \
@@ -32,6 +31,7 @@ HEADERS += \
 
 !contains(DEFINES, CATCHCHALLENGER_DB_FILE) {
 HEADERS += \
+    $$PWD/base/SqlFunction.hpp \
     $$PWD/base/PreparedDBQuery.hpp \
     $$PWD/base/DatabaseBase.hpp \
     $$PWD/base/DatabaseFunction.hpp \

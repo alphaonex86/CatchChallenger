@@ -72,6 +72,8 @@ public:
     const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_SKILL> get_tempNameToSkillId() const;
     const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_BUFF> get_tempNameToBuffId() const;
     const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> get_tempNameToMonsterId() const;
+    void set_tempNameToItemId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_ITEM> &v);
+    void set_tempNameToMonsterId(const std::unordered_map<std::string,CATCHCHALLENGER_TYPE_MONSTER> &v);
 
     const bool &get_monsterRateApplied() const;
     void set_monsterRateApplied(const bool &v);
@@ -120,6 +122,7 @@ public:
         buf << monstersMaxId;
         buf << monsterSkills;
         buf << profileList;
+        buf << skins;
     }
     template <class B>
     void parse(B& buf) {
@@ -147,6 +150,7 @@ public:
         buf >> monstersMaxId;
         buf >> monsterSkills;
         buf >> profileList;
+        buf >> skins;
     }
     #endif
 private:

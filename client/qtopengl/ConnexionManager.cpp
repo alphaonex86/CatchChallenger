@@ -622,12 +622,18 @@ void ConnexionManager::haveTheDatapack()
     if(haveDatapack)
         return;
     haveDatapack=true;
-    Settings::settings->setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
-                      QString(QByteArray(
-                          CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
-                          static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
-                                  ).toHex())
-                      );
+    {
+        const QDir monstersDir(QString::fromStdString(client->datapackPathBase()+"monsters/"));
+        if(monstersDir.exists() && !monstersDir.entryList(QDir::Files|QDir::NoDotAndDotDot).isEmpty())
+            Settings::settings->setValue("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()),
+                          QString(QByteArray(
+                              CommonSettingsCommon::commonSettingsCommon.datapackHashBase.data(),
+                              static_cast<int>(CommonSettingsCommon::commonSettingsCommon.datapackHashBase.size())
+                                      ).toHex())
+                          );
+        else
+            std::cerr << "monsters/ directory missing or empty, not saving DatapackHashBase" << std::endl;
+    }
 
     if(client!=NULL)
         emit parseDatapack(client->datapackPathBase());
@@ -706,6 +712,7 @@ void ConnexionManager::datapackChecksumError()
     Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()));
     Settings::settings->remove("DatapackHashMain-"+QString::fromStdString(client->datapackPathMain()));
     Settings::settings->remove("DatapackHashSub-"+QString::fromStdString(client->datapackPathSub()));
+    Settings::settings->remove("DatapackCacheHashBase-"+QString::fromStdString(client->datapackPathBase()));
     emit newError(tr("Datapack on mirror is corrupted").toStdString(),
                   "The checksum sended by the server is not the same than have on the mirror");
 }
@@ -714,8 +721,20 @@ void ConnexionManager::Qtlogged(const std::vector<std::vector<CatchChallenger::C
 {
     if(Settings::settings->contains("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())))
     {
-        const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toUtf8());
-        client->sendDatapackContentBase(std::string(data.constData(),data.size()));
+        //verify the base datapack actually has critical files before trusting the stored hash
+        const QDir skinDir(QString::fromStdString(client->datapackPathBase()+DATAPACK_BASE_PATH_SKIN));
+        if(skinDir.exists() && !skinDir.entryList(QDir::Dirs|QDir::NoDotAndDotDot).isEmpty())
+        {
+            const QByteArray &data=QByteArray::fromHex(Settings::settings->value("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase())).toString().toUtf8());
+            client->sendDatapackContentBase(std::string(data.constData(),data.size()));
+        }
+        else
+        {
+            std::cerr << "datapack directory is empty or missing, removing stored hash to force re-download" << std::endl;
+            Settings::settings->remove("DatapackHashBase-"+QString::fromStdString(client->datapackPathBase()));
+            Settings::settings->remove("DatapackCacheHashBase-"+QString::fromStdString(client->datapackPathBase()));
+            client->sendDatapackContentBase();
+        }
     }
     else
         client->sendDatapackContentBase();

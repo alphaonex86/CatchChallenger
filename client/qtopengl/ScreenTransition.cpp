@@ -273,7 +273,10 @@ void ScreenTransition::closeEvent(QCloseEvent *event)
 void ScreenTransition::setBackground(ScreenInput *widget)
 {
     if(m_backgroundStack!=nullptr)
+    {
+        mScene->clearFocus();
         mScene->removeItem(m_backgroundStack);
+    }
     m_backgroundStack=widget;
     if(widget!=nullptr)
     {
@@ -295,7 +298,10 @@ void ScreenTransition::setForeground(ScreenInput *widget)
     if(ccmap!=nullptr)
         ccmap->keyPressReset();
     if(m_foregroundStack!=nullptr)
+    {
+        mScene->clearFocus();
         mScene->removeItem(m_foregroundStack);
+    }
     m_foregroundStack=widget;
     if(widget!=nullptr)
     {
@@ -323,7 +329,10 @@ void ScreenTransition::setAbove(ScreenInput *widget)
     if(ccmap!=nullptr)
         ccmap->keyPressReset();
     if(m_aboveStack!=nullptr)
+    {
+        mScene->clearFocus();
         mScene->removeItem(m_aboveStack);
+    }
     m_aboveStack=widget;
     if(widget!=nullptr)
     {

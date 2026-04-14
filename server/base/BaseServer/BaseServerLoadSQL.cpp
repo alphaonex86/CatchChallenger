@@ -4,6 +4,8 @@
 #include "../DictionaryServer.hpp"
 #ifdef CATCHCHALLENGER_CACHE_HPS
 #include <fstream>
+#include <sys/stat.h>
+#include <utime.h>
 #endif
 #include <iostream>
 
@@ -496,6 +498,17 @@ void BaseServer::preload_industries_return()
         delete out_file;
         ::rename((FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin.tmp").c_str(),
                  (FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath)+"/datapack-cache.bin").c_str());
+        {
+            const std::string &basePath=FacilityLibGeneral::getFolderFromFile(CatchChallenger::FacilityLibGeneral::applicationDirPath);
+            struct stat xmlStat;
+            if(::stat((basePath+"/server-properties.xml").c_str(),&xmlStat)==0)
+            {
+                struct utimbuf times;
+                times.actime=xmlStat.st_atime;
+                times.modtime=xmlStat.st_mtime;
+                ::utime((basePath+"/datapack-cache.bin").c_str(),&times);
+            }
+        }
         ::exit(0);
         return;
     }
