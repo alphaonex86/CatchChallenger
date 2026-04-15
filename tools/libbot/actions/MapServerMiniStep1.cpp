@@ -6,6 +6,8 @@ bool MapServerMini::preload_step1()
 {
     if(this->width==0 || this->height==0)
         return false;
+    if(this->flat_simplified_map.size()!=(size_t)this->width*this->height)
+        std::cerr << "WARNING: map " << this->map_file << " flat_simplified_map.size()=" << this->flat_simplified_map.size() << " != width*height=" << (size_t)this->width*this->height << " (w=" << (int)this->width << " h=" << (int)this->height << ")" << std::endl;
     QHash<QString,int> zoneHash;
     QList<QString> layerList;
     zoneHash.clear();
@@ -23,9 +25,9 @@ bool MapServerMini::preload_step1()
                 const std::pair<uint8_t,uint8_t> p(x,y);
                 QString zone;
                 bool walkable=false;
-                if(this->parsed_layer.simplifiedMap!=nullptr)
+                if(this->flat_simplified_map.size()==(size_t)this->width*this->height)
                 {
-                    const uint8_t &var=this->parsed_layer.simplifiedMap[x+y*this->width];
+                    const uint8_t &var=this->flat_simplified_map[x+y*this->width];
                     if(var==0)
                         walkable=true;
                     if(pointOnMap_Item.find(p)!=pointOnMap_Item.cend())

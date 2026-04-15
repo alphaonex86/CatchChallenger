@@ -1,6 +1,6 @@
 #include "WaitScreen.h"
 #include "ui_WaitScreen.h"
-#include "../bot/actions/ActionsAction.h"
+#include "../libbot/actions/ActionsAction.h"
 
 WaitScreen::WaitScreen(QWidget *parent) :
     QWidget(parent),

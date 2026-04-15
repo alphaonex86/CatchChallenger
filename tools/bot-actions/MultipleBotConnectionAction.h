@@ -1,7 +1,7 @@
 #ifndef MULTIPLEBOTCONNECTIONACTION_H
 #define MULTIPLEBOTCONNECTIONACTION_H
 
-#include "../bot/MultipleBotConnectionImplForGui.h"
+#include "../libbot/MultipleBotConnectionImplForGui.h"
 
 #include <string>
 

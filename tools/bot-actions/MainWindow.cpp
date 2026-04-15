@@ -3,7 +3,7 @@
 
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/FacilityLib.hpp"
-#include "../bot/actions/ActionsAction.h"
+#include "../libbot/actions/ActionsAction.h"
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../client/libqtcatchchallenger/Settings.hpp"
 
@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qRegisterMetaType<CatchChallenger::Skill::AttackReturn>("Skill::AttackReturn");
     qRegisterMetaType<QList<uint32_t> >("QList<uint32_t>");
     qRegisterMetaType<QList<QList<CatchChallenger::CharacterEntry> > >("QList<QList<CharacterEntry> >");
-    qRegisterMetaType<std::vector<CatchChallenger::MarketMonster> >("std::vector<MarketMonster>");
+    qRegisterMetaType<std::vector<CatchChallenger::MapMonster> >("std::vector<MarketMonster>");
 
     qRegisterMetaType<std::unordered_map<uint16_t,uint16_t> >("std::unordered_map<uint16_t,uint16_t>");
     qRegisterMetaType<std::unordered_map<uint16_t,uint32_t> >("std::unordered_map<uint16_t,uint32_t>");
@@ -145,12 +145,67 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //LanguagesSelect::languagesSelect=new LanguagesSelect();
     botTargetList=NULL;
+    mAutoConnect=false;
 }
 
 MainWindow::~MainWindow()
 {
     delete multipleBotConnexion.botInterface;
     delete ui;
+}
+
+void MainWindow::autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass)
+{
+    mAutoConnect=true;
+
+    ui->host->setText(host);
+    ui->port->setValue(port);
+
+    if(!login.isEmpty())
+        ui->login->setText(login);
+    if(!pass.isEmpty())
+        ui->pass->setText(pass);
+
+    if(bots>1)
+    {
+        ui->multipleConnexion->setChecked(true);
+        ui->connexionCountTarget->setValue(bots);
+    }
+
+    ui->autoCreateCharacter->setChecked(true);
+
+    connect(&autoConnectTimeout,&QTimer::timeout,this,[this](){
+        qDebug() << "TIMEOUT: Not all players on map within 60 seconds";
+        QCoreApplication::exit(1);
+    });
+    autoConnectTimeout.setSingleShot(true);
+    autoConnectTimeout.start(60000);
+
+    on_connect_clicked();
+}
+
+void MainWindow::autoSelectServer()
+{
+    if(serverOrdenedList.empty())
+    {
+        qDebug() << "Auto-connect: No servers available";
+        QCoreApplication::exit(1);
+        return;
+    }
+
+    const CatchChallenger::ServerFromPoolForDisplay &server=serverOrdenedList.at(0);
+    const uint8_t cgi=server.charactersGroupIndex;
+
+    multipleBotConnexion.serverSelect(cgi,server.uniqueKey);
+
+    ui->groupBox_Server->setEnabled(false);
+    ui->groupBox_char->setEnabled(false);
+
+    if(cgi<characterEntryList.size() && !characterEntryList.at(cgi).empty())
+    {
+        const CatchChallenger::CharacterEntry &character=characterEntryList.at(cgi).front();
+        multipleBotConnexion.characterSelectForFirstCharacter(character.character_id);
+    }
 }
 
 void MainWindow::lastReplyTime(const quint32 &time)
@@ -265,7 +320,7 @@ void MainWindow::updateServerList(CatchChallenger::Api_client_real *senderObject
     bool fullView=true;
     if(serverOrdenedList.size()>10)
         fullView=false;
-    const uint64_t &current__date=QDateTime::currentDateTime().toTime_t();
+    const uint64_t &current__date=QDateTime::currentDateTime().toSecsSinceEpoch();
 
     addToServerList(logicialGroup,ui->serverList->invisibleRootItem(),current__date,fullView);
     ui->serverList->expandAll();
@@ -608,6 +663,9 @@ void MainWindow::datapackIsReady()
         ui->groupBox_char->setEnabled(true);
     }
     QtDatapackClientLoader::datapackLoader->parseDatapack(QCoreApplication::applicationDirPath().toStdString()+"/datapack/");
+
+    if(mAutoConnect)
+        autoSelectServer();
 }
 
 void MainWindow::datapackMainSubIsReady()
@@ -640,6 +698,8 @@ void MainWindow::all_player_connected()
 void MainWindow::all_player_on_map()
 {
     qDebug() << "MainWindow::all_player_on_map()";
+    if(mAutoConnect)
+        autoConnectTimeout.stop();
     botTargetList=new BotTargetList(
                 multipleBotConnexion.apiToCatchChallengerClient,
                 multipleBotConnexion.connectedSocketToCatchChallengerClient,

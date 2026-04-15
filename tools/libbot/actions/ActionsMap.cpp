@@ -54,15 +54,22 @@ bool ActionsAction::preload_the_map()
             std::string sortFileName=fileName;
             stringreplaceOne(sortFileName,tmxRemove,"");
             map_name_to_do_id.push_back(sortFileName);
-            if(map_temp.tryLoadMap(datapack_mapPath+fileName,true))
+
+            flat_map_list_temp.push_back(new MapServerMini);
+            MapServerMini *mapServer=static_cast<MapServerMini *>(flat_map_list_temp.back());
+
+            if(map_temp.tryLoadMap(datapack_mapPath+fileName,*mapServer,true))
             {
-                flat_map_list_temp.push_back(new MapServerMini);
-                MapServerMini *mapServer=static_cast<MapServerMini *>(flat_map_list_temp.back());
                 map_list[sortFileName]=mapServer;
 
-                mapServer->width			= map_temp.map_to_send.width;
-                mapServer->height			= map_temp.map_to_send.height;
-                mapServer->parsed_layer	= map_temp.map_to_send.parsed_layer;
+                // width/height/flat_simplified_map already filled by tryLoadMap into *mapServer
+                // copy from map_to_send as fallback
+                if(mapServer->flat_simplified_map.empty())
+                    mapServer->flat_simplified_map=map_temp.map_to_send.flat_simplified_map;
+                if(mapServer->width==0)
+                    mapServer->width=map_temp.map_to_send.width;
+                if(mapServer->height==0)
+                    mapServer->height=map_temp.map_to_send.height;
                 mapServer->map_file		= sortFileName;
                 {
                     unsigned int index=0;
@@ -72,7 +79,7 @@ bool ActionsAction::preload_the_map()
                         //it's moving bot consider it into all the current zone, not on the tile
                         if(bot.property_text.find("skin")!=bot.property_text.cend() && (bot.property_text.find("lookAt")==bot.property_text.cend() || bot.property_text.at("lookAt")!="move"))
                         {
-                            std::pair<uint8_t,uint8_t> p(bot.point.x,bot.point.y);
+                            std::pair<uint8_t,uint8_t> p(bot.point.first,bot.point.second);
                             mapServer->botOnMap[p].push_back(bot.id);
                         }
                         index++;
@@ -125,6 +132,8 @@ bool ActionsAction::preload_the_map()
             }
             else
             {
+                delete flat_map_list_temp.back();
+                flat_map_list_temp.pop_back();
                 std::cout << "error at loading: " << datapack_mapPath << fileName << ", error: " << map_temp.errorString()
                           << "parsed due: " << "regex_search(" << fileName << ",\\.tmx$) && !regex_search("
                           << fileName << ",[\"'])"
@@ -147,67 +156,75 @@ bool ActionsAction::preload_the_map()
 
     std::sort(map_name_to_do_id.begin(),map_name_to_do_id.end());
 
-    //resolv the border map name into their pointer
+    // Build name-to-index map for resolving border/teleporter references
+    std::unordered_map<std::string, CATCHCHALLENGER_TYPE_MAPID> name_to_index;
+    for(CATCHCHALLENGER_TYPE_MAPID i=0;i<map_name.size();i++)
+        name_to_index[map_name[i]]=i;
+
+    //resolv the border map name into their index
     size=semi_loaded_map.size();
     index=0;
     while(index<size)
     {
-        if(semi_loaded_map.at(index).border.bottom.fileName.size()>0 && map_list.find(semi_loaded_map.at(index).border.bottom.fileName)!=map_list.end())
-            semi_loaded_map[index].map->border.bottom.map=map_list.at(semi_loaded_map.at(index).border.bottom.fileName);
+        if(semi_loaded_map.at(index).border.bottom.fileName.size()>0 && name_to_index.find(semi_loaded_map.at(index).border.bottom.fileName)!=name_to_index.end())
+            semi_loaded_map[index].map->border.bottom.mapIndex=name_to_index.at(semi_loaded_map.at(index).border.bottom.fileName);
         else
-            semi_loaded_map[index].map->border.bottom.map=NULL;
+            semi_loaded_map[index].map->border.bottom.mapIndex=65535;
 
-        if(semi_loaded_map.at(index).border.top.fileName.size()>0 && map_list.find(semi_loaded_map.at(index).border.top.fileName)!=map_list.end())
-            semi_loaded_map[index].map->border.top.map=map_list.at(semi_loaded_map.at(index).border.top.fileName);
+        if(semi_loaded_map.at(index).border.top.fileName.size()>0 && name_to_index.find(semi_loaded_map.at(index).border.top.fileName)!=name_to_index.end())
+            semi_loaded_map[index].map->border.top.mapIndex=name_to_index.at(semi_loaded_map.at(index).border.top.fileName);
         else
-            semi_loaded_map[index].map->border.top.map=NULL;
+            semi_loaded_map[index].map->border.top.mapIndex=65535;
 
-        if(semi_loaded_map.at(index).border.left.fileName.size()>0 && map_list.find(semi_loaded_map.at(index).border.left.fileName)!=map_list.end())
-            semi_loaded_map[index].map->border.left.map=map_list.at(semi_loaded_map.at(index).border.left.fileName);
+        if(semi_loaded_map.at(index).border.left.fileName.size()>0 && name_to_index.find(semi_loaded_map.at(index).border.left.fileName)!=name_to_index.end())
+            semi_loaded_map[index].map->border.left.mapIndex=name_to_index.at(semi_loaded_map.at(index).border.left.fileName);
         else
-            semi_loaded_map[index].map->border.left.map=NULL;
+            semi_loaded_map[index].map->border.left.mapIndex=65535;
 
-        if(semi_loaded_map.at(index).border.right.fileName.size()>0 && map_list.find(semi_loaded_map.at(index).border.right.fileName)!=map_list.end())
-            semi_loaded_map[index].map->border.right.map=map_list.at(semi_loaded_map.at(index).border.right.fileName);
+        if(semi_loaded_map.at(index).border.right.fileName.size()>0 && name_to_index.find(semi_loaded_map.at(index).border.right.fileName)!=name_to_index.end())
+            semi_loaded_map[index].map->border.right.mapIndex=name_to_index.at(semi_loaded_map.at(index).border.right.fileName);
         else
-            semi_loaded_map[index].map->border.right.map=NULL;
+            semi_loaded_map[index].map->border.right.mapIndex=65535;
 
         index++;
     }
 
-    //resolv the teleported into their pointer
+    //resolv the teleporter into their mapIndex
     size=semi_loaded_map.size();
     index=0;
     while(index<size)
     {
         unsigned int sub_index=0;
         Map_semi &map_semi=semi_loaded_map.at(index);
-        map_semi.map->teleporter_list_size=0;
-        /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
-        map_semi.map->teleporter=(CatchChallenger::CommonMap::Teleporter *)malloc(sizeof(CatchChallenger::CommonMap::Teleporter)*map_semi.old_map.teleport.size());
-        memset(map_semi.map->teleporter,0x00,sizeof(CatchChallenger::CommonMap::Teleporter)*map_semi.old_map.teleport.size());
+        MapServerMini *mapServer=static_cast<MapServerMini *>(map_semi.map);
+        map_semi.map->teleporters.clear();
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
             const auto &teleport=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleport.map;
             stringreplaceOne(teleportString,".tmx","");
-            if(map_list.find(teleportString)!=map_list.end())
+            if(name_to_index.find(teleportString)!=name_to_index.end())
             {
-                if(teleport.destination_x<map_list.at(teleportString)->width
-                        && teleport.destination_y<map_list.at(teleportString)->height)
+                CATCHCHALLENGER_TYPE_MAPID destMapIndex=name_to_index.at(teleportString);
+                CatchChallenger::CommonMap *destMap=flat_map_list[destMapIndex];
+                if(teleport.destination_x<destMap->width
+                        && teleport.destination_y<destMap->height)
                 {
-                    uint16_t index_search=0;
-                    while(index_search<map_semi.map->teleporter_list_size)
+                    //check for duplicate
+                    bool duplicate=false;
+                    for(unsigned int idx=0;idx<map_semi.map->teleporters.size();idx++)
                     {
-                        if(map_semi.map->teleporter[index_search].source_x==teleport.source_x && map_semi.map->teleporter[index_search].source_y==teleport.source_y)
+                        if(map_semi.map->teleporters[idx].source_x==teleport.source_x && map_semi.map->teleporters[idx].source_y==teleport.source_y)
+                        {
+                            duplicate=true;
                             break;
-                        index_search++;
+                        }
                     }
-                    if(index_search==map_semi.map->teleporter_list_size)
+                    if(!duplicate)
                     {
                         #ifdef DEBUG_MESSAGE_MAP_LOAD
                         std::cout << "teleporter on the map: "
-                             << map_semi.map->map_file
+                             << mapServer->map_file
                              << "("
                              << std::to_string(teleport.source_x)
                              << ","
@@ -215,25 +232,24 @@ bool ActionsAction::preload_the_map()
                              << "), to "
                              << teleportString
                              << "("
-                             << std::to_string(semi_loaded_map.at(index).old_map.teleport.at(sub_index).destination_x)
+                             << std::to_string(teleport.destination_x)
                              << ","
                              << std::to_string(teleport.destination_y)
                              << ")"
                              << std::endl;
                         #endif
-                        CatchChallenger::CommonMap::Teleporter teleporter;
-                        teleporter.map=map_list.at(teleportString);
-                        teleporter.source_x=teleport.source_x;
-                        teleporter.source_y=teleport.source_y;
-                        teleporter.destination_x=teleport.destination_x;
-                        teleporter.destination_y=teleport.destination_y;
-                        teleporter.condition=teleport.condition;
-                        semi_loaded_map[index].map->teleporter[map_semi.map->teleporter_list_size]=teleporter;
-                        map_semi.map->teleporter_list_size++;
+                        CatchChallenger::Teleporter tp;
+                        tp.mapIndex=destMapIndex;
+                        tp.source_x=teleport.source_x;
+                        tp.source_y=teleport.source_y;
+                        tp.destination_x=teleport.destination_x;
+                        tp.destination_y=teleport.destination_y;
+                        tp.condition=teleport.condition;
+                        map_semi.map->teleporters.push_back(tp);
                     }
                     else
                         std::cerr << "already found teleporter on the map: "
-                             << map_semi.map->map_file
+                             << mapServer->map_file
                              << "("
                              << std::to_string(teleport.source_x)
                              << ","
@@ -249,7 +265,7 @@ bool ActionsAction::preload_the_map()
                 }
                 else
                     std::cerr << "wrong teleporter on the map: "
-                         << map_semi.map->map_file
+                         << mapServer->map_file
                          << "("
                          << std::to_string(teleport.source_x)
                          << ","
@@ -265,7 +281,7 @@ bool ActionsAction::preload_the_map()
             }
             else
                 std::cerr << "wrong teleporter on the map: "
-                     << map_semi.map->map_file
+                     << mapServer->map_file
                      << "("
                      << std::to_string(teleport.source_x)
                      << ","
@@ -289,82 +305,83 @@ bool ActionsAction::preload_the_map()
     index=0;
     while(index<size)
     {
-        const auto &currentTempMap=map_list.at(map_name.at(index));
-        if(currentTempMap->border.bottom.map!=NULL && currentTempMap->border.bottom.map->border.top.map!=currentTempMap)
+        CatchChallenger::CommonMap *currentTempMap=map_list.at(map_name.at(index));
+        MapServerMini *currentMapServer=static_cast<MapServerMini *>(currentTempMap);
+        if(currentTempMap->border.bottom.mapIndex!=65535 && flat_map_list[currentTempMap->border.bottom.mapIndex]->border.top.mapIndex!=name_to_index[map_name.at(index)])
         {
-            if(currentTempMap->border.bottom.map->border.top.map==NULL)
+            if(flat_map_list[currentTempMap->border.bottom.mapIndex]->border.top.mapIndex==65535)
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have bottom map: "
-                          << currentTempMap->border.bottom.map->map_file
+                          << currentMapServer->map_file
+                          << " have bottom map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.bottom.mapIndex])->map_file
                           << ", but the bottom map have not a top map"
                           << std::endl;
             else
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have bottom map: "
-                          << currentTempMap->border.bottom.map->map_file
+                          << currentMapServer->map_file
+                          << " have bottom map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.bottom.mapIndex])->map_file
                           << ", but the bottom map have different top map: "
-                          << currentTempMap->border.bottom.map->border.top.map->map_file
+                          << static_cast<MapServerMini *>(flat_map_list[flat_map_list[currentTempMap->border.bottom.mapIndex]->border.top.mapIndex])->map_file
                           << std::endl;
-            map_list[map_name.at(index)]->border.bottom.map=NULL;
+            map_list[map_name.at(index)]->border.bottom.mapIndex=65535;
         }
-        if(currentTempMap->border.top.map!=NULL && currentTempMap->border.top.map->border.bottom.map!=currentTempMap)
+        if(currentTempMap->border.top.mapIndex!=65535 && flat_map_list[currentTempMap->border.top.mapIndex]->border.bottom.mapIndex!=name_to_index[map_name.at(index)])
         {
-            if(currentTempMap->border.top.map->border.bottom.map==NULL)
+            if(flat_map_list[currentTempMap->border.top.mapIndex]->border.bottom.mapIndex==65535)
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have top map: "
-                          << currentTempMap->border.top.map->map_file
+                          << currentMapServer->map_file
+                          << " have top map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.top.mapIndex])->map_file
                           << ", but the bottom map have not a bottom map"
                           << std::endl;
             else
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have top map: "
-                          << currentTempMap->border.top.map->map_file
+                          << currentMapServer->map_file
+                          << " have top map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.top.mapIndex])->map_file
                           << ", but the bottom map have different bottom map: "
-                          << currentTempMap->border.top.map->border.bottom.map->map_file
+                          << static_cast<MapServerMini *>(flat_map_list[flat_map_list[currentTempMap->border.top.mapIndex]->border.bottom.mapIndex])->map_file
                           << std::endl;
-            map_list[map_name.at(index)]->border.top.map=NULL;
+            map_list[map_name.at(index)]->border.top.mapIndex=65535;
         }
-        if(currentTempMap->border.left.map!=NULL && currentTempMap->border.left.map->border.right.map!=currentTempMap)
+        if(currentTempMap->border.left.mapIndex!=65535 && flat_map_list[currentTempMap->border.left.mapIndex]->border.right.mapIndex!=name_to_index[map_name.at(index)])
         {
-            if(currentTempMap->border.left.map->border.right.map==NULL)
+            if(flat_map_list[currentTempMap->border.left.mapIndex]->border.right.mapIndex==65535)
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have left map: "
-                          << currentTempMap->border.left.map->map_file
+                          << currentMapServer->map_file
+                          << " have left map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.left.mapIndex])->map_file
                           << ", but the right map have not a right map"
                           << std::endl;
             else
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have left map: "
-                          << currentTempMap->border.left.map->map_file
+                          << currentMapServer->map_file
+                          << " have left map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.left.mapIndex])->map_file
                           << ", but the right map have different right map: "
-                          << currentTempMap->border.left.map->border.right.map->map_file
+                          << static_cast<MapServerMini *>(flat_map_list[flat_map_list[currentTempMap->border.left.mapIndex]->border.right.mapIndex])->map_file
                           << std::endl;
-            map_list[map_name.at(index)]->border.left.map=NULL;
+            map_list[map_name.at(index)]->border.left.mapIndex=65535;
         }
-        if(currentTempMap->border.right.map!=NULL && currentTempMap->border.right.map->border.left.map!=currentTempMap)
+        if(currentTempMap->border.right.mapIndex!=65535 && flat_map_list[currentTempMap->border.right.mapIndex]->border.left.mapIndex!=name_to_index[map_name.at(index)])
         {
-            if(currentTempMap->border.right.map->border.left.map==NULL)
+            if(flat_map_list[currentTempMap->border.right.mapIndex]->border.left.mapIndex==65535)
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have right map: "
-                          << currentTempMap->border.right.map->map_file
+                          << currentMapServer->map_file
+                          << " have right map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.right.mapIndex])->map_file
                           << ", but the left map have not a left map"
                           << std::endl;
             else
                 std::cerr << "the map "
-                          << currentTempMap->map_file
-                          << "have right map: "
-                          << currentTempMap->border.right.map->map_file
+                          << currentMapServer->map_file
+                          << " have right map: "
+                          << static_cast<MapServerMini *>(flat_map_list[currentTempMap->border.right.mapIndex])->map_file
                           << ", but the left map have different left map: "
-                          << currentTempMap->border.right.map->border.left.map->map_file
+                          << static_cast<MapServerMini *>(flat_map_list[flat_map_list[currentTempMap->border.right.mapIndex]->border.left.mapIndex])->map_file
                           << std::endl;
-            map_list[map_name.at(index)]->border.right.map=NULL;
+            map_list[map_name.at(index)]->border.right.mapIndex=65535;
         }
         index++;
     }
@@ -375,82 +392,83 @@ bool ActionsAction::preload_the_map()
     while(index<size)
     {
         MapServerMini * const currentTempMap=static_cast<MapServerMini *>(map_list.at(map_name.at(index)));
-        if(currentTempMap->border.bottom.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+        if(currentTempMap->border.bottom.mapIndex!=65535 &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.bottom.mapIndex])
                 ==
                 currentTempMap->near_map.end())
         {
-            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
-            if(currentTempMap->border.left.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.bottom.mapIndex]);
+            if(currentTempMap->border.left.mapIndex!=65535 && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.left.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.right.map!=NULL && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.left.mapIndex]);
+            if(currentTempMap->border.right.mapIndex!=65535 && std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.right.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.right.mapIndex]);
         }
 
-        if(currentTempMap->border.top.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+        if(currentTempMap->border.top.mapIndex!=65535 &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.top.mapIndex])
                 ==
                 currentTempMap->near_map.end()
                 )
         {
-            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.left.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.top.mapIndex]);
+            if(currentTempMap->border.left.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.left.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.right.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.left.mapIndex]);
+            if(currentTempMap->border.right.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.right.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.right.mapIndex]);
         }
 
-        if(currentTempMap->border.right.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.right.map)
+        if(currentTempMap->border.right.mapIndex!=65535 &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.right.mapIndex])
                 ==
                 currentTempMap->near_map.end()
                 )
         {
-            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.right.map);
-            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.right.mapIndex]);
+            if(currentTempMap->border.top.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.top.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.top.mapIndex]);
+            if(currentTempMap->border.bottom.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.bottom.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.bottom.mapIndex]);
         }
 
-        if(currentTempMap->border.left.map!=NULL &&
-                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.left.map)
+        if(currentTempMap->border.left.mapIndex!=65535 &&
+                std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.left.mapIndex])
                 ==
                 currentTempMap->near_map.end()
                 )
         {
-            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.left.map);
-            if(currentTempMap->border.top.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.top.map)
+            static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.left.mapIndex]);
+            if(currentTempMap->border.top.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.top.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.top.map);
-            if(currentTempMap->border.bottom.map!=NULL &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),currentTempMap->border.bottom.map)
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.top.mapIndex]);
+            if(currentTempMap->border.bottom.mapIndex!=65535 &&  std::find(currentTempMap->near_map.begin(),currentTempMap->near_map.end(),flat_map_list[currentTempMap->border.bottom.mapIndex])
                     ==
                     currentTempMap->near_map.end())
-                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(currentTempMap->border.bottom.map);
+                static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map.push_back(flat_map_list[currentTempMap->border.bottom.mapIndex]);
         }
 
         static_cast<MapServerMini *>(map_list[map_name.at(index)])->linked_map=static_cast<MapServerMini *>(map_list[map_name.at(index)])->near_map;
         //the teleporter
         {
             unsigned int index=0;
-            while(index<currentTempMap->teleporter_list_size)
+            while(index<currentTempMap->teleporters.size())
             {
-                const CatchChallenger::CommonMap::Teleporter &teleporter=currentTempMap->teleporter[index];
-                if(!vectorcontainsAtLeastOne(currentTempMap->linked_map,teleporter.map))
-                    currentTempMap->linked_map.push_back(teleporter.map);
+                const CatchChallenger::Teleporter &tp=currentTempMap->teleporters[index];
+                CatchChallenger::CommonMap *tpMap=flat_map_list[tp.mapIndex];
+                if(!vectorcontainsAtLeastOne(currentTempMap->linked_map,tpMap))
+                    currentTempMap->linked_map.push_back(tpMap);
                 index++;
             }
         }
@@ -464,8 +482,8 @@ bool ActionsAction::preload_the_map()
     index=0;
     while(index<size)
     {
-        const auto &currentTempMap=map_list.at(map_name.at(index));
-        if(currentTempMap->border.bottom.map!=NULL)
+        CatchChallenger::CommonMap *currentTempMap=map_list.at(map_name.at(index));
+        if(currentTempMap->border.bottom.mapIndex!=65535)
         {
             map_list[map_name.at(index)]->border.bottom.x_offset=
                     semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.bottom.fileName)).border.top.x_offset-
@@ -473,7 +491,7 @@ bool ActionsAction::preload_the_map()
         }
         else
             map_list[map_name.at(index)]->border.bottom.x_offset=0;
-        if(currentTempMap->border.top.map!=NULL)
+        if(currentTempMap->border.top.mapIndex!=65535)
         {
             map_list[map_name.at(index)]->border.top.x_offset=
                     semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.top.fileName)).border.bottom.x_offset-
@@ -481,7 +499,7 @@ bool ActionsAction::preload_the_map()
         }
         else
             map_list[map_name.at(index)]->border.top.x_offset=0;
-        if(currentTempMap->border.left.map!=NULL)
+        if(currentTempMap->border.left.mapIndex!=65535)
         {
             map_list[map_name.at(index)]->border.left.y_offset=
                     semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.left.fileName)).border.right.y_offset-
@@ -489,7 +507,7 @@ bool ActionsAction::preload_the_map()
         }
         else
             map_list[map_name.at(index)]->border.left.y_offset=0;
-        if(currentTempMap->border.right.map!=NULL)
+        if(currentTempMap->border.right.mapIndex!=65535)
         {
             map_list[map_name.at(index)]->border.right.y_offset=
                     semi_loaded_map.at(vectorindexOf(map_name,semi_loaded_map.at(index).border.right.fileName)).border.left.y_offset-
@@ -505,23 +523,8 @@ bool ActionsAction::preload_the_map()
     //nead be after the offet
     preload_the_bots(semi_loaded_map);
 
-    //load the rescue
-    size=semi_loaded_map.size();
-    index=0;
-    while(index<size)
-    {
-        sub_index=0;
-        while(sub_index<semi_loaded_map.at(index).old_map.rescue_points.size())
-        {
-            const CatchChallenger::Map_to_send::Map_Point &point=semi_loaded_map.at(index).old_map.rescue_points.at(sub_index);
-            std::pair<uint8_t,uint8_t> coord;
-            coord.first=point.x;
-            coord.second=point.y;
-            static_cast<MapServerMini *>(map_list[map_name.at(index)])->rescue[coord]=CatchChallenger::Orientation_bottom;
-            sub_index++;
-        }
-        index++;
-    }
+    //load the rescue (rescue_points removed from BaseMap, loaded via bot XML now)
+    // MapServerMini::rescue is populated by bot steps if needed
 
     size=map_name_to_do_id.size();
     index=0;
@@ -529,8 +532,8 @@ bool ActionsAction::preload_the_map()
     {
         if(map_list.find(map_name_to_do_id.at(index))!=map_list.end())
         {
-            map_list[map_name_to_do_id.at(index)]->id=index;
-            id_map_to_map[map_list[map_name_to_do_id.at(index)]->id]=map_name_to_do_id.at(index);
+            static_cast<MapServerMini *>(map_list[map_name_to_do_id.at(index)])->id=index;
+            id_map_to_map[static_cast<MapServerMini *>(map_list[map_name_to_do_id.at(index)])->id]=map_name_to_do_id.at(index);
         }
         else
             abort();
@@ -538,21 +541,6 @@ bool ActionsAction::preload_the_map()
     }
 
     std::cout << map_list.size() << " map(s) loaded" << std::endl;
-
-    /*DictionaryServer::dictionary_pointOnMap_item_internal_to_database.clear();
-    DictionaryServer::dictionary_pointOnMap_plant_internal_to_database.clear();
-    #ifdef EPOLLCATCHCHALLENGERSERVER
-    {
-        unsigned int index=0;
-        while(index<toDeleteAfterBotLoad.size())
-        {
-            delete toDeleteAfterBotLoad.at(index);
-            index++;
-        }
-        toDeleteAfterBotLoad.clear();
-    }
-    #endif
-    botFiles.clear();*/
 
     //item on map
     {
@@ -566,12 +554,12 @@ bool ActionsAction::preload_the_map()
                 const CatchChallenger::Map_to_send::ItemOnMap_Semi &item=map_semi.old_map.items.at(sub_index);
                 MapServerMini * const mapServer=static_cast<MapServerMini *>(map_semi.map);
 
-                const std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(item.point.x,item.point.y);
+                const std::pair<uint8_t/*x*/,uint8_t/*y*/> pair(item.point.first,item.point.second);
                 MapServerMini::ItemOnMap itemOnMap;
                 itemOnMap.infinite=item.infinite;
                 itemOnMap.item=item.item;
                 itemOnMap.visible=item.visible;
-                itemOnMap.indexOfItemOnMap=0;
+                itemOnMap.indexOfItemOnMap=sub_index;
                 mapServer->pointOnMap_Item[pair]=itemOnMap;
 
                 sub_index++;

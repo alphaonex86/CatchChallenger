@@ -10,7 +10,7 @@
 #include "MapServerMini.h"
 #include <unordered_map>
 #include <QRegularExpression>
-#include <QTime>
+#include <QElapsedTimer>
 #include <QList>
 #include <QtWidgets/QListWidgetItem>
 #include <map>
@@ -39,7 +39,7 @@ public:
         std::vector<const MapServerMini::BlockObject *> bestPath;//without the current path
         std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > localStep;
         MapServerMini::BlockObject::LinkPoint linkPoint;
-        QTime sinceTheLastAction;
+        QElapsedTimer sinceTheLastAction;
         //std::vector<std::pair<CatchChallenger::Orientation,uint8_t/*step number*/> > wildForwardStep,wildBackwardStep;
         uint8_t wildCycle;
         unsigned int points;
@@ -65,6 +65,7 @@ public:
         uint32_t mapId;
         uint16_t x,y;
         CatchChallenger::Direction direction;
+        SIMPLIFIED_PLAYER_ID_FOR_MAP removeId;
     };
     struct Player
     {
@@ -78,18 +79,12 @@ public:
         //CatchChallenger::Direction direction;
         GlobalTarget target;
         //uint8_t previousStepWalked;do into the api, see MoveOnTheMap::newDirection()
-        QTime lastFightAction;
+        QElapsedTimer lastFightAction;
         CatchChallenger::Api_protocol_Qt  *api;
         std::map<uint16_t,CatchChallenger::Player_public_informations> visiblePlayers;
         std::set<QString> viewedPlayers;
 
-        //plant seed in waiting
-        struct SeedInWaiting
-        {
-            uint32_t seedItemId;
-            uint16_t indexOnMap;
-        };
-        std::vector<SeedInWaiting> seed_in_waiting;
+        //plant/seed is now local to player, no server async confirmation needed
         struct ClientPlantInCollecting
         {
             uint16_t indexOnMap;
@@ -111,7 +106,7 @@ public:
     virtual void removeClient(CatchChallenger::Api_protocol_Qt  *api);
     QString name();
     QString version();
-    virtual void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
+    virtual void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
     static std::map<CatchChallenger::Api_protocol_Qt  *,Player> clientList;
     //not into clientList because clientList is not initialised when receive the signals (due to delay of map loading)
     static std::map<CatchChallenger::Api_protocol_Qt  *,std::vector<DelayedMapPlayerChange> > delayedMessage;

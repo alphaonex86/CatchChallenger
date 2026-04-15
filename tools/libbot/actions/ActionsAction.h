@@ -7,9 +7,9 @@
 #define ACTIONS_ACTION_BOT_INTERFACE_H
 
 #include "ActionsBotInterface.h"
-#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../general/base/Map_loader.hpp"
-#include "../bot/actions/MapServerMini.h"
+#include "MapServerMini.h"
 
 #include <QTimer>
 #include <QString>
@@ -37,9 +37,9 @@ public:
         BlockedOn_Fight
     };
 
-    void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    void insert_player_all(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction);
-    void remove_player(CatchChallenger::Api_protocol_Qt  *api,const uint16_t &id);
+    void insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    void insert_player_all(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction);
+    void remove_player(CatchChallenger::Api_protocol_Qt  *api,const SIMPLIFIED_PLAYER_ID_FOR_MAP &id);
     static bool mapConditionIsRepected(const CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::MapCondition &condition);
     void dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt  *api);
     bool preload_other_pre();
@@ -65,8 +65,8 @@ public:
     static void appendReputationRewards(CatchChallenger::Api_protocol_Qt  *api,const QList<CatchChallenger::ReputationRewards> &reputationList);
     static void appendReputationRewards(CatchChallenger::Api_protocol_Qt  *api,const std::vector<CatchChallenger::ReputationRewards> &reputationList);
 
-    void have_inventory_slot(const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
-    static void have_inventory(CatchChallenger::Api_protocol_Qt  *api,const std::unordered_map<uint16_t, uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items);
+    void have_inventory_slot(const std::unordered_map<uint16_t, uint32_t> &items);
+    static void have_inventory(CatchChallenger::Api_protocol_Qt  *api,const std::unordered_map<uint16_t, uint32_t> &items);
     static void add_to_inventory(CatchChallenger::Api_protocol_Qt  *api,const uint32_t &item,const uint32_t &quantity=1);
     static void add_to_inventory(CatchChallenger::Api_protocol_Qt  *api, const std::vector<std::pair<uint16_t, uint32_t> > &items);
     static void add_to_inventory(CatchChallenger::Api_protocol_Qt  *api, const std::unordered_map<uint16_t,uint32_t> &items);

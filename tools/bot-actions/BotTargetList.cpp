@@ -37,6 +37,7 @@ BotTargetList::BotTargetList(QHash<CatchChallenger::Api_client_real *,MultipleBo
     mapId(0),
     g(rd())
 {
+    qDebug() << "BotTargetList constructor";
     srand(time(NULL));
     ui->setupUi(this);
     ui->comboBoxStep->setCurrentIndex(1);
@@ -1666,7 +1667,7 @@ void BotTargetList::autoStartAction()
             abort();
         if(api->getCaracterSelected())
         {
-            if(player.target.sinceTheLastAction.isNull() || !player.target.sinceTheLastAction.isValid())
+            if(!player.target.sinceTheLastAction.isValid())
                 player.target.sinceTheLastAction.restart();
             const int &msFromStart=player.target.sinceTheLastAction.elapsed();
             if(player.target.blockObject==NULL &&
@@ -1827,7 +1828,7 @@ void BotTargetList::on_graphvizTextShow_clicked()
     }
     dotfile.write(ui->graphvizText->toPlainText().toUtf8());
     dotfile.close();
-    if(QProcess::execute("/usr/bin/dot -Tpng "+dotPath+" -o "+pngPath)!=0)
+    if(QProcess::execute("/usr/bin/dot",QStringList{"-Tpng",dotPath,"-o",pngPath})!=0)
     {
         QMessageBox::warning(this,"Error","Unable to convert the dot file");
         return;
@@ -1854,7 +1855,7 @@ void BotTargetList::on_overall_graphvizTextShow_clicked()
     }
     dotfile.write(ui->overall_graphvizText->toPlainText().toUtf8());
     dotfile.close();
-    if(QProcess::execute("/usr/bin/dot -Tpng "+dotPath+" -o "+pngPath)!=0)
+    if(QProcess::execute("/usr/bin/dot",QStringList{"-Tpng",dotPath,"-o",pngPath})!=0)
     {
         QMessageBox::warning(this,"Error","Unable to convert the dot file");
         return;

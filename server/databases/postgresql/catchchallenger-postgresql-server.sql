@@ -43,7 +43,8 @@ CREATE TABLE character_bymap (
     "map" smallint NOT NULL,
     "plants" bytea NOT NULL,
     "items" bytea NOT NULL,
-    "fights" bytea NOT NULL
+    "fights" bytea NOT NULL,
+    "industries" bytea NOT NULL
 );
 
 

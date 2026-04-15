@@ -624,6 +624,27 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         abort();
         return;
     }
+    if(public_and_private_informations.clan!=0)
+    {
+        if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
+        {
+            std::ifstream clan_file("database/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
+            if(clan_file.good() && clan_file.is_open())
+            {
+                std::string clanName;
+                uint64_t cash=0;
+                hps::StreamInputBuffer cs(clan_file);
+                cs >> clanName;
+                cs >> cash;
+                haveClanInfo(public_and_private_informations.clan,clanName,cash);
+            }
+            else
+            {
+                normalOutput("Warning: clan "+std::to_string(public_and_private_informations.clan)+" not found on disk, resetting to 0");
+                public_and_private_informations.clan=0;
+            }
+        }
+    }
     characterIsRightSendData();
     #else
     #error Define what do here

@@ -29,6 +29,7 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     static MultipleBotConnectionAction multipleBotConnexion;
+    void autoConnect(const QString &host, quint16 port, int bots, const QString &login, const QString &pass);
 private:
     QSettings settings;
     QTimer slowDownTimer;
@@ -70,6 +71,9 @@ signals:
 private:
     Ui::MainWindow *ui;
     unsigned int internalId;
+    bool mAutoConnect;
+    QTimer autoConnectTimeout;
+    void autoSelectServer();
 };
 
 #endif // MAINWINDOW_H

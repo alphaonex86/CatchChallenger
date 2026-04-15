@@ -120,6 +120,7 @@ public:
     PreparedStatementUnit db_query_update_plant;
     PreparedStatementUnit db_query_update_itemonmap;
     PreparedStatementUnit db_query_update_character_bot_already_beaten;
+    PreparedStatementUnit db_query_update_industries;
 };
 #endif
 

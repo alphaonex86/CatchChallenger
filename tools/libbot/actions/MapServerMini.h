@@ -11,13 +11,15 @@
 #include <QList>
 #include <QtGui/QColor>
 
-#include "../../general/base/CommonMap.hpp"
+#include "../../general/base/CommonMap/CommonMap.hpp"
 #include "../../client/libqtcatchchallenger/Api_protocol_Qt.hpp"
 
 class MapServerMini : public CatchChallenger::CommonMap
 {
 public:
     MapServerMini();
+    std::string map_file;
+    uint32_t id;
     bool preload_other_pre();
     bool preload_step1();
     bool preload_step2();
@@ -42,6 +44,14 @@ public:
     {
     };
     std::map<std::pair<uint8_t,uint8_t>,PlantOnMap> plants;//position, plant id
+
+    //bot-specific data populated in ActionsBot.cpp, copied to BlockObject in step2c
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> heal;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
+    std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::string,pairhash> zonecapture;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> botsFight;
+    std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>,pairhash> shopIdList;
 
     struct BlockObject{
         /*enum LinkDirection

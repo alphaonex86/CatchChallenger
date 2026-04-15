@@ -20,5 +20,6 @@
         <file>playerlocrm.png</file>
         <file>playerloctm.png</file>
         <file>config.db</file>
+        <file>images/empty.png</file>
     </qresource>
 </RCC>

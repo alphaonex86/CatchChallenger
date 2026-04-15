@@ -465,7 +465,9 @@ private:
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
     void syncDatabaseReputation();
     //bot
-    void syncBotAlreadyBeaten();
+    void syncBotAlreadyBeaten(const CATCHCHALLENGER_TYPE_MAPID &mapId);
+    //industries
+    void syncIndustries(const CATCHCHALLENGER_TYPE_MAPID &mapId);
     //battle
     void battleCanceled();
     void battleAccepted();

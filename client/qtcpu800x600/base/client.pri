@@ -25,7 +25,7 @@ SOURCES += \
     $$PWD/interface/BaseWindowClan.cpp \
     $$PWD/interface/BaseWindowFactory.cpp \
     $$PWD/interface/BaseWindowLoad.cpp \
-    $$PWD/interface/BaseWindowMarket.cpp \
+    $$PWD/interface/BaseWindowTrade.cpp \
     $$PWD/interface/BaseWindowOptions.cpp \
     $$PWD/interface/BaseWindowShop.cpp \
     $$PWD/interface/BaseWindowWarehouse.cpp \

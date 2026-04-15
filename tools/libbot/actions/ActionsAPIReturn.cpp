@@ -17,32 +17,11 @@ void ActionsAction::seed_planted(CatchChallenger::Api_protocol_Qt *api,const boo
 {
     if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
         return;
-    ActionsBotInterface::Player &player=ActionsBotInterface::clientList[api];
-    CatchChallenger::Player_private_and_public_informations &playerInformations=api->get_player_informations();
+    //plant data is now local to player, no server async confirmation needed
     if(ok)
-    {
-        /// \todo add to the map here, and don't send on the server
         showTip(tr("Seed correctly planted"));
-        //do the rewards
-        {
-            const uint32_t &itemId=player.seed_in_waiting.front().seedItemId;
-            if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
-            {
-                qDebug() << "Item is not a plant";
-                QMessageBox::critical(NULL,tr("Error"),tr("Internal error")+", file: "+QString(__FILE__)+":"+QString::number(__LINE__));
-                return;
-            }
-            const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
-            appendReputationRewards(api,CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant).rewards.reputation);
-        }
-    }
     else
-    {
-        playerInformations.plantOnMap.erase(player.seed_in_waiting.front().indexOnMap);
-        add_to_inventory(api,player.seed_in_waiting.front().seedItemId,1);
         showTip(tr("Seed cannot be planted"));
-    }
-    player.seed_in_waiting.erase(player.seed_in_waiting.cbegin());
 }
 
 void ActionsAction::plant_collected_slot(const CatchChallenger::Plant_collect &stat)
@@ -65,7 +44,7 @@ void ActionsAction::plant_collected(CatchChallenger::Api_protocol_Qt *api,const 
         case CatchChallenger::Plant_collect_correctly_collected:
             //see to optimise CommonSettingsServer::commonSettingsServer.plantOnlyVisibleByPlayer==true and use the internal random number list
             showTip(tr("Plant collected"));//the item is send by another message with the protocol
-            playerInformations.plantOnMap.erase(plantInCollecting.indexOnMap);
+            //plant data is now local to player, no server feedback needed
         break;
         /*case CatchChallenger::Plant_collect_empty_dirt:
             showTip(tr("Try collect an empty dirt"));

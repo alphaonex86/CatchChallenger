@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS "character_bymap" (
 	"map"	INTEGER,
 	"plants"	BLOB,
 	"items"	BLOB,
-	"fights"	BLOB
+	"fights"	BLOB,
+	"industries"	BLOB
 );
 CREATE TABLE IF NOT EXISTS "character_forserver" (
 	"character"	INTEGER,

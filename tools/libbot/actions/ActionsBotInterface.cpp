@@ -46,7 +46,7 @@ QStringList ActionsBotInterface::variablesList()
     return QStringList() << QString("move") << QString("randomText") << QString("bugInDirection") << QString("globalChatRandomReply");
 }
 
-void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void ActionsBotInterface::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     (void)direction;
     CatchChallenger::Player_private_and_public_informations &playerApi=api->get_player_informations();

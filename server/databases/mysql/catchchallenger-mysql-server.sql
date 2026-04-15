@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS `character_bymap` (
   `map` int(11) NOT NULL,
   `plants` blob NOT NULL,
   `items` blob NOT NULL,
-  `fights` blob NOT NULL
+  `fights` blob NOT NULL,
+  `industries` blob NOT NULL
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------

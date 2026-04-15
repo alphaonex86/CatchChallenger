@@ -61,17 +61,17 @@ std::pair<uint8_t, uint8_t> BotTargetList::getNextPosition(const MapServerMini::
             break;
             case ActionsBotInterface::GlobalTarget::Dirt:
             {
-                const DatapackClientLoader::PlantIndexContent &plantOrDirt=QtDatapackClientLoader::datapackLoader->get_plantIndexOfOnMap().at(target.extra);
-                point.first=plantOrDirt.x;
-                point.second=plantOrDirt.y;
+                //position encoded as (x<<8)|y in extra
+                point.first=static_cast<uint8_t>((target.extra>>8)&0xFF);
+                point.second=static_cast<uint8_t>(target.extra&0xFF);
                 return point;
             }
             break;
             case ActionsBotInterface::GlobalTarget::Plant:
             {
-                const DatapackClientLoader::PlantIndexContent &plantOrDirt=QtDatapackClientLoader::datapackLoader->get_plantIndexOfOnMap().at(target.extra);
-                point.first=plantOrDirt.x;
-                point.second=plantOrDirt.y;
+                //position encoded as (x<<8)|y in extra
+                point.first=static_cast<uint8_t>((target.extra>>8)&0xFF);
+                point.second=static_cast<uint8_t>(target.extra&0xFF);
                 return point;
             }
             break;

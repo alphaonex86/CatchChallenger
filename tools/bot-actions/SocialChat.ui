@@ -202,6 +202,59 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QGroupBox" name="groupBoxOllama">
+         <property name="title">
+          <string>Ollama</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayoutOllama">
+          <item>
+           <widget class="QCheckBox" name="checkBoxOllama">
+            <property name="text">
+             <string>Reply via Ollama</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelOllamaUrl">
+            <property name="text">
+             <string>Ollama URL:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEditOllamaUrl">
+            <property name="placeholderText">
+             <string>http://localhost:11434</string>
+            </property>
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="labelOllamaModel">
+            <property name="text">
+             <string>Model:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEditOllamaModel">
+            <property name="text">
+             <string>qwen3.5:35b</string>
+            </property>
+            <property name="placeholderText">
+             <string>qwen3.5:35b</string>
+            </property>
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
       </layout>
      </widget>
     </item>

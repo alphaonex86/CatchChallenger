@@ -491,7 +491,6 @@ private:
     std::string clanName;
     bool haveClanInformations;
     uint16_t factoryId;
-    IndustryStatus industryStatus;
     bool factoryInProduction;
     ObjectType waitedObjectType;
     uint32_t datapackDownloadedCount;

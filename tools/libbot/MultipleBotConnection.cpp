@@ -211,12 +211,15 @@ void MultipleBotConnection::haveCharacter()
         return;
     }
     CatchChallengerClient *client=apiToCatchChallengerClient.value(senderObject);
-    qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
-    client->selectedCharacter=true;
-    numberOfSelectedCharacter++;
-    emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
-    client->stat=Status_SelectedCharacter;
-    updateClientListStatus();
+    if(client->selectedCharacter!=true)
+    {
+        qDebug() << "selected character: " << client << " at " << __FILE__ << ":" << __LINE__;
+        client->selectedCharacter=true;
+        numberOfSelectedCharacter++;
+        emit emit_numberOfSelectedCharacter(numberOfSelectedCharacter);
+        client->stat=Status_SelectedCharacter;
+        updateClientListStatus();
+    }
 
     if(multipleConnexion())
     {

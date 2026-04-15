@@ -3,7 +3,77 @@
 #include "../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include "../../general/base/CommonDatapack.hpp"
 #include "../../general/base/CommonDatapackServerSpec.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 #include "ActionsAction.h"
+
+// Helper: pointer-based moveWithoutTeleport for preload (no api needed)
+static bool localMoveWithoutTeleport(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap *&map, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+{
+    if(map==nullptr)
+        return false;
+    CatchChallenger::CommonMap **flat_map_list=ActionsAction::actionsAction->flat_map_list;
+    switch(direction)
+    {
+    case CatchChallenger::Direction_move_at_right:
+        if(x<(map->width-1)) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x+1,y,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x+1,y)) return false;
+            x++;
+        } else {
+            if(map->border.right.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.right.mapIndex];
+            COORD_TYPE ny=y+map->border.right.y_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,0,ny,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,0,ny)) return false;
+            x=0; y=ny; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_left:
+        if(x>0) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x-1,y,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x-1,y)) return false;
+            x--;
+        } else {
+            if(map->border.left.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.left.mapIndex];
+            COORD_TYPE ny=y+map->border.left.y_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nextMap->width-1,ny,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nextMap->width-1,ny)) return false;
+            x=nextMap->width-1; y=ny; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_top:
+        if(y>0) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x,y-1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x,y-1)) return false;
+            y--;
+        } else {
+            if(map->border.top.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.top.mapIndex];
+            COORD_TYPE nx=x+map->border.top.x_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nx,nextMap->height-1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nx,nextMap->height-1)) return false;
+            y=nextMap->height-1; x=nx; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_bottom:
+        if(y<(map->height-1)) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x,y+1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x,y+1)) return false;
+            y++;
+        } else {
+            if(map->border.bottom.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.bottom.mapIndex];
+            COORD_TYPE nx=x+map->border.bottom.x_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nx,0,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nx,0)) return false;
+            y=0; x=nx; map=nextMap;
+        }
+        return true;
+    default:
+        return false;
+    }
+}
 
 bool MapServerMini::preload_step2()
 {
@@ -46,7 +116,7 @@ bool MapServerMini::preload_step2()
                     currentCodeZoneStep1=step1.map[x+y*this->width];
                     step2.map[x+y*this->width]=lastCodeZone;
                     const MapParsedForBot::Layer &step1Layer=step1.layers.at(step1.map[x+y*this->width]-1);
-                    if(parsed_layer.simplifiedMap!=NULL && parsed_layer.simplifiedMap[x+y*this->width]<200)
+                    if(flat_simplified_map.size()==(size_t)this->width*this->height && flat_simplified_map[x+y*this->width]<200)
                     {
                         preload_step2_addNearTileToScanList(scanList,x,y);
                         while(!scanList.empty())
@@ -232,7 +302,7 @@ bool MapServerMini::preload_step2b()
     mapConditionEmpty.data.quest=0;
 
     //link the internal block
-    if(this->parsed_layer.simplifiedMap!=nullptr)
+    if(this->flat_simplified_map.size()==(size_t)this->width*this->height)
     {
         uint8_t y=0;
         while(y<this->height)
@@ -243,7 +313,7 @@ bool MapServerMini::preload_step2b()
                 const uint16_t codeZone=step2.map[x+y*this->width];
                 if(codeZone!=0)
                 {
-                    if(this->parsed_layer.simplifiedMap[x+y*this->width]<200)
+                    if(this->flat_simplified_map[x+y*this->width]<200)
                     {
                         //check the right move
                         {
@@ -255,13 +325,15 @@ bool MapServerMini::preload_step2b()
                             do
                             {
                                 needrepeate=false;
-                                canMove=CatchChallenger::MoveOnTheMap::moveWithoutTeleport(CatchChallenger::Direction_move_at_right,&current_map,&current_x,&current_y,true,false);
+                                canMove=localMoveWithoutTeleport(CatchChallenger::Direction_move_at_right,current_map,current_x,current_y,true,false);
                                 if(!canMove)
                                     break;
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if(casted_map->flat_simplified_map.size()!=(size_t)casted_map->width*casted_map->height)
+                                    break;
+                                const uint8_t &val=casted_map->flat_simplified_map[current_x+current_y*casted_map->width];
                                 if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
                                         CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesRight)
                                     needrepeate=true;
@@ -289,13 +361,15 @@ bool MapServerMini::preload_step2b()
                             do
                             {
                                 needrepeate=false;
-                                canMove=CatchChallenger::MoveOnTheMap::moveWithoutTeleport(CatchChallenger::Direction_move_at_left,&current_map,&current_x,&current_y,true,false);
+                                canMove=localMoveWithoutTeleport(CatchChallenger::Direction_move_at_left,current_map,current_x,current_y,true,false);
                                 if(!canMove)
                                     break;
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if(casted_map->flat_simplified_map.size()!=(size_t)casted_map->width*casted_map->height)
+                                    break;
+                                const uint8_t &val=casted_map->flat_simplified_map[current_x+current_y*casted_map->width];
                                 if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
                                         CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesLeft)
                                     needrepeate=true;
@@ -323,13 +397,15 @@ bool MapServerMini::preload_step2b()
                             do
                             {
                                 needrepeate=false;
-                                canMove=CatchChallenger::MoveOnTheMap::moveWithoutTeleport(CatchChallenger::Direction_move_at_top,&current_map,&current_x,&current_y,true,false);
+                                canMove=localMoveWithoutTeleport(CatchChallenger::Direction_move_at_top,current_map,current_x,current_y,true,false);
                                 if(!canMove)
                                     break;
                                 if(current_map==this && codeZone==otherCodeZone)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if(casted_map->flat_simplified_map.size()!=(size_t)casted_map->width*casted_map->height)
+                                    break;
+                                const uint8_t &val=casted_map->flat_simplified_map[current_x+current_y*casted_map->width];
                                 if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
                                         CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesTop)
                                     needrepeate=true;
@@ -357,11 +433,13 @@ bool MapServerMini::preload_step2b()
                             do
                             {
                                 needrepeate=false;
-                                canMove=CatchChallenger::MoveOnTheMap::moveWithoutTeleport(CatchChallenger::Direction_move_at_bottom,&current_map,&current_x,&current_y,true,false);
+                                canMove=localMoveWithoutTeleport(CatchChallenger::Direction_move_at_bottom,current_map,current_x,current_y,true,false);
                                 if(!canMove)
                                     break;
                                 MapServerMini *casted_map=static_cast<MapServerMini *>(current_map);
-                                const uint8_t &val=casted_map->parsed_layer.simplifiedMap[current_x+current_y*casted_map->width];
+                                if(casted_map->flat_simplified_map.size()!=(size_t)casted_map->width*casted_map->height)
+                                    break;
+                                const uint8_t &val=casted_map->flat_simplified_map[current_x+current_y*casted_map->width];
                                 if((CatchChallenger::ParsedLayerLedges)(val-250+1)==
                                         CatchChallenger::ParsedLayerLedges::ParsedLayerLedges_LedgesBottom)
                                     needrepeate=true;
@@ -388,22 +466,22 @@ bool MapServerMini::preload_step2b()
     }
 
     //The teleporter
-    if(parsed_layer.simplifiedMap!=nullptr)
+    if(flat_simplified_map.size()==(size_t)this->width*this->height)
     {
         unsigned int index=0;
-        while(index<teleporter_list_size)
+        while(index<teleporters.size())
         {
-            const Teleporter &teleporterEntry=teleporter[index];//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+            const CatchChallenger::Teleporter &teleporterEntry=teleporters[index];
             const uint8_t x=teleporterEntry.source_x,y=teleporterEntry.source_y;
             const uint16_t &codeZone=step2.map[x+y*this->width];
             //if current not dirt or other not walkable layer
-            if(parsed_layer.simplifiedMap[x+y*this->width]!=254)
+            if(flat_simplified_map[x+y*this->width]!=254)
             {
                 if(codeZone!=0)
                 {
                     BlockObject &blockObject=*step2.layers[codeZone-1].blockObject;
                     const uint8_t newx=teleporterEntry.destination_x,newy=teleporterEntry.destination_y;
-                    const MapServerMini *nextMap=static_cast<MapServerMini *>(teleporterEntry.map);
+                    const MapServerMini *nextMap=static_cast<MapServerMini *>(ActionsAction::actionsAction->flat_map_list[teleporterEntry.mapIndex]);
                     if(newx<nextMap->width && newy<nextMap->height)
                     {
                         if(nextMap->step.size()<2)
@@ -412,7 +490,7 @@ bool MapServerMini::preload_step2b()
                         const uint8_t &otherCodeZone=step2nextMap.map[newx+newy*nextMap->width];
                         if(otherCodeZone!=0)
                             //if the other not dirt or other not walkable layer
-                            if(nextMap->parsed_layer.simplifiedMap[newx+newy*nextMap->width]!=254)
+                            if(nextMap->flat_simplified_map.size()==(size_t)nextMap->width*nextMap->height && nextMap->flat_simplified_map[newx+newy*nextMap->width]!=254)
                             {
                                 BlockObject &otherBlockObject=*step2nextMap.layers[otherCodeZone-1].blockObject;
                                 addBlockLink(blockObject,otherBlockObject,BlockObject::LinkType::SourceTeleporter,x,y,teleporterEntry.condition);
@@ -445,7 +523,7 @@ bool MapServerMini::preload_step2c()
                         displayConsoleMap(currentStep);
                         abort();
                     }
-                    const CatchChallenger::ParsedLayer &parsedLayer=this->parsed_layer;
+                    //flat_simplified_map replaces parsed_layer
                     //not clickable item
                     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> learn;
                     //std::unordered_set<std::pair<uint8_t,uint8_t>,pairhash> market;
@@ -454,7 +532,7 @@ bool MapServerMini::preload_step2c()
                     //wild monster (and their object, day cycle)
 
                     //dirt
-                    if(parsedLayer.simplifiedMap!=nullptr)
+                    if(this->flat_simplified_map.size()==(size_t)this->width*this->height)
                     {
                         int y=0;
                         while(y<this->height)
@@ -462,7 +540,7 @@ bool MapServerMini::preload_step2c()
                             int x=0;
                             while(x<this->width)
                             {
-                                if(currentStep.map[x+y*this->width]!=0 && parsedLayer.simplifiedMap[x+y*this->width]==249)
+                                if(currentStep.map[x+y*this->width]!=0 && this->flat_simplified_map[x+y*this->width]==249)
                                 {
                                     const uint16_t &codeZone=currentStep.map[x+y*this->width];
                                     std::pair<uint8_t,uint8_t> newDirtPoint{x,y};
@@ -524,7 +602,7 @@ bool MapServerMini::preload_step2c()
                     }
                     //shop
                     {
-                        for(const auto& n : this->shops) {
+                        for(const auto& n : this->shopIdList) {
                             const std::pair<uint8_t,uint8_t> &point=n.first;
                             const uint8_t x=n.first.first,y=n.first.second;
                             const uint16_t &codeZone=currentStep.map[x+y*this->width];
@@ -565,7 +643,7 @@ bool MapServerMini::preload_step2c()
                     }
 
                     //detect the wild monster
-                    if(parsedLayer.simplifiedMap!=nullptr)
+                    if(this->flat_simplified_map.size()==(size_t)this->width*this->height)
                     {
                         int y=0;
                         while(y<this->height)
@@ -576,22 +654,22 @@ bool MapServerMini::preload_step2c()
                                 if(currentStep.map[x+y*this->width]!=0)
                                 {
                                     const uint16_t &codeZone=currentStep.map[x+y*this->width];
-                                    const uint8_t &monsterCode=parsedLayer.simplifiedMap[x+y*this->width];
-                                    if(monsterCode<parsedLayer.monstersCollisionList.size())
+                                    const uint8_t &monsterCode=this->flat_simplified_map[x+y*this->width];
+                                    if(monsterCode<this->zones.size())
                                     {
-                                        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=parsedLayer.monstersCollisionList.at(monsterCode);
+                                        const CatchChallenger::MonstersCollisionValue &monstersCollisionValue=this->zones.at(monsterCode);
                                         if(!monstersCollisionValue.walkOnMonsters.empty())
                                         {
                                             std::pair<uint8_t,uint8_t> newPoint{x,y};
                                             unsigned int index_teleporter=0;
-                                            while(index_teleporter<teleporter_list_size)
+                                            while(index_teleporter<teleporters.size())
                                             {
-                                                const Teleporter &teleporterEntry=teleporter[index_teleporter];//for very small list < 20 teleporter, it's this structure the more fast, code not ready for more than 127
+                                                const CatchChallenger::Teleporter &teleporterEntry=teleporters[index_teleporter];
                                                 if(x==teleporterEntry.source_x && y==teleporterEntry.source_y)
                                                     break;
                                                 index_teleporter++;
                                             }
-                                            if(index_teleporter>=teleporter_list_size)
+                                            if(index_teleporter>=teleporters.size())
                                             {
                                                 if(codeZone>0)
                                                 {

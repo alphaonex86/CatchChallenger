@@ -1,9 +1,79 @@
 #include "ActionsAction.h"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include "../../../general/base/MoveOnTheMap.hpp"
 #include "../../../general/tinyXML2/customtinyxml2.hpp"
 #include "../../../client/libqtcatchchallenger/QtDatapackClientLoader.hpp"
 #include <iostream>
+
+// Helper: pointer-based moveWithoutTeleport for preload (no api needed)
+static bool localMoveWithoutTeleportBot(const CatchChallenger::Direction &direction, CatchChallenger::CommonMap *&map, COORD_TYPE &x, COORD_TYPE &y, const bool &checkCollision, const bool &allowTeleport)
+{
+    if(map==nullptr)
+        return false;
+    CatchChallenger::CommonMap **flat_map_list=ActionsAction::actionsAction->flat_map_list;
+    switch(direction)
+    {
+    case CatchChallenger::Direction_move_at_right:
+        if(x<(map->width-1)) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x+1,y,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x+1,y)) return false;
+            x++;
+        } else {
+            if(map->border.right.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.right.mapIndex];
+            COORD_TYPE ny=y+map->border.right.y_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,0,ny,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,0,ny)) return false;
+            x=0; y=ny; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_left:
+        if(x>0) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x-1,y,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x-1,y)) return false;
+            x--;
+        } else {
+            if(map->border.left.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.left.mapIndex];
+            COORD_TYPE ny=y+map->border.left.y_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nextMap->width-1,ny,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nextMap->width-1,ny)) return false;
+            x=nextMap->width-1; y=ny; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_top:
+        if(y>0) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x,y-1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x,y-1)) return false;
+            y--;
+        } else {
+            if(map->border.top.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.top.mapIndex];
+            COORD_TYPE nx=x+map->border.top.x_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nx,nextMap->height-1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nx,nextMap->height-1)) return false;
+            y=nextMap->height-1; x=nx; map=nextMap;
+        }
+        return true;
+    case CatchChallenger::Direction_move_at_bottom:
+        if(y<(map->height-1)) {
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*map,x,y+1,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*map,x,y+1)) return false;
+            y++;
+        } else {
+            if(map->border.bottom.mapIndex==65535) return false;
+            CatchChallenger::CommonMap *nextMap=flat_map_list[map->border.bottom.mapIndex];
+            COORD_TYPE nx=x+map->border.bottom.x_offset;
+            if(checkCollision && !CatchChallenger::MoveOnTheMap::isWalkableWithDirection(*nextMap,nx,0,direction)) return false;
+            if(!allowTeleport && CatchChallenger::MoveOnTheMap::needBeTeleported(*nextMap,nx,0)) return false;
+            y=0; x=nx; map=nextMap;
+        }
+        return true;
+    default:
+        return false;
+    }
+}
 
 void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_map)
 {
@@ -27,26 +97,21 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
         while(sub_index<botssize)
         {
             bots_number++;
-            CatchChallenger::Map_to_send::Bot_Semi bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
+            const CatchChallenger::Map_to_send::Bot_Semi &bot_Semi=semi_loaded_map.at(index).old_map.bots.at(sub_index);
 
-            if(!stringEndsWith(bot_Semi.file,".xml"))
-                bot_Semi.file+=".xml";
-            loadBotFile(semi_loaded_map.at(index).map->map_file,bot_Semi.file);
-            if(botFiles.find(bot_Semi.file)!=botFiles.end())
-                if(botFiles.at(bot_Semi.file).find(bot_Semi.id)!=botFiles.at(bot_Semi.file).end())
                 {
-                    const auto &step_list=botFiles.at(bot_Semi.file).at(bot_Semi.id).step;
+                    const auto &step_list=bot_Semi.steps;
                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                     std::cout << "Bot "
                               << bot_Semi.id
                               << " ("
-                              << bot_Semi.file
+                              << mapServer->map_file
                               << "), spawn at: "
-                              << semi_loaded_map.at(index).map->map_file
+                              << mapServer->map_file
                               << " ("
-                              << std::to_string(bot_Semi.point.x)
+                              << std::to_string(bot_Semi.point.first)
                               << ","
-                              << std::to_string(bot_Semi.point.y)
+                              << std::to_string(bot_Semi.point.second)
                               << ")"
                               << std::endl;
                     #endif
@@ -60,7 +125,7 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                             continue;
                         }
 
-                        std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.x,bot_Semi.point.y);
+                        std::pair<uint8_t,uint8_t> pairpoint(bot_Semi.point.first,bot_Semi.point.second);
 
                         if(step->Attribute("type")==NULL)
                         {
@@ -74,13 +139,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "Has not attribute \"shop\": for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -91,48 +156,34 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     std::cerr << "shop is not a number: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
-                                else if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().find(shop)==CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().end())
-                                        std::cerr << "shop number is not valid shop: for bot id: "
-                                                  << bot_Semi.id
-                                                  << " ("
-                                                  << bot_Semi.file
-                                                  << "), spawn at: "
-                                                  << semi_loaded_map.at(index).map->map_file
-                                                  << " ("
-                                                  << std::to_string(bot_Semi.point.x)
-                                                  << ","
-                                                  << std::to_string(bot_Semi.point.y)
-                                                  << "), for step: "
-                                                  << std::to_string(i->first)
-                                                  << std::endl;
                                 else
                                 {
                                     #ifdef DEBUG_MESSAGE_MAP_LOAD
                                     std::cout << "shop put at: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
                                     #endif
-                                    mapServer->shops[pairpoint].push_back(shop);
+                                    mapServer->shopIdList[pairpoint].push_back(shop);
                                     shops_number++;
                                 }
                             }
@@ -143,13 +194,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "learn point already on the map: for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -159,13 +210,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     std::cout << "learn point for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
@@ -180,13 +231,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "heal point already on the map: for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -196,13 +247,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     std::cout << "heal point put at: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
@@ -217,13 +268,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "market point already on the map: for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -233,13 +284,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     std::cout << "market point put at: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
@@ -254,13 +305,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "zonecapture point have not the zone attribute: for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -268,13 +319,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     std::cerr << "zonecapture point already on the map: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;
@@ -286,13 +337,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                         std::cerr << "zonecapture point put at: for bot id: "
                                                   << bot_Semi.id
                                                   << " ("
-                                                  << bot_Semi.file
+                                                  << mapServer->map_file
                                                   << "), spawn at: "
-                                                  << semi_loaded_map.at(index).map->map_file
+                                                  << mapServer->map_file
                                                   << " ("
-                                                  << std::to_string(bot_Semi.point.x)
+                                                  << std::to_string(bot_Semi.point.first)
                                                   << ","
-                                                  << std::to_string(bot_Semi.point.y)
+                                                  << std::to_string(bot_Semi.point.second)
                                                   << "), for step: "
                                                   << std::to_string(i->first)
                                                   << std::endl;
@@ -308,13 +359,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                 std::cerr << "botsFight point already on the map: for bot id: "
                                           << bot_Semi.id
                                           << " ("
-                                          << bot_Semi.file
+                                          << mapServer->map_file
                                           << "), spawn at: "
-                                          << semi_loaded_map.at(index).map->map_file
+                                          << mapServer->map_file
                                           << " ("
-                                          << std::to_string(bot_Semi.point.x)
+                                          << std::to_string(bot_Semi.point.first)
                                           << ","
-                                          << std::to_string(bot_Semi.point.y)
+                                          << std::to_string(bot_Semi.point.second)
                                           << "), for step: "
                                           << std::to_string(i->first)
                                           << std::endl;
@@ -326,8 +377,6 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                     fightid=stringtouint32(std::string(step->Attribute("fightid")),&ok);
                                 if(ok)
                                 {
-                                    if(CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().find(fightid)!=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().end())
-                                    {
                                         if(bot_Semi.property_text.find("lookAt")!=bot_Semi.property_text.end())
                                         {
                                             CatchChallenger::Direction direction;
@@ -344,13 +393,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                                     std::cerr << "Wrong direction for the botp: for bot id: "
                                                               << bot_Semi.id
                                                               << " ("
-                                                              << bot_Semi.file
+                                                              << mapServer->map_file
                                                               << "), spawn at: "
-                                                              << semi_loaded_map.at(index).map->map_file
+                                                              << mapServer->map_file
                                                               << " ("
-                                                              << std::to_string(bot_Semi.point.x)
+                                                              << std::to_string(bot_Semi.point.first)
                                                               << ","
-                                                              << std::to_string(bot_Semi.point.y)
+                                                              << std::to_string(bot_Semi.point.second)
                                                               << "), for step: "
                                                               << std::to_string(i->first)
                                                               << std::endl;
@@ -360,13 +409,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                             std::cout << "botsFight point put at: for bot id: "
                                                       << bot_Semi.id
                                                       << " ("
-                                                      << bot_Semi.file
+                                                      << mapServer->map_file
                                                       << "), spawn at: "
-                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << mapServer->map_file
                                                       << " ("
-                                                      << std::to_string(bot_Semi.point.x)
+                                                      << std::to_string(bot_Semi.point.first)
                                                       << ","
-                                                      << std::to_string(bot_Semi.point.y)
+                                                      << std::to_string(bot_Semi.point.second)
                                                       << "), for step: "
                                                       << std::to_string(i->first)
                                                       << std::endl;
@@ -383,13 +432,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                                     std::cerr << "fightRange is not a number: for bot id: "
                                                               << bot_Semi.id
                                                               << " ("
-                                                              << bot_Semi.file
+                                                              << mapServer->map_file
                                                               << "), spawn at: "
-                                                              << semi_loaded_map.at(index).map->map_file
+                                                              << mapServer->map_file
                                                               << " ("
-                                                              << std::to_string(bot_Semi.point.x)
+                                                              << std::to_string(bot_Semi.point.first)
                                                               << ","
-                                                              << std::to_string(bot_Semi.point.y)
+                                                              << std::to_string(bot_Semi.point.second)
                                                               << "), for step: "
                                                               << std::to_string(i->first)
                                                               << std::endl;
@@ -402,13 +451,13 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                                         std::cerr << "fightRange is greater than 10: for bot id: "
                                                                   << bot_Semi.id
                                                                   << " ("
-                                                                  << bot_Semi.file
+                                                                  << mapServer->map_file
                                                                   << "), spawn at: "
-                                                                  << semi_loaded_map.at(index).map->map_file
+                                                                  << mapServer->map_file
                                                                   << " ("
-                                                                  << std::to_string(bot_Semi.point.x)
+                                                                  << std::to_string(bot_Semi.point.first)
                                                                   << ","
-                                                                  << std::to_string(bot_Semi.point.y)
+                                                                  << std::to_string(bot_Semi.point.second)
                                                                   << "), for step: "
                                                                   << std::to_string(i->first)
                                                                   << std::endl;
@@ -421,33 +470,31 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                             std::cerr << "Put bot fight point: for bot id: "
                                                       << bot_Semi.id
                                                       << " ("
-                                                      << bot_Semi.file
+                                                      << mapServer->map_file
                                                       << "), spawn at: "
-                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << mapServer->map_file
                                                       << " ("
-                                                      << std::to_string(bot_Semi.point.x)
+                                                      << std::to_string(bot_Semi.point.first)
                                                       << ","
-                                                      << std::to_string(bot_Semi.point.y)
+                                                      << std::to_string(bot_Semi.point.second)
                                                       << "), for step: "
                                                       << std::to_string(i->first)
                                                       << " in direction: "
                                                       << std::to_string(direction)
                                                       << std::endl;
                                             #endif
-                                            uint8_t temp_x=bot_Semi.point.x,temp_y=bot_Semi.point.y;
+                                            COORD_TYPE temp_x=bot_Semi.point.first,temp_y=bot_Semi.point.second;
                                             uint8_t index_botfight_range=0;
                                             CatchChallenger::CommonMap *map=semi_loaded_map.at(index).map;
                                             CatchChallenger::CommonMap *old_map=map;
                                             while(index_botfight_range<fightRange)
                                             {
-                                                if(!CatchChallenger::MoveOnTheMap::canGoTo(direction,*map,temp_x,temp_y,true,false))
-                                                    break;
-                                                if(!CatchChallenger::MoveOnTheMap::move(direction,&map,&temp_x,&temp_y,true,false))
+                                                if(!localMoveWithoutTeleportBot(direction,map,temp_x,temp_y,true,false))
                                                     break;
                                                 if(map!=old_map)
                                                     break;
                                                 const std::pair<uint8_t,uint8_t> botFightRangePoint(temp_x,temp_y);
-                                                mapServer->botsFightTrigger[botFightRangePoint].push_back(fightid);
+                                                mapServer->botsFightTrigger[botFightRangePoint]=static_cast<uint8_t>(fightid);
                                                 index_botfight_range++;
                                                 botfightstigger_number++;
                                             }
@@ -456,43 +503,28 @@ void ActionsAction::preload_the_bots(const std::vector<Map_semi> &semi_loaded_ma
                                             std::cerr << "lookAt not found: for bot id: "
                                                       << bot_Semi.id
                                                       << " ("
-                                                      << bot_Semi.file
+                                                      << mapServer->map_file
                                                       << "), spawn at: "
-                                                      << semi_loaded_map.at(index).map->map_file
+                                                      << mapServer->map_file
                                                       << " ("
-                                                      << std::to_string(bot_Semi.point.x)
+                                                      << std::to_string(bot_Semi.point.first)
                                                       << ","
-                                                      << std::to_string(bot_Semi.point.y)
+                                                      << std::to_string(bot_Semi.point.second)
                                                       << "), for step: "
                                                       << std::to_string(i->first)
                                                       << std::endl;
-                                    }
-                                    else
-                                        std::cerr << "fightid not found into the list: for bot id: "
-                                                  << bot_Semi.id
-                                                  << " ("
-                                                  << bot_Semi.file
-                                                  << "), spawn at: "
-                                                  << semi_loaded_map.at(index).map->map_file
-                                                  << " ("
-                                                  << std::to_string(bot_Semi.point.x)
-                                                  << ","
-                                                  << std::to_string(bot_Semi.point.y)
-                                                  << "), for step: "
-                                                  << std::to_string(i->first)
-                                                  << std::endl;
                                 }
                                 else
                                     std::cerr << "botsFight point have wrong fightid: for bot id: "
                                               << bot_Semi.id
                                               << " ("
-                                              << bot_Semi.file
+                                              << mapServer->map_file
                                               << "), spawn at: "
-                                              << semi_loaded_map.at(index).map->map_file
+                                              << mapServer->map_file
                                               << " ("
-                                              << std::to_string(bot_Semi.point.x)
+                                              << std::to_string(bot_Semi.point.first)
                                               << ","
-                                              << std::to_string(bot_Semi.point.y)
+                                              << std::to_string(bot_Semi.point.second)
                                               << "), for step: "
                                               << std::to_string(i->first)
                                               << std::endl;

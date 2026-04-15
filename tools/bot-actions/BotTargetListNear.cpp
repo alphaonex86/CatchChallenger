@@ -304,10 +304,10 @@ std::string BotTargetList::graphLocalMap()
                 if(layer.name!="Lost layer" || !content.empty())
                 {
                     bool isledge=false;
-                    if(!block.block.empty() && mapServer->parsed_layer.simplifiedMap!=NULL)
+                    if(!block.block.empty() && mapServer->flat_simplified_map.size()==(size_t)mapServer->width*mapServer->height)
                     {
                         const std::pair<uint8_t,uint8_t> &coord=block.block.front();
-                        const uint8_t &val=mapServer->parsed_layer.simplifiedMap[coord.first+coord.second*mapServer->width];
+                        const uint8_t &val=mapServer->flat_simplified_map[coord.first+coord.second*mapServer->width];
                         isledge=(val>=250 && val<=253);
                     }
                     if(!isledge)
@@ -475,9 +475,9 @@ BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchCha
     uint32_t maxMonsterLevel=0;
     {
         unsigned int index=0;
-        while(index<player_private_and_public_informations.playerMonster.size())
+        while(index<player_private_and_public_informations.monsters.size())
         {
-            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.playerMonster.at(index);
+            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.monsters.at(index);
             if(playerMonster.level>maxMonsterLevel)
                 maxMonsterLevel=playerMonster.level;
             index++;
@@ -491,7 +491,8 @@ BotTargetList::ZoneAccessible BotTargetList::nextZoneIsAccessible(const CatchCha
         while(index<botsFightList.size())
         {
             const uint32_t &fightId=botsFightList.at(index);
-            const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId);
+            const CATCHCHALLENGER_TYPE_BOTID botIdFight=static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId);
+            const CatchChallenger::BotFight &fight=blockObject->map->botFights.at(botIdFight);
             uint8_t maxFightLevel=0;
             {
                 unsigned int sub_index=0;

@@ -449,7 +449,7 @@ bool Client::finishTheTurn(const bool &isBot)
                         stringreplaceOne(queryText,"%1",std::to_string(character_id));
                         stringreplaceOne(queryText,"%2",std::to_string(botFightId));
                         dbQueryWriteServer(queryText);*/
-                        syncBotAlreadyBeaten();
+                        syncBotAlreadyBeaten(mapId);
                     }
                 }
                 fightOrBattleFinish(win,botFight);

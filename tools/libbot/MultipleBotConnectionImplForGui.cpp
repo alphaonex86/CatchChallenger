@@ -1,6 +1,6 @@
 #include "MultipleBotConnectionImplForGui.h"
 #ifdef BOTACTIONS
-#include "../bot/actions/ActionsAction.h"
+#include "actions/ActionsAction.h"
 #endif
 
 #include <iostream>

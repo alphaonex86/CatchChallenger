@@ -6,7 +6,7 @@
 #include <netinet/tcp.h>
 #if defined(CATCHCHALLENGER_DB_FILE) || defined(CATCHCHALLENGER_CACHE_HPS)
 #include <sys/stat.h>
-#warning dictionary_serialBuffer and server_serialBuffer not open as DB
+//dictionary_serialBuffer and server_serialBuffer now open as DB
 #endif
 #include "../base/ServerStructures.hpp"
 #ifndef CATCHCHALLENGER_NOXML
@@ -178,6 +178,7 @@ int main(int argc, char *argv[])
     ::mkdir("database/accounts",0700);
     ::mkdir("database/characters",0700);
     ::mkdir("database/clans",0700);
+    ::mkdir("database/characters_server",0700);
     ::mkdir("database/zone",0700);
     #endif
 
@@ -504,6 +505,20 @@ int main(int argc, char *argv[])
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     server->preload_1_the_data();
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        struct stat sb;
+        if(::stat("database/dictionary",&sb)==0)
+        {
+            BaseServer::dictionary_in_file=new std::ifstream("database/dictionary", std::ifstream::binary);
+            if(BaseServer::dictionary_in_file->good() && BaseServer::dictionary_in_file->is_open())
+                BaseServer::dictionary_serialBuffer=new hps::StreamInputBuffer(*BaseServer::dictionary_in_file);
+            else
+            {
+                delete BaseServer::dictionary_in_file;
+                BaseServer::dictionary_in_file=nullptr;
+            }
+        }
+    }
     server->preload_1_the_data();
     #else
     #error Define what do here
@@ -620,7 +635,7 @@ int main(int argc, char *argv[])
 #ifdef CATCHCHALLENGER_DB_FILE
 const std::string &hexa=binarytoHexa(c->public_and_private_informations.public_informations.pseudo.c_str(),
                                      c->public_and_private_informations.public_informations.pseudo.size());
-std::ofstream out_file("characters/"+hexa, std::ofstream::binary);
+std::ofstream out_file("database/characters/"+hexa, std::ofstream::binary);
 
 if(c->getPlayerId()>0)
     hps::to_stream(*c, out_file);
