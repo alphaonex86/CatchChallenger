@@ -5,11 +5,16 @@
 #include <QHash>
 #include <QString>
 #include <QPixmap>
-#include "../bot/actions/ActionsAction.h"
+#include "../libbot/actions/ActionsAction.h"
 #include <vector>
 #include <unordered_set>
 #include <string>
 #include <QCompleter>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 
 namespace Ui {
 class SocialChat;
@@ -45,8 +50,8 @@ private slots:
     void removeNumberForFlood();
     void on_globalChatText_returnPressed();
     //map view
-    void insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
-    void remove_player(const uint16_t &id);
+    void insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction);
+    void remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id);
     void dropAllPlayerOnTheMap();
     void updatePlayerKnownList(CatchChallenger::Api_protocol_Qt *api);
     void updateVisiblePlayers(CatchChallenger::Api_protocol_Qt *api);
@@ -54,6 +59,13 @@ private slots:
     void globalChatText_updateCompleter();
     void on_chatSpecText_returnPressed();
     void on_listWidgetChatType_itemSelectionChanged();
+    //ollama
+    void on_checkBoxOllama_toggled(bool checked);
+    void on_lineEditOllamaUrl_textChanged(const QString &text);
+    void on_lineEditOllamaModel_textChanged(const QString &text);
+    void ollamaReplyFinished(QNetworkReply *reply);
+    void requestOllamaResponse(const QString &botPseudo, const QString &senderPseudo, const QString &message, const CatchChallenger::Chat_type &chatType);
+    void sendOllamaReply(const QString &replyText, const QString &botPseudo, const CatchChallenger::Chat_type &chatType, const QString &targetPseudo);
 
 private:
     void showEvent(QShowEvent * event);
@@ -81,6 +93,17 @@ private:
     QList<ChatEntry> chat_list;
     QSet<QString> knownGlobalChatPlayers;
     QCompleter *completer;
+
+    //ollama
+    QNetworkAccessManager *ollamaNetworkManager;
+    struct OllamaPendingReply
+    {
+        QString botPseudo;
+        CatchChallenger::Chat_type chatType;
+        QString targetPseudo;
+        qint64 requestTimestamp;
+    };
+    QHash<QNetworkReply*,OllamaPendingReply> ollamaPendingReplies;
 };
 
 #endif // SOCIALCHAT_H

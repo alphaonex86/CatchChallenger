@@ -256,15 +256,81 @@ void Client::syncDatabaseReputation()
         delete buffer;
 }
 
-void Client::syncBotAlreadyBeaten()
+void Client::syncBotAlreadyBeaten(const CATCHCHALLENGER_TYPE_MAPID &mapId)
 {
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
-    /*GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
-                binarytoHexa(public_and_private_informations.bot_already_beaten,CommonDatapackServerSpec::commonDatapackServerSpec.get_botFightsMaxId()/8+1),
-                std::to_string(character_id_db)
-                }); todo remake*/
+    if(public_and_private_informations.mapData.find(mapId)==public_and_private_informations.mapData.cend())
+        return;
+    const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(mapId);
+    const uint32_t blobSize=mapData.bots_beaten.size();
+    char buffer[blobSize];
+    uint32_t posOutput=0;
+    for(const CATCHCHALLENGER_TYPE_BOTID &bot_id : mapData.bots_beaten)
+    {
+        buffer[posOutput]=bot_id;
+        posOutput+=1;
+    }
+    const uint32_t map_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId).id_db;
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_character_bot_already_beaten.asyncWrite({
+                binarytoHexa(buffer,posOutput),
+                std::to_string(character_id_db),
+                std::to_string(map_database_id)
+                });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
+    (void)mapId;
     #elif CATCHCHALLENGER_DB_FILE
+    (void)mapId;
+    #else
+    #error Define what do here
+    #endif
+}
+
+void Client::syncIndustries(const CATCHCHALLENGER_TYPE_MAPID &mapId)
+{
+    #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    if(public_and_private_informations.mapData.find(mapId)==public_and_private_informations.mapData.cend())
+        return;
+    const Player_private_and_public_informations_Map &mapData=public_and_private_informations.mapData.at(mapId);
+    //industries blob: for each industry [last_update(8B LE), resources_count(1B), [item_id(2B LE) quantity(4B LE)]..., products_count(1B), [item_id(2B LE) quantity(4B LE)]...]
+    uint32_t posOutput=0;
+    for(const IndustryStatus &ind : mapData.industriesStatus)
+    {
+        const uint64_t last_update_le=htole64(ind.last_update);
+        memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&last_update_le,sizeof(uint64_t));
+        posOutput+=8;
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(ind.resources.size());
+        posOutput+=1;
+        for(const auto &res : ind.resources)
+        {
+            const uint16_t item_id_le=htole16(res.first);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&item_id_le,sizeof(uint16_t));
+            posOutput+=2;
+            const uint32_t quantity_le=htole32(res.second);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&quantity_le,sizeof(uint32_t));
+            posOutput+=4;
+        }
+        ProtocolParsingBase::tempBigBufferForOutput[posOutput]=static_cast<uint8_t>(ind.products.size());
+        posOutput+=1;
+        for(const auto &prod : ind.products)
+        {
+            const uint16_t item_id_le=htole16(prod.first);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&item_id_le,sizeof(uint16_t));
+            posOutput+=2;
+            const uint32_t quantity_le=htole32(prod.second);
+            memcpy(ProtocolParsingBase::tempBigBufferForOutput+posOutput,&quantity_le,sizeof(uint32_t));
+            posOutput+=4;
+        }
+    }
+    const uint32_t map_database_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(mapId).id_db;
+    GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_update_industries.asyncWrite({
+                binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,posOutput),
+                std::to_string(character_id_db),
+                std::to_string(map_database_id)
+                });
+    #elif CATCHCHALLENGER_DB_BLACKHOLE
+    (void)mapId;
+    #elif CATCHCHALLENGER_DB_FILE
+    (void)mapId;
     #else
     #error Define what do here
     #endif

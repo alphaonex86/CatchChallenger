@@ -112,7 +112,7 @@ void ActionsAction::loadFinishedReemitTheDelayedFunction()
                 insert_player_all(api,delayedMapPlayerChange.player,delayedMapPlayerChange.mapId,delayedMapPlayerChange.x,delayedMapPlayerChange.y,delayedMapPlayerChange.direction);
             break;
             case DelayedMapPlayerChangeType_Delete:
-                remove_player(api,delayedMapPlayerChange.player.simplifiedId);
+                remove_player(api,delayedMapPlayerChange.removeId);
             break;
             default:
                 abort();

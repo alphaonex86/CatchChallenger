@@ -150,8 +150,6 @@ void BaseWindow::resetAll()
     }
     #endif
 
-    industryStatus.products.clear();
-    industryStatus.resources.clear();
     if(newProfile!=NULL)
     {
         delete newProfile;

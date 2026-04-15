@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../bot/MultipleBotConnectionImplForGui.h"
+#include "../libbot/MultipleBotConnectionImplForGui.h"
 #include "../../client/libcatchchallenger/ClientStructures.hpp"
 
 class GlobalControler : public QObject

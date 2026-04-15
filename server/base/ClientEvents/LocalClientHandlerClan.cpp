@@ -9,6 +9,11 @@
 #include "../../general/base/CommonDatapackServerSpec.hpp"
 #endif
 #include <cstring>
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <fstream>
+#include <dirent.h>
+#include "../../../general/hps/hps.h"
+#endif
 
 using namespace CatchChallenger;
 
@@ -86,6 +91,11 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
+            paramToPassToCallBack.push(clanActionParam);
+            #ifdef CATCHCHALLENGER_EXTRA_CHECK
+            paramToPassToCallBackType.push("ClanActionParam");
+            #endif
+            addClan_object();
             #else
             #error Define what do here
             #endif
@@ -172,6 +182,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
+            ::unlink(("database/clans/"+std::to_string(public_and_private_informations.clan)).c_str());
             #else
             #error Define what do here
             #endif
@@ -396,6 +407,47 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        // Check for duplicate clan name in memory and on disk
+        bool duplicateFound=false;
+        for(const auto &clanPair : GlobalServerData::serverPrivateVariables.clanList)
+        {
+            if(clanPair.second.name==text)
+            {
+                duplicateFound=true;
+                break;
+            }
+        }
+        if(!duplicateFound)
+        {
+            DIR *dir=opendir("database/clans");
+            if(dir!=nullptr)
+            {
+                struct dirent *entry;
+                while((entry=readdir(dir))!=nullptr)
+                {
+                    if(entry->d_name[0]=='.') continue;
+                    std::ifstream f(std::string("database/clans/")+entry->d_name, std::ifstream::binary);
+                    if(f.good() && f.is_open())
+                    {
+                        std::string existingName;
+                        hps::StreamInputBuffer sb(f);
+                        sb >> existingName;
+                        if(existingName==text) { duplicateFound=true; break; }
+                    }
+                }
+                closedir(dir);
+            }
+        }
+        if(duplicateFound)
+        {
+            *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+1+1)=htole32(1);
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=0x02;
+            posOutput+=1;
+            sendRawBlock(ProtocolParsingBase::tempBigBufferForOutput,posOutput);
+            return;
+        }
+    }
     #else
     #error Define what do here
     #endif
@@ -436,6 +488,26 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        // Save clan to disk
+        std::ofstream clan_out("database/clans/"+std::to_string(clanId), std::ofstream::binary);
+        if(clan_out.good() && clan_out.is_open())
+        {
+            hps::to_stream(text, clan_out);
+            hps::to_stream((uint64_t)0, clan_out);
+        }
+        // Persist updated maxClanId to database/server
+        {
+            std::ofstream srv_file("database/server", std::ofstream::binary);
+            if(srv_file.good() && srv_file.is_open())
+            {
+                hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
+                hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
+                hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
+                hps::to_stream(GlobalServerData::serverSettings.city, srv_file);
+            }
+        }
+    }
     #else
     #error Define what do here
     #endif

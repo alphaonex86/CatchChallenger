@@ -375,6 +375,35 @@ void Client::characterIsRightSendData()
                 ProtocolParsingBase::tempBigBufferForOutput[posOutput]=key;
                 posOutput+=1;
             }
+
+            size8=mapData.industriesStatus.size();
+            ProtocolParsingBase::tempBigBufferForOutput[posOutput]=size8;
+            posOutput+=1;
+            for(const IndustryStatus &ind : mapData.industriesStatus)
+            {
+                *reinterpret_cast<uint64_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole64(ind.last_update);
+                posOutput+=8;
+                const uint8_t resCount=ind.resources.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=resCount;
+                posOutput+=1;
+                for(const auto &res : ind.resources)
+                {
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(res.first);
+                    posOutput+=2;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(res.second);
+                    posOutput+=4;
+                }
+                const uint8_t prodCount=ind.products.size();
+                ProtocolParsingBase::tempBigBufferForOutput[posOutput]=prodCount;
+                posOutput+=1;
+                for(const auto &prod : ind.products)
+                {
+                    *reinterpret_cast<uint16_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole16(prod.first);
+                    posOutput+=2;
+                    *reinterpret_cast<uint32_t *>(ProtocolParsingBase::tempBigBufferForOutput+posOutput)=htole32(prod.second);
+                    posOutput+=4;
+                }
+            }
         }
     }
 

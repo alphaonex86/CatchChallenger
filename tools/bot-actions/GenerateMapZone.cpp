@@ -148,13 +148,13 @@ void BotTargetList::updatePlayerStep()
                                     std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
                                     const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
                                     if(!itemOnMap.infinite && itemOnMap.visible)
-                                        if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
+                                        if(playerInformations.mapData[player.mapId].items.find(p)==playerInformations.mapData[player.mapId].items.cend())
                                         {
                                             std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
                                                       << ", take the item, bot, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
                                                       << ", item: " << std::to_string(itemOnMap.item)
                                                       << ", pseudo: " << api->getPseudo() << std::endl;
-                                            playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                            playerInformations.mapData[player.mapId].items.insert(p);
                                             api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                             api->takeAnObjectOnMap();
                                             ActionsAction::add_to_inventory(api,itemOnMap.item);
@@ -535,8 +535,8 @@ void BotTargetList::updatePlayerStep()
                                     found=true;
                                     if(!itemOnMap.infinite)
                                     {
-                                        if(playerInformations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==playerInformations.itemOnMap.cend())
-                                            playerInformations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                        if(playerInformations.mapData[player.mapId].items.find(entry.first)==playerInformations.mapData[player.mapId].items.cend())
+                                            playerInformations.mapData[player.mapId].items.insert(entry.first);
                                         else
                                         {
                                             alreadyTake=true;
@@ -579,27 +579,15 @@ void BotTargetList::updatePlayerStep()
                             if(QtDatapackClientLoader::datapackLoader->get_itemToPlants().find(itemId)==QtDatapackClientLoader::datapackLoader->get_itemToPlants().cend())
                                 abort();
                             const uint8_t &plant=QtDatapackClientLoader::datapackLoader->get_itemToPlants().at(itemId);
-                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-                                abort();
-                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &mapS=
-                                    QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(mapQtString);
-                            if(mapS.find(p)==mapS.cend())
-                                abort();
-                            const uint16_t &indexOnMapPlant=mapS.at(p);
-                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                            if(playerInformations.mapData[player.mapId].plants.find(p)==playerInformations.mapData[player.mapId].plants.cend())
                             {
                                 ActionsAction::remove_to_inventory(api,itemId);
-
-                                ActionsBotInterface::Player::SeedInWaiting seedInWaiting;
-                                seedInWaiting.indexOnMap=indexOnMapPlant;
-                                seedInWaiting.seedItemId=itemId;
-                                player.seed_in_waiting.push_back(seedInWaiting);
                                 //std::cout << api->getPseudo().toStdString() << ", useSeed(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                                 api->useSeed(plant);
                                 CatchChallenger::PlayerPlant playerPlant;
                                 playerPlant.mature_at=std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000+CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plant).fruits_seconds;
                                 playerPlant.plant=plant;
-                                playerInformations.plantOnMap[indexOnMapPlant]=playerPlant;
+                                playerInformations.mapData[player.mapId].plants[p]=playerPlant;
                             }
                             else
                                 abort();
@@ -608,22 +596,11 @@ void BotTargetList::updatePlayerStep()
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant:
                         {
                             //const uint8_t &plant=QtDatapackClientLoader::datapackLoader->itemToPlants.at(player.target.extra/*itemUsed*/);
-                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-                                abort();
-                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &pS=
-                                    QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(mapQtString);
-                            if(pS.find(p)==pS.cend())
-                                abort();
-                            const uint16_t &indexOnMapPlant=pS.at(p);
-                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
-                                abort();
-                            if(playerInformations.plantOnMap.find(indexOnMapPlant)==playerInformations.plantOnMap.cend())
+                            if(playerInformations.mapData[player.mapId].plants.find(p)==playerInformations.mapData[player.mapId].plants.cend())
                                 abort();
                             std::cout << "collectMaturePlant(): " << std::to_string(x) << "," << std::to_string(y) << std::endl;
                             api->collectMaturePlant();
-                            if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(mapQtString)==QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
-                                abort();
-                            playerInformations.plantOnMap.erase(indexOnMapPlant);
+                            playerInformations.mapData[player.mapId].plants.erase(p);
                         }
                         break;
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::WildMonster:
@@ -641,14 +618,16 @@ void BotTargetList::updatePlayerStep()
                         case ActionsBotInterface::GlobalTarget::GlobalTargetType::Fight:
                         {
                             const uint32_t &fightId=player.target.extra;
+                            const CATCHCHALLENGER_TYPE_BOTID botId=static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId);
                             if(!ActionsAction::haveBeatBot(api,fightId) && player.api->getAbleToFight())
                             {
                                 qDebug() <<  "is now in fight by target with: " << fightId;
                                 player.canMoveOnMap=false;
                                 player.api->stopMove();
-                                player.api->requestFight(fightId);
+                                player.api->requestFight();
+                                const CatchChallenger::CommonMap *currentMap=actionsAction->flat_map_list[player.mapId];
+                                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=currentMap->botFights.at(botId).monsters;
                                 std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
-                                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).monsters;
                                 unsigned int index=0;
                                 while(index<monsters.size())
                                 {
@@ -657,7 +636,10 @@ void BotTargetList::updatePlayerStep()
                                               CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monsters.at(index).id),monsters.at(index).level)));
                                     index++;
                                 }
-                                player.api->setBotMonster(botFightMonstersTransformed,fightId);
+                                CatchChallenger::Api_protocol_Qt::FightInProgressType fightInProgress;
+                                fightInProgress.mapId=player.mapId;
+                                fightInProgress.botId=botId;
+                                player.api->setBotMonster(botFightMonstersTransformed,fightInProgress);
                                 player.lastFightAction.restart();
                             }
                             else
@@ -793,7 +775,7 @@ void BotTargetList::updatePlayerStep()
                                 }
                         }
                         if(player.api->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
-                            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+                            if(playerInformations.warehouse_monsters.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
                                 tryCaptureWithItem=false;
                         if(tryCaptureWithItem)
                         {

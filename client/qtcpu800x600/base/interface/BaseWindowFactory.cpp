@@ -144,6 +144,7 @@ void BaseWindow::on_factoryResources_itemActivated(QListWidgetItem *item)
 void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPrice)
 {
     const ItemToSellOrBuy &itemToSellOrBuy=itemsToBuy.front();
+    IndustryStatus &industryStatus=client->get_player_informations().mapData[mapController->currentMap()].industriesStatus[factoryId];
     std::unordered_map<uint16_t,uint32_t> items;
     switch(stat)
     {
@@ -207,6 +208,7 @@ void BaseWindow::haveBuyFactoryObject(const BuyStat &stat,const uint32_t &newPri
 void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newPrice)
 {
     waitToSell=false;
+    IndustryStatus &industryStatus=client->get_player_informations().mapData[mapController->currentMap()].industriesStatus[factoryId];
     switch(stat)
     {
         case SoldStat_Done:
@@ -265,9 +267,13 @@ void BaseWindow::haveSellFactoryObject(const SoldStat &stat,const uint32_t &newP
 
 void BaseWindow::haveFactoryList(const uint32_t &remainingProductionTime,const std::vector<ItemToSellOrBuy> &resources,const std::vector<ItemToSellOrBuy> &products)
 {
+    const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
+    std::vector<IndustryStatus> &industriesStatus=client->get_player_informations().mapData[mapController->currentMap()].industriesStatus;
+    if(industriesStatus.size()<=factoryId)
+        industriesStatus.resize(factoryId+1);
+    IndustryStatus &industryStatus=industriesStatus[factoryId];
     industryStatus.products.clear();
     industryStatus.resources.clear();
-    const Industry &industry=QtDatapackClientLoader::datapackLoader->getMap(mapController->currentMap()).industries.at(factoryId);
     industryStatus.last_update=QDateTime::currentMSecsSinceEpoch()/1000+remainingProductionTime-industry.time;
     #ifdef DEBUG_BASEWINDOWS
     qDebug() << "BaseWindow::haveFactoryList()";

@@ -7,8 +7,8 @@
 #include <unordered_map>
 #include <random>
 
-#include "../bot/MultipleBotConnection.h"
-#include "../bot/actions/ActionsAction.h"
+#include "../libbot/MultipleBotConnection.h"
+#include "../libbot/actions/ActionsAction.h"
 #include "WaitScreen.h"
 
 namespace Ui {

@@ -116,9 +116,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
     uint32_t maxMonsterLevel=0;
     {
         unsigned int index=0;
-        while(index<player_private_and_public_informations.playerMonster.size())
+        while(index<player_private_and_public_informations.monsters.size())
         {
-            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.playerMonster.at(index);
+            const CatchChallenger::PlayerMonster &playerMonster=player_private_and_public_informations.monsters.at(index);
             if(playerMonster.level>maxMonsterLevel)
                 maxMonsterLevel=playerMonster.level;
             index++;
@@ -253,34 +253,30 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             const uint32_t &itemToUse=getSeedToPlant(api,&haveSeedToPlant);
             if(haveSeedToPlant)
             {
-                std::string tempMapFile=QtDatapackClientLoader::datapackLoader->getDatapackPath()+
-                        QtDatapackClientLoader::datapackLoader->getMainDatapackPath()+
-                        map->map_file;
-                if(!stringEndsWith(tempMapFile,".tmx"))
-                    tempMapFile+=".tmx";
-                if(QtDatapackClientLoader::datapackLoader->get_plantOnMap().find(tempMapFile)!=QtDatapackClientLoader::datapackLoader->get_plantOnMap().cend())
                 {
+                    const auto &playerMapData=player_private_and_public_informations.mapData;
                     unsigned int dirtCount=0;
-                    //QListWidgetItem * firstDirtItem=NULL;
                     unsigned int index=0;
                     while(index<blockObject->block.size())
                     {
                         {
                             const std::pair<uint8_t,uint8_t> &dirtPoint=blockObject->block.at(index);
-                            const std::unordered_map<std::pair<uint8_t,uint8_t>,uint16_t,pairhash> &positionsList=QtDatapackClientLoader::datapackLoader->get_plantOnMap().at(tempMapFile);
                             std::pair<uint8_t,uint8_t> pos;
                             pos.first=dirtPoint.first;
                             pos.second=dirtPoint.second;
-                            if(positionsList.find(pos)!=positionsList.cend())
+                            const uint16_t plantOnMapIndex=0;
+                            (void)plantOnMapIndex;
+                            //have plant at this position?
+                            bool hasPlant=false;
+                            if(playerMapData.find(map->id)!=playerMapData.cend() &&
+                               playerMapData.at(map->id).plants.find(pos)!=playerMapData.at(map->id).plants.cend())
+                                hasPlant=true;
+                            if(hasPlant)
                             {
-                                const uint16_t &plantOnMapIndex=positionsList.at(pos);
-                                //have plant
-                                if(player_private_and_public_informations.plantOnMap.find(plantOnMapIndex)!=player_private_and_public_informations.plantOnMap.cend())
-                                {
-                                    const CatchChallenger::PlayerPlant &playerMonster=player_private_and_public_informations.plantOnMap.at(plantOnMapIndex);
-                                    //have mature plant
-                                    const uint64_t &currentTime=(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000);
-                                    bool isMature=playerMonster.mature_at<=currentTime;
+                                const CatchChallenger::PlayerPlant &playerMonster=playerMapData.at(map->id).plants.at(pos);
+                                //have mature plant
+                                const uint64_t &currentTime=(uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()/1000);
+                                bool isMature=playerMonster.mature_at<=currentTime;
                                     {
                                         const uint8_t &plantId=playerMonster.plant;
                                         const CatchChallenger::Plant &plant=CatchChallenger::CommonDatapack::commonDatapack.get_plants().at(plantId);
@@ -297,7 +293,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                                         ActionsBotInterface::GlobalTarget globalTarget;
                                         globalTarget.blockObject=blockObject;
-                                        globalTarget.extra=plantOnMapIndex;
+                                        globalTarget.extra=(static_cast<uint32_t>(pos.first)<<8)|pos.second;
                                         globalTarget.bestPath=resolvedBlock.bestPath;
                                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Plant;
                                         globalTarget.points=0;
@@ -353,15 +349,15 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                             {
                                                 player.targetListGlobalTarget.push_back(globalTarget);
                                                 if(alternateColor)
-                                                    newItem->setBackgroundColor(alternateColorValue);
+                                                    newItem->setBackground(alternateColorValue);
                                                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                             }
                                             else
                                             {
                                                 if(alternateColor)
-                                                    newItem->setBackgroundColor(redAlternateColorValue);
+                                                    newItem->setBackground(redAlternateColorValue);
                                                 else
-                                                    newItem->setBackgroundColor(redColorValue);
+                                                    newItem->setBackground(redColorValue);
                                                 newItem->setText(newItem->text()+" "+QString::number(playerMonster.mature_at)+">"+QString::number(currentTime));
                                                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
                                             }
@@ -386,7 +382,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
 
                                         ActionsBotInterface::GlobalTarget globalTarget;
                                         globalTarget.blockObject=blockObject;
-                                        globalTarget.extra=plantOnMapIndex;
+                                        globalTarget.extra=(static_cast<uint32_t>(pos.first)<<8)|pos.second;
                                         globalTarget.bestPath=resolvedBlock.bestPath;
                                         globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Dirt;
                                         globalTarget.points=0;
@@ -419,7 +415,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                         {
                                             player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
-                                                newItem->setBackgroundColor(alternateColorValue);
+                                                newItem->setBackground(alternateColorValue);
                                             alternateColor=!alternateColor;
                                             newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
@@ -445,7 +441,6 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 }
             }
         }
-    }
     for(const auto& n:resolvedBlockListOrdered) {
         const MapServerMini::BlockObject * const blockObject=n.first;
         const MapServerMini::BlockObjectPathFinding &resolvedBlock=n.second;
@@ -477,7 +472,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                 const std::pair<uint8_t,uint8_t> &point=it->first;
                 const MapServerMini::ItemOnMap &itemOnMap=it->second;
 
-                if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                const auto mapIdForItem=static_cast<CATCHCHALLENGER_TYPE_MAPID>(blockObject->map->id);
+                const auto mapDataIt=player_private_and_public_informations.mapData.find(mapIdForItem);
+                if(mapDataIt==player_private_and_public_informations.mapData.cend() || mapDataIt->second.items.find(point)==mapDataIt->second.items.cend())
                 {
                     const CatchChallenger::Item &item=CatchChallenger::CommonDatapack::commonDatapack.get_items().item.at(itemOnMap.item);
                     const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(itemOnMap.item);
@@ -550,16 +547,16 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                         player.targetListGlobalTarget.push_back(globalTarget);
 
                         if(alternateColor)
-                            newItem->setBackgroundColor(alternateColorValue);
+                            newItem->setBackground(alternateColorValue);
                         alternateColor=!alternateColor;
                         newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                     }
                     if(noGoBack)
                     {
                         if(!alternateColor)
-                            newItem->setBackgroundColor(redAlternateColorValue);
+                            newItem->setBackground(redAlternateColorValue);
                         else
-                            newItem->setBackgroundColor(redColorValue);
+                            newItem->setBackground(redColorValue);
                         newItem->setToolTip("No go back");
                     }
                     itemToReturn.push_back(newItem->text().toStdString());
@@ -587,7 +584,8 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                     const uint32_t &fightId=botsFightList.at(index);
                     if(!ActionsAction::haveBeatBot(api,fightId))
                     {
-                        const CatchChallenger::BotFight &fight=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId);
+                        const CATCHCHALLENGER_TYPE_BOTID botIdFight=static_cast<CATCHCHALLENGER_TYPE_BOTID>(fightId);
+                        const CatchChallenger::BotFight &fight=blockObject->map->botFights.at(botIdFight);
                         ActionsBotInterface::GlobalTarget globalTarget;
                         globalTarget.blockObject=blockObject;
                         globalTarget.extra=fightId;
@@ -701,9 +699,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
-                                                newItem->setBackgroundColor(alternateColorValueL);
+                                                newItem->setBackground(alternateColorValueL);
                                             else if(colorValueL.isValid())
-                                                newItem->setBackgroundColor(colorValueL);
+                                                newItem->setBackground(colorValueL);
                                             newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
                                         if(listGUI!=NULL)
@@ -737,9 +735,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                                             player.targetListGlobalTarget.push_back(globalTarget);
                                             if(alternateColor)
-                                                newItem->setBackgroundColor(alternateColorValueL);
+                                                newItem->setBackground(alternateColorValueL);
                                             else if(colorValueL.isValid())
-                                                newItem->setBackgroundColor(colorValueL);
+                                                newItem->setBackground(colorValueL);
                                             newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                                         }
                                         if(listGUI!=NULL)
@@ -766,69 +764,65 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         //shop
         if(shop)
         {
+            //shops are now per-map with items as unordered_map<ITEM, price>
             for(auto it = blockObject->shops.begin();it!=blockObject->shops.cend();++it)
             {
-                const std::vector<uint16_t> &shops=it->second;
-                unsigned int index=0;
-                while(index<shops.size())
+                const std::pair<uint8_t,uint8_t> &shopPos=it->first;
+                //look up Shop from the map's BaseMap shops by position
+                const auto shopIt=blockObject->map->shops.find(shopPos);
+                if(shopIt==blockObject->map->shops.cend())
+                    continue;
+                const CatchChallenger::Shop &shop=shopIt->second;
+                ActionsBotInterface::GlobalTarget globalTarget;
+                globalTarget.blockObject=blockObject;
+                globalTarget.extra=0;
+                globalTarget.bestPath=resolvedBlock.bestPath;
+                globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
+                globalTarget.points=0*catchChallengerClient->preferences.shop/100;
+
+                for(const auto &shopEntry : shop.items)
                 {
-                    const uint32_t &shopId=shops.at(index);
-                    const CatchChallenger::Shop &shop=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_shops().at(shopId);
-                    ActionsBotInterface::GlobalTarget globalTarget;
-                    globalTarget.blockObject=blockObject;
-                    globalTarget.extra=shopId;
-                    globalTarget.bestPath=resolvedBlock.bestPath;
-                    globalTarget.type=ActionsBotInterface::GlobalTarget::GlobalTargetType::Shop;
-                    globalTarget.points=0*catchChallengerClient->preferences.shop/100;
-
-                    unsigned int sub_index=0;
-                    while(sub_index<shop.prices.size())
+                    const CATCHCHALLENGER_TYPE_ITEM &item=shopEntry.first;
+                    const uint32_t &price=shopEntry.second;
+                    const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item);
+                    const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(item);
                     {
-                        const CATCHCHALLENGER_TYPE_ITEM &item=shop.items.at(sub_index);
-                        const DatapackClientLoader::ItemExtra &itemExtra=QtDatapackClientLoader::datapackLoader->get_itemsExtra().at(item);
-                        const QtDatapackClientLoader::QtItemExtra &QtitemExtra=QtDatapackClientLoader::datapackLoader->getItemExtra(item);
-                        const uint32_t &price=shop.prices.at(sub_index);
+                        const bool tooHard=price>player_private_and_public_informations.cash;
+                        if(displayTooHard || !tooHard)
                         {
-                            const bool tooHard=price>player_private_and_public_informations.cash;
-                            if(displayTooHard || !tooHard)
-                            {
-                                QListWidgetItem * newItem=new QListWidgetItem();
-                                newItem->setText(QString("Shop %1: %2 %3$")
-                                        .arg(shopId)
-                                        .arg(QString::fromStdString(itemExtra.name))
-                                        .arg(price)
-                                                 );
-                                newItem->setIcon(QIcon(QtitemExtra.image));
+                            QListWidgetItem * newItem=new QListWidgetItem();
+                            newItem->setText(QString("Shop: %1 %2$")
+                                    .arg(QString::fromStdString(itemExtra.name))
+                                    .arg(price)
+                                             );
+                            newItem->setIcon(QIcon(QtitemExtra.image));
 
-                                itemToReturn.push_back(newItem->text().toStdString());
-                                if(listGUI==ui->globalTargets)
+                            itemToReturn.push_back(newItem->text().toStdString());
+                            if(listGUI==ui->globalTargets)
+                            {
+                                player.targetListGlobalTarget.push_back(globalTarget);
+                                if(tooHard)
                                 {
-                                    player.targetListGlobalTarget.push_back(globalTarget);
-                                    if(tooHard)
-                                    {
-                                        if(alternateColor)
-                                            newItem->setBackgroundColor(redAlternateColorValue);
-                                        else
-                                            newItem->setBackgroundColor(redColorValue);
-                                    }
+                                    if(alternateColor)
+                                        newItem->setBackground(redAlternateColorValue);
                                     else
-                                        if(alternateColor)
-                                            newItem->setBackgroundColor(alternateColorValue);
-                                    newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
+                                        newItem->setBackground(redColorValue);
                                 }
-                                if(listGUI!=NULL)
-                                    listGUI->addItem(newItem);
                                 else
-                                    delete newItem;
+                                    if(alternateColor)
+                                        newItem->setBackground(alternateColorValue);
+                                newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
                             }
+                            if(listGUI!=NULL)
+                                listGUI->addItem(newItem);
+                            else
+                                delete newItem;
                         }
-                        sub_index++;
                     }
-                    if(!shop.prices.empty())
-                        if(listGUI==ui->globalTargets)
-                            alternateColor=!alternateColor;
-                    index++;
                 }
+                if(!shop.items.empty())
+                    if(listGUI==ui->globalTargets)
+                        alternateColor=!alternateColor;
             }
         }
     }
@@ -855,7 +849,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
             {
                 player.targetListGlobalTarget.push_back(globalTarget);
                 if(alternateColor)
-                    newItem->setBackgroundColor(alternateColorValue);
+                    newItem->setBackground(alternateColorValue);
                 newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock)));
                 alternateColor=!alternateColor;
             }
@@ -1049,9 +1043,9 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
                             globalTarget.uiItems=QList<QListWidgetItem *>() << newItem;
                             player.targetListGlobalTarget.push_back(globalTarget);
                             if(alternateColor)
-                                newItem->setBackgroundColor(alternateColorValueL);
+                                newItem->setBackground(alternateColorValueL);
                             else if(colorValueL.isValid())
-                                newItem->setBackgroundColor(colorValueL);
+                                newItem->setBackground(colorValueL);
                             newItem->setText(newItem->text()+QString::fromStdString(pathFindingToString(resolvedBlock,points)));
                         }
                         if(listGUI!=NULL)
@@ -1094,7 +1088,7 @@ std::vector<std::string> BotTargetList::contentToGUI_internal(const CatchChallen
         unsigned int index=0;
         while(index<(unsigned int)bestItems.size())
         {
-            bestItems.at(index)->setBackgroundColor(QColor(180,255,180,255));
+            bestItems.at(index)->setBackground(QColor(180,255,180,255));
             bestItems.at(index)->setToolTip("Internal id: "+QString::number(index));
             index++;
         }

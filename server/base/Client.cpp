@@ -837,7 +837,7 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
-        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader
+        << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << public_and_private_informations.clan
         << public_and_private_informations.quests << public_and_private_informations.reputation
         << public_and_private_informations.items;
     buf << public_and_private_informations.mapData << public_and_private_informations.allowCreateClan;
@@ -876,7 +876,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> public_and_private_informations.public_informations >> public_and_private_informations.cash
         >> recipesS >> public_and_private_informations.monsters >> public_and_private_informations.warehouse_monsters
         >> encyclopedia_monsterS >> encyclopedia_itemS
-        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader;
+        >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> public_and_private_informations.clan;
     buf >> public_and_private_informations.quests
         >> public_and_private_informations.reputation >> public_and_private_informations.items;
     buf >> public_and_private_informations.mapData >> public_and_private_informations.allowCreateClan;

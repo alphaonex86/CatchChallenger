@@ -39,7 +39,7 @@ void ActionsAction::stopAll()
     mStop=true;
 }
 
-void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     if(mStop)
         return;
@@ -76,25 +76,20 @@ void ActionsAction::insert_player(CatchChallenger::Api_protocol_Qt  *api,const C
         abort();
     }
     //after allMapIsLoaded because is after allMapIsLoaded the api is loaded
-    if(player_private_and_public_informations.public_informations.simplifiedId==player.simplifiedId)
+    if(player_private_and_public_informations.public_informations.pseudo==player.pseudo)
     {
-        botplayer.api->addPlayerMonster(player_private_and_public_informations.playerMonster);
+        botplayer.api->addPlayerMonster(player_private_and_public_informations.monsters);
         ActionsBotInterface::insert_player(api,player,mapId,x,y,direction);
         if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtnew_chat_text,      actionsAction,&ActionsAction::new_chat_text,Qt::QueuedConnection))
             abort();
-        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtseed_planted,       actionsAction,&ActionsAction::seed_planted_slot))
-            abort();
-        if(!connect(api,&CatchChallenger::Api_protocol_Qt::Qtplant_collected,    actionsAction,&ActionsAction::plant_collected_slot))
-            abort();
-
         if(!moveTimer.isActive())
-            moveTimer.start(player_private_and_public_informations.public_informations.speed);
+            moveTimer.start(200);
 
         checkOnTileEvent(botplayer,false);
     }
 }
 
-void ActionsAction::insert_player_all(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const quint32 &mapId,const quint16 &x,const quint16 &y,const CatchChallenger::Direction &direction)
+void ActionsAction::insert_player_all(CatchChallenger::Api_protocol_Qt  *api,const CatchChallenger::Player_public_informations &player,const CATCHCHALLENGER_TYPE_MAPID &mapId,const COORD_TYPE &x,const COORD_TYPE &y,const CatchChallenger::Direction &direction)
 {
     (void)mapId;
     (void)x;
@@ -125,9 +120,8 @@ void ActionsAction::insert_player_all(CatchChallenger::Api_protocol_Qt  *api,con
         std::cerr << "clientList.find(api)==NULL" << std::endl;
         abort();
     }
-    if(player.simplifiedId!=botplayer.api->get_player_informations().public_informations.simplifiedId)
+    if(player.pseudo!=botplayer.api->get_player_informations().public_informations.pseudo)
     {
-        botplayer.visiblePlayers[player.simplifiedId]=player;
         botplayer.viewedPlayers.insert(QString::fromStdString(player.pseudo));
     }
 }
@@ -251,7 +245,7 @@ void ActionsAction::dropAllPlayerOnTheMap(CatchChallenger::Api_protocol_Qt  *api
     delayedMessage[api].clear();
 }
 
-void ActionsAction::remove_player(CatchChallenger::Api_protocol_Qt  *api, const uint16_t &id)
+void ActionsAction::remove_player(CatchChallenger::Api_protocol_Qt  *api, const SIMPLIFIED_PLAYER_ID_FOR_MAP &id)
 {
     if(clientList.find(api)==clientList.cend())
     {
@@ -272,9 +266,8 @@ void ActionsAction::remove_player(CatchChallenger::Api_protocol_Qt  *api, const 
         delayedMapPlayerChange.direction=CatchChallenger::Direction::Direction_look_at_bottom;
         delayedMapPlayerChange.mapId=0;
         delayedMapPlayerChange.player.skinId=0;
-        delayedMapPlayerChange.player.simplifiedId=id;
-        delayedMapPlayerChange.player.speed=0;
         delayedMapPlayerChange.player.type=CatchChallenger::Player_type_normal;
+        delayedMapPlayerChange.removeId=id;
         delayedMapPlayerChange.x=0;
         delayedMapPlayerChange.y=0;
         delayedMapPlayerChange.type=DelayedMapPlayerChangeType_Delete;
@@ -394,15 +387,15 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 x-=1;
             else
             {
-                if(map.border.left.map==NULL)
+                if(map.border.left.mapIndex==65535)
                 {
                     if(debug)
                         std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
                 }
-                x=map.border.left.map->width-1;
+                x=actionsAction->flat_map_list[map.border.left.mapIndex]->width-1;
                 y+=map.border.left.y_offset;
-                new_map=static_cast<const MapServerMini *>(map.border.left.map);
+                new_map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[map.border.left.mapIndex]);
             }
         break;
         case CatchChallenger::Direction_move_at_right:
@@ -410,7 +403,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 x+=1;
             else
             {
-                if(map.border.right.map==NULL)
+                if(map.border.right.mapIndex==65535)
                 {
                     if(debug)
                         std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -418,7 +411,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 }
                 x=0;
                 y+=map.border.right.y_offset;
-                new_map=static_cast<const MapServerMini *>(map.border.right.map);
+                new_map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[map.border.right.mapIndex]);
             }
         break;
         case CatchChallenger::Direction_move_at_top:
@@ -426,15 +419,15 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 y-=1;
             else
             {
-                if(map.border.top.map==NULL)
+                if(map.border.top.mapIndex==65535)
                 {
                     if(debug)
                         std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
                     return false;
                 }
-                y=map.border.top.map->height-1;
+                y=actionsAction->flat_map_list[map.border.top.mapIndex]->height-1;
                 x+=map.border.top.x_offset;
-                new_map=static_cast<const MapServerMini *>(map.border.top.map);
+                new_map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[map.border.top.mapIndex]);
             }
         break;
         case CatchChallenger::Direction_move_at_bottom:
@@ -442,7 +435,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 y+=1;
             else
             {
-                if(map.border.bottom.map==NULL)
+                if(map.border.bottom.mapIndex==65535)
                 {
                     if(debug)
                         std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
@@ -450,7 +443,7 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 }
                 y=0;
                 x+=map.border.bottom.x_offset;
-                new_map=static_cast<const MapServerMini *>(map.border.bottom.map);
+                new_map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[map.border.bottom.mapIndex]);
             }
         break;
         default:
@@ -477,16 +470,15 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
                 return false;
             }
             const std::pair<uint8_t,uint8_t> point(x,y);
-            if(new_map->pointOnMap_Item.find(point)!=new_map->pointOnMap_Item.cend())
+            if(new_map->items.find(point)!=new_map->items.cend())
             {
-                const MapServerMini::ItemOnMap &item=new_map->pointOnMap_Item.at(point);
-                if(item.visible)
-                    if(item.infinite || player.itemOnMap.find(item.indexOfItemOnMap)==player.itemOnMap.cend())
-                    {
-                        if(debug)
-                            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-                        return false;
-                    }
+                const CatchChallenger::ItemOnMap &item=new_map->items.at(point);
+                if(!item.infinite)
+                {
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                    return false;
+                }
             }
             //into check colision because some time just need get the near tile
             if(!allowTeleport)
@@ -500,11 +492,10 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
     }
 
     {
-        int list_size=new_map->teleporter_list_size;
-        int index=0;
-        while(index<list_size)
+        unsigned int index=0;
+        while(index<new_map->teleporters.size())
         {
-            const CatchChallenger::CommonMap::Teleporter &teleporter=new_map->teleporter[index];
+            const CatchChallenger::Teleporter &teleporter=new_map->teleporters[index];
             if(teleporter.source_x==x && teleporter.source_y==y)
             {
                 if(!mapConditionIsRepected(api,teleporter.condition))
@@ -522,21 +513,16 @@ bool ActionsAction::canGoTo(CatchChallenger::Api_protocol_Qt  *api,const CatchCh
         std::pair<uint8_t,uint8_t> pos(x,y);
         if(new_map->botsFightTrigger.find(pos)!=new_map->botsFightTrigger.cend())
         {
-            std::vector<uint16_t> botFightList=new_map->botsFightTrigger.at(pos);
-            unsigned int index=0;
-            while(index<botFightList.size())
+            const uint8_t &botId=new_map->botsFightTrigger.at(pos);
+            if(!haveBeatBot(api,botId))
             {
-                if(!haveBeatBot(api,botFightList.at(index)))
+                if(!botplayer.api->getAbleToFight())
                 {
-                    if(!botplayer.api->getAbleToFight())
-                    {
-                        if(debug)
-                            std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
-                        //emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
-                        return false;
-                    }
+                    if(debug)
+                        std::cerr << "!canGoTo(): " << std::string(__FILE__) << ":" << std::to_string(__LINE__) << std::endl;
+                    //emit blockedOn(MapVisualiserPlayer::BlockedOn_Fight);
+                    return false;
                 }
-                index++;
             }
         }
     }
@@ -599,16 +585,16 @@ bool ActionsAction::move(CatchChallenger::Api_protocol_Qt  *api,CatchChallenger:
 
 bool ActionsAction::teleport(const MapServerMini **map, COORD_TYPE *x, COORD_TYPE *y)
 {
-    const CatchChallenger::CommonMap::Teleporter * const teleporter=(*map)->teleporter;
-    const uint8_t &teleporter_list_size=(*map)->teleporter_list_size;
-    uint8_t index=0;
-    while(index<teleporter_list_size)
+    const std::vector<CatchChallenger::Teleporter> &teleporters=(*map)->teleporters;
+    unsigned int index=0;
+    while(index<teleporters.size())
     {
-        if(teleporter[index].source_x==*x && teleporter[index].source_y==*y)
+        if(teleporters[index].source_x==*x && teleporters[index].source_y==*y)
         {
-            *x=teleporter[index].destination_x;
-            *y=teleporter[index].destination_y;
-            *map=static_cast<const MapServerMini *>(teleporter[index].map);
+            *x=teleporters[index].destination_x;
+            *y=teleporters[index].destination_y;
+            if(teleporters[index].mapIndex!=65535)
+                *map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[teleporters[index].mapIndex]);
             return true;
         }
         index++;
@@ -639,9 +625,9 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api,C
                 *x-=1;
             else
             {
-                *x=(*map)->border.left.map->width-1;
+                *x=actionsAction->flat_map_list[(*map)->border.left.mapIndex]->width-1;
                 *y+=(*map)->border.left.y_offset;
-                *map=static_cast<const MapServerMini *>((*map)->border.left.map);
+                *map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[(*map)->border.left.mapIndex]);
             }
             return true;
         break;
@@ -652,7 +638,7 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api,C
             {
                 *x=0;
                 *y+=(*map)->border.right.y_offset;
-                *map=static_cast<const MapServerMini *>((*map)->border.right.map);
+                *map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[(*map)->border.right.mapIndex]);
             }
             return true;
         break;
@@ -661,9 +647,9 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api,C
                 *y-=1;
             else
             {
-                *y=(*map)->border.top.map->height-1;
+                *y=actionsAction->flat_map_list[(*map)->border.top.mapIndex]->height-1;
                 *x+=(*map)->border.top.x_offset;
-                *map=static_cast<const MapServerMini *>((*map)->border.top.map);
+                *map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[(*map)->border.top.mapIndex]);
             }
             return true;
         break;
@@ -674,7 +660,7 @@ bool ActionsAction::moveWithoutTeleport(CatchChallenger::Api_protocol_Qt  *api,C
             {
                 *y=0;
                 *x+=(*map)->border.bottom.x_offset;
-                *map=static_cast<const MapServerMini *>((*map)->border.bottom.map);
+                *map=static_cast<const MapServerMini *>(actionsAction->flat_map_list[(*map)->border.bottom.mapIndex]);
             }
             return true;
         break;
@@ -695,18 +681,16 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
     const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
     if(playerMap->botsFightTrigger.find(pos)!=playerMap->botsFightTrigger.cend())
     {
-        std::vector<uint16_t> botFightList=playerMap->botsFightTrigger.at(pos);
-        unsigned int index=0;
-        while(index<botFightList.size())
+        const uint8_t &botId=playerMap->botsFightTrigger.at(pos);
+        if(playerMap->botFights.find(botId)!=playerMap->botFights.cend())
         {
-            const uint32_t &fightId=botFightList.at(index);
-            if(!haveBeatBot(player.api,fightId))
+            if(!haveBeatBot(player.api,botId))
             {
-                qDebug() <<  "is now in fight with: " << fightId;
+                qDebug() <<  "is now in fight with: " << botId;
                 player.canMoveOnMap=false;
                 player.api->stopMove();
                 std::vector<CatchChallenger::PlayerMonster> botFightMonstersTransformed;
-                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=CatchChallenger::CommonDatapackServerSpec::commonDatapackServerSpec.get_botFights().at(fightId).monsters;
+                const std::vector<CatchChallenger::BotFight::BotFightMonster> &monsters=playerMap->botFights.at(botId).monsters;
                 unsigned int index=0;
                 while(index<monsters.size())
                 {
@@ -719,11 +703,13 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
                                 );
                     index++;
                 }
-                player.api->setBotMonster(botFightMonstersTransformed,fightId);
+                CatchChallenger::Api_protocol_Qt::FightInProgressType fightInProgress;
+                fightInProgress.mapId=player.mapId;
+                fightInProgress.botId=botId;
+                player.api->setBotMonster(botFightMonstersTransformed,fightInProgress);
                 player.lastFightAction.restart();
                 return true;
             }
-            index++;
         }
     }
     //check if is in fight collision, but only if is move
@@ -738,7 +724,8 @@ bool ActionsAction::checkOnTileEvent(Player &player, bool haveDoStep)
 
             const std::string &playerMapStdString=actionsAction->id_map_to_map.at(player.mapId);
             const MapServerMini * playerMap=static_cast<const MapServerMini *>(actionsAction->map_list.at(playerMapStdString));
-            if(player.api->generateWildFightIfCollision(playerMap,player.x,player.y,playerInformationsRO.items,player.events))
+            const std::unordered_map<uint16_t,uint32_t> itemsUnordered(playerInformationsRO.items.cbegin(),playerInformationsRO.items.cend());
+            if(player.api->generateWildFightIfCollision(*playerMap,player.x,player.y,itemsUnordered,player.events))
             {
                 player.canMoveOnMap=false;
                 player.api->stopMove();
@@ -802,18 +789,14 @@ void ActionsAction::doMove()
                             }
                             #endif
                             std::pair<uint8_t,uint8_t> p(x,y);
-                            if(playerMap->pointOnMap_Item.find(p)!=playerMap->pointOnMap_Item.cend())
+                            if(playerMap->items.find(p)!=playerMap->items.cend())
                             {
                                 //std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y) << ", have item on it" << std::endl;
-                                const MapServerMini::ItemOnMap &itemOnMap=playerMap->pointOnMap_Item.at(p);
-                                if(!itemOnMap.infinite && itemOnMap.visible)
-                                    if(player_private_and_public_informations.itemOnMap.find(itemOnMap.indexOfItemOnMap)==player_private_and_public_informations.itemOnMap.cend())
+                                const CatchChallenger::ItemOnMap &itemOnMap=playerMap->items.at(p);
+                                if(!itemOnMap.infinite)
+                                    if(player_private_and_public_informations.mapData[player.mapId].items.find(p)==player_private_and_public_informations.mapData[player.mapId].items.cend())
                                     {
-                                        /*std::cout << "The next case is: " << std::to_string(x) << "," << std::to_string(y)
-                                                  << ", take the item, action, itemOnMap.indexOfItemOnMap: " << std::to_string(itemOnMap.indexOfItemOnMap)
-                                                  << ", item: " << std::to_string(itemOnMap.item)
-                                                  << ", pseudo: " << api->getPseudo().toStdString() << std::endl;*/
-                                        player_private_and_public_informations.itemOnMap.insert(itemOnMap.indexOfItemOnMap);
+                                        player_private_and_public_informations.mapData[player.mapId].items.insert(p);
                                         api->newDirection(CatchChallenger::MoveOnTheMap::directionToDirectionLook(newDirection));//move to look into the right next direction
                                         api->takeAnObjectOnMap();
                                         add_to_inventory(api,itemOnMap.item);
@@ -1003,20 +986,21 @@ void ActionsAction::new_chat_text(const CatchChallenger::Chat_type &chat_type,co
     }*/
 }
 
-void ActionsAction::have_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+void ActionsAction::have_inventory_slot(const std::unordered_map<uint16_t,uint32_t> &items)
 {
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(sender());
-    have_inventory(api,items,warehouse_items);
+    have_inventory(api,items);
 }
 
-void ActionsAction::have_inventory(CatchChallenger::Api_protocol_Qt  *api,const std::unordered_map<uint16_t,uint32_t> &items, const std::unordered_map<uint16_t, uint32_t> &warehouse_items)
+void ActionsAction::have_inventory(CatchChallenger::Api_protocol_Qt  *api,const std::unordered_map<uint16_t,uint32_t> &items)
 {
     if(api==NULL)
         return;
     CatchChallenger::Player_private_and_public_informations &player=api->get_player_informations();
 
-    player.items=items;
-    player.warehouse_items=warehouse_items;
+    player.items.clear();
+    for(const auto &p : items)
+        player.items[p.first]=p.second;
 }
 
 void ActionsAction::add_to_inventory(CatchChallenger::Api_protocol_Qt  *api, const uint32_t &item, const uint32_t &quantity)
@@ -1108,25 +1092,24 @@ uint32_t ActionsAction::itemQuantity(const CatchChallenger::Api_protocol_Qt  *ap
 
 bool ActionsAction::isWalkable(const MapServerMini &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.simplifiedMap==NULL)
+    if(map.flat_simplified_map.size()!=(size_t)map.width*map.height)
         return false;
-    return map.parsed_layer.simplifiedMap[x+y*(map.width)]<200;
+    return map.flat_simplified_map[x+y*(map.width)]<200;
 }
 
 bool ActionsAction::isDirt(const MapServerMini &map, const uint8_t &x, const uint8_t &y)
 {
-    if(map.parsed_layer.simplifiedMap==NULL)
+    if(map.flat_simplified_map.size()!=(size_t)map.width*map.height)
         return false;
-    return map.parsed_layer.simplifiedMap[x+y*(map.width)]==249;
+    return map.flat_simplified_map[x+y*(map.width)]==249;
 }
 
 bool ActionsAction::needBeTeleported(const MapServerMini &map, const COORD_TYPE &x, const COORD_TYPE &y)
 {
-    const CatchChallenger::CommonMap::Teleporter * const teleporter=map.teleporter;
-    int8_t index=0;
-    while(index<map.teleporter_list_size)
+    unsigned int index=0;
+    while(index<map.teleporters.size())
     {
-        if(teleporter[index].source_x==x && teleporter[index].source_y==y)
+        if(map.teleporters[index].source_x==x && map.teleporters[index].source_y==y)
             return true;
         index++;
     }
@@ -1167,12 +1150,12 @@ void ActionsAction::monsterCatch(const bool &success)
         if(player.api->getPlayerMonster().size()>=CommonSettingsCommon::commonSettingsCommon.maxPlayerMonsters)
         {
             CatchChallenger::Player_private_and_public_informations &playerInformations=player.api->get_player_informations();
-            if(playerInformations.warehouse_playerMonster.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
+            if(playerInformations.warehouse_monsters.size()>=CommonSettingsCommon::commonSettingsCommon.maxWarehousePlayerMonsters)
             {
                 std::cerr << "You have already the maximum number of monster into you warehouse" << std::endl;
                 abort();
             }
-            playerInformations.warehouse_playerMonster.push_back(player.api->playerMonster_catchInProgress.front());
+            playerInformations.warehouse_monsters.push_back(player.api->playerMonster_catchInProgress.front());
         }
         else
             player.api->addPlayerMonster(player.api->playerMonster_catchInProgress.front());

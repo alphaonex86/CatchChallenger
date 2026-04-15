@@ -950,6 +950,75 @@ bool Api_protocol::parseCharacterBlockCharacter(const uint8_t &packetCode, const
                 sub_index++;
             }
 
+            if((size-pos)<(int)sizeof(uint8_t))
+            {
+                parseError("Procotol wrong or corrupted",std::string("wrong size to get the industries count, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                return false;
+            }
+            size8=data[pos];
+            pos+=sizeof(uint8_t);
+            sub_index=0;
+            while(sub_index<size8)
+            {
+                IndustryStatus status;
+                if((size-pos)<(int)sizeof(uint64_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the industry last_update, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                status.last_update=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
+                pos+=sizeof(uint64_t);
+
+                if((size-pos)<(int)sizeof(uint8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the industry resources count, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                const uint8_t resCount=data[pos];
+                pos+=sizeof(uint8_t);
+                uint8_t ri=0;
+                while(ri<resCount)
+                {
+                    if((size-pos)<(int)(sizeof(uint16_t)+sizeof(uint32_t)))
+                    {
+                        parseError("Procotol wrong or corrupted",std::string("wrong size to get the industry resource entry, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    const uint16_t item_id=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                    pos+=sizeof(uint16_t);
+                    const uint32_t quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                    pos+=sizeof(uint32_t);
+                    status.resources[item_id]=quantity;
+                    ri++;
+                }
+
+                if((size-pos)<(int)sizeof(uint8_t))
+                {
+                    parseError("Procotol wrong or corrupted",std::string("wrong size to get the industry products count, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    return false;
+                }
+                const uint8_t prodCount=data[pos];
+                pos+=sizeof(uint8_t);
+                uint8_t pi=0;
+                while(pi<prodCount)
+                {
+                    if((size-pos)<(int)(sizeof(uint16_t)+sizeof(uint32_t)))
+                    {
+                        parseError("Procotol wrong or corrupted",std::string("wrong size to get the industry product entry, line: ")+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        return false;
+                    }
+                    const uint16_t item_id=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
+                    pos+=sizeof(uint16_t);
+                    const uint32_t quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
+                    pos+=sizeof(uint32_t);
+                    status.products[item_id]=quantity;
+                    pi++;
+                }
+
+                mapData.industriesStatus.push_back(status);
+                sub_index++;
+            }
+
             index++;
         }
     }

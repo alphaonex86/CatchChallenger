@@ -604,6 +604,92 @@ void Client::loadCharacterByMap_return()
                 }
             }
         }
+
+        //industries blob: for each industry [last_update(8B LE), resources_count(1B), [item_id(2B LE) quantity(4B LE)]..., products_count(1B), [item_id(2B LE) quantity(4B LE)]...]
+        {
+            const std::vector<char> &industries_data=GlobalServerData::serverPrivateVariables.db_server->hexatoBinary(GlobalServerData::serverPrivateVariables.db_server->value(4),&ok);
+            if(!ok)
+                normalOutput("character_bymap: industries is not hexa for map: "+std::to_string(map_database_id));
+            else
+            {
+                const char * const raw=industries_data.data();
+                uint32_t pos=0;
+                uint8_t industryIndex=0;
+                while(pos<industries_data.size() && industryIndex<map.industries.size())
+                {
+                    if(pos+8>industries_data.size())
+                    {
+                        normalOutput("character_bymap: industries blob truncated at last_update for map: "+std::to_string(map_database_id));
+                        break;
+                    }
+                    IndustryStatus status;
+                    memcpy(&status.last_update,raw+pos,sizeof(uint64_t));
+                    status.last_update=le64toh(status.last_update);
+                    pos+=8;
+
+                    if(pos+1>industries_data.size())
+                    {
+                        normalOutput("character_bymap: industries blob truncated at resources_count for map: "+std::to_string(map_database_id));
+                        break;
+                    }
+                    const uint8_t resources_count=static_cast<uint8_t>(raw[pos]);
+                    pos+=1;
+                    uint8_t ri=0;
+                    while(ri<resources_count)
+                    {
+                        if(pos+2+4>industries_data.size())
+                        {
+                            normalOutput("character_bymap: industries blob truncated at resource entry for map: "+std::to_string(map_database_id));
+                            break;
+                        }
+                        uint16_t item_id;
+                        memcpy(&item_id,raw+pos,sizeof(uint16_t));
+                        item_id=le16toh(item_id);
+                        pos+=2;
+                        uint32_t quantity;
+                        memcpy(&quantity,raw+pos,sizeof(uint32_t));
+                        quantity=le32toh(quantity);
+                        pos+=4;
+                        status.resources[item_id]=quantity;
+                        ri++;
+                    }
+                    if(ri<resources_count)
+                        break;
+
+                    if(pos+1>industries_data.size())
+                    {
+                        normalOutput("character_bymap: industries blob truncated at products_count for map: "+std::to_string(map_database_id));
+                        break;
+                    }
+                    const uint8_t products_count=static_cast<uint8_t>(raw[pos]);
+                    pos+=1;
+                    uint8_t pi=0;
+                    while(pi<products_count)
+                    {
+                        if(pos+2+4>industries_data.size())
+                        {
+                            normalOutput("character_bymap: industries blob truncated at product entry for map: "+std::to_string(map_database_id));
+                            break;
+                        }
+                        uint16_t item_id;
+                        memcpy(&item_id,raw+pos,sizeof(uint16_t));
+                        item_id=le16toh(item_id);
+                        pos+=2;
+                        uint32_t quantity;
+                        memcpy(&quantity,raw+pos,sizeof(uint32_t));
+                        quantity=le32toh(quantity);
+                        pos+=4;
+                        status.products[item_id]=quantity;
+                        pi++;
+                    }
+                    if(pi<products_count)
+                        break;
+
+                    playerMapData.industriesStatus.push_back(status);
+                    industryIndex++;
+                }
+            }
+        }
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE

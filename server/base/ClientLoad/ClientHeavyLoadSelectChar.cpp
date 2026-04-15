@@ -2,6 +2,9 @@
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
 #include "../MapManagement/Map_server_MapVisibility_Simple_StoreOnSender.hpp"
+#ifdef CATCHCHALLENGER_DB_FILE
+#include <fstream>
+#endif
 
 #ifdef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
 #include "../game-server-alone/LinkToMaster.hpp"
@@ -327,6 +330,7 @@ void Client::characterIsRightWithParsedRescue(const uint8_t &query_id, uint32_t 
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             selectClan_return();
             #elif CATCHCHALLENGER_DB_FILE
+            selectClan_return();
             #else
             #error Define what do here
             #endif
@@ -376,6 +380,23 @@ void Client::selectClan_return()
     }
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
+    {
+        std::ifstream clan_file("database/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
+        if(clan_file.good() && clan_file.is_open())
+        {
+            std::string clanName;
+            uint64_t cash=0;
+            hps::StreamInputBuffer cs(clan_file);
+            cs >> clanName;
+            cs >> cash;
+            haveClanInfo(public_and_private_informations.clan,clanName,cash);
+        }
+        else
+        {
+            public_and_private_informations.clan=0;
+            normalOutput("Warning: clan file not found on disk");
+        }
+    }
     #else
     #error Define what do here
     #endif

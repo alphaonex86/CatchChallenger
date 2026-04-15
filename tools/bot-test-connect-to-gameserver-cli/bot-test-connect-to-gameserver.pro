@@ -4,7 +4,7 @@ linux:QMAKE_LFLAGS += -fuse-ld=mold
 linux:LIBS += -fuse-ld=mold
 
 include(../../general/general.pri)
-include(../bot/simple/Simple.pri)
+include(../libbot/simple/Simple.pri)
 
 QMAKE_CXXFLAGS+="-fstack-protector-all -g"
 
@@ -17,8 +17,8 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-    ../bot/MultipleBotConnection.cpp \
-    ../bot/MultipleBotConnectionImplForGui.cpp \
+    ../libbot/MultipleBotConnection.cpp \
+    ../libbot/MultipleBotConnectionImplForGui.cpp \
     GlobalControler.cpp \
     ../../client/libqtcatchchallenger/Api_client_real_base.cpp \
     ../../client/libqtcatchchallenger/Api_client_real_main.cpp \
@@ -34,16 +34,16 @@ SOURCES += main.cpp\
     ../../client/libcatchchallenger/TarDecode.cpp \
     ../../client/libcatchchallenger/ZstdDecode.cpp \
     ../../client/libqtcatchchallenger/QtDatapackChecksum.cpp \
-    ../bot/BotInterface.cpp \
+    ../libbot/BotInterface.cpp \
     ../../client/libqtcatchchallenger/Api_protocol_Qt.cpp \
     ../../client/libqtcatchchallenger/ConnectedSocket.cpp \
     ../../client/libcatchchallenger/DatapackChecksum.cpp \
     ../../client/libcatchchallenger/DatapackClientLoader.cpp \
     ../../client/libcatchchallenger/ClientStructures.cpp
 HEADERS  += \
-    ../bot/MultipleBotConnection.h \
-    ../bot/MultipleBotConnectionImplForGui.h \
-    ../bot/BotInterface.h \
+    ../libbot/MultipleBotConnection.h \
+    ../libbot/MultipleBotConnectionImplForGui.h \
+    ../libbot/BotInterface.h \
     GlobalControler.h \
     ../../client/libqtcatchchallenger/Api_client_real.hpp \
     ../../client/libqtcatchchallenger/Api_client_virtual.hpp \

@@ -2,8 +2,10 @@
 #include "../Client.hpp"
 #include "../GlobalServerData.hpp"
 #include "../DictionaryServer.hpp"
-#ifdef CATCHCHALLENGER_CACHE_HPS
+#if defined(CATCHCHALLENGER_CACHE_HPS) || defined(CATCHCHALLENGER_DB_FILE)
 #include <fstream>
+#endif
+#ifdef CATCHCHALLENGER_CACHE_HPS
 #include <sys/stat.h>
 #include <utime.h>
 #endif
@@ -200,6 +202,53 @@ void BaseServer::preload_dictionary_map_return()
         }
         index++;
     }
+
+    #ifdef CATCHCHALLENGER_DB_FILE
+    // Clean up dictionary file after reading
+    if(dictionary_in_file!=nullptr)
+    {
+        dictionary_in_file->close();
+        delete dictionary_in_file;
+        dictionary_in_file=nullptr;
+    }
+    if(dictionary_serialBuffer!=nullptr)
+    {
+        delete dictionary_serialBuffer;
+        dictionary_serialBuffer=nullptr;
+    }
+    // Save dictionary to disk if changed
+    if(dictionary_haveChange)
+    {
+        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, std::string> internalToPath;
+        for(const auto &entry : mapPathToId)
+            internalToPath[entry.second]=entry.first;
+        size_t count=0;
+        for(uint32_t i=0;i<DictionaryServer::dictionary_map_database_to_internal.size();i++)
+        {
+            const CATCHCHALLENGER_TYPE_MAPID internal_id=DictionaryServer::dictionary_map_database_to_internal[i];
+            if(internal_id!=65535 && internalToPath.find(internal_id)!=internalToPath.end())
+                count++;
+        }
+        std::ofstream dict_out("database/dictionary", std::ofstream::binary);
+        if(dict_out.good() && dict_out.is_open())
+        {
+            hps::to_stream(count, dict_out);
+            for(uint32_t i=0;i<DictionaryServer::dictionary_map_database_to_internal.size();i++)
+            {
+                const CATCHCHALLENGER_TYPE_MAPID internal_id=DictionaryServer::dictionary_map_database_to_internal[i];
+                if(internal_id!=65535 && internalToPath.find(internal_id)!=internalToPath.end())
+                {
+                    hps::to_stream(i, dict_out);
+                    hps::to_stream(internalToPath.at(internal_id), dict_out);
+                }
+            }
+            std::cout << count << " dictionary entries saved to database/dictionary" << std::endl;
+        }
+        else
+            std::cerr << "Unable to open database/dictionary for writing" << std::endl;
+        dictionary_haveChange=false;
+    }
+    #endif
 
     #ifdef CATCHCHALLENGER_CACHE_HPS
     // When loading from HPS cache, load dictionary_map_database_to_internal from cache

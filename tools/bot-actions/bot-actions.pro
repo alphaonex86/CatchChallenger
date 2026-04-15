@@ -7,7 +7,7 @@ include(../../client/libcatchchallenger/lib.pri)
 include(../../client/libcatchchallenger/libheader.pri)
 include(../../client/libqtcatchchallenger/libqt.pri)
 include(../../client/libqtcatchchallenger/libqtheader.pri)
-include(../bot/actions/Actions.pri)
+include(../libbot/actions/Actions.pri)
 
 QT       += core gui xml network sql
 QT += widgets websockets
@@ -21,9 +21,9 @@ SOURCES += main.cpp\
     ../../client/qtcpu800x600/base/ChatParsing.cpp \
     GenerateMapZone.cpp \
         MainWindow.cpp \
-    ../bot/MultipleBotConnection.cpp \
-    ../bot/MultipleBotConnectionImplForGui.cpp \
-    ../bot/BotInterface.cpp \
+    ../libbot/MultipleBotConnection.cpp \
+    ../libbot/MultipleBotConnectionImplForGui.cpp \
+    ../libbot/BotInterface.cpp \
     BotTargetList.cpp \
     BotTargetListGUI.cpp \
     BotTargetListNear.cpp \
@@ -37,9 +37,9 @@ SOURCES += main.cpp\
     DatabaseBot.cpp
 HEADERS  += MainWindow.h \
     ../../client/qtcpu800x600/base/ChatParsing.hpp \
-    ../bot/MultipleBotConnection.h \
-    ../bot/MultipleBotConnectionImplForGui.h \
-    ../bot/BotInterface.h \
+    ../libbot/MultipleBotConnection.h \
+    ../libbot/MultipleBotConnectionImplForGui.h \
+    ../libbot/BotInterface.h \
     BotTargetList.h \
     MapBrowse.h \
     WaitScreen.h \

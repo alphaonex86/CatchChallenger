@@ -251,24 +251,23 @@ void BotTargetList::updateFightStats()
                     abort();
                 }
                 const uint32_t &maxXp=monsterGeneralInfo.level_to_xp.at(monster.level-1);
-                item->setText(tr("%1, level: %2\nHP: %3/%4, SP: %5, XP: %6/%7\n%8")
+                item->setText(tr("%1, level: %2\nHP: %3/%4, XP: %5/%6\n%7")
                         .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
                         .arg(monster.level)
                         .arg(monster.hp)
                         .arg(stat.hp)
-                        .arg(monster.sp)
                         .arg(monster.remaining_xp)
                         .arg(maxXp)
                         .arg(lastSkill)
                         );
                 if(monster.hp==0)
-                    item->setBackgroundColor(QColor(255,220,220,255));
+                    item->setBackground(QColor(255,220,220,255));
                 else if(index==selectedMonster)
                 {
                     if(player.api->isInFight())
-                        item->setBackgroundColor(QColor(200,255,200,255));
+                        item->setBackground(QColor(200,255,200,255));
                     else
-                        item->setBackgroundColor(QColor(200,255,255,255));
+                        item->setBackground(QColor(200,255,255,255));
                 }
                 ui->monsterList->addItem(item);
             }

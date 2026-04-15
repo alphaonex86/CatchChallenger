@@ -10,6 +10,8 @@
 #include <QSqlRecord>
 #include <QSqlError>
 #include <QScrollBar>
+#include <QSettings>
+#include <QNetworkRequest>
 #include <iostream>
 
 SocialChat * SocialChat::socialChat=NULL;
@@ -54,6 +56,20 @@ SocialChat::SocialChat() :
         while(chat_list.size()>64)
             chat_list.removeFirst();
         update_chat();
+    }
+
+    //ollama
+    ollamaNetworkManager=new QNetworkAccessManager(this);
+    if(!connect(ollamaNetworkManager,&QNetworkAccessManager::finished,this,&SocialChat::ollamaReplyFinished))
+        abort();
+    {
+        QSettings settings;
+        ui->checkBoxOllama->setChecked(settings.value("ollamaEnabled",false).toBool());
+        ui->lineEditOllamaUrl->setText(settings.value("ollamaUrl","http://localhost:11434").toString());
+        ui->lineEditOllamaModel->setText(settings.value("ollamaModel","qwen3.5:35b").toString());
+        const bool ollamaOn=ui->checkBoxOllama->isChecked();
+        ui->lineEditOllamaUrl->setEnabled(ollamaOn);
+        ui->lineEditOllamaModel->setEnabled(ollamaOn);
     }
 }
 
@@ -571,6 +587,33 @@ void SocialChat::new_chat_text_internal(const CatchChallenger::Chat_type &chat_t
         if(!query.exec())
             qDebug() << "on_note_textChanged del error:  " << query.lastError();
     }*/
+
+    //ollama: trigger on external messages
+    if(ui->checkBoxOllama->isChecked() && !theotherpseudo.isEmpty())
+    {
+        //skip if sender is one of our bots (avoid self-reply loops)
+        if(!pseudoToBot.contains(theotherpseudo))
+        {
+            if(chat_type==CatchChallenger::Chat_type::Chat_type_all)
+            {
+                //global chat: pick first bot to respond (avoid multiple bots replying)
+                if(!pseudoToBot.isEmpty())
+                    requestOllamaResponse(pseudoToBot.begin().key(),theotherpseudo,text,chat_type);
+            }
+            else if(chat_type==CatchChallenger::Chat_type::Chat_type_pm)
+            {
+                //PM: pseudo is the bot that received it
+                if(pseudoToBot.contains(pseudo))
+                    requestOllamaResponse(pseudo,theotherpseudo,text,chat_type);
+            }
+            else
+            {
+                //local/clan: pseudo is the bot that received it
+                if(pseudoToBot.contains(pseudo))
+                    requestOllamaResponse(pseudo,theotherpseudo,text,chat_type);
+            }
+        }
+    }
 }
 
 void SocialChat::new_system_text(const CatchChallenger::Chat_type &chat_type,const std::string &text)
@@ -762,8 +805,9 @@ void SocialChat::on_globalChatText_returnPressed()
     }
 }
 
-void SocialChat::insert_player(const CatchChallenger::Player_public_informations &player,const uint32_t &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
+void SocialChat::insert_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &simplifiedIndex,const CatchChallenger::Player_public_informations &player,const SIMPLIFIED_PLAYER_ID_FOR_MAP &mapId,const uint8_t &x,const uint8_t &y,const CatchChallenger::Direction &direction)
 {
+    (void)simplifiedIndex;
     (void)player;
     (void)mapId;
     (void)x;
@@ -776,7 +820,7 @@ void SocialChat::insert_player(const CatchChallenger::Player_public_informations
     updateVisiblePlayers(api);
 }
 
-void SocialChat::remove_player(const uint16_t &id)
+void SocialChat::remove_player(const SIMPLIFIED_PLAYER_ID_FOR_MAP &id)
 {
     (void)id;
     CatchChallenger::Api_client_real *api = qobject_cast<CatchChallenger::Api_client_real *>(QObject::sender());
@@ -886,7 +930,7 @@ void SocialChat::globalChatText_updateCompleter()
     QSet<QString> viewedPlayers;
     for(const auto &n:ActionsBotInterface::clientList[api].viewedPlayers)
         viewedPlayers.insert(n);
-    QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+viewedPlayers).toList();
+    QList<QString> wordList=QSet<QString>(knownGlobalChatPlayers+viewedPlayers).values();
     if(completer!=NULL)
     {
         delete completer;
@@ -1241,4 +1285,245 @@ void SocialChat::on_listWidgetChatType_itemSelectionChanged()
             index++;
         }
     }
+}
+
+//ollama
+
+void SocialChat::on_checkBoxOllama_toggled(bool checked)
+{
+    ui->lineEditOllamaUrl->setEnabled(checked);
+    ui->lineEditOllamaModel->setEnabled(checked);
+    QSettings settings;
+    settings.setValue("ollamaEnabled",checked);
+}
+
+void SocialChat::on_lineEditOllamaUrl_textChanged(const QString &text)
+{
+    QSettings settings;
+    settings.setValue("ollamaUrl",text);
+}
+
+void SocialChat::on_lineEditOllamaModel_textChanged(const QString &text)
+{
+    QSettings settings;
+    settings.setValue("ollamaModel",text);
+}
+
+void SocialChat::requestOllamaResponse(const QString &botPseudo, const QString &senderPseudo, const QString &message, const CatchChallenger::Chat_type &chatType)
+{
+    QString ollamaUrl=ui->lineEditOllamaUrl->text().trimmed();
+    if(ollamaUrl.isEmpty())
+        ollamaUrl="http://localhost:11434";
+    QString ollamaModel=ui->lineEditOllamaModel->text().trimmed();
+    if(ollamaModel.isEmpty())
+        ollamaModel="qwen3.5:35b";
+
+    //build bot info for system prompt
+    QString botInfo="You are "+botPseudo;
+    if(pseudoToBot.contains(botPseudo))
+    {
+        CatchChallenger::Api_protocol_Qt *api=pseudoToBot.value(botPseudo);
+        if(ActionsBotInterface::clientList.find(api)!=ActionsBotInterface::clientList.cend())
+        {
+            const ActionsBotInterface::Player &client=ActionsBotInterface::clientList.at(api);
+            const CatchChallenger::Player_private_and_public_informations &info=api->get_player_informations();
+            switch(info.public_informations.type)
+            {
+                case CatchChallenger::Player_type_normal: botInfo+=", a normal player"; break;
+                case CatchChallenger::Player_type_premium: botInfo+=", a premium player"; break;
+                case CatchChallenger::Player_type_dev: botInfo+=", a developer"; break;
+                case CatchChallenger::Player_type_gm: botInfo+=", a game master"; break;
+                default: break;
+            }
+            //visible players
+            if(!client.visiblePlayers.empty())
+            {
+                botInfo+=". Nearby players: ";
+                bool first=true;
+                for (const auto &p:client.visiblePlayers) {
+                    if(!first) botInfo+=", ";
+                    botInfo+=QString::fromStdString(p.second.pseudo);
+                    first=false;
+                }
+            }
+        }
+    }
+    botInfo+=". You are in a multiplayer game chat (CatchChallenger).";
+
+    //decision instructions based on chat type
+    QString decisionInstructions;
+    switch(chatType)
+    {
+        case CatchChallenger::Chat_type::Chat_type_all:
+            decisionInstructions=" This is the GLOBAL chat. Not all messages are directed at you. "
+                "Only respond if the message is relevant to you, mentions you, or you have something meaningful to contribute. "
+                "If the message is not for you or you have nothing to say, respond with exactly: [SKIP]";
+        break;
+        case CatchChallenger::Chat_type::Chat_type_pm:
+            decisionInstructions=" This is a PRIVATE MESSAGE directed at you from "+senderPseudo+". "
+                "You should generally respond. But if the message is repetitive spam or makes no sense, respond with exactly: [SKIP]";
+        break;
+        case CatchChallenger::Chat_type::Chat_type_local:
+            decisionInstructions=" This is LOCAL chat (nearby players only). "
+                "Not all messages are directed at you. Only respond if relevant. "
+                "If the message is not for you, respond with exactly: [SKIP]";
+        break;
+        case CatchChallenger::Chat_type::Chat_type_clan:
+            decisionInstructions=" This is CLAN chat. "
+                "Not all messages are directed at you. Only respond if relevant. "
+                "If the message is not for you, respond with exactly: [SKIP]";
+        break;
+        default:
+            decisionInstructions=" If the message is not for you, respond with exactly: [SKIP]";
+        break;
+    }
+
+    const QString systemPrompt=botInfo+decisionInstructions
+        +" Keep replies short and natural, like a real player in a game chat. Do not use markdown formatting.";
+
+    //build messages array with chat history
+    QJsonArray messages;
+    messages.append(QJsonObject{{"role","system"},{"content",systemPrompt}});
+
+    //add recent chat history as context
+    const int historyStart=qMax(0,chat_list.size()-20);
+    for(int i=historyStart;i<chat_list.size();i++)
+    {
+        const ChatEntry &entry=chat_list.at(i);
+        if(entry.chat_type==CatchChallenger::Chat_type_system || entry.chat_type==CatchChallenger::Chat_type_system_important)
+            continue;
+        const QString entryPseudo=QString::fromStdString(entry.player_pseudo);
+        const QString entryText=QString::fromStdString(entry.text);
+        if(pseudoToBot.contains(entryPseudo))
+            messages.append(QJsonObject{{"role","assistant"},{"content",entryText}});
+        else
+            messages.append(QJsonObject{{"role","user"},{"content",entryPseudo+": "+entryText}});
+    }
+
+    //add the new incoming message
+    messages.append(QJsonObject{{"role","user"},{"content",senderPseudo+": "+message}});
+
+    QJsonObject payload;
+    payload["model"]=ollamaModel;
+    payload["messages"]=messages;
+    payload["stream"]=false;
+
+    QNetworkRequest request(QUrl(ollamaUrl+"/api/chat"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader,"application/json");
+
+    QNetworkReply *reply=ollamaNetworkManager->post(request,QJsonDocument(payload).toJson());
+    OllamaPendingReply pending;
+    pending.botPseudo=botPseudo;
+    pending.chatType=chatType;
+    pending.targetPseudo=senderPseudo;
+    pending.requestTimestamp=QDateTime::currentMSecsSinceEpoch();
+    ollamaPendingReplies[reply]=pending;
+}
+
+void SocialChat::ollamaReplyFinished(QNetworkReply *reply)
+{
+    if(!ollamaPendingReplies.contains(reply))
+    {
+        reply->deleteLater();
+        return;
+    }
+    const OllamaPendingReply pending=ollamaPendingReplies.take(reply);
+
+    if(reply->error()!=QNetworkReply::NoError)
+    {
+        std::cerr << "Ollama error: " << reply->errorString().toStdString() << std::endl;
+        reply->deleteLater();
+        return;
+    }
+
+    const QByteArray data=reply->readAll();
+    reply->deleteLater();
+
+    const QJsonDocument doc=QJsonDocument::fromJson(data);
+    if(!doc.isObject())
+    {
+        std::cerr << "Ollama: invalid JSON response" << std::endl;
+        return;
+    }
+    const QJsonObject obj=doc.object();
+    QString replyText;
+    if(obj.contains("message") && obj["message"].isObject())
+        replyText=obj["message"].toObject()["content"].toString().trimmed();
+    else
+    {
+        std::cerr << "Ollama: no message in response" << std::endl;
+        return;
+    }
+
+    //if ollama decided not to respond
+    if(replyText.contains("[SKIP]") || replyText.trimmed()=="[SKIP]")
+    {
+        std::cout << "Ollama: skipping reply for " << pending.botPseudo.toStdString() << std::endl;
+        return;
+    }
+
+    //typing delay: 50ms per character, min 1000ms, max 10000ms
+    //subtract time already spent waiting for ollama response
+    const int typingDelayMs=qBound(1000, replyText.length()*50, 10000);
+    const qint64 elapsedMs=QDateTime::currentMSecsSinceEpoch()-pending.requestTimestamp;
+    const int remainingMs=typingDelayMs-(int)elapsedMs;
+
+    const QString botPseudo=pending.botPseudo;
+    const CatchChallenger::Chat_type chatType=pending.chatType;
+    const QString targetPseudo=pending.targetPseudo;
+    if(remainingMs<=0)
+    {
+        //ollama was slower than typing time, send immediately
+        sendOllamaReply(replyText,botPseudo,chatType,targetPseudo);
+    }
+    else
+    {
+        QTimer::singleShot(remainingMs,this,[this,replyText,botPseudo,chatType,targetPseudo](){
+            sendOllamaReply(replyText,botPseudo,chatType,targetPseudo);
+        });
+    }
+}
+
+void SocialChat::sendOllamaReply(const QString &replyText, const QString &botPseudo, const CatchChallenger::Chat_type &chatType, const QString &targetPseudo)
+{
+    if(!pseudoToBot.contains(botPseudo))
+        return;
+    CatchChallenger::Api_protocol_Qt *api=pseudoToBot.value(botPseudo);
+    if(ActionsBotInterface::clientList.find(api)==ActionsBotInterface::clientList.cend())
+        return;
+    const CatchChallenger::Player_private_and_public_informations &player_informations=api->get_player_informations();
+
+    switch(chatType)
+    {
+        case CatchChallenger::Chat_type::Chat_type_all:
+            api->sendChatText(CatchChallenger::Chat_type_all,replyText.toStdString());
+            new_chat_text_internal(CatchChallenger::Chat_type_all,replyText,botPseudo,botPseudo,player_informations.public_informations.type);
+        break;
+        case CatchChallenger::Chat_type::Chat_type_pm:
+            api->sendPM(replyText.toStdString(),targetPseudo.toStdString());
+            {
+                QSqlQuery query;
+                if(!query.prepare("INSERT INTO privatechat (text,player_type,player,theotherplayer,fromplayer) VALUES (:text,:player_type,:player,:theotherplayer,:fromplayer)"))
+                    abort();
+                query.bindValue(":text", replyText);
+                query.bindValue(":player", botPseudo);
+                query.bindValue(":theotherplayer", targetPseudo);
+                query.bindValue(":player_type", (uint8_t)player_informations.public_informations.type);
+                query.bindValue(":fromplayer",1);
+                if(!query.exec())
+                {
+                    qDebug() << "Ollama PM send db error: " << query.lastError();
+                    abort();
+                }
+            }
+        break;
+        case CatchChallenger::Chat_type::Chat_type_local:
+        case CatchChallenger::Chat_type::Chat_type_clan:
+            api->sendChatText(chatType,replyText.toStdString());
+            new_chat_text_internal(chatType,replyText,botPseudo,botPseudo,player_informations.public_informations.type);
+        break;
+        default:
+        break;
+    }
+    std::cout << "Ollama reply sent as " << botPseudo.toStdString() << ": " << replyText.toStdString() << std::endl;
 }
