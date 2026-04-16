@@ -49,6 +49,8 @@ common/dictionary_starter, in format (8Bits string size + string content) * coun
     if starter is remove, then keep the entry into the dictionary because some character_server can have this index, allow don't edit character_server file if starter is remove
     server will maintain internal convertion from db_id 8Bits to internal index 8Bits (it's std::vector<uint8_t> dictionary_starter_database_to_internal where index is db_id and uint8_t it's internal id, 255 when db_id is not found), EG if starters list into dictionary_starter is empire (id_db 0), road (id_db 1), newstarter (id_db 2) annd road was remove then internal starter list is empire (internal id 0) and new starter (internal id 0), the server will keep only 0 -> 0, 2 -> 1, and then when load from DB convert directly id_db to internal db if found, else log to console output an error
 
+Always exclude queryIdPool to save on disk, this is temporary vartiable, non-sense when client is disconnected. When just connected no query pending, then queryIdPool is all avaible id to be used, and is consumed when query is send, returned when query is completed.
+
 Write lifecycle:
   - Character creation (ClientHeavyLoadLogin2.cpp): `Client::saveCharacterFiles()` writes both files with the fresh profile state.
   - Client disconnect (Client::disconnectClient, CharacterSelected branch): `saveCharacterFiles()` is called BEFORE any cleanup/setToDefault wipes fields. This is the only persistence point — in-memory mutations (moves, fights, quest progress, plant harvest, …) are not flushed incrementally; a crash loses everything since last connect.
