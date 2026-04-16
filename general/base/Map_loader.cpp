@@ -790,7 +790,15 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
     {
         std::string fileName=returnList.at(index);
         stringreplaceAll(fileName,"\\","/");
-        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude))
+        //must match FacilityLibGeneral::getSuffixAndValidatePathFromFS so server and
+        //client agree on which .tmx files are part of the datapack: the hash/sync
+        //path uses that validator and rejects names with spaces or other chars.
+        //Including such files here makes the server's flat_map_list grow past the
+        //client's (server has e.g. 184 maps, client 182), so a player saved on the
+        //last server-only map ends up with an out-of-range mapId on the client
+        //(mapId=183 >= maps.size()=182 -> ABORT initial player load, black map).
+        if(regex_search(fileName,mapFilter) && !regex_search(fileName,mapExclude)
+                && FacilityLibGeneral::getSuffixAndValidatePathFromFS(fileName)=="tmx")
         {
             #ifdef DEBUG_MESSAGE_MAP_LOAD
             std::cout << "load the map: " << fileName << std::endl;

@@ -10,6 +10,8 @@
 
 using namespace CatchChallenger;
 
+std::chrono::steady_clock::time_point EpollGenericServer::processStart=std::chrono::steady_clock::now();
+
 EpollGenericServer::EpollGenericServer()
 {
 }
@@ -134,6 +136,8 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
             sfd_list.push_back(sfd);
 
             const auto p1 = std::chrono::system_clock::now();
+            const auto bootMs = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now()-EpollGenericServer::processStart).count();
             std::cout << "[" << std::chrono::duration_cast<std::chrono::seconds>(
                    p1.time_since_epoch()).count() << "] "
                     << "correctly bind: familly: " << rp->ai_family
@@ -143,6 +147,7 @@ bool EpollGenericServer::tryListenInternal(const char* const ip,const char* cons
                     << ", rp->ai_addrlen: " << rp->ai_addrlen
                     << ", port: " << port
                     << ", rp->ai_flags: " << rp->ai_flags
+                    << ", boot: " << bootMs << "ms"
                     //<< ", rp->ai_canonname: " << rp->ai_canonname-> corrupt the output
                     << std::endl;
             char hbuf[NI_MAXHOST];

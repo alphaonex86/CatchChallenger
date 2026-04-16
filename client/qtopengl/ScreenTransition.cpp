@@ -2,6 +2,7 @@
 #ifdef CATCHCHALLENGER_SOLO
 #include "../../server/qt/InternalServer.hpp"
 #include "../libqtcatchchallenger/Settings.hpp"
+#include "../libqtcatchchallenger/SoloDatabaseInit.hpp"
 #include <QStandardPaths>
 #endif
 #include "../libqtcatchchallenger/QtDatapackClientLoader.hpp"
@@ -466,43 +467,29 @@ void ScreenTransition::openSolo()
         return;
     }
 
-    //initialize the db
-    if(!QFile(savegamesPath+"catchchallenger.db.sqlite").exists())
+    //initialize the db from the embedded SQL schema (with checksum file) if missing,
+    //otherwise validate the existing savegame's schema checksum before reusing it.
     {
-        QByteArray dbData;
+        const QString dbPath=savegamesPath+"catchchallenger.db.sqlite";
+        if(!QFile(dbPath).exists())
         {
-            QFile dbSource(QStringLiteral(":/catchchallenger.db.sqlite"));
-            if(!dbSource.open(QIODevice::ReadOnly))
+            QString initError;
+            if(!SoloDatabaseInit::createSavegame(dbPath,&initError))
             {
-                errorString(QStringLiteral("Unable to open the db model: %1").arg(savegamesPath).toStdString());
+                std::cerr << "Unable to create savegame db at "
+                          << dbPath.toStdString() << ": "
+                          << initError.toStdString() << std::endl;
+                errorString(QStringLiteral("Unable to create savegame db: %1").arg(initError).toStdString());
                 CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
                 return;
             }
-            dbData=dbSource.readAll();
-            if(dbData.isEmpty())
-            {
-                errorString(QStringLiteral("Unable to read the db model: %1").arg(savegamesPath).toStdString());
-                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-                return;
-            }
-            dbSource.close();
         }
+        else if(!SoloDatabaseInit::isSavegameValid(dbPath))
         {
-            QFile dbDestination(savegamesPath+"catchchallenger.db.sqlite");
-            if(!dbDestination.open(QIODevice::WriteOnly))
-            {
-                errorString(QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath).toStdString());
-                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-                return;
-            }
-            if(dbDestination.write(dbData)<0)
-            {
-                dbDestination.close();
-                errorString(QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath).toStdString());
-                CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-                return;
-            }
-            dbDestination.close();
+            std::cerr << "Savegame schema checksum mismatch for: "
+                      << dbPath.toStdString() << std::endl;
+            errorString(QStringLiteral("Incompatible version: %1").arg(dbPath).toStdString());
+            return;
         }
     }
 

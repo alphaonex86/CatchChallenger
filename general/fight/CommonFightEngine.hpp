@@ -112,11 +112,11 @@ protected:
     virtual void messageFightEngine(const std::string &message) const = 0;
     virtual uint32_t randomSeedsSize() const = 0;
 protected:
-    bool ableToFight;
-    std::vector<PlayerMonster> wildMonsters,botFightMonsters;
-    uint8_t stepFight;
-    uint8_t selectedMonster;
-    bool doTurnIfChangeOfMonster;
+    bool ableToFight;//dynamic, non-sense for disconnected player, then never store into database
+    std::vector<PlayerMonster> wildMonsters,botFightMonsters;//dynamic, non-sense for disconnected player, then never store into database
+    uint8_t stepFight;//dynamic, non-sense for disconnected player, then never store into database
+    uint8_t selectedMonster;//dynamic, non-sense for disconnected player, then never store into database
+    bool doTurnIfChangeOfMonster;//dynamic, non-sense for disconnected player, then never store into database
 };
 }
 

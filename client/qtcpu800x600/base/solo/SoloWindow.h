@@ -81,9 +81,6 @@ private:
     std::string datapackPath;
     std::string savegamePath;
 
-    static const QString text_savegame_version;
-    static const QString text_QSQLITE;
-    static const QString text_savegameupdate;
     static const QString text_catchchallenger_db_sqlite;
     static const QString text_time_played;
     static const QString text_location;
@@ -103,7 +100,6 @@ private:
     static const QString text_full_entry;
     static const QString text_lang;
     static const QString text_en;
-    static const QString text_CATCHCHALLENGER_SAVEGAME_VERSION;
 signals:
     void play(const std::string &savegamesPath);
     void back();

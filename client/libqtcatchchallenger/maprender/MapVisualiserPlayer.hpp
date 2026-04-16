@@ -110,6 +110,12 @@ protected:
     //display
     bool centerOnPlayer;
 
+    //Unload our player/monster sprites from the map before the base class
+    //destroys the Tiled::Map. ObjectGroup::~ObjectGroup() qDeleteAll's its
+    //objects; if ours is still in the group we end up with a dangling pointer
+    //that crashes at ~MapVisualiserPlayer.
+    virtual void destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex) override;
+
     //timer
     QTimer timer;
     QTimer moveTimer;

@@ -1,4 +1,0 @@
-correctly bind: familly: 2, rp->ai_socktype: 1, rp->ai_protocol: 6, rp->ai_addr: 0x559206556930, rp->ai_addrlen: 16, port: 61917, rp->ai_flags: 1
-[1775806214] correctly bind: familly: 10, rp->ai_socktype: 1, rp->ai_protocol: 6, rp->ai_addr: 0x5592065568d0, rp->ai_addrlen: 28, port: 61917, rp->ai_flags: 1
-::accept() return -1 and errno: 11 event or socket ignored: Resource temporarily unavailable
-index_on_map!=SIMPLIFIED_PLAYER_INDEX_FOR_CONNECTED_MAX Client::insertClientOnMap()

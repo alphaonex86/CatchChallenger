@@ -3,6 +3,7 @@
 
 #include <sys/socket.h>
 #include <vector>
+#include <chrono>
 
 #include "BaseClassSwitch.hpp"
 
@@ -18,6 +19,9 @@ public:
     std::vector<int> getSfd() const;
     virtual BaseClassSwitch::EpollObjectType getType() const;
     bool isListening() const;
+    //set at the very top of main() so we can report the wall time taken to
+    //reach the "correctly bind" log (datapack/db init etc.).
+    static std::chrono::steady_clock::time_point processStart;
 private:
     std::vector<int> sfd_list;
 };

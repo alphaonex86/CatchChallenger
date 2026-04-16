@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>catchchallenger.db.sqlite</file>
+        <file alias="catchchallenger-sqlite.sql">sqlite/catchchallenger-sqlite.sql</file>
     </qresource>
 </RCC>

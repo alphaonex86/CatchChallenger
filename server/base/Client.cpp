@@ -864,13 +864,13 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
         << public_and_private_informations.items;
     buf << public_and_private_informations.allowCreateClan;
 
-    buf << ableToFight;
-    buf << wildMonsters;
-    buf << botFightMonsters;
+    //ableToFight/wildMonsters/botFightMonsters/stepFight/selectedMonster/
+    //doTurnIfChangeOfMonster live in CommonFightEngine and are dynamic mid-fight
+    //state - meaningless for a disconnected player. They are reset by the
+    //CommonFightEngine ctor (resetAll) on every new Client, so they are never
+    //serialised. Same applies to queryIdPool, botFight and isInCityCapture.
     buf << randomIndex << randomSize << number_of_character;
     buf << questsDrop << connectedSince << profileIndex;
-    //queryIdPool, botFight and isInCityCapture are runtime-only state; on reconnect the
-    //player is never mid-fight nor mid-city-capture, so they are not serialised.
 
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
     CATCHCHALLENGER_TYPE_MAPID rescue_map_file_database_id=0;
@@ -920,9 +920,9 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         min=encyclopedia_itemS.size();
     memcpy(public_and_private_informations.encyclopedia_item,encyclopedia_itemS.data(),min);
 
-    buf >> ableToFight;
-    buf >> wildMonsters;
-    buf >> botFightMonsters;
+    //ableToFight/wildMonsters/botFightMonsters/stepFight/selectedMonster/
+    //doTurnIfChangeOfMonster are dynamic CommonFightEngine state - already reset
+    //by its ctor on this Client, so we don't read them from disk.
     buf >> randomIndex >> randomSize >> number_of_character;
     buf >> questsDrop >> connectedSince >> profileIndex;
     //queryIdPool is runtime-only, initialize full pool

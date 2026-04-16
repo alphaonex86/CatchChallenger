@@ -4,13 +4,9 @@
 #include <iostream>
 #include <QSettings>
 #include <QInputDialog>
-#include <QSqlQuery>
-#include <QSqlError>
-
 #include "../../../libqtcatchchallenger/maprender/MapVisualiserPlayer.hpp"
 #include "../../../../general/base/FacilityLib.hpp"
 #include "../../../../general/base/FacilityLibGeneral.hpp"
-#include "../../../../general/base/SavegameVersion.hpp"
 #include "../../../../general/base/Version.hpp"
 #include "../../../libcatchchallenger/DatapackClientLoader.hpp"
 #include "../LanguagesSelect.h"
@@ -18,11 +14,9 @@
 #include "../../../../general/base/Version.hpp"
 #include "../../../../general/base/CommonDatapack.hpp"
 #include "../../../libqtcatchchallenger/InternetUpdater.hpp"
+#include "../../../libqtcatchchallenger/SoloDatabaseInit.hpp"
 #include "../FacilityLibClient.h"
 
-const QString SoloWindow::text_savegame_version=QStringLiteral("savegame_version");
-const QString SoloWindow::text_QSQLITE=QStringLiteral("QSQLITE");
-const QString SoloWindow::text_savegameupdate=QStringLiteral("savegameupdate");
 const QString SoloWindow::text_catchchallenger_db_sqlite=QStringLiteral("catchchallenger.db.sqlite");
 const QString SoloWindow::text_time_played=QStringLiteral("time_played");
 const QString SoloWindow::text_location=QStringLiteral("location");
@@ -42,7 +36,6 @@ const QString SoloWindow::text_property=QStringLiteral("property");
 const QString SoloWindow::text_lang=QStringLiteral("lang");
 const QString SoloWindow::text_en=QStringLiteral("en");
 const QString SoloWindow::text_full_entry=QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#909090;\">%2<br/>%3</span>");
-const QString SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION=QStringLiteral(CATCHCHALLENGER_SAVEGAME_VERSION);
 
 SoloWindow::SoloWindow(QWidget *parent, const std::string &datapackPath, const std::string &savegamePath, const bool &standAlone) :
     QMainWindow(parent),
@@ -101,41 +94,18 @@ void SoloWindow::on_SaveGame_New_clicked()
         return;
     }
 
-    //initialize the db
-    QByteArray dbData;
+    //initialize the db from the embedded SQL schema and write its checksum
     {
-        QFile dbSource(QStringLiteral(":/catchchallenger.db.sqlite"));
-        if(!dbSource.open(QIODevice::ReadOnly))
+        QString initError;
+        if(!SoloDatabaseInit::createSavegame(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite,&initError))
         {
-            QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to open the db model: %1").arg(savegamesPath));
+            std::cerr << "Unable to create savegame db at "
+                      << savegamesPath.toStdString() << ": "
+                      << initError.toStdString() << std::endl;
+            QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to create savegame db: %1").arg(initError));
             CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
             return;
         }
-        dbData=dbSource.readAll();
-        if(dbData.isEmpty())
-        {
-            QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to read the db model: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-            return;
-        }
-        dbSource.close();
-    }
-    {
-        QFile dbDestination(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
-        if(!dbDestination.open(QIODevice::WriteOnly))
-        {
-            QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-            return;
-        }
-        if(dbDestination.write(dbData)<0)
-        {
-            dbDestination.close();
-            QMessageBox::critical(this,tr("Error"),QStringLiteral("Unable to write savegame into: %1").arg(savegamesPath));
-            CatchChallenger::FacilityLibGeneral::rmpath(savegamesPath.toStdString());
-            return;
-        }
-        dbDestination.close();
     }
 
     //initialise the pass
@@ -153,7 +123,6 @@ void SoloWindow::on_SaveGame_New_clicked()
                 metaData.setValue(SoloWindow::text_location,QString());
                 metaData.setValue(SoloWindow::text_time_played,0);
                 metaData.setValue(SoloWindow::text_pass,pass);
-                metaData.setValue(SoloWindow::text_savegame_version,SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION);
                 settingOk=true;
             }
             else
@@ -310,42 +279,6 @@ void SoloWindow::updateSavegameList()
                 {
                     if(metaData.contains(text_title) && metaData.contains(text_location) && metaData.contains(SoloWindow::text_time_played) && metaData.contains(SoloWindow::text_pass))
                     {
-                        //update process
-                        if(!metaData.contains(text_savegame_version))
-                            metaData.setValue(text_savegame_version,CATCHCHALLENGER_SAVEGAME_VERSION);
-                        QString version=metaData.value(text_savegame_version).toString();
-
-                        if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
-                        {
-                            if(version==QStringLiteral("2.0"))
-                            {
-                                QStringList values;
-                                values << "ALTER TABLE \"character\" ADD COLUMN lastdaillygift INTEGER;";
-                                {
-                                    QSqlDatabase conn = QSqlDatabase::addDatabase(SoloWindow::text_QSQLITE,SoloWindow::text_savegameupdate);
-                                    conn.setDatabaseName(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite);
-                                    if(conn.open())
-                                    {
-                                        int index=0;
-                                        while(index<values.size())
-                                        {
-                                            QSqlQuery query(conn);
-                                            if(!query.exec(values.at(index)))
-                                                qDebug() << "query to update the savegame" << query.lastError().driverText() << query.lastError().driverText();
-                                            index++;
-                                        }
-                                        conn.commit();
-                                        conn.close();
-                                        conn = QSqlDatabase();
-                                        version=QStringLiteral("2.0.3.0");
-                                        metaData.setValue(SoloWindow::text_savegame_version,version);
-                                    }
-                                    else
-                                        qDebug() << "database con't be open to update the savegame" << conn.lastError().driverText() << conn.lastError().databaseText() << values.at(index) << "for" << (savegamesPath+QStringLiteral("catchchallenger.db.sqlite"));
-                                }
-                                QSqlDatabase::removeDatabase(SoloWindow::text_savegameupdate);//need out of scope of QSqlDatabase conn
-                            }
-                        }
                         int time_played_number=metaData.value(SoloWindow::text_time_played).toUInt(&ok);
                         QString time_played;
                         if(!ok || time_played_number>3600*24*365*50)
@@ -378,15 +311,7 @@ void SoloWindow::updateSavegameList()
                         else
                             lastLine=QStringLiteral("%1 (%2)").arg(QString::fromStdString(mapName)).arg(time_played);
 
-                        if(version!=SoloWindow::text_CATCHCHALLENGER_SAVEGAME_VERSION)
-                        {
-                            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br />Version not compatible (%2)</span>")
-                                              .arg(metaData.value("title").toString())
-                                              .arg(version)
-                                              );
-                        }
-                        else
-                            newEntry->setText(SoloWindow::text_full_entry
+                        newEntry->setText(SoloWindow::text_full_entry
                                           .arg(metaData.value(SoloWindow::text_title).toString())
                                           .arg(dateString)
                                           .arg(lastLine)
@@ -407,6 +332,16 @@ void SoloWindow::updateSavegameList()
         }
         ui->scrollAreaWidgetContents->layout()->addWidget(newEntry);
 
+        if(ok && !SoloDatabaseInit::isSavegameValid(savegamesPath+SoloWindow::text_catchchallenger_db_sqlite))
+        {
+            ok=false;
+            std::cerr << "Savegame schema checksum mismatch for: "
+                      << savegamesPath.toStdString() << std::endl;
+            newEntry->setText(QStringLiteral("<span style=\"font-size:12pt;font-weight:600;\">%1</span><br/><span style=\"color:#c04040;\">%2</span>")
+                              .arg(metaData.value(SoloWindow::text_title).toString())
+                              .arg(tr("Incompatible version"))
+                              );
+        }
         if(lastSelectedPath==savegamesPath.toStdString())
             selectedSavegame=newEntry;
         savegame.push_back(newEntry);
@@ -638,6 +573,9 @@ void SoloWindow::on_SaveGame_Copy_clicked()
                 QMessageBox::critical(this,tr("Error"),tr("Unable to open destination file"));
             destination.setPermissions(destination.permissions() | QFileDevice::WriteOwner | QFileDevice::WriteUser);
             source.close();
+            SoloDatabaseInit::copyChecksumFile(
+                        QString::fromStdString(savegamesPath)+SoloWindow::text_catchchallenger_db_sqlite,
+                        destinationPath+SoloWindow::text_catchchallenger_db_sqlite);
         }
         else
             QMessageBox::critical(this,tr("Error"),tr("Unable to open source file"));
