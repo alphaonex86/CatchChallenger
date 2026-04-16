@@ -182,7 +182,7 @@ void Client::clanAction(const uint8_t &query_id,const uint8_t &action,const std:
             GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_delete_clan.asyncWrite({std::to_string(public_and_private_informations.clan)});
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
-            ::unlink(("database/clans/"+std::to_string(public_and_private_informations.clan)).c_str());
+            ::unlink(("database/server/clans/"+std::to_string(public_and_private_informations.clan)).c_str());
             #else
             #error Define what do here
             #endif
@@ -420,14 +420,14 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         }
         if(!duplicateFound)
         {
-            DIR *dir=opendir("database/clans");
+            DIR *dir=opendir("database/server/clans");
             if(dir!=nullptr)
             {
                 struct dirent *entry;
                 while((entry=readdir(dir))!=nullptr)
                 {
                     if(entry->d_name[0]=='.') continue;
-                    std::ifstream f(std::string("database/clans/")+entry->d_name, std::ifstream::binary);
+                    std::ifstream f(std::string("database/server/clans/")+entry->d_name, std::ifstream::binary);
                     if(f.good() && f.is_open())
                     {
                         std::string existingName;
@@ -490,7 +490,7 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
     #elif CATCHCHALLENGER_DB_FILE
     {
         // Save clan to disk
-        std::ofstream clan_out("database/clans/"+std::to_string(clanId), std::ofstream::binary);
+        std::ofstream clan_out("database/server/clans/"+std::to_string(clanId), std::ofstream::binary);
         if(clan_out.good() && clan_out.is_open())
         {
             hps::to_stream(text, clan_out);
@@ -498,13 +498,13 @@ void Client::addClan_return(const uint8_t &query_id,const uint8_t &,const std::s
         }
         // Persist updated maxClanId to database/server
         {
-            std::ofstream srv_file("database/server", std::ofstream::binary);
+            std::ofstream srv_file("database/server/server", std::ofstream::binary);
             if(srv_file.good() && srv_file.is_open())
             {
                 hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, srv_file);
                 hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, srv_file);
                 hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, srv_file);
-                hps::to_stream(GlobalServerData::serverSettings.city, srv_file);
+                hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, srv_file);
             }
         }
     }

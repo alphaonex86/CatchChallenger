@@ -302,10 +302,10 @@ void Client::askLogin_return(AskLoginParam *askLoginParam)
 
                 std::vector<CharacterEntry> characterEntryList;
                 {
-                    std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+                    std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                     if(!in_file.good() || !in_file.is_open())
                     {
-                        std::cerr << "Unable to open data base file database/accounts/" << account_id_db << " (abort)" << std::endl;
+                        std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;
                         abort();
                         return;
                     }
@@ -564,13 +564,13 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
         #elif CATCHCHALLENGER_DB_BLACKHOLE
         #elif CATCHCHALLENGER_DB_FILE
         {
-            std::ofstream out_file("database/server", std::ofstream::binary);
+            std::ofstream out_file("database/server/server", std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
-            {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+            {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-            hps::to_stream(GlobalServerData::serverSettings.city, out_file);
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
         }
         {
             {
@@ -594,10 +594,10 @@ void Client::createAccount_return(AskLoginParam *askLoginParam)
                 hps::to_stream(account_id_db, out_file);
             }
             {
-                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
+                std::ofstream out_file("database/common/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file database/accounts/" << account_id_db << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file database/common/accounts/" << account_id_db << " (abort)" << std::endl;
                     abort();
                     return;
                 }

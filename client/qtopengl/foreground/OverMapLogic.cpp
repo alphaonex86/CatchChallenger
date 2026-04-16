@@ -12,6 +12,12 @@
 #include "../above/player/Reputations.hpp"
 #include "../above/player/Quests.hpp"
 #include "../above/player/FinishedQuests.hpp"
+#include "../above/Animation.hpp"
+#include "../above/Encyclopedia.hpp"
+#include "../above/Shop.hpp"
+#include "../above/Factory.hpp"
+#include "../above/Trade.hpp"
+#include "../above/Warehouse.hpp"
 #include "../../../general/base/FacilityLib.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
 #include "Battle.hpp"
@@ -32,6 +38,13 @@ OverMapLogic::OverMapLogic()
     quests=nullptr;
     finishedQuests=nullptr;
     playerIndex=0;
+
+    animation=nullptr;
+    encyclopedia=nullptr;
+    shop=nullptr;
+    factory=nullptr;
+    trade=nullptr;
+    warehouse=nullptr;
 
     multiplayer=true;
     lastReplyTimeValue=0;

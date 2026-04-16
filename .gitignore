@@ -36,7 +36,7 @@
 
 # generated output
 /tools/map-procedural-generation/dest
-/tools/datapack-explorer-generator/datapack-explorer-generator
+/tools/datapack-explorer-generator-cli/datapack-explorer-generator
 
 ### Qt ###
 # C++ objects and libs

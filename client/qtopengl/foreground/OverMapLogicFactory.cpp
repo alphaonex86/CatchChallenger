@@ -128,23 +128,21 @@ void OverMapLogic::on_factoryResources_itemActivated(QListWidgetItem *item)
 
 void OverMapLogic::haveBuyFactoryObject(const CatchChallenger::BuyStat &stat,const uint32_t &newPrice)
 {
+    // handled by Factory screen directly via UniqueConnection
     Q_UNUSED(stat);
     Q_UNUSED(newPrice);
-    //factory UI not implemented yet
-    abort();
 }
 
 void OverMapLogic::haveSellFactoryObject(const CatchChallenger::SoldStat &stat,const uint32_t &newPrice)
 {
+    // handled by Factory screen directly via UniqueConnection
     Q_UNUSED(stat);
     Q_UNUSED(newPrice);
-    //factory UI not implemented yet
-    abort();
 }
 
 void OverMapLogic::haveFactoryList(const uint32_t &/*remainingProductionTime*/,const std::vector<CatchChallenger::ItemToSellOrBuy> &/*resources*/,const std::vector<CatchChallenger::ItemToSellOrBuy> &/*products*/)
 {
-    abort();
+    // handled by Factory screen directly via UniqueConnection
     /*
     industryStatus.products.clear();
     industryStatus.resources.clear();
@@ -209,7 +207,7 @@ void OverMapLogic::haveFactoryList(const uint32_t &/*remainingProductionTime*/,c
 
 void OverMapLogic::updateFactoryStatProduction(const CatchChallenger::IndustryStatus &/*industryStatus*/,const CatchChallenger::Industry &/*industry*/)
 {
-    abort();
+    // handled by Factory screen directly via UniqueConnection
     /*
     if(FacilityLib::factoryProductionStarted(industryStatus,industry))
     {

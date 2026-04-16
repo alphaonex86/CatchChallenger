@@ -26,7 +26,7 @@ CREATE TABLE `character` (
   `played_time` int(11) UNSIGNED NOT NULL,
   `last_connect` int(11) UNSIGNED NOT NULL,
   `starter` tinyint(4) UNSIGNED NOT NULL,
-  `allow` tinyblob NOT NULL,
+  `allowCreateClan` tinyint(1) NOT NULL DEFAULT 0,
   `item` blob NOT NULL,
   `item_warehouse` mediumblob NOT NULL,
   `recipes` blob NOT NULL,
@@ -87,6 +87,42 @@ CREATE TABLE `server_time` (
   `played_time` int(11) NOT NULL,
   `last_connect` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_reputation`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_reputation` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `reputation` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_skin`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_skin` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `skin` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dictionary_starter`
+--
+
+CREATE TABLE IF NOT EXISTS `dictionary_starter` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `starter` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 --
 -- Indexes for dumped tables

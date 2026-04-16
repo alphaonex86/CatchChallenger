@@ -65,7 +65,7 @@
      <item>
       <widget class="QStackedWidget" name="stackedWidget">
        <property name="currentIndex">
-        <number>3</number>
+        <number>13</number>
        </property>
        <widget class="QWidget" name="page_init">
         <property name="styleSheet">
@@ -96,16 +96,16 @@
             <string notr="true">#frameLoading {border-image: url(:/images/empty.png);border-width: 0px;}</string>
            </property>
            <property name="frameShape">
-            <enum>QFrame::StyledPanel</enum>
+            <enum>QFrame::Shape::StyledPanel</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Raised</enum>
+            <enum>QFrame::Shadow::Raised</enum>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_40">
             <item>
              <spacer name="spacer">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -120,7 +120,7 @@
               <item>
                <spacer name="horizontalSpacer_loading_9">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -148,7 +148,7 @@ background-color: rgba(0, 0, 0, 128);</string>
               <item>
                <spacer name="horizontalSpacer_loading_10">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -188,7 +188,7 @@ color: rgb(0, 0, 0);</string>
          <item>
           <widget class="QTreeWidget" name="serverList">
            <property name="horizontalScrollBarPolicy">
-            <enum>Qt::ScrollBarAlwaysOff</enum>
+            <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
            </property>
            <property name="autoScroll">
             <bool>false</bool>
@@ -222,7 +222,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_57">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -242,7 +242,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_59">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -262,7 +262,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_58">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -299,7 +299,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_53">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -319,7 +319,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_54">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -336,7 +336,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_50">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -356,7 +356,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_4">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -376,7 +376,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_51">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -396,7 +396,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_52">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -432,7 +432,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_13">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -458,7 +458,7 @@ color: rgb(0, 0, 0);
            <item>
             <spacer name="horizontalSpacer_14">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -473,7 +473,7 @@ color: rgb(0, 0, 0);
          <item>
           <spacer name="verticalSpacer_5">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -488,7 +488,7 @@ color: rgb(0, 0, 0);
            <item>
             <spacer name="horizontalSpacer_11">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -534,7 +534,7 @@ border-radius: 5px;
                 <item>
                  <spacer name="horizontalSpacer_55">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -560,7 +560,7 @@ border-radius: 5px;
                 <item>
                  <spacer name="horizontalSpacer_17">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -603,7 +603,7 @@ border-image: url(:/images/empty.png);
               <item>
                <spacer name="verticalSpacer_9">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -619,7 +619,7 @@ border-image: url(:/images/empty.png);
                  <string notr="true">#IG_dialog_text{color: rgb(0, 0, 0);}</string>
                 </property>
                 <property name="textFormat">
-                 <enum>Qt::RichText</enum>
+                 <enum>Qt::TextFormat::RichText</enum>
                 </property>
                 <property name="wordWrap">
                  <bool>true</bool>
@@ -629,7 +629,7 @@ border-image: url(:/images/empty.png);
               <item>
                <spacer name="verticalSpacer_10">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -645,7 +645,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_12">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -660,7 +660,7 @@ border-image: url(:/images/empty.png);
          <item>
           <spacer name="verticalSpacer_8">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -675,7 +675,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_18">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -700,7 +700,7 @@ color: rgb(0, 0, 0);
            <item>
             <spacer name="horizontalSpacer_19">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -717,7 +717,7 @@ color: rgb(0, 0, 0);
            <item>
             <spacer name="horizontalSpacer_15">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -742,7 +742,7 @@ color: rgb(0, 0, 0);
            <item>
             <spacer name="horizontalSpacer_16">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -1077,7 +1077,7 @@ border-image: url(:/images/empty.png);
               <item>
                <spacer name="horizontalSpacer_main_display_tools">
                 <property name="orientation">
-                 <enum>Qt::Horizontal</enum>
+                 <enum>Qt::Orientation::Horizontal</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1274,7 +1274,7 @@ border-image: url(:/images/empty.png);
          <item>
           <spacer name="verticalSpacer_3">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -1289,7 +1289,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_10">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -1352,7 +1352,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="horizontalSpacer_2">
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1388,7 +1388,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                     <item>
                      <spacer name="horizontalSpacer_3">
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1452,7 +1452,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                          <item>
                           <spacer name="horizontalSpacer_6">
                            <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
+                            <enum>Qt::Orientation::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -1511,7 +1511,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                          <item>
                           <spacer name="horizontalSpacer_7">
                            <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
+                            <enum>Qt::Orientation::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -1557,7 +1557,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                          <item>
                           <spacer name="horizontalSpacer_61">
                            <property name="orientation">
-                            <enum>Qt::Horizontal</enum>
+                            <enum>Qt::Orientation::Horizontal</enum>
                            </property>
                            <property name="sizeHint" stdset="0">
                             <size>
@@ -1572,7 +1572,7 @@ border: 1px solid rgb(64, 136, 192);</string>
                        <item>
                         <spacer name="verticalSpacer">
                          <property name="orientation">
-                          <enum>Qt::Vertical</enum>
+                          <enum>Qt::Orientation::Vertical</enum>
                          </property>
                          <property name="sizeHint" stdset="0">
                           <size>
@@ -1614,7 +1614,7 @@ background-position:center; </string>
                        <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignCenter</set>
+                       <set>Qt::AlignmentFlag::AlignCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -1640,7 +1640,7 @@ border-radius: 5px;
                <item>
                 <widget class="QLabel" name="labelReputation">
                  <property name="alignment">
-                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                  <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
                  </property>
                 </widget>
                </item>
@@ -1669,7 +1669,7 @@ border-radius: 5px;
                     <string notr="true">#questDetails{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
                    </property>
                    <property name="frameShape">
-                    <enum>QFrame::NoFrame</enum>
+                    <enum>QFrame::Shape::NoFrame</enum>
                    </property>
                   </widget>
                  </item>
@@ -1678,7 +1678,7 @@ border-radius: 5px;
                    <item>
                     <spacer name="horizontalSpacer_32">
                      <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
+                      <enum>Qt::Orientation::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -1698,7 +1698,7 @@ border-radius: 5px;
                    <item>
                     <spacer name="horizontalSpacer_33">
                      <property name="orientation">
-                      <enum>Qt::Horizontal</enum>
+                      <enum>Qt::Orientation::Horizontal</enum>
                      </property>
                      <property name="sizeHint" stdset="0">
                       <size>
@@ -1725,7 +1725,7 @@ border-radius: 5px;
                   <string notr="true">#finishedQuests{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
                  </property>
                  <property name="frameShape">
-                  <enum>QFrame::NoFrame</enum>
+                  <enum>QFrame::Shape::NoFrame</enum>
                  </property>
                 </widget>
                </item>
@@ -1752,7 +1752,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="verticalSpacer_28">
                     <property name="orientation">
-                     <enum>Qt::Vertical</enum>
+                     <enum>Qt::Orientation::Vertical</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1767,7 +1767,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="horizontalSpacer_44">
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1797,7 +1797,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="horizontalSpacer_45">
                       <property name="orientation">
-                       <enum>Qt::Horizontal</enum>
+                       <enum>Qt::Orientation::Horizontal</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1812,7 +1812,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="verticalSpacer_27">
                     <property name="orientation">
-                     <enum>Qt::Vertical</enum>
+                     <enum>Qt::Orientation::Vertical</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1834,7 +1834,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="horizontalSpacer_40">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1849,7 +1849,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="verticalSpacer_26">
                       <property name="orientation">
-                       <enum>Qt::Vertical</enum>
+                       <enum>Qt::Orientation::Vertical</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1869,7 +1869,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="verticalSpacer_25">
                       <property name="orientation">
-                       <enum>Qt::Vertical</enum>
+                       <enum>Qt::Orientation::Vertical</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1884,7 +1884,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="horizontalSpacer_41">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1906,7 +1906,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="horizontalSpacer_42">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1921,7 +1921,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="verticalSpacer_23">
                       <property name="orientation">
-                       <enum>Qt::Vertical</enum>
+                       <enum>Qt::Orientation::Vertical</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1955,7 +1955,7 @@ border-radius: 5px;
                     <item>
                      <spacer name="verticalSpacer_24">
                       <property name="orientation">
-                       <enum>Qt::Vertical</enum>
+                       <enum>Qt::Orientation::Vertical</enum>
                       </property>
                       <property name="sizeHint" stdset="0">
                        <size>
@@ -1970,7 +1970,7 @@ border-radius: 5px;
                   <item>
                    <spacer name="horizontalSpacer_43">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1990,7 +1990,7 @@ border-radius: 5px;
            <item>
             <spacer name="horizontalSpacer_9">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -2005,7 +2005,7 @@ border-radius: 5px;
          <item>
           <spacer name="verticalSpacer_2">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -2020,7 +2020,7 @@ border-radius: 5px;
            <item>
             <spacer name="horizontalSpacer_8">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -2101,7 +2101,7 @@ border-image: url(:/images/empty.png);
              <pixmap resource="../resources/client-resources.qrc">:/images/inventory/unknown-object.png</pixmap>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="label_8">
@@ -2125,7 +2125,7 @@ border-image: url(:/images/empty.png);
              <string>Inventory</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="label_9">
@@ -2157,7 +2157,7 @@ border-image: url(:/images/empty.png);
              <string>Select an object</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -2176,7 +2176,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">#inventory{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="iconSize">
              <size>
@@ -2185,10 +2185,10 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="movement">
-             <enum>QListView::Static</enum>
+             <enum>QListView::Movement::Static</enum>
             </property>
             <property name="viewMode">
-             <enum>QListView::IconMode</enum>
+             <enum>QListView::ViewMode::IconMode</enum>
             </property>
            </widget>
            <widget class="QToolButton" name="toolButton_quit_inventory">
@@ -2253,7 +2253,7 @@ border-image: url(:/images/empty.png);
              </rect>
             </property>
             <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_12">
              <property name="spacing">
@@ -2382,7 +2382,7 @@ padding-bottom:3px;
              <item>
               <spacer name="verticalSpacer_11">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -2466,7 +2466,7 @@ padding-bottom:3px;
                    <number>2</number>
                   </property>
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                  </widget>
                 </item>
@@ -2475,7 +2475,7 @@ padding-bottom:3px;
               <item>
                <spacer name="verticalSpacer_4">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2536,7 +2536,7 @@ padding-bottom:3px;
               <item>
                <spacer name="verticalSpacer_6">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2570,7 +2570,7 @@ padding-bottom:3px;
                 <item>
                  <spacer name="horizontalSpacer_49">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -2592,7 +2592,7 @@ padding-bottom:3px;
                    <number>100</number>
                   </property>
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                  </widget>
                 </item>
@@ -2610,7 +2610,7 @@ padding-bottom:3px;
                 <item>
                  <spacer name="horizontalSpacer_56">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -2628,7 +2628,7 @@ padding-bottom:3px;
               <item>
                <spacer name="verticalSpacer_13">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2662,7 +2662,7 @@ padding-bottom:3px;
                 <item>
                  <spacer name="horizontalSpacer_20">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -2693,7 +2693,7 @@ padding-bottom:3px;
                 <item>
                  <spacer name="horizontalSpacer_21">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -2729,7 +2729,7 @@ padding-bottom:3px;
               <item>
                <spacer name="verticalSpacer_12">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -2747,7 +2747,7 @@ padding-bottom:3px;
          <item>
           <spacer name="verticalSpacer_7">
            <property name="orientation">
-            <enum>Qt::Vertical</enum>
+            <enum>Qt::Orientation::Vertical</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -2762,7 +2762,7 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -2874,7 +2874,7 @@ border-image: url(:/images/empty.png);
 color: rgb(0, 0, 0);</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
          <widget class="QLabel" name="labelPlantDescription">
@@ -3172,7 +3172,7 @@ padding-bottom:3px;
            <string>Plants</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
          <widget class="QListWidget" name="listPlantList">
@@ -3188,10 +3188,10 @@ padding-bottom:3px;
            <string notr="true">#listPlantList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
+           <enum>QFrame::Shadow::Plain</enum>
           </property>
           <property name="iconSize">
            <size>
@@ -3299,7 +3299,7 @@ border-image: url(:/images/empty.png);
            <string notr="true">color: rgb(0, 0, 0);</string>
           </property>
           <property name="textFormat">
-           <enum>Qt::RichText</enum>
+           <enum>Qt::TextFormat::RichText</enum>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
@@ -3335,13 +3335,13 @@ border-image: url(:/images/empty.png);
 color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
+           <enum>QFrame::Shadow::Plain</enum>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::NoSelection</enum>
+           <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
           </property>
           <property name="iconSize">
            <size>
@@ -3431,10 +3431,10 @@ padding-bottom:3px;
 color: rgb(0, 0, 0);}</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Plain</enum>
+           <enum>QFrame::Shadow::Plain</enum>
           </property>
           <property name="iconSize">
            <size>
@@ -3464,7 +3464,7 @@ color: rgb(0, 0, 0);}</string>
            <string>Crafting</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </widget>
@@ -3530,10 +3530,10 @@ border-image: url(:/images/empty.png);
             <string notr="true">#shop_layout{background-image: url(:/images/inventory/shop.png);}</string>
            </property>
            <property name="frameShape">
-            <enum>QFrame::NoFrame</enum>
+            <enum>QFrame::Shape::NoFrame</enum>
            </property>
            <property name="frameShadow">
-            <enum>QFrame::Plain</enum>
+            <enum>QFrame::Shadow::Plain</enum>
            </property>
            <widget class="QLabel" name="label_14">
             <property name="geometry">
@@ -3568,7 +3568,7 @@ border-image: url(:/images/empty.png);
              <string>Shop</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="shopImage">
@@ -3600,7 +3600,7 @@ border-image: url(:/images/empty.png);
              <string>Select an object</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
             </property>
             <property name="wordWrap">
              <bool>true</bool>
@@ -3619,7 +3619,7 @@ border-image: url(:/images/empty.png);
              <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="shopName">
@@ -3685,7 +3685,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">#shopItemList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="iconSize">
              <size>
@@ -3749,7 +3749,7 @@ padding-bottom:3px;
              <string notr="true">color:black;</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
           </widget>
@@ -3796,7 +3796,7 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer_23">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -3865,10 +3865,10 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer_48">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Preferred</enum>
+              <enum>QSizePolicy::Policy::Preferred</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -3883,7 +3883,7 @@ padding-bottom:3px;
              <item>
               <spacer name="verticalSpacer_34">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -3960,7 +3960,7 @@ color: rgb(255, 255, 255);
              <item>
               <spacer name="verticalSpacer_33">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -3977,7 +3977,7 @@ color: rgb(255, 255, 255);
              <item>
               <spacer name="verticalSpacer_15">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4054,7 +4054,7 @@ color: rgb(255, 255, 255);
              <item>
               <spacer name="verticalSpacer_14">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4094,7 +4094,7 @@ color: rgb(255, 255, 255);
              <item>
               <spacer name="verticalSpacer_16">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4265,7 +4265,7 @@ padding-bottom:3px;
            <pixmap resource="../resources/client-resources.qrc">:/images/player_default/back.png</pixmap>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
          <widget class="QLabel" name="labelFightMonsterTop">
@@ -4293,7 +4293,7 @@ padding-bottom:3px;
            <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
          <widget class="QFrame" name="frameFightTop">
@@ -4354,16 +4354,16 @@ padding:6px 14px 6px 6px;
                 <string notr="true">background-image: url(:/images/empty.png);</string>
                </property>
                <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
+                <enum>QFrame::Shape::NoFrame</enum>
                </property>
                <property name="verticalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                </property>
                <property name="horizontalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                </property>
                <property name="selectionMode">
-                <enum>QAbstractItemView::NoSelection</enum>
+                <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
                </property>
                <property name="iconSize">
                 <size>
@@ -4372,10 +4372,10 @@ padding:6px 14px 6px 6px;
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
                <property name="uniformItemSizes">
                 <bool>true</bool>
@@ -4385,7 +4385,7 @@ padding:6px 14px 6px 6px;
              <item>
               <spacer name="horizontalSpacer_24">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4443,7 +4443,7 @@ padding:6px 14px 6px 6px;
            <item>
             <spacer name="verticalSpacer_17">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -4514,16 +4514,16 @@ padding:6px 6px 6px 14px;
                 <string notr="true">background-image: url(:/images/empty.png);</string>
                </property>
                <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
+                <enum>QFrame::Shape::NoFrame</enum>
                </property>
                <property name="verticalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                </property>
                <property name="horizontalScrollBarPolicy">
-                <enum>Qt::ScrollBarAlwaysOff</enum>
+                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
                </property>
                <property name="selectionMode">
-                <enum>QAbstractItemView::NoSelection</enum>
+                <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
                </property>
                <property name="iconSize">
                 <size>
@@ -4532,10 +4532,10 @@ padding:6px 6px 6px 14px;
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
                <property name="uniformItemSizes">
                 <bool>true</bool>
@@ -4545,7 +4545,7 @@ padding:6px 6px 6px 14px;
              <item>
               <spacer name="horizontalSpacer_25">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4646,7 +4646,7 @@ padding:6px 6px 6px 14px;
            <item>
             <spacer name="verticalSpacer_18">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -4782,7 +4782,7 @@ padding:6px 6px 6px 14px;
               </size>
              </property>
              <property name="movement">
-              <enum>QListView::Static</enum>
+              <enum>QListView::Movement::Static</enum>
              </property>
              <property name="uniformItemSizes">
               <bool>true</bool>
@@ -4808,7 +4808,7 @@ padding:6px 6px 6px 14px;
              <item>
               <spacer name="verticalSpacer_32">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -4827,7 +4827,7 @@ padding:6px 6px 6px 14px;
            <item>
             <spacer name="horizontalSpacer_22">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -4847,7 +4847,7 @@ padding:6px 6px 6px 14px;
            <item>
             <spacer name="horizontalSpacer_31">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -4910,7 +4910,7 @@ border-image: url(:/images/empty.png);
                 <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignmentFlag::AlignCenter</set>
                </property>
               </widget>
              </item>
@@ -4923,7 +4923,7 @@ border-image: url(:/images/empty.png);
                 <string notr="true">Pseudo</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignmentFlag::AlignCenter</set>
                </property>
               </widget>
              </item>
@@ -4946,7 +4946,7 @@ border-image: url(:/images/empty.png);
                <item>
                 <spacer name="horizontalSpacer_26">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -4967,10 +4967,10 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
               </widget>
              </item>
@@ -4990,10 +4990,10 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
               </widget>
              </item>
@@ -5009,7 +5009,7 @@ border-image: url(:/images/empty.png);
                <item>
                 <spacer name="horizontalSpacer_28">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -5029,7 +5029,7 @@ border-image: url(:/images/empty.png);
                <item>
                 <spacer name="horizontalSpacer_29">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -5057,7 +5057,7 @@ border-image: url(:/images/empty.png);
                 <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignmentFlag::AlignCenter</set>
                </property>
               </widget>
              </item>
@@ -5070,7 +5070,7 @@ border-image: url(:/images/empty.png);
                 <string notr="true">Pseudo</string>
                </property>
                <property name="alignment">
-                <set>Qt::AlignCenter</set>
+                <set>Qt::AlignmentFlag::AlignCenter</set>
                </property>
               </widget>
              </item>
@@ -5089,7 +5089,7 @@ border-image: url(:/images/empty.png);
                   <bool>true</bool>
                  </property>
                  <property name="buttonSymbols">
-                  <enum>QAbstractSpinBox::NoButtons</enum>
+                  <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                  </property>
                  <property name="maximum">
                   <number>999999999</number>
@@ -5099,7 +5099,7 @@ border-image: url(:/images/empty.png);
                <item>
                 <spacer name="horizontalSpacer_27">
                  <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
+                  <enum>Qt::Orientation::Horizontal</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -5120,10 +5120,10 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
               </widget>
              </item>
@@ -5136,10 +5136,10 @@ border-image: url(:/images/empty.png);
                 </size>
                </property>
                <property name="movement">
-                <enum>QListView::Static</enum>
+                <enum>QListView::Movement::Static</enum>
                </property>
                <property name="viewMode">
-                <enum>QListView::IconMode</enum>
+                <enum>QListView::ViewMode::IconMode</enum>
                </property>
               </widget>
              </item>
@@ -5159,7 +5159,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_30">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -5201,244 +5201,6 @@ border-image: url(:/images/empty.png);
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_learn">
-        <property name="styleSheet">
-         <string notr="true">#page_learn{background-image: url(:/images/inventory/background.jpg);}
-</string>
-        </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_35">
-         <property name="spacing">
-          <number>0</number>
-         </property>
-         <property name="leftMargin">
-          <number>0</number>
-         </property>
-         <property name="topMargin">
-          <number>0</number>
-         </property>
-         <property name="rightMargin">
-          <number>0</number>
-         </property>
-         <property name="bottomMargin">
-          <number>0</number>
-         </property>
-         <item>
-          <widget class="QFrame" name="learn_layout">
-           <property name="styleSheet">
-            <string notr="true">#learn_layout{background-image: url(:/images/interface/learn.png);}</string>
-           </property>
-           <widget class="QToolButton" name="learnQuit">
-            <property name="geometry">
-             <rect>
-              <x>770</x>
-              <y>560</y>
-              <width>22</width>
-              <height>25</height>
-             </rect>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>22</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>22</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QToolButton::hover {
-background-position:left center;
-}
-QToolButton::pressed {
-background-position:left bottom;
-}
-QToolButton { 
-background-image: url(:/images/interface/quit.png);
-border-image: url(:/images/empty.png);
-}</string>
-            </property>
-           </widget>
-           <widget class="QLabel" name="label_16">
-            <property name="geometry">
-             <rect>
-              <x>360</x>
-              <y>5</y>
-              <width>357</width>
-              <height>51</height>
-             </rect>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>357</width>
-              <height>51</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>357</width>
-              <height>51</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>22</pointsize>
-             </font>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">background-image: url(:/images/inventory/type.png);
-color: rgb(0, 0, 0);</string>
-            </property>
-            <property name="text">
-             <string>Learn</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-           <widget class="QLabel" name="learnDescription">
-            <property name="geometry">
-             <rect>
-              <x>10</x>
-              <y>510</y>
-              <width>661</width>
-              <height>81</height>
-             </rect>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(0, 0, 0);</string>
-            </property>
-            <property name="text">
-             <string>Select attack to learn</string>
-            </property>
-            <property name="wordWrap">
-             <bool>true</bool>
-            </property>
-           </widget>
-           <widget class="QPushButton" name="learnValidate">
-            <property name="geometry">
-             <rect>
-              <x>680</x>
-              <y>510</y>
-              <width>110</width>
-              <height>25</height>
-             </rect>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>110</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>110</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton::hover {
-background-position:left center;
-}
-QPushButton::pressed {
-background-position:left bottom;
-}
-QPushButton { 
-background-image: url(:/images/interface/button-generic.png);
-border-image: url(:/images/empty.png);
-color: rgb(255, 255, 255);
-padding-left:4px;
-padding-right:4px;
-padding-top:8px;
-padding-bottom:3px;
-}</string>
-            </property>
-            <property name="text">
-             <string>Learn</string>
-            </property>
-           </widget>
-           <widget class="QLabel" name="learnMonster">
-            <property name="geometry">
-             <rect>
-              <x>30</x>
-              <y>170</y>
-              <width>160</width>
-              <height>160</height>
-             </rect>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>160</width>
-              <height>160</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>160</width>
-              <height>160</height>
-             </size>
-            </property>
-            <property name="pixmap">
-             <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/monsters/default/front.png</pixmap>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignCenter</set>
-            </property>
-           </widget>
-           <widget class="QListWidget" name="learnAttackList">
-            <property name="geometry">
-             <rect>
-              <x>250</x>
-              <y>70</y>
-              <width>531</width>
-              <height>391</height>
-             </rect>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">#learnAttackList{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
-            </property>
-           </widget>
-           <widget class="QLabel" name="learnSP">
-            <property name="geometry">
-             <rect>
-              <x>60</x>
-              <y>10</y>
-              <width>57</width>
-              <height>14</height>
-             </rect>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(0, 0, 0);</string>
-            </property>
-            <property name="text">
-             <string notr="true">Sp: %1</string>
-            </property>
-           </widget>
-           <widget class="QLabel" name="learnInfo">
-            <property name="geometry">
-             <rect>
-              <x>16</x>
-              <y>340</y>
-              <width>191</width>
-              <height>61</height>
-             </rect>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">color: rgb(0, 0, 0);</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignHCenter|Qt::AlignTop</set>
-            </property>
-           </widget>
-          </widget>
-         </item>
-        </layout>
-       </widget>
        <widget class="QWidget" name="page_warehouse">
         <property name="styleSheet">
          <string notr="true">#page_warehouse{background-image: url(:/images/inventory/background.jpg);}</string>
@@ -5464,7 +5226,7 @@ padding-bottom:3px;
               <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -5489,7 +5251,7 @@ padding-bottom:3px;
               <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -5506,7 +5268,7 @@ padding-bottom:3px;
               <string notr="true">Pseudo</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -5519,7 +5281,7 @@ padding-bottom:3px;
               <string>Warehouse</string>
              </property>
              <property name="alignment">
-              <set>Qt::AlignCenter</set>
+              <set>Qt::AlignmentFlag::AlignCenter</set>
              </property>
             </widget>
            </item>
@@ -5531,231 +5293,9 @@ padding-bottom:3px;
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#ff0000;&quot;&gt;Validate when you have finish&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="alignment">
-            <set>Qt::AlignCenter</set>
+            <set>Qt::AlignmentFlag::AlignCenter</set>
            </property>
           </widget>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_39">
-           <item>
-            <spacer name="horizontalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="warehousePlayerCash">
-             <property name="styleSheet">
-              <string notr="true">color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="text">
-              <string>Cash: 0</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_34">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QPushButton" name="warehouseWithdrawCash">
-             <property name="minimumSize">
-              <size>
-               <width>25</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>25</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">&lt;</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="warehouseDepositCash">
-             <property name="minimumSize">
-              <size>
-               <width>25</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>25</width>
-               <height>25</height>
-              </size>
-             </property>
-             <property name="text">
-              <string notr="true">&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_35">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item>
-            <widget class="QLabel" name="warehousePlayerStoredCash">
-             <property name="styleSheet">
-              <string notr="true">color: rgb(0, 0, 0);</string>
-             </property>
-             <property name="text">
-              <string>Cash: 0</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <spacer name="horizontalSpacer_36">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </item>
-         <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_43">
-           <item>
-            <widget class="QListWidget" name="warehousePlayerInventory">
-             <property name="iconSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="movement">
-              <enum>QListView::Static</enum>
-             </property>
-             <property name="viewMode">
-              <enum>QListView::IconMode</enum>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <layout class="QVBoxLayout" name="verticalLayout_24">
-             <item>
-              <spacer name="verticalSpacer_19">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-             <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_40">
-               <item>
-                <widget class="QPushButton" name="warehouseWithdrawItem">
-                 <property name="minimumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string notr="true">&lt;</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QPushButton" name="warehouseDepositItem">
-                 <property name="minimumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>25</width>
-                   <height>25</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string notr="true">&gt;</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item>
-              <spacer name="verticalSpacer_20">
-               <property name="orientation">
-                <enum>Qt::Vertical</enum>
-               </property>
-               <property name="sizeHint" stdset="0">
-                <size>
-                 <width>20</width>
-                 <height>40</height>
-                </size>
-               </property>
-              </spacer>
-             </item>
-            </layout>
-           </item>
-           <item>
-            <widget class="QListWidget" name="warehousePlayerStoredInventory">
-             <property name="iconSize">
-              <size>
-               <width>24</width>
-               <height>24</height>
-              </size>
-             </property>
-             <property name="movement">
-              <enum>QListView::Static</enum>
-             </property>
-             <property name="viewMode">
-              <enum>QListView::IconMode</enum>
-             </property>
-            </widget>
-           </item>
-          </layout>
          </item>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_44">
@@ -5768,10 +5308,10 @@ padding-bottom:3px;
               </size>
              </property>
              <property name="movement">
-              <enum>QListView::Static</enum>
+              <enum>QListView::Movement::Static</enum>
              </property>
              <property name="viewMode">
-              <enum>QListView::IconMode</enum>
+              <enum>QListView::ViewMode::IconMode</enum>
              </property>
             </widget>
            </item>
@@ -5780,7 +5320,7 @@ padding-bottom:3px;
              <item>
               <spacer name="verticalSpacer_21">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -5835,7 +5375,7 @@ padding-bottom:3px;
              <item>
               <spacer name="verticalSpacer_22">
                <property name="orientation">
-                <enum>Qt::Vertical</enum>
+                <enum>Qt::Orientation::Vertical</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -5856,10 +5396,10 @@ padding-bottom:3px;
               </size>
              </property>
              <property name="movement">
-              <enum>QListView::Static</enum>
+              <enum>QListView::Movement::Static</enum>
              </property>
              <property name="viewMode">
-              <enum>QListView::IconMode</enum>
+              <enum>QListView::ViewMode::IconMode</enum>
              </property>
             </widget>
            </item>
@@ -5870,7 +5410,7 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer_37">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -5890,7 +5430,7 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer_38">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -5907,7 +5447,7 @@ padding-bottom:3px;
            <item>
             <spacer name="horizontalSpacer_39">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -5957,7 +5497,7 @@ border-image: url(:/images/empty.png);
          <item>
           <spacer name="horizontalSpacer_46">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -5972,7 +5512,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="verticalSpacer_30">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -6005,7 +5545,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="verticalSpacer_31">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -6025,7 +5565,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="verticalSpacer_29">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -6040,7 +5580,7 @@ border-image: url(:/images/empty.png);
          <item>
           <spacer name="horizontalSpacer_47">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -6111,7 +5651,7 @@ border-image: url(:/images/empty.png);
              <string>Resources</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="label_19">
@@ -6147,7 +5687,7 @@ border-image: url(:/images/empty.png);
              <string>Products</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QPushButton" name="factoryBuy">
@@ -6293,7 +5833,7 @@ border-image: url(:/images/empty.png);
              <pixmap resource="../resources/client-resources.qrc">:/images/player_default/front.png</pixmap>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QListWidget" name="factoryProducts">
@@ -6309,7 +5849,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">#factoryProducts{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="iconSize">
              <size>
@@ -6318,7 +5858,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="viewMode">
-             <enum>QListView::IconMode</enum>
+             <enum>QListView::ViewMode::IconMode</enum>
             </property>
             <property name="uniformItemSizes">
              <bool>true</bool>
@@ -6337,7 +5877,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">#factoryResources{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="iconSize">
              <size>
@@ -6346,7 +5886,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="viewMode">
-             <enum>QListView::IconMode</enum>
+             <enum>QListView::ViewMode::IconMode</enum>
             </property>
             <property name="uniformItemSizes">
              <bool>true</bool>
@@ -6365,7 +5905,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">color: rgb(0, 0, 0);</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="factoryStatText">
@@ -6439,7 +5979,7 @@ border-image: url(:/images/empty.png);
              <pixmap resource="../../fight/resources/client-resources-fight.qrc">:/images/monsters/default/front.png</pixmap>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="monsterDetailsCatched">
@@ -6503,7 +6043,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">Name</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="monsterDetailsLevel">
@@ -6568,7 +6108,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">#monsterDetailsSkills{background-image: url(:/images/empty.png);color: rgb(0, 0, 0);}</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
            </widget>
            <widget class="QLabel" name="monsterDetailsStatHeal">
@@ -6771,7 +6311,7 @@ border-image: url(:/images/empty.png);
              <string notr="true">Type: </string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignCenter</set>
+             <set>Qt::AlignmentFlag::AlignCenter</set>
             </property>
            </widget>
            <widget class="QLabel" name="monsterDetailsDescription">
@@ -6815,16 +6355,16 @@ border-image: url(:/images/empty.png);
              <string notr="true">background-image: url(:/images/empty.png);color: rgb(0, 0, 0);</string>
             </property>
             <property name="frameShape">
-             <enum>QFrame::NoFrame</enum>
+             <enum>QFrame::Shape::NoFrame</enum>
             </property>
             <property name="verticalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
             </property>
             <property name="horizontalScrollBarPolicy">
-             <enum>Qt::ScrollBarAlwaysOff</enum>
+             <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
             </property>
             <property name="selectionMode">
-             <enum>QAbstractItemView::NoSelection</enum>
+             <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
             </property>
             <property name="iconSize">
              <size>
@@ -6833,7 +6373,7 @@ border-image: url(:/images/empty.png);
              </size>
             </property>
             <property name="viewMode">
-             <enum>QListView::IconMode</enum>
+             <enum>QListView::ViewMode::IconMode</enum>
             </property>
             <property name="uniformItemSizes">
              <bool>true</bool>
@@ -6927,7 +6467,7 @@ border-image: url(:/images/empty.png);
              <item>
               <widget class="QLabel" name="labelEncyclopediaMonster">
                <property name="textFormat">
-                <enum>Qt::RichText</enum>
+                <enum>Qt::TextFormat::RichText</enum>
                </property>
                <property name="wordWrap">
                 <bool>true</bool>
@@ -7003,7 +6543,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_60">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -7059,7 +6599,7 @@ border-image: url(:/images/empty.png);
             </size>
            </property>
            <property name="viewMode">
-            <enum>QListView::IconMode</enum>
+            <enum>QListView::ViewMode::IconMode</enum>
            </property>
           </widget>
          </item>
@@ -7085,7 +6625,7 @@ border-image: url(:/images/empty.png);
             </size>
            </property>
            <property name="viewMode">
-            <enum>QListView::IconMode</enum>
+            <enum>QListView::ViewMode::IconMode</enum>
            </property>
            <property name="sortingEnabled">
             <bool>true</bool>
@@ -7097,7 +6637,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_62">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -7117,7 +6657,7 @@ border-image: url(:/images/empty.png);
            <item>
             <spacer name="horizontalSpacer_63">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -7167,8 +6707,8 @@ border-image: url(:/images/empty.png);
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>
-  <include location="../resources/client-resources.qrc"/>
   <include location="../../fight/resources/client-resources-fight.qrc"/>
+  <include location="../resources/client-resources.qrc"/>
   <include location="../resources/client-resources-multi.qrc"/>
  </resources>
  <connections>

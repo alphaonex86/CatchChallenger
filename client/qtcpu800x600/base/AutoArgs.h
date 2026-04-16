@@ -11,8 +11,10 @@ public:
     static QString character;
     static bool closeWhenOnMap;
     static bool dropSendDataAfterOnMap;
+    static bool autosolo;
 
     static void parse(int &argc, char *argv[]);
+    static void printHelp(const char *progName);
 };
 
 #endif // AUTOARGS_H

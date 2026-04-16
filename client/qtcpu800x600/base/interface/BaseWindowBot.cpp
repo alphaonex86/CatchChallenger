@@ -311,8 +311,6 @@ void BaseWindow::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"warehouse")==0)
     {
-        change_warehouse_items.clear();
-        temp_warehouse_cash=0;
         QPixmap pixmap;
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
         {

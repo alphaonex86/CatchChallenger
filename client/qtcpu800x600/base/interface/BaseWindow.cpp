@@ -99,7 +99,6 @@ BaseWindow::BaseWindow() :
 
     renderFrame=nullptr;
     shopId=0;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
-    temp_warehouse_cash=0;
     //selection of quantity
     tempQuantityForSell=0;
     waitToSell=false;
@@ -158,9 +157,6 @@ BaseWindow::BaseWindow() :
 
     //city
     zonecatch=false;
-
-    //learn
-    monsterPositionToLearn=0;
 
     //quest
     isInQuest=false;
@@ -644,6 +640,33 @@ std::string BaseWindow::lastLocation() const
     if(mapId<maps.size())
         return maps.at(mapId);
     return std::string();
+}
+
+void BaseWindow::dumpAutoSoloInfo() const
+{
+    std::cout << "AutoArgs: --autosolo dump" << std::endl;
+    std::cout << "  characterSelected: " << (characterSelected?"true":"false") << std::endl;
+    std::cout << "  character groups: " << characterListForSelection.size() << std::endl;
+    for(size_t g=0;g<characterListForSelection.size();g++)
+    {
+        const std::vector<CatchChallenger::CharacterEntry> &entries=characterListForSelection.at(g);
+        std::cout << "  group[" << g << "] size=" << entries.size() << std::endl;
+        for(size_t i=0;i<entries.size();i++)
+        {
+            const CatchChallenger::CharacterEntry &e=entries.at(i);
+            std::cout << "    - id=" << e.character_id
+                      << " pseudo=\"" << e.pseudo << "\""
+                      << " skin=" << (uint32_t)e.skinId
+                      << " played=" << e.played_time
+                      << std::endl;
+        }
+    }
+    if(client!=NULL)
+        std::cout << "  current pseudo: \"" << client->getPseudo() << "\"" << std::endl;
+    std::cout << "  current map: \"" << lastLocation() << "\"" << std::endl;
+    if(mapController!=NULL)
+        std::cout << "  current mapId: " << mapController->currentMap() << std::endl;
+    std::cout.flush();
 }
 
 std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> BaseWindow::getQuests() const
@@ -1554,7 +1577,6 @@ void BaseWindow::on_toolButton_monster_list_quit_clicked()
             case ObjectType_ItemEvolutionOnMonster:
             case ObjectType_ItemLearnOnMonster:
             case ObjectType_MonsterToTrade:
-            case ObjectType_MonsterToLearn:
             case ObjectType_MonsterToFight:
             objectSelection(false);
             return;

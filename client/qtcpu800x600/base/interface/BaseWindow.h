@@ -53,6 +53,7 @@ public:
     void serverIsLoading();
     void serverIsReady();
     std::string lastLocation() const;
+    void dumpAutoSoloInfo() const;
     std::map<CATCHCHALLENGER_TYPE_QUEST, PlayerQuest> getQuests() const;
     uint16_t getActualBotId() const;
     bool haveNextStepQuestRequirements(const Quest &quest) const;
@@ -64,7 +65,6 @@ public:
         ObjectType_Sell,
         ObjectType_Trade,
         ObjectType_MonsterToTrade,
-        ObjectType_MonsterToLearn,
         ObjectType_MonsterToFight,
         ObjectType_MonsterToFightKO,
         ObjectType_ItemOnMonsterOutOfFight,
@@ -320,10 +320,6 @@ private slots:
     void cityCaptureUpdateTime();
     void updatePageZoneCatch();
 
-    //learn
-    bool showLearnSkillByPosition(const uint8_t &monsterPosition);
-    bool learnSkillByPosition(const uint8_t &monsterPosition, const uint16_t &skill);
-
     //quest
     bool haveReputationRequirements(const std::vector<ReputationRequirements> &reputationList) const;
     void appendReputationRewards(const std::vector<ReputationRewards> &reputationList);
@@ -389,20 +385,11 @@ private slots:
     void on_tradeAddMonster_clicked();
     void on_selectMonster_clicked();
     void on_monsterList_itemActivated(QListWidgetItem *item);
-    void on_learnQuit_clicked();
-    void on_learnValidate_clicked();
-    void on_learnAttackList_itemActivated(QListWidgetItem *item);
     void on_close_IG_dialog_clicked();
     void on_questsList_itemSelectionChanged();
     void on_listWidgetFightAttack_itemActivated(QListWidgetItem *item);
-    void on_warehouseWithdrawCash_clicked();
-    void on_warehouseDepositCash_clicked();
-    void on_warehouseWithdrawItem_clicked();
-    void on_warehouseDepositItem_clicked();
     void on_warehouseWithdrawMonster_clicked();
     void on_warehouseDepositMonster_clicked();
-    void on_warehousePlayerInventory_itemActivated(QListWidgetItem *item);
-    void on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item);
     void on_warehousePlayerMonster_itemActivated(QListWidgetItem *item);
     void on_warehousePlayerStoredMonster_itemActivated(QListWidgetItem *item);
     void on_toolButton_quit_warehouse_clicked();
@@ -480,7 +467,6 @@ private:
     std::vector<QueryType> queryList;
     uint16_t shopId;/// \see CommonMap, std::unordered_map<std::pair<uint8_t,uint8_t>,std::vector<uint16_t>, pairhash> shops;
     std::unordered_map<uint32_t,ItemToSellOrBuy> itemsIntoTheShop;
-    int64_t temp_warehouse_cash;// if >0 then Withdraw
     //selection of quantity
     uint32_t tempQuantityForSell;
     bool waitToSell;
@@ -560,7 +546,6 @@ private:
     uint16_t fightId;
 
     //player items
-    std::unordered_map<uint16_t,int32_t> change_warehouse_items;//negative = deposite, positive = withdraw
     std::unordered_map<QListWidgetItem *,uint16_t> items_graphical;
     std::unordered_map<uint16_t,QListWidgetItem *> items_to_graphical;
     std::unordered_map<QListWidgetItem *,uint16_t> shop_items_graphical;
@@ -571,7 +556,6 @@ private:
     std::unordered_map<uint16_t,QListWidgetItem *> crafting_recipes_items_to_graphical;
     std::unordered_map<QListWidgetItem *,uint16_t> fight_attacks_graphical;
     std::unordered_map<QListWidgetItem *,uint8_t> monsterspos_items_graphical;
-    std::unordered_map<QListWidgetItem *,uint16_t> attack_to_learn_graphical;
     std::unordered_map<QListWidgetItem *,uint16_t> quests_to_id_graphical;
     bool inSelection;
     std::vector<uint16_t> objectInUsing;
@@ -634,9 +618,6 @@ private:
     std::vector<CatchChallenger::PlayerMonster> tradeOtherMonsters,tradeCurrentMonsters;
     std::vector<uint8_t> tradeCurrentMonstersPosition;
     std::vector<uint8_t> tradeEvolutionMonsters;
-
-    //learn
-    uint8_t monsterPositionToLearn;
 
     //quest
     bool isInQuest;

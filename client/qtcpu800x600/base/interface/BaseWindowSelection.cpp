@@ -28,7 +28,6 @@ void BaseWindow::selectObject(const ObjectType &objectType)
             displaySellList();
         break;
         case ObjectType_MonsterToTrade:
-        case ObjectType_MonsterToLearn:
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
         case ObjectType_ItemOnMonster:
@@ -198,22 +197,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             load_plant_inventory();
             tradeUpdateCurrentObject();
         break;
-        case ObjectType_MonsterToLearn:
-        {
-            ui->stackedWidget->setCurrentWidget(ui->page_map);
-            ui->inventoryUse->setText(tr("Select"));
-            load_monsters();
-            if(!ok)
-                return;
-            ui->stackedWidget->setCurrentWidget(ui->page_learn);
-            monsterPositionToLearn=static_cast<uint8_t>(itemId);
-            if(!showLearnSkillByPosition(monsterPositionToLearn))
-            {
-                newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Unable to load the right monster");
-                return;
-            }
-        }
-        break;
         case ObjectType_MonsterToFight:
         case ObjectType_MonsterToFightKO:
         {
@@ -262,12 +245,6 @@ void BaseWindow::objectSelection(const bool &ok, const uint16_t &itemId, const u
             ui->inventoryUse->setText(tr("Select"));
             load_monsters();
             const uint8_t monsterPosition=static_cast<uint8_t>(itemId);
-            if(waitedObjectType==ObjectType_MonsterToLearn)
-            {
-                ui->stackedWidget->setCurrentWidget(ui->page_learn);
-                monsterPositionToLearn=monsterPosition;
-                return;
-            }
             ui->stackedWidget->setCurrentWidget(ui->page_trade);
             if(!ok)
                 break;

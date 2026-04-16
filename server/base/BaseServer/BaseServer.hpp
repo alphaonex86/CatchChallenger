@@ -192,6 +192,12 @@ public:
     static std::ifstream *dictionary_in_file;
     static hps::StreamInputBuffer *dictionary_serialBuffer;
     static bool dictionary_haveChange;
+    static std::ifstream *dictionary_reputation_in_file;
+    static bool dictionary_reputation_haveChange;
+    static std::ifstream *dictionary_skin_in_file;
+    static bool dictionary_skin_haveChange;
+    static std::ifstream *dictionary_starter_in_file;
+    static bool dictionary_starter_haveChange;
     //mostly dynamic
     std::ifstream *server_in_file;
     hps::StreamInputBuffer *server_serialBuffer;

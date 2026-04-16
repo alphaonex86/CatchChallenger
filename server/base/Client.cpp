@@ -89,6 +89,7 @@ void Client::setToDefault()
     public_and_private_informations.repel_step=0;
     public_and_private_informations.clan_leader=false;
     public_and_private_informations.mapData.clear();
+    public_and_private_informations.allowCreateClan=false;
     public_and_private_informations.quests.clear();
     public_and_private_informations.reputation.clear();
     public_and_private_informations.items.clear();
@@ -347,7 +348,25 @@ bool Client::disconnectClient()
     }
     else if(stat==ClientStat::CharacterSelected)
     {
+        #ifdef CATCHCHALLENGER_DB_FILE
+        #ifdef CATCHCHALLENGER_CACHE_HPS
+        //Persist character state before any disconnect-time cleanup wipes it.
+        saveCharacterFiles();
+        #endif
+        #endif
         //const std::string &character_id_string=std::to_string(character_id_db);
+        //Save position BEFORE removeClientOnMap() runs: that function resets
+        //this->mapIndex to 65535 (see ClientLocalBroadcast.cpp), which would
+        //then make the `if(mapIndex<65535) savePosition();` check near the end
+        //of this function silently skip the write.
+        #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+        if(mapIndex<65535)
+        {
+            if(isInFight())
+                saveCurrentMonsterStat();
+            savePosition();
+        }
+        #endif
         if(mapIndex<65535)
             removeClientOnMap(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapIndex]);
         /*        if(!vectorremoveOne(clientBroadCastList,this))
@@ -822,6 +841,10 @@ uint8_t Client::pingCountInProgress() const
 #ifdef CATCHCHALLENGER_CACHE_HPS
 void Client::serialize(hps::StreamOutputBuffer& buf) const {
     /// \warning use dictionary
+    /// This is the non-map-linked part of the character, stored in
+    /// database/common/characters/{pseudo_hex}. Map-linked data (mapData, quests)
+    /// lives in database/server/characters/{pseudo_hex} and is handled by
+    /// serializeServerPart/parseServerPart.
 
     buf << character_id_db;
     std::string recipesS;
@@ -833,14 +856,13 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     std::string encyclopedia_itemS;
     if(public_and_private_informations.encyclopedia_item!=nullptr)
         encyclopedia_itemS=std::string(public_and_private_informations.encyclopedia_item,CommonDatapack::commonDatapack.get_items().item.size()/8+1);
-    //bot_already_beaten is already serialised inside public_and_private_informations.mapData (per-map bots_beaten set)
 
     buf << public_and_private_informations.public_informations << public_and_private_informations.cash << recipesS
         << public_and_private_informations.monsters << public_and_private_informations.warehouse_monsters << encyclopedia_monsterS << encyclopedia_itemS
         << public_and_private_informations.repel_step << public_and_private_informations.clan_leader << public_and_private_informations.clan
-        << public_and_private_informations.quests << public_and_private_informations.reputation
+        << public_and_private_informations.reputation
         << public_and_private_informations.items;
-    buf << public_and_private_informations.mapData << public_and_private_informations.allowCreateClan;
+    buf << public_and_private_informations.allowCreateClan;
 
     buf << ableToFight;
     buf << wildMonsters;
@@ -877,9 +899,8 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         >> recipesS >> public_and_private_informations.monsters >> public_and_private_informations.warehouse_monsters
         >> encyclopedia_monsterS >> encyclopedia_itemS
         >> public_and_private_informations.repel_step >> public_and_private_informations.clan_leader >> public_and_private_informations.clan;
-    buf >> public_and_private_informations.quests
-        >> public_and_private_informations.reputation >> public_and_private_informations.items;
-    buf >> public_and_private_informations.mapData >> public_and_private_informations.allowCreateClan;
+    buf >> public_and_private_informations.reputation >> public_and_private_informations.items;
+    buf >> public_and_private_informations.allowCreateClan;
     public_and_private_informations.recipes=(char *)malloc(CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     memset(public_and_private_informations.recipes,0x00,CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1);
     size_t min=CommonDatapack::commonDatapack.get_craftingRecipesMaxId()/8+1;
@@ -989,6 +1010,99 @@ void Client::parse(hps::StreamInputBuffer& buf) {
         std::cerr << "mapIndex>=65535, mostly due to start previously start with another mainDatapackCode " << __FILE__ << ":" << __LINE__ << std::endl;
         abort();
     }
+}
+
+void Client::serializeServerPart(hps::StreamOutputBuffer& buf) const {
+    //Per-map data (Player_private_and_public_informations_Map) and quests.
+    //Keys of mapData are internal mapIndex at runtime; convert to db_id on disk.
+    const auto &mapData=public_and_private_informations.mapData;
+    size_t mapDataCount=mapData.size();
+    buf << mapDataCount;
+    for(const auto &entry : mapData)
+    {
+        const CATCHCHALLENGER_TYPE_MAPID internalId=entry.first;
+        if(internalId>=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.size())
+        {
+            std::cerr << "serializeServerPart mapData internalId out of range " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        const uint32_t db_id=Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.at(internalId).id_db;
+        buf << db_id << entry.second;
+    }
+    buf << public_and_private_informations.quests;
+}
+
+void Client::parseServerPart(hps::StreamInputBuffer& buf) {
+    auto &mapData=public_and_private_informations.mapData;
+    mapData.clear();
+    size_t mapDataCount=0;
+    buf >> mapDataCount;
+    for(size_t i=0;i<mapDataCount;i++)
+    {
+        uint32_t db_id=0;
+        Player_private_and_public_informations_Map value;
+        buf >> db_id >> value;
+        if(db_id>=DictionaryServer::dictionary_map_database_to_internal.size())
+        {
+            std::cerr << "parseServerPart mapData db_id out of range " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        const CATCHCHALLENGER_TYPE_MAPID internalId=DictionaryServer::dictionary_map_database_to_internal.at(db_id);
+        if(internalId>=65535)
+        {
+            std::cerr << "parseServerPart mapData internalId>=65535, stale mainDatapackCode? " << __FILE__ << ":" << __LINE__ << std::endl;
+            abort();
+        }
+        mapData[internalId]=std::move(value);
+    }
+    buf >> public_and_private_informations.quests;
+}
+
+void Client::saveCharacterFiles() const {
+    if(public_and_private_informations.public_informations.pseudo.empty())
+    {
+        std::cerr << "saveCharacterFiles called with empty pseudo " << __FILE__ << ":" << __LINE__ << std::endl;
+        return;
+    }
+    const std::string hexa=binarytoHexa(
+        public_and_private_informations.public_informations.pseudo.c_str(),
+        public_and_private_informations.public_informations.pseudo.size());
+    {
+        std::ofstream out_file("database/common/characters/"+hexa, std::ofstream::binary|std::ofstream::trunc);
+        if(!out_file.good() || !out_file.is_open())
+        {
+            std::cerr << "unable to open database/common/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
+            return;
+        }
+        hps::to_stream(*this, out_file);
+    }
+    {
+        std::ofstream out_file("database/server/characters/"+hexa, std::ofstream::binary|std::ofstream::trunc);
+        if(!out_file.good() || !out_file.is_open())
+        {
+            std::cerr << "unable to open database/server/characters/"+hexa+" for write " << __FILE__ << ":" << __LINE__ << std::endl;
+            return;
+        }
+        hps::StreamOutputBuffer s(out_file);
+        serializeServerPart(s);
+    }
+}
+
+bool Client::loadCharacterServerFile() {
+    if(public_and_private_informations.public_informations.pseudo.empty())
+    {
+        std::cerr << "loadCharacterServerFile called with empty pseudo " << __FILE__ << ":" << __LINE__ << std::endl;
+        return false;
+    }
+    const std::string hexa=binarytoHexa(
+        public_and_private_informations.public_informations.pseudo.c_str(),
+        public_and_private_informations.public_informations.pseudo.size());
+    std::ifstream in_file("database/server/characters/"+hexa, std::ifstream::binary);
+    if(!in_file.good() || !in_file.is_open())
+        return false;
+    hps::StreamInputBuffer s(in_file);
+    parseServerPart(s);
+    return true;
 }
 #endif
 #endif

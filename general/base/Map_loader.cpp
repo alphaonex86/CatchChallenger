@@ -990,15 +990,33 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         }
 
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
+        if(!map_semi.old_map.teleport.empty())
+            std::cerr << "[Map_loader] link teleporters for " << map_semi.file
+                      << " count=" << map_semi.old_map.teleport.size() << std::endl;
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
             const Map_semi_teleport &teleporter_semi=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleporter_semi.map;
             stringreplaceOne(teleportString,".tmx","");
+            const bool inMapPathToId=(mapPathToId.find(teleportString)!=mapPathToId.end());
+            std::cerr << "[Map_loader]   tp[" << sub_index << "] src=(" << (int)teleporter_semi.source_x << "," << (int)teleporter_semi.source_y
+                      << ") dest=" << teleportString
+                      << "(" << (int)teleporter_semi.destination_x << "," << (int)teleporter_semi.destination_y << ")"
+                      << " inMapPathToId=" << inMapPathToId;
+            if(inMapPathToId)
+                std::cerr << " destMapWidth=" << (int)flat_map_list.at(mapPathToId.at(teleportString)).width;
+            std::cerr << std::endl;
             if(mapPathToId.find(teleportString)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(teleportString)).width>0)
             {
-                if(teleporter_semi.destination_x<map_semi.old_map.width
-                        && teleporter_semi.destination_y<map_semi.old_map.height)
+                //bounds-check the destination against the DESTINATION map, not
+                //the source map. teleporter_semi.destination_x/y is a coordinate
+                //on the map named by teleporter_semi.map, so the valid range is
+                //flat_map_list[destIndex].{width,height}. Using map_semi.old_map
+                //(the source) silently drops any teleporter whose target tile
+                //is outside the source map (e.g. cave 10x20 -> city(24,10)).
+                const CommonMap &destMap=flat_map_list.at(mapPathToId.at(teleportString));
+                if(teleporter_semi.destination_x<destMap.width
+                        && teleporter_semi.destination_y<destMap.height)
                 {
                     //remove duplicate
                     uint16_t index_search=0;

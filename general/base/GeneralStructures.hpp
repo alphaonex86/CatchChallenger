@@ -1331,15 +1331,14 @@ public:
         std::vector<Buff> buff;
         std::vector<Life> life;
         uint8_t endurance;
-        uint32_t sp_to_learn;
         #ifdef CATCHCHALLENGER_CACHE_HPS
         template <class B>
         void serialize(B& buf) const {
-            buf << buff << life << endurance << sp_to_learn;
+            buf << buff << life << endurance;
         }
         template <class B>
         void parse(B& buf) {
-            buf >> buff >> life >> endurance >> sp_to_learn;
+            buf >> buff >> life >> endurance;
         }
         #endif
     };
@@ -1455,7 +1454,6 @@ public:
     uint8_t catch_rate;///< 0 to 255 (255 = very easy)
     uint32_t egg_step;///< step to hatch, 0 to no egg and never hatch
     uint32_t xp_for_max_level;///< xp to be level 100
-    uint32_t give_sp;
     uint32_t give_xp;
     std::vector<uint32_t> level_to_xp;//first is xp to level 1
     std::unordered_map<CATCHCHALLENGER_TYPE_ITEM/*item*/,AttackToLearnByItem/*skill*/> learnByItem;
@@ -1472,7 +1470,7 @@ public:
     void serialize(B& buf) const {
         buf
             #ifndef CATCHCHALLENGER_CLASS_MASTER
-            << type << catch_rate << egg_step << xp_for_max_level << give_sp << give_xp << level_to_xp << learnByItem << evolutions
+            << type << catch_rate << egg_step << xp_for_max_level << give_xp << level_to_xp << learnByItem << evolutions
             #ifdef CATCHCHALLENGER_CLIENT
             << powerVar
             #endif
@@ -1484,7 +1482,7 @@ public:
     void parse(B& buf) {
         buf
             #ifndef CATCHCHALLENGER_CLASS_MASTER
-            >> type >> catch_rate >> egg_step >> xp_for_max_level >> give_sp >> give_xp >> level_to_xp >> learnByItem >> evolutions
+            >> type >> catch_rate >> egg_step >> xp_for_max_level >> give_xp >> level_to_xp >> learnByItem >> evolutions
             #ifdef CATCHCHALLENGER_CLIENT
             >> powerVar
             #endif

@@ -3,6 +3,7 @@ QT       += opengl
 
 DEFINES += CATCHCHALLENGER_CLIENT
 DEFINES += CATCHCHALLENGER_DB_SQLITE
+DEFINES += DEBUG_MESSAGE_CLIENT_SQL
 
 wasm: {
     DEFINES += NOTCPSOCKET NOSINGLEPLAYER NOTHREADS
@@ -45,7 +46,6 @@ SOURCES += \
     $$PWD/Options.cpp \
     $$PWD/ChatParsing.cpp \
     $$PWD/LanguagesSelect.cpp \
-    $$PWD/CachedString.cpp \
     $$PWD/FacilityLibClient.cpp \
     $$PWD/AutoArgs.cpp
 
@@ -63,7 +63,6 @@ HEADERS  += \
     $$PWD/../fight/interface/QmlInterface/EvolutionControl.h \
     $$PWD/QmlInterface/AnimationControl.h \
     $$PWD/LanguagesSelect.h \
-    $$PWD/CachedString.h \
     $$PWD/Options.h \
     $$PWD/ChatParsing.hpp \
     $$PWD/FacilityLibClient.h

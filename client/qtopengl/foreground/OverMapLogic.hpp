@@ -21,6 +21,12 @@ class Player;
 class Reputations;
 class Quests;
 class FinishedQuests;
+class Animation;
+class Encyclopedia;
+class Shop;
+class Factory;
+class Trade;
+class Warehouse;
 
 class OverMapLogic : public OverMap
 {
@@ -241,6 +247,13 @@ private:
     Quests *quests;
     FinishedQuests *finishedQuests;
     int playerIndex;
+
+    Animation *animation;
+    Encyclopedia *encyclopedia;
+    Shop *shop;
+    Factory *factory;
+    Trade *trade;
+    Warehouse *warehouse;
 
     QTimer tip_timeout;
     QTimer gain_timeout;

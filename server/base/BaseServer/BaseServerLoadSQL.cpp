@@ -93,23 +93,24 @@ void BaseServer::preload_dictionary_map_return()
         abort();
     }
     std::unordered_set<std::string> foundMap;
-    unsigned int maxDatabaseMapId=0;
+    unsigned int nextDatabaseMapId=0;
     unsigned int obsoleteMap=0;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE) || defined(CATCHCHALLENGER_DB_FILE)
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         while(GlobalServerData::serverPrivateVariables.db_server->next())
         #else
-        size_t s=0;
-        if(dictionary_serialBuffer!=nullptr)
-        *dictionary_serialBuffer >> s;
-        for (size_t i = 0; i < s; i++)
+        uint32_t databaseMapId=0;
+        if(dictionary_in_file!=nullptr)
+        while(dictionary_in_file->peek()!=EOF)
         #endif
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            uint32_t databaseMapId=0;
-            *dictionary_serialBuffer >> databaseMapId;
-            std::string map;
-            *dictionary_serialBuffer >> map;
+            uint8_t len=0;
+            dictionary_in_file->read(reinterpret_cast<char*>(&len),1);
+            if(!dictionary_in_file->good()) break;
+            std::string map(len,'\0');
+            dictionary_in_file->read(&map[0],len);
+            if(!dictionary_in_file->good()) break;
             #else
             bool ok;
             const uint32_t &databaseMapId=stringtouint32(GlobalServerData::serverPrivateVariables.db_server->value(0),&ok);
@@ -117,8 +118,8 @@ void BaseServer::preload_dictionary_map_return()
                 std::cerr << "BaseServer::preload_dictionary_map_return() stringtouint32 wrong" << std::endl;
             const std::string &map=std::string(GlobalServerData::serverPrivateVariables.db_server->value(1));
             #endif
-            if(databaseMapId>maxDatabaseMapId)
-                maxDatabaseMapId=databaseMapId;
+            if(databaseMapId+1>nextDatabaseMapId)
+                nextDatabaseMapId=databaseMapId+1;
             if(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
             {
                 unsigned int index=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size());
@@ -137,6 +138,9 @@ void BaseServer::preload_dictionary_map_return()
             }
             else
                 obsoleteMap++;
+            #ifdef CATCHCHALLENGER_DB_FILE
+            databaseMapId++;
+            #endif
         }
         #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
         GlobalServerData::serverPrivateVariables.db_server->clear();
@@ -160,7 +164,8 @@ void BaseServer::preload_dictionary_map_return()
         const std::string &map=map_list_flat.at(index);
         if(foundMap.find(map)==foundMap.end())
         {
-            maxDatabaseMapId=static_cast<uint32_t>(DictionaryServer::dictionary_map_database_to_internal.size())+1;
+            const unsigned int databaseMapId=nextDatabaseMapId;
+            nextDatabaseMapId++;
             #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
             std::string queryText;
             switch(GlobalServerData::serverPrivateVariables.db_server->databaseType())
@@ -170,17 +175,17 @@ void BaseServer::preload_dictionary_map_return()
                 break;
                 #if defined(CATCHCHALLENGER_DB_MYSQL) || (not defined(EPOLLCATCHCHALLENGERSERVER))
                 case DatabaseBase::DatabaseType::Mysql:
-                    queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO `dictionary_map`(`id`,`map`) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 #endif
                 #ifndef EPOLLCATCHCHALLENGERSERVER
                 case DatabaseBase::DatabaseType::SQLite:
-                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 #endif
                 #if not defined(EPOLLCATCHCHALLENGERSERVER) || defined(CATCHCHALLENGER_DB_POSTGRESQL)
                 case DatabaseBase::DatabaseType::PostgreSQL:
-                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(maxDatabaseMapId)+",'"+map+"');";
+                    queryText="INSERT INTO dictionary_map(id,map) VALUES("+std::to_string(databaseMapId)+",'"+map+"');";
                 break;
                 #endif
             }
@@ -195,10 +200,10 @@ void BaseServer::preload_dictionary_map_return()
             #else
             #error Define what do here
             #endif
-            while(DictionaryServer::dictionary_map_database_to_internal.size()<=maxDatabaseMapId)
+            while(DictionaryServer::dictionary_map_database_to_internal.size()<=databaseMapId)
                 DictionaryServer::dictionary_map_database_to_internal.push_back(65535);
-            DictionaryServer::dictionary_map_database_to_internal[maxDatabaseMapId]=mapPathToId.at(map);
-            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=maxDatabaseMapId;
+            DictionaryServer::dictionary_map_database_to_internal[databaseMapId]=mapPathToId.at(map);
+            Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list[mapPathToId.at(map)].id_db=databaseMapId;
         }
         index++;
     }
@@ -216,36 +221,28 @@ void BaseServer::preload_dictionary_map_return()
         delete dictionary_serialBuffer;
         dictionary_serialBuffer=nullptr;
     }
-    // Save dictionary to disk if changed
+    // Append new map dictionary entries to disk if changed
     if(dictionary_haveChange)
     {
-        std::unordered_map<CATCHCHALLENGER_TYPE_MAPID, std::string> internalToPath;
-        for(const auto &entry : mapPathToId)
-            internalToPath[entry.second]=entry.first;
-        size_t count=0;
-        for(uint32_t i=0;i<DictionaryServer::dictionary_map_database_to_internal.size();i++)
-        {
-            const CATCHCHALLENGER_TYPE_MAPID internal_id=DictionaryServer::dictionary_map_database_to_internal[i];
-            if(internal_id!=65535 && internalToPath.find(internal_id)!=internalToPath.end())
-                count++;
-        }
-        std::ofstream dict_out("database/dictionary", std::ofstream::binary);
+        std::ofstream dict_out("database/server/dictionary_map", std::ofstream::binary|std::ofstream::app);
         if(dict_out.good() && dict_out.is_open())
         {
-            hps::to_stream(count, dict_out);
-            for(uint32_t i=0;i<DictionaryServer::dictionary_map_database_to_internal.size();i++)
+            unsigned int newCount=0;
+            for(const auto &mapName : map_list_flat)
             {
-                const CATCHCHALLENGER_TYPE_MAPID internal_id=DictionaryServer::dictionary_map_database_to_internal[i];
-                if(internal_id!=65535 && internalToPath.find(internal_id)!=internalToPath.end())
+                if(foundMap.find(mapName)==foundMap.end())
                 {
-                    hps::to_stream(i, dict_out);
-                    hps::to_stream(internalToPath.at(internal_id), dict_out);
+                    const uint8_t len=static_cast<uint8_t>(mapName.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(mapName.data(),len);
+                    newCount++;
                 }
             }
-            std::cout << count << " dictionary entries saved to database/dictionary" << std::endl;
+            if(newCount>0)
+                std::cout << newCount << " new map dictionary entries appended to database/server/dictionary_map" << std::endl;
         }
         else
-            std::cerr << "Unable to open database/dictionary for writing" << std::endl;
+            std::cerr << "Unable to open database/server/dictionary_map for writing" << std::endl;
         dictionary_haveChange=false;
     }
     #endif

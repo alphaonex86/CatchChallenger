@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "character" (
 	"played_time"	INTEGER,
 	"last_connect"	INTEGER,
 	"starter"	INTEGER,
-	"allow"	BLOB,
+	"allowCreateClan"	INTEGER NOT NULL DEFAULT 0,
 	"item"	BLOB,
 	"item_warehouse"	BLOB,
 	"recipes"	BLOB,
@@ -64,10 +64,6 @@ CREATE TABLE IF NOT EXISTS "clan" (
 	"name"	TEXT,
 	"cash"	INTEGER,
 	"date"	INTEGER
-);
-CREATE TABLE IF NOT EXISTS "dictionary_allow" (
-	"id"	INTEGER,
-	"allow"	TEXT
 );
 CREATE TABLE IF NOT EXISTS "dictionary_map" (
 	"id"	INTEGER,

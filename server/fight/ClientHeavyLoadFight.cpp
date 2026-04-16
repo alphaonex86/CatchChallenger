@@ -119,7 +119,6 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
             else
             {
                 monster=CommonDatapack::commonDatapack.get_monsters().at(playerMonster.monster);
-                monster.give_sp=0;
             }
         }
         else

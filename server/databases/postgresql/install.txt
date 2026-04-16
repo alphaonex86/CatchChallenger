@@ -1,14 +1,11 @@
 = Simplified part =
 echo 'CREATE DATABASE catchchallenger_login;' | psql postgres postgres
-echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
 echo 'CREATE DATABASE catchchallenger_common;' | psql postgres postgres
 echo 'CREATE DATABASE catchchallenger_server;' | psql postgres postgres
 psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
-psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
 psql catchchallenger_common postgres < catchchallenger-postgresql-common.sql
 psql catchchallenger_server postgres < catchchallenger-postgresql-server.sql
 echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_login postgres
-echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_base postgres
 echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_common postgres
 echo 'GRANT ALL ON ALL TABLES IN SCHEMA public TO pglimited;' | psql catchchallenger_server postgres
 
@@ -24,12 +21,6 @@ psql catchchallenger_login postgres < catchchallenger-postgresql-login.sql
 echo 'GRANT SELECT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_login postgres
 echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO login1;' | psql catchchallenger_login postgres
 echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO login2;' | psql catchchallenger_login postgres
-* Base db
-createuser -P master -U postgres
-echo 'DROP DATABASE IF EXISTS catchchallenger_base;' | psql postgres postgres
-echo 'CREATE DATABASE catchchallenger_base;' | psql postgres postgres
-psql catchchallenger_base postgres < catchchallenger-postgresql-base.sql
-echo 'GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO master;' | psql catchchallenger_base postgres
 * Base common 1
 createuser -P master -U postgres
 createuser -P login1 -U postgres

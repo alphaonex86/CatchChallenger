@@ -501,7 +501,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     }
     {
         struct stat sb;
-        if(::stat(("database/characters/"+hexa).c_str(),&sb)==0)
+        if(::stat(("database/common/characters/"+hexa).c_str(),&sb)==0)
         {
             std::cerr << "Client::addCharacter_return() character already exist " << hexa << " then return error " << __FILE__ << " " << __LINE__ << std::endl;
 
@@ -531,13 +531,13 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
     GlobalServerData::serverPrivateVariables.maxCharacterId++;
     #ifdef CATCHCHALLENGER_DB_FILE
     {
-        std::ofstream out_file("database/server", std::ofstream::binary);
+        std::ofstream out_file("database/server/server", std::ofstream::binary);
         if(!out_file.good() || !out_file.is_open())
-        {std::cerr << "error to open in write the file database/server " << __FILE__ << ":" << __LINE__ << std::endl;abort();}
+        {std::cerr << "error to open in write the file database/server/server" << __FILE__ << ":" << __LINE__ << std::endl;abort();}
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
         hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-        hps::to_stream(GlobalServerData::serverSettings.city, out_file);
+        hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
     }
     #endif
     const uint32_t &characterId=GlobalServerData::serverPrivateVariables.maxCharacterId;
@@ -644,10 +644,10 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::vector<CharacterEntry> characterEntryList;
 
             {
-                std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+                std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
                 if(!in_file.good() || !in_file.is_open())
                 {
-                    std::cerr << "Unable to open data base file " << "database/accounts/" << account_id_db << " (abort)" << std::endl;
+                    std::cerr << "Unable to open data base file " << "database/common/accounts/" << account_id_db << " (abort)" << std::endl;
                     abort();
                     return;
                 }
@@ -666,7 +666,7 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             characterEntryList.push_back(newChar);
 
             {
-                std::ofstream out_file("database/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
+                std::ofstream out_file("database/common/accounts/"+std::to_string(account_id_db), std::ofstream::binary);
                 if(!out_file.good() || !out_file.is_open())
                 {
                     std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -677,14 +677,8 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             }
         }
 
-        //do file here ready to copy for each profile
-        std::ofstream out_file(("database/characters/"+hexa), std::ofstream::binary);
-        if(!out_file.good() || !out_file.is_open())
-        {
-            std::cerr << "unable to save file into DB FILE mode (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
-            abort();
-            return;
-        }
+        //both database/common/characters/ and database/server/characters/ files are
+        //populated below via saveCharacterFiles().
         if(CommonDatapack::commonDatapack.get_items().itemMaxId<=0)
         {
             std::cerr << "unable to save profile into DB FILE mode CommonDatapack::commonDatapack.get_items().itemMaxId<=0 (abort) " << __FILE__ << ":" << __LINE__ << std::endl;
@@ -852,10 +846,17 @@ void Client::addCharacter_return(const uint8_t &query_id,const uint8_t &profileI
             std::cerr << "strange public_and_private_informations.encyclopedia_item!=nullptr" << __FILE__ << ":" << __LINE__ << std::endl;
         public_and_private_informations.encyclopedia_item=nullptr;
 
-        hps::to_stream(*this, out_file);
-        out_file.close();
+        //Write both the non-map-linked (database/common/characters/) and map-linked
+        //(database/server/characters/) files. saveCharacterFiles() uses
+        //public_informations.pseudo to build the filename, so set it here and
+        //restore it in the reset block below.
+        public_and_private_informations.public_informations.pseudo=pseudo;
+        character_id_db=characterId;
+        saveCharacterFiles();
 
         //reset all the variables
+        public_and_private_informations.public_informations.pseudo.clear();
+        character_id_db=0;
         mapIndex=65535;
         last_direction=Direction_look_at_bottom;
         x=0;

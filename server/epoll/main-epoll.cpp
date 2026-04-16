@@ -175,11 +175,13 @@ int main(int argc, char *argv[])
     #ifdef CATCHCHALLENGER_DB_FILE
     ::mkdir("database",0700);
     ::mkdir("database/login",0700);
-    ::mkdir("database/accounts",0700);
-    ::mkdir("database/characters",0700);
-    ::mkdir("database/clans",0700);
-    ::mkdir("database/characters_server",0700);
-    ::mkdir("database/zone",0700);
+    ::mkdir("database/common",0700);
+    ::mkdir("database/common/accounts",0700);
+    ::mkdir("database/common/characters",0700);
+    ::mkdir("database/server",0700);
+    ::mkdir("database/server/characters",0700);
+    ::mkdir("database/server/clans",0700);
+    ::mkdir("database/server/zone",0700);
     #endif
 
     #ifndef CATCHCHALLENGER_DB_BLACKHOLE
@@ -507,15 +509,42 @@ int main(int argc, char *argv[])
     #elif CATCHCHALLENGER_DB_FILE
     {
         struct stat sb;
-        if(::stat("database/dictionary",&sb)==0)
+        if(::stat("database/server/dictionary_map",&sb)==0)
         {
-            BaseServer::dictionary_in_file=new std::ifstream("database/dictionary", std::ifstream::binary);
+            BaseServer::dictionary_in_file=new std::ifstream("database/server/dictionary_map", std::ifstream::binary);
             if(BaseServer::dictionary_in_file->good() && BaseServer::dictionary_in_file->is_open())
                 BaseServer::dictionary_serialBuffer=new hps::StreamInputBuffer(*BaseServer::dictionary_in_file);
             else
             {
                 delete BaseServer::dictionary_in_file;
                 BaseServer::dictionary_in_file=nullptr;
+            }
+        }
+        if(::stat("database/common/dictionary_reputation",&sb)==0)
+        {
+            BaseServer::dictionary_reputation_in_file=new std::ifstream("database/common/dictionary_reputation", std::ifstream::binary);
+            if(!BaseServer::dictionary_reputation_in_file->good() || !BaseServer::dictionary_reputation_in_file->is_open())
+            {
+                delete BaseServer::dictionary_reputation_in_file;
+                BaseServer::dictionary_reputation_in_file=nullptr;
+            }
+        }
+        if(::stat("database/common/dictionary_skin",&sb)==0)
+        {
+            BaseServer::dictionary_skin_in_file=new std::ifstream("database/common/dictionary_skin", std::ifstream::binary);
+            if(!BaseServer::dictionary_skin_in_file->good() || !BaseServer::dictionary_skin_in_file->is_open())
+            {
+                delete BaseServer::dictionary_skin_in_file;
+                BaseServer::dictionary_skin_in_file=nullptr;
+            }
+        }
+        if(::stat("database/common/dictionary_starter",&sb)==0)
+        {
+            BaseServer::dictionary_starter_in_file=new std::ifstream("database/common/dictionary_starter", std::ifstream::binary);
+            if(!BaseServer::dictionary_starter_in_file->good() || !BaseServer::dictionary_starter_in_file->is_open())
+            {
+                delete BaseServer::dictionary_starter_in_file;
+                BaseServer::dictionary_starter_in_file=nullptr;
             }
         }
     }
@@ -632,14 +661,9 @@ int main(int argc, char *argv[])
                 while(index<elementsToDeleteSub.size())
                 {
                     Client * c=static_cast<Client *>(elementsToDeleteSub.at(index));
-#ifdef CATCHCHALLENGER_DB_FILE
-const std::string &hexa=binarytoHexa(c->public_and_private_informations.public_informations.pseudo.c_str(),
-                                     c->public_and_private_informations.public_informations.pseudo.size());
-std::ofstream out_file("database/characters/"+hexa, std::ofstream::binary);
-
-if(c->getPlayerId()>0)
-    hps::to_stream(*c, out_file);
-#endif
+                    //Character persistence is handled in Client::disconnectClient(),
+                    //before setToDefault() wipes the data. By the time we reach
+                    //this delete queue the fields are already reset.
                     delete c;
                     index++;
                 }

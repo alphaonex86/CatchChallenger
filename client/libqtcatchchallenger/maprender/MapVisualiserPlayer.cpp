@@ -641,20 +641,31 @@ void MapVisualiserPlayer::moveStepSlot()
         const std::vector<CatchChallenger::CommonMap> &mapList=QtDatapackClientLoader::datapackLoader->get_mapList();
         CATCHCHALLENGER_TYPE_MAPID old_map_index=current_map;
         //set the final value (direction, position, ...)
+        //NOTE: use moveWithoutTeleport here so the player lands on the teleporter
+        //source tile (e.g. a "teleport on push" wall). The actual cave->city swap
+        //is then performed by finalPlayerStepTeleported() via MapControllerMP::finalPlayerStep.
         switch(direction)
         {
             case CatchChallenger::Direction_move_at_left:
             case CatchChallenger::Direction_move_at_right:
             case CatchChallenger::Direction_move_at_top:
             case CatchChallenger::Direction_move_at_bottom:
-                if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,current_map,x,y,true))
+            {
+                const uint8_t pre_x=x,pre_y=y;
+                const CATCHCHALLENGER_TYPE_MAPID pre_map=current_map;
+                if(!CatchChallenger::MoveOnTheMap::moveWithoutTeleport(mapList,direction,current_map,x,y,true))
                 {
                     std::cerr << "Bug at move, unknown move: " << std::to_string(direction)
                               << " from map " << std::to_string(current_map) << " (" << std::to_string(x) << "," << std::to_string(y) << ")"
                               << std::endl;
                     return;
                 }
+                std::cerr << "moveStepSlot(): final step dir=" << (int)direction
+                          << " from map=" << (int)pre_map << "(" << (int)pre_x << "," << (int)pre_y << ")"
+                          << " -> map=" << (int)current_map << "(" << (int)x << "," << (int)y << ")"
+                          << std::endl;
                 direction=CatchChallenger::MoveOnTheMap::directionToDirectionLook(direction);
+            }
             break;
             default:
                 qDebug() << QStringLiteral("moveStepSlot(): moveStep: %1, wrong direction (%2) when moveStep>2").arg(moveStep).arg(direction);
@@ -737,12 +748,21 @@ bool MapVisualiserPlayer::finalPlayerStepTeleported(bool &isTeleported)
         const CatchChallenger::CommonMap &logicalMap=QtDatapackClientLoader::datapackLoader->getMap(current_map);
         int index=0;
         const int size=logicalMap.teleporters.size();
+        std::cerr << "finalPlayerStepTeleported(): checking " << size << " teleporter(s) on map="
+                  << (int)current_map << " pos=(" << (int)x << "," << (int)y << ")" << std::endl;
         while(index<size)
         {
             const CatchChallenger::Teleporter &current_teleport=logicalMap.teleporters.at(index);
+            std::cerr << "  tp[" << index << "] src=(" << (int)current_teleport.source_x << "," << (int)current_teleport.source_y
+                      << ") -> map=" << (int)current_teleport.mapIndex
+                      << "(" << (int)current_teleport.destination_x << "," << (int)current_teleport.destination_y << ")"
+                      << std::endl;
             //if need be teleported
             if(current_teleport.source_x==x && current_teleport.source_y==y)
             {
+                std::cerr << "  -> MATCH: teleporting to map=" << (int)current_teleport.mapIndex
+                          << "(" << (int)current_teleport.destination_x << "," << (int)current_teleport.destination_y << ")"
+                          << std::endl;
                 isTeleported=true;
                 unloadPlayerFromCurrentMap();
                 passMapIntoOld();
@@ -1624,11 +1644,20 @@ bool MapVisualiserPlayer::canGoTo(const CatchChallenger::Direction &direction, c
     do
     {
         if(!CatchChallenger::MoveOnTheMap::canGoTo(mapList,direction,logicalMap,lx,ly,checkCollision && !clip))
+        {
+            std::cerr << "MapVisualiserPlayer::canGoTo() MoveOnTheMap::canGoTo returned false dir=" << (int)direction
+                      << " map=" << (int)mapIndex << " pos=(" << (int)lx << "," << (int)ly << ") checkCollision="
+                      << (checkCollision && !clip) << std::endl;
             return false;
+        }
         if(!CatchChallenger::MoveOnTheMap::move(mapList,direction,tempMapIndex,lx,ly,checkCollision && !clip))
             return false;
         if(CatchChallenger::QMap_client::all_map.find(tempMapIndex)==CatchChallenger::QMap_client::all_map.cend())
+        {
+            std::cerr << "MapVisualiserPlayer::canGoTo() destination map " << (int)tempMapIndex
+                      << " not in all_map (pos=" << (int)lx << "," << (int)ly << "), blocking move" << std::endl;
             return false;
+        }
         const CatchChallenger::CommonMap &destMap=QtDatapackClientLoader::datapackLoader->getMap(tempMapIndex);
         {
             const std::pair<uint8_t,uint8_t> pos(static_cast<uint8_t>(lx),static_cast<uint8_t>(ly));

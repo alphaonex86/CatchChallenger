@@ -544,7 +544,7 @@ void EpollServerLoginSlave::generateTokenStatClient(TinyXMLSettings &settings)
 void EpollServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while((uint16_t)DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
-        DictionaryLogin::dictionary_skin_database_to_internal.push_back(0);
+        DictionaryLogin::dictionary_skin_database_to_internal.push_back(255);
     while((uint16_t)DictionaryLogin::dictionary_skin_internal_to_database.size()<(internalId+1))
         DictionaryLogin::dictionary_skin_internal_to_database.push_back(0);
     DictionaryLogin::dictionary_skin_internal_to_database[internalId]=databaseId;
@@ -554,7 +554,7 @@ void EpollServerLoginSlave::setSkinPair(const uint8_t &internalId,const uint16_t
 void EpollServerLoginSlave::setProfilePair(const uint8_t &internalId,const uint16_t &databaseId)
 {
     while((uint16_t)DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
-        DictionaryLogin::dictionary_starter_database_to_internal.push_back(0);
+        DictionaryLogin::dictionary_starter_database_to_internal.push_back(255);
     while((uint16_t)DictionaryLogin::dictionary_starter_internal_to_database.size()<(internalId+1))
         DictionaryLogin::dictionary_starter_internal_to_database.push_back(0);
     DictionaryLogin::dictionary_starter_internal_to_database[internalId]=databaseId;

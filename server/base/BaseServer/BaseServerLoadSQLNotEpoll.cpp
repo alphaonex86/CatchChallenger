@@ -62,9 +62,9 @@ void BaseServer::preload_zone_return()
             std::string zoneCodeName=entryListZone.at(index).name;
             stringreplaceOne(zoneCodeName,".xml","");
             struct stat sb;
-            if(::stat(("database/zone/"+zoneCodeName).c_str(),&sb)==0)
+            if(::stat(("database/server/zone/"+zoneCodeName).c_str(),&sb)==0)
             {
-                FILE *fp=fopen(("database/zone/"+zoneCodeName).c_str(),"rb");
+                FILE *fp=fopen(("database/server/zone/"+zoneCodeName).c_str(),"rb");
                 if(fp!=NULL)
                 {
                     uint32_t clanId=0;
