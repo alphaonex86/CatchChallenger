@@ -282,7 +282,7 @@ private:
     #endif
     uint8_t profileIndex;
     std::queue<PlayerOnMap> lastTeleportation;
-    std::vector<uint8_t> queryNumberList;
+    std::vector<uint8_t> queryIdPool;//dynamic, non-sense when the client is not connected, then never store to database
 
     PLAYER_INDEX_FOR_CONNECTED otherPlayerBattle;//65535 is not in battle
     bool battleIsValidated;

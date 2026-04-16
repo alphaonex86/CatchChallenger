@@ -44,12 +44,12 @@ Client::Client(const uint16_t &index_connected_player) :
     #ifdef CATCHCHALLENGER_EXTRA_CHECK
     ClientBase::public_and_private_informations_solo=&public_and_private_informations;
     #endif
-    queryNumberList.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
+    queryIdPool.reserve(CATCHCHALLENGER_MAXPROTOCOLQUERY);
     {
         uint8_t index=0;
         while(index<CATCHCHALLENGER_MAXPROTOCOLQUERY)
         {
-            queryNumberList.push_back(index);
+            queryIdPool.push_back(index);
             index++;
         }
     }
@@ -157,7 +157,7 @@ void Client::setToDefault()
     #endif
     while(!lastTeleportation.empty())
         lastTeleportation.pop();
-    queryNumberList.clear();
+    queryIdPool.clear();
     botFight.first=65535;
     botFight.second=255;
     attackReturn.clear();
@@ -792,7 +792,7 @@ void Client::breakNeedMoreData()
 //Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
 void Client::sendPing()
 {
-    if(queryNumberList.empty())
+    if(queryIdPool.empty())
     {
         errorOutput("Sorry, no free query number to send this query of teleportation");
         return;
@@ -804,17 +804,17 @@ void Client::sendPing()
     //send the network reply
     char buffer[2];//Client::sendPing() can be call by another function using the buffer like Map_server_MapVisibility_Simple_StoreOnSender::purgeBuffer(), then use their own
     buffer[0x00]=0xE3;
-    buffer[0x01]=queryNumberList.back();
-    registerOutputQuery(queryNumberList.back(),0xE3);
+    buffer[0x01]=queryIdPool.back();
+    registerOutputQuery(queryIdPool.back(),0xE3);
 
     sendRawBlock(buffer,sizeof(buffer));
 
-    queryNumberList.pop_back();
+    queryIdPool.pop_back();
 }
 
 size_t Client::sendPing(char * output)
 {
-    if(queryNumberList.empty())
+    if(queryIdPool.empty())
     {
         errorOutput("Sorry, no free query number to send this query of teleportation");
         return 0;
@@ -825,10 +825,10 @@ size_t Client::sendPing(char * output)
 
     //send the network reply
     output[0x00]=0xE3;
-    output[0x01]=queryNumberList.back();
-    registerOutputQuery(queryNumberList.back(),0xE3);
+    output[0x01]=queryIdPool.back();
+    registerOutputQuery(queryIdPool.back(),0xE3);
 
-    queryNumberList.pop_back();
+    queryIdPool.pop_back();
     return 2;
 }
 
@@ -868,8 +868,8 @@ void Client::serialize(hps::StreamOutputBuffer& buf) const {
     buf << wildMonsters;
     buf << botFightMonsters;
     buf << randomIndex << randomSize << number_of_character;
-    buf << questsDrop << connectedSince << profileIndex << queryNumberList;
-    //botFight and isInCityCapture are runtime-only state; on reconnect the
+    buf << questsDrop << connectedSince << profileIndex;
+    //queryIdPool, botFight and isInCityCapture are runtime-only state; on reconnect the
     //player is never mid-fight nor mid-city-capture, so they are not serialised.
 
     CATCHCHALLENGER_TYPE_MAPID map_file_database_id=0;
@@ -924,11 +924,11 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     buf >> wildMonsters;
     buf >> botFightMonsters;
     buf >> randomIndex >> randomSize >> number_of_character;
-    buf >> questsDrop >> connectedSince >> profileIndex >> queryNumberList;
-    //queryNumberList is runtime-only, regenerate after cache load
-    queryNumberList.clear();
+    buf >> questsDrop >> connectedSince >> profileIndex;
+    //queryIdPool is runtime-only, initialize full pool
+    queryIdPool.clear();
     for(uint8_t i=0;i<CATCHCHALLENGER_MAXPROTOCOLQUERY;i++)
-        queryNumberList.push_back(i);
+        queryIdPool.push_back(i);
     //botFight and isInCityCapture are runtime-only and not serialised
 
     uint8_t value=0;
@@ -994,6 +994,7 @@ void Client::parse(hps::StreamInputBuffer& buf) {
     CATCHCHALLENGER_TYPE_MAPID map_id=0;
     uint8_t temp_direction=0;
     buf >> map_id >> x >> y >> temp_direction;
+    last_direction=(Direction)temp_direction;
     if(map_file_database_id>=DictionaryServer::dictionary_map_database_to_internal.size())
     {
         std::cerr << "map_file_database_id out of range" << __FILE__ << ":" << __LINE__ << std::endl;
@@ -1085,6 +1086,7 @@ void Client::saveCharacterFiles() const {
         }
         hps::StreamOutputBuffer s(out_file);
         serializeServerPart(s);
+        s.flush();
     }
 }
 
@@ -1100,6 +1102,13 @@ bool Client::loadCharacterServerFile() {
     std::ifstream in_file("database/server/characters/"+hexa, std::ifstream::binary);
     if(!in_file.good() || !in_file.is_open())
         return false;
+    //Empty file → treat as "no per-map state yet". Without this check,
+    //hps::StreamInputBuffer would parse from an uninitialized 64KB stack
+    //buffer and walk garbage memory.
+    in_file.seekg(0, std::ifstream::end);
+    if(in_file.tellg()<=0)
+        return false;
+    in_file.seekg(0, std::ifstream::beg);
     hps::StreamInputBuffer s(in_file);
     parseServerPart(s);
     return true;
