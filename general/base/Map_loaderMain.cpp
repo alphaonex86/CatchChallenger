@@ -356,12 +356,6 @@ bool Map_loader::tryLoadMap(const std::string &file, CommonMap &mapFinal, const 
                                                 new_tp.map=property_text.at("map");
                                                 if(!stringEndsWith(new_tp.map,".tmx") && !new_tp.map.empty())
                                                     new_tp.map+=".tmx";
-                                                std::cerr << "[Map_loader] parse teleport from " << file
-                                                          << " type=" << type
-                                                          << " src=(" << (int)new_tp.source_x << "," << (int)new_tp.source_y << ")"
-                                                          << " dest=" << new_tp.map
-                                                          << "(" << (int)new_tp.destination_x << "," << (int)new_tp.destination_y << ")"
-                                                          << std::endl;
                                                 map_to_send_temp.teleport.push_back(new_tp);
                                             }
                                             else
