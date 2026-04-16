@@ -896,7 +896,7 @@ void MapControllerMP::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
         if(n.second.presumed_map==mapIndex)
             remove_player_final(n.first,true);
     }
-    MapVisualiser::destroyMap(mapIndex);
+    MapVisualiserPlayer::destroyMap(mapIndex);
 }
 
 CatchChallenger::Direction MapControllerMP::moveFromPath()

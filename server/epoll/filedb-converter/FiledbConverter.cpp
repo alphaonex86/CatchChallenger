@@ -368,9 +368,8 @@ static bool loadCharacterCommon(const std::string &path, CharacterCommonRecord &
     s >> c.reputation;
     s >> c.items;
     s >> c.allowCreateClan;
-    s >> c.ableToFight;
-    s >> c.wildMonsters;
-    s >> c.botFightMonsters;
+    //ableToFight/wildMonsters/botFightMonsters are dynamic CommonFightEngine
+    //state, not serialised by Client; mirror that here.
     s >> c.randomIndex >> c.randomSize >> c.number_of_character;
     s >> c.questsDrop >> c.connectedSince >> c.profileIndex;
     s >> c.map_entry.map_db_id >> c.map_entry.x >> c.map_entry.y >> c.map_entry.orientation;
@@ -398,9 +397,8 @@ static bool saveCharacterCommon(const std::string &path, const CharacterCommonRe
     s << c.reputation;
     s << c.items;
     s << c.allowCreateClan;
-    s << c.ableToFight;
-    s << c.wildMonsters;
-    s << c.botFightMonsters;
+    //ableToFight/wildMonsters/botFightMonsters are dynamic CommonFightEngine
+    //state, not serialised by Client; mirror that here.
     s << c.randomIndex << c.randomSize << c.number_of_character;
     s << c.questsDrop << c.connectedSince << c.profileIndex;
     s << c.map_entry.map_db_id << c.map_entry.x << c.map_entry.y << c.map_entry.orientation;

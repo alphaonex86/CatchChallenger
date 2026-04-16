@@ -188,9 +188,9 @@ bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const ti
     if(strcmp(step->Attribute("type"),"zonecapture")==0)
     {
         if(step->Attribute("zone")==NULL)
-            std::cerr << "zonecapture point have not the zone attribute: for bot id: " << object_x << "," << object_y << std::endl;
+            std::cerr << "zonecapture point have not the zone attribute: for bot id: " << std::to_string(object_x) << "," << std::to_string(object_y) << std::endl;
         else if(zoneCapture.find(std::pair<uint8_t,uint8_t>(object_x,object_y))!=zoneCapture.cend())
-            std::cerr << "zonecapture point already on the map: for bot id: " << object_x << "," << object_y << std::endl;
+            std::cerr << "zonecapture point already on the map: for bot id: " << std::to_string(object_x) << "," << std::to_string(object_y) << std::endl;
         else
             zoneCapture.insert(std::pair<uint8_t,uint8_t>(object_x,object_y));
         return true;
@@ -213,15 +213,15 @@ bool MapServer::parseUnknownBotStep(uint32_t object_x,uint32_t object_y,const ti
     if(strcmp(step->Attribute("type"),"industry")==0)
     {
         if(step->Attribute("industry")==NULL)
-            std::cerr << "industry point have not the industry attribute: for bot at: " << object_x << "," << object_y << std::endl;
+            std::cerr << "industry point have not the industry attribute: for bot at: " << std::to_string(object_x) << "," << std::to_string(object_y) << std::endl;
         else
         {
             bool ok=false;
             const uint8_t industryIndex=stringtouint8(step->Attribute("industry"),&ok);
             if(!ok)
-                std::cerr << "industry attribute is not a number: for bot at: " << object_x << "," << object_y << std::endl;
+                std::cerr << "industry attribute is not a number: for bot at: " << std::to_string(object_x) << "," << std::to_string(object_y) << std::endl;
             else if(industryIndex>=industries.size())
-                std::cerr << "industry index " << industryIndex << " out of range (" << industries.size() << "): for bot at: " << object_x << "," << object_y << std::endl;
+                std::cerr << "industry index " << std::to_string(industryIndex) << " out of range (" << industries.size() << "): for bot at: " << std::to_string(object_x) << "," << std::to_string(object_y) << std::endl;
             else
                 industries_pos[std::pair<uint8_t,uint8_t>(object_x,object_y)]=industryIndex;
         }

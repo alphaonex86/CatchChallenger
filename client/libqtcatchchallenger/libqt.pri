@@ -23,6 +23,10 @@ SOURCES += \
     $$PWD/ExtraSocket.cpp \
     $$PWD/ConnectedSocket.cpp
 
+!contains(DEFINES, NOSINGLEPLAYER) {
+    SOURCES += $$PWD/SoloDatabaseInit.cpp
+}
+
 DEFINES += CATCHCHALLENGERLIB
 
 QT += multimedia

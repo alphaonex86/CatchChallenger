@@ -144,6 +144,27 @@ bool MapVisualiserPlayer::haveMapInMemory(const CATCHCHALLENGER_TYPE_MAPID &mapI
            CatchChallenger::QMap_client::old_all_map.find(mapIndex)!=CatchChallenger::QMap_client::old_all_map.cend();
 }
 
+void MapVisualiserPlayer::destroyMap(const CATCHCHALLENGER_TYPE_MAPID &mapIndex)
+{
+    CatchChallenger::QMap_client *map=NULL;
+    if(CatchChallenger::QMap_client::all_map.find(mapIndex)!=CatchChallenger::QMap_client::all_map.cend())
+        map=CatchChallenger::QMap_client::all_map.at(mapIndex);
+    else if(CatchChallenger::QMap_client::old_all_map.find(mapIndex)!=CatchChallenger::QMap_client::old_all_map.cend())
+        map=CatchChallenger::QMap_client::old_all_map.at(mapIndex);
+    if(map!=NULL)
+    {
+        Tiled::ObjectGroup *group=map->objectGroup;
+        if(group!=NULL)
+        {
+            if(playerMapObject!=nullptr && playerMapObject->objectGroup()==group)
+                unloadPlayerFromCurrentMap();
+            if(monsterMapObject!=nullptr && monsterMapObject->objectGroup()==group)
+                unloadMonsterFromCurrentMap();
+        }
+    }
+    MapVisualiser::destroyMap(mapIndex);
+}
+
 void MapVisualiserPlayer::keyPressEvent(QKeyEvent * event)
 {
     if(current_map==65535 || CatchChallenger::QMap_client::all_map.find(current_map)==CatchChallenger::QMap_client::all_map.cend())

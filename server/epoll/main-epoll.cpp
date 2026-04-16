@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <chrono>
 #include <signal.h>
 #include <unistd.h>
 #include <netdb.h>
@@ -130,6 +131,8 @@ void send_settings(
 
 int main(int argc, char *argv[])
 {
+    //capture wall start ASAP so the "correctly bind" log can show ms-since-start
+    EpollGenericServer::processStart=std::chrono::steady_clock::now();
     memset(ProtocolParsingBase::tempBigBufferForOutput,0,sizeof(ProtocolParsingBase::tempBigBufferForOutput));
     /* Catch Signal Handler SIGPIPE */
     if(signal(SIGPIPE, signal_callback_handler)==SIG_ERR)

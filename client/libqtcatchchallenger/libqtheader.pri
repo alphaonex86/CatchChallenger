@@ -21,6 +21,10 @@ HEADERS  += \
     $$PWD/ExtraSocket.hpp \
     $$PWD/ConnectedSocket.hpp
 
+!contains(DEFINES, NOSINGLEPLAYER) {
+    HEADERS += $$PWD/SoloDatabaseInit.hpp
+}
+
 INCLUDEPATH += /usr/include/tiled/
 
 QT += multimedia
