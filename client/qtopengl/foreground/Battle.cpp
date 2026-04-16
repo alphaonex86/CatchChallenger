@@ -3212,7 +3212,7 @@ bool Battle::displayFirstAttackText(bool firstText)
     }
     if(connexionManager->client->getAttackReturnList().empty())
     {
-        emit error("Display text for not existant attack");
+        emit error("Display text for not existent attack");
         return false;
     }
     const Skill::AttackReturn currentAttack=connexionManager->client->getFirstAttackReturn();

@@ -23,7 +23,7 @@ public:
     std::string originalQuery() const;
     uint8_t argumentsCount() const;
 private:
-    /* [0]: occurence to replace
+    /* [0]: occurrence to replace
      * [1,2]: total size of the String
      * List of: 16Bit header + string content */
     unsigned char * preparedQuery;

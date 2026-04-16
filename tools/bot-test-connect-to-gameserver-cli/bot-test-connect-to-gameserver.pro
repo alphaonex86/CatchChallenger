@@ -19,7 +19,7 @@ TEMPLATE = app
 SOURCES += main.cpp\
     ../libbot/MultipleBotConnection.cpp \
     ../libbot/MultipleBotConnectionImplForGui.cpp \
-    GlobalControler.cpp \
+    GlobalController.cpp \
     ../../client/libqtcatchchallenger/Api_client_real_base.cpp \
     ../../client/libqtcatchchallenger/Api_client_real_main.cpp \
     ../../client/libqtcatchchallenger/Api_client_real_sub.cpp \
@@ -44,7 +44,7 @@ HEADERS  += \
     ../libbot/MultipleBotConnection.h \
     ../libbot/MultipleBotConnectionImplForGui.h \
     ../libbot/BotInterface.h \
-    GlobalControler.h \
+    GlobalController.h \
     ../../client/libqtcatchchallenger/Api_client_real.hpp \
     ../../client/libqtcatchchallenger/Api_client_virtual.hpp \
     ../../client/libcatchchallenger/Api_protocol.hpp \

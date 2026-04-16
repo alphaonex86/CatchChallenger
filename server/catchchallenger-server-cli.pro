@@ -9,6 +9,6 @@ TEMPLATE = app
 TARGET = catchchallenger-server-cli
 CONFIG   += console
 
-SOURCES += $$PWD/qt/ProcessControler.cpp \
+SOURCES += $$PWD/qt/ProcessController.cpp \
     main-cli.cpp
-HEADERS  += $$PWD/qt/ProcessControler.hpp
+HEADERS  += $$PWD/qt/ProcessController.hpp

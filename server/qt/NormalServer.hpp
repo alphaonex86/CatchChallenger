@@ -51,7 +51,7 @@ private:
     void load_settings();
     //init, constructor, destructor
     virtual void initAll();//call before all
-    //internal usefull function
+    //internal useful function
     std::string listenIpAndPort(std::string server_ip,uint16_t server_port);
     //store about the network
     QSslServer *sslServer;

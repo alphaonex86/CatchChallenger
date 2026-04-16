@@ -30,19 +30,19 @@ void PlayerUpdaterBase::internal_addConnectedPlayer()
         connected_players++;
     switch(connected_players)
     {
-        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=49*16*1=735B/s
+        //Max bandwidth: (number max of player in this mode)*(packet size)*(tick by second)=49*16*1=735B/s
         case 10:
             setInterval(1000);
         break;
-        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=99*16*0.5=792B/s
+        //Max bandwidth: (number max of player in this mode)*(packet size)*(tick by second)=99*16*0.5=792B/s
         case 50:
             setInterval(2000);
         break;
-        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=999*16*0.1=1.6KB/s
+        //Max bandwidth: (number max of player in this mode)*(packet size)*(tick by second)=999*16*0.1=1.6KB/s
         case 100:
             setInterval(10000);
         break;
-        //Max bandwith: (number max of player in this mode)*(packet size)*(tick by second)=65535*16*0.016=16.7KB/s
+        //Max bandwidth: (number max of player in this mode)*(packet size)*(tick by second)=65535*16*0.016=16.7KB/s
         case 1000:
             setInterval(60000);
         break;

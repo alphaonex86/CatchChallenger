@@ -182,7 +182,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         {
             if(arguments.at(1)!="to")
             {
-                receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /tp player1 to player2");
+                receiveSystemText("wrong second argument: "+arguments.at(1)+", usage: /tp player1 to player2");
                 return;
             }
             const PLAYER_INDEX_FOR_CONNECTED indexConnectedFront=ClientList::list->global_clients_list_bypseudo(arguments.front());
@@ -230,7 +230,7 @@ void Client::sendHandlerCommand(const std::string &command,const std::string &ex
         {
             if(arguments.at(1)!="goto")
             {
-                receiveSystemText("wrong second arguement: "+arguments.at(1)+", usage: /goto map x y");
+                receiveSystemText("wrong second argument: "+arguments.at(1)+", usage: /goto map x y");
                 return;
             }
             if(Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.find(arguments.front())==Map_server_MapVisibility_Simple_StoreOnSender::flat_map_list.end())

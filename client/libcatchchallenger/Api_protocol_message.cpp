@@ -34,7 +34,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {}
         else
         {
-            parseError("Procotol wrong or corrupted","is not logged with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+            parseError("Protocol wrong or corrupted","is not logged with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
             return false;
         }
     }
@@ -54,7 +54,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t mapListSize=data[pos];
@@ -66,7 +66,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
@@ -75,7 +75,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 COORD_TYPE playerSizeList=0;
                 if((size-pos)<(unsigned int)sizeof(COORD_TYPE))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerSizeList=data[pos];
@@ -88,7 +88,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     SIMPLIFIED_PLAYER_ID_FOR_MAP simplifiedIndex=data[pos];
@@ -97,7 +97,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //x and y
                     if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     COORD_TYPE x=data[pos];
@@ -108,7 +108,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //direction and player type
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     uint8_t directionAndPlayerType=data[pos];
@@ -118,7 +118,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     playerTypeInt=directionAndPlayerType & 0xF0;
                     if(directionInt<1 || directionInt>8)
                     {
-                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                        parseError("Protocol wrong or corrupted","direction have wrong value: "+
                                    std::to_string(directionInt)+", at main ident: "+
                                    std::to_string(packetCode)+", directionAndPlayerType: "+
                                    std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
@@ -129,7 +129,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     Player_type playerType=(Player_type)playerTypeInt;
                     if(playerType!=Player_type_normal && playerType!=Player_type_premium && playerType!=Player_type_gm && playerType!=Player_type_dev)
                     {
-                        parseError("Procotol wrong or corrupted","direction have wrong value: "+
+                        parseError("Protocol wrong or corrupted","direction have wrong value: "+
                                    std::to_string(playerType)+", at main ident: "+
                                    std::to_string(packetCode)+", directionAndPlayerType: "+
                                    std::to_string(directionAndPlayerType)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
@@ -143,7 +143,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         //the pseudo
                         if((size-pos)<(unsigned int)sizeof(uint8_t))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         uint8_t pseudoSize=data[pos];
@@ -152,14 +152,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         {
                             if((size-pos)<(unsigned int)pseudoSize)
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             public_informations.pseudo=sanitizeUtf8String(data+pos,pseudoSize);
                             pos+=pseudoSize;
                             if(public_informations.pseudo.empty())
                             {
-                                parseError("Procotol wrong or corrupted","UTF8 decoding failed for pseudo: "+public_informations.pseudo+
+                                parseError("Protocol wrong or corrupted","UTF8 decoding failed for pseudo: "+public_informations.pseudo+
                                            ", rawData: "+binarytoHexa(data+pos,pseudoSize)+", line: "+
                                            std::string(__FILE__)+":"+std::to_string(__LINE__)
                                            );
@@ -173,7 +173,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //the skin
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     uint8_t skinId=data[pos];
@@ -183,7 +183,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //the following monster id to show
                     if((size-pos)<(unsigned int)sizeof(uint16_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     uint16_t monsterId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
@@ -207,7 +207,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)!=0)
             {
-                parseError("Procotol wrong or corrupted","remaining data: parseMessage("+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","remaining data: parseMessage("+std::to_string(packetCode)+
                            ","+binarytoHexa(data,pos)+
                            " "+binarytoHexa(data+pos,size-pos)+
                            ") line "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
@@ -235,7 +235,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             //move the player
@@ -243,7 +243,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t playerSizeList=0;
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             playerSizeList=data[pos];
@@ -255,14 +255,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerId=data[pos];
                 pos+=sizeof(uint8_t);
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::vector<std::pair<uint8_t,Direction> > movement;
@@ -272,14 +272,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 int index_sub_loop=0;
                 if(moveListSize==0)
                 {
-                    parseError("Procotol wrong or corrupted","move size == 0 with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","move size == 0 with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 while(index_sub_loop<moveListSize)
                 {
                     if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident at move player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     new_movement.first=data[pos];
@@ -296,7 +296,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -317,7 +317,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t playerSizeList=0;
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             playerSizeList=data[pos];
@@ -329,7 +329,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerId=data[pos];
@@ -340,7 +340,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -360,14 +360,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             //remove player
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident at remove player: %1, line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             playerExcludeIndex=data[pos];
             pos+=sizeof(uint8_t);
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -388,7 +388,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t current_player_connected_8Bits=data[pos];
@@ -401,7 +401,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)+
                                ", in.device()->pos(): "+std::to_string(pos)+
                                ", in.device()->size(): "+std::to_string(size));
@@ -415,7 +415,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -425,7 +425,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             dropAllPlayerOnTheMap();
             delayedMessages.clear();
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -445,7 +445,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t playerSizeList=0;
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             playerSizeList=data[pos];
@@ -457,7 +457,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 uint8_t playerIndex=0;
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerIndex=data[pos];
@@ -466,7 +466,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 //x and y
                 if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t x=data[pos];
@@ -477,14 +477,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 //direction and player type
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t directionInt=data[pos];
                 pos+=sizeof(uint8_t);
                 if(directionInt<1 || directionInt>8)
                 {
-                    parseError("Procotol wrong or corrupted","direction have wrong value: "+std::to_string(directionInt)+
+                    parseError("Protocol wrong or corrupted","direction have wrong value: "+std::to_string(directionInt)+
                                ", at main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
@@ -496,7 +496,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -515,7 +515,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t mapListSize=data[pos];
@@ -527,7 +527,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 mapId=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
@@ -536,7 +536,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 uint8_t playerSizeList;
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 playerSizeList=data[pos];
@@ -548,7 +548,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     uint8_t simplifiedId=0;
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     simplifiedId=data[pos];
@@ -557,7 +557,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //x and y
                     if((size-pos)<(unsigned int)sizeof(uint8_t)*2)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     uint8_t x=data[pos];
@@ -568,14 +568,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     //direction and player type
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     uint8_t directionInt=data[pos];
                     pos+=sizeof(uint8_t);
                     if(directionInt<1 || directionInt>8)
                     {
-                        parseError("Procotol wrong or corrupted","direction have wrong value: %1"+std::to_string(directionInt)+", at main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","direction have wrong value: %1"+std::to_string(directionInt)+", at main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     Direction direction=(Direction)directionInt;
@@ -587,13 +587,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
 
         }
         #else
-        parseError("Procotol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+        parseError("Protocol wrong or corrupted","packet not allow in benchmark main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
         return false;
         #endif
         break;
@@ -602,20 +602,20 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t chat_type_int=data[pos];
             pos+=sizeof(uint8_t);
             if(chat_type_int<1 || chat_type_int>8)
             {
-                parseError("Procotol wrong or corrupted","wrong chat type with main ident: "+std::to_string(packetCode)+", chat_type_int: "+std::to_string(chat_type_int)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong chat type with main ident: "+std::to_string(packetCode)+", chat_type_int: "+std::to_string(chat_type_int)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             Chat_type chat_type=(Chat_type)chat_type_int;
             if((size-pos)<(unsigned int)(sizeof(uint16_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong text with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong text with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             std::string text;
@@ -635,7 +635,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)textSize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", pseudoSize: "+std::to_string(textSize)+
                                ", data: "+binarytoHexa(data+pos,size)+
                                ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
@@ -654,7 +654,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong text with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong text with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::string pseudo;
@@ -664,7 +664,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)pseudoSize)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", pseudoSize: "+std::to_string(pseudoSize)+
                                    ", data: "+binarytoHexa(data+pos,size)+
                                    ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
@@ -675,7 +675,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     pos+=pseudoSize;
                     if(pseudo.empty())
                     {
-                        parseError("Procotol wrong or corrupted","UTF8 decoding failed: packetCode: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","UTF8 decoding failed: packetCode: "+std::to_string(packetCode)+
                                    ", rawText: "+binarytoHexa(data+pos,pseudoSize)+
                                    ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
@@ -685,7 +685,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 uint8_t player_type_int;
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 player_type_int=data[pos];
@@ -693,7 +693,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 Player_type player_type=(Player_type)player_type_int;
                 if(player_type!=Player_type_normal && player_type!=Player_type_premium && player_type!=Player_type_gm && player_type!=Player_type_dev)
                 {
-                    parseError("Procotol wrong or corrupted","wrong player type with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong player type with main ident: "+std::to_string(packetCode)+
                                ", player_type_int: "+std::to_string(player_type_int)+
                                ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                );
@@ -711,7 +711,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                            );
                 return false;
@@ -720,7 +720,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             pos+=sizeof(uint8_t);
             if(fileListSize==0)
             {
-                parseError("Procotol wrong or corrupted","fileListSize==0 with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","fileListSize==0 with main ident: "+std::to_string(packetCode)+
                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                            );
                 return false;
@@ -748,7 +748,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size2-pos2)<(int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::string fileName;
@@ -758,7 +758,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size2-pos2)<(int)fileNameSize)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     fileName=std::string(data2+pos2,fileNameSize);
@@ -776,7 +776,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         std::cerr << "extensionAllowed is empty" << std::endl;
                     else
                         std::cerr << "extensionAllowed: \"" << stringimplode(std::vector<std::string>(extensionAllowed.cbegin(),extensionAllowed.cend()),";") << "\"" << std::endl;
-                    parseError("Procotol wrong or corrupted","extension not allowed: \""+fileName+
+                    parseError("Protocol wrong or corrupted","extension not allowed: \""+fileName+
                                "\", ext: \""+ext+"\" with main ident: "+std::to_string(packetCode)+", line: "+
                                std::string(__FILE__)+":"+std::to_string(__LINE__)+
                                ", data: "+binarytoHexa(data,size2)
@@ -786,14 +786,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 if((size2-pos2)<(int)(sizeof(uint32_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint32_t filesize=le32toh(*reinterpret_cast<const uint32_t *>(data2+pos2));
                 pos2+=sizeof(uint32_t);
                 if((size2-pos2)<(int)filesize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong file data size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong file data size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 std::string dataFile;
@@ -846,7 +846,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t code=data[pos];
@@ -855,7 +855,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint8_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t textSize=data[pos];
@@ -864,7 +864,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)textSize)
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     text=sanitizeUtf8String(data+pos,textSize);
@@ -897,7 +897,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             std::string name;
@@ -907,7 +907,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)stringSize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -923,14 +923,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint32_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint32_t clanId=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
             pos+=sizeof(uint32_t);
             if((size-pos)<(unsigned int)sizeof(uint8_t))
             {
-                parseError("Procotol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             std::string name;
@@ -940,7 +940,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)stringSize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -956,14 +956,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint32_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint32_t datapckFileNumber=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
             pos+=sizeof(uint32_t);
             if((size-pos)<(unsigned int)sizeof(uint32_t))
             {
-                parseError("Procotol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong string for reason with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint32_t datapckFileSize=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
@@ -980,14 +980,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 abort();
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t serverMode=data[pos];
             pos+=sizeof(uint8_t);
             if(serverMode<1 || serverMode>2)
             {
-                parseError("Procotol wrong or corrupted","unknown serverMode "+std::to_string(serverMode)+" main code: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","unknown serverMode "+std::to_string(serverMode)+" main code: "+std::to_string(packetCode)+
                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                            );
                 return false;
@@ -998,7 +998,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             std::vector<ServerFromPoolForDisplayTemp> serverTempList;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             serverListSize=data[pos];
@@ -1015,7 +1015,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
                         return false;
@@ -1027,7 +1027,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)sizeof(uint32_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
                         return false;
@@ -1041,7 +1041,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)sizeof(uint8_t))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -1052,7 +1052,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         {
                             if((size-pos)<(unsigned int)stringSize)
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                               );
                                 return false;
@@ -1065,7 +1065,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)sizeof(uint16_t))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -1078,7 +1078,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)sizeof(uint16_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
                         return false;
@@ -1089,7 +1089,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)stringSize)
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -1102,7 +1102,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)sizeof(uint8_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
                         return false;
@@ -1114,7 +1114,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<(unsigned int)sizeof(uint16_t))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                    ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                       );
                         return false;
@@ -1130,7 +1130,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1169,7 +1169,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t logicalGroupIndex=0;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1187,7 +1187,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)sizeof(uint8_t))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -1198,7 +1198,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         {
                             if((size-pos)<(unsigned int)pathSize)
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                               );
                                 return false;
@@ -1210,7 +1210,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)sizeof(uint16_t))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -1221,7 +1221,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         {
                             if((size-pos)<(unsigned int)xmlSize)
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                               );
                                 return false;
@@ -1257,7 +1257,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)sizeof(uint16_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1272,7 +1272,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1281,7 +1281,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=sizeof(uint16_t);
                 if((size-pos)<(unsigned int)sizeof(uint32_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1304,7 +1304,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint16_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1319,7 +1319,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1328,7 +1328,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=sizeof(uint16_t);
                 if((size-pos)<(unsigned int)sizeof(uint32_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1349,7 +1349,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)sizeof(uint16_t))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1364,7 +1364,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)sizeof(uint16_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1373,7 +1373,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=sizeof(uint16_t);
                 if((size-pos)<(unsigned int)sizeof(uint32_t))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1394,14 +1394,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if(!isInTrade)
             {
-                parseError("Procotol wrong or corrupted","not in trade main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","not in trade main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
             }
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1415,7 +1415,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<((int)sizeof(uint64_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong remaining size for trade add cash");
+                        parseError("Protocol wrong or corrupted","wrong remaining size for trade add cash");
                         return false;
                     }
                     uint64_t cash=le64toh(*reinterpret_cast<const uint64_t *>(data+pos));
@@ -1428,14 +1428,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 {
                     if((size-pos)<((int)sizeof(uint16_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong remaining size for trade add item id");
+                        parseError("Protocol wrong or corrupted","wrong remaining size for trade add item id");
                         return false;
                     }
                     uint16_t item=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                     pos+=sizeof(uint16_t);
                     if((size-pos)<((int)sizeof(uint32_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong remaining size for trade add item quantity");
+                        parseError("Protocol wrong or corrupted","wrong remaining size for trade add item quantity");
                         return false;
                     }
                     uint32_t quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
@@ -1453,7 +1453,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 }
                 break;
                 default:
-                    parseError("Procotol wrong or corrupted","wrong type for trade add");
+                    parseError("Protocol wrong or corrupted","wrong type for trade add");
                     return false;
                 break;
             }
@@ -1469,14 +1469,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if(isInTrade)
             {
-                parseError("Procotol wrong or corrupted","already in trade main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","already in trade main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
             }
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1488,7 +1488,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)pseudoSize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1497,7 +1497,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=pseudoSize;
                 if(pseudo.empty())
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1506,7 +1506,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t skinId;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                               );
                 return false;
@@ -1534,7 +1534,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if(!isInTrade)
             {
-                parseError("Procotol wrong or corrupted","not in trade with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","not in trade with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             tradeFinishedByOther();
@@ -1545,7 +1545,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if(!isInTrade)
             {
-                parseError("Procotol wrong or corrupted","not in trade with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","not in trade with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             isInTrade=false;
@@ -1566,7 +1566,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
 
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             attackReturnListSize=data[pos];
@@ -1587,20 +1587,20 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 tempAttackReturn.item=0;
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 tempuint=data[pos];
                 pos+=sizeof(uint8_t);
                 if(tempuint>1)
                 {
-                    parseError("Procotol wrong or corrupted","code to bool with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","code to bool with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 tempAttackReturn.doByTheCurrentMonster=(tempuint!=0);
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 tempuint=data[pos];
@@ -1611,20 +1611,20 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempuint=data[pos];
                         pos+=sizeof(uint8_t);
                         if(tempuint>1)
                         {
-                            parseError("Procotol wrong or corrupted","code to bool with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","code to bool with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempAttackReturn.success=(tempuint!=0);
                         if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempAttackReturn.attack=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
@@ -1633,7 +1633,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         index=0;
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         listSizeShort=data[pos];
@@ -1643,14 +1643,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             Skill::BuffEffect buffEffect;
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.buff=data[pos];
                             pos+=sizeof(uint8_t);
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             tempuint=data[pos];
@@ -1664,13 +1664,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 case ApplyOn_Nobody:
                                 break;
                                 default:
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.on=(ApplyOn)tempuint;
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.level=data[pos];
@@ -1682,7 +1682,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         index=0;
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         listSizeShort=data[pos];
@@ -1692,14 +1692,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             Skill::BuffEffect buffEffect;
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.buff=data[pos];
                             pos+=sizeof(uint8_t);
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             tempuint=data[pos];
@@ -1713,13 +1713,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 case ApplyOn_Nobody:
                                 break;
                                 default:
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.on=(ApplyOn)tempuint;
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buffEffect.level=data[pos];
@@ -1731,7 +1731,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         index=0;
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         listSizeShort=data[pos];
@@ -1741,14 +1741,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             Skill::LifeEffectReturn lifeEffectReturn;
                             if((size-pos)<(unsigned int)(sizeof(uint32_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             lifeEffectReturn.quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
                             pos+=sizeof(uint32_t);
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             tempuint=data[pos];
@@ -1762,7 +1762,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 case ApplyOn_Nobody:
                                 break;
                                 default:
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             lifeEffectReturn.on=(ApplyOn)tempuint;
@@ -1773,7 +1773,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         index=0;
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         listSizeShort=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
@@ -1783,14 +1783,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             Skill::LifeEffectReturn lifeEffectReturn;
                             if((size-pos)<(unsigned int)(sizeof(uint32_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             lifeEffectReturn.quantity=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
                             pos+=sizeof(uint32_t);
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             tempuint=data[pos];
@@ -1804,7 +1804,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 case ApplyOn_Nobody:
                                 break;
                                 default:
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             lifeEffectReturn.on=(ApplyOn)tempuint;
@@ -1817,42 +1817,42 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempAttackReturn.monsterPlace=data[pos];
                         pos+=sizeof(uint8_t);
                         if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         publicPlayerMonster.monster=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                         pos+=sizeof(uint16_t);
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         publicPlayerMonster.level=data[pos];
                         pos+=sizeof(uint8_t);
                         if((size-pos)<(unsigned int)(sizeof(uint32_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         publicPlayerMonster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
                         pos+=sizeof(uint32_t);
                         if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         publicPlayerMonster.catched_with=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                         pos+=sizeof(uint16_t);
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         genderInt=data[pos];
@@ -1865,7 +1865,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                                 publicPlayerMonster.gender=(Gender)genderInt;
                             break;
                             default:
-                                parseError("Procotol wrong or corrupted","gender code wrong: "+std::to_string(genderInt)+
+                                parseError("Protocol wrong or corrupted","gender code wrong: "+std::to_string(genderInt)+
                                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                            );
                                 return false;
@@ -1873,7 +1873,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         }
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         buffListSize=data[pos];
@@ -1884,14 +1884,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                             PlayerBuff buff;
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buff.buff=data[pos];
                             pos+=sizeof(uint8_t);
                             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                             {
-                                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                                 return false;
                             }
                             buff.level=data[pos];
@@ -1906,7 +1906,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempuint=data[pos];
@@ -1914,7 +1914,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                         tempAttackReturn.on_current_monster=(tempuint!=0x00);
                         if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                             return false;
                         }
                         tempAttackReturn.item=data[pos];
@@ -1922,7 +1922,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     }
                     break;
                     default:
-                    parseError("Procotol wrong or corrupted","Skill::AttackReturnCase wrong with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","Skill::AttackReturnCase wrong with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 attackReturn.push_back(tempAttackReturn);
@@ -1941,7 +1941,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             std::string pseudo;
@@ -1951,7 +1951,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)pseudoSize)
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1960,7 +1960,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 pos+=pseudoSize;
                 if(pseudo.empty())
                 {
-                    parseError("Procotol wrong or corrupted","UTF8 decoding failed with main ident: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","UTF8 decoding failed with main ident: "+std::to_string(packetCode)+
                                ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                   );
                     return false;
@@ -1969,7 +1969,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t skinId;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             skinId=data[pos];
@@ -1981,7 +1981,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t monsterPlace;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             uint8_t statListSize=data[pos];
@@ -1991,7 +1991,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             {
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 uint8_t statEntry=data[pos];
@@ -2001,47 +2001,47 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             }
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             monsterPlace=data[pos];
             pos+=sizeof(uint8_t);
             if(monsterPlace<=0 || monsterPlace>stat.size())
             {
-                parseError("Procotol wrong or corrupted","monster place wrong range with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","monster place wrong range with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             if((size-pos)<(unsigned int)(sizeof(uint16_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             publicPlayerMonster.monster=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             publicPlayerMonster.level=data[pos];
             pos+=sizeof(uint8_t);
             if((size-pos)<(unsigned int)(sizeof(uint32_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             publicPlayerMonster.hp=le32toh(*reinterpret_cast<const uint32_t *>(data+pos));
             pos+=sizeof(uint32_t);
             if((size-pos)<(unsigned int)(sizeof(uint16_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             publicPlayerMonster.catched_with=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
             pos+=sizeof(uint16_t);
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
@@ -2055,14 +2055,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     publicPlayerMonster.gender=(Gender)genderInt;
                 break;
                 default:
-                    parseError("Procotol wrong or corrupted","gender code wrong: "+std::to_string(genderInt)+
+                    parseError("Protocol wrong or corrupted","gender code wrong: "+std::to_string(genderInt)+
                                ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 break;
             }
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                            ", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
@@ -2074,14 +2074,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                 PlayerBuff buff;
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 buff.buff=data[pos];
                 pos+=sizeof(uint8_t);
                 if((size-pos)<(unsigned int)(sizeof(uint8_t)))
                 {
-                    parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                    parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                     return false;
                 }
                 buff.level=data[pos];
@@ -2097,7 +2097,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         {
             if(size<128)
             {
-                parseError("Procotol wrong or corrupted","have too less data for random seed with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","have too less data for random seed with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             random_seeds(std::string(data,size));
@@ -2111,7 +2111,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t returnCode;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             returnCode=data[pos];
@@ -2130,7 +2130,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     {
                         if((size-pos)<(unsigned int)stringSize)
                         {
-                            parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
+                            parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+
                                        ", data: "+binarytoHexa(data+pos,size)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__)
                                           );
                             return false;
@@ -2149,14 +2149,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     uint16_t player_count,clan_count;
                     if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     player_count=data[pos];
                     pos+=sizeof(uint8_t);
                     if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     clan_count=data[pos];
@@ -2176,14 +2176,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     uint16_t player_count,clan_count;
                     if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     player_count=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
                     pos+=sizeof(uint16_t);
                     if((size-pos)<(unsigned int)(sizeof(uint16_t)))
                     {
-                        parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                        parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                         return false;
                     }
                     clan_count=le16toh(*reinterpret_cast<const uint16_t *>(data+pos));
@@ -2195,7 +2195,7 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
                     captureCityWin();
                 break;
                 default:
-                    parseError("Procotol wrong or corrupted","unknown subCodeType main code: "+std::to_string(packetCode)+
+                    parseError("Protocol wrong or corrupted","unknown subCodeType main code: "+std::to_string(packetCode)+
                                ", returnCode: "+std::to_string(returnCode)+", line: "+
                                std::string(__FILE__)+":"+std::to_string(__LINE__)
                                );
@@ -2211,14 +2211,14 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
             uint8_t progression;
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             gateway=data[pos];
             pos+=sizeof(uint8_t);
             if((size-pos)<(unsigned int)(sizeof(uint8_t)))
             {
-                parseError("Procotol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
+                parseError("Protocol wrong or corrupted","wrong size with main ident: "+std::to_string(packetCode)+", line: "+std::string(__FILE__)+":"+std::to_string(__LINE__));
                 return false;
             }
             progression=data[pos];
@@ -2228,13 +2228,13 @@ bool Api_protocol::parseMessage(const uint8_t &packetCode, const char * const da
         break;
 
         default:
-            parseError("Procotol wrong or corrupted","unknown ident main code: "+std::to_string(packetCode));
+            parseError("Protocol wrong or corrupted","unknown ident main code: "+std::to_string(packetCode));
             return false;
         break;
     }
     if((size-pos)!=0)
     {
-        parseError("Procotol wrong or corrupted","remaining data: parseMessage("+std::to_string(packetCode)+
+        parseError("Protocol wrong or corrupted","remaining data: parseMessage("+std::to_string(packetCode)+
                    ","+binarytoHexa(data,pos)+
                    " "+binarytoHexa(data+pos,size-pos)+
                    ") line "+std::string(__FILE__)+":"+std::to_string(__LINE__)

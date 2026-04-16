@@ -102,7 +102,7 @@ void Settings::populateSettings(QSettings &settings, Settings::Setting& config)
 
                     //before map creation
                     const bool outsideBorder=settings.value("outsideBorder").toBool();
-                    //tempory value
+                    //temporary value
                     const QString &tmp_transition_tsx=settings.value("transition_tsx").toString();
                     std::vector<uint32_t> tmp_transition_tile;
                     {
@@ -173,7 +173,7 @@ void Settings::populateSettings(QSettings &settings, Settings::Setting& config)
                 }
                 const QString &layerString=settings.value("layer").toString();
 
-                //tempory value
+                //temporary value
                 const QString &tmp_transition_tsx=settings.value("transition_tsx").toString();
                 std::vector<uint32_t> tmp_transition_tile;
                 {

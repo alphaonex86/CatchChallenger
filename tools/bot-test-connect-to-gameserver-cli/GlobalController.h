@@ -15,12 +15,12 @@
 #include "../libbot/MultipleBotConnectionImplForGui.h"
 #include "../../client/libcatchchallenger/ClientStructures.hpp"
 
-class GlobalControler : public QObject
+class GlobalController : public QObject
 {
     Q_OBJECT
 public:
-    explicit GlobalControler(const std::string &config,QObject *parent = 0);
-    ~GlobalControler();
+    explicit GlobalController(const std::string &config,QObject *parent = 0);
+    ~GlobalController();
 private:
     QSettings settings;
     QTimer slowDownTimer;

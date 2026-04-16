@@ -47,7 +47,7 @@ class StreamInputBuffer {
     return *this;
   }
   
-  //usefull to debug and profile the file size
+  //useful to debug and profile the file size
   inline size_t tellg() const {
       return (size_t)stream->tellg() - (size_t)STREAM_INPUT_BUFFER_SIZE + (size_t)pos;
   }

@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
     if(argc!=2)
     {
-        std::cerr << "Only accept one arguement, the tmx to compress" << std::endl;
+        std::cerr << "Only accept one argument, the tmx to compress" << std::endl;
         return -1;
     }
 

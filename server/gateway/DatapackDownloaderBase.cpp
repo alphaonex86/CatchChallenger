@@ -101,7 +101,7 @@ void DatapackDownloaderBase::haveTheDatapack()
                 std::cout << "Correctly execute " << DatapackDownloaderBase::commandUpdateDatapackBase << " with return code: " << std::to_string(ret) << std::endl;
         }
         else
-            std::cout << "Not execute due to no file writen " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
+            std::cout << "Not execute due to no file written " << DatapackDownloaderBase::commandUpdateDatapackBase << std::endl;
     }
     else
         std::cout << "No command defined" << std::endl;

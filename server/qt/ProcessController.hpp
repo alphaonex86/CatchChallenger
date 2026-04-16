@@ -1,5 +1,5 @@
-#ifndef CATCHCHALLENGER_PROCESSCONTROLER_H
-#define CATCHCHALLENGER_PROCESSCONTROLER_H
+#ifndef CATCHCHALLENGER_PROCESSCONTROLLER_H
+#define CATCHCHALLENGER_PROCESSCONTROLLER_H
 
 #include <QCoreApplication>
 
@@ -10,12 +10,12 @@
 #include "base/TinyXMLSettings.hpp"
 #include "base/GlobalServerData.hpp"
 
-class ProcessControler : public QObject
+class ProcessController : public QObject
 {
     Q_OBJECT
 public:
-    explicit ProcessControler();
-    ~ProcessControler();
+    explicit ProcessController();
+    ~ProcessController();
 protected:
     void changeEvent(QEvent *e);
 private:

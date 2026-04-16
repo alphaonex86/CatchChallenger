@@ -210,11 +210,6 @@ void generate()
 
             body << "Endurance: " << (unsigned)lvl.endurance << "<br />\n";
 
-            if(lvl.sp_to_learn!=0)
-                body << "Skill point (SP) to learn: " << lvl.sp_to_learn << "<br />\n";
-            else
-                body << "You can't learn this skill<br />\n";
-
             // Life quantity
             for(const auto &li : lvl.life)
             {

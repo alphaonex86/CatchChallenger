@@ -330,7 +330,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
             }
         }
         else
-            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob lenght: " << monster.size() << ", characterId: " << characterId << std::endl;
+            std::cerr << "CharactersGroupForLogin::deleteCharacterNow_return() have incorrect monster blob length: " << monster.size() << ", characterId: " << characterId << std::endl;
     }
     {
         const std::string &monster_warehouse=databaseBaseCommon->value(1);
@@ -350,7 +350,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
             }
         }
         else
-            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob lenght: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
+            std::cerr << "CharactersGroupForLogin::deleteCharacterNow_return() have incorrect monster_warehouse blob length: " << monster_warehouse.size() << ", characterId: " << characterId << std::endl;
     }
     {
         const std::string &monster_market=databaseBaseCommon->value(2);
@@ -370,7 +370,7 @@ void CharactersGroupForLogin::deleteCharacterNow_return(const uint32_t &characte
             }
         }
         else
-            std::cerr << "haractersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob lenght: " << monster_market.size() << ", characterId: " << characterId << std::endl;
+            std::cerr << "CharactersGroupForLogin::deleteCharacterNow_return() have incorrect monster_market blob length: " << monster_market.size() << ", characterId: " << characterId << std::endl;
     }
 
     const std::string &queryText=preparedDBQueryCommonForLogin.db_query_delete_character.compose(

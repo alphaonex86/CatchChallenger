@@ -195,7 +195,7 @@ void BaseServer::preload_6_sync_the_datapack()
 
                         hashBase.update(reinterpret_cast<const unsigned char *>(data.data()),data.size());
 
-                        /*usefull to debug: hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
+                        /*useful to debug: hashBase.final(reinterpret_cast<unsigned char *>(ProtocolParsingBase::tempBigBufferForOutput));
                         std::cout << str_tolower(binarytoHexa(ProtocolParsingBase::tempBigBufferForOutput,CATCHCHALLENGER_SHA224HASH_SIZE)) << "  " << fullPathFileToOpen.c_str() << std::endl;
                         if(fullPathFileToOpen.find("/map/main/")!=std::string::npos)
                         {
