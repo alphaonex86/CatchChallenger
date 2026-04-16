@@ -12,6 +12,12 @@ using namespace CatchChallenger;
 std::ifstream *BaseServer::dictionary_in_file=nullptr;
 hps::StreamInputBuffer *BaseServer::dictionary_serialBuffer=nullptr;
 bool BaseServer::dictionary_haveChange=false;
+std::ifstream *BaseServer::dictionary_reputation_in_file=nullptr;
+bool BaseServer::dictionary_reputation_haveChange=false;
+std::ifstream *BaseServer::dictionary_skin_in_file=nullptr;
+bool BaseServer::dictionary_skin_haveChange=false;
+std::ifstream *BaseServer::dictionary_starter_in_file=nullptr;
+bool BaseServer::dictionary_starter_haveChange=false;
 #endif
 
 //clean this, it's done before the main epoll loop

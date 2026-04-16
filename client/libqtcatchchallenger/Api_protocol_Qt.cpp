@@ -1524,14 +1524,6 @@ void Api_protocol_Qt::confirmEvolutionByPosition(const uint8_t &monterPosition)
     return;
 }
 
-//return true if change level, multiplicator do at datapack loading
-/*bool Api_protocol_Qt::giveXPSP(int xp,int sp)
-{
-    bool haveChangeOfLevel=CommonFightEngine::giveXPSP(xp,sp);
-    mLastGivenXP=xp;
-    return haveChangeOfLevel;
-}*/
-
 uint32_t Api_protocol_Qt::lastGivenXP()
 {
     uint32_t tempLastGivenXP=mLastGivenXP;

@@ -6,6 +6,9 @@
 #include "../../libqtcatchchallenger/maprender/QMap_client.hpp"
 #include "../../../general/base/CommonDatapackServerSpec.hpp"
 #include "../../../general/base/CommonDatapack.hpp"
+#include "../above/Shop.hpp"
+#include "../above/Factory.hpp"
+#include "../above/Warehouse.hpp"
 #include <iostream>
 #include <QDesktopServices>
 
@@ -155,49 +158,31 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
             showTip(tr("Shop called but wrong id").toStdString());
             return;
         }
-        //shops are now per-map in BaseMap, validated on server side
-        Q_UNUSED(shopId);
-/*        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
+        // open shop screen
         {
-            QPixmap skin(QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin"))));
-            if(!skin.isNull())
+            uint8_t skinId=0;
+            if(actualBot.properties.find("skin")!=actualBot.properties.cend())
+                skinId=static_cast<uint8_t>(std::stoi(actualBot.properties.at("skin")));
+            if(shop==nullptr)
             {
-                ui->shopSellerImage->setPixmap(skin.scaled(160,160));
-                ui->shopSellerImage->setVisible(true);
+                shop=new Shop();
+                if(!connect(shop,&Shop::setAbove,this,&OverMapLogic::setAbove))
+                    abort();
+                if(!connect(shop,&Shop::add_to_inventory,this,&OverMapLogic::add_to_inventory_slotpair))
+                    abort();
+                if(!connect(shop,&Shop::remove_to_inventory,this,&OverMapLogic::remove_to_inventory_slotpair))
+                    abort();
+                if(!connect(shop,&Shop::addCash,this,&OverMapLogic::addCash))
+                    abort();
+                if(!connect(shop,&Shop::removeCash,this,&OverMapLogic::removeCash))
+                    abort();
+                if(!connect(shop,&Shop::showTip,this,&OverMapLogic::showTip))
+                    abort();
             }
-            else
-                ui->shopSellerImage->setVisible(false);
+            shop->setVar(connexionManager,actualBot.name,skinId);
+            setAbove(shop);
+            connexionManager->client->getShopList();
         }
-        else
-            ui->shopSellerImage->setVisible(false);
-        ui->stackedWidget->setCurrentWidget(ui->page_shop);
-        ui->shopItemList->clear();
-        on_shopItemList_itemSelectionChanged();
-        #ifndef CATCHCHALLENGER_CLIENT_INSTANT_SHOP
-        ui->shopDescription->setText(tr("Waiting the shop content"));
-        ui->shopBuy->setVisible(false);
-        qDebug() << "goToBotStep(), connexionManager->client->getShopList(shopId): " << shopId;
-        connexionManager->client->getShopList(shopId);
-        #else
-        {
-            std::vector<ItemToSellOrBuy> items;
-            const Shop &shop=CommonDatapackServerSpec::commonDatapackServerSpec.shops.at(shopId);
-            unsigned int index=0;
-            while(index<shop.items.size())
-            {
-                if(shop.prices.at(index)>0)
-                {
-                    ItemToSellOrBuy newItem;
-                    newItem.object=shop.items.at(index);
-                    newItem.price=shop.prices.at(index);
-                    newItem.quantity=0;
-                    items << newItem;
-                }
-                index++;
-            }
-            haveShopList(items);
-        }
-        #endif*/
         return;
     }
     else if(strcmp(stepXml->Attribute("type"),"sell")==0)
@@ -300,40 +285,20 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
     }
     else if(strcmp(stepXml->Attribute("type"),"warehouse")==0)
     {
-        /*monster_to_withdraw.clear();
-        monster_to_deposit.clear();
-        change_warehouse_items.clear();
-        temp_warehouse_cash=0;
-        QPixmap pixmap;
+        uint8_t skinId=0;
         if(actualBot.properties.find("skin")!=actualBot.properties.cend())
+            skinId=static_cast<uint8_t>(std::stoi(actualBot.properties.at("skin")));
+        if(warehouse==nullptr)
         {
-            ui->warehousePlayerImage->setVisible(true);
-            ui->warehousePlayerPseudo->setVisible(true);
-            ui->warehouseBotImage->setVisible(true);
-            ui->warehouseBotPseudo->setVisible(true);
-            pixmap=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
-            if(pixmap.isNull())
-            {
-                ui->warehousePlayerImage->setVisible(false);
-                ui->warehousePlayerPseudo->setVisible(false);
-                ui->warehouseBotImage->setVisible(false);
-                ui->warehouseBotPseudo->setVisible(false);
-            }
-            else
-                ui->warehouseBotImage->setPixmap(pixmap);
+            warehouse=new Warehouse();
+            if(!connect(warehouse,&Warehouse::setAbove,this,&OverMapLogic::setAbove))
+                abort();
+            if(!connect(warehouse,&Warehouse::showTip,this,&OverMapLogic::showTip))
+                abort();
         }
-        else
-        {
-            ui->warehousePlayerImage->setVisible(false);
-            ui->warehousePlayerPseudo->setVisible(false);
-            ui->warehouseBotImage->setVisible(false);
-            ui->warehouseBotPseudo->setVisible(false);
-            pixmap=QPixmap(QStringLiteral(":/CC/images/player_default/front.png"));
-        }
-        ui->stackedWidget->setCurrentWidget(ui->page_warehouse);
-        updateTheWareHouseContent();
-        return;*/
-        abort();
+        warehouse->setVar(connexionManager,actualBot.name,skinId);
+        setAbove(warehouse);
+        return;
     }
     else if(strcmp(stepXml->Attribute("type"),"industry")==0)
     {
@@ -360,26 +325,31 @@ void OverMapLogic::goToBotStep(const uint8_t &step)
                 return;
             }
         }
-        /*ui->factoryResources->clear();
-        ui->factoryProducts->clear();
-        ui->factoryStatus->setText(tr("Waiting of status"));
-        if(actualBot.properties.find("skin")!=actualBot.properties.cend())
+        // open factory screen
         {
-            QPixmap skin=QString::fromStdString(getFrontSkinPath(actualBot.properties.at("skin")));
-            if(!skin.isNull())
+            if(factory==nullptr)
             {
-                ui->factoryBotImage->setPixmap(skin.scaled(80,80));
-                ui->factoryBotImage->setVisible(true);
+                factory=new Factory();
+                if(!connect(factory,&Factory::setAbove,this,&OverMapLogic::setAbove))
+                    abort();
+                if(!connect(factory,&Factory::add_to_inventory,this,&OverMapLogic::add_to_inventory_slotpair))
+                    abort();
+                if(!connect(factory,&Factory::remove_to_inventory,this,&OverMapLogic::remove_to_inventory_slotpair))
+                    abort();
+                if(!connect(factory,&Factory::addCash,this,&OverMapLogic::addCash))
+                    abort();
+                if(!connect(factory,&Factory::removeCash,this,&OverMapLogic::removeCash))
+                    abort();
+                if(!connect(factory,&Factory::showTip,this,&OverMapLogic::showTip))
+                    abort();
+                if(!connect(factory,&Factory::appendReputationRewards,this,&OverMapLogic::appendReputationRewards))
+                    abort();
             }
-            else
-                ui->factoryBotImage->setVisible(false);
+            factory->setVar(connexionManager,factoryId);
+            setAbove(factory);
+            connexionManager->client->getFactoryList();
         }
-        else
-            ui->factoryBotImage->setVisible(false);
-        ui->stackedWidget->setCurrentWidget(ui->page_factory);
-        connexionManager->client->getFactoryList(factoryId);
-        return;*/
-        abort();
+        return;
     }
     else if(strcmp(stepXml->Attribute("type"),"zonecapture")==0)
     {

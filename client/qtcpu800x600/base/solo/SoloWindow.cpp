@@ -1,6 +1,7 @@
 #include "SoloWindow.h"
 #include "ui_solowindow.h"
 
+#include <iostream>
 #include <QSettings>
 #include <QInputDialog>
 #include <QSqlQuery>
@@ -645,6 +646,26 @@ void SoloWindow::on_SaveGame_Copy_clicked()
     QSettings metaData(destinationPath+SoloWindow::text_metadatadotconf,QSettings::IniFormat);
     metaData.setValue(SoloWindow::text_title,tr("Copy of %1").arg(metaData.value(SoloWindow::text_title).toString()));
     updateSavegameList();
+}
+
+bool SoloWindow::playFirstSavegame()
+{
+    for(ListEntryEnvolued * const entry : savegame)
+    {
+        if(savegameWithMetaData.count(entry)==0 || !savegameWithMetaData.at(entry))
+            continue;
+        if(savegamePathList.count(entry)==0)
+            continue;
+        const std::string &path=savegamePathList.at(entry);
+        std::cerr << "AutoArgs: --autosolo playing savegame: " << path << std::endl;
+        selectedSavegame=entry;
+        SoloWindowListEntryEnvoluedUpdate();
+        emit play(path);
+        return true;
+    }
+    std::cerr << "AutoArgs: --autosolo no playable savegame found (count=" << savegame.size()
+              << " datapackExists=" << (datapackPathExists?"true":"false") << ")" << std::endl;
+    return false;
 }
 
 void SoloWindow::on_SaveGame_Play_clicked()

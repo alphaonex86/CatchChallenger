@@ -231,6 +231,13 @@ void QtServer::removeOneClient()
         QtClientWithMap *c=static_cast<QtClientWithMap *>(client);
         if(c->socket==socket)
         {
+            //persist savegame state (savePosition etc.) before the slot tears the
+            //client down. Without this, closing the window drops the socket which
+            //fires this handler, erases the client from client_list, and deletes
+            //it before stop_internal_server_slot has a chance to call
+            //disconnectClient() — so the last x,y never reaches the DB.
+            std::cerr << "[QtServer::removeOneClient] disconnectClient() for client " << client << std::endl;
+            static_cast<CatchChallenger::Client *>(c)->disconnectClient();
             CatchChallenger::ClientList::list->remove(*c);
             client_list.erase(client);
             delete c;
@@ -409,11 +416,12 @@ void QtServer::stop_internal_server()
 
 void QtServer::stop_internal_server_slot()
 {
-    std::cerr << "QtServer::stop_internal_server_slot()" << std::endl;
+    std::cerr << "QtServer::stop_internal_server_slot() client_list.size()=" << client_list.size() << std::endl;
     auto i=client_list.begin();
     while(i!=client_list.cend())
     {
         QtClientWithMap *c=static_cast<QtClientWithMap *>(*i);
+        std::cerr << "[stop_internal_server_slot] disconnectClient() for client " << c << std::endl;
         static_cast<CatchChallenger::Client *>(c)->disconnectClient();
         CatchChallenger::ClientList::list->remove(*c);
         delete c;

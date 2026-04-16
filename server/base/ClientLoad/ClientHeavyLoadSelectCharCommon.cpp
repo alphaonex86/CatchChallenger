@@ -127,7 +127,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
 
     /* account(0),pseudo(1),skin(2),type(3),clan(4),cash(5),
     warehouse_cash(6),clan_leader(7),time_to_delete(8),starter(9),
-    allow(10),item(11),item_warehouse(12),recipes(13),reputations(14),
+    allowCreateClan(10),item(11),item_warehouse(12),recipes(13),reputations(14),
     encyclopedia_monster(15),encyclopedia_item(16),achievements(17),date(18),lastdaillygift(19)
     NB: the SELECT in PreparedDBQueryCommon::db_query_character_by_id dropped
     blob_version; date/lastdaillygift indices shifted by one vs the old layout. */
@@ -146,7 +146,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     }
     std::string hexa,pseudo;
     {
-        std::ifstream in_file("database/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
+        std::ifstream in_file("database/common/accounts/"+std::to_string(account_id_db), std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
@@ -183,7 +183,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         abort();
     }
     struct stat sb;
-    if(::stat(("database/characters/"+hexa).c_str(),&sb)!=0)
+    if(::stat(("database/common/characters/"+hexa).c_str(),&sb)!=0)
     #else
     #error Define what do here
     #endif
@@ -347,29 +347,11 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         return;
     }
 
-    //allow
+    //allowCreateClan
     {
-        const std::vector<char> &data=GlobalServerData::serverPrivateVariables.db_common->hexatoBinary(GlobalServerData::serverPrivateVariables.db_common->value(10),&ok);
-        const char * const data_raw=data.data();
+        public_and_private_informations.allowCreateClan=(GlobalServerData::serverPrivateVariables.db_common->stringtobool(GlobalServerData::serverPrivateVariables.db_common->value(10),&ok)==1);
         if(!ok)
-        {
-            character_id_db=characterId;
-            characterSelectionIsWrong(query_id,0x04,"allow not in hexa");
-            return;
-        }
-        unsigned int pos=0;
-        while(pos<data.size())
-        {
-            const uint8_t &allow=data_raw[pos];
-            if(allow>=1 && allow<=1)
-                public_and_private_informations.allowCreateClan=true;
-            else
-            {
-                ok=false;
-                normalOutput("allow id: "+GlobalServerData::serverPrivateVariables.db_common->value(0)+" is not reverse");
-            }
-            pos+=1;
-        }
+            public_and_private_informations.allowCreateClan=false;
     }
     //encyclopedia_monster
     {
@@ -522,14 +504,13 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
                 normalOutput("The reputation: "+std::to_string(typeReputation)+" don't exist");
                 continue;
             }
-            if(DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation)==-1)
+            if(DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation)==255)
             {
                 normalOutput("The reputation: "+std::to_string(typeReputation)+" not resolved");
                 continue;
             }
-            const int &reputationInternalIdFull=DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation);
-            const uint8_t &reputationInternalId=static_cast<uint8_t>(reputationInternalIdFull);
-            if(reputationInternalIdFull>=0)
+            const uint8_t &reputationInternalId=DictionaryLogin::dictionary_reputation_database_to_internal.at(typeReputation);
+            if(reputationInternalId!=255)
             {
                 if(playerReputation.level>=0)
                 {
@@ -605,7 +586,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
-        std::ifstream in_file("database/characters/"+hexa, std::ifstream::binary);
+        std::ifstream in_file("database/common/characters/"+hexa, std::ifstream::binary);
         if(!in_file.good() || !in_file.is_open())
         {
             std::cerr << "Try select character " << characterId << " but not found with account " << account_id_db << std::endl;
@@ -616,6 +597,18 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
         hps::StreamInputBuffer s(in_file);
         s >> *this;
         public_and_private_informations.public_informations.pseudo=pseudo;
+        //Map-linked character data (mapData, quests) lives in a separate file.
+        if(!loadCharacterServerFile())
+        {
+            //Missing server-part file is not fatal: character was created
+            //before the split or has no per-map state yet. Leave mapData and
+            //quests empty — they will be written on disconnect.
+            public_and_private_informations.mapData.clear();
+            public_and_private_informations.quests.clear();
+            public_and_private_informations.reputation.clear();
+            public_and_private_informations.items.clear();
+            public_and_private_informations.allowCreateClan=false;
+        }
         selectCharacterQueryId.push_back(query_id);
     }
     if(this->mapIndex==65535)
@@ -628,7 +621,7 @@ void Client::selectCharacter_return(const uint8_t &query_id,const uint32_t &char
     {
         if(GlobalServerData::serverPrivateVariables.clanList.find(public_and_private_informations.clan)==GlobalServerData::serverPrivateVariables.clanList.cend())
         {
-            std::ifstream clan_file("database/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
+            std::ifstream clan_file("database/server/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
             if(clan_file.good() && clan_file.is_open())
             {
                 std::string clanName;

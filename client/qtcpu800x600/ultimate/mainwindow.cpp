@@ -202,6 +202,35 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->UltimateKey->hide();
     }
 
+    #if defined(CATCHCHALLENGER_SOLO)
+    if(AutoArgs::autosolo)
+    {
+        QTimer::singleShot(0,this,[this](){
+            int index=ui->stackedWidget->indexOf(solowindow);
+            if(index<0)
+            {
+                std::cerr << "AutoArgs: --autosolo requested but solo window is unavailable" << std::endl;
+                QCoreApplication::quit();
+                return;
+            }
+            ui->stackedWidget->setCurrentWidget(solowindow);
+            if(!solowindow->playFirstSavegame())
+            {
+                QCoreApplication::quit();
+                return;
+            }
+        });
+        QTimer::singleShot(10000,this,[this](){
+            std::cerr << "AutoArgs: --autosolo timeout (10s) reached, dumping and exiting" << std::endl;
+            if(baseWindow!=NULL)
+                baseWindow->dumpAutoSoloInfo();
+            else if(client!=NULL)
+                std::cout << "  current pseudo: \"" << client->getPseudo() << "\"" << std::endl;
+            QCoreApplication::quit();
+        });
+    }
+    #endif
+
     if(!AutoArgs::server.isEmpty())
     {
         on_multiplayer_clicked();

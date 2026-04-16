@@ -9,30 +9,6 @@
 
 using namespace CatchChallenger;
 
-void BaseWindow::on_warehouseWithdrawCash_clicked()
-{
-    // warehouse cash feature removed
-    return;
-}
-
-void BaseWindow::on_warehouseDepositCash_clicked()
-{
-    // warehouse cash feature removed
-    return;
-}
-
-void BaseWindow::on_warehouseWithdrawItem_clicked()
-{
-    // warehouse item transfer feature removed
-    return;
-}
-
-void BaseWindow::on_warehouseDepositItem_clicked()
-{
-    // warehouse item transfer feature removed
-    return;
-}
-
 void BaseWindow::on_warehouseWithdrawMonster_clicked()
 {
     QList<QListWidgetItem *> itemList=ui->warehousePlayerStoredMonster->selectedItems();
@@ -63,20 +39,6 @@ void BaseWindow::on_warehouseDepositMonster_clicked()
         return;
     }
     on_warehousePlayerMonster_itemActivated(itemList.first());
-}
-
-void BaseWindow::on_warehousePlayerInventory_itemActivated(QListWidgetItem *item)
-{
-    Q_UNUSED(item);
-    // warehouse item transfer feature removed
-    return;
-}
-
-void BaseWindow::on_warehousePlayerStoredInventory_itemActivated(QListWidgetItem *item)
-{
-    Q_UNUSED(item);
-    // warehouse item transfer feature removed
-    return;
 }
 
 void BaseWindow::on_warehousePlayerMonster_itemActivated(QListWidgetItem *item)
@@ -133,8 +95,6 @@ std::vector<PlayerMonster> BaseWindow::warehouseMonsterOnPlayer() const
 
 void BaseWindow::on_toolButton_quit_warehouse_clicked()
 {
-    change_warehouse_items.clear();
-    temp_warehouse_cash=0;
     ui->stackedWidget->setCurrentWidget(ui->page_map);
 }
 
@@ -228,28 +188,6 @@ void BaseWindow::updateTheWareHouseContent()
         return;
     const CatchChallenger::Player_private_and_public_informations &playerInformations=client->get_player_informations_ro();
 
-    //inventory display (read-only, no warehouse item transfers)
-    {
-        ui->warehousePlayerInventory->clear();
-        auto i=playerInformations.items.begin();
-        while(i!=playerInformations.items.cend())
-        {
-            int32_t quantity=i->second;
-            if(quantity>0)
-                ui->warehousePlayerInventory->addItem(itemToGraphic(i->first,quantity));
-            ++i;
-        }
-    }
-
-    qDebug() << QStringLiteral("ui->warehousePlayerInventory icon size: %1x%2").arg(ui->warehousePlayerInventory->iconSize().width()).arg(ui->warehousePlayerInventory->iconSize().height());
-
-    //warehouse inventory removed - clear only
-    ui->warehousePlayerStoredInventory->clear();
-
-    //cash display (warehouse cash removed)
-    ui->warehousePlayerCash->setText(tr("Cash: %1").arg(playerInformations.cash));
-    ui->warehousePlayerStoredCash->setText(tr("Cash: N/A"));
-
     //do before because the dispatch put into random of it
     ui->warehousePlayerStoredMonster->clear();
     ui->warehousePlayerMonster->clear();
@@ -301,11 +239,6 @@ void BaseWindow::updateTheWareHouseContent()
         }
     }
 
-    //set the button enabled - cash and item buttons disabled (features removed)
-    ui->warehouseWithdrawCash->setEnabled(false);
-    ui->warehouseDepositCash->setEnabled(false);
-    ui->warehouseDepositItem->setEnabled(false);
-    ui->warehouseWithdrawItem->setEnabled(false);
     ui->warehouseDepositMonster->setEnabled(ui->warehousePlayerMonster->count()>1);
     ui->warehouseWithdrawMonster->setEnabled(ui->warehousePlayerStoredMonster->count()>0);
 }

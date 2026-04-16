@@ -36,7 +36,7 @@ CREATE TABLE "character" (
     played_time integer,
     last_connect integer,
     starter smallint,
-    allow bytea,
+    "allowCreateClan" boolean DEFAULT false NOT NULL,
     item bytea,
     item_warehouse bytea,
     recipes bytea,
@@ -105,6 +105,42 @@ CREATE TABLE server_time (
 ALTER TABLE server_time OWNER TO postgres;
 
 --
+-- Name: dictionary_reputation; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE dictionary_reputation (
+    id integer NOT NULL,
+    reputation text NOT NULL
+);
+
+
+ALTER TABLE dictionary_reputation OWNER TO postgres;
+
+--
+-- Name: dictionary_skin; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE dictionary_skin (
+    id integer NOT NULL,
+    skin text NOT NULL
+);
+
+
+ALTER TABLE dictionary_skin OWNER TO postgres;
+
+--
+-- Name: dictionary_starter; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE dictionary_starter (
+    id integer NOT NULL,
+    starter text NOT NULL
+);
+
+
+ALTER TABLE dictionary_starter OWNER TO postgres;
+
+--
 -- Name: character character_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -134,6 +170,30 @@ ALTER TABLE ONLY monster
 
 ALTER TABLE ONLY server_time
     ADD CONSTRAINT server_time_pkey PRIMARY KEY (server, account);
+
+
+--
+-- Name: dictionary_reputation dictionary_reputation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY dictionary_reputation
+    ADD CONSTRAINT dictionary_reputation_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dictionary_skin dictionary_skin_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY dictionary_skin
+    ADD CONSTRAINT dictionary_skin_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: dictionary_starter dictionary_starter_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY dictionary_starter
+    ADD CONSTRAINT dictionary_starter_pkey PRIMARY KEY (id);
 
 
 --

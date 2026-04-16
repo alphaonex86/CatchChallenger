@@ -154,11 +154,6 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                 std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"speed\": child->Name(): " << monsterNode->Name() << std::endl;
                 attributeIsOk=false;
             }
-            if(monsterNode->Attribute("give_sp")==NULL)
-            {
-                std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_sp\": child->Name(): " << monsterNode->Name() << std::endl;
-                attributeIsOk=false;
-            }
             if(monsterNode->Attribute("give_xp")==NULL)
             {
                 std::cerr << "Unable to open the xml file: " << file << ", have not the monster attribute \"give_xp\": child->Name(): " << monsterNode->Name() << std::endl;
@@ -313,12 +308,6 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                         monster.give_xp=stringtouint32(monsterNode->Attribute("give_xp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp/1000;
                         if(!ok)
                             std::cerr << "Unable to open the xml file: " << file << ", give_xp is not number: child->Name(): " << monsterNode->Name() << std::endl;
-                    }
-                    if(ok)
-                    {
-                        monster.give_sp=stringtouint32(monsterNode->Attribute("give_sp"),&ok)*CommonSettingsServer::commonSettingsServer.rates_xp/1000;
-                        if(!ok)
-                            std::cerr << "Unable to open the xml file: " << file << ", give_sp is not number: child->Name(): " << monsterNode->Name() << std::endl;
                     }
                     #endif
                     if(ok)

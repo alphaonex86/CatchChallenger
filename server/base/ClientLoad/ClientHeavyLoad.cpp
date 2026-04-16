@@ -311,7 +311,7 @@ void Client::loadReputation_return()
             normalOutput("The reputation: "+std::to_string(type)+" don't exist");
             continue;
         }
-        if(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)==-1)
+        if(DictionaryLogin::dictionary_reputation_database_to_internal.at(type)==255)
         {
             normalOutput("The reputation: "+std::to_string(type)+" not resolved");
             continue;

@@ -5,6 +5,7 @@
 #include "../../general/base/cpp11addition.hpp"
 #ifdef CATCHCHALLENGER_DB_FILE
 #include "BaseServer.hpp"
+#include <fstream>
 #endif
 
 #include <regex>
@@ -100,17 +101,18 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     #else
-    size_t s=0;
-    if(BaseServer::dictionary_serialBuffer!=nullptr)
-        *BaseServer::dictionary_serialBuffer >> s;
-    for (size_t i = 0; i < s; i++)
+    uint32_t tempId=0;
+    if(BaseServer::dictionary_reputation_in_file!=nullptr)
+    while(BaseServer::dictionary_reputation_in_file->peek()!=EOF)
     #endif
     {
         #ifdef CATCHCHALLENGER_DB_FILE
-        uint32_t tempId;
-        *BaseServer::dictionary_serialBuffer >> tempId;
-        std::string reputation;
-        *BaseServer::dictionary_serialBuffer >> reputation;
+        uint8_t len=0;
+        BaseServer::dictionary_reputation_in_file->read(reinterpret_cast<char*>(&len),1);
+        if(!BaseServer::dictionary_reputation_in_file->good()) break;
+        std::string reputation(len,'\0');
+        BaseServer::dictionary_reputation_in_file->read(&reputation[0],len);
+        if(!BaseServer::dictionary_reputation_in_file->good()) break;
         #else
         bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
@@ -125,7 +127,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             unsigned int index=static_cast<unsigned int>(dictionary_reputation_database_to_internal.size());
             while(index<=tempId)
             {
-                dictionary_reputation_database_to_internal.push_back(-1);
+                dictionary_reputation_database_to_internal.push_back(255);
                 index++;
             }
         }
@@ -136,6 +138,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             foundReputation.insert(reputation);
             CommonDatapack::commonDatapack.get_reputation_rw()[internalId].reverse_database_id=tempId;
         }
+        #ifdef CATCHCHALLENGER_DB_FILE
+        tempId++;
+        #endif
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
@@ -182,12 +187,12 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
-            BaseServer::dictionary_haveChange=true;
+            BaseServer::dictionary_reputation_haveChange=true;
             #else
             #error Define what do here
             #endif
             while(dictionary_reputation_database_to_internal.size()<=lastId)
-                dictionary_reputation_database_to_internal.push_back(-1);
+                dictionary_reputation_database_to_internal.push_back(255);
             dictionary_reputation_database_to_internal[lastId]=index;
             CommonDatapack::commonDatapack.get_reputation_rw()[index].reverse_database_id=lastId;
             #else
@@ -197,6 +202,38 @@ void BaseServerMasterLoadDictionary::preload_dictionary_reputation_return()
         }
         index++;
     }
+    #ifdef CATCHCHALLENGER_DB_FILE
+    if(BaseServer::dictionary_reputation_in_file!=nullptr)
+    {
+        BaseServer::dictionary_reputation_in_file->close();
+        delete BaseServer::dictionary_reputation_in_file;
+        BaseServer::dictionary_reputation_in_file=nullptr;
+    }
+    if(BaseServer::dictionary_reputation_haveChange)
+    {
+        std::ofstream dict_out("database/common/dictionary_reputation", std::ofstream::binary|std::ofstream::app);
+        if(dict_out.good() && dict_out.is_open())
+        {
+            unsigned int newCount=0;
+            for(uint8_t i=0;i<CommonDatapack::commonDatapack.get_reputation().size();i++)
+            {
+                if(foundReputation.find(CommonDatapack::commonDatapack.get_reputation().at(i).name)==foundReputation.end())
+                {
+                    const std::string &name=CommonDatapack::commonDatapack.get_reputation().at(i).name;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new reputation dictionary entries appended to database/common/dictionary_reputation" << std::endl;
+        }
+        else
+            std::cerr << "Unable to open database/common/dictionary_reputation for writing" << std::endl;
+        BaseServer::dictionary_reputation_haveChange=false;
+    }
+    #endif
     preload_dictionary_skin();
 }
 
@@ -260,22 +297,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     #else
-    size_t s=0;
-    if(BaseServer::dictionary_serialBuffer!=nullptr)
-        *BaseServer::dictionary_serialBuffer >> s;
-    for (size_t i = 0; i < s; i++)
+    uint32_t tempId=0;
+    if(BaseServer::dictionary_skin_in_file!=nullptr)
+    while(BaseServer::dictionary_skin_in_file->peek()!=EOF)
     #endif
     {
         #ifdef CATCHCHALLENGER_DB_FILE
-        uint32_t tempId;
-        *BaseServer::dictionary_serialBuffer >> tempId;
-        std::string skin;
-        *BaseServer::dictionary_serialBuffer >> skin;
+        uint8_t len=0;
+        BaseServer::dictionary_skin_in_file->read(reinterpret_cast<char*>(&len),1);
+        if(!BaseServer::dictionary_skin_in_file->good()) break;
+        std::string skin(len,'\0');
+        BaseServer::dictionary_skin_in_file->read(&skin[0],len);
+        if(!BaseServer::dictionary_skin_in_file->good()) break;
         #else
         bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
         if(!ok)
-            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_reputation_return() " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_skin_return() " << __FILE__ << ":" << __LINE__ << std::endl;
         const std::string &skin=databaseBaseBase->value(1);
         #endif
         if(tempId>lastId)
@@ -285,7 +323,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             unsigned int index=static_cast<uint32_t>(dictionary_skin_database_to_internal.size());
             while(index<=tempId)
             {
-                dictionary_skin_database_to_internal.push_back(0);
+                dictionary_skin_database_to_internal.push_back(255);
                 index++;
             }
         }
@@ -296,6 +334,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             dictionary_skin_internal_to_database[internalValue]=tempId;
             foundSkin.insert(skin);
         }
+        #ifdef CATCHCHALLENGER_DB_FILE
+        tempId++;
+        #endif
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
@@ -342,12 +383,12 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
-            BaseServer::dictionary_haveChange=true;
+            BaseServer::dictionary_skin_haveChange=true;
             #else
             #error Define what do here
             #endif
             while(dictionary_skin_database_to_internal.size()<lastId)
-                dictionary_skin_database_to_internal.push_back(0);
+                dictionary_skin_database_to_internal.push_back(255);
             dictionary_skin_database_to_internal.push_back(i->second);
             dictionary_skin_internal_to_database[i->second]=lastId;
             #else
@@ -357,6 +398,38 @@ void BaseServerMasterLoadDictionary::preload_dictionary_skin_return()
         }
         ++i;
     }
+    #ifdef CATCHCHALLENGER_DB_FILE
+    if(BaseServer::dictionary_skin_in_file!=nullptr)
+    {
+        BaseServer::dictionary_skin_in_file->close();
+        delete BaseServer::dictionary_skin_in_file;
+        BaseServer::dictionary_skin_in_file=nullptr;
+    }
+    if(BaseServer::dictionary_skin_haveChange)
+    {
+        std::ofstream dict_out("database/common/dictionary_skin", std::ofstream::binary|std::ofstream::app);
+        if(dict_out.good() && dict_out.is_open())
+        {
+            unsigned int newCount=0;
+            for(const auto &entry : BaseServerMasterSendDatapack::skinList)
+            {
+                if(foundSkin.find(entry.first)==foundSkin.end())
+                {
+                    const std::string &name=entry.first;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new skin dictionary entries appended to database/common/dictionary_skin" << std::endl;
+        }
+        else
+            std::cerr << "Unable to open database/common/dictionary_skin for writing" << std::endl;
+        BaseServer::dictionary_skin_haveChange=false;
+    }
+    #endif
     preload_dictionary_starter();
 }
 
@@ -430,22 +503,23 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     while(databaseBaseBase->next())
     #else
-    size_t s=0;
-    if(BaseServer::dictionary_serialBuffer!=nullptr)
-        *BaseServer::dictionary_serialBuffer >> s;
-    for (size_t i = 0; i < s; i++)
+    uint32_t tempId=0;
+    if(BaseServer::dictionary_starter_in_file!=nullptr)
+    while(BaseServer::dictionary_starter_in_file->peek()!=EOF)
     #endif
     {
         #ifdef CATCHCHALLENGER_DB_FILE
-        uint32_t tempId;
-        *BaseServer::dictionary_serialBuffer >> tempId;
-        std::string starter;
-        *BaseServer::dictionary_serialBuffer >> starter;
+        uint8_t len=0;
+        BaseServer::dictionary_starter_in_file->read(reinterpret_cast<char*>(&len),1);
+        if(!BaseServer::dictionary_starter_in_file->good()) break;
+        std::string starter(len,'\0');
+        BaseServer::dictionary_starter_in_file->read(&starter[0],len);
+        if(!BaseServer::dictionary_starter_in_file->good()) break;
         #else
         bool ok=true;
         const uint32_t &tempId=stringtouint32(databaseBaseBase->value(0),&ok);
         if(!ok)
-            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_reputation_return() " << __FILE__ << ":" << __LINE__ << std::endl;
+            std::cerr << "BaseServerMasterLoadDictionary::preload_dictionary_starter_return() " << __FILE__ << ":" << __LINE__ << std::endl;
         const std::string &starter=std::string(databaseBaseBase->value(1));
         #endif
         if(tempId>lastId)
@@ -455,7 +529,7 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             uint8_t index=static_cast<uint8_t>(dictionary_starter_database_to_internal.size());
             while(index<=tempId)
             {
-                dictionary_starter_database_to_internal.push_back(0);
+                dictionary_starter_database_to_internal.push_back(255);
                 index++;
             }
         }
@@ -466,6 +540,9 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             dictionary_starter_internal_to_database[internalValue]=tempId;
             foundstarter.insert(CommonDatapack::commonDatapack.get_profileList().at(internalValue).databaseId);
         }
+        #ifdef CATCHCHALLENGER_DB_FILE
+        tempId++;
+        #endif
     }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     databaseBaseBase->clear();
@@ -512,12 +589,12 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
             }
             #elif CATCHCHALLENGER_DB_BLACKHOLE
             #elif CATCHCHALLENGER_DB_FILE
-            BaseServer::dictionary_haveChange=true;
+            BaseServer::dictionary_starter_haveChange=true;
             #else
             #error Define what do here
             #endif
             while(dictionary_starter_database_to_internal.size()<lastId)
-                dictionary_starter_database_to_internal.push_back(0);
+                dictionary_starter_database_to_internal.push_back(255);
             dictionary_starter_database_to_internal.push_back(static_cast<uint8_t>(index));
             dictionary_starter_internal_to_database[index]=lastId;
             #else
@@ -527,6 +604,39 @@ void BaseServerMasterLoadDictionary::preload_dictionary_starter_return()
         }
         index++;
     }
+    #ifdef CATCHCHALLENGER_DB_FILE
+    if(BaseServer::dictionary_starter_in_file!=nullptr)
+    {
+        BaseServer::dictionary_starter_in_file->close();
+        delete BaseServer::dictionary_starter_in_file;
+        BaseServer::dictionary_starter_in_file=nullptr;
+    }
+    if(BaseServer::dictionary_starter_haveChange)
+    {
+        std::ofstream dict_out("database/common/dictionary_starter", std::ofstream::binary|std::ofstream::app);
+        if(dict_out.good() && dict_out.is_open())
+        {
+            unsigned int newCount=0;
+            for(unsigned int i=0;i<CommonDatapack::commonDatapack.get_profileList().size();i++)
+            {
+                const Profile &profile=CommonDatapack::commonDatapack.get_profileList().at(i);
+                if(foundstarter.find(profile.databaseId)==foundstarter.end())
+                {
+                    const std::string &name=profile.databaseId;
+                    const uint8_t len=static_cast<uint8_t>(name.size());
+                    dict_out.write(reinterpret_cast<const char*>(&len),1);
+                    dict_out.write(name.data(),len);
+                    newCount++;
+                }
+            }
+            if(newCount>0)
+                std::cout << newCount << " new starter dictionary entries appended to database/common/dictionary_starter" << std::endl;
+        }
+        else
+            std::cerr << "Unable to open database/common/dictionary_starter for writing" << std::endl;
+        BaseServer::dictionary_starter_haveChange=false;
+    }
+    #endif
     SQL_common_load_finish();
 }
 

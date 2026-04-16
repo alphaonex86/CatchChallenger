@@ -381,7 +381,7 @@ void Client::selectClan_return()
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
     {
-        std::ifstream clan_file("database/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
+        std::ifstream clan_file("database/server/clans/"+std::to_string(public_and_private_informations.clan), std::ifstream::binary);
         if(clan_file.good() && clan_file.is_open())
         {
             std::string clanName;

@@ -30,6 +30,7 @@ public:
     ~SoloWindow();
     void updateSavegameList();
     void setOnlySolo();
+    bool playFirstSavegame();
     void setBuggyStyle();//work around QSS crash
 protected:
     void changeEvent(QEvent *e);

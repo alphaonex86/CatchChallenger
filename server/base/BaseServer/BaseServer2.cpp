@@ -99,6 +99,7 @@ BaseServer::BaseServer() :
     GlobalServerData::serverPrivateVariables.maxClanId=0;
     GlobalServerData::serverPrivateVariables.maxAccountId=0;
     GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+    GlobalServerData::serverPrivateVariables.maxCity=0;
     #ifndef CATCHCHALLENGER_DB_FILE
     GlobalServerData::serverPrivateVariables.maxMonsterId=1;
     #endif
@@ -259,7 +260,7 @@ void BaseServer::SQL_common_load_finish()
 
     /*DictionaryLogin::dictionary_allow_database_to_internal=this->dictionary_allow_database_to_internal;
     DictionaryLogin::dictionary_allow_internal_to_database=this->dictionary_allow_internal_to_database;*/
-    DictionaryLogin::dictionary_reputation_database_to_internal=this->dictionary_reputation_database_to_internal;//negative == not found
+    DictionaryLogin::dictionary_reputation_database_to_internal=this->dictionary_reputation_database_to_internal;//255 == not found
     DictionaryLogin::dictionary_skin_database_to_internal=this->dictionary_skin_database_to_internal;
     DictionaryLogin::dictionary_skin_internal_to_database=this->dictionary_skin_internal_to_database;
     DictionaryLogin::dictionary_starter_database_to_internal=this->dictionary_starter_database_to_internal;
@@ -361,12 +362,13 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
     {
         {
             #ifdef CATCHCHALLENGER_DB_FILE
-            std::ifstream in_file("database/server", std::ifstream::binary);
+            std::ifstream in_file("database/server/server", std::ifstream::binary);
             if(!in_file.good() || !in_file.is_open())
             {
                 GlobalServerData::serverPrivateVariables.maxClanId=0;
                 GlobalServerData::serverPrivateVariables.maxAccountId=0;
                 GlobalServerData::serverPrivateVariables.maxCharacterId=0;
+                GlobalServerData::serverPrivateVariables.maxCity=0;
             }
             else
             {
@@ -374,24 +376,22 @@ void BaseServer::preload_finish()//call after preload_industries_return(), after
                 s >> GlobalServerData::serverPrivateVariables.maxClanId;
                 s >> GlobalServerData::serverPrivateVariables.maxAccountId;
                 s >> GlobalServerData::serverPrivateVariables.maxCharacterId;
-                s >> GlobalServerData::serverSettings.city;
+                s >> GlobalServerData::serverPrivateVariables.maxCity;
             }
             #endif
         }
         {
-            std::ofstream out_file("database/server", std::ofstream::binary);
+            std::ofstream out_file("database/server/server", std::ofstream::binary);
             if(!out_file.good() || !out_file.is_open())
             {
-                std::cerr << "Unable to open data base file " << "database/server (abort)" << std::endl;
+                std::cerr << "Unable to open data base file " << "database/server/server (abort)" << std::endl;
                 abort();
                 return;
             }
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxClanId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxAccountId, out_file);
             hps::to_stream(GlobalServerData::serverPrivateVariables.maxCharacterId, out_file);
-            hps::to_stream(GlobalServerData::serverSettings.city, out_file);
-
-            //std::cerr << "createAccount_return) for: database/server" << std::endl;
+            hps::to_stream(GlobalServerData::serverPrivateVariables.maxCity, out_file);
         }
     }
     #else

@@ -55,11 +55,13 @@ Battle::Battle()
 
     if(!connect(pushButtonFightEnterNext,&CustomButton::clicked,this,&Battle::on_pushButtonFightEnterNext_clicked))
         abort();
-    /*if(!connect(toolButtonFightQuit,&CustomButton::clicked,this,&Battle::on_toolButtonFightQuit_clicked))
+    if(!connect(toolButtonFightQuit,&CustomButton::clicked,this,&Battle::on_toolButtonFightQuit_clicked))
         abort();
     if(!connect(pushButtonFightAttack,&CustomButton::clicked,this,&Battle::on_pushButtonFightAttack_clicked))
         abort();
     if(!connect(pushButtonFightMonster,&CustomButton::clicked,this,&Battle::on_pushButtonFightMonster_clicked))
+        abort();
+    if(!connect(pushButtonFightBag,&CustomButton::clicked,this,&Battle::on_pushButtonFightBag_clicked))
         abort();
     if(!connect(pushButtonFightAttackConfirmed,&CustomButton::clicked,this,&Battle::on_pushButtonFightAttackConfirmed_clicked))
         abort();
@@ -67,13 +69,28 @@ Battle::Battle()
         abort();
     if(!connect(listWidgetFightAttack,&QListWidget::itemSelectionChanged,this,&Battle::on_listWidgetFightAttack_itemSelectionChanged))
         abort();
-    if(!connect(listWidgetFightAttack,&QListWidget::itemActivated,this,&Battle::on_listWidgetFightAttack_itemActivated))
-        abort();*/
+
+    moveFightMonsterBottomTimer.setInterval(20);
+    moveFightMonsterBottomTimer.setSingleShot(true);
+    if(!connect(&moveFightMonsterBottomTimer,&QTimer::timeout,this,&Battle::moveFightMonsterBottom))
+        abort();
+    moveFightMonsterTopTimer.setInterval(20);
+    moveFightMonsterTopTimer.setSingleShot(true);
+    if(!connect(&moveFightMonsterTopTimer,&QTimer::timeout,this,&Battle::moveFightMonsterTop))
+        abort();
+    moveFightMonsterBothTimer.setInterval(20);
+    moveFightMonsterBothTimer.setSingleShot(true);
+    if(!connect(&moveFightMonsterBothTimer,&QTimer::timeout,this,&Battle::moveFightMonsterBoth))
+        abort();
 
     newLanguage();
 
     escape=false;
     escapeSuccess=false;
+    battleType=BattleType_Wild;
+    battleStep=BattleStep_Presentation;
+    moveType=MoveType_Enter;
+    doNextActionStep=DoNextActionStep_Start;
 }
 
 Battle::~Battle()
@@ -933,39 +950,489 @@ void Battle::init_current_monster_display(CatchChallenger::PlayerMonster *fightM
 
 void Battle::on_pushButtonFightEnterNext_clicked()
 {
-    /*pushButtonFightEnterNext->setVisible(false);
+    pushButtonFightEnterNext->setVisible(false);
     switch(battleStep)
     {
         case BattleStep_Presentation:
-            if(connexionManager->client->isInFightWithWild())
-            {
-                moveType=MoveType_Leave;
-                moveFightMonsterBottom();
-            }
-            else
-            {
-                moveType=MoveType_Leave;
-                moveFightMonsterBoth();
-            }
+            moveType=MoveType_Leave;
+            moveFightMonsterBoth();
         break;
         case BattleStep_PresentationMonster:
         default:
-            frameFightTop->show();
-            frameFightBottom->show();
-            moveType=MoveType_Enter;
-            moveFightMonsterBottom();
-            stackedWidgetFightBottomBarsetCurrentWidget(stackedWidgetFightBottomBarPageEnter);
-            PlayerMonster *monster=connexionManager->client->getCurrentMonster();
-            if(monster!=NULL)
-                labelFightEnter->setText(tr("Protect me %1!").arg(QString::fromStdString(
-                                                                          QtDatapackClientLoader::datapackLoader->monsterExtra.at(monster->monster).name)));
+            frameFightTop->setVisible(true);
+            frameFightBottom->setVisible(true);
+            battleStep=BattleStep_Middle;
+            // show battle action menu
+            stackedWidgetFightBottomBarsetCurrentWidget(1);
+        break;
+    }
+}
+
+void Battle::on_pushButtonFightAttack_clicked()
+{
+    // switch to attack selection page
+    updateAttackList();
+    stackedWidgetFightBottomBarsetCurrentWidget(2);
+}
+
+void Battle::on_pushButtonFightBag_clicked()
+{
+    emit openBagForBattle();
+}
+
+void Battle::on_pushButtonFightMonster_clicked()
+{
+    emit openMonsterListForBattle();
+}
+
+void Battle::on_toolButtonFightQuit_clicked()
+{
+    if(battleType!=BattleType_Wild)
+    {
+        labelFightEnter->setHtml(tr("You can't escape from this battle!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+        return;
+    }
+    escape=true;
+    escapeSuccess=connexionManager->client->tryEscape();
+    if(escapeSuccess)
+    {
+        labelFightEnter->setHtml(tr("You escaped successfully!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+        // will trigger win/return to map on next click
+        battleStep=BattleStep_Final;
+    }
+    else
+    {
+        labelFightEnter->setHtml(tr("You failed to escape!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+    }
+}
+
+void Battle::on_pushButtonFightAttackConfirmed_clicked()
+{
+    QList<QListWidgetItem *> items=listWidgetFightAttack->selectedItems();
+    if(items.size()!=1)
+        return;
+    QListWidgetItem *item=items.first();
+    if(fight_attacks_graphical.find(item)==fight_attacks_graphical.cend())
+        return;
+    uint16_t skillId=fight_attacks_graphical.at(item);
+    // send attack to server
+    connexionManager->client->useSkill(skillId);
+    // show waiting message
+    labelFightEnter->setHtml(tr("Waiting..."));
+    stackedWidgetFightBottomBarsetCurrentWidget(0);
+    pushButtonFightEnterNext->setVisible(false);
+}
+
+void Battle::on_pushButtonFightReturn_clicked()
+{
+    // return to main battle menu
+    stackedWidgetFightBottomBarsetCurrentWidget(1);
+}
+
+void Battle::on_listWidgetFightAttack_itemSelectionChanged()
+{
+    QList<QListWidgetItem *> items=listWidgetFightAttack->selectedItems();
+    if(items.size()!=1)
+    {
+        labelFightAttackDetails->setHtml(tr("Select an attack"));
+        pushButtonFightAttackConfirmed->setEnabled(false);
+        return;
+    }
+    QListWidgetItem *item=items.first();
+    if(fight_attacks_graphical.find(item)==fight_attacks_graphical.cend())
+    {
+        pushButtonFightAttackConfirmed->setEnabled(false);
+        return;
+    }
+    uint16_t skillId=fight_attacks_graphical.at(item);
+    if(CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().find(skillId)!=
+            CatchChallenger::CommonDatapack::commonDatapack.get_monsterSkills().cend())
+    {
+        if(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().find(skillId)!=
+                QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().cend())
+            labelFightAttackDetails->setHtml(QString::fromStdString(
+                QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(skillId).description));
+        else
+            labelFightAttackDetails->setHtml(tr("Skill %1").arg(skillId));
+    }
+    else
+        labelFightAttackDetails->setHtml(tr("Unknown skill"));
+    pushButtonFightAttackConfirmed->setEnabled(true);
+}
+
+void Battle::updateAttackList()
+{
+    listWidgetFightAttack->clear();
+    fight_attacks_graphical.clear();
+    CatchChallenger::PlayerMonster *monster=connexionManager->client->getCurrentMonster();
+    if(monster==nullptr)
+        return;
+
+    bool hasUsableSkill=false;
+    unsigned int index=0;
+    while(index<monster->skills.size())
+    {
+        const CatchChallenger::PlayerMonster::PlayerSkill &skill=monster->skills.at(index);
+        if(skill.endurance>0)
+        {
+            QListWidgetItem *item=new QListWidgetItem();
+            if(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().find(skill.skill)!=
+                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().cend())
+                item->setText(tr("%1 (EP: %2)").arg(QString::fromStdString(
+                    QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(skill.skill).name)).arg(skill.endurance));
+            else
+                item->setText(tr("Skill %1 (EP: %2)").arg(skill.skill).arg(skill.endurance));
+            item->setData(99,skill.endurance);
+            item->setData(98,skill.skill);
+            fight_attacks_graphical[item]=skill.skill;
+            listWidgetFightAttack->addItem(item);
+            hasUsableSkill=true;
+        }
+        index++;
+    }
+
+    if(!hasUsableSkill)
+    {
+        // add rescue skill (struggle)
+        QListWidgetItem *item=new QListWidgetItem();
+        item->setText(tr("Struggle"));
+        item->setData(99,1);
+        item->setData(98,0);
+        fight_attacks_graphical[item]=0;
+        listWidgetFightAttack->addItem(item);
+    }
+    on_listWidgetFightAttack_itemSelectionChanged();
+}
+
+void Battle::updateOtherMonsterInformation()
+{
+    CatchChallenger::PublicPlayerMonster *otherMonster=connexionManager->client->getOtherMonster();
+    if(otherMonster==nullptr)
+        return;
+
+    frameFightTop->setVisible(true);
+
+    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(otherMonster->monster)!=
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    {
+        labelFightTopName->setHtml(QString::fromStdString(
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(otherMonster->monster).name));
+        const std::string &frontPath=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(otherMonster->monster).frontPath;
+        labelFightMonsterTop->setPixmap(QPixmap(QString::fromStdString(frontPath)).scaled(160,160));
+    }
+    else
+    {
+        labelFightTopName->setHtml(tr("Monster %1").arg(otherMonster->monster));
+        labelFightMonsterTop->setPixmap(QPixmap(":/CC/images/monsters/default/front.png").scaled(160,160));
+    }
+
+    CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
+        CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(otherMonster->monster),otherMonster->level);
+    progressBarFightTopHP->setMaximum(stat.hp);
+    progressBarFightTopHP->setValue(otherMonster->hp);
+    labelFightMonsterTop->setPos(510,90);
+}
+
+void Battle::updateCurrentMonsterInformation()
+{
+    CatchChallenger::PlayerMonster *monster=connexionManager->client->getCurrentMonster();
+    if(monster==nullptr)
+        return;
+    frameFightBottom->setVisible(true);
+
+    if(QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monster->monster)!=
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+    {
+        labelFightBottomName->setHtml(QString::fromStdString(
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster->monster).name));
+        const std::string &backPath=QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster->monster).backPath;
+        labelFightMonsterBottom->setPixmap(QPixmap(QString::fromStdString(backPath)).scaled(160,160));
+    }
+    else
+    {
+        labelFightBottomName->setHtml(tr("Monster %1").arg(monster->monster));
+        labelFightMonsterBottom->setPixmap(QPixmap(":/CC/images/monsters/default/back.png").scaled(160,160));
+    }
+
+    CatchChallenger::Monster::Stat stat=CatchChallenger::CommonFightEngine::getStat(
+        CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster->monster),monster->level);
+    progressBarFightBottomHP->setMaximum(stat.hp);
+    progressBarFightBottomHP->setValue(monster->hp);
+    labelFightMonsterBottom->setPos(60,280);
+}
+
+void Battle::resetPosition(bool both, bool top, bool bottom)
+{
+    if(bottom || both)
+        labelFightMonsterBottom->setPos(-200,280);
+    if(top || both)
+        labelFightMonsterTop->setPos(800,90);
+}
+
+void Battle::startWildBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    escape=false;
+    escapeSuccess=false;
+    battleType=BattleType_Wild;
+    doNextActionStep=DoNextActionStep_Start;
+    attackReturnList.clear();
+
+    init_environement_display(mapIndex,x,y);
+    init_current_monster_display();
+    updateOtherMonsterInformation();
+
+    // show enter text
+    CatchChallenger::PublicPlayerMonster *otherMonster=connexionManager->client->getOtherMonster();
+    if(otherMonster!=nullptr && QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(otherMonster->monster)!=
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+        labelFightEnter->setHtml(tr("A wild %1 appears!").arg(QString::fromStdString(
+            QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(otherMonster->monster).name)));
+    else
+        labelFightEnter->setHtml(tr("A wild monster appears!"));
+
+    stackedWidgetFightBottomBarsetCurrentWidget(0);
+    pushButtonFightEnterNext->setVisible(false);
+    frameFightTop->setVisible(false);
+    frameFightBottom->setVisible(false);
+
+    battleStep=BattleStep_Presentation;
+    moveType=MoveType_Enter;
+    resetPosition(true);
+    moveFightMonsterBoth();
+}
+
+void Battle::startBotBattle(const CATCHCHALLENGER_TYPE_MAPID &mapIndex, const COORD_TYPE &x, const COORD_TYPE &y)
+{
+    escape=false;
+    escapeSuccess=false;
+    battleType=BattleType_Bot;
+    doNextActionStep=DoNextActionStep_Start;
+    attackReturnList.clear();
+
+    init_environement_display(mapIndex,x,y);
+    init_current_monster_display();
+
+    labelFightEnter->setHtml(tr("A trainer challenges you!"));
+
+    stackedWidgetFightBottomBarsetCurrentWidget(0);
+    pushButtonFightEnterNext->setVisible(false);
+    frameFightTop->setVisible(false);
+    frameFightBottom->setVisible(false);
+
+    battleStep=BattleStep_Presentation;
+    moveType=MoveType_Enter;
+    resetPosition(true);
+    moveFightMonsterBoth();
+}
+
+void Battle::moveFightMonsterBottom()
+{
+    QPointF pos=labelFightMonsterBottom->pos();
+    if(moveType==MoveType_Enter)
+    {
+        pos.setX(pos.x()+4);
+        labelFightMonsterBottom->setPos(pos);
+        if(pos.x()<60)
+            moveFightMonsterBottomTimer.start();
+        else
+        {
+            updateCurrentMonsterInformation();
+            doNextAction();
+        }
+    }
+    else if(moveType==MoveType_Leave)
+    {
+        pos.setX(pos.x()-4);
+        labelFightMonsterBottom->setPos(pos);
+        if(pos.x()>-160)
+            moveFightMonsterBottomTimer.start();
+        else
+        {
+            // monster left, now show new monster entering
+            if(battleStep==BattleStep_Presentation)
+            {
+                resetPosition(false,false,true);
+                battleStep=BattleStep_PresentationMonster;
+                moveType=MoveType_Enter;
+                CatchChallenger::PlayerMonster *monster=connexionManager->client->getCurrentMonster();
+                if(monster!=nullptr && QtDatapackClientLoader::datapackLoader->get_monsterExtra().find(monster->monster)!=
+                        QtDatapackClientLoader::datapackLoader->get_monsterExtra().cend())
+                    labelFightEnter->setHtml(tr("Go %1!").arg(QString::fromStdString(
+                        QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster->monster).name)));
+                else
+                    labelFightEnter->setHtml(tr("Go!"));
+                pushButtonFightEnterNext->setVisible(true);
+                moveFightMonsterBottom();
+            }
+            else
+                doNextAction();
+        }
+    }
+    else if(moveType==MoveType_Dead)
+    {
+        pos.setY(pos.y()+4);
+        labelFightMonsterBottom->setPos(pos);
+        if(pos.y()<440)
+            moveFightMonsterBottomTimer.start();
+        else
+        {
+            // player monster KO
+            doNextActionStep=DoNextActionStep_Loose;
+            doNextAction();
+        }
+    }
+}
+
+void Battle::moveFightMonsterTop()
+{
+    QPointF pos=labelFightMonsterTop->pos();
+    if(moveType==MoveType_Enter)
+    {
+        pos.setX(pos.x()-4);
+        labelFightMonsterTop->setPos(pos);
+        if(pos.x()>510)
+            moveFightMonsterTopTimer.start();
+        else
+        {
+            updateOtherMonsterInformation();
+            doNextAction();
+        }
+    }
+    else if(moveType==MoveType_Leave)
+    {
+        pos.setX(pos.x()+4);
+        labelFightMonsterTop->setPos(pos);
+        if(pos.x()<800)
+            moveFightMonsterTopTimer.start();
+        else
+            doNextAction();
+    }
+    else if(moveType==MoveType_Dead)
+    {
+        pos.setX(pos.x()+4);
+        labelFightMonsterTop->setPos(pos);
+        if(pos.x()<800)
+            moveFightMonsterTopTimer.start();
+        else
+        {
+            // enemy monster KO
+            doNextActionStep=DoNextActionStep_Win;
+            doNextAction();
+        }
+    }
+}
+
+void Battle::moveFightMonsterBoth()
+{
+    QPointF posTop=labelFightMonsterTop->pos();
+    QPointF posBottom=labelFightMonsterBottom->pos();
+    bool needMore=false;
+
+    posTop.setX(posTop.x()-4);
+    posBottom.setX(posBottom.x()+3);
+    labelFightMonsterTop->setPos(posTop);
+    labelFightMonsterBottom->setPos(posBottom);
+
+    if(posTop.x()>510 || posBottom.x()<60)
+        needMore=true;
+
+    if(needMore)
+        moveFightMonsterBothTimer.start();
+    else
+    {
+        // both monsters in position
+        pushButtonFightEnterNext->setVisible(true);
+        updateOtherMonsterInformation();
+        updateCurrentMonsterInformation();
+        frameFightTop->setVisible(true);
+        // still in presentation, wait for user click
+    }
+}
+
+void Battle::doNextAction()
+{
+    if(battleStep==BattleStep_Final || doNextActionStep==DoNextActionStep_Win)
+    {
+        labelFightEnter->setHtml(tr("You win!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+        battleStep=BattleStep_Final;
+        // next click will trigger battleWin
+        return;
+    }
+    if(doNextActionStep==DoNextActionStep_Loose)
+    {
+        labelFightEnter->setHtml(tr("You lose!"));
+        stackedWidgetFightBottomBarsetCurrentWidget(0);
+        pushButtonFightEnterNext->setVisible(true);
+        battleStep=BattleStep_Final;
+        return;
+    }
+
+    if(escape && escapeSuccess)
+    {
+        emit battleWin();
+        return;
+    }
+
+    // process pending attack returns
+    if(!attackReturnList.empty())
+    {
+        const CatchChallenger::Skill::AttackReturn &attackReturn=attackReturnList.front();
+        // apply HP changes
+        if(!attackReturn.lifeEffectMonster.empty())
+        {
+            int32_t hpChange=attackReturn.lifeEffectMonster.front().quantity;
+            bool applyOnOther=attackReturn.doByTheCurrentMonster;
+            if(applyOnOther)
+            {
+                progressBarFightTopHP->setValue(progressBarFightTopHP->value()+hpChange);
+                if(progressBarFightTopHP->value()<=0)
+                {
+                    // enemy monster KO
+                    attackReturnList.erase(attackReturnList.cbegin());
+                    moveType=MoveType_Dead;
+                    moveFightMonsterTop();
+                    return;
+                }
+            }
             else
             {
-                qDebug() << "on_pushButtonFightEnterNext_clicked(): NULL pointer for current monster";
-                labelFightEnter->setText(tr("Protect me %1!").arg("(Unknow monster)"));
+                progressBarFightBottomHP->setValue(progressBarFightBottomHP->value()+hpChange);
+                if(progressBarFightBottomHP->value()<=0)
+                {
+                    // player monster KO
+                    attackReturnList.erase(attackReturnList.cbegin());
+                    moveType=MoveType_Dead;
+                    moveFightMonsterBottom();
+                    return;
+                }
             }
-        break;
-    }*/
+        }
+        attackReturnList.erase(attackReturnList.cbegin());
+        if(!attackReturnList.empty())
+        {
+            // process next attack return after a brief delay
+            QTimer::singleShot(500,this,&Battle::doNextAction);
+            return;
+        }
+    }
+
+    // show battle action menu
+    if(battleStep==BattleStep_Middle)
+        stackedWidgetFightBottomBarsetCurrentWidget(1);
+}
+
+void Battle::sendBattleReturn(const std::vector<CatchChallenger::Skill::AttackReturn> &attackReturn)
+{
+    attackReturnList=attackReturn;
+    doNextAction();
 }
 
 /*void Battle::moveFightMonsterBottom()

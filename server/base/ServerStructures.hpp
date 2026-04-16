@@ -504,6 +504,7 @@ struct ServerPrivateVariables
     #ifndef CATCHCHALLENGER_CLASS_ONLYGAMESERVER
     uint32_t maxAccountId;
     uint32_t maxCharacterId;
+    uint8_t maxCity;
     #endif
     uint64_t time_city_capture;
     std::unordered_map<uint32_t,Clan> clanList;

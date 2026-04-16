@@ -540,7 +540,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                     });
                     #elif CATCHCHALLENGER_DB_BLACKHOLE
                     #elif CATCHCHALLENGER_DB_FILE
-                    ::unlink(("database/zone/"+CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.capturedCity)).c_str());
+                    ::unlink(("database/server/zone/"+CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.capturedCity)).c_str());
                     #else
                     #error Define what do here
                     #endif
@@ -558,7 +558,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
-                            FILE *fp=fopen(("database/zone/"+zoneName).c_str(),"wb");
+                            FILE *fp=fopen(("database/server/zone/"+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);
@@ -580,7 +580,7 @@ void Client::fightOrBattleFinish(const bool &win, const std::pair<CATCHCHALLENGE
                         #elif CATCHCHALLENGER_DB_FILE
                         {
                             const std::string &zoneName=CommonDatapackServerSpec::commonDatapackServerSpec.get_idToZone().at(clan.captureCityInProgress);
-                            FILE *fp=fopen(("database/zone/"+zoneName).c_str(),"wb");
+                            FILE *fp=fopen(("database/server/zone/"+zoneName).c_str(),"wb");
                             if(fp!=NULL)
                             {
                                 fwrite(&clanId,sizeof(clanId),1,fp);

@@ -71,7 +71,7 @@
           <item>
            <spacer name="horizontalSpacer_11">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -86,7 +86,7 @@
             <item>
              <spacer name="verticalSpacer_5">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -125,7 +125,7 @@
             <item>
              <spacer name="verticalSpacer_6">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -140,7 +140,7 @@
           <item>
            <spacer name="horizontalSpacer_12">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -205,7 +205,7 @@ color: rgb(0, 0, 0);</string>
           <item>
            <spacer name="horizontalSpacer_10">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -244,7 +244,7 @@ color: rgb(0, 0, 0);</string>
         <item>
          <spacer name="verticalSpacer_login_2">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -259,7 +259,7 @@ color: rgb(0, 0, 0);</string>
           <item>
            <spacer name="horizontalSpacer_22">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -290,7 +290,7 @@ color: rgb(0, 0, 0);</string>
              <item>
               <spacer name="horizontalSpacer_16">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -333,7 +333,7 @@ QLabel { padding:2px; }</string>
                      <x>0</x>
                      <y>0</y>
                      <width>746</width>
-                     <height>236</height>
+                     <height>237</height>
                     </rect>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_12">
@@ -346,7 +346,7 @@ QLabel { padding:2px; }</string>
                           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#a0a0a0;&quot;&gt;Empty&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                          </property>
                          <property name="textFormat">
-                          <enum>Qt::RichText</enum>
+                          <enum>Qt::TextFormat::RichText</enum>
                          </property>
                         </widget>
                        </item>
@@ -375,7 +375,7 @@ color: rgb(0, 0, 0);</string>
                   <item>
                    <spacer name="horizontalSpacer_17">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -398,7 +398,7 @@ color: rgb(0, 0, 0);</string>
                   <item>
                    <spacer name="horizontalSpacer_18">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -415,7 +415,7 @@ color: rgb(0, 0, 0);</string>
                   <item>
                    <spacer name="horizontalSpacer_19">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -472,7 +472,7 @@ color: rgb(0, 0, 0);</string>
                   <item>
                    <spacer name="horizontalSpacer_20">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -490,7 +490,7 @@ color: rgb(0, 0, 0);</string>
              <item>
               <spacer name="horizontalSpacer_21">
                <property name="orientation">
-                <enum>Qt::Horizontal</enum>
+                <enum>Qt::Orientation::Horizontal</enum>
                </property>
                <property name="sizeHint" stdset="0">
                 <size>
@@ -506,7 +506,7 @@ color: rgb(0, 0, 0);</string>
           <item>
            <spacer name="horizontalSpacer_23">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -521,7 +521,7 @@ color: rgb(0, 0, 0);</string>
         <item>
          <spacer name="verticalSpacer_login_3">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -543,7 +543,7 @@ color: rgb(0, 0, 0);</string>
           <item>
            <spacer name="horizontalSpacer_2">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -565,7 +565,7 @@ color: rgb(0, 0, 0);</string>
         <item>
          <spacer name="verticalSpacer_2">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -596,7 +596,7 @@ color: rgb(0, 0, 0);</string>
            <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -638,8 +638,8 @@ QLabel { padding:2px; }</string>
                   <rect>
                    <x>0</x>
                    <y>0</y>
-                   <width>82</width>
-                   <height>47</height>
+                   <width>746</width>
+                   <height>262</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -652,7 +652,7 @@ QLabel { padding:2px; }</string>
                         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:12pt; color:#a0a0a0;&quot;&gt;Empty&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                        </property>
                        <property name="textFormat">
-                        <enum>Qt::RichText</enum>
+                        <enum>Qt::TextFormat::RichText</enum>
                        </property>
                       </widget>
                      </item>
@@ -668,7 +668,7 @@ QLabel { padding:2px; }</string>
                 <item>
                  <spacer name="horizontalSpacer_5">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -691,7 +691,7 @@ QLabel { padding:2px; }</string>
                 <item>
                  <spacer name="horizontalSpacer_6">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -708,7 +708,7 @@ QLabel { padding:2px; }</string>
                 <item>
                  <spacer name="horizontalSpacer_7">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -728,7 +728,7 @@ QLabel { padding:2px; }</string>
                 <item>
                  <spacer name="horizontalSpacer_8">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -746,7 +746,7 @@ QLabel { padding:2px; }</string>
            <item>
             <spacer name="horizontalSpacer_4">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -762,7 +762,7 @@ QLabel { padding:2px; }</string>
         <item>
          <spacer name="verticalSpacer">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -782,7 +782,7 @@ QLabel { padding:2px; }</string>
         <item>
          <spacer name="verticalSpacer_3">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
@@ -797,7 +797,7 @@ QLabel { padding:2px; }</string>
           <item>
            <spacer name="horizontalSpacer">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -855,10 +855,10 @@ QLabel { padding:2px; }</string>
                 </size>
                </property>
                <property name="frameShape">
-                <enum>QFrame::NoFrame</enum>
+                <enum>QFrame::Shape::NoFrame</enum>
                </property>
                <property name="frameShadow">
-                <enum>QFrame::Raised</enum>
+                <enum>QFrame::Shadow::Raised</enum>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout">
                 <item>
@@ -873,7 +873,7 @@ QLabel { padding:2px; }</string>
                   <item>
                    <spacer name="horizontalSpacer_login_7">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -917,7 +917,7 @@ border-image: url(:/images/empty.png);</string>
                   <item>
                    <spacer name="horizontalSpacer_login_2">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -947,7 +947,7 @@ border-image: url(:/images/empty.png);
 color: rgb(0, 0, 0);</string>
                     </property>
                     <property name="echoMode">
-                     <enum>QLineEdit::Password</enum>
+                     <enum>QLineEdit::EchoMode::Password</enum>
                     </property>
                    </widget>
                   </item>
@@ -983,7 +983,7 @@ color: rgb(0, 0, 0);</string>
                 <item>
                  <spacer name="verticalSpacer_login">
                   <property name="orientation">
-                   <enum>Qt::Vertical</enum>
+                   <enum>Qt::Orientation::Vertical</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -998,7 +998,7 @@ color: rgb(0, 0, 0);</string>
                   <item>
                    <spacer name="horizontalSpacer_login_5">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1025,7 +1025,7 @@ padding: 0 5px;</string>
                   <item>
                    <spacer name="horizontalSpacer_website">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1052,7 +1052,7 @@ padding: 0 5px;</string>
                   <item>
                    <spacer name="horizontalSpacer_register">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1069,7 +1069,7 @@ padding: 0 5px;</string>
                   <item>
                    <spacer name="horizontalSpacer_login_3">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1089,7 +1089,7 @@ padding: 0 5px;</string>
                   <item>
                    <spacer name="horizontalSpacer_13">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1109,7 +1109,7 @@ padding: 0 5px;</string>
                   <item>
                    <spacer name="horizontalSpacer_14">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -1130,7 +1130,7 @@ padding: 0 5px;</string>
           <item>
            <spacer name="horizontalSpacer_9">
             <property name="orientation">
-             <enum>Qt::Horizontal</enum>
+             <enum>Qt::Orientation::Horizontal</enum>
             </property>
             <property name="sizeHint" stdset="0">
              <size>
@@ -1145,7 +1145,7 @@ padding: 0 5px;</string>
         <item>
          <spacer name="verticalSpacer_4">
           <property name="orientation">
-           <enum>Qt::Vertical</enum>
+           <enum>Qt::Orientation::Vertical</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>

@@ -94,9 +94,7 @@ void QtDatabase::syncDisconnect()
 
 DatabaseBaseCallBack *QtDatabase::asyncRead(const std::string &query,void * returnObject, CallBackDatabase method)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cerr << "QtDatabase::asyncRead(): " << query << std::endl;
-    #endif
+    std::cerr << "[SQL read] " << query << std::endl;
     if(conn==NULL)
     {
         std::cerr << "db not connected" << std::endl;
@@ -154,19 +152,20 @@ void QtDatabase::receiveReply(const QSqlQuery &queryReturn)
 
 bool QtDatabase::asyncWrite(const std::string &query)
 {
-    #ifdef DEBUG_MESSAGE_CLIENT_SQL
-    std::cerr << "QtDatabase::asyncWrite(): " << query << std::endl;
-    #endif
+    std::cerr << "[SQL exec-sync] " << query << std::endl;
     if(conn==NULL)
     {
-        std::cerr << "pg not connected" << std::endl;
+        std::cerr << "[SQL exec-sync] FAILED: db not connected (" << query << ")" << std::endl;
         return false;
     }
     QSqlQuery writeQuery(*conn);
     if(!writeQuery.exec(query.c_str()))
     {
         lastErrorMessage=(conn->lastError().driverText()+": "+conn->lastError().databaseText()).toUtf8().data();
-        qDebug() << writeQuery.lastQuery()+": "+writeQuery.lastError().text();
+        std::cerr << "[SQL exec-sync] FAILED: " << writeQuery.lastError().text().toStdString()
+                  << " driver: " << conn->lastError().driverText().toStdString()
+                  << " db: " << conn->lastError().databaseText().toStdString()
+                  << " (" << query << ")" << std::endl;
         return false;
     }
     return true;
@@ -233,7 +232,7 @@ void QtDatabaseThread::receiveQuery(const std::string &query,const QSqlDatabase 
 
     //to debug crash into queryReturn.exec(query.c_str())
     const char * const tempString=query.c_str();
-    std::cout << "Try this query: " << tempString << std::endl;
+    std::cerr << "[SQL exec] " << tempString << std::endl;
 
     if(!queryReturn.exec(tempString))
     {

@@ -1,6 +1,0 @@
-into clans/
-you have: clans/XXXXXXXXXXXX where XXXXXXXXXXXX is the clan id
-
-  * string name
-  * uint64_t cash
-  * uint64_t date

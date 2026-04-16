@@ -48,6 +48,12 @@ SOURCES += \
     $$PWD/above/inventory/Inventory.cpp \
     $$PWD/above/inventory/Plant.cpp \
     $$PWD/above/inventory/Crafting.cpp \
+    $$PWD/above/Animation.cpp \
+    $$PWD/above/Encyclopedia.cpp \
+    $$PWD/above/Shop.cpp \
+    $$PWD/above/Factory.cpp \
+    $$PWD/above/Trade.cpp \
+    $$PWD/above/Warehouse.cpp \
     $$PWD/above/player/Player.cpp \
     $$PWD/above/player/Reputations.cpp \
     $$PWD/above/player/Quests.cpp \
@@ -91,6 +97,12 @@ HEADERS  += \
     $$PWD/above/inventory/Inventory.hpp \
     $$PWD/above/inventory/Plant.hpp \
     $$PWD/above/inventory/Crafting.hpp \
+    $$PWD/above/Animation.hpp \
+    $$PWD/above/Encyclopedia.hpp \
+    $$PWD/above/Shop.hpp \
+    $$PWD/above/Factory.hpp \
+    $$PWD/above/Trade.hpp \
+    $$PWD/above/Warehouse.hpp \
     $$PWD/above/player/Player.hpp \
     $$PWD/above/player/Quests.hpp \
     $$PWD/above/player/Reputations.hpp \

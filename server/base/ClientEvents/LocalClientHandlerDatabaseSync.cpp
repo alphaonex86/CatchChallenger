@@ -171,26 +171,23 @@ void Client::updateMonsterInDatabaseEncyclopedia()
 
 void Client::syncDatabaseAllow()
 {
-    /*uint8_t allowflat[public_and_private_informations.allow.size()];
-    uint32_t index=0;
-    auto i=public_and_private_informations.allow.begin();
-    while(i!=public_and_private_informations.allow.cend())
-    {
-        allowflat[index]=*i;
-        index++;
-        ++i;
-    }
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
+    std::string allowCreateClanStr;
+    #if defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_CLASS_QT)
+    if(GlobalServerData::serverPrivateVariables.db_common->databaseType()==DatabaseBase::DatabaseType::PostgreSQL)
+        allowCreateClanStr=public_and_private_informations.allowCreateClan?"true":"false";
+    else
+    #endif
+        allowCreateClanStr=public_and_private_informations.allowCreateClan?"1":"0";
     GlobalServerData::serverPrivateVariables.preparedDBQueryCommon.db_query_update_character_allow.asyncWrite({
-                binarytoHexa(allowflat,static_cast<uint32_t>(sizeof(allowflat))),
-                std::to_string(character_id)
+                allowCreateClanStr,
+                std::to_string(character_id_db)
                 });
     #elif CATCHCHALLENGER_DB_BLACKHOLE
     #elif CATCHCHALLENGER_DB_FILE
-    (void)allowflat;
     #else
     #error Define what do here
-    #endif*/
+    #endif
 }
 
 void Client::syncDatabaseReputation()
@@ -349,6 +346,10 @@ void Client::savePosition()
                 ", orientation: "+std::to_string((int)last_direction)
                 );
     #endif
+    std::cerr << "[savePosition] character=" << character_id_db
+              << " mapIndex=" << getMapId()
+              << " x=" << (int)x << " y=" << (int)y
+              << " last_direction=" << (int)getLastDirection() << std::endl;
     #if defined(CATCHCHALLENGER_DB_MYSQL) || defined(CATCHCHALLENGER_DB_POSTGRESQL) || defined(CATCHCHALLENGER_DB_SQLITE)
     /* disable because use memory, but useful only into less than < 0.1% of case
      * if(map!=at_start_map_name || x!=at_start_x || y!=at_start_y || orientation!=at_start_orientation) */

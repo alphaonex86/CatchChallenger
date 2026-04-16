@@ -18,6 +18,7 @@ using namespace CatchChallenger;
 
 #include "../../general/base/CommonSettingsServer.hpp"
 #include "../../general/base/GeneralVariable.hpp"
+#include "../../general/base/MoveOnTheMap.hpp"
 
 //need host + port here to have datapack base
 
@@ -397,6 +398,17 @@ void Api_client_real::tryConnect(std::string host,uint16_t port)
 
 void Api_client_real::tryDisconnect()
 {
+    //flush any pending move accumulated in MoveOnTheMap::last_step before we
+    //drop the socket, so the server's saved x,y match the client's on-screen
+    //position. Without this, walking one tile then disconnecting loses the
+    //step because no direction-change packet was sent to carry it.
+    if(character_selected && last_direction_is_set)
+    {
+        std::cerr << "Api_client_real::tryDisconnect(): flushing pending move"
+                  << " last_direction=" << CatchChallenger::MoveOnTheMap::directionToString(last_direction)
+                  << " last_step=" << (int)last_step << std::endl;
+        stopMove();
+    }
     if(socket!=NULL)
         socket->disconnectFromHost();
 }

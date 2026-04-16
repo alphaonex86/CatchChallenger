@@ -137,7 +137,6 @@ void BaseWindow::on_monsterList_itemActivated(QListWidgetItem *item)
     ui->monsterDetailsStatXpBar->repaint();
     ui->monsterDetailsStatAttackSpe->setText(tr("Special attack: %1").arg(stat.special_attack));
     ui->monsterDetailsStatDefenseSpe->setText(tr("Special defense: %1").arg(stat.special_defense));
-    ui->monsterDetailsStatSp->setVisible(false);
     //skill
     ui->monsterDetailsSkills->clear();
     {
@@ -359,68 +358,12 @@ void BaseWindow::load_monsters()
             else
                 item->setIcon(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front);
 
-            if(waitedObjectType==ObjectType_MonsterToLearn && inSelection)
-            {
-                QHash<uint32_t,uint8_t> skillToDisplay;
-                unsigned int sub_index=0;
-                while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size())
-                {
-                    Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.at(sub_index);
-                    if(learn.learnAtLevel<=monster.level)
-                    {
-                        unsigned int sub_index2=0;
-                        while(sub_index2<monster.skills.size())
-                        {
-                            const PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
-                            if(skill.skill==learn.learnSkill)
-                                break;
-                            sub_index2++;
-                        }
-                        if(
-                                //if skill not found
-                                (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
-                                ||
-                                //if skill already found and need level up
-                                (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
-                        )
-                        {
-                            if(skillToDisplay.contains(learn.learnSkill))
-                            {
-                                if(skillToDisplay.value(learn.learnSkill)>learn.learnSkillLevel)
-                                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-                            }
-                            else
-                                skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-                        }
-                    }
-                    sub_index++;
-                }
-                if(skillToDisplay.isEmpty())
-                    item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                            .arg(monster.level)
-                            .arg(monster.hp)
-                            .arg(stat.hp)
-                            .arg(tr("No skill to learn"))
-                            );
-                else
-                    item->setText(tr("%1, level: %2\nHP: %3/%4\n%5")
-                            .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                            .arg(monster.level)
-                            .arg(monster.hp)
-                            .arg(stat.hp)
-                            .arg(tr("%n skill(s) to learn","",skillToDisplay.size()))
-                            );
-            }
-            else
-            {
-                item->setText(tr("%1, level: %2\nHP: %3/%4")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                        .arg(monster.level)
-                        .arg(monster.hp)
-                        .arg(stat.hp)
-                        );
-            }
+            item->setText(tr("%1, level: %2\nHP: %3/%4")
+                    .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
+                    .arg(monster.level)
+                    .arg(monster.hp)
+                    .arg(stat.hp)
+                    );
             if(monster.hp==0)
                 item->setBackground(QColor(255,220,220,255));
             else if(index==currentMonsterPosition)
@@ -1964,130 +1907,6 @@ void BaseWindow::tradeAddTradeMonster(const CatchChallenger::PlayerMonster &mons
         item->setToolTip(QStringLiteral("Level: %1, Gender: %2").arg(monster.level).arg(genderString));
     }
     ui->tradeOtherMonsters->addItem(item);
-}
-
-void BaseWindow::on_learnQuit_clicked()
-{
-    selectObject(ObjectType_MonsterToLearn);
-    //ui->stackedWidget->setCurrentWidget(ui->page_map);
-}
-
-void BaseWindow::on_learnValidate_clicked()
-{
-    QList<QListWidgetItem *> itemsList=ui->learnAttackList->selectedItems();
-    if(itemsList.size()!=1)
-    {
-        QMessageBox::warning(this,tr("Error"),tr("Select an attack to learn"));
-        return;
-    }
-    on_learnAttackList_itemActivated(itemsList.first());
-}
-
-void BaseWindow::on_learnAttackList_itemActivated(QListWidgetItem *item)
-{
-    if(attack_to_learn_graphical.find(item)==attack_to_learn_graphical.cend())
-    {
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Selected item wrong");
-        return;
-    }
-    if(!learnSkillByPosition(monsterPositionToLearn,attack_to_learn_graphical.at(item)))
-    {
-        ui->learnDescription->setText(tr("You can't learn this attack"));
-        return;
-    }
-    if(monsterspos_items_graphical.find(item)==monsterspos_items_graphical.cend())
-        return;
-    showLearnSkillByPosition(monsterPositionToLearn);
-}
-
-bool BaseWindow::learnSkillByPosition(const uint8_t &monsterPosition,const uint16_t &skill)
-{
-    if(!showLearnSkillByPosition(monsterPosition))
-    {
-        newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"Unable to load the right monster");
-        return false;
-    }
-    if(client->learnSkill(client->monsterByPosition(monsterPosition),skill))
-    {
-        client->learnSkillByPosition(monsterPosition,skill);
-        showLearnSkillByPosition(monsterPosition);
-        return true;
-    }
-    return false;
-}
-
-//learn
-bool BaseWindow::showLearnSkillByPosition(const uint8_t &monsterPosition)
-{
-    QFont MissingQuantity;
-    MissingQuantity.setItalic(true);
-    ui->learnAttackList->clear();
-    attack_to_learn_graphical.clear();
-    std::vector<PlayerMonster> playerMonster=client->getPlayerMonster();
-    //get the right monster
-    QHash<uint16_t,uint8_t> skillToDisplay;
-    unsigned int index=monsterPosition;
-    PlayerMonster monster=playerMonster.at(index);
-    ui->learnMonster->setPixmap(QtDatapackClientLoader::datapackLoader->getMonsterExtra(monster.monster).front.scaled(160,160));
-    ui->learnSP->setVisible(false);
-    #ifdef CATCHCHALLENGER_VERSION_ULTIMATE
-    ui->learnInfo->setText(tr("<b>%1</b><br />Level %2").arg(
-                               QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterExtra().at(monster.monster).name))
-                           .arg(monster.level));
-    #endif
-    unsigned int sub_index=0;
-    while(sub_index<CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.size())
-    {
-        Monster::AttackToLearn learn=CatchChallenger::CommonDatapack::commonDatapack.get_monsters().at(monster.monster).learn.at(sub_index);
-        if(learn.learnAtLevel<=monster.level)
-        {
-            unsigned int sub_index2=0;
-            while(sub_index2<monster.skills.size())
-            {
-                const PlayerMonster::PlayerSkill &skill=monster.skills.at(sub_index2);
-                if(skill.skill==learn.learnSkill)
-                    break;
-                sub_index2++;
-            }
-            if(
-                    //if skill not found
-                    (sub_index2==monster.skills.size() && learn.learnSkillLevel==1)
-                    ||
-                    //if skill already found and need level up
-                    (sub_index2<monster.skills.size() && (monster.skills.at(sub_index2).level+1)==learn.learnSkillLevel)
-            )
-            {
-                if(skillToDisplay.contains(learn.learnSkill))
-                {
-                    if(skillToDisplay.value(learn.learnSkill)>learn.learnSkillLevel)
-                        skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-                }
-                else
-                    skillToDisplay[learn.learnSkill]=learn.learnSkillLevel;
-            }
-        }
-        sub_index++;
-    }
-    QHashIterator<uint16_t,uint8_t> i(skillToDisplay);
-    while (i.hasNext()) {
-        i.next();
-        QListWidgetItem *item=new QListWidgetItem();
-        const uint32_t &level=i.value();
-        if(level<=1)
-            item->setText(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name));
-        else
-            item->setText(tr("%1 level %2")
-                        .arg(QString::fromStdString(QtDatapackClientLoader::datapackLoader->get_monsterSkillsExtra().at(i.key()).name))
-                        .arg(level)
-                    );
-        attack_to_learn_graphical[item]=i.key();
-        ui->learnAttackList->addItem(item);
-    }
-    if(attack_to_learn_graphical.empty())
-        ui->learnDescription->setText(tr("No more attack to learn"));
-    else
-        ui->learnDescription->setText(tr("Select attack to learn"));
-    return true;
 }
 
 void BaseWindow::sendBattleReturn(const std::vector<Skill::AttackReturn> &attackReturn)

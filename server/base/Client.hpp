@@ -62,6 +62,10 @@ public:
     #ifdef CATCHCHALLENGER_CACHE_HPS
     void serialize(hps::StreamOutputBuffer& buf) const;
     void parse(hps::StreamInputBuffer& buf);
+    void serializeServerPart(hps::StreamOutputBuffer& buf) const;
+    void parseServerPart(hps::StreamInputBuffer& buf);
+    void saveCharacterFiles() const;
+    bool loadCharacterServerFile();
     #endif
     #endif
     friend class BaseServer;

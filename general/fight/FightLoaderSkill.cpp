@@ -112,16 +112,6 @@ std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::loadMonsterSki
                         {
                             if(level->Attribute("number")!=NULL)
                             {
-                                uint32_t sp=0;
-                                if(level->Attribute("sp")!=NULL)
-                                {
-                                    sp=stringtouint32(level->Attribute("sp"),&ok);
-                                    if(!ok)
-                                    {
-                                        std::cerr << "Unable to open the xml file: " << file << ", sp is not number: child->Name(): " << level->Name() << std::endl;
-                                        sp=0;
-                                    }
-                                }
                                 uint8_t endurance=40;
                                 if(level->Attribute("endurance")!=NULL)
                                 {
@@ -142,7 +132,6 @@ std::unordered_map<CATCHCHALLENGER_TYPE_SKILL,Skill> FightLoader::loadMonsterSki
                                     number=stringtouint8(level->Attribute("number"),&ok);
                                 if(ok)
                                 {
-                                    levelDef[number].sp_to_learn=sp;
                                     levelDef[number].endurance=endurance;
                                     if(number>0)
                                     {

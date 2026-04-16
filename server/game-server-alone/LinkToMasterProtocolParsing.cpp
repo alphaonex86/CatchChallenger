@@ -295,7 +295,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             pos+=sizeof(uint16_t);
                             //index is the internal id
                             while((uint16_t)DictionaryLogin::dictionary_reputation_database_to_internal.size()<(databaseId+1))
-                                DictionaryLogin::dictionary_reputation_database_to_internal.push_back(-1);
+                                DictionaryLogin::dictionary_reputation_database_to_internal.push_back(255);
                             DictionaryLogin::dictionary_reputation_database_to_internal[databaseId]=reputationListIndex;
                             if(reputationListIndex>=CommonDatapack::commonDatapack.get_reputation().size())
                             {
@@ -327,7 +327,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             pos+=sizeof(uint16_t);
                             //index is the internal id
                             while((uint16_t)DictionaryLogin::dictionary_skin_database_to_internal.size()<(databaseId+1))
-                                DictionaryLogin::dictionary_skin_database_to_internal.push_back(0);
+                                DictionaryLogin::dictionary_skin_database_to_internal.push_back(255);
                             DictionaryLogin::dictionary_skin_database_to_internal[databaseId]=skinListIndex;
                             skinListIndex++;
                         }
@@ -353,7 +353,7 @@ bool LinkToMaster::parseReplyData(const uint8_t &mainCodeType,const uint8_t &que
                             pos+=sizeof(uint16_t);
                             //index is the internal id
                             while((uint16_t)DictionaryLogin::dictionary_starter_database_to_internal.size()<(databaseId+1))
-                                DictionaryLogin::dictionary_starter_database_to_internal.push_back(0);
+                                DictionaryLogin::dictionary_starter_database_to_internal.push_back(255);
                             DictionaryLogin::dictionary_starter_database_to_internal[databaseId]=starterListIndex;
                             starterListIndex++;
                         }
