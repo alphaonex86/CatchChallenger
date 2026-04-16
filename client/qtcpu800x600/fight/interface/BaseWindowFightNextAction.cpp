@@ -267,7 +267,7 @@ bool BaseWindow::displayFirstAttackText(bool firstText)
     }
     if(client->getAttackReturnList().empty())
     {
-        emit error("Display text for not existant attack");
+        emit error("Display text for not existent attack");
         return false;
     }
     const Skill::AttackReturn currentAttack=client->getFirstAttackReturn();

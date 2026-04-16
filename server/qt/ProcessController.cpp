@@ -1,20 +1,20 @@
-#include "ProcessControler.hpp"
+#include "ProcessController.hpp"
 #include "base/ServerStructures.hpp"
 #include "base/NormalServerGlobal.hpp"
 #include "../general/base/CommonSettingsCommon.hpp"
 
 using namespace CatchChallenger;
 
-ProcessControler::ProcessControler()
+ProcessController::ProcessController()
 {
     GlobalServerData::serverPrivateVariables.player_updater=new QtPlayerUpdater();
     qRegisterMetaType<Chat_type>("Chat_type");
     qRegisterMetaType<std::string>("std::string");
-    connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessControler::server_is_started);
-    connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessControler::server_need_be_stopped);
-    connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessControler::server_need_be_restarted);
-    connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessControler::error);
-    connect(&server,&CatchChallenger::NormalServer::haveQuitForCriticalDatabaseQueryFailed,               this,&ProcessControler::haveQuitForCriticalDatabaseQueryFailed);
+    connect(&server,&CatchChallenger::NormalServer::is_started,this,&ProcessController::server_is_started);
+    connect(&server,&CatchChallenger::NormalServer::need_be_stopped,this,&ProcessController::server_need_be_stopped);
+    connect(&server,&CatchChallenger::NormalServer::need_be_restarted,this,&ProcessController::server_need_be_restarted);
+    connect(&server,&CatchChallenger::NormalServer::error,this,&ProcessController::error);
+    connect(&server,&CatchChallenger::NormalServer::haveQuitForCriticalDatabaseQueryFailed,               this,&ProcessController::haveQuitForCriticalDatabaseQueryFailed);
     need_be_restarted=false;
     need_be_closed=false;
 
@@ -24,12 +24,12 @@ ProcessControler::ProcessControler()
     server.start_server();
 }
 
-ProcessControler::~ProcessControler()
+ProcessController::~ProcessController()
 {
     delete settings;
 }
 
-void ProcessControler::generateTokenStatClient(TinyXMLSettings &settings,char * const data)
+void ProcessController::generateTokenStatClient(TinyXMLSettings &settings,char * const data)
 {
     FILE *fpRandomFile = fopen(RANDOMFILEDEVICE,"rb");
     if(fpRandomFile==NULL)
@@ -61,7 +61,7 @@ void ProcessControler::generateTokenStatClient(TinyXMLSettings &settings,char * 
     settings.sync();
 }
 
-void ProcessControler::send_settings()
+void ProcessController::send_settings()
 {
     bool ok;
     CatchChallenger::GameServerSettings formatedServerSettings=server.getSettings();
@@ -483,7 +483,7 @@ void ProcessControler::send_settings()
     server.setNormalSettings(formatedServerNormalSettings);
 }
 
-void ProcessControler::server_is_started(bool is_started)
+void ProcessController::server_is_started(bool is_started)
 {
     if(need_be_closed)
     {
@@ -500,24 +500,24 @@ void ProcessControler::server_is_started(bool is_started)
     }
 }
 
-void ProcessControler::error(const std::string &error)
+void ProcessController::error(const std::string &error)
 {
     std::cerr << error << std::endl;
     QCoreApplication::quit();
 }
 
-void ProcessControler::server_need_be_stopped()
+void ProcessController::server_need_be_stopped()
 {
     server.stop_server();
 }
 
-void ProcessControler::server_need_be_restarted()
+void ProcessController::server_need_be_restarted()
 {
     need_be_restarted=true;
     server.stop_server();
 }
 
-std::string ProcessControler::sizeToString(double size)
+std::string ProcessController::sizeToString(double size)
 {
     if(size<1024)
         return std::to_string(size)+std::string("B");
@@ -540,7 +540,7 @@ std::string ProcessControler::sizeToString(double size)
     return std::string("Too big");
 }
 
-std::string ProcessControler::adaptString(float size)
+std::string ProcessController::adaptString(float size)
 {
     if(size>=100)
         return std::to_string(size);
@@ -548,7 +548,7 @@ std::string ProcessControler::adaptString(float size)
         return std::to_string(size);
 }
 
-void ProcessControler::haveQuitForCriticalDatabaseQueryFailed()
+void ProcessController::haveQuitForCriticalDatabaseQueryFailed()
 {
     qDebug() << "Unable to do critical database query to initialise the server";
     QCoreApplication::quit();

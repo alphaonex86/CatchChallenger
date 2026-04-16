@@ -56,7 +56,7 @@ void EpollGenericSslServer::LoadCertificates(SSL_CTX* ctx, const char* const Cer
     SSL_CTX_set_verify(ctx,SSL_VERIFY_NONE,NULL);
     //no ca cert because I use self signed certicat
     //SSL_CTX_load_verify_locations(ctx,"/home/user/cacert.pem",NULL);
-    //no compression because CatchChallenger have their own compression, and add lot of bandwith on small packet
+    //no compression because CatchChallenger have their own compression, and add lot of bandwidth on small packet
     SSL_CTX_set_options(ctx, SSL_OP_NO_COMPRESSION);
 
     /* set the local certificate from CertFile */

@@ -18,7 +18,7 @@
 #include <QCoreApplication>
 
 /* why send the look at because blocked into the wall?
-to be sync if connexion is stop, but use more bandwith
+to be sync if connexion is stop, but use more bandwidth
 To not send: store "is blocked but direction not send", cautch the close event, at close: if "is blocked but direction not send" then send it
 */
 

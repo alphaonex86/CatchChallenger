@@ -157,7 +157,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListBase.size())
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too small with main ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
@@ -182,7 +182,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackBase();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too big with main ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(queryNumber).toStdString());
                         return false;
@@ -217,7 +217,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListMain.size())
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too small with main ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
@@ -241,7 +241,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackMain();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too big with main ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
@@ -276,7 +276,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     }
                     if((uint32_t)boolList.size()<datapackFilesListSub.size())
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too small with sub ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
@@ -300,7 +300,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
                     cleanDatapackSub();
                     if(boolList.size()>=8)
                     {
-                        newError(tr("Procotol wrong or corrupted").toStdString(),
+                        newError(tr("Protocol wrong or corrupted").toStdString(),
                                  QStringLiteral("bool list too big with sub ident: %1, and queryNumber: %2, type: query_type_protocol")
                                  .arg(mainCodeType).arg(queryNumber).toStdString());
                         return false;
@@ -322,7 +322,7 @@ bool Api_client_real::parseReplyData(const uint8_t &mainCodeType,const uint8_t &
     if((in.device()->size()-in.device()->pos())!=0)
     {
         QByteArray data_remaining=QByteArray(data.data(),data.size()).right(data.size()-in.device()->pos());
-        parseError(tr("Procotol wrong or corrupted").toStdString(),
+        parseError(tr("Protocol wrong or corrupted").toStdString(),
                    QStringLiteral("error: remaining data: Api_client_real::parseReplyData(%1,%2,%3): %4")
                    .arg(mainCodeType).arg(queryNumber).arg(QString(data_remaining.toHex()))
                    .toStdString());

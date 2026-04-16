@@ -1,5 +1,5 @@
 #include <QCoreApplication>
-#include "qt/ProcessControler.hpp"
+#include "qt/ProcessController.hpp"
 #include "base/NormalServerGlobal.hpp"
 
 int main(int argc, char *argv[])
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    ProcessControler w;
+    ProcessController w;
     Q_UNUSED(w);
     return a.exec();
 }

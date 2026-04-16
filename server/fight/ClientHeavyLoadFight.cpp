@@ -101,7 +101,7 @@ PlayerMonster Client::loadMonsters_DatabaseReturn_to_PlayerMonster(bool &ok)
         playerMonster.hp=GlobalServerData::serverPrivateVariables.db_common->stringtouint32(GlobalServerData::serverPrivateVariables.db_common->value(3),&ok);
         if(ok)
         {
-            /// \warning HP need be controled after the monster type and level have been loaded
+            /// \warning HP need be controlled after the monster type and level have been loaded
         }
         else
             std::cerr << "monster hp: " << GlobalServerData::serverPrivateVariables.db_common->value(3) << " is not a number" << std::endl;

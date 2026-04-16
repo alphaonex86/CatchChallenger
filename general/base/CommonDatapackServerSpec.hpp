@@ -33,7 +33,7 @@ protected:
     std::unordered_map<CATCHCHALLENGER_TYPE_QUEST,Quest> quests;
     std::vector<ServerSpecProfile> serverProfileList;
     std::unordered_map<CATCHCHALLENGER_TYPE_MAPID,std::vector<MonsterDrops> > monsterDrops;//to prevent send network packet for item when luck is 100%
-    std::unordered_map<std::string,ZONE_TYPE> zoneToId;//tempory var to load zone
+    std::unordered_map<std::string,ZONE_TYPE> zoneToId;//temporary var to load zone
     std::vector<std::string> idToZone;//to write to db: GlobalServerData::serverPrivateVariables.preparedDBQueryServer.db_query_delete_city.asyncWrite({clan->capturedCity});
 public:
     #ifdef CATCHCHALLENGER_CACHE_HPS

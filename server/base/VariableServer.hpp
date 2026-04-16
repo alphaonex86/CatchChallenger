@@ -46,7 +46,7 @@
 
 #define RANDOMFILEDEVICE "/dev/urandom"
 
-/** map visibility bandwith optimisation
+/** map visibility bandwidth optimisation
  Do in define to not drop cpu performance, due to heavy call **/
 
 /** convert the overflow of move into insert, use more cpu than CATCHCHALLENGER_SERVER_VISIBILITY_CLEAR

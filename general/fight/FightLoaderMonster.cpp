@@ -495,7 +495,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                                         }
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child->Name(): " << attack->Name() << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", missing arguments (level or skill): child->Name(): " << attack->Name() << std::endl;
                                     attack = attack->NextSiblingElement("attack");
                                 }
                                 std::sort(monster.learn.begin(),monster.learn.end());
@@ -589,7 +589,7 @@ std::unordered_map<CATCHCHALLENGER_TYPE_MONSTER,Monster> FightLoader::loadMonste
                                             monster.evolutions.push_back(evolutionVar);
                                     }
                                     else
-                                        std::cerr << "Unable to open the xml file: " << file << ", missing arguements (level or skill): child->Name(): " << evolutionItem->Name() << std::endl;
+                                        std::cerr << "Unable to open the xml file: " << file << ", missing arguments (level or skill): child->Name(): " << evolutionItem->Name() << std::endl;
                                     evolutionItem = evolutionItem->NextSiblingElement("evolution");
                                 }
                             }

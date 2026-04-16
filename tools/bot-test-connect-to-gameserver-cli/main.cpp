@@ -1,4 +1,4 @@
-#include "GlobalControler.h"
+#include "GlobalController.h"
 #include <QCoreApplication>
 #include <iostream>
 
@@ -48,6 +48,6 @@ int main(int argc, char *argv[])
         proxy.setType(QNetworkProxy::NoProxy);
         QNetworkProxy::setApplicationProxy(proxy);
     }
-    GlobalControler w(config);
+    GlobalController w(config);
     return a.exec();
 }

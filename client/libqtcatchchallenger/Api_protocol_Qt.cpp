@@ -1380,7 +1380,7 @@ bool Api_protocol_Qt::firstLifeEffectQuantityChange(int32_t quantity)
 {
     if(fightEffectList.empty())
     {
-        emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"try add quantity to non existant life effect");
+        emit newError(tr("Internal error").toStdString()+", file: "+std::string(__FILE__)+":"+std::to_string(__LINE__),"try add quantity to non-existent life effect");
         return false;
     }
     if(fightEffectList.front().lifeEffectMonster.empty())

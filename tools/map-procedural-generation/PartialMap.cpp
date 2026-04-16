@@ -228,7 +228,7 @@ bool PartialMap::save(const Tiled::Map &world, const unsigned int &minX, const u
 
     //delete map
     {
-        // It was commented out in the commit removing the embeded libs 42df8825b7d1dc939264d4145aeabf4ea2f1bdf6
+        // It was commented out in the commit removing the embedded libs 42df8825b7d1dc939264d4145aeabf4ea2f1bdf6
         /*
         QHashIterator<QString,Tiled::Tileset *> i(Tiled::Tileset::preloadedTileset);
         while (i.hasNext()) {

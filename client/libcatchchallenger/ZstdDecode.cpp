@@ -43,7 +43,7 @@ void ZstdDecode::run()
     } else if (rSize==ZSTD_CONTENTSIZE_UNKNOWN) {
         rSize=64*1024*1024;
         streamed=true;
-        std::cerr << "strange, std file is ZSTD_CONTENTSIZE_UNKNOWN, posible error here" << std::endl;
+        std::cerr << "strange, std file is ZSTD_CONTENTSIZE_UNKNOWN, possible error here" << std::endl;
     } else if (rSize==0) {
         mErrorString="original size 0. Use streaming decompression instead.";
         return;

@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
-                        /* An error has occured on this fd, or the socket is not
+                        /* An error has occurred on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         std::cerr << "server epoll error" << std::endl;
                         continue;
@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
                         std::cerr << "BaseClassSwitch::EpollObjectType::Client events[i].events : " << client << " (" << events[i].events  << ")" << std::endl;
-                        /* An error has occured on this fd, or the socket is not
+                        /* An error has occurred on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;
@@ -326,7 +326,7 @@ int main(int argc, char *argv[])
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
-                        /* An error has occured on this fd, or the socket is not
+                        /* An error has occurred on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "master epoll error: " << events[i].events << std::endl;
@@ -363,7 +363,7 @@ int main(int argc, char *argv[])
                     (events[i].events & EPOLLHUP) ||
                     (!(events[i].events & EPOLLIN) && !(events[i].events & EPOLLOUT)))
                     {
-                        /* An error has occured on this fd, or the socket is not
+                        /* An error has occurred on this fd, or the socket is not
                         ready for reading (why were we notified then?) */
                         if(!(events[i].events & EPOLLHUP))
                             std::cerr << "client epoll error: " << events[i].events << std::endl;

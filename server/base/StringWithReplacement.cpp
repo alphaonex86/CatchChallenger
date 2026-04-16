@@ -46,7 +46,7 @@ void StringWithReplacement::set(const std::string &query)
         const auto &found = query.find("%"+std::to_string(numberOfReplace));
         if(found!=std::string::npos)
         {
-            /* [0]: occurence to replace
+            /* [0]: occurrence to replace
              * [1,2]: total size of the String
              * List of: 16Bit header + string content */
             const uint16_t &arraysize=static_cast<uint16_t>(1+2+(numberOfReplace+1/*if one %1 mean 2 string, if  %1,%2 mean 3 string*/)*sizeof(uint16_t)+query.size());
@@ -270,7 +270,7 @@ std::string StringWithReplacement::compose(const std::vector<std::string> &value
     }
     if(preparedQuery[0]!=values.size())
     {
-        std::cerr << "StringWithReplacement::compose(): compose with wrong arguements count: " << originalQuery() << std::endl;
+        std::cerr << "StringWithReplacement::compose(): compose with wrong arguments count: " << originalQuery() << std::endl;
         #ifdef CATCHCHALLENGER_EXTRA_CHECK
         abort();
         #endif

@@ -848,7 +848,7 @@ bool LinkToGameServer::parseReplyData(const uint8_t &mainCodeType,const uint8_t 
                 socketFd=LinkToGameServer::tryConnect(EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_ip,EpollServerLoginSlave::epollServerLoginSlave->destination_proxy_port,5,1);
             if(Q_LIKELY(socketFd>=0))
             {
-                std::cout << "tryConnect() to game server finish and sucess, stat: " << std::to_string(stat) << ", queryIdToReconnect: " << std::to_string(queryNumber) << std::endl;
+                std::cout << "tryConnect() to game server finish and success, stat: " << std::to_string(stat) << ", queryIdToReconnect: " << std::to_string(queryNumber) << std::endl;
                 reopenSocketFd=socketFd;
                 queryIdToReconnect=queryNumber;
                 memcpy(tokenForGameServer,data,CATCHCHALLENGER_TOKENSIZE_CONNECTGAMESERVER);
