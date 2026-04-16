@@ -22,8 +22,14 @@ class Serializer<
   static void serialize(const std::vector<T>& container, B& ob) {
     Serializer<size_t, B>::serialize(container.size(), ob);
 #ifdef HPS_VECTOR_RAW_BINARY
-    const char* ptr = reinterpret_cast<const char*>(container.data());
-    ob.write(ptr, container.size() * sizeof(T));
+    if constexpr (std::is_trivially_copyable<T>::value) {
+      const char* ptr = reinterpret_cast<const char*>(container.data());
+      ob.write(ptr, container.size() * sizeof(T));
+    } else {
+      for (const T& elem : container) {
+        Serializer<T, B>::serialize(elem, ob);
+      }
+    }
 #else
     for (const T& elem : container) {
       Serializer<T, B>::serialize(elem, ob);
@@ -36,8 +42,14 @@ class Serializer<
     Serializer<size_t, B>::parse(n_elems, ib);
     container.resize(n_elems);
 #ifdef HPS_VECTOR_RAW_BINARY
-    char* ptr = reinterpret_cast<char*>(container.data());
-    ib.read(ptr, n_elems * sizeof(T));
+    if constexpr (std::is_trivially_copyable<T>::value) {
+      char* ptr = reinterpret_cast<char*>(container.data());
+      ib.read(ptr, n_elems * sizeof(T));
+    } else {
+      for (size_t i = 0; i < n_elems; i++) {
+        Serializer<T, B>::parse(container[i], ib);
+      }
+    }
 #else
     for (size_t i = 0; i < n_elems; i++) {
       Serializer<T, B>::parse(container[i], ib);

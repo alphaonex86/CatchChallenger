@@ -914,6 +914,10 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
 
                 mapFinal.width			= 0;
                 mapFinal.height			= 0;
+
+                Map_semi map_semi;
+                map_semi.file=fileName;
+                semi_loaded_map.push_back(map_semi);
             }
         }
         index++;
@@ -941,7 +945,10 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         Map_semi &map_semi=semi_loaded_map.at(index);
         CommonMap &mapFinal=flat_map_list.at(index);
         if(mapFinal.width==0 || mapFinal.height==0)
+        {
+            index++;
             continue;
+        }
         unsigned int sub_index=0;
 
         //resolv the border map name into their pointer + resolv the offset to change of map
