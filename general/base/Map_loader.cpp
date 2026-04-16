@@ -427,18 +427,28 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.id=0;
                                    i.quantity=1;
                                    bool ok=false;
-                                   const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(gain->Attribute("item"),&ok);
-                                   if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                                   const std::string itemIdStr=str_tolower(gain->Attribute("item"));
+                                   if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(itemIdStr)!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
                                    {
-                                       i.id=itemId;
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(itemIdStr);
                                        i.quantity=1;
                                        t.items.push_back(i);
                                    }
-                                   else if(CommonDatapack::commonDatapack.get_tempNameToItemId().find(gain->Attribute("item"))!=CommonDatapack::commonDatapack.get_tempNameToItemId().cend())
+                                   else
                                    {
-                                       i.id=CommonDatapack::commonDatapack.get_tempNameToItemId().at(gain->Attribute("item"));
-                                       i.quantity=1;
-                                       t.items.push_back(i);
+                                       const CATCHCHALLENGER_TYPE_ITEM itemId=stringtouint16(gain->Attribute("item"),&ok);
+                                       if(ok && CommonDatapack::commonDatapack.get_items().item.find(itemId)!=CommonDatapack::commonDatapack.get_items().item.cend())
+                                       {
+                                           i.id=itemId;
+                                           i.quantity=1;
+                                           t.items.push_back(i);
+                                       }
+                                       else
+                                       {
+                                           std::cerr << "item not found: " << gain->Attribute("item") << " at " << __FILE__ << ":" << __LINE__ << std::endl;
+                                           ok=false;
+                                           i.id=0;
+                                       }
                                    }
                                }
                                gain = gain->NextSiblingElement("gain");
@@ -453,14 +463,20 @@ bool Map_loader::loadExtraXml(CommonMap &mapFinal,const std::string &file, std::
                                    i.id=0;//monster id
                                    i.level=1;
                                    bool ok=false;
-                                   i.id=stringtouint16(monster->Attribute("id"),&ok);
-                                   if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
-                                   {}
+                                   const std::string monsterIdStr=str_tolower(monster->Attribute("id"));
+                                   if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(monsterIdStr)!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
+                                       i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(monsterIdStr);
                                    else
                                    {
-                                       i.id=0;//monster id
-                                       if(CommonDatapack::commonDatapack.get_tempNameToMonsterId().find(monster->Attribute("id"))!=CommonDatapack::commonDatapack.get_tempNameToMonsterId().cend())
-                                           i.id=CommonDatapack::commonDatapack.get_tempNameToMonsterId().at(monster->Attribute("id"));
+                                       i.id=stringtouint16(monster->Attribute("id"),&ok);
+                                       if(ok && CommonDatapack::commonDatapack.get_monsters().find(i.id)!=CommonDatapack::commonDatapack.get_monsters().cend())
+                                       {}
+                                       else
+                                       {
+                                           std::cerr << "monster not found: " << monster->Attribute("id") << " at " << __FILE__ << ":" << __LINE__ << std::endl;
+                                           ok=false;
+                                           i.id=0;
+                                       }
                                    }
                                    if(i.id!=0 && monster->Attribute("level")!=NULL)
                                    {
@@ -1005,22 +1021,11 @@ void Map_loader::loadAllMapsAndLink(std::vector<CommonMap> &flat_map_list,const 
         }
 
         /*The datapack dev should fix it and then drop duplicate teleporter, if well done then the final size is map_semi.old_map.teleport.size()*/
-        if(!map_semi.old_map.teleport.empty())
-            std::cerr << "[Map_loader] link teleporters for " << map_semi.file
-                      << " count=" << map_semi.old_map.teleport.size() << std::endl;
         while(sub_index<map_semi.old_map.teleport.size() && sub_index<127)//code not ready for more than 127
         {
             const Map_semi_teleport &teleporter_semi=map_semi.old_map.teleport.at(sub_index);
             std::string teleportString=teleporter_semi.map;
             stringreplaceOne(teleportString,".tmx","");
-            const bool inMapPathToId=(mapPathToId.find(teleportString)!=mapPathToId.end());
-            std::cerr << "[Map_loader]   tp[" << sub_index << "] src=(" << (int)teleporter_semi.source_x << "," << (int)teleporter_semi.source_y
-                      << ") dest=" << teleportString
-                      << "(" << (int)teleporter_semi.destination_x << "," << (int)teleporter_semi.destination_y << ")"
-                      << " inMapPathToId=" << inMapPathToId;
-            if(inMapPathToId)
-                std::cerr << " destMapWidth=" << (int)flat_map_list.at(mapPathToId.at(teleportString)).width;
-            std::cerr << std::endl;
             if(mapPathToId.find(teleportString)!=mapPathToId.end() && flat_map_list.at(mapPathToId.at(teleportString)).width>0)
             {
                 //bounds-check the destination against the DESTINATION map, not
